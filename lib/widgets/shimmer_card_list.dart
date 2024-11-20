@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:split_it_supa/constants.dart';
 
 class _SlidingGradientTransform extends GradientTransform {
   const _SlidingGradientTransform({

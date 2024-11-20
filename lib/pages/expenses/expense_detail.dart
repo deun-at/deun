@@ -26,20 +26,10 @@ class _ExpenseBottomSheetState extends State<ExpenseBottomSheet> {
   final NumberFormat numFormat = NumberFormat('###,##0.00', 'en_US');
 
   @override
-  void dispose() {
-    // Clean up the controller when the widget is disposed.
-    expenseNameController.dispose();
-    expenseAmountController.dispose();
-    super.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) {
     const double spacing = 10;
 
     String titleText = AppLocalizations.of(context)!.createNewExpense;
-
-    debugPrint(widget.expenseDocId.toString());
 
     if (widget.expenseDocId != null) {
       supabase
@@ -127,13 +117,21 @@ class _ExpenseBottomSheetState extends State<ExpenseBottomSheet> {
                             if (_formKey.currentState!.validate()) {
                               var amount =
                                   double.parse(expenseAmountController.text);
-
-                              supabase.from('expense').insert({
+                              var name = expenseNameController.text;
+                              Map<String, dynamic> upsertVals = {
                                 'group_id': widget.groupDocId,
-                                'name': expenseNameController.text,
+                                'name': name,
                                 'amount': amount,
                                 'user_id': supabase.auth.currentUser?.id
-                              }).then((value) {
+                              };
+
+                              if (widget.expenseDocId != null) {
+                                upsertVals.addAll({'id': widget.expenseDocId});
+                              }
+                              supabase
+                                  .from('expense')
+                                  .upsert(upsertVals)
+                                  .then((value) {
                                 Navigator.pop(context);
                               });
                             }

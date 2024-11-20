@@ -18,8 +18,8 @@ class DecimalTextInputFormatter extends TextInputFormatter {
     if (decimalRange != null) {
       String value = newValue.text;
 
-      debugPrint(value);
-      debugPrint(oldValue.text);
+      // debugPrint(value);
+      // debugPrint(oldValue.text);
 
       // if(value.contains("."))
       /*if (value.contains(".") &&

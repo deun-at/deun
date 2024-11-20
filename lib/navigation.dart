@@ -65,7 +65,6 @@ class _NavigationScreenState extends State<NavigationScreen> {
                         builder: (context, state) {
                           int groupDocId = int.parse(state
                               .uri.queryParameters["groupDocId"] as String);
-                          debugPrint(groupDocId.toString());
                           return GroupDetail(groupDocId: groupDocId);
                         },
                         routes: [

@@ -5,7 +5,6 @@ import 'package:grouped_list/grouped_list.dart';
 import 'package:split_it_supa/main.dart';
 import 'package:split_it_supa/widgets/shimmer_card_list.dart';
 
-import '../../constants.dart';
 import '../../helper/helper.dart';
 
 class ExpenseList extends StatefulWidget {
@@ -16,6 +15,10 @@ class ExpenseList extends StatefulWidget {
 }
 
 class _ExpenseListState extends State<ExpenseList> {
+  void updateExpenseList() {
+    setState(() {});
+  }
+
   @override
   Widget build(BuildContext context) {
     Future<List<Map<String, dynamic>>> _data = supabase.from('expense').select(
@@ -32,14 +35,17 @@ class _ExpenseListState extends State<ExpenseList> {
             }
 
             if (!snapshot.hasData) {
-              return const ShimmerCardList(height: 100, listEntryLength: 5,);
+              return const ShimmerCardList(
+                height: 70,
+                listEntryLength: 20,
+              );
             }
 
             // Access the QuerySnapshot
             return SafeArea(
                 child: RefreshIndicator(
                     onRefresh: () async {
-                      // setState(() {});
+                      updateExpenseList();
                     },
                     child: GroupedListView(
                         elements: snapshot.data ?? [],
@@ -79,7 +85,7 @@ class _ExpenseListState extends State<ExpenseList> {
                                   child: InkWell(
                                       borderRadius: BorderRadius.circular(12.0),
                                       onTap: () {
-                                        GoRouter.of(context).go(
+                                        GoRouter.of(context).push(
                                             "/group/details/expense?groupDocId=${expense['group_id']}&expenseDocId=${expense['id']}");
                                       },
                                       child: Padding(

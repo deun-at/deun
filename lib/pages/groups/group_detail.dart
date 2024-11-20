@@ -15,31 +15,13 @@ class GroupDetail extends StatefulWidget {
 }
 
 class _GroupDetailState extends State<GroupDetail> {
-  Future<Map<String, dynamic>>? _groupDetailData;
-
   @override
   void initState() {
     super.initState();
-
-    _groupDetailData = fetchData();
-  }
-
-  Future<Map<String, dynamic>> fetchData() async {
-    await Future.delayed(const Duration(milliseconds: 200), () {});
-
-    var data = await supabase
-        .from('group')
-        .select('*, expense(*)')
-        .eq('id', widget.groupDocId)
-        .order('created_at', ascending: false, referencedTable: 'expense')
-        .limit(1)
-        .single();
-
-    return data;
   }
 
   void updateExpenseList() {
-    setState(() {_groupDetailData = fetchData();});
+    setState(() {});
   }
 
   void openDeleteItemDialog(BuildContext context, int docId) {
@@ -72,144 +54,135 @@ class _GroupDetailState extends State<GroupDetail> {
 
   @override
   Widget build(BuildContext context) {
+      Future<Map<String, dynamic>> _groupDetailData = supabase
+        .from('group')
+        .select('*, expense(*)')
+        .eq('id', widget.groupDocId)
+        .order('created_at', ascending: false, referencedTable: 'expense')
+        .limit(1)
+        .single();
+
     return Scaffold(
-        appBar: AppBar(leading: const BackButton(), centerTitle: true),
-        body: Hero(
-            tag: widget.groupDocId,
-            child: Material(
-                child: FutureBuilder(
-                    future: _groupDetailData,
-                    builder: (context, snapshot) {
-                      if (snapshot.hasError) {
-                        return Center(
-                            child: Text(
-                                AppLocalizations.of(context)!.groupEntriesError,
-                                style: Theme.of(context)
-                                    .textTheme
-                                    .headlineMedium));
-                      }
+        appBar: AppBar(leading: const BackButton()),
+        body: FutureBuilder(
+            future: _groupDetailData,
+            builder: (context, snapshot) {
+              if (snapshot.hasError) {
+                return Center(
+                    child: Text(AppLocalizations.of(context)!.groupEntriesError,
+                        style: Theme.of(context).textTheme.headlineMedium));
+              }
 
-                      if (!snapshot.hasData) {
-                        return const ShimmerCardList(
-                          height: 120,
-                          listEntryLength: 8,
-                        );
-                      }
+              if (!snapshot.hasData) {
+                return const ShimmerCardList(
+                  height: 120,
+                  listEntryLength: 8,
+                );
+              }
 
-                      // Access the GroupDocumentSnapshot
-                      dynamic group = snapshot.data;
-                      dynamic expenseList = group['expense'];
+              // Access the GroupDocumentSnapshot
+              dynamic group = snapshot.data;
+              dynamic expenseList = group['expense'];
 
-                      var colorSeedValue = Color(group['color_value']);
+              var colorSeedValue = Color(group['color_value']);
 
-                      return RefreshIndicator(
-                          onRefresh: () async {
-                            updateExpenseList();
-                          },
-                          child: ListView.builder(
-                              itemCount: expenseList?.length,
-                              itemBuilder: (context, index) {
-                                // Access the Expense instance
-                                dynamic expense = expenseList?[index];
+              return RefreshIndicator(
+                  onRefresh: () async {
+                    updateExpenseList();
+                  },
+                  child: ListView.builder(
+                      itemCount: expenseList?.length,
+                      itemBuilder: (context, index) {
+                        // Access the Expense instance
+                        dynamic expense = expenseList?[index];
 
-                                var formatAmount =
-                                    "€${expense['amount'].toStringAsFixed(2)}";
+                        var formatAmount =
+                            "€${expense['amount'].toStringAsFixed(2)}";
 
-                                return Padding(
-                                    padding: const EdgeInsets.all(8.0),
-                                    child: Card(
-                                        elevation: 8,
-                                        color: Theme.of(context)
-                                            .colorScheme
-                                            .surfaceContainer,
-                                        surfaceTintColor: colorSeedValue,
-                                        child: InkWell(
-                                            borderRadius:
-                                                BorderRadius.circular(12.0),
-                                            onTap: () {
-                                              GoRouter.of(context).go(
-                                                  "/group/details/expense?groupDocId=${widget.groupDocId}&expenseDocId=${expense['id']}");
-                                            },
-                                            child: Padding(
-                                                padding:
-                                                    const EdgeInsets.fromLTRB(
-                                                        10, 5, 5, 10),
-                                                child: Column(
-                                                  children: [
-                                                    Align(
-                                                        alignment:
-                                                            Alignment.topRight,
-                                                        child: Directionality(
-                                                          textDirection:
-                                                              TextDirection.rtl,
-                                                          child: MenuAnchor(
-                                                            builder: (context,
-                                                                controller,
-                                                                child) {
-                                                              return IconButton(
-                                                                icon: const Icon(
-                                                                    Icons
-                                                                        .more_vert),
-                                                                onPressed: () {
-                                                                  if (controller
-                                                                      .isOpen) {
-                                                                    controller
-                                                                        .close();
-                                                                  } else {
-                                                                    controller
-                                                                        .open();
-                                                                  }
-                                                                },
-                                                              );
-                                                            },
-                                                            menuChildren: [
-                                                              MenuItemButton(
-                                                                closeOnActivate:
-                                                                    true,
-                                                                onPressed: () =>
-                                                                    openDeleteItemDialog(
-                                                                        context,
-                                                                        expense[
-                                                                            'id']),
-                                                                trailingIcon:
-                                                                    const Icon(Icons
-                                                                        .delete),
-                                                                child: Text(
-                                                                    AppLocalizations.of(
-                                                                            context)!
-                                                                        .delete),
-                                                              ),
-                                                            ],
-                                                          ),
-                                                        )),
-                                                    Align(
-                                                      alignment:
-                                                          Alignment.bottomLeft,
-                                                      child: Text(
-                                                        expense['name'],
-                                                        style: Theme.of(context)
-                                                            .textTheme
-                                                            .headlineMedium,
+                        return Padding(
+                            padding: const EdgeInsets.all(8.0),
+                            child: Card(
+                                elevation: 8,
+                                color: Theme.of(context)
+                                    .colorScheme
+                                    .surfaceContainer,
+                                surfaceTintColor: colorSeedValue,
+                                child: InkWell(
+                                    borderRadius: BorderRadius.circular(12.0),
+                                    onTap: () {
+                                      GoRouter.of(context).push(
+                                          "/group/details/expense?groupDocId=${widget.groupDocId}&expenseDocId=${expense['id']}");
+                                    },
+                                    child: Padding(
+                                        padding: const EdgeInsets.fromLTRB(
+                                            10, 5, 5, 10),
+                                        child: Column(
+                                          children: [
+                                            Align(
+                                                alignment: Alignment.topRight,
+                                                child: Directionality(
+                                                  textDirection:
+                                                      TextDirection.rtl,
+                                                  child: MenuAnchor(
+                                                    builder: (context,
+                                                        controller, child) {
+                                                      return IconButton(
+                                                        icon: const Icon(
+                                                            Icons.more_vert),
+                                                        onPressed: () {
+                                                          if (controller
+                                                              .isOpen) {
+                                                            controller.close();
+                                                          } else {
+                                                            controller.open();
+                                                          }
+                                                        },
+                                                      );
+                                                    },
+                                                    menuChildren: [
+                                                      MenuItemButton(
+                                                        closeOnActivate: true,
+                                                        onPressed: () =>
+                                                            openDeleteItemDialog(
+                                                                context,
+                                                                expense['id']),
+                                                        trailingIcon:
+                                                            const Icon(
+                                                                Icons.delete),
+                                                        child: Text(
+                                                            AppLocalizations.of(
+                                                                    context)!
+                                                                .delete),
                                                       ),
-                                                    ),
-                                                    Align(
-                                                      alignment:
-                                                          Alignment.bottomLeft,
-                                                      child: Text(
-                                                        formatAmount,
-                                                        style: Theme.of(context)
-                                                            .textTheme
-                                                            .labelLarge,
-                                                      ),
-                                                    )
-                                                  ],
-                                                )))));
-                              }));
-                    }))),
+                                                    ],
+                                                  ),
+                                                )),
+                                            Align(
+                                              alignment: Alignment.bottomLeft,
+                                              child: Text(
+                                                expense['name'],
+                                                style: Theme.of(context)
+                                                    .textTheme
+                                                    .headlineMedium,
+                                              ),
+                                            ),
+                                            Align(
+                                              alignment: Alignment.bottomLeft,
+                                              child: Text(
+                                                formatAmount,
+                                                style: Theme.of(context)
+                                                    .textTheme
+                                                    .labelLarge,
+                                              ),
+                                            )
+                                          ],
+                                        )))));
+                      }));
+            }),
         floatingActionButton: FloatingActionButton.extended(
             onPressed: () {
               GoRouter.of(context)
-                  .go("/group/details/expense?groupDocId=${widget.groupDocId}");
+                  .go("/group");
             },
             label: Text(AppLocalizations.of(context)!.addNewExpense),
             icon: const Icon(Icons.add)));
