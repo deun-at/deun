@@ -1,17 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:go_router/go_router.dart';
-import 'package:intl/intl.dart' as intl;
 import '../../main.dart';
 
-import '../../constants.dart';
-import '../expenses/new_expense.dart';
+import '../../widgets/shimmer_card_list.dart';
 
 class GroupDetail extends StatefulWidget {
-  const GroupDetail(
-      {super.key, required this.handleColorSelect, required this.groupDocId});
+  const GroupDetail({super.key, required this.groupDocId});
 
-  final void Function(int) handleColorSelect;
   final int groupDocId;
 
   @override
@@ -19,19 +15,31 @@ class GroupDetail extends StatefulWidget {
 }
 
 class _GroupDetailState extends State<GroupDetail> {
-  void updateExpenseList() {
-    setState(() {});
+  Future<Map<String, dynamic>>? _groupDetailData;
+
+  @override
+  void initState() {
+    super.initState();
+
+    _groupDetailData = fetchData();
   }
 
-  Future<Map<String, dynamic>> fetchDetails() async {
-    Map<String, dynamic> data = await supabase
+  Future<Map<String, dynamic>> fetchData() async {
+    await Future.delayed(const Duration(milliseconds: 200), () {});
+
+    var data = await supabase
         .from('group')
         .select('*, expense(*)')
         .eq('id', widget.groupDocId)
+        .order('created_at', ascending: false, referencedTable: 'expense')
         .limit(1)
         .single();
 
     return data;
+  }
+
+  void updateExpenseList() {
+    setState(() {_groupDetailData = fetchData();});
   }
 
   void openDeleteItemDialog(BuildContext context, int docId) {
@@ -70,7 +78,7 @@ class _GroupDetailState extends State<GroupDetail> {
             tag: widget.groupDocId,
             child: Material(
                 child: FutureBuilder(
-                    future: fetchDetails(),
+                    future: _groupDetailData,
                     builder: (context, snapshot) {
                       if (snapshot.hasError) {
                         return Center(
@@ -82,10 +90,9 @@ class _GroupDetailState extends State<GroupDetail> {
                       }
 
                       if (!snapshot.hasData) {
-                        return const Center(
-                          child: CircularProgressIndicator(
-                            value: null,
-                          ),
+                        return const ShimmerCardList(
+                          height: 120,
+                          listEntryLength: 8,
                         );
                       }
 
@@ -120,23 +127,8 @@ class _GroupDetailState extends State<GroupDetail> {
                                             borderRadius:
                                                 BorderRadius.circular(12.0),
                                             onTap: () {
-                                              showModalBottomSheet(
-                                                  useSafeArea: true,
-                                                  context: context,
-                                                  showDragHandle: true,
-                                                  isScrollControlled: true,
-                                                  builder: (context) {
-                                                    return ExpenseBottomSheet(
-                                                      groupDocId:
-                                                          widget.groupDocId,
-                                                      expenseDocId:
-                                                          expense['id'],
-                                                      updateExpenseList:
-                                                          updateExpenseList,
-                                                    );
-                                                  });
-                                              // GoRouter.of(context).go(
-                                              //     "/group/details/expense?groupDocId=${widget.groupDocId}&expenseDocId=${expense['id']}");
+                                              GoRouter.of(context).go(
+                                                  "/group/details/expense?groupDocId=${widget.groupDocId}&expenseDocId=${expense['id']}");
                                             },
                                             child: Padding(
                                                 padding:
@@ -216,17 +208,8 @@ class _GroupDetailState extends State<GroupDetail> {
                     }))),
         floatingActionButton: FloatingActionButton.extended(
             onPressed: () {
-              showModalBottomSheet(
-                  useSafeArea: true,
-                  context: context,
-                  showDragHandle: true,
-                  isScrollControlled: true,
-                  builder: (context) {
-                    return ExpenseBottomSheet(
-                      groupDocId: widget.groupDocId,
-                      updateExpenseList: updateExpenseList,
-                    );
-                  });
+              GoRouter.of(context)
+                  .go("/group/details/expense?groupDocId=${widget.groupDocId}");
             },
             label: Text(AppLocalizations.of(context)!.addNewExpense),
             icon: const Icon(Icons.add)));

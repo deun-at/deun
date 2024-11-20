@@ -3,25 +3,33 @@ import 'package:go_router/go_router.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:split_it_supa/main.dart';
 
-import '../../constants.dart';
+import '../../widgets/shimmer_card_list.dart';
 import 'new_group.dart';
 
 class GroupList extends StatefulWidget {
-  const GroupList(
-      {super.key,
-      required this.colorSelected,
-      required this.handleColorSelect});
-
-  final ColorSeed colorSelected;
-  final void Function(int) handleColorSelect;
+  const GroupList({super.key});
 
   @override
   State<GroupList> createState() => _GroupListState();
 }
 
 class _GroupListState extends State<GroupList> {
+  Future<List<Map<String, dynamic>>>? _groupListData;
+
+  @override
+  void initState() {
+    super.initState();
+
+    _groupListData = fetchData();
+  }
+
+  Future<List<Map<String, dynamic>>> fetchData() async {
+    return supabase.from('group').select(
+        '*, expense(expense_amount:amount.sum(), expense_newest_edit:created_at.max())');
+  }
+
   void updateGroupList() {
-    setState(() {});
+    setState(() {_groupListData = fetchData();});
   }
 
   void openDeleteItemDialog(BuildContext context, int groupId) {
@@ -54,13 +62,9 @@ class _GroupListState extends State<GroupList> {
 
   @override
   Widget build(BuildContext context) {
-    Future<List<Map<String, dynamic>>> _data = supabase
-        .from('group')
-        .select('*, expense(expense_amount:amount.sum())');
-
     return Scaffold(
         body: FutureBuilder(
-            future: _data,
+            future: _groupListData,
             builder: (context, snapshot) {
               if (snapshot.hasError) {
                 return Center(
@@ -69,12 +73,16 @@ class _GroupListState extends State<GroupList> {
               }
 
               if (!snapshot.hasData) {
-                return const Center(
-                  child: CircularProgressIndicator(
-                    value: null,
-                  ),
+                return const ShimmerCardList(
+                  height: 120,
+                  listEntryLength: 8,
                 );
               }
+
+              // return const ShimmerCardList(
+              //     height: 120,
+              //     listEntryLength: 8,
+              //   );
 
               // Access the QuerySnapshot
               return RefreshIndicator(
@@ -95,6 +103,8 @@ class _GroupListState extends State<GroupList> {
                       String formatSumAmount =
                           "€${sumAmount.toStringAsFixed(2)}";
 
+                      // debugPrint(group['expense'].first['expense_newest_edit'] ?? '');
+
                       return Padding(
                           padding: const EdgeInsets.all(8.0),
                           child: Hero(
@@ -109,7 +119,7 @@ class _GroupListState extends State<GroupList> {
                                       borderRadius: BorderRadius.circular(12.0),
                                       onTap: () {
                                         GoRouter.of(context).go(
-                                            "/group/details?groupDocId=${group['id']}");
+                                            "/group/details?groupDocId=${group["id"]}");
                                       },
                                       child: Padding(
                                           padding: const EdgeInsets.fromLTRB(
@@ -158,16 +168,12 @@ class _GroupListState extends State<GroupList> {
                                                   )),
                                               Align(
                                                 alignment: Alignment.bottomLeft,
-                                                child: Material(
-                                                        color:
-                                                            Colors.transparent,
-                                                        child: Text(
-                                                          group['name'],
-                                                          style: Theme.of(
-                                                                  context)
-                                                              .textTheme
-                                                              .headlineMedium,
-                                                        )),
+                                                child: Text(
+                                                  group['name'],
+                                                  style: Theme.of(context)
+                                                      .textTheme
+                                                      .headlineMedium,
+                                                ),
                                               ),
                                               Align(
                                                 alignment: Alignment.bottomLeft,

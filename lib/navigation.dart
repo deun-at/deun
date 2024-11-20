@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:split_it_supa/widgets/modal_bottom_sheet_page.dart';
 import 'pages/expenses/expense_detail.dart';
 import 'pages/expenses/expense_list.dart';
 import 'pages/groups/group_detail.dart';
@@ -29,12 +30,6 @@ class _NavigationScreenState extends State<NavigationScreen> {
 
   ColorSeed colorSelected = ColorSeed.baseColor;
 
-  void handleColorSelect(int value) {
-    setState(() {
-      colorSelected = ColorSeed.values[value];
-    });
-  }
-
   @override
   void initState() {
     super.initState();
@@ -60,32 +55,39 @@ class _NavigationScreenState extends State<NavigationScreen> {
                 // top route inside branch
                 GoRoute(
                   path: '/group',
-                  pageBuilder: (context, state) => NoTransitionPage(
-                    child: GroupList(
-                        colorSelected: colorSelected,
-                        handleColorSelect: handleColorSelect),
+                  pageBuilder: (context, state) => const NoTransitionPage(
+                    child: GroupList(),
                   ),
                   routes: [
                     // child route
                     GoRoute(
                         path: 'details',
                         builder: (context, state) {
-                          int groupDocId = int.parse(state.uri.queryParameters["groupDocId"] as String);
-                          return GroupDetail(
-                              handleColorSelect: handleColorSelect,
-                              groupDocId: groupDocId);
+                          int groupDocId = int.parse(state
+                              .uri.queryParameters["groupDocId"] as String);
+                          debugPrint(groupDocId.toString());
+                          return GroupDetail(groupDocId: groupDocId);
                         },
                         routes: [
                           GoRoute(
                               path: 'expense',
-                              builder: (context, state) {
-                                int groupDocId = int.parse(state.uri.queryParameters["groupDocId"] as String);
-                                int expenseDocId = int.parse(state.uri.queryParameters["expenseDocId"] as String);
-                                return ExpenseDetail(
-                                    handleColorSelect: handleColorSelect,
+                              pageBuilder: (context, state) {
+                                int groupDocId = int.parse(state.uri
+                                    .queryParameters["groupDocId"] as String);
+
+                                String? expenseDocIdQ =
+                                    state.uri.queryParameters["expenseDocId"];
+                                int? expenseDocId = expenseDocIdQ != null
+                                    ? int.parse(expenseDocIdQ)
+                                    : null;
+
+                                return ModalBottomSheetPage(
+                                  key: state.pageKey,
+                                  builder: (context) => ExpenseBottomSheet(
                                     groupDocId: groupDocId,
                                     expenseDocId: expenseDocId,
-                                  );
+                                  ),
+                                );
                               })
                         ]),
                   ],
@@ -99,10 +101,8 @@ class _NavigationScreenState extends State<NavigationScreen> {
                 // top route inside branch
                 GoRoute(
                   path: '/expense',
-                  pageBuilder: (context, state) => NoTransitionPage(
-                    child: ExpenseList(
-                        colorSelected: colorSelected,
-                        handleColorSelect: handleColorSelect),
+                  pageBuilder: (context, state) => const NoTransitionPage(
+                    child: ExpenseList(),
                   ),
                 ),
               ],
