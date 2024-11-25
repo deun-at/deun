@@ -4,7 +4,6 @@ import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:split_it_supa/main.dart';
 
 import '../../widgets/shimmer_card_list.dart';
-import 'new_group.dart';
 
 class GroupList extends StatefulWidget {
   const GroupList({super.key});
@@ -53,10 +52,17 @@ class _GroupListState extends State<GroupList> {
 
   @override
   Widget build(BuildContext context) {
-    Future<List<Map<String, dynamic>>> _groupListData = supabase.from('group').select(
-        '*, expense(expense_amount:amount.sum(), expense_newest_edit:created_at.max())');
+    Future<List<Map<String, dynamic>>> _groupListData = supabase
+        .from('group')
+        .select(
+            '*, expense(expense_amount:amount.sum(), expense_newest_edit:created_at.max())')
+        .order('created_at', ascending: false); //todo: order activity
 
     return Scaffold(
+        appBar: AppBar(
+          title: Text(AppLocalizations.of(context)!.groups),
+          centerTitle: true,
+        ),
         body: FutureBuilder(
             future: _groupListData,
             builder: (context, snapshot) {
@@ -98,8 +104,9 @@ class _GroupListState extends State<GroupList> {
                               elevation: 8,
                               color: Theme.of(context)
                                   .colorScheme
-                                  .surfaceContainer,
+                                  .surfaceContainerHighest,
                               surfaceTintColor: colorSeedValue,
+                              shadowColor: Colors.transparent,
                               child: InkWell(
                                   borderRadius: BorderRadius.circular(12.0),
                                   onTap: () {
@@ -132,6 +139,19 @@ class _GroupListState extends State<GroupList> {
                                                     );
                                                   },
                                                   menuChildren: [
+                                                    MenuItemButton(
+                                                      closeOnActivate: true,
+                                                      onPressed: () {
+                                                        GoRouter.of(context).push(
+                                                            "/group/edit?groupDocId=${group["id"]}");
+                                                      },
+                                                      trailingIcon: const Icon(
+                                                          Icons.edit),
+                                                      child: Text(
+                                                          AppLocalizations.of(
+                                                                  context)!
+                                                              .edit),
+                                                    ),
                                                     MenuItemButton(
                                                       closeOnActivate: true,
                                                       onPressed: () =>
@@ -173,14 +193,7 @@ class _GroupListState extends State<GroupList> {
             }),
         floatingActionButton: FloatingActionButton.extended(
           onPressed: () {
-            showModalBottomSheet(
-                useSafeArea: true,
-                context: context,
-                showDragHandle: true,
-                isScrollControlled: true,
-                builder: (context) {
-                  return NewGroup(updateGroupList: updateGroupList);
-                });
+            GoRouter.of(context).push("/group/edit");
           },
           label: Text(AppLocalizations.of(context)!.addNewGroup),
           icon: const Icon(Icons.add),

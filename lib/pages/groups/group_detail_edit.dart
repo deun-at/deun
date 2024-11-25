@@ -4,31 +4,48 @@ import 'package:split_it_supa/main.dart';
 
 import '../../constants.dart';
 
-class NewGroup extends StatefulWidget {
-  const NewGroup({super.key, required this.updateGroupList});
+class GroupBottomSheet extends StatefulWidget {
+  const GroupBottomSheet({super.key, this.groupDocId});
 
-  final VoidCallback updateGroupList;
+  final int? groupDocId;
 
   @override
-  State<NewGroup> createState() => _NewGroupState();
+  State<GroupBottomSheet> createState() => _GroupBottomSheetState();
 }
 
-class _NewGroupState extends State<NewGroup> {
+class _GroupBottomSheetState extends State<GroupBottomSheet> {
   final _formKey = GlobalKey<FormState>();
   final groupNameController = TextEditingController();
 
-  ColorSeed groupColor = ColorSeed.baseColor;
+  Color groupColor = ColorSeed.baseColor.color;
+  String? titleText;
 
   @override
-  void dispose() {
-    // Clean up the controller when the widget is disposed.
-    groupNameController.dispose();
-    super.dispose();
+  void initState() {
+    super.initState();
+
+    if (widget.groupDocId != null) {
+      supabase
+          .from('group')
+          .select()
+          .eq('id', widget.groupDocId ?? '')
+          .limit(1)
+          .single()
+          .then((value) {
+        groupNameController.text = value['name'];
+
+        setState(() {
+          titleText = value['name'];
+          groupColor = Color(value['color_value']);
+        });
+      });
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     const double spacing = 10;
+
     return SingleChildScrollView(
       child: Padding(
           padding: const EdgeInsets.fromLTRB(20, 10, 20, 10),
@@ -40,7 +57,9 @@ class _NewGroupState extends State<NewGroup> {
                     mainAxisSize: MainAxisSize.min,
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: <Widget>[
-                      Text(AppLocalizations.of(context)!.createNewGroup,
+                      Text(
+                          titleText ??
+                              AppLocalizations.of(context)!.createNewGroup,
                           style: Theme.of(context)
                               .textTheme
                               .displaySmall!
@@ -80,10 +99,11 @@ class _NewGroupState extends State<NewGroup> {
                                 selectedIcon:
                                     const Icon(Icons.radio_button_checked),
                                 color: ColorSeed.values[i].color,
-                                isSelected: groupColor == ColorSeed.values[i],
+                                isSelected: groupColor.value ==
+                                    ColorSeed.values[i].color.value,
                                 onPressed: () {
                                   setState(() {
-                                    groupColor = ColorSeed.values[i];
+                                    groupColor = ColorSeed.values[i].color;
                                   });
                                 });
                           }),
@@ -91,19 +111,26 @@ class _NewGroupState extends State<NewGroup> {
                       FilledButton(
                           onPressed: () {
                             if (_formKey.currentState!.validate()) {
-                              supabase.from('group').insert({
+                              Map<String, dynamic> upsertVals = {
                                 'name': groupNameController.text,
-                                'color_value': groupColor.color.value,
+                                'color_value': groupColor.value,
                                 'user_id': supabase.auth.currentUser?.id
-                              }).then(
-                                (value) {
-                                  widget.updateGroupList();
-                                  Navigator.pop(context);
-                                },
-                              );
+                              };
+
+                              if (widget.groupDocId != null) {
+                                upsertVals.addAll({'id': widget.groupDocId});
+                              }
+                              supabase
+                                  .from('group')
+                                  .upsert(upsertVals)
+                                  .then((value) {
+                                Navigator.pop(context);
+                              });
                             }
                           },
-                          child: Text(AppLocalizations.of(context)!.create))
+                          child: Text(widget.groupDocId != null
+                              ? AppLocalizations.of(context)!.update
+                              : AppLocalizations.of(context)!.create))
                     ],
                   )))),
     );

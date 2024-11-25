@@ -24,12 +24,11 @@ class _ExpenseBottomSheetState extends State<ExpenseBottomSheet> {
 
   ColorSeed groupColor = ColorSeed.baseColor;
   final NumberFormat numFormat = NumberFormat('###,##0.00', 'en_US');
+  String? titleText;
 
   @override
-  Widget build(BuildContext context) {
-    const double spacing = 10;
-
-    String titleText = AppLocalizations.of(context)!.createNewExpense;
+  void initState() {
+    super.initState();
 
     if (widget.expenseDocId != null) {
       supabase
@@ -39,11 +38,18 @@ class _ExpenseBottomSheetState extends State<ExpenseBottomSheet> {
           .limit(1)
           .single()
           .then((value) {
-        titleText = value['name'];
+        setState(() {
+          titleText = value['name'];
+        });
         expenseNameController.text = value['name'];
         expenseAmountController.text = value['amount'].toString();
       });
     }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    const double spacing = 10;
 
     return SingleChildScrollView(
       child: Padding(
@@ -56,7 +62,9 @@ class _ExpenseBottomSheetState extends State<ExpenseBottomSheet> {
                     mainAxisSize: MainAxisSize.min,
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: <Widget>[
-                      Text(titleText,
+                      Text(
+                          titleText ??
+                              AppLocalizations.of(context)!.createNewExpense,
                           style: Theme.of(context)
                               .textTheme
                               .displaySmall!
@@ -115,13 +123,11 @@ class _ExpenseBottomSheetState extends State<ExpenseBottomSheet> {
                       FilledButton(
                           onPressed: () {
                             if (_formKey.currentState!.validate()) {
-                              var amount =
-                                  double.parse(expenseAmountController.text);
-                              var name = expenseNameController.text;
                               Map<String, dynamic> upsertVals = {
                                 'group_id': widget.groupDocId,
-                                'name': name,
-                                'amount': amount,
+                                'name': expenseNameController.text,
+                                'amount':
+                                    double.parse(expenseAmountController.text),
                                 'user_id': supabase.auth.currentUser?.id
                               };
 
@@ -136,7 +142,9 @@ class _ExpenseBottomSheetState extends State<ExpenseBottomSheet> {
                               });
                             }
                           },
-                          child: Text(AppLocalizations.of(context)!.create))
+                          child: Text(widget.expenseDocId != null
+                              ? AppLocalizations.of(context)!.update
+                              : AppLocalizations.of(context)!.create))
                     ],
                   )))),
     );

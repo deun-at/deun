@@ -4,6 +4,7 @@ import 'package:split_it_supa/widgets/modal_bottom_sheet_page.dart';
 import 'pages/expenses/expense_detail.dart';
 import 'pages/expenses/expense_list.dart';
 import 'pages/groups/group_detail.dart';
+import 'pages/groups/group_detail_edit.dart';
 import 'pages/groups/group_list.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
@@ -89,6 +90,22 @@ class _NavigationScreenState extends State<NavigationScreen> {
                                 );
                               })
                         ]),
+                    GoRoute(
+                        path: 'edit',
+                        pageBuilder: (context, state) {
+                          String? groupDocIdQ =
+                              state.uri.queryParameters["groupDocId"];
+                          int? groupDocId = groupDocIdQ != null
+                              ? int.parse(groupDocIdQ)
+                              : null;
+
+                          return ModalBottomSheetPage(
+                            key: state.pageKey,
+                            builder: (context) => GroupBottomSheet(
+                              groupDocId: groupDocId,
+                            ),
+                          );
+                        })
                   ],
                 ),
               ],

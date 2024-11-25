@@ -20,6 +20,8 @@
   "create": "create",
   "cancel": "cancel",
   "delete": "delete",
+  "edit": "edit",
+  "update": "update",
   "generalError": "Something went wrong",
   "loading": "loading"
 }

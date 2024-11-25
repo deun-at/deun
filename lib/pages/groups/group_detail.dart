@@ -54,7 +54,7 @@ class _GroupDetailState extends State<GroupDetail> {
 
   @override
   Widget build(BuildContext context) {
-      Future<Map<String, dynamic>> _groupDetailData = supabase
+    Future<Map<String, dynamic>> _groupDetailData = supabase
         .from('group')
         .select('*, expense(*)')
         .eq('id', widget.groupDocId)
@@ -63,7 +63,10 @@ class _GroupDetailState extends State<GroupDetail> {
         .single();
 
     return Scaffold(
-        appBar: AppBar(leading: const BackButton()),
+        appBar: AppBar(
+            leading: const BackButton(),
+            title: Text(AppLocalizations.of(context)!.expenses),
+            centerTitle: true),
         body: FutureBuilder(
             future: _groupDetailData,
             builder: (context, snapshot) {
@@ -105,8 +108,9 @@ class _GroupDetailState extends State<GroupDetail> {
                                 elevation: 8,
                                 color: Theme.of(context)
                                     .colorScheme
-                                    .surfaceContainer,
+                                    .surfaceContainerHighest,
                                 surfaceTintColor: colorSeedValue,
+                                shadowColor: Colors.transparent,
                                 child: InkWell(
                                     borderRadius: BorderRadius.circular(12.0),
                                     onTap: () {
@@ -181,8 +185,8 @@ class _GroupDetailState extends State<GroupDetail> {
             }),
         floatingActionButton: FloatingActionButton.extended(
             onPressed: () {
-              GoRouter.of(context)
-                  .go("/group");
+              GoRouter.of(context).push(
+                  "/group/details/expense?groupDocId=${widget.groupDocId}");
             },
             label: Text(AppLocalizations.of(context)!.addNewExpense),
             icon: const Icon(Icons.add)));

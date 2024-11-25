@@ -80,8 +80,9 @@ class _ExpenseListState extends State<ExpenseList> {
                                   elevation: 8,
                                   color: Theme.of(context)
                                       .colorScheme
-                                      .surfaceContainer,
+                                      .surfaceContainerHighest,
                                   surfaceTintColor: colorSeedValue,
+                                  shadowColor: Colors.transparent,
                                   child: InkWell(
                                       borderRadius: BorderRadius.circular(12.0),
                                       onTap: () {
