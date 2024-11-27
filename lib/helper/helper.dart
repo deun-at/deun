@@ -13,3 +13,8 @@ String toHumanDateString(String? dateTimeIn) {
   DateFormat format = DateFormat("dd.MM.yyyy");
   return format.format(DateTime.parse(dateTimeIn));
 }
+
+String toCurrency(double value) {
+  final NumberFormat numFormat = NumberFormat('###,##0.00', 'en_US');
+  return "€${numFormat.format(value)}";
+}

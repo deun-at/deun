@@ -39,7 +39,9 @@ class Group {
         .from('group')
         .select('*, expense(*)')
         .order('created_at', ascending: false)
-        .order('created_at', ascending: false, referencedTable: 'expense'); //todo order by activity
+        .order('created_at',
+            ascending: false,
+            referencedTable: 'expense'); //todo order by activity
 
     Map<int, Group> retData = <int, Group>{};
 
@@ -51,4 +53,9 @@ class Group {
 
     return retData;
   }
+
+  Map<String, dynamic> toJson() => {
+        'name': name,
+        'color_value': colorValue,
+      };
 }

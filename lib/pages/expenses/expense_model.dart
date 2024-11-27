@@ -40,4 +40,9 @@ class Expense {
 
     return retData;
   }
+
+  Map<String, dynamic> toJson() => {
+        'name': name,
+        'amount': amount.toString(),
+      };
 }

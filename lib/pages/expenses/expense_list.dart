@@ -68,11 +68,6 @@ class _ExpenseListState extends State<ExpenseList> {
                           Color colorSeedValue =
                               Color(expense.group.colorValue);
 
-                          double sumAmount =
-                              double.parse(expense.amount.toString());
-                          String formatSumAmount =
-                              "€${sumAmount.toStringAsFixed(2)}";
-
                           return Padding(
                               padding: const EdgeInsets.all(8.0),
                               child: Card(
@@ -105,7 +100,7 @@ class _ExpenseListState extends State<ExpenseList> {
                                               Align(
                                                 alignment: Alignment.bottomLeft,
                                                 child: Text(
-                                                  formatSumAmount,
+                                                  toCurrency(expense.amount),
                                                   style: Theme.of(context)
                                                       .textTheme
                                                       .labelLarge,

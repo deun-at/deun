@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_form_builder/flutter_form_builder.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:form_builder_validators/form_builder_validators.dart';
 import 'package:intl/intl.dart';
 
 import '../../app_state.dart';
@@ -25,27 +27,18 @@ class ExpenseBottomSheet extends StatefulWidget {
 }
 
 class _ExpenseBottomSheetState extends State<ExpenseBottomSheet> {
-  final _formKey = GlobalKey<FormState>();
-  final expenseNameController = TextEditingController();
-  final expenseAmountController = TextEditingController();
-
+  final _formKey = GlobalKey<FormBuilderState>();
+  late Expense? expense;
   ColorSeed groupColor = ColorSeed.baseColor;
-  final NumberFormat numFormat = NumberFormat('###,##0.00', 'en_US');
-  String? titleText;
 
   @override
   void initState() {
     super.initState();
 
-    final Group? group = widget.appState.groupItems.value[widget.groupId];
+    Group? group = widget.appState.groupItems.value[widget.groupId];
 
     if (group != null) {
-      final Expense? expense = group.expenses[widget.expenseId];
-
-      if (expense != null) {
-        expenseNameController.text = expense.name;
-        expenseAmountController.text = expense.amount.toString();
-      }
+      expense = group.expenses[widget.expenseId];
     }
   }
 
@@ -58,8 +51,10 @@ class _ExpenseBottomSheetState extends State<ExpenseBottomSheet> {
           padding: const EdgeInsets.fromLTRB(20, 10, 20, 10),
           child: Padding(
               padding: MediaQuery.of(context).viewInsets,
-              child: Form(
+              child: FormBuilder(
                   key: _formKey,
+                  clearValueOnUnregister: true,
+                  initialValue: expense?.toJson() ?? {},
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -75,47 +70,28 @@ class _ExpenseBottomSheetState extends State<ExpenseBottomSheet> {
                                   color:
                                       Theme.of(context).colorScheme.primary)),
                       const SizedBox(height: spacing),
-                      TextFormField(
-                        autovalidateMode: AutovalidateMode.onUserInteraction,
-                        controller: expenseNameController,
-                        validator: (value) {
-                          if (value == null || value.isEmpty) {
-                            return AppLocalizations.of(context)!
-                                .expenseNameValidationEmpty;
-                          }
-                          return null;
-                        },
+                      FormBuilderTextField(
+                        name: "name",
+                        validator: FormBuilderValidators.required(
+                            errorText: AppLocalizations.of(context)!
+                                .expenseNameValidationEmpty),
                         decoration: InputDecoration(
                           border: const OutlineInputBorder(),
                           labelText: AppLocalizations.of(context)!.expenseName,
                         ),
                       ),
                       const SizedBox(height: spacing),
-                      TextFormField(
+                      FormBuilderTextField(
+                        name: "amount",
                         autovalidateMode: AutovalidateMode.onUserInteraction,
                         keyboardType: const TextInputType.numberWithOptions(
                             decimal: true),
-                        controller: expenseAmountController,
                         inputFormatters: [
                           DecimalTextInputFormatter(decimalRange: 2)
                         ],
-                        onFieldSubmitted: (value) {
-                          final formattedPrice =
-                              numFormat.format(double.parse(value));
-                          debugPrint('Formatted $formattedPrice');
-                          expenseAmountController.value = TextEditingValue(
-                            text: formattedPrice,
-                            selection: TextSelection.collapsed(
-                                offset: formattedPrice.length),
-                          );
-                        },
-                        validator: (value) {
-                          if (value == null || value.isEmpty) {
-                            return AppLocalizations.of(context)!
-                                .expenseAmountValidationEmpty;
-                          }
-                          return null;
-                        },
+                        validator: FormBuilderValidators.required(
+                            errorText: AppLocalizations.of(context)!
+                                .expenseAmountValidationEmpty),
                         decoration: InputDecoration(
                           border: const OutlineInputBorder(),
                           labelText:
@@ -125,14 +101,14 @@ class _ExpenseBottomSheetState extends State<ExpenseBottomSheet> {
                       const SizedBox(height: spacing),
                       FilledButton(
                           onPressed: () {
-                            if (_formKey.currentState!.validate()) {
-                              Map<String, dynamic> upsertVals = {
-                                'group_id': widget.groupId,
-                                'name': expenseNameController.text,
-                                'amount':
-                                    double.parse(expenseAmountController.text),
-                                'user_id': supabase.auth.currentUser?.id
-                              };
+                            if (_formKey.currentState!.saveAndValidate()) {
+                              Map<String, dynamic> upsertVals =
+                                  Map<String, dynamic>.from(
+                                      _formKey.currentState!.value)
+                                    ..addAll({
+                                      'group_id': widget.groupId,
+                                      'user_id': supabase.auth.currentUser?.id
+                                    });
 
                               if (widget.expenseId != null) {
                                 upsertVals.addAll({'id': widget.expenseId});

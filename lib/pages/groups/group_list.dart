@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:split_it_supa/helper/helper.dart';
 
 import '../../app_state.dart';
 import '../../widgets/shimmer_card_list.dart';
@@ -88,9 +89,6 @@ class _GroupListState extends State<GroupList> {
                       }
 
                       Color colorSeedValue = Color(group.colorValue);
-
-                      String formatSumAmount =
-                          "€${group.sumAmount.toStringAsFixed(2)}";
 
                       return Hero(
                           tag: "group_card_${group.id}",
@@ -181,7 +179,7 @@ class _GroupListState extends State<GroupList> {
                                               Align(
                                                 alignment: Alignment.bottomLeft,
                                                 child: Text(
-                                                  formatSumAmount,
+                                                  toCurrency(group.sumAmount),
                                                   style: Theme.of(context)
                                                       .textTheme
                                                       .labelLarge,

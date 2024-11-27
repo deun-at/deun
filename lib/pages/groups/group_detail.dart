@@ -3,6 +3,7 @@ import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:go_router/go_router.dart';
 import '../../app_state.dart';
 
+import '../../helper/helper.dart';
 import '../expenses/expense_model.dart';
 import 'group_model.dart';
 
@@ -91,9 +92,6 @@ class _GroupDetailState extends State<GroupDetail> {
                             return Container();
                           }
 
-                          var formatAmount =
-                              "€${expense.amount.toStringAsFixed(2)}";
-
                           return Padding(
                               padding: const EdgeInsets.all(8.0),
                               child: Card(
@@ -166,7 +164,7 @@ class _GroupDetailState extends State<GroupDetail> {
                                               Align(
                                                 alignment: Alignment.bottomLeft,
                                                 child: Text(
-                                                  formatAmount,
+                                                  toCurrency(expense.amount),
                                                   style: Theme.of(context)
                                                       .textTheme
                                                       .labelLarge,
