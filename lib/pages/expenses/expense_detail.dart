@@ -1,17 +1,24 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:intl/intl.dart';
-import 'package:split_it_supa/main.dart';
 
+import '../../app_state.dart';
 import '../../constants.dart';
+import '../../main.dart';
 import '../../widgets/decimal_text_input_formatter.dart';
+import '../groups/group_model.dart';
+import 'expense_model.dart';
 
 class ExpenseBottomSheet extends StatefulWidget {
   const ExpenseBottomSheet(
-      {super.key, required this.groupDocId, this.expenseDocId});
+      {super.key,
+      required this.appState,
+      required this.groupId,
+      this.expenseId});
 
-  final int groupDocId;
-  final int? expenseDocId;
+  final AppState appState;
+  final int groupId;
+  final int? expenseId;
 
   @override
   State<ExpenseBottomSheet> createState() => _ExpenseBottomSheetState();
@@ -30,20 +37,15 @@ class _ExpenseBottomSheetState extends State<ExpenseBottomSheet> {
   void initState() {
     super.initState();
 
-    if (widget.expenseDocId != null) {
-      supabase
-          .from('expense')
-          .select()
-          .eq('id', widget.expenseDocId ?? '')
-          .limit(1)
-          .single()
-          .then((value) {
-        setState(() {
-          titleText = value['name'];
-        });
-        expenseNameController.text = value['name'];
-        expenseAmountController.text = value['amount'].toString();
-      });
+    final Group? group = widget.appState.groupItems.value[widget.groupId];
+
+    if (group != null) {
+      final Expense? expense = group.expenses[widget.expenseId];
+
+      if (expense != null) {
+        expenseNameController.text = expense.name;
+        expenseAmountController.text = expense.amount.toString();
+      }
     }
   }
 
@@ -63,8 +65,9 @@ class _ExpenseBottomSheetState extends State<ExpenseBottomSheet> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: <Widget>[
                       Text(
-                          titleText ??
-                              AppLocalizations.of(context)!.createNewExpense,
+                          widget.expenseId == null
+                              ? AppLocalizations.of(context)!.createExpense
+                              : AppLocalizations.of(context)!.editExpense,
                           style: Theme.of(context)
                               .textTheme
                               .displaySmall!
@@ -124,25 +127,27 @@ class _ExpenseBottomSheetState extends State<ExpenseBottomSheet> {
                           onPressed: () {
                             if (_formKey.currentState!.validate()) {
                               Map<String, dynamic> upsertVals = {
-                                'group_id': widget.groupDocId,
+                                'group_id': widget.groupId,
                                 'name': expenseNameController.text,
                                 'amount':
                                     double.parse(expenseAmountController.text),
                                 'user_id': supabase.auth.currentUser?.id
                               };
 
-                              if (widget.expenseDocId != null) {
-                                upsertVals.addAll({'id': widget.expenseDocId});
+                              if (widget.expenseId != null) {
+                                upsertVals.addAll({'id': widget.expenseId});
                               }
                               supabase
                                   .from('expense')
                                   .upsert(upsertVals)
-                                  .then((value) {
+                                  .then((value) async {
+                                await widget.appState.fetchGroupData();
+                                await widget.appState.fetchExpenseData();
                                 Navigator.pop(context);
                               });
                             }
                           },
-                          child: Text(widget.expenseDocId != null
+                          child: Text(widget.expenseId != null
                               ? AppLocalizations.of(context)!.update
                               : AppLocalizations.of(context)!.create))
                     ],

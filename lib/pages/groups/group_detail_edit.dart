@@ -1,13 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
-import 'package:split_it_supa/main.dart';
 
+import '../../app_state.dart';
 import '../../constants.dart';
+import '../../main.dart';
+import 'group_model.dart';
 
 class GroupBottomSheet extends StatefulWidget {
-  const GroupBottomSheet({super.key, this.groupDocId});
+  const GroupBottomSheet({super.key, required this.appState, this.groupId});
 
-  final int? groupDocId;
+  final AppState appState;
+  final int? groupId;
 
   @override
   State<GroupBottomSheet> createState() => _GroupBottomSheetState();
@@ -18,27 +21,16 @@ class _GroupBottomSheetState extends State<GroupBottomSheet> {
   final groupNameController = TextEditingController();
 
   Color groupColor = ColorSeed.baseColor.color;
-  String? titleText;
 
   @override
   void initState() {
     super.initState();
 
-    if (widget.groupDocId != null) {
-      supabase
-          .from('group')
-          .select()
-          .eq('id', widget.groupDocId ?? '')
-          .limit(1)
-          .single()
-          .then((value) {
-        groupNameController.text = value['name'];
+    final Group? group = widget.appState.groupItems.value[widget.groupId];
 
-        setState(() {
-          titleText = value['name'];
-          groupColor = Color(value['color_value']);
-        });
-      });
+    if (group != null) {
+      groupNameController.text = group.name;
+      groupColor = Color(group.colorValue);
     }
   }
 
@@ -58,8 +50,9 @@ class _GroupBottomSheetState extends State<GroupBottomSheet> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: <Widget>[
                       Text(
-                          titleText ??
-                              AppLocalizations.of(context)!.createNewGroup,
+                          widget.groupId == null
+                              ? AppLocalizations.of(context)!.createGroup
+                              : AppLocalizations.of(context)!.editGroup,
                           style: Theme.of(context)
                               .textTheme
                               .displaySmall!
@@ -117,18 +110,19 @@ class _GroupBottomSheetState extends State<GroupBottomSheet> {
                                 'user_id': supabase.auth.currentUser?.id
                               };
 
-                              if (widget.groupDocId != null) {
-                                upsertVals.addAll({'id': widget.groupDocId});
+                              if (widget.groupId != null) {
+                                upsertVals.addAll({'id': widget.groupId});
                               }
                               supabase
                                   .from('group')
                                   .upsert(upsertVals)
-                                  .then((value) {
+                                  .then((value) async {
+                                await widget.appState.fetchGroupData();
                                 Navigator.pop(context);
                               });
                             }
                           },
-                          child: Text(widget.groupDocId != null
+                          child: Text(widget.groupId != null
                               ? AppLocalizations.of(context)!.update
                               : AppLocalizations.of(context)!.create))
                     ],

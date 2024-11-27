@@ -1,40 +1,40 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:grouped_list/grouped_list.dart';
-import 'package:split_it_supa/main.dart';
-import 'package:split_it_supa/widgets/shimmer_card_list.dart';
 
+import '../../app_state.dart';
 import '../../helper/helper.dart';
+import '../../widgets/shimmer_card_list.dart';
+import 'expense_model.dart';
 
 class ExpenseList extends StatefulWidget {
-  const ExpenseList({super.key});
+  const ExpenseList({super.key, required this.appState});
+
+  final AppState appState;
 
   @override
   State<ExpenseList> createState() => _ExpenseListState();
 }
 
 class _ExpenseListState extends State<ExpenseList> {
-  void updateExpenseList() {
-    setState(() {});
+  @override
+  void initState() {
+    super.initState();
+    updateExpenseList();
+  }
+  
+  Future<void> updateExpenseList() async {
+    // Notify the ListPage to reload
+    await widget.appState.fetchExpenseData();
   }
 
   @override
   Widget build(BuildContext context) {
-    Future<List<Map<String, dynamic>>> _data = supabase.from('expense').select(
-        '*, ...group(group_id:id, group_name:name, group_color_value:color_value)');
-
     return Scaffold(
-      body: FutureBuilder(
-          future: _data,
-          builder: (context, snapshot) {
-            if (snapshot.hasError) {
-              return Center(
-                  child: Text(AppLocalizations.of(context)!.groupEntriesError,
-                      style: Theme.of(context).textTheme.headlineMedium));
-            }
-
-            if (!snapshot.hasData) {
+      body: ValueListenableBuilder<List<Expense>>(
+            valueListenable: widget.appState.expenseItems,
+          builder: (context, items, _) {
+            if (items.isEmpty) {
               return const ShimmerCardList(
                 height: 70,
                 listEntryLength: 20,
@@ -48,9 +48,9 @@ class _ExpenseListState extends State<ExpenseList> {
                       updateExpenseList();
                     },
                     child: GroupedListView(
-                        elements: snapshot.data ?? [],
-                        groupBy: (element) =>
-                            toHumanDateString(element['created_at']),
+                        elements: items,
+                        groupBy: (Expense element) =>
+                            toHumanDateString(element.createdAt),
                         useStickyGroupSeparators: true,
                         stickyHeaderBackgroundColor:
                             Theme.of(context).colorScheme.surface,
@@ -66,11 +66,10 @@ class _ExpenseListState extends State<ExpenseList> {
                         itemBuilder: (context, expense) {
                           // Access the Group instance
                           Color colorSeedValue =
-                              Color(expense['group_color_value']);
+                              Color(expense.group.colorValue);
 
-                          dynamic expenseAmount = expense['amount'] ?? 0;
                           double sumAmount =
-                              double.parse(expenseAmount.toString());
+                              double.parse(expense.amount.toString());
                           String formatSumAmount =
                               "€${sumAmount.toStringAsFixed(2)}";
 
@@ -87,7 +86,7 @@ class _ExpenseListState extends State<ExpenseList> {
                                       borderRadius: BorderRadius.circular(12.0),
                                       onTap: () {
                                         GoRouter.of(context).push(
-                                            "/group/details/expense?groupDocId=${expense['group_id']}&expenseDocId=${expense['id']}");
+                                            "/group/details/expense?groupId=${expense.group.id}&expenseId=${expense.id}");
                                       },
                                       child: Padding(
                                           padding: const EdgeInsets.fromLTRB(
@@ -97,7 +96,7 @@ class _ExpenseListState extends State<ExpenseList> {
                                               Align(
                                                 alignment: Alignment.bottomLeft,
                                                 child: Text(
-                                                  expense['name'],
+                                                  expense.name,
                                                   style: Theme.of(context)
                                                       .textTheme
                                                       .headlineMedium,

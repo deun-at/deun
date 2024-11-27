@@ -1,14 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:go_router/go_router.dart';
-import '../../main.dart';
+import '../../app_state.dart';
 
-import '../../widgets/shimmer_card_list.dart';
+import '../expenses/expense_model.dart';
+import 'group_model.dart';
 
 class GroupDetail extends StatefulWidget {
-  const GroupDetail({super.key, required this.groupDocId});
+  const GroupDetail({super.key, required this.appState, required this.groupId});
 
-  final int groupDocId;
+  final AppState appState;
+  final int groupId;
 
   @override
   State<GroupDetail> createState() => _GroupDetailState();
@@ -20,11 +22,13 @@ class _GroupDetailState extends State<GroupDetail> {
     super.initState();
   }
 
-  void updateExpenseList() {
+  Future<void> updateExpenseList() async {
+    // Notify the ListPage to reload
+    await widget.appState.fetchGroupData();
     setState(() {});
   }
 
-  void openDeleteItemDialog(BuildContext context, int docId) {
+  void openDeleteItemDialog(BuildContext context, Expense expense) {
     showDialog<void>(
       context: context,
       builder: (context) => AlertDialog(
@@ -40,11 +44,10 @@ class _GroupDetailState extends State<GroupDetail> {
               foregroundColor: Theme.of(context).colorScheme.onError,
             ),
             child: Text(AppLocalizations.of(context)!.delete),
-            onPressed: () {
-              supabase.from('expense').delete().eq('id', docId).then((value) {
-                updateExpenseList();
-                Navigator.of(context).pop();
-              });
+            onPressed: () async {
+              await expense.delete();
+              await updateExpenseList();
+              Navigator.of(context).pop();
             },
           ),
         ],
@@ -54,139 +57,128 @@ class _GroupDetailState extends State<GroupDetail> {
 
   @override
   Widget build(BuildContext context) {
-    Future<Map<String, dynamic>> _groupDetailData = supabase
-        .from('group')
-        .select('*, expense(*)')
-        .eq('id', widget.groupDocId)
-        .order('created_at', ascending: false, referencedTable: 'expense')
-        .limit(1)
-        .single();
+    final Group? group = widget.appState.groupItems.value[widget.groupId];
+
+    if (group == null) {
+      return Container();
+    }
+
+    // Access the GroupDocumentSnapshot
+    var colorSeedValue = Color(group.colorValue);
+    Map<int, Expense> expenses = group.expenses;
 
     return Scaffold(
         appBar: AppBar(
             leading: const BackButton(),
-            title: Text(AppLocalizations.of(context)!.expenses),
+            title: Text(group.name),
             centerTitle: true),
-        body: FutureBuilder(
-            future: _groupDetailData,
-            builder: (context, snapshot) {
-              if (snapshot.hasError) {
-                return Center(
-                    child: Text(AppLocalizations.of(context)!.groupEntriesError,
-                        style: Theme.of(context).textTheme.headlineMedium));
-              }
+        body: Hero(
+            tag: "group_card_${group.id}",
+            child: Material(
+                color: Colors.transparent,
+                child: RefreshIndicator(
+                    onRefresh: () async {
+                      await updateExpenseList();
+                    },
+                    child: ListView.builder(
+                        itemCount: group.expenses.length,
+                        itemBuilder: (context, index) {
+                          int expenseId = expenses.keys.elementAt(index);
+                          // Access the Group instance
+                          Expense? expense = expenses[expenseId];
 
-              if (!snapshot.hasData) {
-                return const ShimmerCardList(
-                  height: 120,
-                  listEntryLength: 8,
-                );
-              }
+                          if (expense == null) {
+                            return Container();
+                          }
 
-              // Access the GroupDocumentSnapshot
-              dynamic group = snapshot.data;
-              dynamic expenseList = group['expense'];
+                          var formatAmount =
+                              "€${expense.amount.toStringAsFixed(2)}";
 
-              var colorSeedValue = Color(group['color_value']);
-
-              return RefreshIndicator(
-                  onRefresh: () async {
-                    updateExpenseList();
-                  },
-                  child: ListView.builder(
-                      itemCount: expenseList?.length,
-                      itemBuilder: (context, index) {
-                        // Access the Expense instance
-                        dynamic expense = expenseList?[index];
-
-                        var formatAmount =
-                            "€${expense['amount'].toStringAsFixed(2)}";
-
-                        return Padding(
-                            padding: const EdgeInsets.all(8.0),
-                            child: Card(
-                                elevation: 8,
-                                color: Theme.of(context)
-                                    .colorScheme
-                                    .surfaceContainerHighest,
-                                surfaceTintColor: colorSeedValue,
-                                shadowColor: Colors.transparent,
-                                child: InkWell(
-                                    borderRadius: BorderRadius.circular(12.0),
-                                    onTap: () {
-                                      GoRouter.of(context).push(
-                                          "/group/details/expense?groupDocId=${widget.groupDocId}&expenseDocId=${expense['id']}");
-                                    },
-                                    child: Padding(
-                                        padding: const EdgeInsets.fromLTRB(
-                                            10, 5, 5, 10),
-                                        child: Column(
-                                          children: [
-                                            Align(
-                                                alignment: Alignment.topRight,
-                                                child: Directionality(
-                                                  textDirection:
-                                                      TextDirection.rtl,
-                                                  child: MenuAnchor(
-                                                    builder: (context,
-                                                        controller, child) {
-                                                      return IconButton(
-                                                        icon: const Icon(
-                                                            Icons.more_vert),
-                                                        onPressed: () {
-                                                          if (controller
-                                                              .isOpen) {
-                                                            controller.close();
-                                                          } else {
-                                                            controller.open();
-                                                          }
-                                                        },
-                                                      );
-                                                    },
-                                                    menuChildren: [
-                                                      MenuItemButton(
-                                                        closeOnActivate: true,
-                                                        onPressed: () =>
-                                                            openDeleteItemDialog(
-                                                                context,
-                                                                expense['id']),
-                                                        trailingIcon:
-                                                            const Icon(
-                                                                Icons.delete),
-                                                        child: Text(
-                                                            AppLocalizations.of(
-                                                                    context)!
-                                                                .delete),
-                                                      ),
-                                                    ],
-                                                  ),
-                                                )),
-                                            Align(
-                                              alignment: Alignment.bottomLeft,
-                                              child: Text(
-                                                expense['name'],
-                                                style: Theme.of(context)
-                                                    .textTheme
-                                                    .headlineMedium,
+                          return Padding(
+                              padding: const EdgeInsets.all(8.0),
+                              child: Card(
+                                  elevation: 8,
+                                  color: Theme.of(context)
+                                      .colorScheme
+                                      .surfaceContainerHighest,
+                                  surfaceTintColor: colorSeedValue,
+                                  shadowColor: Colors.transparent,
+                                  child: InkWell(
+                                      borderRadius: BorderRadius.circular(12.0),
+                                      onTap: () {
+                                        GoRouter.of(context).push(
+                                            "/group/details/expense?groupId=${widget.groupId}&expenseId=${expense.id}");
+                                      },
+                                      child: Padding(
+                                          padding: const EdgeInsets.fromLTRB(
+                                              10, 5, 5, 10),
+                                          child: Column(
+                                            children: [
+                                              Align(
+                                                  alignment: Alignment.topRight,
+                                                  child: Directionality(
+                                                    textDirection:
+                                                        TextDirection.rtl,
+                                                    child: MenuAnchor(
+                                                      builder: (context,
+                                                          controller, child) {
+                                                        return IconButton(
+                                                          icon: const Icon(
+                                                              Icons.more_vert),
+                                                          onPressed: () {
+                                                            if (controller
+                                                                .isOpen) {
+                                                              controller
+                                                                  .close();
+                                                            } else {
+                                                              controller.open();
+                                                            }
+                                                          },
+                                                        );
+                                                      },
+                                                      menuChildren: [
+                                                        MenuItemButton(
+                                                          closeOnActivate: true,
+                                                          onPressed: () =>
+                                                              openDeleteItemDialog(
+                                                                  context,
+                                                                  expense),
+                                                          trailingIcon:
+                                                              const Icon(
+                                                                  Icons.delete),
+                                                          child: Text(
+                                                              AppLocalizations.of(
+                                                                      context)!
+                                                                  .delete),
+                                                        ),
+                                                      ],
+                                                    ),
+                                                  )),
+                                              Align(
+                                                alignment: Alignment.bottomLeft,
+                                                child: Text(
+                                                  expense.name,
+                                                  style: Theme.of(context)
+                                                      .textTheme
+                                                      .headlineMedium,
+                                                ),
                                               ),
-                                            ),
-                                            Align(
-                                              alignment: Alignment.bottomLeft,
-                                              child: Text(
-                                                formatAmount,
-                                                style: Theme.of(context)
-                                                    .textTheme
-                                                    .labelLarge,
-                                              ),
-                                            )
-                                          ],
-                                        )))));
-                      }));
-            }),
+                                              Align(
+                                                alignment: Alignment.bottomLeft,
+                                                child: Text(
+                                                  formatAmount,
+                                                  style: Theme.of(context)
+                                                      .textTheme
+                                                      .labelLarge,
+                                                ),
+                                              )
+                                            ],
+                                          )))));
+                        })))),
         floatingActionButton: FloatingActionButton.extended(
             onPressed: () {
-              GoRouter.of(context).push(
-                  "/group/details/expense?groupDocId=${widget.groupDocId}");
+              GoRouter.of(context)
+                  .push("/group/details/expense?groupId=${group.id}");
             },
             label: Text(AppLocalizations.of(context)!.addNewExpense),
             icon: const Icon(Icons.add)));
