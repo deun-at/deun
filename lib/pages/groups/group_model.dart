@@ -1,5 +1,6 @@
 import '../../main.dart';
 import '../expenses/expense_model.dart';
+import 'group_member_model.dart';
 
 class Group {
   late int id;
@@ -9,6 +10,7 @@ class Group {
   late String userId;
   late double sumAmount;
   late Map<int, Expense> expenses;
+  late List<GroupMember> groupMembers;
 
   void loadDataFromJson(Map<String, dynamic> json) {
     id = json["id"];
@@ -28,6 +30,15 @@ class Group {
         sumAmount += expense.amount;
       }
     }
+
+    groupMembers = [];
+    if (json["group_member"] != null) {
+      for (var element in json["group_member"]) {
+        GroupMember groupMember = GroupMember();
+        groupMember.loadDataFromJson(element);
+        groupMembers.add(groupMember);
+      }
+    }
   }
 
   delete() async {
@@ -37,7 +48,7 @@ class Group {
   static Future<Map<int, Group>> fetchData() async {
     List<Map<String, dynamic>> data = await supabase
         .from('group')
-        .select('*, expense(*)')
+        .select('*, expense(*), group_member(*)')
         .order('created_at', ascending: false)
         .order('created_at',
             ascending: false,

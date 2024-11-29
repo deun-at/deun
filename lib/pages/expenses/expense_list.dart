@@ -22,7 +22,7 @@ class _ExpenseListState extends State<ExpenseList> {
     super.initState();
     updateExpenseList();
   }
-  
+
   Future<void> updateExpenseList() async {
     // Notify the ListPage to reload
     await widget.appState.fetchExpenseData();
@@ -32,7 +32,7 @@ class _ExpenseListState extends State<ExpenseList> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: ValueListenableBuilder<List<Expense>>(
-            valueListenable: widget.appState.expenseItems,
+          valueListenable: widget.appState.expenseItems,
           builder: (context, items, _) {
             if (items.isEmpty) {
               return const ShimmerCardList(
