@@ -149,9 +149,8 @@ class _NavigationScreenState extends State<NavigationScreen> {
                 // top route inside branch
                 GoRoute(
                   path: '/setting',
-                  pageBuilder: (context, state) => NoTransitionPage(
-                    // child: Setting(),
-                    child: Scaffold(body: Text('hans')),
+                  pageBuilder: (context, state) => const NoTransitionPage(
+                    child: Setting(),
                   ),
                 ),
               ],

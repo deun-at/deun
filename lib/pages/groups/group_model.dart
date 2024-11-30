@@ -54,7 +54,7 @@ class Group {
     List<Map<String, dynamic>> data = await supabase
         .from('group')
         .select(
-            '*, expense(*), group_member(*, ...user(firstname:firstname, lastname:lastname))')
+            '*, expense(*), group_member(*, ...user(display_name:display_name))')
         .order('created_at', ascending: false)
         .order('created_at',
             ascending: false,
@@ -79,8 +79,7 @@ class Group {
     if (selectedGroupMembers.isEmpty) {
       selectedGroupMembers.add({
         'email': supabase.auth.currentUser?.email ?? '',
-        'firstname': '',
-        'lastname': '',
+        'display_name': '',
       });
     }
 
@@ -103,6 +102,11 @@ class Group {
 
     List<Map<String, dynamic>> groupMembers =
         decodeGroupMembersString(formValue['group_members']);
+
+    await supabase
+        .from('group_member')
+        .delete()
+        .eq('group_id', groupInsertResponse['id']);
 
     if (groupMembers.isNotEmpty) {
       List<Map<String, dynamic>> upsertGroupMembers = [];

@@ -2,14 +2,14 @@ import '../../main.dart';
 
 class User {
   late String email;
-  late String firstname;
-  late String lastname;
+  late String userId;
+  late String displayName;
   late String createdAt;
 
   void loadDataFromJson(Map<String, dynamic> json) {
     email = json["email"];
-    firstname = json["firstname"];
-    lastname = json["lastname"];
+    userId = json["user_id"];
+    displayName = json["display_name"];
     createdAt = json["created_at"];
   }
 
@@ -35,8 +35,8 @@ class User {
 
   Map<String, dynamic> toJson() => {
         "email": email,
-        "firstname": firstname,
-        "lastname": lastname,
+        "user_id": userId,
+        "display_name": displayName,
         "created_at": createdAt,
       };
 }

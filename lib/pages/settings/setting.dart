@@ -1,11 +1,21 @@
-// import 'package:firebase_ui_auth/firebase_ui_auth.dart';
-// import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 
-// class Setting extends StatelessWidget {
-//   const Setting({super.key});
+import '../../main.dart';
 
-//   @override
-//   Widget build(BuildContext context) {
-//     return const ProfileScreen();
-//   }
-// }
+class Setting extends StatelessWidget {
+  const Setting({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(centerTitle: true, title: Text('Settings')),
+      body: Center(
+        child: FilledButton(
+            onPressed: () async {
+              await supabase.auth.signOut();
+            },
+            child: const Text('sign out')),
+      ),
+    );
+  }
+}

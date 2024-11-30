@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:supabase_auth_ui/supabase_auth_ui.dart';
 
 import '../../constants.dart';
+import '../../main.dart';
 
 class SignUp extends StatelessWidget {
   const SignUp({super.key});
@@ -16,18 +17,21 @@ class SignUp extends StatelessWidget {
           SupaEmailAuth(
             redirectTo: kIsWeb ? null : 'io.supabase.flutter://',
             onSignInComplete:(response) {},
-            onSignUpComplete: (response) {},
+            onSignUpComplete: (response) async {
+              Navigator.of(context).pushReplacementNamed('/');
+            },
             metadataFields: [
               MetaDataField(
                 prefixIcon: const Icon(Icons.person),
-                label: 'Username',
-                key: 'username',
+                label: 'Display Name',
+                key: 'display_name',
                 validator: (val) {
                   if (val == null || val.isEmpty) {
-                    return 'Please enter something';
+                    return 'Please enter a Display Name';
                   }
                   return null;
                 },
+
               ),
             ],
           ),
@@ -40,7 +44,14 @@ class SignUp extends StatelessWidget {
             ),
             enableNativeAppleAuth: false,
             socialProviders: const [ /* OAuthProvider.apple, */ OAuthProvider.google ],
-            onSuccess: (session) {},
+            onSuccess: (session) async {
+              debugPrint(session.user.userMetadata.toString());
+              await supabase.from("user").upsert({
+                'email': session.user.email,
+                'user_id': session.user.id,
+                'display_name': session.user.userMetadata?['name'] ?? session.user.userMetadata?['display_name'],
+              });
+            },
           ),
         ],
       ),
