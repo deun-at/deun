@@ -27,5 +27,6 @@
   "edit": "edit",
   "update": "update",
   "generalError": "Something went wrong",
-  "loading": "loading"
+  "loading": "loading",
+  "you": "You"
 }

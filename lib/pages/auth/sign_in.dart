@@ -35,8 +35,8 @@ class SignUp extends StatelessWidget {
           SupaSocialsAuth(
             colored: true,
             nativeGoogleAuthConfig: const NativeGoogleAuthConfig(
-              webClientId: '81959600219-11bd727f843jmkus0cijmov1724k7rob.apps.googleusercontent.com',
-              iosClientId: 'YOUR_IOS_CLIENT_ID',
+              webClientId: '820724879316-jauhp8t8g5r3pmir1r5gsghbn2qchav5.apps.googleusercontent.com',
+              iosClientId: '820724879316-8sacuk8sjju1rvr878gl9lqin0or5h9d.apps.googleusercontent.com',
             ),
             enableNativeAppleAuth: false,
             socialProviders: const [ /* OAuthProvider.apple, */ OAuthProvider.google ],

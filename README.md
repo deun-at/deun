@@ -1,3 +1,3 @@
-# split_it_supa
+# deun
 
 A new Flutter project.

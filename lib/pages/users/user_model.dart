@@ -13,9 +13,14 @@ class User {
     createdAt = json["created_at"];
   }
 
-  static Future<List<User>> fetchData(String searchString, int limit) async {
-    List<Map<String, dynamic>> data =
-        await supabase.from("user").select("*").like("email", "%$searchString%").order("email").limit(limit);
+  static Future<List<User>> fetchData(String searchString, List<String> selectedUsers, int limit) async {
+    List<Map<String, dynamic>> data = await supabase
+        .from("user")
+        .select("*")
+        .like("email", "%$searchString%")
+        .not('email', 'in', '(${selectedUsers.join(',')})')
+        .order("email")
+        .limit(limit);
 
     List<User> retData = [];
 

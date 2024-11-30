@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
-import 'package:split_it_supa/helper/helper.dart';
 
 import '../../app_state.dart';
+import '../../helper/helper.dart';
 import '../../widgets/shimmer_card_list.dart';
 import 'group_model.dart';
 

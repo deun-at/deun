@@ -1,3 +1,7 @@
+import 'dart:convert';
+
+import 'package:flutter/material.dart';
+
 import '../../main.dart';
 import '../expenses/expense_model.dart';
 import 'group_member_model.dart';
@@ -33,6 +37,7 @@ class Group {
 
     groupMembers = [];
     if (json["group_member"] != null) {
+      debugPrint(json["group_member"].toString());
       for (var element in json["group_member"]) {
         GroupMember groupMember = GroupMember();
         groupMember.loadDataFromJson(element);
@@ -48,7 +53,8 @@ class Group {
   static Future<Map<int, Group>> fetchData() async {
     List<Map<String, dynamic>> data = await supabase
         .from('group')
-        .select('*, expense(*), group_member(*)')
+        .select(
+            '*, expense(*), group_member(*, ...user(firstname:firstname, lastname:lastname))')
         .order('created_at', ascending: false)
         .order('created_at',
             ascending: false,
@@ -65,8 +71,56 @@ class Group {
     return retData;
   }
 
+  static List<Map<String, dynamic>> decodeGroupMembersString(
+      String? jsonValue) {
+    var selectedGroupMembers =
+        List<Map<String, dynamic>>.from(jsonDecode(jsonValue ?? "[]"));
+
+    if (selectedGroupMembers.isEmpty) {
+      selectedGroupMembers.add({
+        'email': supabase.auth.currentUser?.email ?? '',
+        'firstname': '',
+        'lastname': '',
+      });
+    }
+
+    return selectedGroupMembers;
+  }
+
+  static Future<void> saveAll(
+      int? groupId, Map<String, dynamic> formValue) async {
+    Map<String, dynamic> upsertVals = {
+      "name": formValue["name"],
+      "color_value": formValue["color_value"],
+      "user_id": supabase.auth.currentUser?.id
+    };
+
+    if (groupId != null) {
+      upsertVals.addAll({'id': groupId});
+    }
+    Map<String, dynamic> groupInsertResponse =
+        await supabase.from('group').upsert(upsertVals).select('id').single();
+
+    List<Map<String, dynamic>> groupMembers =
+        decodeGroupMembersString(formValue['group_members']);
+
+    if (groupMembers.isNotEmpty) {
+      List<Map<String, dynamic>> upsertGroupMembers = [];
+      upsertGroupMembers.addAll(groupMembers.map((groupMember) {
+        return {
+          'group_id': groupInsertResponse['id'],
+          'email': groupMember['email']
+        };
+      }));
+
+      await supabase.from('group_member').upsert(upsertGroupMembers);
+    }
+  }
+
   Map<String, dynamic> toJson() => {
         'name': name,
         'color_value': colorValue,
+        'group_members': jsonEncode(
+            groupMembers.map((groupMember) => groupMember.toJson()).toList()),
       };
 }
