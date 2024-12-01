@@ -54,7 +54,7 @@ class Group {
     List<Map<String, dynamic>> data = await supabase
         .from('group')
         .select(
-            '*, expense(*), group_member(*, ...user(display_name:display_name))')
+            '*, expense(*, expense_entry(*)), group_member(*, ...user(display_name:display_name))')
         .order('created_at', ascending: false)
         .order('created_at',
             ascending: false,
@@ -117,7 +117,7 @@ class Group {
         };
       }));
 
-      await supabase.from('group_member').upsert(upsertGroupMembers);
+      await supabase.from('group_member').insert(upsertGroupMembers);
     }
   }
 

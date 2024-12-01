@@ -8,6 +8,7 @@ import '../../constants.dart';
 import '../../main.dart';
 import '../../widgets/decimal_text_input_formatter.dart';
 import '../groups/group_model.dart';
+import 'expense_entry.dart';
 import 'expense_model.dart';
 
 class ExpenseBottomSheet extends StatefulWidget {
@@ -29,6 +30,9 @@ class _ExpenseBottomSheetState extends State<ExpenseBottomSheet> {
   final _formKey = GlobalKey<FormBuilderState>();
   late Expense? expense;
   ColorSeed groupColor = ColorSeed.baseColor;
+  final List<ExpenseEntryWidget> expenseEntryFields =
+      List.empty(growable: true);
+  int _newTextFieldId = 0;
 
   @override
   void initState() {
@@ -38,7 +42,44 @@ class _ExpenseBottomSheetState extends State<ExpenseBottomSheet> {
 
     if (group != null) {
       expense = group.expenses[widget.expenseId];
+
+      if (expense != null && expense!.expenseEntries.isNotEmpty) {
+        _newTextFieldId = expense!.expenseEntries.length;
+        expense!.expenseEntries.forEach((key, expenseEntry) {
+          expenseEntryFields.add(ExpenseEntryWidget(
+              expenseEntry: expenseEntry,
+              index: expenseEntry.index,
+              onRemove: () => onRemove(expenseEntry)));
+        });
+      } else {
+        ExpenseEntry _expenseEntry = ExpenseEntry(index: _newTextFieldId++);
+        expenseEntryFields.add(ExpenseEntryWidget(
+            expenseEntry: _expenseEntry,
+            index: _expenseEntry.index,
+            onRemove: () => onRemove(_expenseEntry)));
+      }
     }
+  }
+
+  void onRemove(ExpenseEntry expenseEntry) {
+    setState(() {
+      debugPrint(expenseEntryFields
+          .map(
+            (e) => e.index.toString(),
+          )
+          .toString());
+      int index = expenseEntryFields.indexWhere(
+          (element) => element.expenseEntry.index == expenseEntry.index);
+
+      debugPrint(index.toString());
+      expenseEntryFields.removeAt(index);
+
+      debugPrint(expenseEntryFields
+          .map(
+            (e) => e.index.toString(),
+          )
+          .toString());
+    });
   }
 
   @override
@@ -58,68 +99,52 @@ class _ExpenseBottomSheetState extends State<ExpenseBottomSheet> {
                     mainAxisSize: MainAxisSize.min,
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: <Widget>[
-                      Text(
-                          widget.expenseId == null
-                              ? AppLocalizations.of(context)!.createExpense
-                              : AppLocalizations.of(context)!.editExpense,
-                          style: Theme.of(context)
-                              .textTheme
-                              .displaySmall!
-                              .copyWith(
-                                  color:
-                                      Theme.of(context).colorScheme.primary)),
-                      const SizedBox(height: spacing),
                       FormBuilderTextField(
                         name: "name",
+                        style: Theme.of(context)
+                            .textTheme
+                            .displaySmall!
+                            .copyWith(
+                                color: Theme.of(context).colorScheme.primary),
                         validator: FormBuilderValidators.required(
                             errorText: AppLocalizations.of(context)!
                                 .expenseNameValidationEmpty),
                         decoration: InputDecoration(
-                          border: const OutlineInputBorder(),
-                          labelText: AppLocalizations.of(context)!.expenseName,
+                          border: InputBorder.none,
+                          hintText:
+                              AppLocalizations.of(context)!.addExpenseTitle,
                         ),
                       ),
                       const SizedBox(height: spacing),
-                      FormBuilderTextField(
-                        name: "amount",
-                        autovalidateMode: AutovalidateMode.onUserInteraction,
-                        keyboardType: const TextInputType.numberWithOptions(
-                            decimal: true),
-                        inputFormatters: [
-                          DecimalTextInputFormatter(decimalRange: 2)
-                        ],
-                        validator: FormBuilderValidators.required(
-                            errorText: AppLocalizations.of(context)!
-                                .expenseAmountValidationEmpty),
-                        decoration: InputDecoration(
-                          border: const OutlineInputBorder(),
-                          labelText:
-                              AppLocalizations.of(context)!.expenseAmount,
-                        ),
-                      ),
-                      const SizedBox(height: spacing),
+                      ...expenseEntryFields,
+                      Center(
+                          child: FilledButton.tonalIcon(
+                        icon: const Icon(Icons.add),
+                        label: Text(
+                            AppLocalizations.of(context)!.addNewExpenseEntry),
+                        onPressed: () {
+                          setState(() {
+                            ExpenseEntry _expenseEntry =
+                                ExpenseEntry(index: _newTextFieldId++);
+                            expenseEntryFields.add(ExpenseEntryWidget(
+                              expenseEntry: _expenseEntry,
+                              index: _expenseEntry.index,
+                              onRemove: () => onRemove(_expenseEntry),
+                            ));
+                          });
+                        },
+                      )),
                       FilledButton(
-                          onPressed: () {
+                          onPressed: () async {
                             if (_formKey.currentState!.saveAndValidate()) {
-                              Map<String, dynamic> upsertVals =
-                                  Map<String, dynamic>.from(
-                                      _formKey.currentState!.value)
-                                    ..addAll({
-                                      'group_id': widget.groupId,
-                                      'user_id': supabase.auth.currentUser?.id
-                                    });
+                              await Expense.saveAll(
+                                  widget.groupId,
+                                  widget.expenseId,
+                                  _formKey.currentState!.value);
 
-                              if (widget.expenseId != null) {
-                                upsertVals.addAll({'id': widget.expenseId});
-                              }
-                              supabase
-                                  .from('expense')
-                                  .upsert(upsertVals)
-                                  .then((value) async {
-                                await widget.appState.fetchGroupData();
-                                await widget.appState.fetchExpenseData();
-                                Navigator.pop(context);
-                              });
+                              await widget.appState.fetchGroupData();
+                              await widget.appState.fetchExpenseData();
+                              Navigator.pop(context);
                             }
                           },
                           child: Text(widget.expenseId != null
