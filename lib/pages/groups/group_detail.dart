@@ -11,7 +11,7 @@ class GroupDetail extends StatefulWidget {
   const GroupDetail({super.key, required this.appState, required this.groupId});
 
   final AppState appState;
-  final int groupId;
+  final String groupId;
 
   @override
   State<GroupDetail> createState() => _GroupDetailState();
@@ -66,7 +66,7 @@ class _GroupDetailState extends State<GroupDetail> {
 
     // Access the GroupDocumentSnapshot
     var colorSeedValue = Color(group.colorValue);
-    Map<int, Expense> expenses = group.expenses;
+    Map<String, Expense> expenses = group.expenses;
 
     return Scaffold(
         appBar: AppBar(
@@ -84,7 +84,7 @@ class _GroupDetailState extends State<GroupDetail> {
                     child: ListView.builder(
                         itemCount: group.expenses.length,
                         itemBuilder: (context, index) {
-                          int expenseId = expenses.keys.elementAt(index);
+                          String expenseId = expenses.keys.elementAt(index);
                           // Access the Group instance
                           Expense? expense = expenses[expenseId];
 

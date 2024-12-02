@@ -62,7 +62,7 @@ class _GroupListState extends State<GroupList> {
           title: Text(AppLocalizations.of(context)!.groups),
           centerTitle: true,
         ),
-        body: ValueListenableBuilder<Map<int, Group>>(
+        body: ValueListenableBuilder<Map<String, Group>>(
             valueListenable: widget.appState.groupItems,
             builder: (context, items, _) {
               if (items.isEmpty) {
@@ -80,7 +80,7 @@ class _GroupListState extends State<GroupList> {
                   child: ListView.builder(
                     itemCount: items.length,
                     itemBuilder: (context, index) {
-                      int groupId = items.keys.elementAt(index);
+                      String groupId = items.keys.elementAt(index);
                       // Access the Group instance
                       Group? group = items[groupId];
 
@@ -95,7 +95,7 @@ class _GroupListState extends State<GroupList> {
                           child: Padding(
                               padding: const EdgeInsets.all(8.0),
                               child: Card(
-                                  elevation: 8,
+                                  elevation: 5,
                                   color: Theme.of(context)
                                       .colorScheme
                                       .surfaceContainerHighest,

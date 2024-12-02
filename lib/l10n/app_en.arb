@@ -6,6 +6,7 @@
   "createGroup": "Create Group",
   "editGroup": "Edit Group",
   "groupName": "Name",
+  "addGroupTitle": "Add Title",
   "groupNameValidationEmpty": "Please enter a name",
   "groupDeleteItemTitle": "Delete this group?",
   "groupNoEntries": "Create a group to get startet.",
@@ -33,6 +34,7 @@
   "delete": "Delete",
   "edit": "Edit",
   "update": "Update",
+  "save": "Save",
   "generalError": "Something went wrong",
   "loading": "Loading",
   "you": "You"

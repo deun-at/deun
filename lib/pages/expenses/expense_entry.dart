@@ -30,6 +30,7 @@ class _ExpenseEntryWidgetState extends State<ExpenseEntryWidget> {
     return Column(children: [
       Card(
           elevation: 8,
+          shadowColor: Colors.transparent,
           color: Theme.of(context).colorScheme.surfaceContainer,
           child: Padding(
               padding: const EdgeInsets.all(8),
@@ -39,17 +40,18 @@ class _ExpenseEntryWidgetState extends State<ExpenseEntryWidget> {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Flexible(
-                          child: FormBuilderTextField(
-                        key: ValueKey("${widget.index}_name"),
-                        name: "expense_entry[${widget.index}][name]",
-                        style: Theme.of(context).textTheme.titleLarge,
-                        validator: FormBuilderValidators.required(
-                            errorText: AppLocalizations.of(context)!
-                                .expenseEntryNameValidationEmpty),
-                        decoration: InputDecoration(
-                          border: InputBorder.none,
-                          hintText: AppLocalizations.of(context)!.expenseEntryTitle,
-                        ),
+                        child: FormBuilderTextField(
+                          key: ValueKey("${widget.index}_name"),
+                          name: "expense_entry[${widget.index}][name]",
+                          style: Theme.of(context).textTheme.titleLarge,
+                          validator: FormBuilderValidators.required(
+                              errorText: AppLocalizations.of(context)!
+                                  .expenseEntryNameValidationEmpty),
+                          decoration: InputDecoration(
+                            border: InputBorder.none,
+                            hintText:
+                                AppLocalizations.of(context)!.expenseEntryTitle,
+                          ),
                       )),
                       const SizedBox(width: spacing),
                       // Text(

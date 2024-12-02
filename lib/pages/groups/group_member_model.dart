@@ -1,8 +1,7 @@
 class GroupMember {
-  late int groupId;
+  late String groupId;
   late String email;
   late String displayName;
-  late String lastname;
 
   void loadDataFromJson(Map<String, dynamic> json) {
     groupId = json["group_id"];

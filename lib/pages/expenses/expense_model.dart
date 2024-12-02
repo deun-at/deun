@@ -1,12 +1,8 @@
-import 'dart:convert';
-
-import 'package:flutter/material.dart';
-
 import '../../main.dart';
 import '../groups/group_model.dart';
 
 class Expense {
-  late int id;
+  late String id;
   late Group group;
   late String name;
   late double amount;
@@ -61,7 +57,7 @@ class Expense {
   }
 
   static Future<void> saveAll(
-      int groupId, int? expenseId, Map<String, dynamic> formResponse) async {
+      String groupId, String? expenseId, Map<String, dynamic> formResponse) async {
     Map<String, dynamic> upsertVals = {
       'name': formResponse['name'],
       'group_id': groupId,

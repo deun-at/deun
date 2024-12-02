@@ -67,8 +67,7 @@ class _NavigationScreenState extends State<NavigationScreen> {
                     GoRoute(
                         path: 'details',
                         pageBuilder: (context, state) {
-                          int groupId = int.parse(
-                              state.uri.queryParameters["groupId"] as String);
+                          String groupId = state.uri.queryParameters["groupId"] as String;
 
                           return CustomTransitionPage(
                             key: state.pageKey,
@@ -90,14 +89,9 @@ class _NavigationScreenState extends State<NavigationScreen> {
                           GoRoute(
                               path: 'expense',
                               pageBuilder: (context, state) {
-                                int groupId = int.parse(state
-                                    .uri.queryParameters["groupId"] as String);
+                                String groupId = state.uri.queryParameters["groupId"] as String;
 
-                                String? expenseIdQ =
-                                    state.uri.queryParameters["expenseId"];
-                                int? expenseId = expenseIdQ != null
-                                    ? int.parse(expenseIdQ)
-                                    : null;
+                                String? expenseId = state.uri.queryParameters["expenseId"];
 
                                 return ModalBottomSheetPage(
                                   key: state.pageKey,
@@ -112,10 +106,8 @@ class _NavigationScreenState extends State<NavigationScreen> {
                     GoRoute(
                         path: 'edit',
                         pageBuilder: (context, state) {
-                          String? groupIdQ =
+                          String? groupId =
                               state.uri.queryParameters["groupId"];
-                          int? groupId =
-                              groupIdQ != null ? int.parse(groupIdQ) : null;
 
                           return ModalBottomSheetPage(
                             key: state.pageKey,
@@ -165,7 +157,7 @@ class _NavigationScreenState extends State<NavigationScreen> {
   Widget build(BuildContext context) {
     return MaterialApp.router(
       routerConfig: _routerConfig,
-      title: 'SplitIt',
+      title: 'Deun',
       theme: ThemeData(
           colorSchemeSeed: colorSelected.color,
           useMaterial3: true,

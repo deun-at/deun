@@ -2,29 +2,30 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 
+import '../../constants.dart';
 import '../../main.dart';
 import '../expenses/expense_model.dart';
 import 'group_member_model.dart';
 
 class Group {
-  late int id;
+  late String id;
   late String name;
   late int colorValue;
   late String createdAt;
   late String userId;
   late double sumAmount;
-  late Map<int, Expense> expenses;
+  late Map<String, Expense> expenses;
   late List<GroupMember> groupMembers;
 
   void loadDataFromJson(Map<String, dynamic> json) {
     id = json["id"];
     name = json["name"];
-    colorValue = json["color_value"];
+    colorValue = json["color_value"] ?? ColorSeed.baseColor.color.value;
     createdAt = json["created_at"];
     userId = json["user_id"];
 
     sumAmount = 0.0;
-    expenses = <int, Expense>{};
+    expenses = <String, Expense>{};
     if (json["expense"] != null) {
       for (var element in json["expense"]) {
         Expense expense = Expense();
@@ -50,7 +51,7 @@ class Group {
     return await supabase.from('group').delete().eq('id', id);
   }
 
-  static Future<Map<int, Group>> fetchData() async {
+  static Future<Map<String, Group>> fetchData() async {
     List<Map<String, dynamic>> data = await supabase
         .from('group')
         .select(
@@ -60,7 +61,7 @@ class Group {
             ascending: false,
             referencedTable: 'expense'); //todo order by activity
 
-    Map<int, Group> retData = <int, Group>{};
+    Map<String, Group> retData = <String, Group>{};
 
     for (var element in data) {
       Group group = Group();
@@ -87,10 +88,10 @@ class Group {
   }
 
   static Future<void> saveAll(
-      int? groupId, Map<String, dynamic> formValue) async {
+      String? groupId, Map<String, dynamic> formValue) async {
     Map<String, dynamic> upsertVals = {
       "name": formValue["name"],
-      "color_value": formValue["color_value"],
+      "color_value": formValue["color_value"] ?? ColorSeed.baseColor.color.value,
       "user_id": supabase.auth.currentUser?.id
     };
 
