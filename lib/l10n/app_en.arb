@@ -20,12 +20,15 @@
   "expenseNameValidationEmpty": "Please enter a Title",
   "expenseAmount": "Amount",
   "expenseAmountValidationEmpty": "Please enter an amount",
+  "expensePaidBy": "Who paid?",
   "expenseEntryTitle": "Add Item Title",
   "addNewExpenseEntry": "Add Item",
   "expenseEntryName": "Name",
   "expenseEntryNameValidationEmpty": "Please enter an Item Title",
   "expenseEntryAmount": "Amount",
   "expenseEntryAmountValidationEmpty": "Please enter an amount",
+  "expenseEntrySharesLable": "Who used it?",
+  "expenseEntrySharesValidationEmpty": "Please select at least one person",
   "expenseDeleteItemTitle": "Delete this expense?",
   "expenseNoEntries": "Create an expense to get startet.",
   "settings": "Settings",
@@ -37,5 +40,6 @@
   "save": "Save",
   "generalError": "Something went wrong",
   "loading": "Loading",
-  "you": "You"
+  "you": "You",
+  "all": "All"
 }

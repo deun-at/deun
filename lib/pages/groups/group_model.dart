@@ -1,7 +1,5 @@
 import 'dart:convert';
 
-import 'package:flutter/material.dart';
-
 import '../../constants.dart';
 import '../../main.dart';
 import '../expenses/expense_model.dart';
@@ -38,7 +36,6 @@ class Group {
 
     groupMembers = [];
     if (json["group_member"] != null) {
-      debugPrint(json["group_member"].toString());
       for (var element in json["group_member"]) {
         GroupMember groupMember = GroupMember();
         groupMember.loadDataFromJson(element);
@@ -55,7 +52,7 @@ class Group {
     List<Map<String, dynamic>> data = await supabase
         .from('group')
         .select(
-            '*, expense(*, expense_entry(*)), group_member(*, ...user(display_name:display_name))')
+            '*, expense(*, expense_entry(*, expense_entry_share(*))), group_member(*, ...user(display_name:display_name))')
         .order('created_at', ascending: false)
         .order('created_at',
             ascending: false,

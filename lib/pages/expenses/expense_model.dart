@@ -1,3 +1,5 @@
+import 'package:flutter/material.dart';
+
 import '../../main.dart';
 import '../groups/group_model.dart';
 
@@ -6,6 +8,7 @@ class Expense {
   late Group group;
   late String name;
   late double amount;
+  late String? paidBy;
   late String createdAt;
   late String userId;
 
@@ -19,6 +22,7 @@ class Expense {
       group.loadDataFromJson(json["group"]);
     }
     name = json["name"];
+    paidBy = json["paid_by"];
     createdAt = json["created_at"];
     userId = json["user_id"];
 
@@ -56,10 +60,11 @@ class Expense {
     return retData;
   }
 
-  static Future<void> saveAll(
-      String groupId, String? expenseId, Map<String, dynamic> formResponse) async {
+  static Future<void> saveAll(String groupId, String? expenseId,
+      Map<String, dynamic> formResponse) async {
     Map<String, dynamic> upsertVals = {
       'name': formResponse['name'],
+      'paid_by': formResponse['paid_by'],
       'group_id': groupId,
       'user_id': supabase.auth.currentUser?.id
     };
@@ -98,20 +103,55 @@ class Expense {
         .delete()
         .eq('expense_id', expenseInsertResponse['id']);
 
-    List<Map<String, dynamic>> upsertExpenseEntries =
-        List.of(expenseEntryValues.values);
+    await Future.wait(expenseEntryValues.values.map((expenseEntry) async {
+      Map<String, dynamic> insertExpenseEntry = {
+        "expense_id": expenseEntry["expense_id"],
+        "name": expenseEntry["name"],
+        "amount": expenseEntry["amount"],
+      };
 
-    await supabase.from('expense_entry').insert(upsertExpenseEntries);
+      Map<String, dynamic> expenseEntryResult = await supabase
+          .from('expense_entry')
+          .insert(insertExpenseEntry)
+          .select('id')
+          .single();
+
+      await supabase
+          .from('expense_entry_share')
+          .delete()
+          .eq('expense_entry_id', expenseEntryResult['id']);
+
+      Set<String> expenseEntryShares = expenseEntry['shares'];
+
+      List<Map<String, dynamic>> insertExpenseEntryShares =
+          expenseEntryShares.map((email) {
+        return {
+          "expense_entry_id": expenseEntryResult['id'],
+          "email": email,
+          "percentage": 100 / expenseEntryShares.length
+        };
+      }).toList();
+
+      await supabase
+          .from('expense_entry_share')
+          .insert(insertExpenseEntryShares);
+    }));
   }
 
   Map<String, dynamic> toJson() {
     Map<String, dynamic> jsonValue = {
-        'name': name,
+      'name': name,
+      'paid_by': paidBy,
     };
 
     expenseEntries.forEach((key, value) {
       jsonValue.addAll({"expense_entry[${value.index}][name]": value.name});
-      jsonValue.addAll({"expense_entry[${value.index}][amount]": value.amount.toString()});
+      jsonValue.addAll(
+          {"expense_entry[${value.index}][amount]": value.amount.toString()});
+      jsonValue.addAll({
+        "expense_entry[${value.index}][shares]":
+            value.expenseEntryShares.map((e) => e.email).toSet()
+      });
     });
 
     return jsonValue;
@@ -122,9 +162,11 @@ class ExpenseEntry {
   int index;
   late String id;
   late Expense expense;
-  late String name;
+  late String? name;
   late double amount;
   late String createdAt;
+
+  List<ExpenseEntryShare> expenseEntryShares = [];
 
   ExpenseEntry({required this.index});
 
@@ -137,6 +179,29 @@ class ExpenseEntry {
     }
     name = json["name"];
     amount = double.parse((json["amount"] ?? 0).toString());
+    createdAt = json["created_at"];
+
+    expenseEntryShares = [];
+    if (json["expense_entry_share"] != null) {
+      for (var element in json["expense_entry_share"]) {
+        ExpenseEntryShare expenseEntryShare = ExpenseEntryShare();
+        expenseEntryShare.loadDataFromJson(element);
+        expenseEntryShares.add(expenseEntryShare);
+      }
+    }
+  }
+}
+
+class ExpenseEntryShare {
+  late String expenseEntryId;
+  late String email;
+  late double percentage;
+  late String createdAt;
+
+  void loadDataFromJson(Map<String, dynamic> json) {
+    expenseEntryId = json["expense_entry_id"];
+    email = json["email"];
+    percentage = double.parse((json["percentage"] ?? 0).toString());
     createdAt = json["created_at"];
   }
 }

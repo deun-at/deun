@@ -8,7 +8,7 @@ class Setting extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(centerTitle: true, title: Text('Settings')),
+      appBar: AppBar(centerTitle: true, title: const Text('Settings')),
       body: Center(
         child: FilledButton(
             onPressed: () async {

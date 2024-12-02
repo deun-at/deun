@@ -85,7 +85,7 @@ class _GroupBottomSheetState extends State<GroupBottomSheet> {
     List<User> result = await User.fetchData(input, selectedUsers, 10);
 
     return result.map((user) => ListTile(
-          title: Text("${user.displayName}"),
+          title: Text(user.displayName),
           subtitle: Text(user.email),
           onTap: () {
             nbs.add(user.toJson());
