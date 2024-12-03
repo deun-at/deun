@@ -5,7 +5,7 @@ import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 import '../../widgets/decimal_text_input_formatter.dart';
 import '../groups/group_member_model.dart';
-import 'expense_model.dart';
+import 'expense_entry_model.dart';
 
 class ExpenseEntryWidget extends StatefulWidget {
   const ExpenseEntryWidget(

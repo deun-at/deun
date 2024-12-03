@@ -52,11 +52,9 @@ class Group {
     List<Map<String, dynamic>> data = await supabase
         .from('group')
         .select(
-            '*, expense(*, expense_entry(*, expense_entry_share(*))), group_member(*, ...user(display_name:display_name))')
+            '*, expense(*, ...user(paid_by_display_name:display_name), expense_entry(*, expense_entry_share(*))), group_member(*, ...user(display_name:display_name))')
         .order('created_at', ascending: false)
-        .order('created_at',
-            ascending: false,
-            referencedTable: 'expense'); //todo order by activity
+        .order('created_at', ascending: false, referencedTable: 'expense'); //todo order by activity
 
     Map<String, Group> retData = <String, Group>{};
 
@@ -69,10 +67,8 @@ class Group {
     return retData;
   }
 
-  static List<Map<String, dynamic>> decodeGroupMembersString(
-      String? jsonValue) {
-    var selectedGroupMembers =
-        List<Map<String, dynamic>>.from(jsonDecode(jsonValue ?? "[]"));
+  static List<Map<String, dynamic>> decodeGroupMembersString(String? jsonValue) {
+    var selectedGroupMembers = List<Map<String, dynamic>>.from(jsonDecode(jsonValue ?? "[]"));
 
     if (selectedGroupMembers.isEmpty) {
       selectedGroupMembers.add({
@@ -84,8 +80,7 @@ class Group {
     return selectedGroupMembers;
   }
 
-  static Future<void> saveAll(
-      String? groupId, Map<String, dynamic> formValue) async {
+  static Future<void> saveAll(String? groupId, Map<String, dynamic> formValue) async {
     Map<String, dynamic> upsertVals = {
       "name": formValue["name"],
       "color_value": formValue["color_value"] ?? ColorSeed.baseColor.color.value,
@@ -95,24 +90,16 @@ class Group {
     if (groupId != null) {
       upsertVals.addAll({'id': groupId});
     }
-    Map<String, dynamic> groupInsertResponse =
-        await supabase.from('group').upsert(upsertVals).select('id').single();
+    Map<String, dynamic> groupInsertResponse = await supabase.from('group').upsert(upsertVals).select('id').single();
 
-    List<Map<String, dynamic>> groupMembers =
-        decodeGroupMembersString(formValue['group_members']);
+    List<Map<String, dynamic>> groupMembers = decodeGroupMembersString(formValue['group_members']);
 
-    await supabase
-        .from('group_member')
-        .delete()
-        .eq('group_id', groupInsertResponse['id']);
+    await supabase.from('group_member').delete().eq('group_id', groupInsertResponse['id']);
 
     if (groupMembers.isNotEmpty) {
       List<Map<String, dynamic>> upsertGroupMembers = [];
       upsertGroupMembers.addAll(groupMembers.map((groupMember) {
-        return {
-          'group_id': groupInsertResponse['id'],
-          'email': groupMember['email']
-        };
+        return {'group_id': groupInsertResponse['id'], 'email': groupMember['email']};
       }));
 
       await supabase.from('group_member').insert(upsertGroupMembers);
@@ -122,7 +109,6 @@ class Group {
   Map<String, dynamic> toJson() => {
         'name': name,
         'color_value': colorValue,
-        'group_members': jsonEncode(
-            groupMembers.map((groupMember) => groupMember.toJson()).toList()),
+        'group_members': jsonEncode(groupMembers.map((groupMember) => groupMember.toJson()).toList()),
       };
 }

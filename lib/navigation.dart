@@ -13,12 +13,9 @@ import 'pages/settings/setting.dart';
 import 'widgets/modal_bottom_sheet_page.dart';
 
 final _rootNavigatorKey = GlobalKey<NavigatorState>();
-final _shellNavigatorGroupKey =
-    GlobalKey<NavigatorState>(debugLabel: 'shellGroup');
-final _shellNavigatorExpenseKey =
-    GlobalKey<NavigatorState>(debugLabel: 'shellExpense');
-final _shellNavigatorSettingKey =
-    GlobalKey<NavigatorState>(debugLabel: 'shellSetting');
+final _shellNavigatorGroupKey = GlobalKey<NavigatorState>(debugLabel: 'shellGroup');
+final _shellNavigatorExpenseKey = GlobalKey<NavigatorState>(debugLabel: 'shellExpense');
+final _shellNavigatorSettingKey = GlobalKey<NavigatorState>(debugLabel: 'shellSetting');
 
 class NavigationScreen extends StatefulWidget {
   const NavigationScreen({super.key, required this.appState});
@@ -48,8 +45,7 @@ class _NavigationScreenState extends State<NavigationScreen> {
         StatefulShellRoute.indexedStack(
           builder: (context, state, navigationShell) {
             // the UI shell
-            return ScaffoldWithNestedNavigation(
-                navigationShell: navigationShell);
+            return ScaffoldWithNestedNavigation(navigationShell: navigationShell);
           },
           branches: [
             // first branch (Group)
@@ -71,15 +67,12 @@ class _NavigationScreenState extends State<NavigationScreen> {
 
                           return CustomTransitionPage(
                             key: state.pageKey,
-                            child: GroupDetail(
-                                appState: widget.appState, groupId: groupId),
-                            transitionsBuilder: (context, animation,
-                                secondaryAnimation, child) {
+                            child: GroupDetail(appState: widget.appState, groupId: groupId),
+                            transitionsBuilder: (context, animation, secondaryAnimation, child) {
                               // Change the opacity of the screen using a Curve based on the the animation's
                               // value
                               return FadeTransition(
-                                opacity: CurveTween(curve: Curves.easeIn)
-                                    .animate(animation),
+                                opacity: CurveTween(curve: Curves.easeIn).animate(animation),
                                 child: child,
                               );
                             },
@@ -106,8 +99,7 @@ class _NavigationScreenState extends State<NavigationScreen> {
                     GoRoute(
                         path: 'edit',
                         pageBuilder: (context, state) {
-                          String? groupId =
-                              state.uri.queryParameters["groupId"];
+                          String? groupId = state.uri.queryParameters["groupId"];
 
                           return ModalBottomSheetPage(
                             key: state.pageKey,
@@ -158,14 +150,8 @@ class _NavigationScreenState extends State<NavigationScreen> {
     return MaterialApp.router(
       routerConfig: _routerConfig,
       title: 'Deun',
-      theme: ThemeData(
-          colorSchemeSeed: colorSelected.color,
-          useMaterial3: true,
-          brightness: Brightness.light),
-      darkTheme: ThemeData(
-          colorSchemeSeed: colorSelected.color,
-          useMaterial3: true,
-          brightness: Brightness.dark),
+      theme: ThemeData(colorSchemeSeed: colorSelected.color, useMaterial3: true, brightness: Brightness.light),
+      darkTheme: ThemeData(colorSchemeSeed: colorSelected.color, useMaterial3: true, brightness: Brightness.dark),
       themeMode: ThemeMode.system,
       localizationsDelegates: AppLocalizations.localizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,

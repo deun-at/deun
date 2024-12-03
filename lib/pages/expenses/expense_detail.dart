@@ -9,6 +9,7 @@ import '../../constants.dart';
 import '../../main.dart';
 import '../groups/group_model.dart';
 import 'expense_entry.dart';
+import 'expense_entry_model.dart';
 import 'expense_model.dart';
 
 class ExpenseBottomSheet extends StatefulWidget {

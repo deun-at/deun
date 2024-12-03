@@ -1,3 +1,4 @@
+import 'package:deun/main.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:go_router/go_router.dart';
@@ -69,10 +70,7 @@ class _GroupDetailState extends State<GroupDetail> {
     Map<String, Expense> expenses = group.expenses;
 
     return Scaffold(
-        appBar: AppBar(
-            leading: const BackButton(),
-            title: Text(group.name),
-            centerTitle: true),
+        appBar: AppBar(leading: const BackButton(), title: Text(group.name), centerTitle: true),
         body: Hero(
             tag: "group_card_${group.id}",
             child: Material(
@@ -96,38 +94,29 @@ class _GroupDetailState extends State<GroupDetail> {
                               padding: const EdgeInsets.all(8.0),
                               child: Card(
                                   elevation: 8,
-                                  color: Theme.of(context)
-                                      .colorScheme
-                                      .surfaceContainerHighest,
+                                  color: Theme.of(context).colorScheme.surfaceContainerHighest,
                                   surfaceTintColor: colorSeedValue,
                                   shadowColor: Colors.transparent,
                                   child: InkWell(
                                       borderRadius: BorderRadius.circular(12.0),
                                       onTap: () {
-                                        GoRouter.of(context).push(
-                                            "/group/details/expense?groupId=${widget.groupId}&expenseId=${expense.id}");
+                                        GoRouter.of(context).push("/group/details/expense?groupId=${widget.groupId}&expenseId=${expense.id}");
                                       },
                                       child: Padding(
-                                          padding: const EdgeInsets.fromLTRB(
-                                              10, 5, 5, 10),
+                                          padding: const EdgeInsets.fromLTRB(10, 5, 5, 10),
                                           child: Column(
                                             children: [
                                               Align(
                                                   alignment: Alignment.topRight,
                                                   child: Directionality(
-                                                    textDirection:
-                                                        TextDirection.rtl,
+                                                    textDirection: TextDirection.rtl,
                                                     child: MenuAnchor(
-                                                      builder: (context,
-                                                          controller, child) {
+                                                      builder: (context, controller, child) {
                                                         return IconButton(
-                                                          icon: const Icon(
-                                                              Icons.more_vert),
+                                                          icon: const Icon(Icons.more_vert),
                                                           onPressed: () {
-                                                            if (controller
-                                                                .isOpen) {
-                                                              controller
-                                                                  .close();
+                                                            if (controller.isOpen) {
+                                                              controller.close();
                                                             } else {
                                                               controller.open();
                                                             }
@@ -137,17 +126,9 @@ class _GroupDetailState extends State<GroupDetail> {
                                                       menuChildren: [
                                                         MenuItemButton(
                                                           closeOnActivate: true,
-                                                          onPressed: () =>
-                                                              openDeleteItemDialog(
-                                                                  context,
-                                                                  expense),
-                                                          trailingIcon:
-                                                              const Icon(
-                                                                  Icons.delete),
-                                                          child: Text(
-                                                              AppLocalizations.of(
-                                                                      context)!
-                                                                  .delete),
+                                                          onPressed: () => openDeleteItemDialog(context, expense),
+                                                          trailingIcon: const Icon(Icons.delete),
+                                                          child: Text(AppLocalizations.of(context)!.delete),
                                                         ),
                                                       ],
                                                     ),
@@ -156,18 +137,18 @@ class _GroupDetailState extends State<GroupDetail> {
                                                 alignment: Alignment.bottomLeft,
                                                 child: Text(
                                                   expense.name,
-                                                  style: Theme.of(context)
-                                                      .textTheme
-                                                      .headlineMedium,
+                                                  style: Theme.of(context).textTheme.headlineMedium,
                                                 ),
                                               ),
                                               Align(
                                                 alignment: Alignment.bottomLeft,
                                                 child: Text(
-                                                  toCurrency(expense.amount),
-                                                  style: Theme.of(context)
-                                                      .textTheme
-                                                      .labelLarge,
+                                                  AppLocalizations.of(context)!.expensePaidAmount(
+                                                      (expense.paidBy == supabase.auth.currentUser?.email)
+                                                          ? AppLocalizations.of(context)!.you
+                                                          : (expense.paidByDisplayName ?? ""),
+                                                      expense.amount),
+                                                  style: Theme.of(context).textTheme.labelLarge,
                                                 ),
                                               )
                                             ],
@@ -175,8 +156,7 @@ class _GroupDetailState extends State<GroupDetail> {
                         })))),
         floatingActionButton: FloatingActionButton.extended(
             onPressed: () {
-              GoRouter.of(context)
-                  .push("/group/details/expense?groupId=${group.id}");
+              GoRouter.of(context).push("/group/details/expense?groupId=${group.id}");
             },
             label: Text(AppLocalizations.of(context)!.addNewExpense),
             icon: const Icon(Icons.add)));
