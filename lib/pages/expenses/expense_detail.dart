@@ -36,7 +36,7 @@ class _ExpenseBottomSheetState extends State<ExpenseBottomSheet> {
   void initState() {
     super.initState();
 
-    group = widget.appState.groupItems.value[widget.groupId];
+    group = widget.appState.groupItems.value.data[widget.groupId];
 
     if (group != null) {
       expense = group?.expenses[widget.expenseId];

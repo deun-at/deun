@@ -1,4 +1,5 @@
 import 'package:deun/main.dart';
+import 'package:deun/widgets/empty_list_widget.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:go_router/go_router.dart';
@@ -32,7 +33,7 @@ class _GroupDetailState extends State<GroupDetail> {
 
   @override
   Widget build(BuildContext context) {
-    final Group? group = widget.appState.groupItems.value[widget.groupId];
+    final Group? group = widget.appState.groupItems.value.data[widget.groupId];
 
     if (group == null) {
       return Container();
@@ -52,44 +53,50 @@ class _GroupDetailState extends State<GroupDetail> {
                     onRefresh: () async {
                       await updateExpenseList();
                     },
-                    child: ListView.builder(
-                        itemCount: group.expenses.length,
-                        itemBuilder: (context, index) {
-                          String expenseId = expenses.keys.elementAt(index);
-                          // Access the Group instance
-                          Expense? expense = expenses[expenseId];
+                    child: group.expenses.isEmpty
+                        ? EmptyListWidget(
+                            label: AppLocalizations.of(context)!.groupExpenseNoEntries,
+                            onRefresh: () async {
+                              await updateExpenseList();
+                            })
+                        : ListView.builder(
+                            itemCount: group.expenses.length,
+                            itemBuilder: (context, index) {
+                              String expenseId = expenses.keys.elementAt(index);
+                              // Access the Group instance
+                              Expense? expense = expenses[expenseId];
 
-                          if (expense == null) {
-                            return Container();
-                          }
+                              if (expense == null) {
+                                return Container();
+                              }
 
-                          return Padding(
-                              padding: const EdgeInsets.all(8.0),
-                              child: Card(
-                                  elevation: 8,
-                                  color: Theme.of(context).colorScheme.surfaceContainerHighest,
-                                  surfaceTintColor: colorSeedValue,
-                                  shadowColor: Colors.transparent,
-                                  child: InkWell(
-                                      borderRadius: BorderRadius.circular(12.0),
-                                      onTap: () {
-                                        GoRouter.of(context).push("/group/details/expense?groupId=${widget.groupId}&expenseId=${expense.id}");
-                                      },
-                                      child: Padding(
-                                          padding: const EdgeInsets.fromLTRB(10, 5, 5, 10),
-                                          child: Column(
-                                            children: [
-                                              Align(
-                                                alignment: Alignment.bottomLeft,
-                                                child: Text(
-                                                  expense.name,
-                                                  style: Theme.of(context).textTheme.headlineMedium,
-                                                ),
-                                              ),
-                                              ExpenseShareWidget(expense: expense),
-                                            ],
-                                          )))));
-                        })))),
+                              return Padding(
+                                  padding: const EdgeInsets.all(8.0),
+                                  child: Card(
+                                      elevation: 8,
+                                      color: Theme.of(context).colorScheme.surfaceContainerHighest,
+                                      surfaceTintColor: colorSeedValue,
+                                      shadowColor: Colors.transparent,
+                                      child: InkWell(
+                                          borderRadius: BorderRadius.circular(12.0),
+                                          onTap: () {
+                                            GoRouter.of(context).push("/group/details/expense?groupId=${widget.groupId}&expenseId=${expense.id}");
+                                          },
+                                          child: Padding(
+                                              padding: const EdgeInsets.fromLTRB(10, 5, 5, 10),
+                                              child: Column(
+                                                children: [
+                                                  Align(
+                                                    alignment: Alignment.bottomLeft,
+                                                    child: Text(
+                                                      expense.name,
+                                                      style: Theme.of(context).textTheme.headlineMedium,
+                                                    ),
+                                                  ),
+                                                  ExpenseShareWidget(expense: expense),
+                                                ],
+                                              )))));
+                            })))),
         floatingActionButton: FloatingActionButton.extended(
             onPressed: () {
               GoRouter.of(context).push("/group/details/expense?groupId=${group.id}");
@@ -113,14 +120,14 @@ class _ExpenseShareWidgetState extends State<ExpenseShareWidget> {
   Widget build(BuildContext context) {
     String? currentUserEmail = supabase.auth.currentUser?.email;
     bool currentUserPaid = widget.expense.paidBy == currentUserEmail;
-    Map<String, Map<String, double>> groupMemberShareStatistic = widget.expense.groupMemberShareStatistic;
+    Map<String, double> groupMemberShareStatistic = widget.expense.groupMemberShareStatistic;
 
     Widget? sharedWidget;
     String paidWidgetLable = AppLocalizations.of(context)!
         .expenseDisplayAmount(currentUserPaid ? AppLocalizations.of(context)!.you : (widget.expense.paidByDisplayName ?? ""), "paid", widget.expense.amount);
     if (groupMemberShareStatistic.containsKey(currentUserEmail)) {
       String textLabel = "";
-      double? currentUserShares = groupMemberShareStatistic[currentUserEmail]!["sharedAmount"];
+      double? currentUserShares = groupMemberShareStatistic[currentUserEmail];
       if (currentUserPaid) {
         textLabel = AppLocalizations.of(context)!.expenseDisplayAmount(AppLocalizations.of(context)!.you, "lent", widget.expense.amount - (currentUserShares ?? 0));
       } else {

@@ -1,6 +1,8 @@
+import 'package:deun/widgets/empty_list_widget.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:grouped_list/grouped_list.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 import '../../app_state.dart';
 import '../../helper/helper.dart';
@@ -31,14 +33,26 @@ class _ExpenseListState extends State<ExpenseList> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: ValueListenableBuilder<List<Expense>>(
+      appBar: AppBar(
+        title: Text(AppLocalizations.of(context)!.expenses),
+        centerTitle: true,
+      ),
+      body: ValueListenableBuilder<ListExpenseState>(
           valueListenable: widget.appState.expenseItems,
           builder: (context, items, _) {
-            if (items.isEmpty) {
+            if (items.isLoading) {
               return const ShimmerCardList(
                 height: 70,
                 listEntryLength: 20,
               );
+            }
+
+            if (items.data.isEmpty) {
+              return EmptyListWidget(
+                  label: AppLocalizations.of(context)!.expenseNoEntries,
+                  onRefresh: () async {
+                    await updateExpenseList();
+                  });
             }
 
             // Access the QuerySnapshot
@@ -48,12 +62,10 @@ class _ExpenseListState extends State<ExpenseList> {
                       updateExpenseList();
                     },
                     child: GroupedListView(
-                        elements: items,
-                        groupBy: (Expense element) =>
-                            toHumanDateString(element.createdAt),
+                        elements: items.data.values.toList(),
+                        groupBy: (Expense element) => toHumanDateString(element.createdAt),
                         useStickyGroupSeparators: true,
-                        stickyHeaderBackgroundColor:
-                            Theme.of(context).colorScheme.surface,
+                        stickyHeaderBackgroundColor: Theme.of(context).colorScheme.surface,
                         order: GroupedListOrder.DESC,
                         groupSeparatorBuilder: (String value) => Padding(
                               padding: const EdgeInsets.all(8.0),
@@ -65,45 +77,36 @@ class _ExpenseListState extends State<ExpenseList> {
                             ),
                         itemBuilder: (context, expense) {
                           // Access the Group instance
-                          Color colorSeedValue =
-                              Color(expense.group.colorValue);
+                          Color colorSeedValue = Color(expense.group.colorValue);
 
                           return Padding(
                               padding: const EdgeInsets.all(8.0),
                               child: Card(
                                   elevation: 8,
-                                  color: Theme.of(context)
-                                      .colorScheme
-                                      .surfaceContainerHighest,
+                                  color: Theme.of(context).colorScheme.surfaceContainerHighest,
                                   surfaceTintColor: colorSeedValue,
                                   shadowColor: Colors.transparent,
                                   child: InkWell(
                                       borderRadius: BorderRadius.circular(12.0),
                                       onTap: () {
-                                        GoRouter.of(context).push(
-                                            "/group/details/expense?groupId=${expense.group.id}&expenseId=${expense.id}");
+                                        GoRouter.of(context).push("/group/details/expense?groupId=${expense.group.id}&expenseId=${expense.id}");
                                       },
                                       child: Padding(
-                                          padding: const EdgeInsets.fromLTRB(
-                                              10, 5, 5, 10),
+                                          padding: const EdgeInsets.fromLTRB(10, 5, 5, 10),
                                           child: Column(
                                             children: [
                                               Align(
                                                 alignment: Alignment.bottomLeft,
                                                 child: Text(
                                                   expense.name,
-                                                  style: Theme.of(context)
-                                                      .textTheme
-                                                      .headlineMedium,
+                                                  style: Theme.of(context).textTheme.headlineMedium,
                                                 ),
                                               ),
                                               Align(
                                                 alignment: Alignment.bottomLeft,
                                                 child: Text(
                                                   toCurrency(expense.amount),
-                                                  style: Theme.of(context)
-                                                      .textTheme
-                                                      .labelLarge,
+                                                  style: Theme.of(context).textTheme.labelLarge,
                                                 ),
                                               )
                                             ],

@@ -1,5 +1,7 @@
 import 'dart:convert';
 
+import 'package:flutter/material.dart';
+
 import '../../constants.dart';
 import '../../main.dart';
 import '../expenses/expense_model.dart';
@@ -15,13 +17,18 @@ class Group {
   late Map<String, Expense> expenses;
   late List<GroupMember> groupMembers;
 
+  late Map<String, double> groupMemberShareStatistic;
+
   void loadDataFromJson(Map<String, dynamic> json) {
+    String? currentUserEmail = supabase.auth.currentUser?.email;
+
     id = json["id"];
     name = json["name"];
     colorValue = json["color_value"] ?? ColorSeed.baseColor.color.value;
     createdAt = json["created_at"];
     userId = json["user_id"];
 
+    groupMemberShareStatistic = {};
     sumAmount = 0.0;
     expenses = <String, Expense>{};
     if (json["expense"] != null) {
@@ -31,6 +38,19 @@ class Group {
         expenses.addAll({expense.id: expense});
 
         sumAmount += expense.amount;
+
+        bool paidByCurrentUser = false;
+        if (expense.paidBy == currentUserEmail) {
+          paidByCurrentUser = true;
+        }
+
+        expense.groupMemberShareStatistic.forEach((String email, double amount) {
+          if (paidByCurrentUser && email != currentUserEmail) {
+            groupMemberShareStatistic[email] = (groupMemberShareStatistic[email] ?? 0) + amount;
+          } else if (paidByCurrentUser == false && email == currentUserEmail) {
+            groupMemberShareStatistic[expense.paidBy ?? ''] = (groupMemberShareStatistic[expense.paidBy ?? ''] ?? 0) - amount;
+          }
+        });
       }
     }
 
@@ -49,12 +69,7 @@ class Group {
   }
 
   static Future<Map<String, Group>> fetchData() async {
-    List<Map<String, dynamic>> data = await supabase
-        .from('group')
-        .select(
-            '*, expense(*, ...user(paid_by_display_name:display_name), expense_entry(*, expense_entry_share(*))), group_member(*, ...user(display_name:display_name))')
-        .order('created_at', ascending: false)
-        .order('created_at', ascending: false, referencedTable: 'expense'); //todo order by activity
+    List<Map<String, dynamic>> data = await supabase.from('group_data_view').select(); //todo order by activity
 
     Map<String, Group> retData = <String, Group>{};
 

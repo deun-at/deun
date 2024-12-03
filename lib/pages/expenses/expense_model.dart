@@ -11,11 +11,10 @@ class Expense {
   late double amount;
   late String? paidBy;
   late String createdAt;
-  late String userId;
 
   late Map<String, ExpenseEntry> expenseEntries;
 
-  late Map<String, Map<String, double>> groupMemberShareStatistic;
+  late Map<String, double> groupMemberShareStatistic;
   late String? paidByDisplayName;
 
   void loadDataFromJson(Map<String, dynamic> json) {
@@ -29,7 +28,6 @@ class Expense {
     paidBy = json["paid_by"];
     paidByDisplayName = json["paid_by_display_name"];
     createdAt = json["created_at"];
-    userId = json["user_id"];
 
     amount = 0.0;
     expenseEntries = <String, ExpenseEntry>{};
@@ -46,12 +44,7 @@ class Expense {
 
         if (expenseEntry.expenseEntryShares.isNotEmpty) {
           for (var e in expenseEntry.expenseEntryShares) {
-            if (!groupMemberShareStatistic.containsKey(e.email)) {
-              groupMemberShareStatistic[e.email] = {"sharedAmount": 0};
-            }
-
-            groupMemberShareStatistic[e.email]!["sharedAmount"] =
-                (groupMemberShareStatistic[e.email]!["sharedAmount"] ?? 0) + (expenseEntry.amount * (e.percentage / 100));
+            groupMemberShareStatistic[e.email] = (groupMemberShareStatistic[e.email] ?? 0) + (expenseEntry.amount * (e.percentage / 100));
           }
           ;
         }
@@ -63,15 +56,15 @@ class Expense {
     return await supabase.from('expense').delete().eq('id', id);
   }
 
-  static Future<List<Expense>> fetchData() async {
+  static Future<Map<String, Expense>> fetchData() async {
     List<Map<String, dynamic>> data = await supabase.from('expense').select('*, group(*), expense_entry(*)');
 
-    List<Expense> retData = [];
+    Map<String, Expense> retData = <String, Expense>{};
 
     for (var element in data) {
       Expense expense = Expense();
       expense.loadDataFromJson(element);
-      retData.add(expense);
+      retData.addAll({expense.id: expense});
     }
 
     return retData;

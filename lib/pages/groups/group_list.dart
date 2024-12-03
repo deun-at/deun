@@ -1,9 +1,11 @@
+import 'package:deun/widgets/empty_list_widget.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 import '../../app_state.dart';
 import '../../helper/helper.dart';
+import '../../main.dart';
 import '../../widgets/shimmer_card_list.dart';
 import 'group_model.dart';
 
@@ -62,14 +64,22 @@ class _GroupListState extends State<GroupList> {
           title: Text(AppLocalizations.of(context)!.groups),
           centerTitle: true,
         ),
-        body: ValueListenableBuilder<Map<String, Group>>(
+        body: ValueListenableBuilder<ListGroupState>(
             valueListenable: widget.appState.groupItems,
             builder: (context, items, _) {
-              if (items.isEmpty) {
+              if (items.isLoading) {
                 return const ShimmerCardList(
                   height: 120,
                   listEntryLength: 8,
                 );
+              }
+
+              if (items.data.isEmpty) {
+                return EmptyListWidget(
+                    label: AppLocalizations.of(context)!.groupNoEntries,
+                    onRefresh: () async {
+                      await updateGroupList();
+                    });
               }
 
               // Access the QuerySnapshot
@@ -78,11 +88,11 @@ class _GroupListState extends State<GroupList> {
                     await updateGroupList();
                   },
                   child: ListView.builder(
-                    itemCount: items.length,
+                    itemCount: items.data.length,
                     itemBuilder: (context, index) {
-                      String groupId = items.keys.elementAt(index);
+                      String groupId = items.data.keys.elementAt(index);
                       // Access the Group instance
-                      Group? group = items[groupId];
+                      Group? group = items.data[groupId];
 
                       if (group == null) {
                         return Container();
@@ -96,38 +106,29 @@ class _GroupListState extends State<GroupList> {
                               padding: const EdgeInsets.all(8.0),
                               child: Card(
                                   elevation: 5,
-                                  color: Theme.of(context)
-                                      .colorScheme
-                                      .surfaceContainerHighest,
+                                  color: Theme.of(context).colorScheme.surfaceContainerHighest,
                                   surfaceTintColor: colorSeedValue,
                                   shadowColor: Colors.transparent,
                                   child: InkWell(
                                       borderRadius: BorderRadius.circular(12.0),
                                       onTap: () {
-                                        GoRouter.of(context).push(
-                                            "/group/details?groupId=${group.id}");
+                                        GoRouter.of(context).push("/group/details?groupId=${group.id}");
                                       },
                                       child: Padding(
-                                          padding: const EdgeInsets.fromLTRB(
-                                              10, 5, 5, 10),
+                                          padding: const EdgeInsets.fromLTRB(10, 5, 5, 10),
                                           child: Column(
                                             children: [
                                               Align(
                                                   alignment: Alignment.topRight,
                                                   child: Directionality(
-                                                    textDirection:
-                                                        TextDirection.rtl,
+                                                    textDirection: TextDirection.rtl,
                                                     child: MenuAnchor(
-                                                      builder: (context,
-                                                          controller, child) {
+                                                      builder: (context, controller, child) {
                                                         return IconButton(
-                                                          icon: const Icon(
-                                                              Icons.more_vert),
+                                                          icon: const Icon(Icons.more_vert),
                                                           onPressed: () {
-                                                            if (controller
-                                                                .isOpen) {
-                                                              controller
-                                                                  .close();
+                                                            if (controller.isOpen) {
+                                                              controller.close();
                                                             } else {
                                                               controller.open();
                                                             }
@@ -138,31 +139,16 @@ class _GroupListState extends State<GroupList> {
                                                         MenuItemButton(
                                                           closeOnActivate: true,
                                                           onPressed: () {
-                                                            GoRouter.of(context)
-                                                                .push(
-                                                                    "/group/edit?groupId=${group.id}");
+                                                            GoRouter.of(context).push("/group/edit?groupId=${group.id}");
                                                           },
-                                                          trailingIcon:
-                                                              const Icon(
-                                                                  Icons.edit),
-                                                          child: Text(
-                                                              AppLocalizations.of(
-                                                                      context)!
-                                                                  .edit),
+                                                          trailingIcon: const Icon(Icons.edit),
+                                                          child: Text(AppLocalizations.of(context)!.edit),
                                                         ),
                                                         MenuItemButton(
                                                           closeOnActivate: true,
-                                                          onPressed: () =>
-                                                              openDeleteItemDialog(
-                                                                  context,
-                                                                  group),
-                                                          trailingIcon:
-                                                              const Icon(
-                                                                  Icons.delete),
-                                                          child: Text(
-                                                              AppLocalizations.of(
-                                                                      context)!
-                                                                  .delete),
+                                                          onPressed: () => openDeleteItemDialog(context, group),
+                                                          trailingIcon: const Icon(Icons.delete),
+                                                          child: Text(AppLocalizations.of(context)!.delete),
                                                         ),
                                                       ],
                                                     ),
@@ -171,20 +157,10 @@ class _GroupListState extends State<GroupList> {
                                                 alignment: Alignment.bottomLeft,
                                                 child: Text(
                                                   group.name,
-                                                  style: Theme.of(context)
-                                                      .textTheme
-                                                      .headlineMedium,
+                                                  style: Theme.of(context).textTheme.headlineMedium,
                                                 ),
                                               ),
-                                              Align(
-                                                alignment: Alignment.bottomLeft,
-                                                child: Text(
-                                                  toCurrency(group.sumAmount),
-                                                  style: Theme.of(context)
-                                                      .textTheme
-                                                      .labelLarge,
-                                                ),
-                                              )
+                                              GroupShareWidget(group: group),
                                             ],
                                           ))))));
                     },
@@ -197,5 +173,34 @@ class _GroupListState extends State<GroupList> {
           label: Text(AppLocalizations.of(context)!.addNewGroup),
           icon: const Icon(Icons.add),
         ));
+  }
+}
+
+class GroupShareWidget extends StatefulWidget {
+  const GroupShareWidget({super.key, required this.group});
+
+  final Group group;
+
+  @override
+  State<GroupShareWidget> createState() => _GroupShareWidgetState();
+}
+
+class _GroupShareWidgetState extends State<GroupShareWidget> {
+  @override
+  Widget build(BuildContext context) {
+    String? currentUserEmail = supabase.auth.currentUser?.email;
+    Map<String, dynamic> groupMemberShareStatistic = Map.from(widget.group.groupMemberShareStatistic);
+
+    debugPrint(groupMemberShareStatistic.toString());
+
+    return Column(children: [
+      Align(
+        alignment: Alignment.bottomLeft,
+        child: Text(
+          toCurrency(widget.group.sumAmount),
+          style: Theme.of(context).textTheme.labelLarge,
+        ),
+      )
+    ]);
   }
 }

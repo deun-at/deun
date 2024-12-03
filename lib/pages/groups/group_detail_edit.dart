@@ -32,13 +32,11 @@ class _GroupBottomSheetState extends State<GroupBottomSheet> {
   void initState() {
     super.initState();
 
-    group = widget.appState.groupItems.value[widget.groupId];
+    group = widget.appState.groupItems.value.data[widget.groupId];
   }
 
-  Iterable<Widget> getUserSelection(
-      SearchController controller, FormFieldState<dynamic> field) {
-    List<Map<String, dynamic>> groupMembers =
-        Group.decodeGroupMembersString(field.value);
+  Iterable<Widget> getUserSelection(SearchController controller, FormFieldState<dynamic> field) {
+    List<Map<String, dynamic>> groupMembers = Group.decodeGroupMembersString(field.value);
 
     return groupMembers.mapIndexed((index, user) {
       String titleText = "";
@@ -62,15 +60,11 @@ class _GroupBottomSheetState extends State<GroupBottomSheet> {
         );
       }
 
-      return ListTile(
-          title: Text(titleText),
-          subtitle: Text(user["email"]),
-          trailing: iconButton);
+      return ListTile(title: Text(titleText), subtitle: Text(user["email"]), trailing: iconButton);
     });
   }
 
-  Future<Iterable<Widget>> getUserSuggestions(
-      SearchController controller, FormFieldState<dynamic> field) async {
+  Future<Iterable<Widget>> getUserSuggestions(SearchController controller, FormFieldState<dynamic> field) async {
     final String input = controller.value.text;
     List<dynamic> nbs = Group.decodeGroupMembersString(field.value);
 
@@ -113,8 +107,7 @@ class _GroupBottomSheetState extends State<GroupBottomSheet> {
                 child: FilledButton(
                     onPressed: () async {
                       if (_formKey.currentState!.saveAndValidate()) {
-                        await Group.saveAll(
-                            widget.groupId, _formKey.currentState!.value);
+                        await Group.saveAll(widget.groupId, _formKey.currentState!.value);
                         await widget.appState.fetchGroupData();
                         await widget.appState.fetchExpenseData();
                         Navigator.pop(context);
@@ -139,21 +132,12 @@ class _GroupBottomSheetState extends State<GroupBottomSheet> {
                           const SizedBox(height: spacing),
                           FormBuilderTextField(
                             name: "name",
-                            style: Theme.of(context)
-                                .textTheme
-                                .displaySmall!
-                                .copyWith(
-                                    color:
-                                        Theme.of(context).colorScheme.primary),
-                            autovalidateMode:
-                                AutovalidateMode.onUserInteraction,
-                            validator: FormBuilderValidators.required(
-                                errorText: AppLocalizations.of(context)!
-                                    .groupNameValidationEmpty),
+                            style: Theme.of(context).textTheme.displaySmall!.copyWith(color: Theme.of(context).colorScheme.primary),
+                            autovalidateMode: AutovalidateMode.onUserInteraction,
+                            validator: FormBuilderValidators.required(errorText: AppLocalizations.of(context)!.groupNameValidationEmpty),
                             decoration: InputDecoration(
                               border: InputBorder.none,
-                              hintText:
-                                  AppLocalizations.of(context)!.addGroupTitle,
+                              hintText: AppLocalizations.of(context)!.addGroupTitle,
                             ),
                           ),
                           const SizedBox(height: spacing),
@@ -161,33 +145,20 @@ class _GroupBottomSheetState extends State<GroupBottomSheet> {
                             name: "color_value",
                             builder: (FormFieldState<dynamic> field) {
                               return GridView.builder(
-                                  gridDelegate:
-                                      const SliverGridDelegateWithFixedCrossAxisCount(
-                                          crossAxisCount: 5,
-                                          crossAxisSpacing: 8,
-                                          mainAxisSpacing: 4),
+                                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 5, crossAxisSpacing: 8, mainAxisSpacing: 4),
                                   padding: const EdgeInsets.all(8),
                                   physics: const NeverScrollableScrollPhysics(),
                                   shrinkWrap: true,
                                   itemCount: ColorSeed.values.length,
                                   itemBuilder: (context, i) {
                                     return IconButton(
-                                        icon: const Icon(
-                                            Icons.radio_button_unchecked),
-                                        selectedIcon: const Icon(
-                                            Icons.radio_button_checked),
+                                        icon: const Icon(Icons.radio_button_unchecked),
+                                        selectedIcon: const Icon(Icons.radio_button_checked),
                                         color: ColorSeed.values[i].color,
-                                        isSelected: (field.value ==
-                                                ColorSeed
-                                                    .values[i].color.value ||
-                                            (field.value == null &&
-                                                ColorSeed.values[i].color
-                                                        .value ==
-                                                    ColorSeed.baseColor.color
-                                                        .value)),
+                                        isSelected: (field.value == ColorSeed.values[i].color.value ||
+                                            (field.value == null && ColorSeed.values[i].color.value == ColorSeed.baseColor.color.value)),
                                         onPressed: () {
-                                          field.didChange(
-                                              ColorSeed.values[i].color.value);
+                                          field.didChange(ColorSeed.values[i].color.value);
                                         });
                                   });
                             },
@@ -197,57 +168,36 @@ class _GroupBottomSheetState extends State<GroupBottomSheet> {
                             name: "group_members",
                             builder: (FormFieldState<dynamic> field) {
                               return SearchAnchor(
-                                viewHintText: AppLocalizations.of(context)!
-                                    .groupMemberSelectionEmpty,
+                                viewHintText: AppLocalizations.of(context)!.groupMemberSelectionEmpty,
                                 builder: (context, controller) {
-                                  List<Map<String, dynamic>> groupMembers =
-                                      Group.decodeGroupMembersString(
-                                          field.value);
+                                  List<Map<String, dynamic>> groupMembers = Group.decodeGroupMembersString(field.value);
 
-                                  if (groupMembers.isEmpty ||
-                                      (groupMembers.length == 1 &&
-                                          groupMembers.first['email'] ==
-                                              supabase
-                                                  .auth.currentUser?.email)) {
+                                  if (groupMembers.isEmpty || (groupMembers.length == 1 && groupMembers.first['email'] == supabase.auth.currentUser?.email)) {
                                     return ListTile(
                                       leading: const Icon(Icons.people),
-                                      title: Text(AppLocalizations.of(context)!
-                                          .groupMemberSelectionEmpty),
+                                      title: Text(AppLocalizations.of(context)!.groupMemberSelectionEmpty),
                                     );
                                   }
 
                                   return Padding(
-                                      padding: const EdgeInsets.fromLTRB(
-                                          10, 5, 5, 10),
-                                      child: Column(
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.center,
-                                          children: <Widget>[
-                                            Wrap(
-                                                spacing: 8,
-                                                children: groupMembers
-                                                    .map((groupMember) {
-                                                  String displayName =
-                                                      groupMember[
-                                                          "display_name"];
-                                                  if (groupMember["email"] ==
-                                                      supabase.auth.currentUser
-                                                          ?.email) {
-                                                    displayName =
-                                                        AppLocalizations.of(
-                                                                context)!
-                                                            .you;
-                                                  }
-                                                  return ActionChip(
-                                                    label: Text(displayName),
-                                                    avatar: const Icon(
-                                                        Icons.person),
-                                                    onPressed: () {
-                                                      controller.openView();
-                                                    },
-                                                  );
-                                                }).toList())
-                                          ]));
+                                      padding: const EdgeInsets.fromLTRB(10, 5, 5, 10),
+                                      child: Column(crossAxisAlignment: CrossAxisAlignment.center, children: <Widget>[
+                                        Wrap(
+                                            spacing: 8,
+                                            children: groupMembers.map((groupMember) {
+                                              String displayName = groupMember["display_name"];
+                                              if (groupMember["email"] == supabase.auth.currentUser?.email) {
+                                                displayName = AppLocalizations.of(context)!.you;
+                                              }
+                                              return ActionChip(
+                                                label: Text(displayName),
+                                                avatar: const Icon(Icons.person),
+                                                onPressed: () {
+                                                  controller.openView();
+                                                },
+                                              );
+                                            }).toList())
+                                      ]));
                                 },
                                 suggestionsBuilder: (context, controller) {
                                   if (controller.text.isEmpty) {
@@ -256,9 +206,7 @@ class _GroupBottomSheetState extends State<GroupBottomSheet> {
                                   return getUserSuggestions(controller, field);
                                 },
                                 viewBuilder: (suggestions) {
-                                  return SearchView(
-                                      searchQueryNotifier: _searchQueryNotifier,
-                                      suggestions: suggestions);
+                                  return SearchView(searchQueryNotifier: _searchQueryNotifier, suggestions: suggestions);
                                 },
                               );
                             },
