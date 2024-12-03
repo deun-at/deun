@@ -15,7 +15,7 @@ class Expense {
 
   late Map<String, ExpenseEntry> expenseEntries;
 
-  late Map<String, Map<String, double>>? groupMemberShareStatistic;
+  late Map<String, Map<String, double>> groupMemberShareStatistic;
   late String? paidByDisplayName;
 
   void loadDataFromJson(Map<String, dynamic> json) {
@@ -34,6 +34,7 @@ class Expense {
     amount = 0.0;
     expenseEntries = <String, ExpenseEntry>{};
     int _newTextFieldId = 0;
+    groupMemberShareStatistic = {};
     if (json["expense_entry"] != null) {
       for (var element in json["expense_entry"]) {
         ExpenseEntry expenseEntry = ExpenseEntry(index: _newTextFieldId);
@@ -42,18 +43,20 @@ class Expense {
 
         _newTextFieldId++;
         amount += expenseEntry.amount;
+
+        if (expenseEntry.expenseEntryShares.isNotEmpty) {
+          for (var e in expenseEntry.expenseEntryShares) {
+            if (!groupMemberShareStatistic.containsKey(e.email)) {
+              groupMemberShareStatistic[e.email] = {"sharedAmount": 0};
+            }
+
+            groupMemberShareStatistic[e.email]!["sharedAmount"] =
+                (groupMemberShareStatistic[e.email]!["sharedAmount"] ?? 0) + (expenseEntry.amount * (e.percentage / 100));
+          }
+          ;
+        }
       }
     }
-
-    // groupMemberShareStatistic = {};
-    // if (paidBy != null) {
-    //   if (!groupMemberShareStatistic.containsKey(paidBy)) {
-    //     groupMemberShareStatistic[paidBy ?? ""] = {"paidAmount": 0};
-    //   }
-
-    //   groupMemberShareStatistic[paidBy]!["paidAmount"] =
-    //       (groupMemberShareStatistic[paidBy]!["paidAmount"] ?? 0) + amount;
-    // }
   }
 
   delete() async {

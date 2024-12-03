@@ -8,16 +8,12 @@ import '../../app_state.dart';
 import '../../constants.dart';
 import '../../main.dart';
 import '../groups/group_model.dart';
-import 'expense_entry.dart';
+import 'expense_entry_widget.dart';
 import 'expense_entry_model.dart';
 import 'expense_model.dart';
 
 class ExpenseBottomSheet extends StatefulWidget {
-  const ExpenseBottomSheet(
-      {super.key,
-      required this.appState,
-      required this.groupId,
-      this.expenseId});
+  const ExpenseBottomSheet({super.key, required this.appState, required this.groupId, this.expenseId});
 
   final AppState appState;
   final String groupId;
@@ -33,8 +29,7 @@ class _ExpenseBottomSheetState extends State<ExpenseBottomSheet> {
   late Expense? expense;
   List<GroupMember> groupMembers = [];
   ColorSeed groupColor = ColorSeed.baseColor;
-  final List<ExpenseEntryWidget> expenseEntryFields =
-      List.empty(growable: true);
+  final List<ExpenseEntryWidget> expenseEntryFields = List.empty(growable: true);
   int _newTextFieldId = 0;
 
   @override
@@ -50,35 +45,81 @@ class _ExpenseBottomSheetState extends State<ExpenseBottomSheet> {
       if (expense != null && expense!.expenseEntries.isNotEmpty) {
         _newTextFieldId = expense!.expenseEntries.length;
         expense!.expenseEntries.forEach((key, expenseEntry) {
-          expenseEntryFields.add(ExpenseEntryWidget(
-              expenseEntry: expenseEntry,
-              index: expenseEntry.index,
-              onRemove: () => onRemove(expenseEntry),
-              groupMembers: groupMembers));
+          expenseEntryFields
+              .add(ExpenseEntryWidget(expenseEntry: expenseEntry, index: expenseEntry.index, onRemove: () => onRemove(expenseEntry), groupMembers: groupMembers));
         });
       } else {
         ExpenseEntry _expenseEntry = ExpenseEntry(index: _newTextFieldId++);
-        expenseEntryFields.add(ExpenseEntryWidget(
-            expenseEntry: _expenseEntry,
-            index: _expenseEntry.index,
-            onRemove: () => onRemove(_expenseEntry),
-            groupMembers: groupMembers));
+        expenseEntryFields
+            .add(ExpenseEntryWidget(expenseEntry: _expenseEntry, index: _expenseEntry.index, onRemove: () => onRemove(_expenseEntry), groupMembers: groupMembers));
       }
     }
   }
 
   void onRemove(ExpenseEntry expenseEntry) {
     setState(() {
-      int index = expenseEntryFields.indexWhere(
-          (element) => element.expenseEntry.index == expenseEntry.index);
+      int index = expenseEntryFields.indexWhere((element) => element.expenseEntry.index == expenseEntry.index);
 
       expenseEntryFields.removeAt(index);
     });
   }
 
+  void openDeleteItemDialog(BuildContext modalContext, Expense expense) {
+    showDialog<void>(
+      context: context,
+      builder: (context) => AlertDialog(
+        content: Text(AppLocalizations.of(context)!.expenseDeleteItemTitle),
+        actions: <Widget>[
+          TextButton(
+            child: Text(AppLocalizations.of(context)!.cancel),
+            onPressed: () => Navigator.of(context).pop(),
+          ),
+          FilledButton(
+            style: FilledButton.styleFrom(
+              backgroundColor: Theme.of(context).colorScheme.error,
+              foregroundColor: Theme.of(context).colorScheme.onError,
+            ),
+            child: Text(AppLocalizations.of(context)!.delete),
+            onPressed: () async {
+              await expense.delete();
+              await widget.appState.fetchGroupData();
+              await widget.appState.fetchExpenseData();
+              Navigator.pop(context);
+              Navigator.pop(modalContext);
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     const double spacing = 10;
+
+    List<Widget> expenseActions = [];
+
+    if (expense != null) {
+      expenseActions.add(IconButton(
+        onPressed: () {
+          openDeleteItemDialog(context, expense!);
+        },
+        icon: const Icon(Icons.delete),
+      ));
+    }
+
+    expenseActions.add(Padding(
+        padding: const EdgeInsets.only(right: 10),
+        child: FilledButton(
+            onPressed: () async {
+              if (_formKey.currentState!.saveAndValidate()) {
+                await Expense.saveAll(widget.groupId, widget.expenseId, _formKey.currentState!.value);
+                await widget.appState.fetchGroupData();
+                await widget.appState.fetchExpenseData();
+                Navigator.pop(context);
+              }
+            },
+            child: Text(AppLocalizations.of(context)!.save))));
 
     return Scaffold(
         appBar: AppBar(
@@ -88,21 +129,7 @@ class _ExpenseBottomSheetState extends State<ExpenseBottomSheet> {
               Navigator.pop(context);
             },
           ),
-          actions: [
-            Padding(
-                padding: const EdgeInsets.only(right: 10),
-                child: FilledButton(
-                    onPressed: () async {
-                      if (_formKey.currentState!.saveAndValidate()) {
-                        await Expense.saveAll(widget.groupId, widget.expenseId,
-                            _formKey.currentState!.value);
-                        await widget.appState.fetchGroupData();
-                        await widget.appState.fetchExpenseData();
-                        Navigator.pop(context);
-                      }
-                    },
-                    child: Text(AppLocalizations.of(context)!.save)))
-          ],
+          actions: expenseActions,
         ),
         body: SingleChildScrollView(
           child: Padding(
@@ -119,32 +146,22 @@ class _ExpenseBottomSheetState extends State<ExpenseBottomSheet> {
                         children: <Widget>[
                           FormBuilderTextField(
                             name: "name",
-                            style: Theme.of(context)
-                                .textTheme
-                                .displaySmall!
-                                .copyWith(
-                                    color:
-                                        Theme.of(context).colorScheme.primary),
-                            validator: FormBuilderValidators.required(
-                                errorText: AppLocalizations.of(context)!
-                                    .expenseNameValidationEmpty),
+                            style: Theme.of(context).textTheme.displaySmall!.copyWith(color: Theme.of(context).colorScheme.primary),
+                            validator: FormBuilderValidators.required(errorText: AppLocalizations.of(context)!.expenseNameValidationEmpty),
                             decoration: InputDecoration(
                               border: InputBorder.none,
-                              hintText:
-                                  AppLocalizations.of(context)!.addExpenseTitle,
+                              hintText: AppLocalizations.of(context)!.addExpenseTitle,
                             ),
                           ),
                           const SizedBox(height: spacing),
                           FormBuilderChoiceChip(
                               name: "paid_by",
                               decoration: InputDecoration(
-                                label: Text(AppLocalizations.of(context)!
-                                    .expensePaidBy),
+                                label: Text(AppLocalizations.of(context)!.expensePaidBy),
                                 border: InputBorder.none,
                                 contentPadding: const EdgeInsets.all(0),
                               ),
-                              initialValue: expense?.paidBy ??
-                                  supabase.auth.currentUser?.email,
+                              initialValue: expense?.paidBy ?? supabase.auth.currentUser?.email,
                               spacing: 8,
                               options: group!.groupMembers
                                   .map((e) => FormBuilderChipOption(
@@ -157,12 +174,10 @@ class _ExpenseBottomSheetState extends State<ExpenseBottomSheet> {
                           Center(
                               child: FilledButton.tonalIcon(
                             icon: const Icon(Icons.add),
-                            label: Text(AppLocalizations.of(context)!
-                                .addNewExpenseEntry),
+                            label: Text(AppLocalizations.of(context)!.addNewExpenseEntry),
                             onPressed: () {
                               setState(() {
-                                ExpenseEntry _expenseEntry =
-                                    ExpenseEntry(index: _newTextFieldId++);
+                                ExpenseEntry _expenseEntry = ExpenseEntry(index: _newTextFieldId++);
                                 expenseEntryFields.add(ExpenseEntryWidget(
                                   expenseEntry: _expenseEntry,
                                   index: _expenseEntry.index,

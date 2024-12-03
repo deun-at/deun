@@ -30,33 +30,6 @@ class _GroupDetailState extends State<GroupDetail> {
     setState(() {});
   }
 
-  void openDeleteItemDialog(BuildContext context, Expense expense) {
-    showDialog<void>(
-      context: context,
-      builder: (context) => AlertDialog(
-        content: Text(AppLocalizations.of(context)!.expenseDeleteItemTitle),
-        actions: <Widget>[
-          TextButton(
-            child: Text(AppLocalizations.of(context)!.cancel),
-            onPressed: () => Navigator.of(context).pop(),
-          ),
-          FilledButton(
-            style: FilledButton.styleFrom(
-              backgroundColor: Theme.of(context).colorScheme.error,
-              foregroundColor: Theme.of(context).colorScheme.onError,
-            ),
-            child: Text(AppLocalizations.of(context)!.delete),
-            onPressed: () async {
-              await expense.delete();
-              await updateExpenseList();
-              Navigator.of(context).pop();
-            },
-          ),
-        ],
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     final Group? group = widget.appState.groupItems.value[widget.groupId];
@@ -107,50 +80,13 @@ class _GroupDetailState extends State<GroupDetail> {
                                           child: Column(
                                             children: [
                                               Align(
-                                                  alignment: Alignment.topRight,
-                                                  child: Directionality(
-                                                    textDirection: TextDirection.rtl,
-                                                    child: MenuAnchor(
-                                                      builder: (context, controller, child) {
-                                                        return IconButton(
-                                                          icon: const Icon(Icons.more_vert),
-                                                          onPressed: () {
-                                                            if (controller.isOpen) {
-                                                              controller.close();
-                                                            } else {
-                                                              controller.open();
-                                                            }
-                                                          },
-                                                        );
-                                                      },
-                                                      menuChildren: [
-                                                        MenuItemButton(
-                                                          closeOnActivate: true,
-                                                          onPressed: () => openDeleteItemDialog(context, expense),
-                                                          trailingIcon: const Icon(Icons.delete),
-                                                          child: Text(AppLocalizations.of(context)!.delete),
-                                                        ),
-                                                      ],
-                                                    ),
-                                                  )),
-                                              Align(
                                                 alignment: Alignment.bottomLeft,
                                                 child: Text(
                                                   expense.name,
                                                   style: Theme.of(context).textTheme.headlineMedium,
                                                 ),
                                               ),
-                                              Align(
-                                                alignment: Alignment.bottomLeft,
-                                                child: Text(
-                                                  AppLocalizations.of(context)!.expensePaidAmount(
-                                                      (expense.paidBy == supabase.auth.currentUser?.email)
-                                                          ? AppLocalizations.of(context)!.you
-                                                          : (expense.paidByDisplayName ?? ""),
-                                                      expense.amount),
-                                                  style: Theme.of(context).textTheme.labelLarge,
-                                                ),
-                                              )
+                                              ExpenseShareWidget(expense: expense),
                                             ],
                                           )))));
                         })))),
@@ -160,5 +96,59 @@ class _GroupDetailState extends State<GroupDetail> {
             },
             label: Text(AppLocalizations.of(context)!.addNewExpense),
             icon: const Icon(Icons.add)));
+  }
+}
+
+class ExpenseShareWidget extends StatefulWidget {
+  const ExpenseShareWidget({super.key, required this.expense});
+
+  final Expense expense;
+
+  @override
+  State<ExpenseShareWidget> createState() => _ExpenseShareWidgetState();
+}
+
+class _ExpenseShareWidgetState extends State<ExpenseShareWidget> {
+  @override
+  Widget build(BuildContext context) {
+    String? currentUserEmail = supabase.auth.currentUser?.email;
+    bool currentUserPaid = widget.expense.paidBy == currentUserEmail;
+    Map<String, Map<String, double>> groupMemberShareStatistic = widget.expense.groupMemberShareStatistic;
+
+    Widget? sharedWidget;
+    String paidWidgetLable = AppLocalizations.of(context)!
+        .expenseDisplayAmount(currentUserPaid ? AppLocalizations.of(context)!.you : (widget.expense.paidByDisplayName ?? ""), "paid", widget.expense.amount);
+    if (groupMemberShareStatistic.containsKey(currentUserEmail)) {
+      String textLabel = "";
+      double? currentUserShares = groupMemberShareStatistic[currentUserEmail]!["sharedAmount"];
+      if (currentUserPaid) {
+        textLabel = AppLocalizations.of(context)!.expenseDisplayAmount(AppLocalizations.of(context)!.you, "lent", widget.expense.amount - (currentUserShares ?? 0));
+      } else {
+        textLabel = AppLocalizations.of(context)!.expenseDisplayAmount(AppLocalizations.of(context)!.you, "borrowed", (currentUserShares ?? 0));
+      }
+
+      sharedWidget = Align(
+        alignment: Alignment.bottomLeft,
+        child: Text(
+          textLabel,
+          style: Theme.of(context).textTheme.labelMedium,
+        ),
+      );
+    } else {
+      if (!currentUserPaid) {
+        paidWidgetLable = AppLocalizations.of(context)!.expenseNoShares;
+      }
+    }
+
+    return Column(children: [
+      Align(
+        alignment: Alignment.bottomLeft,
+        child: Text(
+          paidWidgetLable,
+          style: Theme.of(context).textTheme.labelLarge,
+        ),
+      ),
+      sharedWidget ?? const SizedBox(),
+    ]);
   }
 }

@@ -8,12 +8,7 @@ import '../groups/group_member_model.dart';
 import 'expense_entry_model.dart';
 
 class ExpenseEntryWidget extends StatefulWidget {
-  const ExpenseEntryWidget(
-      {super.key,
-      required this.expenseEntry,
-      required this.index,
-      required this.onRemove,
-      required this.groupMembers});
+  const ExpenseEntryWidget({super.key, required this.expenseEntry, required this.index, required this.onRemove, required this.groupMembers});
 
   final int index;
   final ExpenseEntry expenseEntry;
@@ -48,8 +43,7 @@ class _ExpenseEntryWidgetState extends State<ExpenseEntryWidget> {
                         style: Theme.of(context).textTheme.titleLarge,
                         decoration: InputDecoration(
                           border: InputBorder.none,
-                          hintText:
-                              AppLocalizations.of(context)!.expenseEntryTitle,
+                          hintText: AppLocalizations.of(context)!.expenseEntryTitle,
                         ),
                       )),
                       const SizedBox(width: spacing),
@@ -66,19 +60,13 @@ class _ExpenseEntryWidgetState extends State<ExpenseEntryWidget> {
                           child: FormBuilderTextField(
                         key: ValueKey("${widget.index}_amount"),
                         name: "expense_entry[${widget.index}][amount]",
-                        keyboardType: const TextInputType.numberWithOptions(
-                            decimal: true),
-                        inputFormatters: [
-                          DecimalTextInputFormatter(decimalRange: 2)
-                        ],
+                        keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                        inputFormatters: [DecimalTextInputFormatter(decimalRange: 2)],
                         autovalidateMode: AutovalidateMode.onUserInteraction,
-                        validator: FormBuilderValidators.required(
-                            errorText: AppLocalizations.of(context)!
-                                .expenseEntryAmountValidationEmpty),
+                        validator: FormBuilderValidators.required(errorText: AppLocalizations.of(context)!.expenseEntryAmountValidationEmpty),
                         decoration: InputDecoration(
                           border: const OutlineInputBorder(),
-                          labelText:
-                              AppLocalizations.of(context)!.expenseEntryAmount,
+                          labelText: AppLocalizations.of(context)!.expenseEntryAmount,
                         ),
                       )),
                     ],
@@ -87,18 +75,15 @@ class _ExpenseEntryWidgetState extends State<ExpenseEntryWidget> {
                   FormBuilderField(
                     key: ValueKey("${widget.index}_shares"),
                     name: "expense_entry[${widget.index}][shares]",
-                    initialValue:
-                        widget.expenseEntry.expenseEntryShares.isNotEmpty
-                            ? widget.expenseEntry.expenseEntryShares
-                                .map(
-                                  (e) => e.email,
-                                )
-                                .toSet()
-                            : widget.groupMembers.map((e) => e.email).toSet(),
+                    initialValue: widget.expenseEntry.expenseEntryShares.isNotEmpty
+                        ? widget.expenseEntry.expenseEntryShares
+                            .map(
+                              (e) => e.email,
+                            )
+                            .toSet()
+                        : widget.groupMembers.map((e) => e.email).toSet(),
                     autovalidateMode: AutovalidateMode.onUserInteraction,
-                    validator: FormBuilderValidators.required(
-                        errorText: AppLocalizations.of(context)!
-                            .expenseEntrySharesValidationEmpty),
+                    validator: FormBuilderValidators.required(errorText: AppLocalizations.of(context)!.expenseEntrySharesValidationEmpty),
                     builder: (FormFieldState<dynamic> field) {
                       Set<String> fieldValue = field.value;
 
@@ -113,21 +98,17 @@ class _ExpenseEntryWidgetState extends State<ExpenseEntryWidget> {
                               alignment: Alignment.topLeft,
                               child: Wrap(spacing: 8, children: <Widget>[
                                 FilterChip(
-                                  label:
-                                      Text(AppLocalizations.of(context)!.all),
+                                  label: Text(AppLocalizations.of(context)!.all),
                                   onSelected: (bool newValue) {
                                     if (newValue) {
-                                      fieldValue = widget.groupMembers
-                                          .map((e) => e.email)
-                                          .toSet();
+                                      fieldValue = widget.groupMembers.map((e) => e.email).toSet();
                                     } else {
                                       fieldValue = <String>{};
                                     }
 
                                     field.didChange(fieldValue);
                                   },
-                                  selected: fieldValue.length ==
-                                      widget.groupMembers.length,
+                                  selected: fieldValue.length == widget.groupMembers.length,
                                 ),
                                 ...widget.groupMembers.map((groupMember) {
                                   return FilterChip(
@@ -140,8 +121,7 @@ class _ExpenseEntryWidgetState extends State<ExpenseEntryWidget> {
                                         }
                                         field.didChange(fieldValue);
                                       },
-                                      selected: fieldValue
-                                          .contains(groupMember.email));
+                                      selected: fieldValue.contains(groupMember.email));
                                 }),
                               ])));
                     },

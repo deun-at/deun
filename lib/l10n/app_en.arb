@@ -31,17 +31,20 @@
   "expenseEntrySharesValidationEmpty": "Please select at least one person",
   "expenseDeleteItemTitle": "Delete this expense?",
   "expenseNoEntries": "Create an expense to get startet.",
-  "expensePaidAmount": "{displayName} paid {amount}",
-  "@expensePaidAmount": {
-    "description": "Lable in the expense list of who paid what.",
+  "expenseDisplayAmount": "{displayName} {expenseType, select, paid{paid} lent{lent} borrowed{borrowed} other{}} {amount}",
+  "@expenseDisplayAmount": {
+    "description": "Lable in the expense list of did what.",
     "placeholders": {
       "displayName": {
         "type": "String",
         "example": "Bob Muster"
       },
+      "expenseType": {
+        "type": "String"
+      },
       "amount": {
         "type": "double",
-        "format": "simpleCurrency",
+        "format": "compactCurrency",
         "optionalParameters": {
           "decimalDigits": 2,
           "name": "€"
@@ -50,6 +53,7 @@
       }
     }
   },
+  "expenseNoShares": "You are not involved",
   "settings": "Settings",
   "create": "Create",
   "cancel": "Cancel",
