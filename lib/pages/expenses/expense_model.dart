@@ -46,7 +46,6 @@ class Expense {
           for (var e in expenseEntry.expenseEntryShares) {
             groupMemberShareStatistic[e.email] = (groupMemberShareStatistic[e.email] ?? 0) + (expenseEntry.amount * (e.percentage / 100));
           }
-          ;
         }
       }
     }
