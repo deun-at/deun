@@ -2,104 +2,104 @@ import 'package:deun/main.dart';
 import 'package:deun/widgets/empty_list_widget.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import '../../app_state.dart';
+import '../../provider.dart';
 
-import '../../helper/helper.dart';
+import '../../widgets/shimmer_card_list.dart';
 import '../expenses/expense_model.dart';
 import 'group_model.dart';
 
-class GroupDetail extends StatefulWidget {
-  const GroupDetail({super.key, required this.appState, required this.groupId});
+class GroupDetail extends ConsumerStatefulWidget {
+  const GroupDetail({super.key, required this.group});
 
-  final AppState appState;
-  final String groupId;
+  final Group group;
 
   @override
-  State<GroupDetail> createState() => _GroupDetailState();
+  ConsumerState<GroupDetail> createState() => _GroupDetailState();
 }
 
-class _GroupDetailState extends State<GroupDetail> {
+class _GroupDetailState extends ConsumerState<GroupDetail> {
   @override
   void initState() {
     super.initState();
   }
 
   Future<void> updateExpenseList() async {
-    // Notify the ListPage to reload
-    await widget.appState.fetchGroupData();
-    setState(() {});
+    ref.refresh(groupDetailProvider(widget.group.id).future);
   }
 
   @override
   Widget build(BuildContext context) {
-    final Group? group = widget.appState.groupItems.value.data[widget.groupId];
-
-    if (group == null) {
-      return Container();
-    }
-
-    // Access the GroupDocumentSnapshot
-    var colorSeedValue = Color(group.colorValue);
-    Map<String, Expense> expenses = group.expenses;
+    final AsyncValue<Group> groupDetail = ref.watch(groupDetailProvider(widget.group.id));
 
     return Scaffold(
-        appBar: AppBar(leading: const BackButton(), title: Text(group.name), centerTitle: true),
-        body: Hero(
-            tag: "group_card_${group.id}",
-            child: Material(
-                color: Colors.transparent,
-                child: RefreshIndicator(
-                    onRefresh: () async {
-                      await updateExpenseList();
-                    },
-                    child: group.expenses.isEmpty
-                        ? EmptyListWidget(
-                            label: AppLocalizations.of(context)!.groupExpenseNoEntries,
-                            onRefresh: () async {
-                              await updateExpenseList();
-                            })
-                        : ListView.builder(
-                            itemCount: group.expenses.length,
-                            itemBuilder: (context, index) {
-                              String expenseId = expenses.keys.elementAt(index);
-                              // Access the Group instance
-                              Expense? expense = expenses[expenseId];
+        appBar: AppBar(leading: const BackButton(), title: Text(widget.group.name), centerTitle: true),
+        body: switch (groupDetail) {
+          AsyncData(:final value) => RefreshIndicator(
+              onRefresh: () async {
+                await updateExpenseList();
+              },
+              child: value.expenses!.isEmpty
+                  ? EmptyListWidget(
+                      label: AppLocalizations.of(context)!.groupExpenseNoEntries,
+                      onRefresh: () async {
+                        await updateExpenseList();
+                      })
+                  : ListView.builder(
+                      itemCount: value.expenses!.length,
+                      itemBuilder: (context, index) {
+                        Expense expense = value.expenses![index];
 
-                              if (expense == null) {
-                                return Container();
-                              }
-
-                              return Padding(
-                                  padding: const EdgeInsets.all(8.0),
-                                  child: Card(
-                                      elevation: 8,
-                                      color: Theme.of(context).colorScheme.surfaceContainerHighest,
-                                      surfaceTintColor: colorSeedValue,
-                                      shadowColor: Colors.transparent,
-                                      child: InkWell(
-                                          borderRadius: BorderRadius.circular(12.0),
-                                          onTap: () {
-                                            GoRouter.of(context).push("/group/details/expense?groupId=${widget.groupId}&expenseId=${expense.id}");
-                                          },
-                                          child: Padding(
-                                              padding: const EdgeInsets.fromLTRB(10, 5, 5, 10),
-                                              child: Column(
-                                                children: [
-                                                  Align(
-                                                    alignment: Alignment.bottomLeft,
-                                                    child: Text(
-                                                      expense.name,
-                                                      style: Theme.of(context).textTheme.headlineMedium,
-                                                    ),
-                                                  ),
-                                                  ExpenseShareWidget(expense: expense),
-                                                ],
-                                              )))));
-                            })))),
+                        return Padding(
+                            padding: const EdgeInsets.all(8.0),
+                            child: Card(
+                                elevation: 8,
+                                color: Theme.of(context).colorScheme.surfaceContainerHighest,
+                                surfaceTintColor: Color(widget.group.colorValue),
+                                shadowColor: Colors.transparent,
+                                child: InkWell(
+                                    borderRadius: BorderRadius.circular(12.0),
+                                    onTap: () {
+                                      GoRouter.of(context).push("/group/details/expense",
+                                          extra: {'group': widget.group, 'expense': expense}).then(
+                                        (value) async {
+                                          await updateExpenseList();
+                                        },
+                                      );
+                                    },
+                                    child: Padding(
+                                        padding: const EdgeInsets.fromLTRB(10, 5, 5, 10),
+                                        child: Column(
+                                          children: [
+                                            Align(
+                                              alignment: Alignment.bottomLeft,
+                                              child: Text(
+                                                expense.name,
+                                                style: Theme.of(context).textTheme.headlineMedium,
+                                              ),
+                                            ),
+                                            ExpenseShareWidget(expense: expense),
+                                          ],
+                                        )))));
+                      })),
+          AsyncError() => EmptyListWidget(
+              label: AppLocalizations.of(context)!.groupNoEntries,
+              onRefresh: () async {
+                await updateExpenseList();
+              }),
+          _ => const ShimmerCardList(
+              height: 120,
+              listEntryLength: 8,
+            ),
+        },
         floatingActionButton: FloatingActionButton.extended(
             onPressed: () {
-              GoRouter.of(context).push("/group/details/expense?groupId=${group.id}");
+              GoRouter.of(context).push("/group/details/expense", extra: {'group': widget.group, 'expense': null}).then(
+                (value) async {
+                  await updateExpenseList();
+                },
+              );
             },
             label: Text(AppLocalizations.of(context)!.addNewExpense),
             icon: const Icon(Icons.add)));
@@ -123,17 +123,20 @@ class _ExpenseShareWidgetState extends State<ExpenseShareWidget> {
     Map<String, double> groupMemberShareStatistic = widget.expense.groupMemberShareStatistic;
 
     Widget? sharedWidget;
-    String paidWidgetLable = AppLocalizations.of(context)!
-        .expenseDisplayAmount(currentUserPaid ? AppLocalizations.of(context)!.you : (widget.expense.paidByDisplayName ?? ""), "paid", widget.expense.amount);
+    String paidWidgetLable = AppLocalizations.of(context)!.expenseDisplayAmount(
+        currentUserPaid ? AppLocalizations.of(context)!.you : (widget.expense.paidByDisplayName ?? ""),
+        "paid",
+        widget.expense.amount);
     if (groupMemberShareStatistic.containsKey(currentUserEmail)) {
       String textLabel = "";
       double? currentUserShares = groupMemberShareStatistic[currentUserEmail];
       if (currentUserPaid) {
-        textLabel = AppLocalizations.of(context)!.expenseDisplayAmount(AppLocalizations.of(context)!.you, "lent", widget.expense.amount - (currentUserShares ?? 0));
+        textLabel = AppLocalizations.of(context)!.expenseDisplayAmount(
+            AppLocalizations.of(context)!.you, "lent", widget.expense.amount - (currentUserShares ?? 0));
       } else {
-        textLabel = AppLocalizations.of(context)!.expenseDisplayAmount(AppLocalizations.of(context)!.you, "borrowed", (currentUserShares ?? 0));
+        textLabel = AppLocalizations.of(context)!
+            .expenseDisplayAmount(AppLocalizations.of(context)!.you, "borrowed", (currentUserShares ?? 0));
       }
-
       sharedWidget = Align(
         alignment: Alignment.bottomLeft,
         child: Text(

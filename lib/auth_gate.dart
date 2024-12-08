@@ -1,15 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_auth_ui/supabase_auth_ui.dart';
 
-import 'app_state.dart';
+import 'provider.dart';
 import 'main.dart';
 import 'navigation.dart';
 import 'pages/auth/login_screen.dart';
 
 class AuthGate extends StatelessWidget {
-  const AuthGate({super.key, required this.appState});
-
-  final AppState appState;
+  const AuthGate({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -20,7 +18,7 @@ class AuthGate extends StatelessWidget {
           return const LoginScreen();
         }
 
-        return NavigationScreen(appState: appState);
+        return NavigationScreen();
       },
     );
   }

@@ -3,36 +3,32 @@ import 'dart:convert';
 import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_form_builder/flutter_form_builder.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:form_builder_validators/form_builder_validators.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
-import '../../app_state.dart';
 import '../../constants.dart';
 import '../../main.dart';
 import '../../widgets/search_view.dart';
 import '../users/user_model.dart';
 import 'group_model.dart';
 
-class GroupBottomSheet extends StatefulWidget {
-  const GroupBottomSheet({super.key, required this.appState, this.groupId});
+class GroupBottomSheet extends ConsumerStatefulWidget {
+  const GroupBottomSheet({super.key, this.group});
 
-  final AppState appState;
-  final String? groupId;
+  final Group? group;
 
   @override
-  State<GroupBottomSheet> createState() => _GroupBottomSheetState();
+  ConsumerState<GroupBottomSheet> createState() => _GroupBottomSheetState();
 }
 
-class _GroupBottomSheetState extends State<GroupBottomSheet> {
+class _GroupBottomSheetState extends ConsumerState<GroupBottomSheet> {
   final _formKey = GlobalKey<FormBuilderState>();
-  late Group? group;
   final ValueNotifier<String> _searchQueryNotifier = ValueNotifier<String>("");
 
   @override
   void initState() {
     super.initState();
-
-    group = widget.appState.groupItems.value.data[widget.groupId];
   }
 
   Iterable<Widget> getUserSelection(SearchController controller, FormFieldState<dynamic> field) {
@@ -93,6 +89,8 @@ class _GroupBottomSheetState extends State<GroupBottomSheet> {
   Widget build(BuildContext context) {
     const double spacing = 10;
 
+    debugPrint(widget.group.toString());
+
     return Scaffold(
         appBar: AppBar(
           leading: IconButton(
@@ -107,9 +105,7 @@ class _GroupBottomSheetState extends State<GroupBottomSheet> {
                 child: FilledButton(
                     onPressed: () async {
                       if (_formKey.currentState!.saveAndValidate()) {
-                        await Group.saveAll(widget.groupId, _formKey.currentState!.value);
-                        await widget.appState.fetchGroupData();
-                        await widget.appState.fetchExpenseData();
+                        await Group.saveAll(widget.group?.id, _formKey.currentState!.value);
                         Navigator.pop(context);
                       }
                     },
@@ -124,7 +120,7 @@ class _GroupBottomSheetState extends State<GroupBottomSheet> {
                   child: FormBuilder(
                       key: _formKey,
                       clearValueOnUnregister: true,
-                      initialValue: group?.toJson() ?? {},
+                      initialValue: widget.group?.toJson() ?? {},
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -132,9 +128,13 @@ class _GroupBottomSheetState extends State<GroupBottomSheet> {
                           const SizedBox(height: spacing),
                           FormBuilderTextField(
                             name: "name",
-                            style: Theme.of(context).textTheme.displaySmall!.copyWith(color: Theme.of(context).colorScheme.primary),
+                            style: Theme.of(context)
+                                .textTheme
+                                .displaySmall!
+                                .copyWith(color: Theme.of(context).colorScheme.primary),
                             autovalidateMode: AutovalidateMode.onUserInteraction,
-                            validator: FormBuilderValidators.required(errorText: AppLocalizations.of(context)!.groupNameValidationEmpty),
+                            validator: FormBuilderValidators.required(
+                                errorText: AppLocalizations.of(context)!.groupNameValidationEmpty),
                             decoration: InputDecoration(
                               border: InputBorder.none,
                               hintText: AppLocalizations.of(context)!.addGroupTitle,
@@ -145,7 +145,8 @@ class _GroupBottomSheetState extends State<GroupBottomSheet> {
                             name: "color_value",
                             builder: (FormFieldState<dynamic> field) {
                               return GridView.builder(
-                                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 5, crossAxisSpacing: 8, mainAxisSpacing: 4),
+                                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                                      crossAxisCount: 5, crossAxisSpacing: 8, mainAxisSpacing: 4),
                                   padding: const EdgeInsets.all(8),
                                   physics: const NeverScrollableScrollPhysics(),
                                   shrinkWrap: true,
@@ -156,7 +157,8 @@ class _GroupBottomSheetState extends State<GroupBottomSheet> {
                                         selectedIcon: const Icon(Icons.radio_button_checked),
                                         color: ColorSeed.values[i].color,
                                         isSelected: (field.value == ColorSeed.values[i].color.value ||
-                                            (field.value == null && ColorSeed.values[i].color.value == ColorSeed.baseColor.color.value)),
+                                            (field.value == null &&
+                                                ColorSeed.values[i].color.value == ColorSeed.baseColor.color.value)),
                                         onPressed: () {
                                           field.didChange(ColorSeed.values[i].color.value);
                                         });
@@ -172,7 +174,9 @@ class _GroupBottomSheetState extends State<GroupBottomSheet> {
                                 builder: (context, controller) {
                                   List<Map<String, dynamic>> groupMembers = Group.decodeGroupMembersString(field.value);
 
-                                  if (groupMembers.isEmpty || (groupMembers.length == 1 && groupMembers.first['email'] == supabase.auth.currentUser?.email)) {
+                                  if (groupMembers.isEmpty ||
+                                      (groupMembers.length == 1 &&
+                                          groupMembers.first['email'] == supabase.auth.currentUser?.email)) {
                                     return ListTile(
                                       leading: const Icon(Icons.people),
                                       title: Text(AppLocalizations.of(context)!.groupMemberSelectionEmpty),
@@ -206,7 +210,8 @@ class _GroupBottomSheetState extends State<GroupBottomSheet> {
                                   return getUserSuggestions(controller, field);
                                 },
                                 viewBuilder: (suggestions) {
-                                  return SearchView(searchQueryNotifier: _searchQueryNotifier, suggestions: suggestions);
+                                  return SearchView(
+                                      searchQueryNotifier: _searchQueryNotifier, suggestions: suggestions);
                                 },
                               );
                             },

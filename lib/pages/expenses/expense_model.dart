@@ -6,6 +6,7 @@ import 'expense_entry_model.dart';
 
 class Expense {
   late String id;
+  late String groupId;
   late Group group;
   late String name;
   late double amount;
@@ -19,6 +20,7 @@ class Expense {
 
   void loadDataFromJson(Map<String, dynamic> json) {
     id = json["id"];
+    groupId = json["group_id"];
 
     group = Group();
     if (json["group"] != null) {
@@ -44,7 +46,8 @@ class Expense {
 
         if (expenseEntry.expenseEntryShares.isNotEmpty) {
           for (var e in expenseEntry.expenseEntryShares) {
-            groupMemberShareStatistic[e.email] = (groupMemberShareStatistic[e.email] ?? 0) + (expenseEntry.amount * (e.percentage / 100));
+            groupMemberShareStatistic[e.email] =
+                (groupMemberShareStatistic[e.email] ?? 0) + (expenseEntry.amount * (e.percentage / 100));
           }
         }
       }
@@ -52,31 +55,53 @@ class Expense {
   }
 
   delete() async {
-    return await supabase.from('expense').delete().eq('id', id);
+    await supabase.from('expense').delete().eq('id', id);
+    await supabase.rpc('update_group_member_shares', params: {"_group_id": groupId});
   }
 
-  static Future<Map<String, Expense>> fetchData() async {
-    List<Map<String, dynamic>> data = await supabase.from('expense').select('*, group(*), expense_entry(*)');
+  static Future<List<Expense>> fetchData([String? groupId]) async {
+    var query = supabase.from('expense').select('*, group(*), expense_entry(*)');
 
-    Map<String, Expense> retData = <String, Expense>{};
+    if (groupId != null) {
+      query = query.eq('group_id', groupId);
+    }
+
+    List<Map<String, dynamic>> data = await query.order('name');
+
+    List<Expense> retData = List.empty(growable: true);
 
     for (var element in data) {
       Expense expense = Expense();
       expense.loadDataFromJson(element);
-      retData.addAll({expense.id: expense});
+      retData.add(expense);
     }
 
     return retData;
   }
 
+  static Future<Expense> fetchDetail(String expenseId) async {
+    var data = await supabase.from('expense').select('*, group(*), expense_entry(*)').eq('id', expenseId).single();
+
+    Expense expense = Expense();
+    expense.loadDataFromJson(data);
+
+    return expense;
+  }
+
   static Future<void> saveAll(String groupId, String? expenseId, Map<String, dynamic> formResponse) async {
-    Map<String, dynamic> upsertVals = {'name': formResponse['name'], 'paid_by': formResponse['paid_by'], 'group_id': groupId, 'user_id': supabase.auth.currentUser?.id};
+    Map<String, dynamic> upsertVals = {
+      'name': formResponse['name'],
+      'paid_by': formResponse['paid_by'],
+      'group_id': groupId,
+      'user_id': supabase.auth.currentUser?.id
+    };
 
     if (expenseId != null) {
       upsertVals.addAll({'id': expenseId});
     }
 
-    Map<String, dynamic> expenseInsertResponse = await supabase.from('expense').upsert(upsertVals).select('id').single();
+    Map<String, dynamic> expenseInsertResponse =
+        await supabase.from('expense').upsert(upsertVals).select('id').single();
 
     Map<String, Map<String, dynamic>> expenseEntryValues = {};
 
@@ -108,18 +133,25 @@ class Expense {
         "amount": expenseEntry["amount"],
       };
 
-      Map<String, dynamic> expenseEntryResult = await supabase.from('expense_entry').insert(insertExpenseEntry).select('id').single();
+      Map<String, dynamic> expenseEntryResult =
+          await supabase.from('expense_entry').insert(insertExpenseEntry).select('id').single();
 
       await supabase.from('expense_entry_share').delete().eq('expense_entry_id', expenseEntryResult['id']);
 
       Set<String> expenseEntryShares = expenseEntry['shares'];
 
       List<Map<String, dynamic>> insertExpenseEntryShares = expenseEntryShares.map((email) {
-        return {"expense_entry_id": expenseEntryResult['id'], "email": email, "percentage": 100 / expenseEntryShares.length};
+        return {
+          "expense_entry_id": expenseEntryResult['id'],
+          "email": email,
+          "percentage": 100 / expenseEntryShares.length
+        };
       }).toList();
 
       await supabase.from('expense_entry_share').insert(insertExpenseEntryShares);
     }));
+
+    await supabase.rpc('update_group_member_shares', params: {"_group_id": groupId});
   }
 
   Map<String, dynamic> toJson() {

@@ -54,6 +54,28 @@
       }
     }
   },
+  "groupDisplayAmount": "{paidByYourself, select, yes{{displayName} owes you} other{You owe {displayName}}} {amount}",
+  "@groupDisplayAmount": {
+    "description": "Lable in the expense list of did what.",
+    "placeholders": {
+      "displayName": {
+        "type": "String",
+        "example": "Bob Muster"
+      },
+      "paidByYourself": {
+        "type": "String"
+      },
+      "amount": {
+        "type": "double",
+        "format": "compactCurrency",
+        "optionalParameters": {
+          "decimalDigits": 2,
+          "name": "€"
+        },
+        "example": "200.00"
+      }
+    }
+  },
   "expenseNoShares": "You are not involved",
   "settings": "Settings",
   "create": "Create",

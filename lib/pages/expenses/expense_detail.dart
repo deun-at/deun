@@ -4,7 +4,6 @@ import 'package:flutter_form_builder/flutter_form_builder.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:form_builder_validators/form_builder_validators.dart';
 
-import '../../app_state.dart';
 import '../../constants.dart';
 import '../../main.dart';
 import '../groups/group_model.dart';
@@ -13,11 +12,10 @@ import 'expense_entry_model.dart';
 import 'expense_model.dart';
 
 class ExpenseBottomSheet extends StatefulWidget {
-  const ExpenseBottomSheet({super.key, required this.appState, required this.groupId, this.expenseId});
+  const ExpenseBottomSheet({super.key, required this.group, this.expense});
 
-  final AppState appState;
-  final String groupId;
-  final String? expenseId;
+  final Group group;
+  final Expense? expense;
 
   @override
   State<ExpenseBottomSheet> createState() => _ExpenseBottomSheetState();
@@ -25,8 +23,6 @@ class ExpenseBottomSheet extends StatefulWidget {
 
 class _ExpenseBottomSheetState extends State<ExpenseBottomSheet> {
   final _formKey = GlobalKey<FormBuilderState>();
-  late Group? group;
-  late Expense? expense;
   List<GroupMember> groupMembers = [];
   ColorSeed groupColor = ColorSeed.baseColor;
   final List<ExpenseEntryWidget> expenseEntryFields = List.empty(growable: true);
@@ -36,23 +32,23 @@ class _ExpenseBottomSheetState extends State<ExpenseBottomSheet> {
   void initState() {
     super.initState();
 
-    group = widget.appState.groupItems.value.data[widget.groupId];
-
-    if (group != null) {
-      expense = group?.expenses[widget.expenseId];
-
-      groupMembers = group!.groupMembers;
-      if (expense != null && expense!.expenseEntries.isNotEmpty) {
-        _newTextFieldId = expense!.expenseEntries.length;
-        expense!.expenseEntries.forEach((key, expenseEntry) {
-          expenseEntryFields
-              .add(ExpenseEntryWidget(expenseEntry: expenseEntry, index: expenseEntry.index, onRemove: () => onRemove(expenseEntry), groupMembers: groupMembers));
-        });
-      } else {
-        ExpenseEntry _expenseEntry = ExpenseEntry(index: _newTextFieldId++);
-        expenseEntryFields
-            .add(ExpenseEntryWidget(expenseEntry: _expenseEntry, index: _expenseEntry.index, onRemove: () => onRemove(_expenseEntry), groupMembers: groupMembers));
-      }
+    groupMembers = widget.group.groupMembers;
+    if (widget.expense != null && widget.expense!.expenseEntries.isNotEmpty) {
+      _newTextFieldId = widget.expense!.expenseEntries.length;
+      widget.expense!.expenseEntries.forEach((key, expenseEntry) {
+        expenseEntryFields.add(ExpenseEntryWidget(
+            expenseEntry: expenseEntry,
+            index: expenseEntry.index,
+            onRemove: () => onRemove(expenseEntry),
+            groupMembers: groupMembers));
+      });
+    } else {
+      ExpenseEntry _expenseEntry = ExpenseEntry(index: _newTextFieldId++);
+      expenseEntryFields.add(ExpenseEntryWidget(
+          expenseEntry: _expenseEntry,
+          index: _expenseEntry.index,
+          onRemove: () => onRemove(_expenseEntry),
+          groupMembers: groupMembers));
     }
   }
 
@@ -81,9 +77,7 @@ class _ExpenseBottomSheetState extends State<ExpenseBottomSheet> {
             ),
             child: Text(AppLocalizations.of(context)!.delete),
             onPressed: () async {
-              await expense.delete();
-              await widget.appState.fetchGroupData();
-              await widget.appState.fetchExpenseData();
+              await widget.expense!.delete();
               Navigator.pop(context);
               Navigator.pop(modalContext);
             },
@@ -99,10 +93,10 @@ class _ExpenseBottomSheetState extends State<ExpenseBottomSheet> {
 
     List<Widget> expenseActions = [];
 
-    if (expense != null) {
+    if (widget.expense != null) {
       expenseActions.add(IconButton(
         onPressed: () {
-          openDeleteItemDialog(context, expense!);
+          openDeleteItemDialog(context, widget.expense!);
         },
         icon: const Icon(Icons.delete),
       ));
@@ -113,9 +107,7 @@ class _ExpenseBottomSheetState extends State<ExpenseBottomSheet> {
         child: FilledButton(
             onPressed: () async {
               if (_formKey.currentState!.saveAndValidate()) {
-                await Expense.saveAll(widget.groupId, widget.expenseId, _formKey.currentState!.value);
-                await widget.appState.fetchGroupData();
-                await widget.appState.fetchExpenseData();
+                await Expense.saveAll(widget.group.id, widget.expense?.id, _formKey.currentState!.value);
                 Navigator.pop(context);
               }
             },
@@ -139,15 +131,19 @@ class _ExpenseBottomSheetState extends State<ExpenseBottomSheet> {
                   child: FormBuilder(
                       key: _formKey,
                       clearValueOnUnregister: true,
-                      initialValue: expense?.toJson() ?? {},
+                      initialValue: widget.expense?.toJson() ?? {},
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: <Widget>[
                           FormBuilderTextField(
                             name: "name",
-                            style: Theme.of(context).textTheme.displaySmall!.copyWith(color: Theme.of(context).colorScheme.primary),
-                            validator: FormBuilderValidators.required(errorText: AppLocalizations.of(context)!.expenseNameValidationEmpty),
+                            style: Theme.of(context)
+                                .textTheme
+                                .displaySmall!
+                                .copyWith(color: Theme.of(context).colorScheme.primary),
+                            validator: FormBuilderValidators.required(
+                                errorText: AppLocalizations.of(context)!.expenseNameValidationEmpty),
                             decoration: InputDecoration(
                               border: InputBorder.none,
                               hintText: AppLocalizations.of(context)!.addExpenseTitle,
@@ -161,9 +157,9 @@ class _ExpenseBottomSheetState extends State<ExpenseBottomSheet> {
                                 border: InputBorder.none,
                                 contentPadding: const EdgeInsets.all(0),
                               ),
-                              initialValue: expense?.paidBy ?? supabase.auth.currentUser?.email,
+                              initialValue: widget.expense?.paidBy ?? supabase.auth.currentUser?.email,
                               spacing: 8,
-                              options: group!.groupMembers
+                              options: widget.group.groupMembers
                                   .map((e) => FormBuilderChipOption(
                                         value: e.email,
                                         child: Text(e.displayName),

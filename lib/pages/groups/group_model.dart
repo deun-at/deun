@@ -13,11 +13,11 @@ class Group {
   late int colorValue;
   late String createdAt;
   late String userId;
-  late double sumAmount;
-  late Map<String, Expense> expenses;
-  late List<GroupMember> groupMembers;
 
-  late Map<String, double> groupMemberShareStatistic;
+  late List<GroupMember> groupMembers;
+  late Map<String, double> groupSharesSummary;
+
+  late List<Expense>? expenses;
 
   void loadDataFromJson(Map<String, dynamic> json) {
     String? currentUserEmail = supabase.auth.currentUser?.email;
@@ -28,32 +28,6 @@ class Group {
     createdAt = json["created_at"];
     userId = json["user_id"];
 
-    groupMemberShareStatistic = {};
-    sumAmount = 0.0;
-    expenses = <String, Expense>{};
-    if (json["expense"] != null) {
-      for (var element in json["expense"]) {
-        Expense expense = Expense();
-        expense.loadDataFromJson(element);
-        expenses.addAll({expense.id: expense});
-
-        sumAmount += expense.amount;
-
-        bool paidByCurrentUser = false;
-        if (expense.paidBy == currentUserEmail) {
-          paidByCurrentUser = true;
-        }
-
-        expense.groupMemberShareStatistic.forEach((String email, double amount) {
-          if (paidByCurrentUser && email != currentUserEmail) {
-            groupMemberShareStatistic[email] = (groupMemberShareStatistic[email] ?? 0) + amount;
-          } else if (paidByCurrentUser == false && email == currentUserEmail) {
-            groupMemberShareStatistic[expense.paidBy ?? ''] = (groupMemberShareStatistic[expense.paidBy ?? ''] ?? 0) - amount;
-          }
-        });
-      }
-    }
-
     groupMembers = [];
     if (json["group_member"] != null) {
       for (var element in json["group_member"]) {
@@ -62,24 +36,54 @@ class Group {
         groupMembers.add(groupMember);
       }
     }
+
+    groupSharesSummary = {};
+    if (json["group_shares_summary"] != null) {
+      for (var element in json["group_shares_summary"]) {
+        if (element['paid_by'] == currentUserEmail) {
+          groupSharesSummary[element['paid_for_display_name']] =
+              (groupSharesSummary[element['paid_for_display_name']] ?? 0) + element['share_amount'];
+        } else if (element['paid_for'] == currentUserEmail) {
+          groupSharesSummary[element['paid_by_display_name']] =
+              (groupSharesSummary[element['paid_by_display_name']] ?? 0) - element['share_amount'];
+        }
+      }
+    }
   }
 
   delete() async {
     return await supabase.from('group').delete().eq('id', id);
   }
 
-  static Future<Map<String, Group>> fetchData() async {
-    List<Map<String, dynamic>> data = await supabase.from('group_data_view').select(); //todo order by activity
+  static Future<List<Group>> fetchData() async {
+    List<Map<String, dynamic>> data = await supabase.from('group').select(
+        '*, group_shares_summary(*, ...paid_by(paid_by_display_name:display_name), ...paid_for(paid_for_display_name:display_name)), group_member(*, ...user(display_name:display_name))');
 
-    Map<String, Group> retData = <String, Group>{};
+    List<Group> retData = List.empty(growable: true);
 
     for (var element in data) {
       Group group = Group();
       group.loadDataFromJson(element);
-      retData.addAll({group.id: group});
+      retData.add(group);
     }
 
     return retData;
+  }
+
+  static Future<Group> fetchDetail(String groupId) async {
+    Map<String, dynamic> data = await supabase
+        .from('group')
+        .select(
+            '*, group_shares_summary(*, ...paid_by(paid_by_display_name:display_name), ...paid_for(paid_for_display_name:display_name)), group_member(*, ...user(display_name:display_name))')
+        .eq('id', groupId)
+        .single();
+
+    Group group = Group();
+    group.loadDataFromJson(data);
+
+    group.expenses = await Expense.fetchData(groupId);
+
+    return group;
   }
 
   static List<Map<String, dynamic>> decodeGroupMembersString(String? jsonValue) {

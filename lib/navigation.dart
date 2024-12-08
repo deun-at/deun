@@ -1,6 +1,6 @@
+import 'package:deun/pages/expenses/expense_model.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'app_state.dart';
 import 'pages/expenses/expense_detail.dart';
 import 'pages/expenses/expense_list.dart';
 import 'pages/groups/group_detail.dart';
@@ -9,6 +9,7 @@ import 'pages/groups/group_list.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 import 'constants.dart';
+import 'pages/groups/group_model.dart';
 import 'pages/settings/setting.dart';
 import 'widgets/modal_bottom_sheet_page.dart';
 
@@ -18,9 +19,7 @@ final _shellNavigatorExpenseKey = GlobalKey<NavigatorState>(debugLabel: 'shellEx
 final _shellNavigatorSettingKey = GlobalKey<NavigatorState>(debugLabel: 'shellSetting');
 
 class NavigationScreen extends StatefulWidget {
-  const NavigationScreen({super.key, required this.appState});
-
-  final AppState appState;
+  const NavigationScreen({super.key});
 
   @override
   State<NavigationScreen> createState() => _NavigationScreenState();
@@ -55,19 +54,19 @@ class _NavigationScreenState extends State<NavigationScreen> {
                 // top route inside branch
                 GoRoute(
                   path: '/group',
-                  pageBuilder: (context, state) => NoTransitionPage(
-                    child: GroupList(appState: widget.appState),
+                  pageBuilder: (context, state) => const NoTransitionPage(
+                    child: GroupList(),
                   ),
                   routes: [
                     // child route
                     GoRoute(
                         path: 'details',
                         pageBuilder: (context, state) {
-                          String groupId = state.uri.queryParameters["groupId"] as String;
+                          var group = state.extra as Group;
 
                           return CustomTransitionPage(
                             key: state.pageKey,
-                            child: GroupDetail(appState: widget.appState, groupId: groupId),
+                            child: GroupDetail(group: group),
                             transitionsBuilder: (context, animation, secondaryAnimation, child) {
                               // Change the opacity of the screen using a Curve based on the the animation's
                               // value
@@ -82,16 +81,15 @@ class _NavigationScreenState extends State<NavigationScreen> {
                           GoRoute(
                               path: 'expense',
                               pageBuilder: (context, state) {
-                                String groupId = state.uri.queryParameters["groupId"] as String;
-
-                                String? expenseId = state.uri.queryParameters["expenseId"];
+                                var extra = state.extra as Map<String, dynamic>;
+                                var group = extra['group'] as Group;
+                                var expense = extra['expense'] as Expense?;
 
                                 return ModalBottomSheetPage(
                                   key: state.pageKey,
                                   builder: (context) => ExpenseBottomSheet(
-                                    appState: widget.appState,
-                                    groupId: groupId,
-                                    expenseId: expenseId,
+                                    group: group,
+                                    expense: expense,
                                   ),
                                 );
                               })
@@ -99,13 +97,12 @@ class _NavigationScreenState extends State<NavigationScreen> {
                     GoRoute(
                         path: 'edit',
                         pageBuilder: (context, state) {
-                          String? groupId = state.uri.queryParameters["groupId"];
+                          var group = state.extra as Group?;
 
                           return ModalBottomSheetPage(
                             key: state.pageKey,
                             builder: (context) => GroupBottomSheet(
-                              appState: widget.appState,
-                              groupId: groupId,
+                              group: group,
                             ),
                           );
                         })
@@ -120,8 +117,8 @@ class _NavigationScreenState extends State<NavigationScreen> {
                 // top route inside branch
                 GoRoute(
                   path: '/expense',
-                  pageBuilder: (context, state) => NoTransitionPage(
-                    child: ExpenseList(appState: widget.appState),
+                  pageBuilder: (context, state) => const NoTransitionPage(
+                    child: ExpenseList(),
                   ),
                 ),
               ],
