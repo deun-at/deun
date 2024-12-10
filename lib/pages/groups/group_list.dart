@@ -1,4 +1,3 @@
-import 'package:deun/constants.dart';
 import 'package:deun/widgets/empty_list_widget.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -23,7 +22,7 @@ class _GroupListState extends ConsumerState<GroupList> {
   }
 
   Future<void> updateGroupList() async {
-    ref.refresh(groupListProvider.future);
+    return ref.refresh(groupListProvider.future);
   }
 
   void openDeleteItemDialog(BuildContext context, Group group) {

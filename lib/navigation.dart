@@ -10,7 +10,6 @@ import 'pages/groups/group_detail_edit.dart';
 import 'pages/groups/group_list.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
-import 'constants.dart';
 import 'pages/groups/group_model.dart';
 import 'pages/settings/setting.dart';
 import 'widgets/modal_bottom_sheet_page.dart';

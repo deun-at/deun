@@ -1,5 +1,3 @@
-import 'package:flutter/material.dart';
-
 import '../../main.dart';
 import '../groups/group_model.dart';
 import 'expense_entry_model.dart';

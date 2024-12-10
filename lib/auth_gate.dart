@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_auth_ui/supabase_auth_ui.dart';
 
-import 'provider.dart';
 import 'main.dart';
 import 'navigation.dart';
 import 'pages/auth/login_screen.dart';

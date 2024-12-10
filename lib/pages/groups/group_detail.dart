@@ -1,4 +1,3 @@
-import 'package:deun/constants.dart';
 import 'package:deun/main.dart';
 import 'package:deun/widgets/empty_list_widget.dart';
 import 'package:flutter/material.dart';
@@ -27,7 +26,7 @@ class _GroupDetailState extends ConsumerState<GroupDetail> {
   }
 
   Future<void> updateExpenseList() async {
-    ref.refresh(groupDetailProvider(widget.group.id).future);
+    return ref.refresh(groupDetailProvider(widget.group.id).future);
   }
 
   @override

@@ -24,7 +24,7 @@ class _ExpenseListState extends ConsumerState<ExpenseList> {
   }
 
   Future<void> updateExpenseList() async {
-    ref.refresh(expenseListProvider.future);
+    return ref.refresh(expenseListProvider.future);
   }
 
   @override
