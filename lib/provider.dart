@@ -1,3 +1,4 @@
+import 'package:deun/constants.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
@@ -19,11 +20,19 @@ Future<Group> groupDetail(Ref ref, String groupId) async {
 }
 
 @riverpod
-Future<Expense> expenseDetail(Ref ref, String expenseId) async {
-  return await Expense.fetchDetail(expenseId);
+Future<List<Expense>> expenseList(Ref ref) async {
+  return await Expense.fetchData();
 }
 
 @riverpod
-Future<List<Expense>> expenseList(Ref ref) async {
-  return await Expense.fetchData();
+class ThemeColor extends _$ThemeColor {
+  /// Classes annotated by `@riverpod` **must** define a [build] function.
+  /// This function is expected to return the initial state of your shared state.
+  /// It is totally acceptable for this function to return a [Future] or [Stream] if you need to.
+  /// You can also freely define parameters on this method.
+  @override
+  Color build() => ColorSeed.baseColor.color;
+
+  void setColor(Color color) => state = color;
+  void resetColor() => state = ColorSeed.baseColor.color;
 }

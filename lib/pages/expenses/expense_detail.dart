@@ -153,7 +153,7 @@ class _ExpenseBottomSheetState extends State<ExpenseBottomSheet> {
                           FormBuilderChoiceChip(
                               name: "paid_by",
                               decoration: InputDecoration(
-                                label: Text(AppLocalizations.of(context)!.expensePaidBy),
+                                labelText: AppLocalizations.of(context)!.expensePaidBy,
                                 border: InputBorder.none,
                                 contentPadding: const EdgeInsets.all(0),
                               ),
@@ -165,6 +165,19 @@ class _ExpenseBottomSheetState extends State<ExpenseBottomSheet> {
                                         child: Text(e.displayName),
                                       ))
                                   .toList()),
+                          const SizedBox(height: spacing),
+                          FormBuilderDateTimePicker(
+                            name: "expense_date",
+                            initialValue: widget.expense?.expenseDate != null
+                                ? DateTime.parse(widget.expense!.expenseDate)
+                                : DateTime.now(),
+                            inputType: InputType.date,
+                            decoration: InputDecoration(
+                              border: InputBorder.none,
+                              labelText: AppLocalizations.of(context)!.expenseDate,
+                              hintText: AppLocalizations.of(context)!.addExpenseTitle,
+                            ),
+                          ),
                           const SizedBox(height: spacing),
                           ...expenseEntryFields,
                           Center(

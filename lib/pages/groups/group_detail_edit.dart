@@ -89,8 +89,6 @@ class _GroupBottomSheetState extends ConsumerState<GroupBottomSheet> {
   Widget build(BuildContext context) {
     const double spacing = 10;
 
-    debugPrint(widget.group.toString());
-
     return Scaffold(
         appBar: AppBar(
           leading: IconButton(

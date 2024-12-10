@@ -1,3 +1,4 @@
+import 'package:deun/constants.dart';
 import 'package:deun/widgets/empty_list_widget.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -74,77 +75,82 @@ class _GroupListState extends ConsumerState<GroupList> {
 
                   Color colorSeedValue = Color(group.colorValue);
 
-                  return Hero(
-                      tag: "group_card_${group.id}",
-                      child: Padding(
-                          padding: const EdgeInsets.all(8.0),
-                          child: Card(
-                              elevation: 5,
-                              color: Theme.of(context).colorScheme.surfaceContainerHighest,
-                              surfaceTintColor: colorSeedValue,
-                              shadowColor: Colors.transparent,
-                              child: InkWell(
-                                  borderRadius: BorderRadius.circular(12.0),
-                                  onTap: () {
-                                    GoRouter.of(context).push("/group/details", extra: group).then(
-                                      (value) async {
-                                        await updateGroupList();
+                  return Padding(
+                      padding: const EdgeInsets.all(8.0),
+                      child: Hero(
+                          tag: "group_card_${group.id}",
+                          child: Material(
+                              child: Card(
+                                  elevation: 5,
+                                  color: Theme.of(context).colorScheme.surfaceContainer,
+                                  surfaceTintColor: colorSeedValue,
+                                  shadowColor: Colors.transparent,
+                                  child: InkWell(
+                                      borderRadius: BorderRadius.circular(12.0),
+                                      onTap: () {
+                                        ref.read(themeColorProvider.notifier).setColor(Color(group.colorValue));
+                                        GoRouter.of(context).push("/group/details", extra: group).then(
+                                          (value) async {
+                                            ref.read(themeColorProvider.notifier).resetColor();
+                                            await updateGroupList();
+                                          },
+                                        );
                                       },
-                                    );
-                                  },
-                                  child: Padding(
-                                      padding: const EdgeInsets.fromLTRB(10, 5, 5, 10),
-                                      child: Column(
-                                        children: [
-                                          Align(
-                                              alignment: Alignment.topRight,
-                                              child: Directionality(
-                                                textDirection: TextDirection.rtl,
-                                                child: MenuAnchor(
-                                                  builder: (context, controller, child) {
-                                                    return IconButton(
-                                                      icon: const Icon(Icons.more_vert),
-                                                      onPressed: () {
-                                                        if (controller.isOpen) {
-                                                          controller.close();
-                                                        } else {
-                                                          controller.open();
-                                                        }
-                                                      },
-                                                    );
-                                                  },
-                                                  menuChildren: [
-                                                    MenuItemButton(
-                                                      closeOnActivate: true,
-                                                      onPressed: () {
-                                                        GoRouter.of(context).push("/group/edit", extra: group).then(
-                                                          (value) async {
-                                                            await updateGroupList();
+                                      child: Padding(
+                                          padding: const EdgeInsets.fromLTRB(10, 5, 5, 10),
+                                          child: Column(
+                                            children: [
+                                              Row(
+                                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                                children: [
+                                                  Flexible(
+                                                      child: Text(
+                                                    group.name,
+                                                    style: Theme.of(context).textTheme.headlineMedium,
+                                                    overflow: TextOverflow.ellipsis,
+                                                  )),
+                                                  Directionality(
+                                                    textDirection: TextDirection.rtl,
+                                                    child: MenuAnchor(
+                                                      builder: (context, controller, child) {
+                                                        return IconButton(
+                                                          icon: const Icon(Icons.more_vert),
+                                                          onPressed: () {
+                                                            if (controller.isOpen) {
+                                                              controller.close();
+                                                            } else {
+                                                              controller.open();
+                                                            }
                                                           },
                                                         );
                                                       },
-                                                      trailingIcon: const Icon(Icons.edit),
-                                                      child: Text(AppLocalizations.of(context)!.edit),
+                                                      menuChildren: [
+                                                        MenuItemButton(
+                                                          closeOnActivate: true,
+                                                          onPressed: () {
+                                                            GoRouter.of(context).push("/group/edit", extra: group).then(
+                                                              (value) async {
+                                                                await updateGroupList();
+                                                              },
+                                                            );
+                                                          },
+                                                          trailingIcon: const Icon(Icons.edit),
+                                                          child: Text(AppLocalizations.of(context)!.edit),
+                                                        ),
+                                                        MenuItemButton(
+                                                          closeOnActivate: true,
+                                                          onPressed: () => openDeleteItemDialog(context, group),
+                                                          trailingIcon: const Icon(Icons.delete),
+                                                          child: Text(AppLocalizations.of(context)!.delete),
+                                                        ),
+                                                      ],
                                                     ),
-                                                    MenuItemButton(
-                                                      closeOnActivate: true,
-                                                      onPressed: () => openDeleteItemDialog(context, group),
-                                                      trailingIcon: const Icon(Icons.delete),
-                                                      child: Text(AppLocalizations.of(context)!.delete),
-                                                    ),
-                                                  ],
-                                                ),
-                                              )),
-                                          Align(
-                                            alignment: Alignment.bottomLeft,
-                                            child: Text(
-                                              group.name,
-                                              style: Theme.of(context).textTheme.headlineMedium,
-                                            ),
-                                          ),
-                                          GroupShareWidget(group: group),
-                                        ],
-                                      ))))));
+                                                  ),
+                                                ],
+                                              ),
+                                              GroupShareWidget(group: group),
+                                            ],
+                                          )))))));
                 },
               )),
           AsyncError() => EmptyListWidget(
@@ -188,36 +194,45 @@ class _GroupShareWidgetState extends State<GroupShareWidget> {
     List<Widget> sharedWidget = widget.group.groupSharesSummary.entries.map(
       (e) {
         totalSharedSum += e.value;
+        Color textColor = Colors.red;
         String paidByYourself = "";
         if (e.value > 0) {
           paidByYourself = "yes";
+          textColor = Colors.green;
         }
 
         return Align(
           alignment: Alignment.bottomLeft,
           child: Text(
             AppLocalizations.of(context)!.groupDisplayAmount(e.key, paidByYourself, e.value.abs()),
-            style: Theme.of(context).textTheme.labelLarge,
+            style: Theme.of(context).textTheme.labelLarge!.copyWith(color: textColor),
           ),
         );
       },
     ).toList();
 
-    String totalWidgetText = "";
+    String paidByYourselfAll = "";
+    Color textColorAll = Colors.red;
     if (totalSharedSum > 0) {
-      totalWidgetText = "du hast mehr zahlt";
-    } else if (totalSharedSum < 0) {
-      totalWidgetText = "wer anderer hat mehr zahlt";
-    } else {
-      totalWidgetText = "passt alles";
+      paidByYourselfAll = "yes";
+      textColorAll = Colors.green;
     }
+
+    String totalSharedText =
+        AppLocalizations.of(context)!.groupDisplaySumAmount(paidByYourselfAll, totalSharedSum.abs());
+
+    if (totalSharedSum == 0) {
+      totalSharedText = AppLocalizations.of(context)!.allDone;
+      textColorAll = Theme.of(context).colorScheme.onSurface;
+    }
+
     sharedWidget.insert(
         0,
         Align(
           alignment: Alignment.bottomLeft,
           child: Text(
-            totalWidgetText,
-            style: Theme.of(context).textTheme.labelLarge,
+            totalSharedText,
+            style: Theme.of(context).textTheme.titleMedium!.copyWith(color: textColorAll),
           ),
         ));
 

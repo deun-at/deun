@@ -1,3 +1,4 @@
+import 'package:deun/constants.dart';
 import 'package:deun/main.dart';
 import 'package:deun/widgets/empty_list_widget.dart';
 import 'package:flutter/material.dart';
@@ -35,64 +36,67 @@ class _GroupDetailState extends ConsumerState<GroupDetail> {
 
     return Scaffold(
         appBar: AppBar(leading: const BackButton(), title: Text(widget.group.name), centerTitle: true),
-        body: switch (groupDetail) {
-          AsyncData(:final value) => RefreshIndicator(
-              onRefresh: () async {
-                await updateExpenseList();
-              },
-              child: value.expenses!.isEmpty
-                  ? EmptyListWidget(
-                      label: AppLocalizations.of(context)!.groupExpenseNoEntries,
-                      onRefresh: () async {
-                        await updateExpenseList();
-                      })
-                  : ListView.builder(
-                      itemCount: value.expenses!.length,
-                      itemBuilder: (context, index) {
-                        Expense expense = value.expenses![index];
+        body: Hero(
+            tag: "group_card_${widget.group.id}",
+            child: Material(
+                child: switch (groupDetail) {
+              AsyncData(:final value) => RefreshIndicator(
+                  onRefresh: () async {
+                    await updateExpenseList();
+                  },
+                  child: value.expenses!.isEmpty
+                      ? EmptyListWidget(
+                          label: AppLocalizations.of(context)!.groupExpenseNoEntries,
+                          onRefresh: () async {
+                            await updateExpenseList();
+                          })
+                      : ListView.builder(
+                          itemCount: value.expenses!.length,
+                          itemBuilder: (context, index) {
+                            Expense expense = value.expenses![index];
 
-                        return Padding(
-                            padding: const EdgeInsets.all(8.0),
-                            child: Card(
-                                elevation: 8,
-                                color: Theme.of(context).colorScheme.surfaceContainerHighest,
-                                surfaceTintColor: Color(widget.group.colorValue),
-                                shadowColor: Colors.transparent,
-                                child: InkWell(
-                                    borderRadius: BorderRadius.circular(12.0),
-                                    onTap: () {
-                                      GoRouter.of(context).push("/group/details/expense",
-                                          extra: {'group': widget.group, 'expense': expense}).then(
-                                        (value) async {
-                                          await updateExpenseList();
+                            return Padding(
+                                padding: const EdgeInsets.all(8.0),
+                                child: Card(
+                                    elevation: 8,
+                                    color: Theme.of(context).colorScheme.surfaceContainerHighest,
+                                    surfaceTintColor: Color(widget.group.colorValue),
+                                    shadowColor: Colors.transparent,
+                                    child: InkWell(
+                                        borderRadius: BorderRadius.circular(12.0),
+                                        onTap: () {
+                                          GoRouter.of(context).push("/group/details/expense",
+                                              extra: {'group': widget.group, 'expense': expense}).then(
+                                            (value) async {
+                                              await updateExpenseList();
+                                            },
+                                          );
                                         },
-                                      );
-                                    },
-                                    child: Padding(
-                                        padding: const EdgeInsets.fromLTRB(10, 5, 5, 10),
-                                        child: Column(
-                                          children: [
-                                            Align(
-                                              alignment: Alignment.bottomLeft,
-                                              child: Text(
-                                                expense.name,
-                                                style: Theme.of(context).textTheme.headlineMedium,
-                                              ),
-                                            ),
-                                            ExpenseShareWidget(expense: expense),
-                                          ],
-                                        )))));
-                      })),
-          AsyncError() => EmptyListWidget(
-              label: AppLocalizations.of(context)!.groupNoEntries,
-              onRefresh: () async {
-                await updateExpenseList();
-              }),
-          _ => const ShimmerCardList(
-              height: 120,
-              listEntryLength: 8,
-            ),
-        },
+                                        child: Padding(
+                                            padding: const EdgeInsets.fromLTRB(10, 5, 5, 10),
+                                            child: Column(
+                                              children: [
+                                                Align(
+                                                  alignment: Alignment.bottomLeft,
+                                                  child: Text(
+                                                    expense.name,
+                                                    style: Theme.of(context).textTheme.headlineMedium,
+                                                  ),
+                                                ),
+                                                ExpenseShareWidget(expense: expense),
+                                              ],
+                                            )))));
+                          })),
+              AsyncError() => EmptyListWidget(
+                  label: AppLocalizations.of(context)!.groupNoEntries,
+                  onRefresh: () async {
+                    await updateExpenseList();
+                  }),
+              _ => const ShimmerCardList(
+                  height: 120,
+                  listEntryLength: 8,
+                ),
+            })),
         floatingActionButton: FloatingActionButton.extended(
             onPressed: () {
               GoRouter.of(context).push("/group/details/expense", extra: {'group': widget.group, 'expense': null}).then(

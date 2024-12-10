@@ -11,6 +11,7 @@ class Expense {
   late String name;
   late double amount;
   late String? paidBy;
+  late String expenseDate;
   late String createdAt;
 
   late Map<String, ExpenseEntry> expenseEntries;
@@ -27,6 +28,7 @@ class Expense {
       group.loadDataFromJson(json["group"]);
     }
     name = json["name"];
+    expenseDate = json["expense_date"];
     paidBy = json["paid_by"];
     paidByDisplayName = json["paid_by_display_name"];
     createdAt = json["created_at"];
@@ -60,13 +62,14 @@ class Expense {
   }
 
   static Future<List<Expense>> fetchData([String? groupId]) async {
-    var query = supabase.from('expense').select('*, group(*), expense_entry(*)');
+    var query = supabase.from('expense').select(
+        '*, ...paid_by(paid_by_display_name:display_name), expense_entry(*, expense_entry_share(*)), group(*, group_shares_summary(*, ...paid_by(paid_by_display_name:display_name), ...paid_for(paid_for_display_name:display_name)), group_member(*, ...user(display_name:display_name)))');
 
     if (groupId != null) {
       query = query.eq('group_id', groupId);
     }
 
-    List<Map<String, dynamic>> data = await query.order('name');
+    List<Map<String, dynamic>> data = await query.order('expense_date');
 
     List<Expense> retData = List.empty(growable: true);
 
@@ -79,18 +82,10 @@ class Expense {
     return retData;
   }
 
-  static Future<Expense> fetchDetail(String expenseId) async {
-    var data = await supabase.from('expense').select('*, group(*), expense_entry(*)').eq('id', expenseId).single();
-
-    Expense expense = Expense();
-    expense.loadDataFromJson(data);
-
-    return expense;
-  }
-
   static Future<void> saveAll(String groupId, String? expenseId, Map<String, dynamic> formResponse) async {
     Map<String, dynamic> upsertVals = {
       'name': formResponse['name'],
+      'expense_date': formResponse['expense_date'].toString(),
       'paid_by': formResponse['paid_by'],
       'group_id': groupId,
       'user_id': supabase.auth.currentUser?.id

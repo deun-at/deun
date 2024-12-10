@@ -8,6 +8,7 @@
   "groupName": "Name",
   "addGroupTitle": "Add Title",
   "groupNameValidationEmpty": "Please enter a name",
+  "expenseDateValidationEmpty": "Please enter a date",
   "groupDeleteItemTitle": "Delete this group?",
   "groupNoEntries": "Add a group to get startet",
   "groupEntriesError": "Something went wrong with loading Groups.",
@@ -21,6 +22,7 @@
   "expenseNameValidationEmpty": "Please enter a Title",
   "expenseAmount": "Amount",
   "expenseAmountValidationEmpty": "Please enter an amount",
+  "expenseDate": "When did it happen?",
   "expensePaidBy": "Who paid?",
   "expenseEntryTitle": "Add Item Title",
   "addNewExpenseEntry": "Add Item",
@@ -54,6 +56,7 @@
       }
     }
   },
+  "expenseNoShares": "You are not involved",
   "groupDisplayAmount": "{paidByYourself, select, yes{{displayName} owes you} other{You owe {displayName}}} {amount}",
   "@groupDisplayAmount": {
     "description": "Lable in the expense list of did what.",
@@ -76,7 +79,25 @@
       }
     }
   },
-  "expenseNoShares": "You are not involved",
+  "groupDisplaySumAmount": "{paidByYourself, select, yes{You are owed} other{You owe}} {amount}",
+  "@groupDisplaySumAmount": {
+    "description": "Lable in the expense list of did what.",
+    "placeholders": {
+      "paidByYourself": {
+        "type": "String"
+      },
+      "amount": {
+        "type": "double",
+        "format": "compactCurrency",
+        "optionalParameters": {
+          "decimalDigits": 2,
+          "name": "€"
+        },
+        "example": "200.00"
+      }
+    }
+  },
+  "allDone": "all done",
   "settings": "Settings",
   "create": "Create",
   "cancel": "Cancel",

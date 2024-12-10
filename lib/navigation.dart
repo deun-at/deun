@@ -1,5 +1,7 @@
 import 'package:deun/pages/expenses/expense_model.dart';
+import 'package:deun/provider.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'pages/expenses/expense_detail.dart';
 import 'pages/expenses/expense_list.dart';
@@ -18,17 +20,15 @@ final _shellNavigatorGroupKey = GlobalKey<NavigatorState>(debugLabel: 'shellGrou
 final _shellNavigatorExpenseKey = GlobalKey<NavigatorState>(debugLabel: 'shellExpense');
 final _shellNavigatorSettingKey = GlobalKey<NavigatorState>(debugLabel: 'shellSetting');
 
-class NavigationScreen extends StatefulWidget {
+class NavigationScreen extends ConsumerStatefulWidget {
   const NavigationScreen({super.key});
 
   @override
-  State<NavigationScreen> createState() => _NavigationScreenState();
+  ConsumerState<NavigationScreen> createState() => _NavigationScreenState();
 }
 
-class _NavigationScreenState extends State<NavigationScreen> {
+class _NavigationScreenState extends ConsumerState<NavigationScreen> {
   late RouterConfig<Object> _routerConfig;
-
-  ColorSeed colorSelected = ColorSeed.baseColor;
 
   @override
   void initState() {
@@ -64,18 +64,7 @@ class _NavigationScreenState extends State<NavigationScreen> {
                         pageBuilder: (context, state) {
                           var group = state.extra as Group;
 
-                          return CustomTransitionPage(
-                            key: state.pageKey,
-                            child: GroupDetail(group: group),
-                            transitionsBuilder: (context, animation, secondaryAnimation, child) {
-                              // Change the opacity of the screen using a Curve based on the the animation's
-                              // value
-                              return FadeTransition(
-                                opacity: CurveTween(curve: Curves.easeIn).animate(animation),
-                                child: child,
-                              );
-                            },
-                          );
+                          return defaultTransitionPage(state.pageKey, GroupDetail(group: group));
                         },
                         routes: [
                           GoRoute(
@@ -142,13 +131,32 @@ class _NavigationScreenState extends State<NavigationScreen> {
     );
   }
 
+  CustomTransitionPage<dynamic> defaultTransitionPage(LocalKey key, Widget child) {
+    return CustomTransitionPage(
+      key: key,
+      child: child,
+      transitionDuration: Durations.long1,
+      reverseTransitionDuration: Durations.long1,
+      transitionsBuilder: (context, animation, secondaryAnimation, child) {
+        // Change the opacity of the screen using a Curve based on the the animation's
+        // value
+        return FadeTransition(
+          opacity: CurveTween(curve: Curves.easeIn).animate(animation),
+          child: child,
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
+    Color colorSelected = ref.watch(themeColorProvider);
+
     return MaterialApp.router(
       routerConfig: _routerConfig,
       title: 'Deun',
-      theme: ThemeData(colorSchemeSeed: colorSelected.color, useMaterial3: true, brightness: Brightness.light),
-      darkTheme: ThemeData(colorSchemeSeed: colorSelected.color, useMaterial3: true, brightness: Brightness.dark),
+      theme: ThemeData(colorSchemeSeed: colorSelected, useMaterial3: true, brightness: Brightness.light),
+      darkTheme: ThemeData(colorSchemeSeed: colorSelected, useMaterial3: true, brightness: Brightness.dark),
       themeMode: ThemeMode.system,
       localizationsDelegates: AppLocalizations.localizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,

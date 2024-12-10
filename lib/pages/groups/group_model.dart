@@ -56,8 +56,11 @@ class Group {
   }
 
   static Future<List<Group>> fetchData() async {
-    List<Map<String, dynamic>> data = await supabase.from('group').select(
-        '*, group_shares_summary(*, ...paid_by(paid_by_display_name:display_name), ...paid_for(paid_for_display_name:display_name)), group_member(*, ...user(display_name:display_name))');
+    List<Map<String, dynamic>> data = await supabase
+        .from('group')
+        .select(
+            '*, group_shares_summary(*, ...paid_by(paid_by_display_name:display_name), ...paid_for(paid_for_display_name:display_name)), group_member(*, ...user(display_name:display_name))')
+        .order('name', ascending: true);
 
     List<Group> retData = List.empty(growable: true);
 

@@ -16,7 +16,7 @@ class SignUp extends StatelessWidget {
         children: [
           SupaEmailAuth(
             redirectTo: kIsWeb ? null : 'io.supabase.flutter://',
-            onSignInComplete:(response) {},
+            onSignInComplete: (response) {},
             onSignUpComplete: (response) async {
               Navigator.of(context).pushReplacementNamed('/');
             },
@@ -31,7 +31,6 @@ class SignUp extends StatelessWidget {
                   }
                   return null;
                 },
-
               ),
             ],
           ),
@@ -43,8 +42,12 @@ class SignUp extends StatelessWidget {
               iosClientId: '820724879316-8sacuk8sjju1rvr878gl9lqin0or5h9d.apps.googleusercontent.com',
             ),
             enableNativeAppleAuth: false,
-            socialProviders: const [ /* OAuthProvider.apple, */ OAuthProvider.google ],
+            socialProviders: const [/* OAuthProvider.apple, */ OAuthProvider.google],
+            onError: (error) {
+              debugPrint(error.toString());
+            },
             onSuccess: (session) async {
+              debugPrint(session.toString());
               debugPrint(session.user.userMetadata.toString());
               await supabase.from("user").upsert({
                 'email': session.user.email,

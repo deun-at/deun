@@ -169,134 +169,6 @@ class _GroupDetailProviderElement
   String get groupId => (origin as GroupDetailProvider).groupId;
 }
 
-String _$expenseDetailHash() => r'66b3fedc0bcd4390c68d01a6d40367abb0a3cbad';
-
-/// See also [expenseDetail].
-@ProviderFor(expenseDetail)
-const expenseDetailProvider = ExpenseDetailFamily();
-
-/// See also [expenseDetail].
-class ExpenseDetailFamily extends Family<AsyncValue<Expense>> {
-  /// See also [expenseDetail].
-  const ExpenseDetailFamily();
-
-  /// See also [expenseDetail].
-  ExpenseDetailProvider call(
-    String expenseId,
-  ) {
-    return ExpenseDetailProvider(
-      expenseId,
-    );
-  }
-
-  @override
-  ExpenseDetailProvider getProviderOverride(
-    covariant ExpenseDetailProvider provider,
-  ) {
-    return call(
-      provider.expenseId,
-    );
-  }
-
-  static const Iterable<ProviderOrFamily>? _dependencies = null;
-
-  @override
-  Iterable<ProviderOrFamily>? get dependencies => _dependencies;
-
-  static const Iterable<ProviderOrFamily>? _allTransitiveDependencies = null;
-
-  @override
-  Iterable<ProviderOrFamily>? get allTransitiveDependencies =>
-      _allTransitiveDependencies;
-
-  @override
-  String? get name => r'expenseDetailProvider';
-}
-
-/// See also [expenseDetail].
-class ExpenseDetailProvider extends AutoDisposeFutureProvider<Expense> {
-  /// See also [expenseDetail].
-  ExpenseDetailProvider(
-    String expenseId,
-  ) : this._internal(
-          (ref) => expenseDetail(
-            ref as ExpenseDetailRef,
-            expenseId,
-          ),
-          from: expenseDetailProvider,
-          name: r'expenseDetailProvider',
-          debugGetCreateSourceHash:
-              const bool.fromEnvironment('dart.vm.product')
-                  ? null
-                  : _$expenseDetailHash,
-          dependencies: ExpenseDetailFamily._dependencies,
-          allTransitiveDependencies:
-              ExpenseDetailFamily._allTransitiveDependencies,
-          expenseId: expenseId,
-        );
-
-  ExpenseDetailProvider._internal(
-    super._createNotifier, {
-    required super.name,
-    required super.dependencies,
-    required super.allTransitiveDependencies,
-    required super.debugGetCreateSourceHash,
-    required super.from,
-    required this.expenseId,
-  }) : super.internal();
-
-  final String expenseId;
-
-  @override
-  Override overrideWith(
-    FutureOr<Expense> Function(ExpenseDetailRef provider) create,
-  ) {
-    return ProviderOverride(
-      origin: this,
-      override: ExpenseDetailProvider._internal(
-        (ref) => create(ref as ExpenseDetailRef),
-        from: from,
-        name: null,
-        dependencies: null,
-        allTransitiveDependencies: null,
-        debugGetCreateSourceHash: null,
-        expenseId: expenseId,
-      ),
-    );
-  }
-
-  @override
-  AutoDisposeFutureProviderElement<Expense> createElement() {
-    return _ExpenseDetailProviderElement(this);
-  }
-
-  @override
-  bool operator ==(Object other) {
-    return other is ExpenseDetailProvider && other.expenseId == expenseId;
-  }
-
-  @override
-  int get hashCode {
-    var hash = _SystemHash.combine(0, runtimeType.hashCode);
-    hash = _SystemHash.combine(hash, expenseId.hashCode);
-
-    return _SystemHash.finish(hash);
-  }
-}
-
-mixin ExpenseDetailRef on AutoDisposeFutureProviderRef<Expense> {
-  /// The parameter `expenseId` of this provider.
-  String get expenseId;
-}
-
-class _ExpenseDetailProviderElement
-    extends AutoDisposeFutureProviderElement<Expense> with ExpenseDetailRef {
-  _ExpenseDetailProviderElement(super.provider);
-
-  @override
-  String get expenseId => (origin as ExpenseDetailProvider).expenseId;
-}
-
 String _$expenseListHash() => r'00dca8aef60e04c10e83bf68f036038277de8956';
 
 /// See also [expenseList].
@@ -311,5 +183,20 @@ final expenseListProvider = AutoDisposeFutureProvider<List<Expense>>.internal(
 );
 
 typedef ExpenseListRef = AutoDisposeFutureProviderRef<List<Expense>>;
+String _$themeColorHash() => r'4ef7e05d68a34bec800592eac7cd770666832636';
+
+/// See also [ThemeColor].
+@ProviderFor(ThemeColor)
+final themeColorProvider =
+    AutoDisposeNotifierProvider<ThemeColor, Color>.internal(
+  ThemeColor.new,
+  name: r'themeColorProvider',
+  debugGetCreateSourceHash:
+      const bool.fromEnvironment('dart.vm.product') ? null : _$themeColorHash,
+  dependencies: null,
+  allTransitiveDependencies: null,
+);
+
+typedef _$ThemeColor = AutoDisposeNotifier<Color>;
 // ignore_for_file: type=lint
 // ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member
