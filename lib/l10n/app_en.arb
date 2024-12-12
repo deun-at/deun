@@ -47,7 +47,7 @@
       },
       "amount": {
         "type": "double",
-        "format": "compactCurrency",
+        "format": "currency",
         "optionalParameters": {
           "decimalDigits": 2,
           "name": "€"
@@ -70,7 +70,7 @@
       },
       "amount": {
         "type": "double",
-        "format": "compactCurrency",
+        "format": "currency",
         "optionalParameters": {
           "decimalDigits": 2,
           "name": "€"
@@ -88,7 +88,7 @@
       },
       "amount": {
         "type": "double",
-        "format": "compactCurrency",
+        "format": "currency",
         "optionalParameters": {
           "decimalDigits": 2,
           "name": "€"

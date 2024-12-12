@@ -176,22 +176,21 @@ class _GroupListState extends ConsumerState<GroupList> {
   }
 }
 
-class GroupShareWidget extends StatefulWidget {
+class GroupShareWidget extends StatelessWidget {
   const GroupShareWidget({super.key, required this.group});
 
   final Group group;
 
   @override
-  State<GroupShareWidget> createState() => _GroupShareWidgetState();
-}
-
-class _GroupShareWidgetState extends State<GroupShareWidget> {
-  @override
   Widget build(BuildContext context) {
     double totalSharedSum = 0;
 
-    List<Widget> sharedWidget = widget.group.groupSharesSummary.entries.map(
+    List<Widget> sharedWidget = group.groupSharesSummary.entries.map(
       (e) {
+        if (e.value == 0) {
+          return const SizedBox();
+        }
+
         totalSharedSum += e.value;
         Color textColor = Colors.red;
         String paidByYourself = "";
@@ -199,6 +198,7 @@ class _GroupShareWidgetState extends State<GroupShareWidget> {
           paidByYourself = "yes";
           textColor = Colors.green;
         }
+        textColor = Theme.of(context).colorScheme.onSurface;
 
         return Align(
           alignment: Alignment.bottomLeft,
@@ -224,6 +224,7 @@ class _GroupShareWidgetState extends State<GroupShareWidget> {
       totalSharedText = AppLocalizations.of(context)!.allDone;
       textColorAll = Theme.of(context).colorScheme.onSurface;
     }
+    textColorAll = Theme.of(context).colorScheme.onSurface;
 
     sharedWidget.insert(
         0,
