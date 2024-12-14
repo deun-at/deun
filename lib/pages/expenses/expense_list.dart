@@ -53,7 +53,7 @@ class _ExpenseListState extends ConsumerState<ExpenseList> {
                             child: Text(
                               value,
                               textAlign: TextAlign.center,
-                              style: Theme.of(context).textTheme.titleMedium,
+                              style: Theme.of(context).textTheme.bodyMedium,
                             ),
                           ),
                       itemBuilder: (context, expense) {

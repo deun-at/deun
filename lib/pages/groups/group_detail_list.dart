@@ -1,3 +1,4 @@
+import 'package:deun/helper/helper.dart';
 import 'package:deun/main.dart';
 import 'package:deun/pages/groups/group_model.dart';
 import 'package:deun/provider.dart';
@@ -7,6 +8,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../expenses/expense_model.dart';
 
@@ -27,6 +29,18 @@ class _GroupDetailListState extends ConsumerState<GroupDetailList> {
   @override
   Widget build(BuildContext context) {
     final AsyncValue<Group> groupDetail = ref.watch(groupDetailProvider(widget.group.id));
+
+    supabase
+        .channel('public:group_shares_summary')
+        .onPostgresChanges(
+            event: PostgresChangeEvent.all,
+            schema: 'public',
+            table: 'group_shares_summary',
+            callback: (payload) {
+              debugPrint('Change received: ${payload.toString()}');
+              updateExpenseList();
+            })
+        .subscribe();
 
     return switch (groupDetail) {
       AsyncData(:final value) => value.expenses!.isEmpty
@@ -65,13 +79,19 @@ class _GroupDetailListState extends ConsumerState<GroupDetailList> {
                                     padding: const EdgeInsets.fromLTRB(10, 5, 5, 10),
                                     child: Column(
                                       children: [
-                                        Align(
-                                          alignment: Alignment.bottomLeft,
-                                          child: Text(
-                                            expense.name,
-                                            style: Theme.of(context).textTheme.headlineMedium,
-                                          ),
-                                        ),
+                                        Row(
+                                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                            crossAxisAlignment: CrossAxisAlignment.start,
+                                            children: [
+                                              Flexible(
+                                                  child: Text(
+                                                expense.name,
+                                                style: Theme.of(context).textTheme.headlineMedium,
+                                                overflow: TextOverflow.ellipsis,
+                                              )),
+                                              Text(formatDate(expense.expenseDate),
+                                                  style: Theme.of(context).textTheme.bodySmall)
+                                            ]),
                                         ExpenseShareWidget(expense: expense),
                                       ],
                                     )))));

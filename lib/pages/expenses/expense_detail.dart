@@ -78,6 +78,7 @@ class _ExpenseBottomSheetState extends State<ExpenseBottomSheet> {
             child: Text(AppLocalizations.of(context)!.delete),
             onPressed: () async {
               await widget.expense!.delete();
+              //pop both dialog and edit page, because this item is not existing anymore
               Navigator.pop(context);
               Navigator.pop(modalContext);
             },
@@ -151,20 +152,21 @@ class _ExpenseBottomSheetState extends State<ExpenseBottomSheet> {
                           ),
                           const SizedBox(height: spacing),
                           FormBuilderChoiceChip(
-                              name: "paid_by",
-                              decoration: InputDecoration(
-                                labelText: AppLocalizations.of(context)!.expensePaidBy,
-                                border: InputBorder.none,
-                                contentPadding: const EdgeInsets.all(0),
-                              ),
-                              initialValue: widget.expense?.paidBy ?? supabase.auth.currentUser?.email,
-                              spacing: 8,
-                              options: widget.group.groupMembers
-                                  .map((e) => FormBuilderChipOption(
-                                        value: e.email,
-                                        child: Text(e.displayName),
-                                      ))
-                                  .toList()),
+                            name: "paid_by",
+                            decoration: InputDecoration(
+                              labelText: AppLocalizations.of(context)!.expensePaidBy,
+                              border: InputBorder.none,
+                              contentPadding: const EdgeInsets.all(0),
+                            ),
+                            initialValue: widget.expense?.paidBy ?? supabase.auth.currentUser?.email,
+                            spacing: 8,
+                            options: widget.group.groupMembers
+                                .map((e) => FormBuilderChipOption(
+                                      value: e.email,
+                                      child: Text(e.displayName),
+                                    ))
+                                .toList(),
+                          ),
                           const SizedBox(height: spacing),
                           FormBuilderDateTimePicker(
                             name: "expense_date",

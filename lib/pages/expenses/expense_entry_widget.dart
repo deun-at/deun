@@ -8,7 +8,8 @@ import '../groups/group_member_model.dart';
 import 'expense_entry_model.dart';
 
 class ExpenseEntryWidget extends StatefulWidget {
-  const ExpenseEntryWidget({super.key, required this.expenseEntry, required this.index, required this.onRemove, required this.groupMembers});
+  const ExpenseEntryWidget(
+      {super.key, required this.expenseEntry, required this.index, required this.onRemove, required this.groupMembers});
 
   final int index;
   final ExpenseEntry expenseEntry;
@@ -63,7 +64,8 @@ class _ExpenseEntryWidgetState extends State<ExpenseEntryWidget> {
                         keyboardType: const TextInputType.numberWithOptions(decimal: true),
                         inputFormatters: [DecimalTextInputFormatter(decimalRange: 2)],
                         autovalidateMode: AutovalidateMode.onUserInteraction,
-                        validator: FormBuilderValidators.required(errorText: AppLocalizations.of(context)!.expenseEntryAmountValidationEmpty),
+                        validator: FormBuilderValidators.required(
+                            errorText: AppLocalizations.of(context)!.expenseEntryAmountValidationEmpty),
                         decoration: InputDecoration(
                           border: const OutlineInputBorder(),
                           labelText: AppLocalizations.of(context)!.expenseEntryAmount,
@@ -83,7 +85,8 @@ class _ExpenseEntryWidgetState extends State<ExpenseEntryWidget> {
                             .toSet()
                         : widget.groupMembers.map((e) => e.email).toSet(),
                     autovalidateMode: AutovalidateMode.onUserInteraction,
-                    validator: FormBuilderValidators.required(errorText: AppLocalizations.of(context)!.expenseEntrySharesValidationEmpty),
+                    validator: FormBuilderValidators.required(
+                        errorText: AppLocalizations.of(context)!.expenseEntrySharesValidationEmpty),
                     builder: (FormFieldState<dynamic> field) {
                       Set<String> fieldValue = field.value;
 

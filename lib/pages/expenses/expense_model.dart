@@ -67,7 +67,8 @@ class Expense {
       query = query.eq('group_id', groupId);
     }
 
-    List<Map<String, dynamic>> data = await query.order('expense_date');
+    //created_at as fallback if multiple entrys are on the same date/check if name makes more senses
+    List<Map<String, dynamic>> data = await query.order('expense_date').order('created_at');
 
     List<Expense> retData = List.empty(growable: true);
 
