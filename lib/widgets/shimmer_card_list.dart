@@ -23,8 +23,7 @@ class ShimmerCardList extends StatefulWidget {
   State<StatefulWidget> createState() => ShimmerCardListState();
 }
 
-class ShimmerCardListState extends State<ShimmerCardList>
-    with SingleTickerProviderStateMixin {
+class ShimmerCardListState extends State<ShimmerCardList> with SingleTickerProviderStateMixin {
   late AnimationController _shimmerController;
 
   @override
@@ -53,39 +52,38 @@ class ShimmerCardListState extends State<ShimmerCardList>
         ],
         begin: const Alignment(-1.0, -0.3),
         end: const Alignment(1.0, 0.3),
-        transform:
-            _SlidingGradientTransform(slidePercent: _shimmerController.value),
+        transform: _SlidingGradientTransform(slidePercent: _shimmerController.value),
       );
 
   Listenable get shimmerChanges => _shimmerController;
 
   @override
   Widget build(BuildContext context) {
-    return SafeArea(
-        child: AnimatedBuilder(
-            animation: _shimmerController,
-            builder: (context, child) {
-              return ShaderMask(
-                  shaderCallback: (bounds) {
-                    return gradient.createShader(bounds);
-                  },
-                  blendMode: BlendMode.srcATop,
-                  child: ListView(
-                    physics: const NeverScrollableScrollPhysics(),
-                    children: List.generate(
-                        widget.listEntryLength,
-                        (index) => Padding(
-                              padding: const EdgeInsets.all(8.0),
-                              child: Container(
-                                width: double.infinity,
-                                height: widget.height,
-                                decoration: BoxDecoration(
-                                  color: Colors.black,
-                                  borderRadius: BorderRadius.circular(16),
-                                ),
-                              ),
-                            )),
-                  ));
-            }));
+    return AnimatedBuilder(
+        animation: _shimmerController,
+        builder: (context, child) {
+          return ShaderMask(
+              shaderCallback: (bounds) {
+                return gradient.createShader(bounds);
+              },
+              blendMode: BlendMode.srcATop,
+              child: ListView(
+                padding: EdgeInsets.zero,
+                physics: const NeverScrollableScrollPhysics(),
+                children: List.generate(
+                    widget.listEntryLength,
+                    (index) => Padding(
+                          padding: const EdgeInsets.all(8.0),
+                          child: Container(
+                            width: double.infinity,
+                            height: widget.height,
+                            decoration: BoxDecoration(
+                              color: Colors.black,
+                              borderRadius: BorderRadius.circular(16),
+                            ),
+                          ),
+                        )),
+              ));
+        });
   }
 }

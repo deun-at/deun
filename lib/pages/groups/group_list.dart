@@ -81,6 +81,7 @@ class _GroupListState extends ConsumerState<GroupList> {
                 await updateGroupList();
               },
               child: ListView.builder(
+                padding: EdgeInsets.zero,
                 itemCount: value.length,
                 itemBuilder: (context, index) {
                   // Access the Group instance

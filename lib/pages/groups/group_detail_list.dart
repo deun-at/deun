@@ -54,6 +54,7 @@ class _GroupDetailListState extends ConsumerState<GroupDetailList> {
                 await updateExpenseList();
               },
               child: ListView.builder(
+                  padding: EdgeInsets.zero,
                   itemCount: value.expenses!.length,
                   itemBuilder: (context, index) {
                     Expense expense = value.expenses![index];
