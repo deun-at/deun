@@ -21,6 +21,7 @@ dependencies:
   grouped_list: ^6.0.0
   intl: any
   riverpod_annotation: ^2.6.1
+  sign_in_with_apple: ^6.1.4
   supabase_auth_ui: ^0.5.1
   supabase_flutter: ^2.8.0
 
@@ -30,6 +31,7 @@ dev_dependencies:
   flutter_lints: ^3.0.0
   riverpod_generator: ^2.4.0
   build_runner: ^2.4.11
+  build_web_compilers: ^4.0.10
 
 flutter:
   generate: true

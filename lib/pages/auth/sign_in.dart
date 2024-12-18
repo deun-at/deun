@@ -1,8 +1,6 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:supabase_auth_ui/supabase_auth_ui.dart';
 
-import '../../constants.dart';
 import '../../main.dart';
 
 class SignUp extends StatelessWidget {
@@ -14,27 +12,6 @@ class SignUp extends StatelessWidget {
       body: ListView(
         padding: const EdgeInsets.all(24.0),
         children: [
-          SupaEmailAuth(
-            redirectTo: kIsWeb ? null : 'io.supabase.flutter://',
-            onSignInComplete: (response) {},
-            onSignUpComplete: (response) async {
-              Navigator.of(context).pushReplacementNamed('/');
-            },
-            metadataFields: [
-              MetaDataField(
-                prefixIcon: const Icon(Icons.person),
-                label: 'Display Name',
-                key: 'display_name',
-                validator: (val) {
-                  if (val == null || val.isEmpty) {
-                    return 'Please enter a Display Name';
-                  }
-                  return null;
-                },
-              ),
-            ],
-          ),
-          spacer,
           SupaSocialsAuth(
             colored: true,
             nativeGoogleAuthConfig: const NativeGoogleAuthConfig(
@@ -42,7 +19,7 @@ class SignUp extends StatelessWidget {
               iosClientId: '820724879316-8sacuk8sjju1rvr878gl9lqin0or5h9d.apps.googleusercontent.com',
             ),
             enableNativeAppleAuth: false,
-            socialProviders: const [/* OAuthProvider.apple, */ OAuthProvider.google],
+            socialProviders: const [/*OAuthProvider.apple,*/ OAuthProvider.google, OAuthProvider.github],
             onError: (error) {
               debugPrint(error.toString());
             },
