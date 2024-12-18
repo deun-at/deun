@@ -1,8 +1,11 @@
-version: '3'
-
 services:
-  frontend:
+  flutter-web-app:
     build:
-      context: ./
+      context: .
+      dockerfile: Dockerfile
     ports:
-      - "9001"
+      - "8080:8080"
+    volumes:
+      - .:/app
+    stdin_open: true
+    tty: true
