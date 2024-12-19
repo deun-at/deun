@@ -30,7 +30,7 @@ jobs:
 
       # Step 5: Deploy to GitHub Pages
       - name: Deploy to GitHub Pages
-        uses: JamesIves/github-pages-deploy-action@v5
+        uses: JamesIves/github-pages-deploy-action@v4
         with:
           branch: main       # The branch of your GitHub Pages repo.
           folder: build/web  # The build output directory.
