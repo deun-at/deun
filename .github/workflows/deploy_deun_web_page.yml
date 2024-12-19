@@ -1,0 +1,39 @@
+name: Deploy Deun Web Page
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      # Step 1: Checkout the code
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      # Step 2: Set up Flutter
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: "stable"
+
+      # Step 3: Install dependencies
+      - name: Install Flutter Dependencies
+        run: flutter pub get
+
+      # Step 4: Build Flutter Web
+      - name: Build Flutter Web
+        run: flutter build web
+
+      # Step 5: Deploy to GitHub Pages
+      - name: Deploy to GitHub Pages
+        uses: JamesIves/github-pages-deploy-action@v5
+        with:
+          branch: main       # The branch of your GitHub Pages repo.
+          folder: build/web  # The build output directory.
+          repository-name: deun-at/deun-at.github.io
+          target-folder: docs
+          token: ${{ secrets.GITHUB_TOKEN }}
