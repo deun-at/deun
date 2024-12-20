@@ -33,6 +33,13 @@ jobs:
       - name: Build Flutter Web
         run: flutter build web
 
+      - name: Configure SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.DEPLOY_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan github.com >> ~/.ssh/known_hosts
+      
       # Step 5: Deploy to GitHub Pages
       - name: Deploy to GitHub Pages
         uses: JamesIves/github-pages-deploy-action@v4
@@ -40,4 +47,4 @@ jobs:
           branch: main       # The branch of your GitHub Pages repo.
           folder: build/web  # The build output directory.
           repository-name: deun-at/deun-at.github.io
-          token: ${{ secrets.GITHUB_TOKEN }}
+          token: ${{ secrets.DEPLOY_KEY }}
