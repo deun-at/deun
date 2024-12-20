@@ -35,5 +35,4 @@ jobs:
           branch: main       # The branch of your GitHub Pages repo.
           folder: build/web  # The build output directory.
           repository-name: deun-at/deun-at.github.io
-          target-folder: docs
           token: ${{ secrets.GITHUB_TOKEN }}
