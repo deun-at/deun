@@ -12,14 +12,13 @@ jobs:
     steps:
       # Step 1: Checkout the code
       - name: Checkout Repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       # Step 2: Set up Flutter
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
         with:
           channel: stable
-          flutter-version-file: pubspec.yaml
 
       # Step 3: Install dependencies
       - name: Install Flutter Dependencies
