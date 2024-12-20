@@ -31,7 +31,7 @@ jobs:
 
       # Step 4: Build Flutter Web
       - name: Build Flutter Web
-        run: flutter build web
+        run: flutter build web --base-href / --release
 
       - name: Configure SSH
         run: |
