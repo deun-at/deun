@@ -1,5 +1,8 @@
 name: Deploy Deun Web Page
 
+permissions:
+  contents: write
+
 on:
   push:
     branches:
