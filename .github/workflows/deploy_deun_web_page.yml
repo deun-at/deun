@@ -1,7 +1,9 @@
 name: Deploy Deun Web Page
 
 permissions:
+  pull-requests: write
   contents: write
+  repository-projects: write
 
 on:
   push:
