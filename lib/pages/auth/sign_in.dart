@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:supabase_auth_ui/supabase_auth_ui.dart';
 
@@ -20,16 +21,17 @@ class SignUp extends StatelessWidget {
             ),
             enableNativeAppleAuth: false,
             socialProviders: const [/*OAuthProvider.apple,*/ OAuthProvider.google, OAuthProvider.github],
+            redirectUrl: kIsWeb ? null : 'app.deun.www://login-callback',
             onError: (error) {
               debugPrint(error.toString());
             },
             onSuccess: (session) async {
-              debugPrint(session.toString());
+              // debugPrint(session.toString());
               debugPrint(session.user.userMetadata.toString());
               await supabase.from("user").upsert({
                 'email': session.user.email,
                 'user_id': session.user.id,
-                'display_name': session.user.userMetadata?['name'] ?? session.user.userMetadata?['display_name'],
+                'display_name': session.user.userMetadata?['name'],
               });
             },
           ),

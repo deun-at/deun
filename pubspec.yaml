@@ -20,6 +20,7 @@ dependencies:
   google_sign_in: ^6.2.2
   grouped_list: ^6.0.0
   intl: any
+  msix: ^3.16.8
   riverpod_annotation: ^2.6.1
   sign_in_with_apple: ^6.1.4
   supabase_auth_ui: ^0.5.1
@@ -32,6 +33,12 @@ dev_dependencies:
   riverpod_generator: ^2.4.0
   build_runner: ^2.4.11
   build_web_compilers: ^4.0.10
+
+msix_config:
+  display_name: Deun
+  msix_version: 1.0.0.2
+  protocol_activation: https # Add the protocols to activate the app
+  app_uri_handler_hosts: www.deun.app, deun.app # Add the app uri handler hosts. You can't use patterns here.
 
 flutter:
   generate: true
