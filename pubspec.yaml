@@ -1,5 +1,5 @@
 name: deun
-description: "A new Flutter project."
+description: "Share Expenses with Friends"
 publish_to: 'none'
 version: 0.1.0
 
@@ -33,6 +33,7 @@ dev_dependencies:
   riverpod_generator: ^2.4.0
   build_runner: ^2.4.11
   build_web_compilers: ^4.0.10
+  flutter_launcher_icons: ^0.14.2
 
 msix_config:
   display_name: Deun

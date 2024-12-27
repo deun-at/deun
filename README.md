@@ -1,3 +1,3 @@
 # deun
 
-A new Flutter project.
+Share Expenses with friends.

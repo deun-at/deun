@@ -93,8 +93,8 @@ class _GroupBottomSheetState extends ConsumerState<GroupBottomSheet> {
     const double spacing = 10;
     final isLoading = ref.watch(_isLoading);
 
-    return WillPopScope(
-        onWillPop: () async => !isLoading, // Prevent back navigation if loading
+    return PopScope(
+        canPop: !isLoading, // Prevent back navigation if loading
         child: Stack(children: [
           DraggableScrollableSheet(
               expand: false,
