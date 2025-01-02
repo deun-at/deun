@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:supabase_auth_ui/supabase_auth_ui.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 import '../../main.dart';
 
@@ -9,7 +10,7 @@ class SignUp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Sign In'), centerTitle: true),
+      appBar: AppBar(title: Text(AppLocalizations.of(context)!.signIn), centerTitle: true),
       body: ListView(
         padding: const EdgeInsets.all(24.0),
         children: [
@@ -26,13 +27,15 @@ class SignUp extends StatelessWidget {
               debugPrint(error.toString());
             },
             onSuccess: (session) async {
-              // debugPrint(session.toString());
-              debugPrint(session.user.userMetadata.toString());
-              await supabase.from("user").upsert({
-                'email': session.user.email,
-                'user_id': session.user.id,
-                'display_name': session.user.userMetadata?['name'],
-              });
+              try {
+                await supabase.from("user").insert({
+                  'email': session.user.email,
+                  'user_id': session.user.id,
+                  'display_name': session.user.userMetadata?['name'],
+                });
+              } catch (e) {
+                debugPrint(e.toString());
+              }
             },
           ),
         ],

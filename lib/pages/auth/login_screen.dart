@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 import '../../constants.dart';
 
@@ -23,6 +24,8 @@ class LoginScreen extends StatelessWidget {
       theme: ThemeData(colorSchemeSeed: ColorSeed.baseColor.color, useMaterial3: true, brightness: Brightness.light),
       darkTheme: ThemeData(colorSchemeSeed: ColorSeed.baseColor.color, useMaterial3: true, brightness: Brightness.dark),
       themeMode: ThemeMode.system,
+      localizationsDelegates: AppLocalizations.localizationsDelegates,
+      supportedLocales: AppLocalizations.supportedLocales,
       initialRoute: '/',
       routes: {
         '/': (context) => const SignUp(),
