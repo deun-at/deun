@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:supabase_auth_ui/supabase_auth_ui.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
@@ -35,6 +36,8 @@ class SignUp extends StatelessWidget {
                 });
               } catch (e) {
                 debugPrint(e.toString());
+              } finally {
+                // context.go('/');
               }
             },
           ),

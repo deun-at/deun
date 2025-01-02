@@ -74,116 +74,118 @@ class _GroupListState extends ConsumerState<GroupList> {
           title: Text(AppLocalizations.of(context)!.groups),
           centerTitle: true,
         ),
-        body: switch (groupList) {
-          AsyncData(:final value) => value.isEmpty
-              ? EmptyListWidget(
-                  label: AppLocalizations.of(context)!.groupNoEntries,
-                  onRefresh: () async {
-                    await updateGroupList();
-                  })
-              : RefreshIndicator(
-                  onRefresh: () async {
-                    await updateGroupList();
-                  },
-                  child: ListView.builder(
-                    padding: EdgeInsets.zero,
-                    itemCount: value.length,
-                    itemBuilder: (context, index) {
-                      // Access the Group instance
-                      Group group = value[index];
+        body: Container(
+            color: Theme.of(context).colorScheme.surface,
+            child: switch (groupList) {
+              AsyncData(:final value) => value.isEmpty
+                  ? EmptyListWidget(
+                      label: AppLocalizations.of(context)!.groupNoEntries,
+                      onRefresh: () async {
+                        await updateGroupList();
+                      })
+                  : RefreshIndicator(
+                      onRefresh: () async {
+                        await updateGroupList();
+                      },
+                      child: ListView.builder(
+                        padding: EdgeInsets.zero,
+                        itemCount: value.length,
+                        itemBuilder: (context, index) {
+                          // Access the Group instance
+                          Group group = value[index];
 
-                      Color colorSeedValue = Color(group.colorValue);
+                          Color colorSeedValue = Color(group.colorValue);
 
-                      return Padding(
-                          padding: const EdgeInsets.all(8.0),
-                          child: Hero(
-                              tag: "group_card_${group.id}",
-                              child: Material(
-                                  child: Card(
-                                      elevation: 5,
-                                      color: Theme.of(context).colorScheme.surfaceContainer,
-                                      surfaceTintColor: colorSeedValue,
-                                      shadowColor: Colors.transparent,
-                                      child: InkWell(
-                                          borderRadius: BorderRadius.circular(12.0),
-                                          onTap: () {
-                                            ref.read(themeColorProvider.notifier).setColor(Color(group.colorValue));
-                                            GoRouter.of(context).push("/group/details", extra: group).then(
-                                              (value) async {
-                                                ref.read(themeColorProvider.notifier).resetColor();
-                                                await updateGroupList();
+                          return Padding(
+                              padding: const EdgeInsets.all(8.0),
+                              child: Hero(
+                                  tag: "group_card_${group.id}",
+                                  child: Material(
+                                      child: Card(
+                                          elevation: 5,
+                                          color: Theme.of(context).colorScheme.surfaceContainer,
+                                          surfaceTintColor: colorSeedValue,
+                                          shadowColor: Colors.transparent,
+                                          child: InkWell(
+                                              borderRadius: BorderRadius.circular(12.0),
+                                              onTap: () {
+                                                ref.read(themeColorProvider.notifier).setColor(Color(group.colorValue));
+                                                GoRouter.of(context).push("/group/details", extra: group).then(
+                                                  (value) async {
+                                                    ref.read(themeColorProvider.notifier).resetColor();
+                                                    await updateGroupList();
+                                                  },
+                                                );
                                               },
-                                            );
-                                          },
-                                          child: Padding(
-                                              padding: const EdgeInsets.fromLTRB(10, 5, 5, 10),
-                                              child: Column(
-                                                children: [
-                                                  Row(
-                                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                              child: Padding(
+                                                  padding: const EdgeInsets.fromLTRB(10, 5, 5, 10),
+                                                  child: Column(
                                                     children: [
-                                                      Flexible(
-                                                          child: Text(
-                                                        group.name,
-                                                        style: Theme.of(context).textTheme.headlineMedium,
-                                                        overflow: TextOverflow.ellipsis,
-                                                      )),
-                                                      Directionality(
-                                                        textDirection: TextDirection.rtl,
-                                                        child: MenuAnchor(
-                                                          builder: (context, controller, child) {
-                                                            return IconButton(
-                                                              icon: const Icon(Icons.more_vert),
-                                                              onPressed: () {
-                                                                if (controller.isOpen) {
-                                                                  controller.close();
-                                                                } else {
-                                                                  controller.open();
-                                                                }
-                                                              },
-                                                            );
-                                                          },
-                                                          menuChildren: [
-                                                            MenuItemButton(
-                                                              closeOnActivate: true,
-                                                              onPressed: () {
-                                                                GoRouter.of(context)
-                                                                    .push("/group/edit", extra: group)
-                                                                    .then(
-                                                                  (value) async {
-                                                                    await updateGroupList();
+                                                      Row(
+                                                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                                        children: [
+                                                          Flexible(
+                                                              child: Text(
+                                                            group.name,
+                                                            style: Theme.of(context).textTheme.headlineMedium,
+                                                            overflow: TextOverflow.ellipsis,
+                                                          )),
+                                                          Directionality(
+                                                            textDirection: TextDirection.rtl,
+                                                            child: MenuAnchor(
+                                                              builder: (context, controller, child) {
+                                                                return IconButton(
+                                                                  icon: const Icon(Icons.more_vert),
+                                                                  onPressed: () {
+                                                                    if (controller.isOpen) {
+                                                                      controller.close();
+                                                                    } else {
+                                                                      controller.open();
+                                                                    }
                                                                   },
                                                                 );
                                                               },
-                                                              trailingIcon: const Icon(Icons.edit),
-                                                              child: Text(AppLocalizations.of(context)!.edit),
+                                                              menuChildren: [
+                                                                MenuItemButton(
+                                                                  closeOnActivate: true,
+                                                                  onPressed: () {
+                                                                    GoRouter.of(context)
+                                                                        .push("/group/edit", extra: group)
+                                                                        .then(
+                                                                      (value) async {
+                                                                        await updateGroupList();
+                                                                      },
+                                                                    );
+                                                                  },
+                                                                  trailingIcon: const Icon(Icons.edit),
+                                                                  child: Text(AppLocalizations.of(context)!.edit),
+                                                                ),
+                                                                MenuItemButton(
+                                                                  closeOnActivate: true,
+                                                                  onPressed: () => openDeleteItemDialog(context, group),
+                                                                  trailingIcon: const Icon(Icons.delete),
+                                                                  child: Text(AppLocalizations.of(context)!.delete),
+                                                                ),
+                                                              ],
                                                             ),
-                                                            MenuItemButton(
-                                                              closeOnActivate: true,
-                                                              onPressed: () => openDeleteItemDialog(context, group),
-                                                              trailingIcon: const Icon(Icons.delete),
-                                                              child: Text(AppLocalizations.of(context)!.delete),
-                                                            ),
-                                                          ],
-                                                        ),
+                                                          ),
+                                                        ],
                                                       ),
+                                                      GroupShareWidget(group: group),
                                                     ],
-                                                  ),
-                                                  GroupShareWidget(group: group),
-                                                ],
-                                              )))))));
-                    },
-                  )),
-          AsyncError() => EmptyListWidget(
-              label: AppLocalizations.of(context)!.groupNoEntries,
-              onRefresh: () async {
-                await updateGroupList();
-              }),
-          _ => const ShimmerCardList(
-              height: 120,
-              listEntryLength: 8,
-            ),
-        },
+                                                  )))))));
+                        },
+                      )),
+              AsyncError() => EmptyListWidget(
+                  label: AppLocalizations.of(context)!.groupNoEntries,
+                  onRefresh: () async {
+                    await updateGroupList();
+                  }),
+              _ => const ShimmerCardList(
+                  height: 120,
+                  listEntryLength: 8,
+                ),
+            }),
         floatingActionButton: FloatingActionButton.extended(
           onPressed: () {
             GoRouter.of(context).push("/group/edit").then(

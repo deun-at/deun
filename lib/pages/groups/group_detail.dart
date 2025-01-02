@@ -82,7 +82,8 @@ class _GroupDetailState extends ConsumerState<GroupDetail> {
                             ),
                           ),
                         ],
-                    body: GroupDetailList(group: widget.group)))),
+                    body: Container(
+                        color: Theme.of(context).colorScheme.surface, child: GroupDetailList(group: widget.group))))),
         floatingActionButton: FloatingActionButton.extended(
             onPressed: () {
               GoRouter.of(context).push("/group/details/expense", extra: {'group': widget.group, 'expense': null}).then(
