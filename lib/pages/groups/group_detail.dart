@@ -33,66 +33,72 @@ class _GroupDetailState extends ConsumerState<GroupDetail> {
     final AsyncValue<Group> groupDetail = ref.watch(groupDetailProvider(widget.group.id));
 
     return Scaffold(
-        body: Hero(
-            tag: "group_card_${widget.group.id}",
-            child: Material(
-                child: NestedScrollView(
-                    headerSliverBuilder: (context, innerBoxIsScrolled) => [
-                          SliverAppBar(
-                            expandedHeight: 120,
-                            flexibleSpace: FlexibleSpaceBar(
-                              title: Text(widget.group.name, maxLines: 1, overflow: TextOverflow.ellipsis),
-                              centerTitle: false,
-                            ),
-                            floating: true, // Your appBar appears immediately
-                            snap: true, // Your appBar displayed %100 or %0
-                            pinned: true, // Your appBar pinned to top
-                          ),
-                          SliverToBoxAdapter(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                switch (groupDetail) {
-                                  AsyncData(:final value) => Padding(
-                                      padding: const EdgeInsets.fromLTRB(16.0, 5.0, 16.0, 5.0),
-                                      child: GroupShareWidget(group: value)),
-                                  _ => const Padding(
-                                      padding: EdgeInsets.fromLTRB(5.0, 5.0, 5.0, 5.0),
-                                      child: Column(
-                                          mainAxisAlignment: MainAxisAlignment.start,
-                                          crossAxisAlignment: CrossAxisAlignment.start,
-                                          children: [
-                                            SizedBox(
-                                                height: 25,
-                                                width: 250,
-                                                child: ShimmerCardList(
-                                                  height: 20,
-                                                  listEntryLength: 1,
-                                                )),
-                                            SizedBox(
-                                                height: 25,
-                                                width: 250,
-                                                child: ShimmerCardList(
-                                                  height: 15,
-                                                  listEntryLength: 1,
-                                                )),
-                                          ])),
-                                }
-                              ],
-                            ),
-                          ),
-                        ],
-                    body: Container(
-                        color: Theme.of(context).colorScheme.surface, child: GroupDetailList(group: widget.group))))),
-        floatingActionButton: FloatingActionButton.extended(
-            onPressed: () {
-              GoRouter.of(context).push("/group/details/expense", extra: {'group': widget.group, 'expense': null}).then(
-                (value) async {
-                  await updateExpenseList();
-                },
-              );
-            },
-            label: Text(AppLocalizations.of(context)!.addNewExpense),
-            icon: const Icon(Icons.add)));
+        body: NestedScrollView(
+            headerSliverBuilder: (context, innerBoxIsScrolled) => [
+                  SliverAppBar(
+                    expandedHeight: 120,
+                    flexibleSpace: FlexibleSpaceBar(
+                      title: Text(widget.group.name, maxLines: 1, overflow: TextOverflow.ellipsis),
+                      centerTitle: false,
+                    ),
+                    floating: true, // Your appBar appears immediately
+                    snap: true, // Your appBar displayed %100 or %0
+                    pinned: true, // Your appBar pinned to top
+                  ),
+                  SliverToBoxAdapter(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        switch (groupDetail) {
+                          AsyncData(:final value) => Padding(
+                              padding: const EdgeInsets.fromLTRB(16.0, 5.0, 16.0, 5.0),
+                              child: GroupShareWidget(group: value)),
+                          _ => const Padding(
+                              padding: EdgeInsets.fromLTRB(5.0, 5.0, 5.0, 5.0),
+                              child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.start,
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    SizedBox(
+                                        height: 25,
+                                        width: 250,
+                                        child: ShimmerCardList(
+                                          height: 20,
+                                          listEntryLength: 1,
+                                        )),
+                                    SizedBox(
+                                        height: 25,
+                                        width: 250,
+                                        child: ShimmerCardList(
+                                          height: 15,
+                                          listEntryLength: 1,
+                                        )),
+                                  ])),
+                        }
+                      ],
+                    ),
+                  ),
+                ],
+            body: Container(color: Theme.of(context).colorScheme.surface, child: GroupDetailList(group: widget.group))),
+        floatingActionButton:
+            Column(mainAxisAlignment: MainAxisAlignment.end, crossAxisAlignment: CrossAxisAlignment.end, children: [
+          FloatingActionButton.small(
+            onPressed: () {},
+            child: const Icon(Icons.money),
+          ),
+          const SizedBox(height: 8),
+          FloatingActionButton.extended(
+              heroTag: "floating_action_button_main",
+              onPressed: () {
+                GoRouter.of(context)
+                    .push("/group/details/expense", extra: {'group': widget.group, 'expense': null}).then(
+                  (value) async {
+                    await updateExpenseList();
+                  },
+                );
+              },
+              label: Text(AppLocalizations.of(context)!.addNewExpense),
+              icon: const Icon(Icons.add))
+        ]));
   }
 }

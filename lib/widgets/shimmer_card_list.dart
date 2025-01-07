@@ -73,7 +73,7 @@ class ShimmerCardListState extends State<ShimmerCardList> with SingleTickerProvi
                 children: List.generate(
                     widget.listEntryLength,
                     (index) => Padding(
-                          padding: const EdgeInsets.all(8.0),
+                          padding: const EdgeInsets.fromLTRB(8.0, 8.0, 8.0, 0),
                           child: Container(
                             width: double.infinity,
                             height: widget.height,

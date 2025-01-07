@@ -1,4 +1,5 @@
 import 'package:deun/pages/expenses/expense_model.dart';
+import 'package:deun/pages/groups/group_detail_list.dart';
 import 'package:deun/provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -60,6 +61,8 @@ class _NavigationScreenState extends ConsumerState<NavigationScreen> {
                     // child route
                     GoRoute(
                         path: 'details',
+                        // pageBuilder: (context, state) =>
+                        // NoTransitionPage(child: GroupDetail(group: state.extra as Group)),
                         pageBuilder: (context, state) {
                           var group = state.extra as Group;
 
@@ -134,13 +137,14 @@ class _NavigationScreenState extends ConsumerState<NavigationScreen> {
     return CustomTransitionPage(
       key: key,
       child: child,
-      transitionDuration: Durations.long1,
-      reverseTransitionDuration: Durations.long1,
+      transitionDuration: Durations.medium1,
+      reverseTransitionDuration: Durations.medium1,
       transitionsBuilder: (context, animation, secondaryAnimation, child) {
-        // Change the opacity of the screen using a Curve based on the the animation's
-        // value
-        return FadeTransition(
-          opacity: CurveTween(curve: Curves.easeIn).animate(animation),
+        return SlideTransition(
+          position: Tween<Offset>(
+            begin: const Offset(1, 0),
+            end: Offset.zero,
+          ).animate(animation),
           child: child,
         );
       },

@@ -53,15 +53,15 @@ class _GroupDetailListState extends ConsumerState<GroupDetailList> {
               onRefresh: () async {
                 await updateExpenseList();
               },
-              child: ListView.builder(
-                  padding: EdgeInsets.zero,
-                  itemCount: value.expenses!.length,
-                  itemBuilder: (context, index) {
-                    Expense expense = value.expenses![index];
+              child: Padding(
+                  padding: const EdgeInsets.only(right: 8.0, left: 8.0),
+                  child: ListView.builder(
+                      padding: EdgeInsets.zero,
+                      itemCount: value.expenses!.length,
+                      itemBuilder: (context, index) {
+                        Expense expense = value.expenses![index];
 
-                    return Padding(
-                        padding: const EdgeInsets.all(8.0),
-                        child: Card(
+                        return Card(
                             elevation: 8,
                             color: Theme.of(context).colorScheme.surfaceContainerHighest,
                             surfaceTintColor: Color(widget.group.colorValue),
@@ -95,8 +95,8 @@ class _GroupDetailListState extends ConsumerState<GroupDetailList> {
                                             ]),
                                         ExpenseShareWidget(expense: expense),
                                       ],
-                                    )))));
-                  })),
+                                    ))));
+                      }))),
       AsyncError() => EmptyListWidget(
           label: AppLocalizations.of(context)!.groupNoEntries,
           onRefresh: () async {
