@@ -23,22 +23,7 @@ class SignUp extends StatelessWidget {
             enableNativeAppleAuth: false,
             socialProviders: const [/*OAuthProvider.apple,*/ OAuthProvider.google, OAuthProvider.github],
             redirectUrl: kIsWeb ? null : 'app.deun.www://login-callback',
-            onError: (error) {
-              debugPrint(error.toString());
-            },
-            onSuccess: (session) async {
-              try {
-                await supabase.from("user").insert({
-                  'email': session.user.email,
-                  'user_id': session.user.id,
-                  'display_name': session.user.userMetadata?['name'],
-                });
-              } catch (e) {
-                debugPrint(e.toString());
-              } finally {
-                // context.go('/');
-              }
-            },
+            onSuccess: (session) {},
           ),
         ],
       ),

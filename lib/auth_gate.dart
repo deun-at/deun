@@ -17,6 +17,18 @@ class AuthGate extends StatelessWidget {
           return const LoginScreen();
         }
 
+        try {
+          supabase.from("user").insert({
+            'email': snapshot.data?.session?.user.email,
+            'user_id': snapshot.data?.session?.user.id,
+            'display_name': snapshot.data?.session?.user.userMetadata?['name'],
+          });
+        } catch (e) {
+          debugPrint(e.toString());
+        } finally {
+          debugPrint('User inserted');
+        }
+
         return const NavigationScreen();
       },
     );
