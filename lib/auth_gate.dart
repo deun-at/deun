@@ -13,20 +13,23 @@ class AuthGate extends StatelessWidget {
     return StreamBuilder<AuthState?>(
       stream: supabase.auth.onAuthStateChange,
       builder: (context, snapshot) {
-        if (snapshot.data?.session == null) {
+        final Session? session = snapshot.data?.session;
+        final AuthChangeEvent? event = snapshot.data?.event;
+
+        if (session == null) {
           return const LoginScreen();
         }
 
-        try {
-          supabase.from("user").insert({
-            'email': snapshot.data?.session?.user.email,
-            'user_id': snapshot.data?.session?.user.id,
-            'display_name': snapshot.data?.session?.user.userMetadata?['name'],
-          });
-        } catch (e) {
-          debugPrint(e.toString());
-        } finally {
-          debugPrint('User inserted');
+        if (event == AuthChangeEvent.signedIn) {
+          try {
+            supabase.from("user").upsert({
+              'email': session.user.email,
+              'user_id': session.user.id,
+              'display_name': session.user.userMetadata?['name'],
+            }, ignoreDuplicates: true).whenComplete(() {});
+          } catch (e) {
+            debugPrint(e.toString());
+          }
         }
 
         return const NavigationScreen();
