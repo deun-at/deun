@@ -81,10 +81,13 @@ class _ExpenseBottomSheetState extends ConsumerState<ExpenseBottomSheet> {
             ),
             child: Text(AppLocalizations.of(context)!.delete),
             onPressed: () async {
-              await widget.expense!.delete();
-              //pop both dialog and edit page, because this item is not existing anymore
-              Navigator.pop(context);
-              Navigator.pop(modalContext);
+              try {
+                await widget.expense!.delete();
+              } finally {
+                //pop both dialog and edit page, because this item is not existing anymore
+                Navigator.pop(context);
+                Navigator.pop(modalContext);
+              }
             },
           ),
         ],

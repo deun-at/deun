@@ -11,6 +11,7 @@ class Expense {
   late String? paidBy;
   late String expenseDate;
   late String createdAt;
+  late bool isPaidBackRow;
 
   late Map<String, ExpenseEntry> expenseEntries;
 
@@ -30,6 +31,7 @@ class Expense {
     paidBy = json["paid_by"];
     paidByDisplayName = json["paid_by_display_name"];
     createdAt = json["created_at"];
+    isPaidBackRow = json["is_paid_back_row"];
 
     amount = 0.0;
     expenseEntries = <String, ExpenseEntry>{};

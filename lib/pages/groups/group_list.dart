@@ -1,7 +1,6 @@
 import 'package:deun/main.dart';
 import 'package:deun/widgets/empty_list_widget.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
@@ -46,7 +45,6 @@ class _GroupListState extends ConsumerState<GroupList> {
             child: Text(AppLocalizations.of(context)!.delete),
             onPressed: () async {
               await group.delete();
-              await updateGroupList();
               Navigator.of(context).pop();
             },
           ),
@@ -65,6 +63,17 @@ class _GroupListState extends ConsumerState<GroupList> {
             event: PostgresChangeEvent.all,
             schema: 'public',
             table: 'group_shares_summary',
+            callback: (payload) {
+              updateGroupList();
+            })
+        .subscribe();
+
+    supabase
+        .channel('public:group')
+        .onPostgresChanges(
+            event: PostgresChangeEvent.all,
+            schema: 'public',
+            table: 'group',
             callback: (payload) {
               updateGroupList();
             })
@@ -106,10 +115,10 @@ class _GroupListState extends ConsumerState<GroupList> {
                                   child: InkWell(
                                       borderRadius: BorderRadius.circular(12.0),
                                       onTap: () {
-                                        // ref.read(themeColorProvider.notifier).setColor(Color(group.colorValue));
+                                        ref.read(themeColorProvider.notifier).setColor(Color(group.colorValue));
                                         GoRouter.of(context).push("/group/details", extra: group).then(
                                           (value) async {
-                                            // ref.read(themeColorProvider.notifier).resetColor();
+                                            ref.read(themeColorProvider.notifier).resetColor();
                                             await updateGroupList();
                                           },
                                         );
@@ -146,11 +155,7 @@ class _GroupListState extends ConsumerState<GroupList> {
                                                         MenuItemButton(
                                                           closeOnActivate: true,
                                                           onPressed: () {
-                                                            GoRouter.of(context).push("/group/edit", extra: group).then(
-                                                              (value) async {
-                                                                await updateGroupList();
-                                                              },
-                                                            );
+                                                            GoRouter.of(context).push("/group/edit", extra: group);
                                                           },
                                                           trailingIcon: const Icon(Icons.edit),
                                                           child: Text(AppLocalizations.of(context)!.edit),
@@ -184,11 +189,7 @@ class _GroupListState extends ConsumerState<GroupList> {
         floatingActionButton: FloatingActionButton.extended(
           heroTag: "floating_action_button_main",
           onPressed: () {
-            GoRouter.of(context).push("/group/edit").then(
-              (value) async {
-                await updateGroupList();
-              },
-            );
+            GoRouter.of(context).push("/group/edit");
           },
           label: Text(AppLocalizations.of(context)!.addNewGroup),
           icon: const Icon(Icons.add),
@@ -205,30 +206,37 @@ class GroupShareWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     double totalSharedSum = 0;
 
-    List<Widget> sharedWidget = group.groupSharesSummary.entries.map(
-      (e) {
-        if (e.value == 0) {
-          return const SizedBox();
-        }
+    List<Widget> sharedWidget = group.groupSharesSummary
+        .map(
+          (String key, GroupSharesSummary e) {
+            if (e.shareAmount == 0) {
+              return MapEntry(key, const SizedBox());
+            }
 
-        totalSharedSum += e.value;
-        Color textColor = Colors.red;
-        String paidByYourself = "";
-        if (e.value > 0) {
-          paidByYourself = "yes";
-          textColor = Colors.green;
-        }
-        textColor = Theme.of(context).colorScheme.onSurface;
+            totalSharedSum += e.shareAmount;
+            Color textColor = Colors.red;
+            String paidByYourself = "";
+            if (e.shareAmount > 0) {
+              paidByYourself = "yes";
+              textColor = Colors.green;
+            }
+            textColor = Theme.of(context).colorScheme.onSurface;
 
-        return Align(
-          alignment: Alignment.bottomLeft,
-          child: Text(
-            AppLocalizations.of(context)!.groupDisplayAmount(e.key, paidByYourself, e.value.abs()),
-            style: Theme.of(context).textTheme.labelLarge!.copyWith(color: textColor),
-          ),
-        );
-      },
-    ).toList();
+            return MapEntry(
+                key,
+                Align(
+                  alignment: Alignment.bottomLeft,
+                  child: Text(
+                    AppLocalizations.of(context)!
+                        .groupDisplayAmount(e.dipslayName, paidByYourself, e.shareAmount.abs()),
+                    style: Theme.of(context).textTheme.labelLarge!.copyWith(color: textColor),
+                  ),
+                ));
+          },
+        )
+        .entries
+        .map((e) => e.value)
+        .toList();
 
     String paidByYourselfAll = "";
     Color textColorAll = Colors.red;

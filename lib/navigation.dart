@@ -1,7 +1,6 @@
 import 'package:deun/pages/expenses/expense_model.dart';
-import 'package:deun/pages/groups/group_detail_list.dart';
+import 'package:deun/pages/groups/group_detail_payment.dart';
 import 'package:deun/provider.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -84,7 +83,20 @@ class _NavigationScreenState extends ConsumerState<NavigationScreen> {
                                     expense: expense,
                                   ),
                                 );
-                              })
+                              }),
+                          GoRoute(
+                              path: 'payment',
+                              pageBuilder: (context, state) {
+                                var extra = state.extra as Map<String, dynamic>;
+                                var group = extra['group'] as Group;
+
+                                return ModalBottomSheetPage(
+                                  key: state.pageKey,
+                                  builder: (context) => GroupPaymentBottomSheet(
+                                    group: group,
+                                  ),
+                                );
+                              }),
                         ]),
                     GoRoute(
                         path: 'edit',
@@ -97,7 +109,7 @@ class _NavigationScreenState extends ConsumerState<NavigationScreen> {
                               group: group,
                             ),
                           );
-                        })
+                        }),
                   ],
                 ),
               ],

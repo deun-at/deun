@@ -1,10 +1,13 @@
+import 'package:deun/main.dart';
 import 'package:deun/pages/groups/group_detail_list.dart';
 import 'package:deun/pages/groups/group_list.dart';
 import 'package:deun/widgets/shimmer_card_list.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../provider.dart';
 
 import 'group_model.dart';
@@ -19,9 +22,36 @@ class GroupDetail extends ConsumerStatefulWidget {
 }
 
 class _GroupDetailState extends ConsumerState<GroupDetail> {
+  final ScrollController _scrollController = ScrollController();
+  bool _showText = true;
+
   @override
   void initState() {
     super.initState();
+    _scrollController.addListener(_handleScroll);
+  }
+
+  @override
+  void dispose() {
+    _scrollController.removeListener(_handleScroll);
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  void _handleScroll() {
+    if (_scrollController.position.userScrollDirection == ScrollDirection.reverse) {
+      if (_showText) {
+        setState(() {
+          _showText = false;
+        });
+      }
+    } else if (_scrollController.position.userScrollDirection == ScrollDirection.forward) {
+      if (!_showText) {
+        setState(() {
+          _showText = true;
+        });
+      }
+    }
   }
 
   Future<void> updateExpenseList() async {
@@ -32,8 +62,21 @@ class _GroupDetailState extends ConsumerState<GroupDetail> {
   Widget build(BuildContext context) {
     final AsyncValue<Group> groupDetail = ref.watch(groupDetailProvider(widget.group.id));
 
+    supabase
+        .channel('public:group_shares_summary')
+        .onPostgresChanges(
+            event: PostgresChangeEvent.all,
+            schema: 'public',
+            table: 'group_shares_summary',
+            callback: (payload) {
+              debugPrint('Group shares summary changed');
+              updateExpenseList();
+            })
+        .subscribe();
+
     return Scaffold(
         body: NestedScrollView(
+            controller: _scrollController,
             headerSliverBuilder: (context, innerBoxIsScrolled) => [
                   SliverAppBar(
                     expandedHeight: 120,
@@ -83,21 +126,23 @@ class _GroupDetailState extends ConsumerState<GroupDetail> {
         floatingActionButton:
             Column(mainAxisAlignment: MainAxisAlignment.end, crossAxisAlignment: CrossAxisAlignment.end, children: [
           FloatingActionButton.small(
-            onPressed: () {},
-            child: const Icon(Icons.money),
+            onPressed: () {
+              GoRouter.of(context).push("/group/details/payment", extra: {'group': widget.group});
+            },
+            child: const Icon(Icons.credit_card),
           ),
           const SizedBox(height: 8),
           FloatingActionButton.extended(
               heroTag: "floating_action_button_main",
+              extendedIconLabelSpacing: _showText ? 10 : 0,
+              extendedPadding: _showText ? null : const EdgeInsets.all(16),
               onPressed: () {
-                GoRouter.of(context)
-                    .push("/group/details/expense", extra: {'group': widget.group, 'expense': null}).then(
-                  (value) async {
-                    await updateExpenseList();
-                  },
-                );
+                GoRouter.of(context).push("/group/details/expense", extra: {'group': widget.group, 'expense': null});
               },
-              label: Text(AppLocalizations.of(context)!.addNewExpense),
+              label: AnimatedSize(
+                duration: Durations.short4,
+                child: _showText ? Text(AppLocalizations.of(context)!.addNewExpense) : const Text(""),
+              ),
               icon: const Icon(Icons.add))
         ]));
   }

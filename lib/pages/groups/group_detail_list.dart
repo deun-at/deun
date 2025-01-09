@@ -8,7 +8,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../expenses/expense_model.dart';
 
@@ -30,18 +29,6 @@ class _GroupDetailListState extends ConsumerState<GroupDetailList> {
   Widget build(BuildContext context) {
     final AsyncValue<Group> groupDetail = ref.watch(groupDetailProvider(widget.group.id));
 
-    supabase
-        .channel('public:group_shares_summary')
-        .onPostgresChanges(
-            event: PostgresChangeEvent.all,
-            schema: 'public',
-            table: 'group_shares_summary',
-            callback: (payload) {
-              debugPrint('Change received: ${payload.toString()}');
-              updateExpenseList();
-            })
-        .subscribe();
-
     return switch (groupDetail) {
       AsyncData(:final value) => value.expenses!.isEmpty
           ? EmptyListWidget(
@@ -61,6 +48,18 @@ class _GroupDetailListState extends ConsumerState<GroupDetailList> {
                       itemBuilder: (context, index) {
                         Expense expense = value.expenses![index];
 
+                        if (expense.isPaidBackRow) {
+                          return Card(
+                              elevation: 8,
+                              color: Theme.of(context).colorScheme.surfaceContainer,
+                              shadowColor: Colors.transparent,
+                              child: Padding(
+                                padding: const EdgeInsets.fromLTRB(10, 5, 10, 5),
+                                child: Text(AppLocalizations.of(context)!
+                                    .groupDisplayPaidBack(expense.paidByDisplayName ?? '', '', expense.amount)),
+                              ));
+                        }
+
                         return Card(
                             elevation: 8,
                             color: Theme.of(context).colorScheme.surfaceContainerHighest,
@@ -70,14 +69,10 @@ class _GroupDetailListState extends ConsumerState<GroupDetailList> {
                                 borderRadius: BorderRadius.circular(12.0),
                                 onTap: () {
                                   GoRouter.of(context).push("/group/details/expense",
-                                      extra: {'group': widget.group, 'expense': expense}).then(
-                                    (value) async {
-                                      await updateExpenseList();
-                                    },
-                                  );
+                                      extra: {'group': widget.group, 'expense': expense});
                                 },
                                 child: Padding(
-                                    padding: const EdgeInsets.fromLTRB(10, 5, 5, 10),
+                                    padding: const EdgeInsets.fromLTRB(10, 5, 10, 5),
                                     child: Column(
                                       children: [
                                         Row(

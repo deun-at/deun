@@ -5,6 +5,11 @@ import '../../main.dart';
 import '../expenses/expense_model.dart';
 import 'group_member_model.dart';
 
+class GroupSharesSummary {
+  late String dipslayName;
+  late double shareAmount;
+}
+
 class Group {
   late String id;
   late String name;
@@ -13,7 +18,7 @@ class Group {
   late String userId;
 
   late List<GroupMember> groupMembers;
-  late Map<String, double> groupSharesSummary;
+  late Map<String, GroupSharesSummary> groupSharesSummary;
 
   late List<Expense>? expenses;
 
@@ -39,11 +44,23 @@ class Group {
     if (json["group_shares_summary"] != null) {
       for (var element in json["group_shares_summary"]) {
         if (element['paid_by'] == currentUserEmail) {
-          groupSharesSummary[element['paid_for_display_name']] =
-              (groupSharesSummary[element['paid_for_display_name']] ?? 0) + element['share_amount'];
+          if (groupSharesSummary[element['paid_for']] == null) {
+            groupSharesSummary[element['paid_for']] = GroupSharesSummary();
+            groupSharesSummary[element['paid_for']]!.dipslayName = element['paid_for_display_name'];
+            groupSharesSummary[element['paid_for']]!.shareAmount = 0;
+          }
+
+          groupSharesSummary[element['paid_for']]!.shareAmount =
+              groupSharesSummary[element['paid_for']]!.shareAmount + element['share_amount'];
         } else if (element['paid_for'] == currentUserEmail) {
-          groupSharesSummary[element['paid_by_display_name']] =
-              (groupSharesSummary[element['paid_by_display_name']] ?? 0) - element['share_amount'];
+          if (groupSharesSummary[element['paid_by']] == null) {
+            groupSharesSummary[element['paid_by']] = GroupSharesSummary();
+            groupSharesSummary[element['paid_by']]!.dipslayName = element['paid_by_display_name'];
+            groupSharesSummary[element['paid_by']]!.shareAmount = 0;
+          }
+
+          groupSharesSummary[element['paid_by']]!.shareAmount =
+              groupSharesSummary[element['paid_by']]!.shareAmount - element['share_amount'];
         }
       }
     }
@@ -124,6 +141,16 @@ class Group {
 
       await supabase.from('group_member').insert(upsertGroupMembers);
     }
+  }
+
+  static Future<void> payBack(String groupId, String email, double amount) async {
+    await supabase.rpc('pay_back', params: {
+      "_group_id": groupId,
+      "_paid_by": supabase.auth.currentUser?.email,
+      "_paid_for": email,
+      "_amount": amount
+    });
+    await supabase.rpc('update_group_member_shares', params: {"_group_id": groupId});
   }
 
   Map<String, dynamic> toJson() => {

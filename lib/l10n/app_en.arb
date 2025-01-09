@@ -36,11 +36,11 @@
   "expenseNoEntries": "So empty here :(",
   "expenseDisplayAmount": "{displayName} {expenseType, select, paid{paid} lent{lent} borrowed{borrowed} other{}} {amount}",
   "@expenseDisplayAmount": {
-    "description": "Lable in the expense list of did what.",
+    "description": "Lable in the expense list of what you are owed/what you owe per user.",
     "placeholders": {
       "displayName": {
         "type": "String",
-        "example": "Bob Muster"
+        "example": "Max Muster"
       },
       "expenseType": {
         "type": "String"
@@ -59,11 +59,11 @@
   "expenseNoShares": "You are not involved",
   "groupDisplayAmount": "{paidByYourself, select, yes{{displayName} owes you} other{You owe {displayName}}} {amount}",
   "@groupDisplayAmount": {
-    "description": "Lable in the expense list of did what.",
+    "description": "Lable in the group list/group detail of what you are owed/what you owe per user.",
     "placeholders": {
       "displayName": {
         "type": "String",
-        "example": "Bob Muster"
+        "example": "Max Muster"
       },
       "paidByYourself": {
         "type": "String"
@@ -81,7 +81,7 @@
   },
   "groupDisplaySumAmount": "{paidByYourself, select, yes{You are owed} other{You owe}} {amount}",
   "@groupDisplaySumAmount": {
-    "description": "Lable in the expense list of did what.",
+    "description": "Lable in the group list/group detail of what you are owed/what you owe as a sum.",
     "placeholders": {
       "paidByYourself": {
         "type": "String"
@@ -98,6 +98,49 @@
     }
   },
   "allDone": "all done",
+  "payBack": "Pay back",
+  "payBackDialog": "Pay back {amount} to {displayName}",
+  "@payBackDialog": {
+    "description": "Dialog to confirm that you want to pay back money.",
+    "placeholders": {
+      "displayName": {
+        "type": "String",
+        "example": "Max Muster"
+      },
+      "amount": {
+        "type": "double",
+        "format": "currency",
+        "optionalParameters": {
+          "decimalDigits": 2,
+          "name": "€"
+        },
+        "example": "200.00"
+      }
+    }
+  },
+  "groupDisplayPaidBack": "{paidBy} paid back {amount} to {paidFor}",
+  "@groupDisplayPaidBack": {
+    "description": "ListTile in the group detail of who paid back money.",
+    "placeholders": {
+      "paidBy": {
+        "type": "String",
+        "example": "Max Muster"
+      },
+      "paidFor": {
+        "type": "String",
+        "example": "Max Muster"
+      },
+      "amount": {
+        "type": "double",
+        "format": "currency",
+        "optionalParameters": {
+          "decimalDigits": 2,
+          "name": "€"
+        },
+        "example": "200.00"
+      }
+    }
+  },
   "signIn": "Sign In",
   "settings": "Settings",
   "create": "Create",
