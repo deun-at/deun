@@ -67,7 +67,8 @@ class Group {
   }
 
   delete() async {
-    return await supabase.from('group').delete().eq('id', id);
+    await supabase.from('group').delete().eq('id', id);
+    await supabase.rpc('update_group_member_shares', params: {"_group_id": id});
   }
 
   static Future<List<Group>> fetchData() async {
@@ -141,6 +142,8 @@ class Group {
 
       await supabase.from('group_member').insert(upsertGroupMembers);
     }
+
+    await supabase.rpc('update_group_member_shares', params: {"_group_id": groupId});
   }
 
   static Future<void> payBack(String groupId, String email, double amount) async {

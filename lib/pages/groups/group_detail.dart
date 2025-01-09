@@ -63,13 +63,13 @@ class _GroupDetailState extends ConsumerState<GroupDetail> {
     final AsyncValue<Group> groupDetail = ref.watch(groupDetailProvider(widget.group.id));
 
     supabase
-        .channel('public:group_shares_summary')
+        .channel('public:group_update_checker')
         .onPostgresChanges(
             event: PostgresChangeEvent.all,
             schema: 'public',
-            table: 'group_shares_summary',
+            table: 'group_update_checker',
             callback: (payload) {
-              debugPrint('Group shares summary changed');
+              debugPrint('Group update checker changed');
               updateExpenseList();
             })
         .subscribe();

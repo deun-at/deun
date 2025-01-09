@@ -58,23 +58,13 @@ class _GroupListState extends ConsumerState<GroupList> {
     final AsyncValue<List<Group>> groupList = ref.watch(groupListProvider);
 
     supabase
-        .channel('public:group_shares_summary')
+        .channel('public:group_update_checker')
         .onPostgresChanges(
             event: PostgresChangeEvent.all,
             schema: 'public',
-            table: 'group_shares_summary',
+            table: 'group_update_checker',
             callback: (payload) {
-              updateGroupList();
-            })
-        .subscribe();
-
-    supabase
-        .channel('public:group')
-        .onPostgresChanges(
-            event: PostgresChangeEvent.all,
-            schema: 'public',
-            table: 'group',
-            callback: (payload) {
+              debugPrint("group update checker changed");
               updateGroupList();
             })
         .subscribe();
