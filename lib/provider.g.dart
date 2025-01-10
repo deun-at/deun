@@ -183,6 +183,22 @@ final expenseListProvider = AutoDisposeFutureProvider<List<Expense>>.internal(
 );
 
 typedef ExpenseListRef = AutoDisposeFutureProviderRef<List<Expense>>;
+String _$friendshipListHash() => r'8a6e5c87d5120b81632e885cf1ea9feef644349c';
+
+/// See also [friendshipList].
+@ProviderFor(friendshipList)
+final friendshipListProvider =
+    AutoDisposeFutureProvider<List<Friendship>>.internal(
+  friendshipList,
+  name: r'friendshipListProvider',
+  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
+      ? null
+      : _$friendshipListHash,
+  dependencies: null,
+  allTransitiveDependencies: null,
+);
+
+typedef FriendshipListRef = AutoDisposeFutureProviderRef<List<Friendship>>;
 String _$themeColorHash() => r'4ef7e05d68a34bec800592eac7cd770666832636';
 
 /// See also [ThemeColor].

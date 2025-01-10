@@ -1,4 +1,5 @@
 import 'package:deun/constants.dart';
+import 'package:deun/pages/friends/friendship_model.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
@@ -22,6 +23,11 @@ Future<Group> groupDetail(Ref ref, String groupId) async {
 @riverpod
 Future<List<Expense>> expenseList(Ref ref) async {
   return await Expense.fetchData();
+}
+
+@riverpod
+Future<List<Friendship>> friendshipList(Ref ref) async {
+  return await Friendship.fetchData();
 }
 
 @riverpod

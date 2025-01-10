@@ -71,7 +71,7 @@ class _GroupListState extends ConsumerState<GroupList> {
 
     return Scaffold(
         appBar: AppBar(
-          title: Text(AppLocalizations.of(context)!.groups),
+          title: Text(AppLocalizations.of(context)!.expenses),
           centerTitle: true,
         ),
         body: Container(

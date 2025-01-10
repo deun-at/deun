@@ -1,11 +1,11 @@
 import 'package:deun/pages/expenses/expense_model.dart';
+import 'package:deun/pages/friends/friend_list.dart';
 import 'package:deun/pages/groups/group_detail_payment.dart';
 import 'package:deun/provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'pages/expenses/expense_detail.dart';
-import 'pages/expenses/expense_list.dart';
 import 'pages/groups/group_detail.dart';
 import 'pages/groups/group_detail_edit.dart';
 import 'pages/groups/group_list.dart';
@@ -17,7 +17,7 @@ import 'widgets/modal_bottom_sheet_page.dart';
 
 final _rootNavigatorKey = GlobalKey<NavigatorState>();
 final _shellNavigatorGroupKey = GlobalKey<NavigatorState>(debugLabel: 'shellGroup');
-final _shellNavigatorExpenseKey = GlobalKey<NavigatorState>(debugLabel: 'shellExpense');
+final _shellNavigatorFriendKey = GlobalKey<NavigatorState>(debugLabel: 'shellFriend');
 final _shellNavigatorSettingKey = GlobalKey<NavigatorState>(debugLabel: 'shellSetting');
 
 class NavigationScreen extends ConsumerStatefulWidget {
@@ -114,15 +114,15 @@ class _NavigationScreenState extends ConsumerState<NavigationScreen> {
                 ),
               ],
             ),
-            // second branch (Expense)
+            // second branch (Friend)
             StatefulShellBranch(
-              navigatorKey: _shellNavigatorExpenseKey,
+              navigatorKey: _shellNavigatorFriendKey,
               routes: [
                 // top route inside branch
                 GoRoute(
-                  path: '/expense',
+                  path: '/friend',
                   pageBuilder: (context, state) => const NoTransitionPage(
-                    child: ExpenseList(),
+                    child: FriendList(),
                   ),
                 ),
               ],
@@ -209,14 +209,14 @@ class ScaffoldWithNestedNavigation extends StatelessWidget {
         selectedIndex: navigationShell.currentIndex,
         destinations: <Widget>[
           NavigationDestination(
-            selectedIcon: const Icon(Icons.group),
-            icon: const Icon(Icons.group_outlined),
-            label: AppLocalizations.of(context)!.groups,
-          ),
-          NavigationDestination(
             selectedIcon: const Icon(Icons.receipt_long),
             icon: const Icon(Icons.receipt_long_outlined),
             label: AppLocalizations.of(context)!.expenses,
+          ),
+          NavigationDestination(
+            selectedIcon: const Icon(Icons.group),
+            icon: const Icon(Icons.group_outlined),
+            label: AppLocalizations.of(context)!.friends,
           ),
           NavigationDestination(
             selectedIcon: const Icon(Icons.settings),

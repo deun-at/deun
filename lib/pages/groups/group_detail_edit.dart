@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:collection/collection.dart';
+import 'package:deun/pages/friends/friendship_model.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_form_builder/flutter_form_builder.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -75,7 +76,7 @@ class _GroupBottomSheetState extends ConsumerState<GroupBottomSheet> {
 
     selectedUsers.add(supabase.auth.currentUser?.email ?? '');
 
-    List<User> result = await User.fetchData(input, selectedUsers, 10);
+    List<User> result = await Friendship.fetchFriends(input, selectedUsers, 10);
 
     return result.map((user) => ListTile(
           title: Text(user.displayName),
