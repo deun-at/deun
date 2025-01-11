@@ -50,7 +50,7 @@ class _ExpenseEntryWidgetState extends State<ExpenseEntryWidget> {
                       const SizedBox(width: spacing),
                       IconButton.filledTonal(
                         onPressed: () => widget.onRemove(),
-                        icon: const Icon(Icons.delete),
+                        icon: const Icon(Icons.delete_outline),
                       )
                     ],
                   ),

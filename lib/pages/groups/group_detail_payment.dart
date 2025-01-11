@@ -1,3 +1,4 @@
+import 'package:deun/helper/helper.dart';
 import 'package:deun/provider.dart';
 import 'package:deun/widgets/shimmer_card_list.dart';
 import 'package:flutter/material.dart';
@@ -19,38 +20,6 @@ class _GroupPaymentBottomSheetState extends ConsumerState<GroupPaymentBottomShee
   @override
   void initState() {
     super.initState();
-  }
-
-  void openPayBackDialog(BuildContext modalContext, Group group, String email, GroupSharesSummary groupShare) {
-    showDialog<void>(
-      context: context,
-      builder: (context) => AlertDialog(
-        content:
-            Text(AppLocalizations.of(context)!.payBackDialog(groupShare.dipslayName, groupShare.shareAmount.abs())),
-        actions: <Widget>[
-          TextButton(
-            child: Text(AppLocalizations.of(context)!.cancel),
-            onPressed: () => Navigator.of(context).pop(),
-          ),
-          FilledButton(
-            style: FilledButton.styleFrom(
-              backgroundColor: Theme.of(context).colorScheme.primary,
-              foregroundColor: Theme.of(context).colorScheme.onPrimary,
-            ),
-            child: Text(AppLocalizations.of(context)!.payBack),
-            onPressed: () async {
-              try {
-                await Group.payBack(widget.group.id, email, groupShare.shareAmount.abs());
-              } finally {
-                //pop both dialog and edit page, because this item is not existing anymore
-                Navigator.pop(context);
-                Navigator.pop(modalContext);
-              }
-            },
-          ),
-        ],
-      ),
-    );
   }
 
   @override
@@ -99,5 +68,40 @@ class _GroupPaymentBottomSheetState extends ConsumerState<GroupPaymentBottomShee
                 }),
           );
         });
+  }
+
+  void openPayBackDialog(BuildContext modalContext, Group group, String email, GroupSharesSummary groupShare) {
+    showDialog<void>(
+      context: context,
+      builder: (context) => AlertDialog(
+        content:
+            Text(AppLocalizations.of(context)!.payBackDialog(groupShare.dipslayName, groupShare.shareAmount.abs())),
+        actions: <Widget>[
+          TextButton(
+            child: Text(AppLocalizations.of(context)!.cancel),
+            onPressed: () => Navigator.of(context).pop(),
+          ),
+          FilledButton(
+            style: FilledButton.styleFrom(
+              backgroundColor: Theme.of(context).colorScheme.primary,
+              foregroundColor: Theme.of(context).colorScheme.onPrimary,
+            ),
+            child: Text(AppLocalizations.of(context)!.payBack),
+            onPressed: () async {
+              try {
+                await Group.payBack(widget.group.id, email, groupShare.shareAmount.abs());
+              } finally {
+                //pop both dialog and edit page, because this item is not existing anymore
+                Navigator.pop(context);
+                Navigator.pop(modalContext);
+
+                showSnackBar(
+                    context, AppLocalizations.of(context)!.payBackSuccess(email, groupShare.shareAmount.abs()));
+              }
+            },
+          ),
+        ],
+      ),
+    );
   }
 }

@@ -1,4 +1,8 @@
+import 'dart:ffi';
+
+import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 String toHumanDateString(String? dateTimeIn) {
   if (dateTimeIn == null) return '';
@@ -31,4 +35,19 @@ String formatDate(String? dateString) {
     // Different year, display full date with year
     return DateFormat('d MMM yyyy').format(date);
   }
+}
+
+showSnackBar(BuildContext context, String message) {
+  SnackBar snackBar = SnackBar(
+    behavior: SnackBarBehavior.floating,
+    width: 400.0,
+    content: Text(message),
+    action: SnackBarAction(
+      label: AppLocalizations.of(context)!.close,
+      onPressed: () {},
+    ),
+  );
+
+  ScaffoldMessenger.of(context).hideCurrentSnackBar();
+  ScaffoldMessenger.of(context).showSnackBar(snackBar);
 }

@@ -103,11 +103,11 @@ class _ExpenseBottomSheetState extends ConsumerState<ExpenseBottomSheet> {
     List<Widget> expenseActions = [];
 
     if (widget.expense != null) {
-      expenseActions.add(IconButton(
+      expenseActions.add(IconButton.filledTonal(
         onPressed: () {
           openDeleteItemDialog(context, widget.expense!);
         },
-        icon: const Icon(Icons.delete),
+        icon: const Icon(Icons.delete_outline),
       ));
     }
 

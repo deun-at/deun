@@ -1,3 +1,4 @@
+import 'package:deun/helper/helper.dart';
 import 'package:deun/main.dart';
 import 'package:deun/pages/friends/friendship_model.dart';
 import 'package:deun/pages/users/user_model.dart';
@@ -78,6 +79,7 @@ class _FriendListState extends ConsumerState<FriendList> {
           subtitle: Text(user.email),
           onTap: () {
             Friendship.request(user.email);
+            showSnackBar(context, AppLocalizations.of(context)!.friendshipRequestSent(user.displayName));
             controller.text = "";
           },
         ));
@@ -119,90 +121,105 @@ class _FriendListState extends ConsumerState<FriendList> {
                     pinned: true, // Your appBar pinned to top
                   ),
                 ],
-            body: switch (friendshipProvider) {
-              AsyncData(:final value) => value.isEmpty
-                  ? EmptyListWidget(
+            body: Container(
+                color: Theme.of(context).colorScheme.surface,
+                child: switch (friendshipProvider) {
+                  AsyncData(:final value) => value.isEmpty
+                      ? EmptyListWidget(
+                          label: AppLocalizations.of(context)!.friendsNoEntries,
+                          onRefresh: () async {
+                            updateFriendshipList();
+                          })
+                      : RefreshIndicator(
+                          onRefresh: () async {
+                            updateFriendshipList();
+                          },
+                          child: ListView.builder(
+                            padding: EdgeInsets.zero,
+                            itemCount: value.length,
+                            itemBuilder: (context, index) {
+                              Friendship friendship = value[index];
+                              User user = friendship.user;
+                              Widget leadingHeader = const SizedBox();
+                              Widget trailingButton = const SizedBox();
+
+                              if ((currStatus == "pending" || currStatus == "") && friendship.status == "accepted") {
+                                leadingHeader = Padding(
+                                    padding: const EdgeInsets.only(top: 12, bottom: 12),
+                                    child: Text(
+                                      AppLocalizations.of(context)!.friends,
+                                      style: Theme.of(context).textTheme.headlineSmall,
+                                    ));
+                              } else if (currStatus == "" && friendship.status == "pending") {
+                                leadingHeader = Padding(
+                                    padding: const EdgeInsets.only(top: 12, bottom: 12),
+                                    child: Text(
+                                      AppLocalizations.of(context)!.friendsPending,
+                                      style: Theme.of(context).textTheme.headlineSmall,
+                                    ));
+                              }
+
+                              if (friendship.status == "pending") {
+                                if (friendship.isRequester) {
+                                  trailingButton = IconButton.filledTonal(
+                                    icon: const Icon(Icons.check),
+                                    onPressed: () {
+                                      Friendship.accepted(user.email);
+                                      showSnackBar(
+                                          context, AppLocalizations.of(context)!.friendshipAccept(user.displayName));
+                                    },
+                                  );
+                                } else {
+                                  trailingButton = IconButton.filledTonal(
+                                    style: IconButton.styleFrom(
+                                        backgroundColor: Theme.of(context).colorScheme.errorContainer,
+                                        foregroundColor: Theme.of(context).colorScheme.onErrorContainer),
+                                    icon: const Icon(Icons.cancel_outlined),
+                                    onPressed: () {
+                                      Friendship.cancel(user.email);
+                                      showSnackBar(context,
+                                          AppLocalizations.of(context)!.friendshipRequestCancel(user.displayName));
+                                    },
+                                  );
+                                }
+                              } else {
+                                trailingButton = IconButton.filledTonal(
+                                  style: IconButton.styleFrom(
+                                      backgroundColor: Theme.of(context).colorScheme.errorContainer,
+                                      foregroundColor: Theme.of(context).colorScheme.onErrorContainer),
+                                  icon: const Icon(Icons.delete_outline),
+                                  onPressed: () {
+                                    openRemoveFriendDialog(
+                                      context,
+                                      user,
+                                    );
+                                  },
+                                );
+                              }
+
+                              currStatus = friendship.status;
+                              return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                                Padding(padding: const EdgeInsets.only(left: 15, right: 15), child: leadingHeader),
+                                ListTile(
+                                  title: Text(user.displayName),
+                                  subtitle: Text(user.email),
+                                  trailing: trailingButton,
+                                  onTap: () {},
+                                ),
+                                const Divider(height: 0),
+                              ]);
+                            },
+                          )),
+                  AsyncError() => EmptyListWidget(
                       label: AppLocalizations.of(context)!.friendsNoEntries,
                       onRefresh: () async {
-                        updateFriendshipList();
-                      })
-                  : RefreshIndicator(
-                      onRefresh: () async {
-                        updateFriendshipList();
-                      },
-                      child: ListView.builder(
-                        padding: EdgeInsets.zero,
-                        itemCount: value.length,
-                        itemBuilder: (context, index) {
-                          Friendship friendship = value[index];
-                          User user = friendship.user;
-                          Widget leadingHeader = const SizedBox();
-                          Widget trailingButton = const SizedBox();
-
-                          if ((currStatus == "pending" || currStatus == "") && friendship.status == "accepted") {
-                            leadingHeader = Padding(
-                                padding: const EdgeInsets.only(top: 12),
-                                child: Text(
-                                  AppLocalizations.of(context)!.friends,
-                                  style: Theme.of(context).textTheme.headlineSmall,
-                                ));
-                          } else if (currStatus == "" && friendship.status == "pending") {
-                            leadingHeader = Padding(
-                                padding: const EdgeInsets.only(top: 12),
-                                child: Text(
-                                  AppLocalizations.of(context)!.friendsPending,
-                                  style: Theme.of(context).textTheme.headlineSmall,
-                                ));
-                          }
-
-                          if (friendship.status == "pending") {
-                            if (friendship.isRequester) {
-                              trailingButton = FilledButton(
-                                child: Text(AppLocalizations.of(context)!.accept),
-                                onPressed: () {
-                                  Friendship.accepted(user.email);
-                                },
-                              );
-                            } else {
-                              trailingButton = FilledButton(
-                                child: Text(AppLocalizations.of(context)!.cancel),
-                                onPressed: () {
-                                  Friendship.cancel(user.email);
-                                },
-                              );
-                            }
-                          } else {
-                            trailingButton = FilledButton(
-                              child: Text(AppLocalizations.of(context)!.remove),
-                              onPressed: () {
-                                Friendship.remove(user.email);
-                              },
-                            );
-                          }
-
-                          currStatus = friendship.status;
-                          return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                            Padding(padding: const EdgeInsets.only(left: 15, right: 15), child: leadingHeader),
-                            ListTile(
-                              title: Text(user.displayName),
-                              subtitle: Text(user.email),
-                              trailing: trailingButton,
-                              onTap: () {},
-                            ),
-                            const Divider(height: 0),
-                          ]);
-                        },
-                      )),
-              AsyncError() => EmptyListWidget(
-                  label: AppLocalizations.of(context)!.friendsNoEntries,
-                  onRefresh: () async {
-                    await updateFriendshipList();
-                  }),
-              _ => const ShimmerCardList(
-                  height: 70,
-                  listEntryLength: 20,
-                ),
-            }),
+                        await updateFriendshipList();
+                      }),
+                  _ => const ShimmerCardList(
+                      height: 70,
+                      listEntryLength: 20,
+                    ),
+                })),
         floatingActionButton: SearchAnchor(
           viewHintText: AppLocalizations.of(context)!.groupMemberSelectionEmpty,
           builder: (context, controller) {
@@ -223,5 +240,35 @@ class _FriendListState extends ConsumerState<FriendList> {
             return getUserSuggestions(controller);
           },
         ));
+  }
+
+  void openRemoveFriendDialog(BuildContext modalContext, User user) {
+    showDialog<void>(
+      context: context,
+      builder: (context) => AlertDialog(
+        content: Text(AppLocalizations.of(context)!.removeFriend(user.displayName)),
+        actions: <Widget>[
+          TextButton(
+            child: Text(AppLocalizations.of(context)!.cancel),
+            onPressed: () => Navigator.of(context).pop(),
+          ),
+          FilledButton(
+            style: FilledButton.styleFrom(
+              backgroundColor: Theme.of(context).colorScheme.error,
+              foregroundColor: Theme.of(context).colorScheme.onError,
+            ),
+            child: Text(AppLocalizations.of(context)!.remove),
+            onPressed: () async {
+              try {
+                Friendship.remove(user.email);
+              } finally {
+                Navigator.pop(context);
+                showSnackBar(context, AppLocalizations.of(context)!.friendRemoved(user.displayName));
+              }
+            },
+          ),
+        ],
+      ),
+    );
   }
 }

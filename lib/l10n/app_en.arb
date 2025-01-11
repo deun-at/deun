@@ -118,6 +118,25 @@
       }
     }
   },
+  "payBackSuccess": "You paid back {amount} to {displayName}",
+  "@payBackSuccess": {
+    "description": "Snackbar message when you paid back money.",
+    "placeholders": {
+      "displayName": {
+        "type": "String",
+        "example": "Max Muster"
+      },
+      "amount": {
+        "type": "double",
+        "format": "currency",
+        "optionalParameters": {
+          "decimalDigits": 2,
+          "name": "€"
+        },
+        "example": "200.00"
+      }
+    }
+  },
   "groupDisplayPaidBack": "{paidBy} paid back {amount} to {paidFor}",
   "@groupDisplayPaidBack": {
     "description": "ListTile in the group detail of who paid back money.",
@@ -146,6 +165,56 @@
   "friendsNoEntries": "No friends yet",
   "requestFriendship": "Add friend",
   "friendsPending": "Pending",
+  "friendshipRequestSent": "Request sent to {displayName}",
+  "@friendshipRequestSent": {
+    "description": "Snackbar message when a friendship request was sent.",
+    "placeholders": {
+      "displayName": {
+        "type": "String",
+        "example": "Max Muster"
+      }
+    }
+  },
+  "removeFriend": "Remove {displayName} as a friend",
+  "@removeFriend": {
+    "description": "Dialog to confirm that you want to remove a friend.",
+    "placeholders": {
+      "displayName": {
+        "type": "String",
+        "example": "Max Muster"
+      }
+    }
+  },
+  "friendRemoved": "{displayName} was removed as a friend",
+  "@friendRemoved": {
+    "description": "Snackbar message when a friend was removed.",
+    "placeholders": {
+      "displayName": {
+        "type": "String",
+        "example": "Max Muster"
+      }
+    }
+  },
+  "friendshipAccept": "{displayName} was accepted as a friend",
+  "@friendshipAccept": {
+    "description": "Snackbar message when a friend was accepted.",
+    "placeholders": {
+      "displayName": {
+        "type": "String",
+        "example": "Max Muster"
+      }
+    }
+  },
+  "friendshipRequestCancel": "Request to {displayName} was canceled",
+  "@friendshipRequestCancel": {
+    "description": "Snackbar message when a friendship request was canceled.",
+    "placeholders": {
+      "displayName": {
+        "type": "String",
+        "example": "Max Muster"
+      }
+    }
+  },
   "settings": "Settings",
   "create": "Create",
   "cancel": "Cancel",
@@ -155,6 +224,7 @@
   "save": "Save",
   "accept": "Accept",
   "remove": "Remove",
+  "close": "Close",
   "generalError": "Something went wrong",
   "loading": "Loading",
   "you": "You",
