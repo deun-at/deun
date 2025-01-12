@@ -22,12 +22,12 @@ class GroupDetailList extends ConsumerStatefulWidget {
 
 class _GroupDetailListState extends ConsumerState<GroupDetailList> {
   Future<void> updateExpenseList() async {
-    return ref.refresh(groupDetailProvider(widget.group.id).future);
+    return ref.read(groupDetailNotifierProvider(widget.group.id).notifier).reload(widget.group.id);
   }
 
   @override
   Widget build(BuildContext context) {
-    final AsyncValue<Group> groupDetail = ref.watch(groupDetailProvider(widget.group.id));
+    final AsyncValue<Group> groupDetail = ref.watch(groupDetailNotifierProvider(widget.group.id));
 
     return switch (groupDetail) {
       AsyncData(:final value) => value.expenses!.isEmpty

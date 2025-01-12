@@ -7,7 +7,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
-import 'package:supabase_flutter/supabase_flutter.dart' as supabase_flutter;
 
 import '../../provider.dart';
 import '../../widgets/shimmer_card_list.dart';
@@ -53,7 +52,7 @@ class _FriendListState extends ConsumerState<FriendList> {
   }
 
   Future<void> updateFriendshipList() async {
-    return ref.refresh(friendshipListProvider.future);
+    return ref.read(friendshipListNotifierProvider.notifier).reload();
   }
 
   Future<Iterable<Widget>> getUserSuggestions(SearchController controller) async {
@@ -85,26 +84,10 @@ class _FriendListState extends ConsumerState<FriendList> {
         ));
   }
 
-  Future<void> updateFriendList() async {
-    return ref.refresh(friendshipListProvider.future);
-  }
-
   @override
   Widget build(BuildContext context) {
-    final AsyncValue<List<Friendship>> friendshipProvider = ref.watch(friendshipListProvider);
+    final AsyncValue<List<Friendship>> friendshipProvider = ref.watch(friendshipListNotifierProvider);
     String currStatus = "";
-
-    supabase
-        .channel('public:friendship')
-        .onPostgresChanges(
-            event: supabase_flutter.PostgresChangeEvent.all,
-            schema: 'public',
-            table: 'friendship',
-            callback: (payload) {
-              debugPrint("friendship changed");
-              updateFriendList();
-            })
-        .subscribe();
 
     return Scaffold(
         body: NestedScrollView(

@@ -6,21 +6,38 @@ part of 'provider.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$groupListHash() => r'cc51f06b600a614238f596744a8b09f2cf5ed697';
+String _$expenseListHash() => r'00dca8aef60e04c10e83bf68f036038277de8956';
 
-/// See also [groupList].
-@ProviderFor(groupList)
-final groupListProvider = AutoDisposeFutureProvider<List<Group>>.internal(
-  groupList,
-  name: r'groupListProvider',
+/// See also [expenseList].
+@ProviderFor(expenseList)
+final expenseListProvider = AutoDisposeFutureProvider<List<Expense>>.internal(
+  expenseList,
+  name: r'expenseListProvider',
   debugGetCreateSourceHash:
-      const bool.fromEnvironment('dart.vm.product') ? null : _$groupListHash,
+      const bool.fromEnvironment('dart.vm.product') ? null : _$expenseListHash,
   dependencies: null,
   allTransitiveDependencies: null,
 );
 
-typedef GroupListRef = AutoDisposeFutureProviderRef<List<Group>>;
-String _$groupDetailHash() => r'd59fe9372cf34c22a45f142126b0478ee9e9db2a';
+typedef ExpenseListRef = AutoDisposeFutureProviderRef<List<Expense>>;
+String _$groupListNotifierHash() => r'327b675967e6c93c0f9ec556d8e9f4f6a8f7b5f8';
+
+/// See also [GroupListNotifier].
+@ProviderFor(GroupListNotifier)
+final groupListNotifierProvider =
+    AutoDisposeAsyncNotifierProvider<GroupListNotifier, List<Group>>.internal(
+  GroupListNotifier.new,
+  name: r'groupListNotifierProvider',
+  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
+      ? null
+      : _$groupListNotifierHash,
+  dependencies: null,
+  allTransitiveDependencies: null,
+);
+
+typedef _$GroupListNotifier = AutoDisposeAsyncNotifier<List<Group>>;
+String _$groupDetailNotifierHash() =>
+    r'6f1c21ca5550da7a5ac139b6dd1c5561c5837b6a';
 
 /// Copied from Dart SDK
 class _SystemHash {
@@ -43,27 +60,36 @@ class _SystemHash {
   }
 }
 
-/// See also [groupDetail].
-@ProviderFor(groupDetail)
-const groupDetailProvider = GroupDetailFamily();
+abstract class _$GroupDetailNotifier
+    extends BuildlessAutoDisposeAsyncNotifier<Group> {
+  late final String groupId;
 
-/// See also [groupDetail].
-class GroupDetailFamily extends Family<AsyncValue<Group>> {
-  /// See also [groupDetail].
-  const GroupDetailFamily();
+  FutureOr<Group> build(
+    String groupId,
+  );
+}
 
-  /// See also [groupDetail].
-  GroupDetailProvider call(
+/// See also [GroupDetailNotifier].
+@ProviderFor(GroupDetailNotifier)
+const groupDetailNotifierProvider = GroupDetailNotifierFamily();
+
+/// See also [GroupDetailNotifier].
+class GroupDetailNotifierFamily extends Family<AsyncValue<Group>> {
+  /// See also [GroupDetailNotifier].
+  const GroupDetailNotifierFamily();
+
+  /// See also [GroupDetailNotifier].
+  GroupDetailNotifierProvider call(
     String groupId,
   ) {
-    return GroupDetailProvider(
+    return GroupDetailNotifierProvider(
       groupId,
     );
   }
 
   @override
-  GroupDetailProvider getProviderOverride(
-    covariant GroupDetailProvider provider,
+  GroupDetailNotifierProvider getProviderOverride(
+    covariant GroupDetailNotifierProvider provider,
   ) {
     return call(
       provider.groupId,
@@ -82,32 +108,30 @@ class GroupDetailFamily extends Family<AsyncValue<Group>> {
       _allTransitiveDependencies;
 
   @override
-  String? get name => r'groupDetailProvider';
+  String? get name => r'groupDetailNotifierProvider';
 }
 
-/// See also [groupDetail].
-class GroupDetailProvider extends AutoDisposeFutureProvider<Group> {
-  /// See also [groupDetail].
-  GroupDetailProvider(
+/// See also [GroupDetailNotifier].
+class GroupDetailNotifierProvider
+    extends AutoDisposeAsyncNotifierProviderImpl<GroupDetailNotifier, Group> {
+  /// See also [GroupDetailNotifier].
+  GroupDetailNotifierProvider(
     String groupId,
   ) : this._internal(
-          (ref) => groupDetail(
-            ref as GroupDetailRef,
-            groupId,
-          ),
-          from: groupDetailProvider,
-          name: r'groupDetailProvider',
+          () => GroupDetailNotifier()..groupId = groupId,
+          from: groupDetailNotifierProvider,
+          name: r'groupDetailNotifierProvider',
           debugGetCreateSourceHash:
               const bool.fromEnvironment('dart.vm.product')
                   ? null
-                  : _$groupDetailHash,
-          dependencies: GroupDetailFamily._dependencies,
+                  : _$groupDetailNotifierHash,
+          dependencies: GroupDetailNotifierFamily._dependencies,
           allTransitiveDependencies:
-              GroupDetailFamily._allTransitiveDependencies,
+              GroupDetailNotifierFamily._allTransitiveDependencies,
           groupId: groupId,
         );
 
-  GroupDetailProvider._internal(
+  GroupDetailNotifierProvider._internal(
     super._createNotifier, {
     required super.name,
     required super.dependencies,
@@ -120,13 +144,20 @@ class GroupDetailProvider extends AutoDisposeFutureProvider<Group> {
   final String groupId;
 
   @override
-  Override overrideWith(
-    FutureOr<Group> Function(GroupDetailRef provider) create,
+  FutureOr<Group> runNotifierBuild(
+    covariant GroupDetailNotifier notifier,
   ) {
+    return notifier.build(
+      groupId,
+    );
+  }
+
+  @override
+  Override overrideWith(GroupDetailNotifier Function() create) {
     return ProviderOverride(
       origin: this,
-      override: GroupDetailProvider._internal(
-        (ref) => create(ref as GroupDetailRef),
+      override: GroupDetailNotifierProvider._internal(
+        () => create()..groupId = groupId,
         from: from,
         name: null,
         dependencies: null,
@@ -138,13 +169,14 @@ class GroupDetailProvider extends AutoDisposeFutureProvider<Group> {
   }
 
   @override
-  AutoDisposeFutureProviderElement<Group> createElement() {
-    return _GroupDetailProviderElement(this);
+  AutoDisposeAsyncNotifierProviderElement<GroupDetailNotifier, Group>
+      createElement() {
+    return _GroupDetailNotifierProviderElement(this);
   }
 
   @override
   bool operator ==(Object other) {
-    return other is GroupDetailProvider && other.groupId == groupId;
+    return other is GroupDetailNotifierProvider && other.groupId == groupId;
   }
 
   @override
@@ -156,49 +188,37 @@ class GroupDetailProvider extends AutoDisposeFutureProvider<Group> {
   }
 }
 
-mixin GroupDetailRef on AutoDisposeFutureProviderRef<Group> {
+mixin GroupDetailNotifierRef on AutoDisposeAsyncNotifierProviderRef<Group> {
   /// The parameter `groupId` of this provider.
   String get groupId;
 }
 
-class _GroupDetailProviderElement
-    extends AutoDisposeFutureProviderElement<Group> with GroupDetailRef {
-  _GroupDetailProviderElement(super.provider);
+class _GroupDetailNotifierProviderElement
+    extends AutoDisposeAsyncNotifierProviderElement<GroupDetailNotifier, Group>
+    with GroupDetailNotifierRef {
+  _GroupDetailNotifierProviderElement(super.provider);
 
   @override
-  String get groupId => (origin as GroupDetailProvider).groupId;
+  String get groupId => (origin as GroupDetailNotifierProvider).groupId;
 }
 
-String _$expenseListHash() => r'00dca8aef60e04c10e83bf68f036038277de8956';
+String _$friendshipListNotifierHash() =>
+    r'920f495475a6dc5a3fc18b054b3bddefb15490e3';
 
-/// See also [expenseList].
-@ProviderFor(expenseList)
-final expenseListProvider = AutoDisposeFutureProvider<List<Expense>>.internal(
-  expenseList,
-  name: r'expenseListProvider',
-  debugGetCreateSourceHash:
-      const bool.fromEnvironment('dart.vm.product') ? null : _$expenseListHash,
-  dependencies: null,
-  allTransitiveDependencies: null,
-);
-
-typedef ExpenseListRef = AutoDisposeFutureProviderRef<List<Expense>>;
-String _$friendshipListHash() => r'8a6e5c87d5120b81632e885cf1ea9feef644349c';
-
-/// See also [friendshipList].
-@ProviderFor(friendshipList)
-final friendshipListProvider =
-    AutoDisposeFutureProvider<List<Friendship>>.internal(
-  friendshipList,
-  name: r'friendshipListProvider',
+/// See also [FriendshipListNotifier].
+@ProviderFor(FriendshipListNotifier)
+final friendshipListNotifierProvider = AutoDisposeAsyncNotifierProvider<
+    FriendshipListNotifier, List<Friendship>>.internal(
+  FriendshipListNotifier.new,
+  name: r'friendshipListNotifierProvider',
   debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
       ? null
-      : _$friendshipListHash,
+      : _$friendshipListNotifierHash,
   dependencies: null,
   allTransitiveDependencies: null,
 );
 
-typedef FriendshipListRef = AutoDisposeFutureProviderRef<List<Friendship>>;
+typedef _$FriendshipListNotifier = AutoDisposeAsyncNotifier<List<Friendship>>;
 String _$themeColorHash() => r'4ef7e05d68a34bec800592eac7cd770666832636';
 
 /// See also [ThemeColor].

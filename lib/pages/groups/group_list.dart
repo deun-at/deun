@@ -24,50 +24,12 @@ class _GroupListState extends ConsumerState<GroupList> {
   }
 
   Future<void> updateGroupList() async {
-    return ref.refresh(groupListProvider.future);
-  }
-
-  void openDeleteItemDialog(BuildContext context, Group group) {
-    showDialog<void>(
-      context: context,
-      builder: (context) => AlertDialog(
-        content: Text(AppLocalizations.of(context)!.groupDeleteItemTitle),
-        actions: <Widget>[
-          TextButton(
-            child: Text(AppLocalizations.of(context)!.cancel),
-            onPressed: () => Navigator.of(context).pop(),
-          ),
-          FilledButton(
-            style: FilledButton.styleFrom(
-              backgroundColor: Theme.of(context).colorScheme.error,
-              foregroundColor: Theme.of(context).colorScheme.onError,
-            ),
-            child: Text(AppLocalizations.of(context)!.delete),
-            onPressed: () async {
-              await group.delete();
-              Navigator.of(context).pop();
-            },
-          ),
-        ],
-      ),
-    );
+    await ref.read(groupListNotifierProvider.notifier).reload();
   }
 
   @override
   Widget build(BuildContext context) {
-    final AsyncValue<List<Group>> groupList = ref.watch(groupListProvider);
-
-    supabase
-        .channel('public:group_update_checker')
-        .onPostgresChanges(
-            event: PostgresChangeEvent.all,
-            schema: 'public',
-            table: 'group_update_checker',
-            callback: (payload) {
-              debugPrint("group update checker changed");
-              updateGroupList();
-            })
-        .subscribe();
+    final groupList = ref.watch(groupListNotifierProvider);
 
     return Scaffold(
         appBar: AppBar(
@@ -184,6 +146,32 @@ class _GroupListState extends ConsumerState<GroupList> {
           label: Text(AppLocalizations.of(context)!.addNewGroup),
           icon: const Icon(Icons.add),
         ));
+  }
+
+  void openDeleteItemDialog(BuildContext context, Group group) {
+    showDialog<void>(
+      context: context,
+      builder: (context) => AlertDialog(
+        content: Text(AppLocalizations.of(context)!.groupDeleteItemTitle),
+        actions: <Widget>[
+          TextButton(
+            child: Text(AppLocalizations.of(context)!.cancel),
+            onPressed: () => Navigator.of(context).pop(),
+          ),
+          FilledButton(
+            style: FilledButton.styleFrom(
+              backgroundColor: Theme.of(context).colorScheme.error,
+              foregroundColor: Theme.of(context).colorScheme.onError,
+            ),
+            child: Text(AppLocalizations.of(context)!.delete),
+            onPressed: () async {
+              await group.delete();
+              Navigator.of(context).pop();
+            },
+          ),
+        ],
+      ),
+    );
   }
 }
 

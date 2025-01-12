@@ -24,7 +24,7 @@ class _GroupPaymentBottomSheetState extends ConsumerState<GroupPaymentBottomShee
 
   @override
   Widget build(BuildContext context) {
-    final AsyncValue<Group> groupDetail = ref.watch(groupDetailProvider(widget.group.id));
+    final AsyncValue<Group> groupDetail = ref.watch(groupDetailNotifierProvider(widget.group.id));
     return DraggableScrollableSheet(
         expand: false,
         initialChildSize: 1,
