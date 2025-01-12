@@ -163,6 +163,8 @@
   "signIn": "Sign In",
   "friends": "Friends",
   "friendsNoEntries": "No friends yet",
+  "addFriendshipSelectionEmpty": "Search E-Mail",
+  "addFriendshipNoResult": "No User found with this E-Mail!",
   "requestFriendship": "Add friend",
   "friendsPending": "Pending",
   "friendshipRequestSent": "Request sent to {displayName}",

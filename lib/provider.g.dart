@@ -20,7 +20,7 @@ final expenseListProvider = AutoDisposeFutureProvider<List<Expense>>.internal(
 );
 
 typedef ExpenseListRef = AutoDisposeFutureProviderRef<List<Expense>>;
-String _$groupListNotifierHash() => r'327b675967e6c93c0f9ec556d8e9f4f6a8f7b5f8';
+String _$groupListNotifierHash() => r'7d1676342fb07e2ca143c8cc196b6d33df55eb4a';
 
 /// See also [GroupListNotifier].
 @ProviderFor(GroupListNotifier)
@@ -37,7 +37,7 @@ final groupListNotifierProvider =
 
 typedef _$GroupListNotifier = AutoDisposeAsyncNotifier<List<Group>>;
 String _$groupDetailNotifierHash() =>
-    r'6f1c21ca5550da7a5ac139b6dd1c5561c5837b6a';
+    r'0874588cb5a72e27c3b7a0f9e74e16586f66d28f';
 
 /// Copied from Dart SDK
 class _SystemHash {
@@ -203,7 +203,7 @@ class _GroupDetailNotifierProviderElement
 }
 
 String _$friendshipListNotifierHash() =>
-    r'920f495475a6dc5a3fc18b054b3bddefb15490e3';
+    r'ceb7c5ee49d72b0c3a2bd01a3ae05844bf058f5b';
 
 /// See also [FriendshipListNotifier].
 @ProviderFor(FriendshipListNotifier)

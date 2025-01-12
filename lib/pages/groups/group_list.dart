@@ -1,10 +1,8 @@
-import 'package:deun/main.dart';
 import 'package:deun/widgets/empty_list_widget.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../provider.dart';
 import '../../widgets/shimmer_card_list.dart';
@@ -71,7 +69,6 @@ class _GroupListState extends ConsumerState<GroupList> {
                                         GoRouter.of(context).push("/group/details", extra: group).then(
                                           (value) async {
                                             ref.read(themeColorProvider.notifier).resetColor();
-                                            await updateGroupList();
                                           },
                                         );
                                       },

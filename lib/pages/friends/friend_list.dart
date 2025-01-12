@@ -72,6 +72,13 @@ class _FriendListState extends ConsumerState<FriendList> {
     selectedUsers.add(supabase.auth.currentUser?.email ?? '');
 
     List<User> result = await User.fetchData(input, selectedUsers, 10);
+    if (result.isEmpty) {
+      return [
+        ListTile(
+          title: Text(AppLocalizations.of(context)!.addFriendshipNoResult),
+        )
+      ];
+    }
 
     return result.map((user) => ListTile(
           title: Text(user.displayName),
@@ -87,6 +94,7 @@ class _FriendListState extends ConsumerState<FriendList> {
   @override
   Widget build(BuildContext context) {
     final AsyncValue<List<Friendship>> friendshipProvider = ref.watch(friendshipListNotifierProvider);
+
     String currStatus = "";
 
     return Scaffold(
@@ -204,7 +212,7 @@ class _FriendListState extends ConsumerState<FriendList> {
                     ),
                 })),
         floatingActionButton: SearchAnchor(
-          viewHintText: AppLocalizations.of(context)!.groupMemberSelectionEmpty,
+          viewHintText: AppLocalizations.of(context)!.addFriendshipSelectionEmpty,
           builder: (context, controller) {
             return FloatingActionButton.extended(
                 heroTag: "floating_action_button_main",

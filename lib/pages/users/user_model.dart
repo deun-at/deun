@@ -17,7 +17,7 @@ class User {
     List<Map<String, dynamic>> data = await supabase
         .from("user")
         .select("*")
-        .or("email.ilike.%$searchString%,display_name.ilike.%$searchString%")
+        .eq("email", searchString)
         .not('email', 'in', '(${selectedUsers.join(',')})')
         .order("email")
         .limit(limit);

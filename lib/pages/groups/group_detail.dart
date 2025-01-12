@@ -1,4 +1,3 @@
-import 'package:deun/main.dart';
 import 'package:deun/pages/groups/group_detail_list.dart';
 import 'package:deun/pages/groups/group_list.dart';
 import 'package:deun/widgets/shimmer_card_list.dart';
@@ -7,7 +6,6 @@ import 'package:flutter/rendering.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../provider.dart';
 
 import 'group_model.dart';
@@ -54,25 +52,9 @@ class _GroupDetailState extends ConsumerState<GroupDetail> {
     }
   }
 
-  Future<void> updateExpenseList() async {
-    return ref.read(groupDetailNotifierProvider(widget.group.id).notifier).reload(widget.group.id);
-  }
-
   @override
   Widget build(BuildContext context) {
     final AsyncValue<Group> groupDetail = ref.watch(groupDetailNotifierProvider(widget.group.id));
-
-    supabase
-        .channel('public:group_update_checker')
-        .onPostgresChanges(
-            event: PostgresChangeEvent.all,
-            schema: 'public',
-            table: 'group_update_checker',
-            callback: (payload) {
-              debugPrint('Group update checker changed');
-              updateExpenseList();
-            })
-        .subscribe();
 
     return Scaffold(
         body: NestedScrollView(

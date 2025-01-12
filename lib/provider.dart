@@ -1,9 +1,12 @@
+import 'dart:math';
+
 import 'package:deun/constants.dart';
 import 'package:deun/main.dart';
 import 'package:deun/pages/friends/friendship_model.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
+import 'package:supabase_auth_ui/supabase_auth_ui.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'pages/groups/group_model.dart';
@@ -16,10 +19,9 @@ part 'provider.g.dart';
 class GroupListNotifier extends _$GroupListNotifier {
   @override
   FutureOr<List<Group>> build() async {
-    // Initialize entries when the provider is first used
-    final groupList = await fetchGroupList();
     _subscribeToRealTimeUpdates();
-    return groupList;
+
+    return await fetchGroupList();
   }
 
   Future<void> reload() async {
@@ -32,13 +34,13 @@ class GroupListNotifier extends _$GroupListNotifier {
 
   void _subscribeToRealTimeUpdates() {
     supabase
-        .channel('public:group_update_checker')
+        .channel('public:group_list_checker')
         .onPostgresChanges(
             event: PostgresChangeEvent.all,
             schema: 'public',
             table: 'group_update_checker',
             callback: (payload) async {
-              debugPrint("group update checker changed");
+              debugPrint("group list changed");
               reload();
             })
         .subscribe();
@@ -49,10 +51,9 @@ class GroupListNotifier extends _$GroupListNotifier {
 class GroupDetailNotifier extends _$GroupDetailNotifier {
   @override
   FutureOr<Group> build(String groupId) async {
-    // Initialize entries when the provider is first used
-    final groupList = await fetchGroupDetail(groupId);
     _subscribeToRealTimeUpdates(groupId);
-    return groupList;
+
+    return await fetchGroupDetail(groupId);
   }
 
   Future<void> reload(groupId) async {
@@ -65,13 +66,18 @@ class GroupDetailNotifier extends _$GroupDetailNotifier {
 
   void _subscribeToRealTimeUpdates(String groupId) {
     supabase
-        .channel('public:group_update_checker')
+        .channel('public:group_detail_checker')
         .onPostgresChanges(
             event: PostgresChangeEvent.all,
             schema: 'public',
             table: 'group_update_checker',
+            filter: PostgresChangeFilter(
+              type: PostgresChangeFilterType.eq,
+              column: 'group_id',
+              value: groupId,
+            ),
             callback: (payload) async {
-              debugPrint("group update checker changed");
+              debugPrint("group detail changed");
               reload(groupId);
             })
         .subscribe();
@@ -87,10 +93,9 @@ Future<List<Expense>> expenseList(Ref ref) async {
 class FriendshipListNotifier extends _$FriendshipListNotifier {
   @override
   FutureOr<List<Friendship>> build() async {
-    // Initialize entries when the provider is first used
-    final friendshipList = await fetchFriendshipList();
     _subscribeToRealTimeUpdates();
-    return friendshipList;
+
+    return await fetchFriendshipList();
   }
 
   Future<void> reload() async {
