@@ -2,8 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 class DecimalTextInputFormatter extends TextInputFormatter {
-  DecimalTextInputFormatter({this.decimalRange})
-      : assert(decimalRange == null || decimalRange > 0);
+  DecimalTextInputFormatter({this.decimalRange}) : assert(decimalRange == null || decimalRange > 0);
 
   final int? decimalRange;
 
@@ -20,8 +19,7 @@ class DecimalTextInputFormatter extends TextInputFormatter {
       int baseOffset = newValue.selection.baseOffset;
 
       if (baseOffset > 0) {
-        String? typedCharacter =
-            value.characters.elementAtOrNull(baseOffset - 1);
+        String? typedCharacter = value.characters.elementAtOrNull(baseOffset - 1);
         int typedCharacterInt = typedCharacter?.codeUnitAt(0) ?? 0;
 
         if (typedCharacterInt >= 48 && typedCharacterInt <= 57) {
@@ -51,14 +49,25 @@ class DecimalTextInputFormatter extends TextInputFormatter {
         truncated = oldValue.text;
         newSelection = oldValue.selection.copyWith();
       }
-
-      return TextEditingValue(
-        text: truncated,
-        selection: newSelection,
-        composing: TextRange.empty,
-      );
+    } else {
+      newSelection = newValue.selection;
     }
-    return newValue;
+
+    if (truncated.indexOf('0') == 0 && truncated.length > 1 && truncated.indexOf('.') != 1) {
+      truncated = truncated.replaceAll(RegExp(r'^0'), '');
+      newSelection = TextSelection.collapsed(offset: truncated.length);
+    }
+
+    if (truncated == '') {
+      truncated = '0';
+      newSelection = const TextSelection.collapsed(offset: 1);
+    }
+
+    return TextEditingValue(
+      text: truncated,
+      selection: newSelection,
+      composing: TextRange.empty,
+    );
   }
 
   bool isDoubleDot(String value) {

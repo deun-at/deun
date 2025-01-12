@@ -55,24 +55,72 @@ class _ExpenseEntryWidgetState extends State<ExpenseEntryWidget> {
                     ],
                   ),
                   const SizedBox(height: spacing),
-                  Row(
-                    children: [
-                      Flexible(
-                          child: FormBuilderTextField(
-                        key: ValueKey("${widget.index}_amount"),
-                        name: "expense_entry[${widget.index}][amount]",
-                        keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                        inputFormatters: [DecimalTextInputFormatter(decimalRange: 2)],
-                        autovalidateMode: AutovalidateMode.onUserInteraction,
-                        validator: FormBuilderValidators.required(
-                            errorText: AppLocalizations.of(context)!.expenseEntryAmountValidationEmpty),
-                        decoration: InputDecoration(
-                          border: const OutlineInputBorder(),
-                          labelText: AppLocalizations.of(context)!.expenseEntryAmount,
-                        ),
-                      )),
-                    ],
-                  ),
+                  FormBuilderField(
+                      key: ValueKey("${widget.index}_amount"),
+                      name: "expense_entry[${widget.index}][amount]",
+                      autovalidateMode: AutovalidateMode.onUserInteraction,
+                      validator: FormBuilderValidators.required(
+                          errorText: AppLocalizations.of(context)!.expenseEntryAmountValidationEmpty),
+                      builder: (FormFieldState<dynamic> field) {
+                        return InputDecorator(
+                            decoration: InputDecoration(
+                              errorText: field.errorText,
+                              border: InputBorder.none,
+                              contentPadding: const EdgeInsets.all(0),
+                            ),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Text("€", style: Theme.of(context).textTheme.headlineMedium),
+                                IntrinsicWidth(
+                                    child: ConstrainedBox(
+                                        constraints: BoxConstraints(
+                                          minWidth: 0, // Minimum width
+                                          maxWidth: MediaQuery.of(context).size.width * 0.9, // Max width
+                                        ),
+                                        child: TextFormField(
+                                          initialValue: field.value ?? "0",
+                                          onChanged: (value) {
+                                            field.didChange(value);
+                                          },
+                                          keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                                          inputFormatters: [DecimalTextInputFormatter(decimalRange: 2)],
+                                          style: Theme.of(context).textTheme.headlineMedium,
+                                          decoration: const InputDecoration(
+                                            contentPadding: EdgeInsets.only(right: 8),
+                                            border: InputBorder.none,
+                                            // hintText: AppLocalizations.of(context)!.expenseEntryTitle,
+                                          ),
+                                        ))),
+                              ],
+                            ));
+                      }),
+                  // Row(
+                  //   mainAxisAlignment: MainAxisAlignment.center,
+                  //   children: [
+                  //     Text("€", style: Theme.of(context).textTheme.headlineMedium),
+                  //     IntrinsicWidth(
+                  //         child: ConstrainedBox(
+                  //             constraints: BoxConstraints(
+                  //               minWidth: 50, // Minimum width
+                  //               maxWidth: MediaQuery.of(context).size.width * 0.9, // Max width
+                  //             ),
+                  //             child: FormBuilderTextField(
+                  //               key: ValueKey("${widget.index}_amount"),
+                  //               name: "expense_entry[${widget.index}][amount]",
+                  //               keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                  //               inputFormatters: [DecimalTextInputFormatter(decimalRange: 2)],
+                  //               autovalidateMode: AutovalidateMode.onUserInteraction,
+                  //               validator: FormBuilderValidators.required(
+                  //                   errorText: AppLocalizations.of(context)!.expenseEntryAmountValidationEmpty),
+                  //               style: Theme.of(context).textTheme.headlineMedium,
+                  //               decoration: InputDecoration(
+                  //                 border: InputBorder.none,
+                  //                 // hintText: AppLocalizations.of(context)!.expenseEntryTitle,
+                  //               ),
+                  //             ))),
+                  //   ],
+                  // ),
                   const SizedBox(height: spacing),
                   FormBuilderField(
                     key: ValueKey("${widget.index}_shares"),
