@@ -217,6 +217,21 @@
       }
     }
   },
+  "toCurrency": "{amount}",
+  "@toCurrency": {
+    "description": "",
+    "placeholders": {
+      "amount": {
+        "type": "double",
+        "format": "currency",
+        "optionalParameters": {
+          "decimalDigits": 2,
+          "name": "€"
+        },
+        "example": "200.00"
+      }
+    }
+  },
   "settings": "Settings",
   "create": "Create",
   "cancel": "Cancel",

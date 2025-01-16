@@ -63,13 +63,13 @@ class _GroupDetailListState extends ConsumerState<GroupDetailList> {
                         return Card(
                             elevation: 8,
                             color: Theme.of(context).colorScheme.surfaceContainerHighest,
-                            surfaceTintColor: Color(widget.group.colorValue),
+                            surfaceTintColor: Color(value.colorValue),
                             shadowColor: Colors.transparent,
                             child: InkWell(
                                 borderRadius: BorderRadius.circular(12.0),
                                 onTap: () {
-                                  GoRouter.of(context).push("/group/details/expense",
-                                      extra: {'group': widget.group, 'expense': expense});
+                                  GoRouter.of(context)
+                                      .push("/group/details/expense", extra: {'group': value, 'expense': expense});
                                 },
                                 child: Padding(
                                     padding: const EdgeInsets.fromLTRB(10, 5, 10, 5),

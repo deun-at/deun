@@ -186,7 +186,9 @@ class _ExpenseBottomSheetState extends ConsumerState<ExpenseBottomSheet> {
                                         options: widget.group.groupMembers
                                             .map((e) => FormBuilderChipOption(
                                                   value: e.email,
-                                                  child: Text(e.displayName),
+                                                  child: Text(e.email == supabase.auth.currentUser?.email
+                                                      ? AppLocalizations.of(context)!.you
+                                                      : e.displayName),
                                                 ))
                                             .toList(),
                                       ),

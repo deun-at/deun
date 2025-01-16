@@ -203,7 +203,7 @@ class _GroupDetailNotifierProviderElement
 }
 
 String _$friendshipListNotifierHash() =>
-    r'ceb7c5ee49d72b0c3a2bd01a3ae05844bf058f5b';
+    r'b10672c661b7b864fe6cbd5154cf7d64b649f036';
 
 /// See also [FriendshipListNotifier].
 @ProviderFor(FriendshipListNotifier)
@@ -219,6 +219,153 @@ final friendshipListNotifierProvider = AutoDisposeAsyncNotifierProvider<
 );
 
 typedef _$FriendshipListNotifier = AutoDisposeAsyncNotifier<List<Friendship>>;
+String _$friendshipDetailNotifierHash() =>
+    r'9bea82c9be1fd123e7a3d773ea57fda328e2e8f7';
+
+abstract class _$FriendshipDetailNotifier
+    extends BuildlessAutoDisposeAsyncNotifier<Friendship> {
+  late final String email;
+
+  FutureOr<Friendship> build(
+    String email,
+  );
+}
+
+/// See also [FriendshipDetailNotifier].
+@ProviderFor(FriendshipDetailNotifier)
+const friendshipDetailNotifierProvider = FriendshipDetailNotifierFamily();
+
+/// See also [FriendshipDetailNotifier].
+class FriendshipDetailNotifierFamily extends Family<AsyncValue<Friendship>> {
+  /// See also [FriendshipDetailNotifier].
+  const FriendshipDetailNotifierFamily();
+
+  /// See also [FriendshipDetailNotifier].
+  FriendshipDetailNotifierProvider call(
+    String email,
+  ) {
+    return FriendshipDetailNotifierProvider(
+      email,
+    );
+  }
+
+  @override
+  FriendshipDetailNotifierProvider getProviderOverride(
+    covariant FriendshipDetailNotifierProvider provider,
+  ) {
+    return call(
+      provider.email,
+    );
+  }
+
+  static const Iterable<ProviderOrFamily>? _dependencies = null;
+
+  @override
+  Iterable<ProviderOrFamily>? get dependencies => _dependencies;
+
+  static const Iterable<ProviderOrFamily>? _allTransitiveDependencies = null;
+
+  @override
+  Iterable<ProviderOrFamily>? get allTransitiveDependencies =>
+      _allTransitiveDependencies;
+
+  @override
+  String? get name => r'friendshipDetailNotifierProvider';
+}
+
+/// See also [FriendshipDetailNotifier].
+class FriendshipDetailNotifierProvider
+    extends AutoDisposeAsyncNotifierProviderImpl<FriendshipDetailNotifier,
+        Friendship> {
+  /// See also [FriendshipDetailNotifier].
+  FriendshipDetailNotifierProvider(
+    String email,
+  ) : this._internal(
+          () => FriendshipDetailNotifier()..email = email,
+          from: friendshipDetailNotifierProvider,
+          name: r'friendshipDetailNotifierProvider',
+          debugGetCreateSourceHash:
+              const bool.fromEnvironment('dart.vm.product')
+                  ? null
+                  : _$friendshipDetailNotifierHash,
+          dependencies: FriendshipDetailNotifierFamily._dependencies,
+          allTransitiveDependencies:
+              FriendshipDetailNotifierFamily._allTransitiveDependencies,
+          email: email,
+        );
+
+  FriendshipDetailNotifierProvider._internal(
+    super._createNotifier, {
+    required super.name,
+    required super.dependencies,
+    required super.allTransitiveDependencies,
+    required super.debugGetCreateSourceHash,
+    required super.from,
+    required this.email,
+  }) : super.internal();
+
+  final String email;
+
+  @override
+  FutureOr<Friendship> runNotifierBuild(
+    covariant FriendshipDetailNotifier notifier,
+  ) {
+    return notifier.build(
+      email,
+    );
+  }
+
+  @override
+  Override overrideWith(FriendshipDetailNotifier Function() create) {
+    return ProviderOverride(
+      origin: this,
+      override: FriendshipDetailNotifierProvider._internal(
+        () => create()..email = email,
+        from: from,
+        name: null,
+        dependencies: null,
+        allTransitiveDependencies: null,
+        debugGetCreateSourceHash: null,
+        email: email,
+      ),
+    );
+  }
+
+  @override
+  AutoDisposeAsyncNotifierProviderElement<FriendshipDetailNotifier, Friendship>
+      createElement() {
+    return _FriendshipDetailNotifierProviderElement(this);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is FriendshipDetailNotifierProvider && other.email == email;
+  }
+
+  @override
+  int get hashCode {
+    var hash = _SystemHash.combine(0, runtimeType.hashCode);
+    hash = _SystemHash.combine(hash, email.hashCode);
+
+    return _SystemHash.finish(hash);
+  }
+}
+
+mixin FriendshipDetailNotifierRef
+    on AutoDisposeAsyncNotifierProviderRef<Friendship> {
+  /// The parameter `email` of this provider.
+  String get email;
+}
+
+class _FriendshipDetailNotifierProviderElement
+    extends AutoDisposeAsyncNotifierProviderElement<FriendshipDetailNotifier,
+        Friendship> with FriendshipDetailNotifierRef {
+  _FriendshipDetailNotifierProviderElement(super.provider);
+
+  @override
+  String get email => (origin as FriendshipDetailNotifierProvider).email;
+}
+
 String _$themeColorHash() => r'4ef7e05d68a34bec800592eac7cd770666832636';
 
 /// See also [ThemeColor].

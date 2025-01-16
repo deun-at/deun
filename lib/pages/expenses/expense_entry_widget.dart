@@ -1,3 +1,4 @@
+import 'package:deun/main.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_form_builder/flutter_form_builder.dart';
 import 'package:form_builder_validators/form_builder_validators.dart';
@@ -95,32 +96,6 @@ class _ExpenseEntryWidgetState extends State<ExpenseEntryWidget> {
                               ],
                             ));
                       }),
-                  // Row(
-                  //   mainAxisAlignment: MainAxisAlignment.center,
-                  //   children: [
-                  //     Text("€", style: Theme.of(context).textTheme.headlineMedium),
-                  //     IntrinsicWidth(
-                  //         child: ConstrainedBox(
-                  //             constraints: BoxConstraints(
-                  //               minWidth: 50, // Minimum width
-                  //               maxWidth: MediaQuery.of(context).size.width * 0.9, // Max width
-                  //             ),
-                  //             child: FormBuilderTextField(
-                  //               key: ValueKey("${widget.index}_amount"),
-                  //               name: "expense_entry[${widget.index}][amount]",
-                  //               keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                  //               inputFormatters: [DecimalTextInputFormatter(decimalRange: 2)],
-                  //               autovalidateMode: AutovalidateMode.onUserInteraction,
-                  //               validator: FormBuilderValidators.required(
-                  //                   errorText: AppLocalizations.of(context)!.expenseEntryAmountValidationEmpty),
-                  //               style: Theme.of(context).textTheme.headlineMedium,
-                  //               decoration: InputDecoration(
-                  //                 border: InputBorder.none,
-                  //                 // hintText: AppLocalizations.of(context)!.expenseEntryTitle,
-                  //               ),
-                  //             ))),
-                  //   ],
-                  // ),
                   const SizedBox(height: spacing),
                   FormBuilderField(
                     key: ValueKey("${widget.index}_shares"),
@@ -163,7 +138,9 @@ class _ExpenseEntryWidgetState extends State<ExpenseEntryWidget> {
                                 ),
                                 ...widget.groupMembers.map((groupMember) {
                                   return FilterChip(
-                                      label: Text(groupMember.displayName),
+                                      label: Text(groupMember.email == supabase.auth.currentUser?.email
+                                          ? AppLocalizations.of(context)!.you
+                                          : groupMember.displayName),
                                       onSelected: (bool newValue) {
                                         if (newValue) {
                                           fieldValue.add(groupMember.email);

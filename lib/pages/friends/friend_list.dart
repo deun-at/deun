@@ -174,18 +174,27 @@ class _FriendListState extends ConsumerState<FriendList> {
                                   );
                                 }
                               } else {
-                                trailingButton = IconButton.filledTonal(
-                                  style: IconButton.styleFrom(
-                                      backgroundColor: Theme.of(context).colorScheme.errorContainer,
-                                      foregroundColor: Theme.of(context).colorScheme.onErrorContainer),
-                                  icon: const Icon(Icons.delete_outline),
-                                  onPressed: () {
-                                    openRemoveFriendDialog(
-                                      context,
-                                      user,
-                                    );
-                                  },
-                                );
+                                Color shareAmountColor = Theme.of(context).colorScheme.onSurface;
+                                if (friendship.shareAmount < 0) {
+                                  shareAmountColor = Colors.red;
+                                } else if (friendship.shareAmount > 0) {
+                                  shareAmountColor = Colors.green;
+                                }
+                                trailingButton = Text(
+                                    style: Theme.of(context).textTheme.bodyMedium!.copyWith(color: shareAmountColor),
+                                    AppLocalizations.of(context)!.toCurrency(friendship.shareAmount));
+                                // trailingButton = IconButton.filledTonal(
+                                //   style: IconButton.styleFrom(
+                                //       backgroundColor: Theme.of(context).colorScheme.errorContainer,
+                                //       foregroundColor: Theme.of(context).colorScheme.onErrorContainer),
+                                //   icon: const Icon(Icons.delete_outline),
+                                //   onPressed: () {
+                                //     openRemoveFriendDialog(
+                                //       context,
+                                //       user,
+                                //     );
+                                //   },
+                                // );
                               }
 
                               currStatus = friendship.status;

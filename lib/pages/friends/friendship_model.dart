@@ -7,6 +7,7 @@ class Friendship {
   late User user;
   late String status;
   late bool isRequester;
+  late double shareAmount;
 
   void loadDataFromJson(Map<String, dynamic> json) {
     user = User();
@@ -36,16 +37,45 @@ class Friendship {
 
     List<Friendship> retData = List.empty(growable: true);
 
+    List<Map<String, dynamic>> groupSharesSummaryData = await supabase
+        .from('group_shares_summary')
+        .select('*')
+        .or("paid_by.eq.$currentEmail,paid_for.eq.$currentEmail");
+
+    debugPrint(groupSharesSummaryData.toString());
+
     for (var element in data) {
       if ((element["status"] == "accepted" && element["requester"]["email"] == currentEmail) ||
           element["status"] == "pending") {
-        Friendship expense = Friendship();
-        expense.loadDataFromJson(element);
-        retData.add(expense);
+        Friendship friendship = Friendship();
+        friendship.loadDataFromJson(element);
+        friendship.shareAmount = 0;
+
+        if (element["status"] == "accepted") {
+          for (var groupSharesSummary in groupSharesSummaryData) {
+            if (groupSharesSummary["paid_by"] == currentEmail &&
+                groupSharesSummary["paid_for"] == friendship.user.email) {
+              friendship.shareAmount += groupSharesSummary["share_amount"];
+            } else if (groupSharesSummary["paid_for"] == currentEmail &&
+                groupSharesSummary["paid_by"] == friendship.user.email) {
+              friendship.shareAmount -= groupSharesSummary["share_amount"];
+            }
+          }
+        }
+
+        retData.add(friendship);
       }
     }
 
     return retData;
+  }
+
+  static Future<Friendship> fetchDetail(String email) async {
+    String currentEmail = supabase.auth.currentUser?.email ?? '';
+
+    Friendship friendship = Friendship();
+    // friendship.loadDataFromJson(json);
+    return friendship;
   }
 
   static Future<List<User>> fetchFriends(String searchString, List<String> selectedUsers, int limit) async {

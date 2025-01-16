@@ -108,7 +108,7 @@ class FriendshipListNotifier extends _$FriendshipListNotifier {
 
   void _subscribeToRealTimeUpdates() {
     supabase
-        .channel('public:friendship')
+        .channel('public:friendship_list')
         .onPostgresChanges(
             event: PostgresChangeEvent.all,
             schema: 'public',
@@ -118,6 +118,22 @@ class FriendshipListNotifier extends _$FriendshipListNotifier {
               reload();
             })
         .subscribe();
+  }
+}
+
+@riverpod
+class FriendshipDetailNotifier extends _$FriendshipDetailNotifier {
+  @override
+  FutureOr<Friendship> build(String email) async {
+    return await fetchFriendshipDetail(email);
+  }
+
+  Future<void> reload(String email) async {
+    state = await AsyncValue.guard(() async => await fetchFriendshipDetail(email));
+  }
+
+  Future<Friendship> fetchFriendshipDetail(String email) async {
+    return await Friendship.fetchDetail(email);
   }
 }
 
