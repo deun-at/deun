@@ -31,7 +31,10 @@ jobs:
 
       - name: Add Environment Variables
         run: |
-          mkdir -p ~/.env
+          mkdir .env
+
+          # Create the development.env file within the folder
+          touch ".env/development.env"
 
           # Add content to the Env file
           echo "SUPABASE_URL=${{ secrets.SUPABASE_URL }}" >> .env/development.env
@@ -40,13 +43,11 @@ jobs:
 
           echo "development.env file created with all the keys..............."
 
-          chmod 600 ~/.env/development.env
-
-          ls -l .env/development.env
+          echo "$(<.env/development.env )"
 
       # Step 4: Build Flutter Web
       - name: Build Flutter Web
-        run: flutter build web --base-href / --release --dart-define-from-file=.env/development.env
+        run: flutter build web --base-href / --release --dart-define-from-file .env/development.env
 
       - name: Configure SSH
         run: |
