@@ -29,9 +29,27 @@ jobs:
       - name: Install Flutter Dependencies
         run: flutter pub get
 
+      - name: Add Environment Variables
+        run: |
+          if [ ! -d ".env" ]; then
+            mkdir .env
+          fi
+
+          # Create the development.env file within the folder
+          touch ".env/development.env"
+
+          # Add content to the Env file
+          echo "SUPABASE_URL=${{ secrets.SUPABASE_URL }}" >> .env/development.env
+          echo "SUPABASE_ANON_KEY=${{ secrets.SUPABASE_ANON_KEY }}" >> .env/development.env
+          echo "ONESIGNAL_APP_KEY=${{ secrets.ONESIGNAL_APP_KEY }}" >> .env/development.env
+
+          echo "development.env file created with all the keys..............."
+
+          ls -l .env/development.env
+
       # Step 4: Build Flutter Web
       - name: Build Flutter Web
-        run: flutter build web --base-href / --release
+        run: flutter build web --base-href / --release --dart-define-from-file .env/development.env
 
       - name: Configure SSH
         run: |

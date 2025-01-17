@@ -1,5 +1,3 @@
-import 'dart:math';
-
 import 'package:deun/constants.dart';
 import 'package:deun/main.dart';
 import 'package:deun/pages/friends/friendship_model.dart';
