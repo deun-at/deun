@@ -14,6 +14,10 @@
   "groupEntriesError": "Something went wrong with loading Groups.",
   "groupMemberSelectionEmpty": "Add People",
   "groupExpenseNoEntries": "Add an expense to get started",
+  "groupDeleteError": "Error while deleting group!",
+  "groupDeleteSuccess": "Group deleted!",
+  "groupCreateError": "Error while creating group!",
+  "groupCreateSuccess": "Group created!",
   "expenses": "Expenses",
   "createExpense": "Create Expense",
   "editExpense": "Edit Expense",
@@ -35,6 +39,8 @@
   "expenseDeleteItemTitle": "Delete this expense?",
   "expenseDeleteError": "Error while deleting expense!",
   "expenseDeleteSuccess": "Expense deleted!",
+  "expenseCreateError": "Error while creating expense!",
+  "expenseCreateSuccess": "Expense created!",
   "expenseNoEntries": "So empty here :(",
   "expenseDisplayAmount": "{displayName} {expenseType, select, paid{paid} lent{lent} borrowed{borrowed} other{}} {amount}",
   "@expenseDisplayAmount": {
@@ -120,6 +126,7 @@
       }
     }
   },
+  "payBackError": "There was an error with paying back the amount. Please try again later!",
   "payBackSuccess": "You paid back {amount} to {displayName}",
   "@payBackSuccess": {
     "description": "Snackbar message when you paid back money.",

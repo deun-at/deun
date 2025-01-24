@@ -129,10 +129,19 @@ class _ExpenseBottomSheetState extends ConsumerState<ExpenseBottomSheet> {
                 ref.read(_isLoading.notifier).state = true; // Set loading to true
                 try {
                   await Expense.saveAll(widget.group.id, widget.expense?.id, _formKey.currentState!.value);
+                  if (context.mounted) {
+                    showSnackBar(context, AppLocalizations.of(context)!.expenseCreateSuccess);
+                  }
+                } catch (e) {
+                  if (context.mounted) {
+                    showSnackBar(context, AppLocalizations.of(context)!.expenseCreateError);
+                  }
                 } finally {
                   if (mounted) {
                     ref.read(_isLoading.notifier).state = false; // Stop loading
-                    Navigator.pop(context);
+                    if (context.mounted) {
+                      Navigator.pop(context);
+                    }
                   }
                 }
               }

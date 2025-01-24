@@ -1,3 +1,4 @@
+import 'package:deun/helper/helper.dart';
 import 'package:deun/widgets/empty_list_widget.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -162,8 +163,20 @@ class _GroupListState extends ConsumerState<GroupList> {
             ),
             child: Text(AppLocalizations.of(context)!.delete),
             onPressed: () async {
-              await group.delete();
-              Navigator.of(context).pop();
+              try {
+                await group.delete();
+                if (context.mounted) {
+                  showSnackBar(context, AppLocalizations.of(context)!.groupDeleteSuccess);
+                }
+              } catch (e) {
+                if (context.mounted) {
+                  showSnackBar(context, AppLocalizations.of(context)!.groupDeleteError);
+                }
+              } finally {
+                if (context.mounted) {
+                  Navigator.of(context).pop();
+                }
+              }
             },
           ),
         ],

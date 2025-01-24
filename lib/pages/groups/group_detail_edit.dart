@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:collection/collection.dart';
+import 'package:deun/helper/helper.dart';
 import 'package:deun/pages/friends/friendship_model.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_form_builder/flutter_form_builder.dart';
@@ -118,10 +119,19 @@ class _GroupBottomSheetState extends ConsumerState<GroupBottomSheet> {
                                     ref.read(_isLoading.notifier).state = true; // Set loading to true
                                     try {
                                       await Group.saveAll(widget.group?.id, _formKey.currentState!.value);
+                                      if (context.mounted) {
+                                        showSnackBar(context, AppLocalizations.of(context)!.groupCreateSuccess);
+                                      }
+                                    } catch (e) {
+                                      if (context.mounted) {
+                                        showSnackBar(context, AppLocalizations.of(context)!.groupCreateError);
+                                      }
                                     } finally {
                                       if (mounted) {
                                         ref.read(_isLoading.notifier).state = false; // Stop loading
-                                        Navigator.pop(context);
+                                        if (context.mounted) {
+                                          Navigator.pop(context);
+                                        }
                                       }
                                     }
                                   }

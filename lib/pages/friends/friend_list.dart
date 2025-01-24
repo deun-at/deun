@@ -72,7 +72,7 @@ class _FriendListState extends ConsumerState<FriendList> {
     selectedUsers.add(supabase.auth.currentUser?.email ?? '');
 
     List<User> result = await User.fetchData(input, selectedUsers, 10);
-    if (result.isEmpty) {
+    if (result.isEmpty && context.mounted) {
       return [
         ListTile(
           title: Text(AppLocalizations.of(context)!.addFriendshipNoResult),

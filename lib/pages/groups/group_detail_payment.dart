@@ -90,13 +90,20 @@ class _GroupPaymentBottomSheetState extends ConsumerState<GroupPaymentBottomShee
             onPressed: () async {
               try {
                 await Group.payBack(widget.group.id, email, groupShare.shareAmount.abs());
+                if (context.mounted) {
+                  showSnackBar(
+                      context, AppLocalizations.of(context)!.payBackSuccess(email, groupShare.shareAmount.abs()));
+                }
+              } catch (e) {
+                if (context.mounted) {
+                  showSnackBar(context, AppLocalizations.of(context)!.payBackError);
+                }
               } finally {
                 //pop both dialog and edit page, because this item is not existing anymore
-                Navigator.pop(context);
-                Navigator.pop(modalContext);
-
-                showSnackBar(
-                    context, AppLocalizations.of(context)!.payBackSuccess(email, groupShare.shareAmount.abs()));
+                if (context.mounted) {
+                  Navigator.pop(context);
+                  Navigator.pop(modalContext);
+                }
               }
             },
           ),
