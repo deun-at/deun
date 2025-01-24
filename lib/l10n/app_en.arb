@@ -33,6 +33,8 @@
   "expenseEntrySharesLable": "Who used it?",
   "expenseEntrySharesValidationEmpty": "Please select at least one person",
   "expenseDeleteItemTitle": "Delete this expense?",
+  "expenseDeleteError": "Error while deleting expense!",
+  "expenseDeleteSuccess": "Expense deleted!",
   "expenseNoEntries": "So empty here :(",
   "expenseDisplayAmount": "{displayName} {expenseType, select, paid{paid} lent{lent} borrowed{borrowed} other{}} {amount}",
   "@expenseDisplayAmount": {

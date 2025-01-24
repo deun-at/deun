@@ -21,7 +21,6 @@ dependencies:
   grouped_list: ^6.0.0
   intl: any
   msix: ^3.16.8
-  onesignal_flutter: ^5.2.9
   riverpod_annotation: ^2.6.1
   sign_in_with_apple: ^6.1.4
   supabase_auth_ui: ^0.5.1

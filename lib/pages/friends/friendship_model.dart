@@ -71,7 +71,7 @@ class Friendship {
   }
 
   static Future<Friendship> fetchDetail(String email) async {
-    String currentEmail = supabase.auth.currentUser?.email ?? '';
+    // String currentEmail = supabase.auth.currentUser?.email ?? '';
 
     Friendship friendship = Friendship();
     // friendship.loadDataFromJson(json);

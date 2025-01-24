@@ -1,3 +1,4 @@
+import 'package:deun/helper/helper.dart';
 import 'package:deun/pages/groups/group_member_model.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_form_builder/flutter_form_builder.dart';
@@ -83,10 +84,19 @@ class _ExpenseBottomSheetState extends ConsumerState<ExpenseBottomSheet> {
             onPressed: () async {
               try {
                 await widget.expense!.delete();
+                if (context.mounted) {
+                  showSnackBar(context, AppLocalizations.of(context)!.expenseDeleteSuccess);
+                }
+              } catch (e) {
+                if (context.mounted) {
+                  showSnackBar(context, AppLocalizations.of(context)!.expenseDeleteError);
+                }
               } finally {
                 //pop both dialog and edit page, because this item is not existing anymore
-                Navigator.pop(context);
-                Navigator.pop(modalContext);
+                if (context.mounted) {
+                  Navigator.pop(context);
+                  Navigator.pop(modalContext);
+                }
               }
             },
           ),
