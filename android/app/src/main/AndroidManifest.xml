@@ -42,6 +42,13 @@
         <meta-data
             android:name="flutterEmbedding"
             android:value="2" />
+        <!-- Firebase Messaging Disable Analytics collection-->
+        <meta-data
+            android:name="firebase_messaging_auto_init_enabled"
+            android:value="false" />
+        <meta-data
+            android:name="firebase_analytics_collection_enabled"
+            android:value="false" />
     </application>
     <!-- Required to query activities that can process text, see:
          https://developer.android.com/training/package-visibility and

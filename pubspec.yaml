@@ -8,9 +8,12 @@ environment:
 
 dependencies:
   collection: ^1.18.0
+  firebase_core: ^3.10.1
+  firebase_messaging: ^15.2.1
   flutter:
     sdk: flutter
   flutter_form_builder: ^9.3.0
+  flutter_local_notifications: ^18.0.1
   flutter_localizations:
     sdk: flutter
   flutter_riverpod: ^2.6.1

@@ -1,7 +1,9 @@
+import 'package:deun/main.dart';
 import 'package:deun/pages/expenses/expense_model.dart';
 import 'package:deun/pages/friends/friend_list.dart';
 import 'package:deun/pages/groups/group_detail_payment.dart';
 import 'package:deun/provider.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -33,6 +35,7 @@ class _NavigationScreenState extends ConsumerState<NavigationScreen> {
   @override
   void initState() {
     super.initState();
+    _initFirebaseMessaging();
 
     // the one and only GoRouter instance
     _routerConfig = GoRouter(
@@ -144,6 +147,76 @@ class _NavigationScreenState extends ConsumerState<NavigationScreen> {
         ),
       ],
     );
+  }
+
+  _initFirebaseMessaging() async {
+    // You may set the permission requests to "provisional" which allows the user to choose what type
+    // of notifications they would like to receive once the user receives a notification.
+    final notificationSettings = await FirebaseMessaging.instance.requestPermission(
+      alert: true,
+      announcement: false,
+      badge: true,
+      carPlay: false,
+      criticalAlert: false,
+      provisional: false,
+      sound: true,
+    );
+
+    debugPrint('User granted permission: ${notificationSettings.authorizationStatus}');
+
+    if (notificationSettings.authorizationStatus == AuthorizationStatus.denied) {
+      return null;
+    }
+
+    // For apple platforms, ensure the APNS token is available before making any FCM plugin API calls
+    final apnsToken = await FirebaseMessaging.instance.getAPNSToken();
+    if (apnsToken != null) {
+      // APNS token is available, make FCM plugin API requests...
+    }
+
+    final fcmToken = await FirebaseMessaging.instance
+        .getToken(vapidKey: "BL4YZRDAw8gBPt37GNhz6ub5UxTtDUdjERYzFOgOI2ZdCqwwBToztXtL9Wj0QwqDfKe4CoBQjcjSP54OG3fjFvE");
+
+    if (fcmToken != null) {
+      await supabase.from('device_tokens').upsert({
+        'user_id': supabase.auth.currentUser!.id, // Replace with your user ID field
+        'token': fcmToken,
+      });
+    }
+
+    await FirebaseMessaging.instance.setAutoInitEnabled(true);
+
+    // Get any messages which caused the application to open from
+    // a terminated state.
+    RemoteMessage? initialMessage = await FirebaseMessaging.instance.getInitialMessage();
+
+    // If the message also contains a data property with a "type" of "chat",
+    // navigate to a chat screen
+    if (initialMessage != null) {
+      _handleMessage(initialMessage);
+    }
+
+    // Also handle any interaction when the app is in the background via a
+    // Stream listener
+    FirebaseMessaging.onMessageOpenedApp.listen(_handleMessage);
+
+    FirebaseMessaging.instance.onTokenRefresh.listen((fcmToken) {
+      supabase.from('device_tokens').upsert({
+        'user_id': supabase.auth.currentUser!.id, // Replace with your user ID field
+        'token': fcmToken,
+      });
+      // Note: This callback is fired at each app startup and whenever a new
+      // token is generated.
+    }).onError((err) {
+      // Error getting token.
+    });
+  }
+
+  void _handleMessage(RemoteMessage message) {
+    debugPrint('handle message: ${message.data.toString()}');
+    //   if (message.data['type'] == 'chat') {
+    //     Navigator.pushNamed(context, "/group/details/expense", extra: {'group': value, 'expense': expense});
+    //   }
   }
 
   CustomTransitionPage<dynamic> defaultTransitionPage(LocalKey key, Widget child) {

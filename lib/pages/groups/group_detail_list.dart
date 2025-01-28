@@ -61,9 +61,7 @@ class _GroupDetailListState extends ConsumerState<GroupDetailList> {
                         }
 
                         return Card(
-                            elevation: 8,
-                            color: Theme.of(context).colorScheme.surfaceContainerHighest,
-                            surfaceTintColor: Color(value.colorValue),
+                            color: Theme.of(context).colorScheme.surfaceContainer,
                             shadowColor: Colors.transparent,
                             child: InkWell(
                                 borderRadius: BorderRadius.circular(12.0),
@@ -126,6 +124,7 @@ class _ExpenseShareWidgetState extends State<ExpenseShareWidget> {
         currentUserPaid ? AppLocalizations.of(context)!.you : (widget.expense.paidByDisplayName ?? ""),
         "paid",
         widget.expense.amount);
+    Color paidWidgetTextColor = currentUserPaid ? Colors.green : Colors.red;
     if (groupMemberShareStatistic.containsKey(currentUserEmail)) {
       String textLabel = "";
       double? currentUserShares = groupMemberShareStatistic[currentUserEmail];
@@ -147,6 +146,7 @@ class _ExpenseShareWidgetState extends State<ExpenseShareWidget> {
     } else {
       if (!currentUserPaid) {
         paidWidgetLable = AppLocalizations.of(context)!.expenseNoShares;
+        paidWidgetTextColor = Theme.of(context).colorScheme.onSurface;
       }
     }
 
@@ -155,7 +155,7 @@ class _ExpenseShareWidgetState extends State<ExpenseShareWidget> {
         alignment: Alignment.bottomLeft,
         child: Text(
           paidWidgetLable,
-          style: Theme.of(context).textTheme.labelLarge,
+          style: Theme.of(context).textTheme.labelLarge?.copyWith(color: paidWidgetTextColor),
         ),
       ),
       sharedWidget ?? const SizedBox(),
