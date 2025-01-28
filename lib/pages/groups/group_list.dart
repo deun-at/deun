@@ -247,6 +247,16 @@ class GroupShareWidget extends StatelessWidget {
         Align(
           alignment: Alignment.bottomLeft,
           child: Text(
+            AppLocalizations.of(context)!.totalExpensesAmount(group.totalExpenses.abs()),
+            style: Theme.of(context).textTheme.titleMedium!.copyWith(color: textColorAll),
+          ),
+        ));
+
+    sharedWidget.insert(
+        1,
+        Align(
+          alignment: Alignment.bottomLeft,
+          child: Text(
             totalSharedText,
             style: Theme.of(context).textTheme.titleMedium!.copyWith(color: textColorAll),
           ),

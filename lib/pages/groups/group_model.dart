@@ -19,6 +19,7 @@ class Group {
 
   late List<GroupMember> groupMembers;
   late Map<String, GroupSharesSummary> groupSharesSummary;
+  late double totalExpenses;
 
   late List<Expense>? expenses;
 
@@ -40,6 +41,7 @@ class Group {
       }
     }
 
+    totalExpenses = 0;
     groupSharesSummary = {};
     if (json["group_shares_summary"] != null) {
       for (var element in json["group_shares_summary"]) {
@@ -52,6 +54,7 @@ class Group {
 
           groupSharesSummary[element['paid_for']]!.shareAmount =
               groupSharesSummary[element['paid_for']]!.shareAmount + element['share_amount'];
+          totalExpenses += element['total_expenses'];
         } else if (element['paid_for'] == currentUserEmail) {
           if (groupSharesSummary[element['paid_by']] == null) {
             groupSharesSummary[element['paid_by']] = GroupSharesSummary();
@@ -61,6 +64,7 @@ class Group {
 
           groupSharesSummary[element['paid_by']]!.shareAmount =
               groupSharesSummary[element['paid_by']]!.shareAmount - element['share_amount'];
+          totalExpenses += element['total_expenses'];
         }
       }
     }

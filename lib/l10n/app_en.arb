@@ -105,6 +105,21 @@
       }
     }
   },
+  "totalExpensesAmount": "You spent {amount}",
+  "@totalExpensesAmount": {
+    "description": "Lable in the group list/group detail of what you spent",
+    "placeholders": {
+      "amount": {
+        "type": "double",
+        "format": "currency",
+        "optionalParameters": {
+          "decimalDigits": 2,
+          "name": "€"
+        },
+        "example": "200.00"
+      }
+    }
+  },
   "allDone": "all done",
   "payBack": "Pay back",
   "payBackDialog": "Pay back {amount} to {displayName}",
