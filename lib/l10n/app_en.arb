@@ -105,7 +105,7 @@
       }
     }
   },
-  "totalExpensesAmount": "You spent {amount}",
+  "totalExpensesAmount": "Total expenses {amount}",
   "@totalExpensesAmount": {
     "description": "Lable in the group list/group detail of what you spent",
     "placeholders": {
