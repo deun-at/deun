@@ -50,9 +50,11 @@ jobs:
       - name: Build Flutter Web
         run: flutter build web --base-href / --release --dart-define-from-file .env/development.env
       
-      # Step 6: Add cache-busting parameter
-      - name: Add cache-busting parameter
-        run: sed -i 's|main.dart.js|main.dart.js?v=${{ github.run_number }}|' build/web/index.html
+      # Step 6: Add github run_number
+      - name: Add github run_number
+        run: |
+          touch "build/web/version.txt"
+          echo "${{ github.run_number }}" >> build/web/version.txt
       
       # Step 7: Configure SSH
       - name: Configure SSH
