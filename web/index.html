@@ -35,7 +35,12 @@
 </head>
 
 <body>
-  <script src="flutter_bootstrap.js" async>
+  <script async>
+    { { flutter_js } }
+    { { flutter_build_config } }
+    { { flutter_service_worker } }
+    _flutter.loader.load();
+
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', function () {
         navigator.serviceWorker.register('firebase-messaging-sw.js', {
