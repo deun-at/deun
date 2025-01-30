@@ -54,7 +54,8 @@ class Group {
 
           groupSharesSummary[element['paid_for']]!.shareAmount =
               groupSharesSummary[element['paid_for']]!.shareAmount + element['share_amount'];
-          totalExpenses += element['total_expenses'];
+
+          totalExpenses = element['total_expenses'];
         } else if (element['paid_for'] == currentUserEmail) {
           if (groupSharesSummary[element['paid_by']] == null) {
             groupSharesSummary[element['paid_by']] = GroupSharesSummary();
@@ -64,7 +65,6 @@ class Group {
 
           groupSharesSummary[element['paid_by']]!.shareAmount =
               groupSharesSummary[element['paid_by']]!.shareAmount - element['share_amount'];
-          totalExpenses += element['total_expenses'];
         }
       }
     }

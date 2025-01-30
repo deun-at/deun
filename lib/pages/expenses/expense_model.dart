@@ -63,7 +63,7 @@ class Expense {
 
   static Future<List<Expense>> fetchData([String? groupId]) async {
     var query = supabase.from('expense').select(
-        '*, ...paid_by(paid_by_display_name:display_name), expense_entry(*, expense_entry_share(*)), group(*, group_shares_summary(*, ...paid_by(paid_by_display_name:display_name), ...paid_for(paid_for_display_name:display_name)), group_member(*, ...user(display_name:display_name)))');
+        '*, ...paid_by(paid_by_display_name:display_name), expense_entry(*, expense_entry_share(*, ...email(display_name:display_name))), group(*, group_shares_summary(*, ...paid_by(paid_by_display_name:display_name), ...paid_for(paid_for_display_name:display_name)), group_member(*, ...user(display_name:display_name)))');
 
     if (groupId != null) {
       query = query.eq('group_id', groupId);

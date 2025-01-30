@@ -1,5 +1,6 @@
 import 'package:deun/helper/helper.dart';
 import 'package:deun/main.dart';
+import 'package:deun/pages/expenses/expense_entry_model.dart';
 import 'package:deun/pages/groups/group_model.dart';
 import 'package:deun/provider.dart';
 import 'package:deun/widgets/empty_list_widget.dart';
@@ -49,6 +50,17 @@ class _GroupDetailListState extends ConsumerState<GroupDetailList> {
                         Expense expense = value.expenses![index];
 
                         if (expense.isPaidBackRow) {
+                          String? currentUserEmail = supabase.auth.currentUser?.email;
+                          ExpenseEntryShare paidBackEntryShare =
+                              expense.expenseEntries.entries.first.value.expenseEntryShares.first;
+
+                          String paidByDisplayName = expense.paidBy == currentUserEmail
+                              ? AppLocalizations.of(context)!.you
+                              : (expense.paidByDisplayName ?? "");
+                          String paidToDisplayName = paidBackEntryShare.email == currentUserEmail
+                              ? AppLocalizations.of(context)!.you
+                              : paidBackEntryShare.displayName;
+
                           return Card(
                               elevation: 8,
                               color: Theme.of(context).colorScheme.surfaceContainer,
@@ -56,7 +68,7 @@ class _GroupDetailListState extends ConsumerState<GroupDetailList> {
                               child: Padding(
                                 padding: const EdgeInsets.fromLTRB(10, 5, 10, 5),
                                 child: Text(AppLocalizations.of(context)!
-                                    .groupDisplayPaidBack(expense.paidByDisplayName ?? '', '', expense.amount)),
+                                    .groupDisplayPaidBack(paidByDisplayName, paidToDisplayName, expense.amount)),
                               ));
                         }
 

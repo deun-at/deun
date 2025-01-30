@@ -32,12 +32,14 @@ class ExpenseEntry {
 class ExpenseEntryShare {
   late String expenseEntryId;
   late String email;
+  late String displayName;
   late double percentage;
   late String createdAt;
 
   void loadDataFromJson(Map<String, dynamic> json) {
     expenseEntryId = json["expense_entry_id"];
     email = json["email"];
+    displayName = json["display_name"];
     percentage = double.parse((json["percentage"] ?? 0).toString());
     createdAt = json["created_at"];
   }
