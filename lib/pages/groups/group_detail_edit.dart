@@ -95,14 +95,16 @@ class _GroupBottomSheetState extends ConsumerState<GroupBottomSheet> {
     const double spacing = 10;
     final isLoading = ref.watch(_isLoading);
 
-    return PopScope(
-        canPop: !isLoading, // Prevent back navigation if loading
-        child: Stack(children: [
-          DraggableScrollableSheet(
-              expand: false,
-              initialChildSize: 1,
-              builder: (context, scrollController) {
-                return Scaffold(
+    return DraggableScrollableSheet(
+        expand: false,
+        initialChildSize: .8,
+        snap: true,
+        shouldCloseOnMinExtent: false,
+        builder: (context, scrollController) {
+          return PopScope(
+              canPop: !isLoading, // Prevent back navigation if loading
+              child: Stack(children: [
+                Scaffold(
                     appBar: AppBar(
                       leading: IconButton(
                         icon: const Icon(Icons.close),
@@ -252,15 +254,15 @@ class _GroupBottomSheetState extends ConsumerState<GroupBottomSheet> {
                                       )
                                     ],
                                   )))),
-                    ));
-              }),
-          if (isLoading)
-            Container(
-              color: Colors.black.withOpacity(0.5),
-              child: const Center(
-                child: CircularProgressIndicator(),
-              ),
-            ),
-        ]));
+                    )),
+                if (isLoading)
+                  Container(
+                    color: Colors.black.withOpacity(0.5),
+                    child: const Center(
+                      child: CircularProgressIndicator(),
+                    ),
+                  ),
+              ]));
+        });
   }
 }

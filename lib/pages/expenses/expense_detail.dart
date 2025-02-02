@@ -148,14 +148,16 @@ class _ExpenseBottomSheetState extends ConsumerState<ExpenseBottomSheet> {
             },
             child: Text(AppLocalizations.of(context)!.save))));
 
-    return PopScope(
-        canPop: !isLoading, // Prevent back navigation if loading
-        child: Stack(children: [
-          DraggableScrollableSheet(
-              expand: false,
-              initialChildSize: 1,
-              builder: (context, scrollController) {
-                return Scaffold(
+    return DraggableScrollableSheet(
+        expand: false,
+        initialChildSize: .8,
+        snap: true,
+        shouldCloseOnMinExtent: false,
+        builder: (context, scrollController) {
+          return PopScope(
+              canPop: !isLoading, // Prevent back navigation if loading
+              child: Stack(children: [
+                Scaffold(
                     appBar: AppBar(
                       leading: IconButton(
                         icon: const Icon(Icons.close),
@@ -244,20 +246,20 @@ class _ExpenseBottomSheetState extends ConsumerState<ExpenseBottomSheet> {
                                       )),
                                     ],
                                   )))),
-                    ));
-              }),
-          if (isLoading)
-            Positioned.fill(
-              child: GestureDetector(
-                onTap: () {}, // Prevent interactions
-                child: Container(
-                  color: Colors.black.withOpacity(0.5),
-                  child: const Center(
-                    child: CircularProgressIndicator(),
+                    )),
+                if (isLoading)
+                  Positioned.fill(
+                    child: GestureDetector(
+                      onTap: () {}, // Prevent interactions
+                      child: Container(
+                        color: Colors.black.withOpacity(0.5),
+                        child: const Center(
+                          child: CircularProgressIndicator(),
+                        ),
+                      ),
+                    ),
                   ),
-                ),
-              ),
-            ),
-        ]));
+              ]));
+        });
   }
 }
