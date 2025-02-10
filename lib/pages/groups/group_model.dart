@@ -45,7 +45,11 @@ class Group {
     groupSharesSummary = {};
     if (json["group_shares_summary"] != null) {
       for (var element in json["group_shares_summary"]) {
-        if (element['paid_by'] == currentUserEmail) {
+        if (element['paid_for'] == currentUserEmail) {
+          totalExpenses += element['total_expenses'] ?? 0;
+        }
+
+        if (element['paid_by'] == currentUserEmail && element['paid_for'] != currentUserEmail) {
           if (groupSharesSummary[element['paid_for']] == null) {
             groupSharesSummary[element['paid_for']] = GroupSharesSummary();
             groupSharesSummary[element['paid_for']]!.dipslayName = element['paid_for_display_name'];
@@ -53,10 +57,8 @@ class Group {
           }
 
           groupSharesSummary[element['paid_for']]!.shareAmount =
-              groupSharesSummary[element['paid_for']]!.shareAmount + element['share_amount'];
-
-          totalExpenses = element['total_expenses'];
-        } else if (element['paid_for'] == currentUserEmail) {
+              groupSharesSummary[element['paid_for']]!.shareAmount + (element['share_amount'] ?? 0);
+        } else if (element['paid_for'] == currentUserEmail && element['paid_by'] != currentUserEmail) {
           if (groupSharesSummary[element['paid_by']] == null) {
             groupSharesSummary[element['paid_by']] = GroupSharesSummary();
             groupSharesSummary[element['paid_by']]!.dipslayName = element['paid_by_display_name'];
@@ -64,7 +66,7 @@ class Group {
           }
 
           groupSharesSummary[element['paid_by']]!.shareAmount =
-              groupSharesSummary[element['paid_by']]!.shareAmount - element['share_amount'];
+              groupSharesSummary[element['paid_by']]!.shareAmount - (element['share_amount'] ?? 0);
         }
       }
     }

@@ -55,10 +55,10 @@ class Friendship {
           for (var groupSharesSummary in groupSharesSummaryData) {
             if (groupSharesSummary["paid_by"] == currentEmail &&
                 groupSharesSummary["paid_for"] == friendship.user.email) {
-              friendship.shareAmount += groupSharesSummary["share_amount"];
+              friendship.shareAmount += groupSharesSummary["share_amount"] ?? 0;
             } else if (groupSharesSummary["paid_for"] == currentEmail &&
                 groupSharesSummary["paid_by"] == friendship.user.email) {
-              friendship.shareAmount -= groupSharesSummary["share_amount"];
+              friendship.shareAmount -= groupSharesSummary["share_amount"] ?? 0;
             }
           }
         }

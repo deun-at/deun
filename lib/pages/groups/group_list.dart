@@ -208,7 +208,6 @@ class GroupShareWidget extends StatelessWidget {
               paidByYourself = "yes";
               textColor = Colors.green;
             }
-            textColor = Theme.of(context).colorScheme.onSurface;
 
             return MapEntry(
                 key,
@@ -240,7 +239,6 @@ class GroupShareWidget extends StatelessWidget {
       totalSharedText = AppLocalizations.of(context)!.allDone;
       textColorAll = Theme.of(context).colorScheme.onSurface;
     }
-    textColorAll = Theme.of(context).colorScheme.onSurface;
 
     sharedWidget.insert(
         0,
@@ -248,7 +246,7 @@ class GroupShareWidget extends StatelessWidget {
           alignment: Alignment.bottomLeft,
           child: Text(
             AppLocalizations.of(context)!.totalExpensesAmount(group.totalExpenses.abs()),
-            style: Theme.of(context).textTheme.titleMedium!.copyWith(color: textColorAll),
+            style: Theme.of(context).textTheme.titleMedium,
           ),
         ));
 
