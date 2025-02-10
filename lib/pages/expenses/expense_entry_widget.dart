@@ -88,9 +88,8 @@ class _ExpenseEntryWidgetState extends State<ExpenseEntryWidget> {
                                           inputFormatters: [DecimalTextInputFormatter(decimalRange: 2)],
                                           style: Theme.of(context).textTheme.headlineMedium,
                                           decoration: const InputDecoration(
-                                            contentPadding: EdgeInsets.only(right: 8),
+                                            contentPadding: EdgeInsets.only(right: 10, left: 10),
                                             border: InputBorder.none,
-                                            // hintText: AppLocalizations.of(context)!.expenseEntryTitle,
                                           ),
                                         ))),
                               ],

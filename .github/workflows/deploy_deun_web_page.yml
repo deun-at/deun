@@ -32,23 +32,23 @@ jobs:
       # Step 4: Add Environment Variables
       - name: Add Environment Variables
         run: |
-          mkdir .env
+          mkdir .env_flutter
 
           # Create the development.env file within the folder
-          touch ".env/development.env"
+          touch ".env_flutter/development.env"
 
           # Add content to the Env file
-          echo "SUPABASE_URL=${{ secrets.SUPABASE_URL }}" >> .env/development.env
-          echo "SUPABASE_ANON_KEY=${{ secrets.SUPABASE_ANON_KEY }}" >> .env/development.env
-          echo "ONESIGNAL_APP_KEY=${{ secrets.ONESIGNAL_APP_KEY }}" >> .env/development.env
+          echo "SUPABASE_URL=${{ secrets.SUPABASE_URL }}" >> .env_flutter/development.env
+          echo "SUPABASE_ANON_KEY=${{ secrets.SUPABASE_ANON_KEY }}" >> .env_flutter/development.env
+          echo "SERVICE_ACCOUNT_JSON=${{ secrets.SERVICE_ACCOUNT_JSON }}" >> .env_flutter/development.env
 
           echo "development.env file created with all the keys..............."
 
-          echo "$(<.env/development.env )"
+          echo "$(<.env_flutter/development.env )"
 
       # Step 5: Build Flutter Web
       - name: Build Flutter Web
-        run: flutter build web --base-href / --release --dart-define-from-file .env/development.env
+        run: flutter build web --base-href / --release --dart-define-from-file .env_flutter/development.env
       
       # Step 6: Add github run_number
       - name: Add github run_number
