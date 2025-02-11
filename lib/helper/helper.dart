@@ -1,3 +1,4 @@
+import 'package:deun/main.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
@@ -48,4 +49,27 @@ showSnackBar(BuildContext context, String message) {
 
   ScaffoldMessenger.of(context).hideCurrentSnackBar();
   ScaffoldMessenger.of(context).showSnackBar(snackBar);
+}
+
+sendExpenseNotification(String expenseId, String groupId, String expenseName, double amount, bool isPaidBackRow,
+    Set<String> notificationReceiver) async {
+  try {
+    final res = await supabase.functions.invoke('push', body: {
+      'type': 'INSERT',
+      'table': 'expense',
+      'record': {
+        'id': expenseId,
+        'group_id': groupId,
+        'name': expenseName,
+        'user_id': supabase.auth.currentUser?.id,
+        'amount': toCurrency(amount),
+        'is_paid_back_row': isPaidBackRow,
+        'notification_receiver': notificationReceiver.toList(),
+      }
+    });
+    final data = res.data;
+    debugPrint(data.toString());
+  } catch (e) {
+    debugPrint(e.toString());
+  }
 }

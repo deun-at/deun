@@ -40,7 +40,6 @@ jobs:
           # Add content to the Env file
           echo "SUPABASE_URL=${{ secrets.SUPABASE_URL }}" >> .env_flutter/development.env
           echo "SUPABASE_ANON_KEY=${{ secrets.SUPABASE_ANON_KEY }}" >> .env_flutter/development.env
-          echo "SERVICE_ACCOUNT_JSON=${{ secrets.SERVICE_ACCOUNT_JSON }}" >> .env_flutter/development.env
 
           echo "development.env file created with all the keys..............."
 

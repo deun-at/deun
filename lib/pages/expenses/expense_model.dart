@@ -1,3 +1,6 @@
+import 'package:deun/helper/helper.dart';
+import 'package:flutter/foundation.dart';
+
 import '../../main.dart';
 import '../groups/group_model.dart';
 import 'expense_entry_model.dart';
@@ -122,7 +125,12 @@ class Expense {
 
     await supabase.from('expense_entry').delete().eq('expense_id', expenseInsertResponse['id']);
 
+    Set<String> notifiactionReceiver = {};
+    double amount = 0;
+
     await Future.wait(expenseEntryValues.values.map((expenseEntry) async {
+      amount += double.parse(expenseEntry['amount']);
+
       Map<String, dynamic> insertExpenseEntry = {
         "expense_id": expenseEntry["expense_id"],
         "name": expenseEntry["name"],
@@ -136,6 +144,8 @@ class Expense {
 
       Set<String> expenseEntryShares = expenseEntry['shares'];
 
+      notifiactionReceiver.addAll(expenseEntryShares);
+
       List<Map<String, dynamic>> insertExpenseEntryShares = expenseEntryShares.map((email) {
         return {
           "expense_entry_id": expenseEntryResult['id'],
@@ -148,6 +158,11 @@ class Expense {
     }));
 
     await supabase.rpc('update_group_member_shares', params: {"_group_id": groupId});
+
+    if (expenseId == null) {
+      sendExpenseNotification(
+          expenseInsertResponse['id'], groupId, formResponse['name'], amount, false, notifiactionReceiver);
+    }
   }
 
   Map<String, dynamic> toJson() {
