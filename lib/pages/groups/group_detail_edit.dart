@@ -156,20 +156,24 @@ class _GroupBottomSheetState extends ConsumerState<GroupBottomSheet> {
                                     crossAxisAlignment: CrossAxisAlignment.start,
                                     children: <Widget>[
                                       const SizedBox(height: spacing),
-                                      FormBuilderTextField(
-                                        name: "name",
-                                        style: Theme.of(context)
-                                            .textTheme
-                                            .displaySmall!
-                                            .copyWith(color: Theme.of(context).colorScheme.primary),
-                                        autovalidateMode: AutovalidateMode.onUserInteraction,
-                                        validator: FormBuilderValidators.required(
-                                            errorText: AppLocalizations.of(context)!.groupNameValidationEmpty),
-                                        decoration: InputDecoration(
-                                          border: InputBorder.none,
-                                          hintText: AppLocalizations.of(context)!.addGroupTitle,
-                                        ),
-                                      ),
+                                      FormBuilderField(
+                                          name: "name",
+                                          builder: (FormFieldState<dynamic> field) => TextFormField(
+                                                initialValue: field.value,
+                                                style: Theme.of(context)
+                                                    .textTheme
+                                                    .displaySmall!
+                                                    .copyWith(color: Theme.of(context).colorScheme.primary),
+                                                autovalidateMode: AutovalidateMode.onUserInteraction,
+                                                validator: FormBuilderValidators.required(
+                                                    errorText: AppLocalizations.of(context)!.groupNameValidationEmpty),
+                                                keyboardType: TextInputType.text,
+                                                decoration: InputDecoration(
+                                                  border: InputBorder.none,
+                                                  hintText: AppLocalizations.of(context)!.addGroupTitle,
+                                                ),
+                                                onChanged: (value) => field.didChange(value),
+                                              )),
                                       const SizedBox(height: spacing),
                                       FormBuilderField(
                                         name: "color_value",

@@ -64,10 +64,9 @@ class _NavigationScreenState extends ConsumerState<NavigationScreen> {
                     // child route
                     GoRoute(
                         path: 'details',
-                        // pageBuilder: (context, state) =>
-                        // NoTransitionPage(child: GroupDetail(group: state.extra as Group)),
                         pageBuilder: (context, state) {
-                          var group = state.extra as Group;
+                          var extra = state.extra as Map<String, dynamic>;
+                          var group = extra['group'] as Group;
 
                           return defaultTransitionPage(state.pageKey, GroupDetail(group: group));
                         },
@@ -104,7 +103,8 @@ class _NavigationScreenState extends ConsumerState<NavigationScreen> {
                     GoRoute(
                         path: 'edit',
                         pageBuilder: (context, state) {
-                          var group = state.extra as Group?;
+                          var extra = state.extra as Map<String, dynamic>?;
+                          var group = extra?['group'] as Group?;
 
                           return ModalBottomSheetPage(
                             key: state.pageKey,

@@ -181,19 +181,23 @@ class _ExpenseBottomSheetState extends ConsumerState<ExpenseBottomSheet> {
                                     mainAxisSize: MainAxisSize.min,
                                     crossAxisAlignment: CrossAxisAlignment.start,
                                     children: <Widget>[
-                                      FormBuilderTextField(
-                                        name: "name",
-                                        style: Theme.of(context)
-                                            .textTheme
-                                            .displaySmall!
-                                            .copyWith(color: Theme.of(context).colorScheme.primary),
-                                        validator: FormBuilderValidators.required(
-                                            errorText: AppLocalizations.of(context)!.expenseNameValidationEmpty),
-                                        decoration: InputDecoration(
-                                          border: InputBorder.none,
-                                          hintText: AppLocalizations.of(context)!.addExpenseTitle,
-                                        ),
-                                      ),
+                                      FormBuilderField(
+                                          name: "name",
+                                          builder: (FormFieldState<dynamic> field) => TextFormField(
+                                                initialValue: field.value,
+                                                style: Theme.of(context)
+                                                    .textTheme
+                                                    .displaySmall!
+                                                    .copyWith(color: Theme.of(context).colorScheme.primary),
+                                                validator: FormBuilderValidators.required(
+                                                    errorText:
+                                                        AppLocalizations.of(context)!.expenseNameValidationEmpty),
+                                                decoration: InputDecoration(
+                                                  border: InputBorder.none,
+                                                  hintText: AppLocalizations.of(context)!.addExpenseTitle,
+                                                ),
+                                                onChanged: (value) => field.didChange(value),
+                                              )),
                                       const SizedBox(height: spacing),
                                       FormBuilderChoiceChip(
                                         name: "paid_by",

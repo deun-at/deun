@@ -67,7 +67,7 @@ class _GroupListState extends ConsumerState<GroupList> {
                                       borderRadius: BorderRadius.circular(12.0),
                                       onTap: () {
                                         ref.read(themeColorProvider.notifier).setColor(Color(group.colorValue));
-                                        GoRouter.of(context).push("/group/details", extra: group).then(
+                                        GoRouter.of(context).push("/group/details", extra: {'group': group}).then(
                                           (value) async {
                                             ref.read(themeColorProvider.notifier).resetColor();
                                           },
@@ -105,7 +105,8 @@ class _GroupListState extends ConsumerState<GroupList> {
                                                         MenuItemButton(
                                                           closeOnActivate: true,
                                                           onPressed: () {
-                                                            GoRouter.of(context).push("/group/edit", extra: group);
+                                                            GoRouter.of(context)
+                                                                .push("/group/edit", extra: {'group': group});
                                                           },
                                                           trailingIcon: const Icon(Icons.edit),
                                                           child: Text(AppLocalizations.of(context)!.edit),

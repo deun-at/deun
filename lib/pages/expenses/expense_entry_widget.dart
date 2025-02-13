@@ -39,15 +39,18 @@ class _ExpenseEntryWidgetState extends State<ExpenseEntryWidget> {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Flexible(
-                          child: FormBuilderTextField(
-                        key: ValueKey("${widget.index}_name"),
-                        name: "expense_entry[${widget.index}][name]",
-                        style: Theme.of(context).textTheme.titleLarge,
-                        decoration: InputDecoration(
-                          border: InputBorder.none,
-                          hintText: AppLocalizations.of(context)!.expenseEntryTitle,
-                        ),
-                      )),
+                          child: FormBuilderField(
+                              key: ValueKey("${widget.index}_name"),
+                              name: "expense_entry[${widget.index}][name]",
+                              builder: (FormFieldState<dynamic> field) => TextFormField(
+                                    initialValue: field.value,
+                                    style: Theme.of(context).textTheme.titleLarge,
+                                    decoration: InputDecoration(
+                                      border: InputBorder.none,
+                                      hintText: AppLocalizations.of(context)!.expenseEntryTitle,
+                                    ),
+                                    onChanged: (value) => field.didChange(value),
+                                  ))),
                       const SizedBox(width: spacing),
                       IconButton.filledTonal(
                         onPressed: () => widget.onRemove(),
