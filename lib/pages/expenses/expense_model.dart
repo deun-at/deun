@@ -1,5 +1,4 @@
 import 'package:deun/helper/helper.dart';
-import 'package:flutter/foundation.dart';
 
 import '../../main.dart';
 import '../groups/group_model.dart';
@@ -86,6 +85,20 @@ class Expense {
     return retData;
   }
 
+  static Future<Expense> fetchDetail(String expenseId) async {
+    Map<String, dynamic> data = await supabase
+        .from('expense')
+        .select(
+            '*, ...paid_by(paid_by_display_name:display_name), expense_entry(*, expense_entry_share(*, ...email(display_name:display_name))), group(*, group_shares_summary(*, ...paid_by(paid_by_display_name:display_name), ...paid_for(paid_for_display_name:display_name)), group_member(*, ...user(display_name:display_name)))')
+        .eq('id', expenseId)
+        .single();
+
+    Expense expense = Expense();
+    expense.loadDataFromJson(data);
+
+    return expense;
+  }
+
   static Future<void> saveAll(String groupId, String? expenseId, Map<String, dynamic> formResponse) async {
     Map<String, dynamic> upsertVals = {
       'name': formResponse['name'],
@@ -125,7 +138,7 @@ class Expense {
 
     await supabase.from('expense_entry').delete().eq('expense_id', expenseInsertResponse['id']);
 
-    Set<String> notifiactionReceiver = {};
+    Set<String> notificationReceiver = {};
     double amount = 0;
 
     await Future.wait(expenseEntryValues.values.map((expenseEntry) async {
@@ -144,7 +157,7 @@ class Expense {
 
       Set<String> expenseEntryShares = expenseEntry['shares'];
 
-      notifiactionReceiver.addAll(expenseEntryShares);
+      notificationReceiver.addAll(expenseEntryShares);
 
       List<Map<String, dynamic>> insertExpenseEntryShares = expenseEntryShares.map((email) {
         return {
@@ -160,8 +173,7 @@ class Expense {
     await supabase.rpc('update_group_member_shares', params: {"_group_id": groupId});
 
     if (expenseId == null) {
-      sendExpenseNotification(
-          expenseInsertResponse['id'], groupId, formResponse['name'], amount, false, notifiactionReceiver);
+      sendExpenseNotification(expenseInsertResponse['id'], notificationReceiver);
     }
   }
 

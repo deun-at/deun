@@ -51,19 +51,17 @@ showSnackBar(BuildContext context, String message) {
   ScaffoldMessenger.of(context).showSnackBar(snackBar);
 }
 
-sendExpenseNotification(String expenseId, String groupId, String expenseName, double amount, bool isPaidBackRow,
-    Set<String> notificationReceiver) async {
+sendExpenseNotification(String expenseId, Set<String> notificationReceiver) async {
   try {
+    notificationReceiver.remove(supabase.auth.currentUser?.email);
     final res = await supabase.functions.invoke('push', body: {
       'type': 'INSERT',
       'table': 'expense',
       'record': {
-        'id': expenseId,
-        'group_id': groupId,
-        'name': expenseName,
-        'user_id': supabase.auth.currentUser?.id,
-        'amount': toCurrency(amount),
-        'is_paid_back_row': isPaidBackRow,
+        'type': 'expense',
+        'object_id': expenseId,
+        'title': 'New Expense',
+        'body': 'A new expense has been added',
         'notification_receiver': notificationReceiver.toList(),
       }
     });

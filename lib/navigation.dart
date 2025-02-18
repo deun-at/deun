@@ -178,10 +178,14 @@ class _NavigationScreenState extends ConsumerState<NavigationScreen> {
         .getToken(vapidKey: "BL4YZRDAw8gBPt37GNhz6ub5UxTtDUdjERYzFOgOI2ZdCqwwBToztXtL9Wj0QwqDfKe4CoBQjcjSP54OG3fjFvE");
 
     if (fcmToken != null) {
-      await supabase.from('device_tokens').upsert({
-        'user_id': supabase.auth.currentUser!.id, // Replace with your user ID field
-        'token': fcmToken,
-      });
+      try {
+        await supabase.from('device_tokens').upsert({
+          'user_id': supabase.auth.currentUser!.id, // Replace with your user ID field
+          'token': fcmToken,
+        });
+      } catch (e) {
+        debugPrint('error: $e');
+      }
     }
 
     await FirebaseMessaging.instance.setAutoInitEnabled(true);
@@ -212,11 +216,20 @@ class _NavigationScreenState extends ConsumerState<NavigationScreen> {
     });
   }
 
-  void _handleMessage(RemoteMessage message) {
+  void _handleMessage(RemoteMessage message) async {
     debugPrint('handle message: ${message.data.toString()}');
-    //   if (message.data['type'] == 'chat') {
-    //     Navigator.pushNamed(context, "/group/details/expense", extra: {'group': value, 'expense': expense});
-    //   }
+    if (message.data['type'] == 'expense') {
+      Expense expense = await Expense.fetchDetail(message.data['expense_id']);
+
+      // Navigate to the group expense list first
+      GoRouter.of(_rootNavigatorKey.currentContext!).push("/group/details", extra: {'group': expense.group});
+
+      // Delay opening the BottomSheet
+      Future.delayed(Durations.medium1, () {
+        GoRouter.of(_rootNavigatorKey.currentContext!)
+            .push("/group/details/expense", extra: {'group': expense.group, 'expense': expense});
+      });
+    }
   }
 
   CustomTransitionPage<dynamic> defaultTransitionPage(LocalKey key, Widget child) {
