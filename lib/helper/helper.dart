@@ -54,7 +54,7 @@ showSnackBar(BuildContext context, String message) {
 sendExpenseNotification(BuildContext context, String expenseId, Set<String> notificationReceiver, double amount) {
   supabase
       .from('expense')
-      .select('name, ...group(group_name:name), ...user(user_display_name:display_name)')
+      .select('name, ...group!expense_group_id_fkey(group_name:name), ...user(user_display_name:display_name)')
       .eq('id', expenseId)
       .single()
       .then((value) {

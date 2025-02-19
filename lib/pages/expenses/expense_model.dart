@@ -61,19 +61,19 @@ class Expense {
 
   delete() async {
     await supabase.from('expense').delete().eq('id', id);
-    await supabase.rpc('update_group_member_shares', params: {"_group_id": groupId});
+    await supabase.rpc('update_group_member_shares', params: {"_group_id": groupId, "_expense_id": id});
   }
 
-  static Future<List<Expense>> fetchData([String? groupId]) async {
+  static Future<List<Expense>> fetchData([String? groupId, int rangeFrom = 0, int rangeTo = 0]) async {
     var query = supabase.from('expense').select(
-        '*, ...paid_by(paid_by_display_name:display_name), expense_entry(*, expense_entry_share(*, ...email(display_name:display_name))), group(*, group_shares_summary(*, ...paid_by(paid_by_display_name:display_name), ...paid_for(paid_for_display_name:display_name)), group_member(*, ...user(display_name:display_name)))');
+        '*, ...paid_by(paid_by_display_name:display_name), expense_entry(*, expense_entry_share(*, ...email(display_name:display_name))), group!expense_group_id_fkey(*, group_shares_summary(*, ...paid_by(paid_by_display_name:display_name), ...paid_for(paid_for_display_name:display_name)), group_member(*, ...user(display_name:display_name)))');
 
     if (groupId != null) {
       query = query.eq('group_id', groupId);
     }
 
     //created_at as fallback if multiple entrys are on the same date/check if name makes more senses
-    List<Map<String, dynamic>> data = await query.order('expense_date').order('created_at');
+    List<Map<String, dynamic>> data = await query.order('expense_date').order('created_at').range(rangeFrom, rangeTo);
 
     List<Expense> retData = List.empty(growable: true);
 
@@ -90,7 +90,7 @@ class Expense {
     Map<String, dynamic> data = await supabase
         .from('expense')
         .select(
-            '*, ...paid_by(paid_by_display_name:display_name), expense_entry(*, expense_entry_share(*, ...email(display_name:display_name))), group(*, group_shares_summary(*, ...paid_by(paid_by_display_name:display_name), ...paid_for(paid_for_display_name:display_name)), group_member(*, ...user(display_name:display_name)))')
+            '*, ...paid_by(paid_by_display_name:display_name), expense_entry(*, expense_entry_share(*, ...email(display_name:display_name))), group!expense_group_id_fkey(*, group_shares_summary(*, ...paid_by(paid_by_display_name:display_name), ...paid_for(paid_for_display_name:display_name)), group_member(*, ...user(display_name:display_name)))')
         .eq('id', expenseId)
         .single();
 
@@ -172,7 +172,7 @@ class Expense {
       await supabase.from('expense_entry_share').insert(insertExpenseEntryShares);
     }));
 
-    await supabase.rpc('update_group_member_shares', params: {"_group_id": groupId});
+    await supabase.rpc('update_group_member_shares', params: {"_group_id": groupId, "_expense_id": expenseId});
 
     if (expenseId == null && context.mounted) {
       sendExpenseNotification(context, expenseInsertResponse['id'], notificationReceiver, amount);

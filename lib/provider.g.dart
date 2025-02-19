@@ -37,7 +37,7 @@ final groupListNotifierProvider =
 
 typedef _$GroupListNotifier = AutoDisposeAsyncNotifier<List<Group>>;
 String _$groupDetailNotifierHash() =>
-    r'0874588cb5a72e27c3b7a0f9e74e16586f66d28f';
+    r'4a51f1930db65d2bce87dd5996f6ca4e745a4a65';
 
 /// Copied from Dart SDK
 class _SystemHash {
@@ -200,6 +200,152 @@ class _GroupDetailNotifierProviderElement
 
   @override
   String get groupId => (origin as GroupDetailNotifierProvider).groupId;
+}
+
+String _$expenseListNotifierHash() =>
+    r'74af4a90fd4ae26a45d243d61ed497e45ab5b427';
+
+abstract class _$ExpenseListNotifier
+    extends BuildlessAutoDisposeAsyncNotifier<List<Expense>> {
+  late final String groupId;
+
+  FutureOr<List<Expense>> build(
+    String groupId,
+  );
+}
+
+/// See also [ExpenseListNotifier].
+@ProviderFor(ExpenseListNotifier)
+const expenseListNotifierProvider = ExpenseListNotifierFamily();
+
+/// See also [ExpenseListNotifier].
+class ExpenseListNotifierFamily extends Family<AsyncValue<List<Expense>>> {
+  /// See also [ExpenseListNotifier].
+  const ExpenseListNotifierFamily();
+
+  /// See also [ExpenseListNotifier].
+  ExpenseListNotifierProvider call(
+    String groupId,
+  ) {
+    return ExpenseListNotifierProvider(
+      groupId,
+    );
+  }
+
+  @override
+  ExpenseListNotifierProvider getProviderOverride(
+    covariant ExpenseListNotifierProvider provider,
+  ) {
+    return call(
+      provider.groupId,
+    );
+  }
+
+  static const Iterable<ProviderOrFamily>? _dependencies = null;
+
+  @override
+  Iterable<ProviderOrFamily>? get dependencies => _dependencies;
+
+  static const Iterable<ProviderOrFamily>? _allTransitiveDependencies = null;
+
+  @override
+  Iterable<ProviderOrFamily>? get allTransitiveDependencies =>
+      _allTransitiveDependencies;
+
+  @override
+  String? get name => r'expenseListNotifierProvider';
+}
+
+/// See also [ExpenseListNotifier].
+class ExpenseListNotifierProvider extends AutoDisposeAsyncNotifierProviderImpl<
+    ExpenseListNotifier, List<Expense>> {
+  /// See also [ExpenseListNotifier].
+  ExpenseListNotifierProvider(
+    String groupId,
+  ) : this._internal(
+          () => ExpenseListNotifier()..groupId = groupId,
+          from: expenseListNotifierProvider,
+          name: r'expenseListNotifierProvider',
+          debugGetCreateSourceHash:
+              const bool.fromEnvironment('dart.vm.product')
+                  ? null
+                  : _$expenseListNotifierHash,
+          dependencies: ExpenseListNotifierFamily._dependencies,
+          allTransitiveDependencies:
+              ExpenseListNotifierFamily._allTransitiveDependencies,
+          groupId: groupId,
+        );
+
+  ExpenseListNotifierProvider._internal(
+    super._createNotifier, {
+    required super.name,
+    required super.dependencies,
+    required super.allTransitiveDependencies,
+    required super.debugGetCreateSourceHash,
+    required super.from,
+    required this.groupId,
+  }) : super.internal();
+
+  final String groupId;
+
+  @override
+  FutureOr<List<Expense>> runNotifierBuild(
+    covariant ExpenseListNotifier notifier,
+  ) {
+    return notifier.build(
+      groupId,
+    );
+  }
+
+  @override
+  Override overrideWith(ExpenseListNotifier Function() create) {
+    return ProviderOverride(
+      origin: this,
+      override: ExpenseListNotifierProvider._internal(
+        () => create()..groupId = groupId,
+        from: from,
+        name: null,
+        dependencies: null,
+        allTransitiveDependencies: null,
+        debugGetCreateSourceHash: null,
+        groupId: groupId,
+      ),
+    );
+  }
+
+  @override
+  AutoDisposeAsyncNotifierProviderElement<ExpenseListNotifier, List<Expense>>
+      createElement() {
+    return _ExpenseListNotifierProviderElement(this);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is ExpenseListNotifierProvider && other.groupId == groupId;
+  }
+
+  @override
+  int get hashCode {
+    var hash = _SystemHash.combine(0, runtimeType.hashCode);
+    hash = _SystemHash.combine(hash, groupId.hashCode);
+
+    return _SystemHash.finish(hash);
+  }
+}
+
+mixin ExpenseListNotifierRef
+    on AutoDisposeAsyncNotifierProviderRef<List<Expense>> {
+  /// The parameter `groupId` of this provider.
+  String get groupId;
+}
+
+class _ExpenseListNotifierProviderElement
+    extends AutoDisposeAsyncNotifierProviderElement<ExpenseListNotifier,
+        List<Expense>> with ExpenseListNotifierRef {
+  _ExpenseListNotifierProviderElement(super.provider);
+
+  @override
+  String get groupId => (origin as ExpenseListNotifierProvider).groupId;
 }
 
 String _$friendshipListNotifierHash() =>

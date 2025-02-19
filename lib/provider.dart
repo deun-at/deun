@@ -1,10 +1,11 @@
+import 'dart:math';
+
 import 'package:deun/constants.dart';
 import 'package:deun/main.dart';
 import 'package:deun/pages/friends/friendship_model.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
-import 'package:supabase_auth_ui/supabase_auth_ui.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'pages/groups/group_model.dart';
@@ -59,7 +60,9 @@ class GroupDetailNotifier extends _$GroupDetailNotifier {
   }
 
   Future<Group> fetchGroupDetail(String groupId) async {
-    return await Group.fetchDetail(groupId);
+    Group group = await Group.fetchDetail(groupId);
+
+    return group;
   }
 
   void _subscribeToRealTimeUpdates(String groupId) {
@@ -79,6 +82,70 @@ class GroupDetailNotifier extends _$GroupDetailNotifier {
               reload(groupId);
             })
         .subscribe();
+  }
+}
+
+@riverpod
+class ExpenseListNotifier extends _$ExpenseListNotifier {
+  static const int pageSize = 20;
+  int _offset = 0;
+  bool _hasMore = true;
+
+  @override
+  FutureOr<List<Expense>> build(String groupId) async {
+    _subscribeToRealTimeUpdates(groupId);
+
+    return await fetchExpenseList(groupId, _offset, _offset + pageSize - 1);
+  }
+
+  Future<void> reload(groupId) async {
+    _offset = 0;
+    _hasMore = true;
+
+    state = await AsyncValue.guard(() async => await fetchExpenseList(groupId, _offset, _offset + pageSize - 1));
+  }
+
+  int get offset => _offset;
+
+  Future<List<Expense>> fetchExpenseList(String groupId, int rangeFrom, int rangeTo) async {
+    List<Expense> expenses = await Expense.fetchData(groupId, rangeFrom, rangeTo);
+    return expenses;
+  }
+
+  void _subscribeToRealTimeUpdates(String groupId) {
+    supabase
+        .channel('public:expense_list_checker')
+        .onPostgresChanges(
+            event: PostgresChangeEvent.all,
+            schema: 'public',
+            table: 'expense_update_checker',
+            filter: PostgresChangeFilter(
+              type: PostgresChangeFilterType.eq,
+              column: 'group_id',
+              value: groupId,
+            ),
+            callback: (payload) async {
+              debugPrint("expense list changed");
+              debugPrint(payload.toString());
+              // reload(groupId);
+            })
+        .subscribe();
+  }
+
+  Future<void> loadMoreEntries(String groupId) async {
+    if (!_hasMore || state.isLoading) return; // ✅ Stop if no more data
+
+    _offset += pageSize; // ✅ Increase the offset for the next page
+    final newExpenses = await Expense.fetchData(groupId, _offset, _offset + pageSize - 1);
+
+    if (newExpenses.isEmpty) {
+      _hasMore = false; // ✅ No more data to load
+      return;
+    }
+
+    state = state.whenData((expenses) {
+      return [...expenses, ...newExpenses];
+    });
   }
 }
 

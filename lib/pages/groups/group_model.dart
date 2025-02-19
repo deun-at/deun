@@ -105,8 +105,6 @@ class Group {
     Group group = Group();
     group.loadDataFromJson(data);
 
-    group.expenses = await Expense.fetchData(groupId);
-
     return group;
   }
 
@@ -148,7 +146,8 @@ class Group {
       await supabase.from('group_member').insert(upsertGroupMembers);
     }
 
-    await supabase.rpc('update_group_member_shares', params: {"_group_id": groupInsertResponse['id']});
+    await supabase
+        .rpc('update_group_member_shares', params: {"_group_id": groupInsertResponse['id'], "_expense_id": null});
   }
 
   static Future<void> payBack(String groupId, String email, double amount) async {
@@ -158,7 +157,7 @@ class Group {
       "_paid_for": email,
       "_amount": amount
     });
-    await supabase.rpc('update_group_member_shares', params: {"_group_id": groupId});
+    await supabase.rpc('update_group_member_shares', params: {"_group_id": groupId, "_expense_id": null});
   }
 
   Map<String, dynamic> toJson() => {

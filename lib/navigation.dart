@@ -5,6 +5,7 @@ import 'package:deun/pages/groups/group_detail_payment.dart';
 import 'package:deun/provider.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'pages/expenses/expense_detail.dart';
@@ -288,30 +289,35 @@ class ScaffoldWithNestedNavigation extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: navigationShell,
-      bottomNavigationBar: NavigationBar(
-        labelBehavior: NavigationDestinationLabelBehavior.onlyShowSelected,
-        selectedIndex: navigationShell.currentIndex,
-        destinations: <Widget>[
-          NavigationDestination(
-            selectedIcon: const Icon(Icons.receipt_long),
-            icon: const Icon(Icons.receipt_long_outlined),
-            label: AppLocalizations.of(context)!.expenses,
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+        value: SystemUiOverlayStyle(
+          systemNavigationBarColor: Theme.of(context).colorScheme.surfaceContainer, // ✅ Matches BottomNavigationBar
+          systemNavigationBarIconBrightness: Theme.of(context).brightness, // ✅ Light or dark icons based on color
+        ),
+        child: Scaffold(
+          body: navigationShell,
+          bottomNavigationBar: NavigationBar(
+            labelBehavior: NavigationDestinationLabelBehavior.onlyShowSelected,
+            selectedIndex: navigationShell.currentIndex,
+            destinations: <Widget>[
+              NavigationDestination(
+                selectedIcon: const Icon(Icons.receipt_long),
+                icon: const Icon(Icons.receipt_long_outlined),
+                label: AppLocalizations.of(context)!.expenses,
+              ),
+              NavigationDestination(
+                selectedIcon: const Icon(Icons.group),
+                icon: const Icon(Icons.group_outlined),
+                label: AppLocalizations.of(context)!.friends,
+              ),
+              NavigationDestination(
+                selectedIcon: const Icon(Icons.settings),
+                icon: const Icon(Icons.settings_outlined),
+                label: AppLocalizations.of(context)!.settings,
+              ),
+            ],
+            onDestinationSelected: _goBranch,
           ),
-          NavigationDestination(
-            selectedIcon: const Icon(Icons.group),
-            icon: const Icon(Icons.group_outlined),
-            label: AppLocalizations.of(context)!.friends,
-          ),
-          NavigationDestination(
-            selectedIcon: const Icon(Icons.settings),
-            icon: const Icon(Icons.settings_outlined),
-            label: AppLocalizations.of(context)!.settings,
-          ),
-        ],
-        onDestinationSelected: _goBranch,
-      ),
-    );
+        ));
   }
 }

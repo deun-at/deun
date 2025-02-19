@@ -21,6 +21,7 @@ class GroupDetail extends ConsumerStatefulWidget {
 
 class _GroupDetailState extends ConsumerState<GroupDetail> {
   final ScrollController _scrollController = ScrollController();
+  int oldLength = 0;
   bool _showText = true;
 
   @override
@@ -54,10 +55,9 @@ class _GroupDetailState extends ConsumerState<GroupDetail> {
 
   @override
   Widget build(BuildContext context) {
-    final AsyncValue<Group> groupDetail = ref.watch(groupDetailNotifierProvider(widget.group.id));
-
     return Scaffold(
         body: NestedScrollView(
+            physics: const BouncingScrollPhysics(),
             controller: _scrollController,
             headerSliverBuilder: (context, innerBoxIsScrolled) => [
                   SliverAppBar(
@@ -74,37 +74,45 @@ class _GroupDetailState extends ConsumerState<GroupDetail> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        switch (groupDetail) {
-                          AsyncData(:final value) => Padding(
-                              padding: const EdgeInsets.fromLTRB(16.0, 5.0, 16.0, 5.0),
-                              child: GroupShareWidget(group: value)),
-                          _ => const Padding(
-                              padding: EdgeInsets.fromLTRB(5.0, 5.0, 5.0, 5.0),
-                              child: Column(
-                                  mainAxisAlignment: MainAxisAlignment.start,
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    SizedBox(
-                                        height: 25,
-                                        width: 250,
-                                        child: ShimmerCardList(
-                                          height: 20,
-                                          listEntryLength: 1,
-                                        )),
-                                    SizedBox(
-                                        height: 25,
-                                        width: 250,
-                                        child: ShimmerCardList(
-                                          height: 15,
-                                          listEntryLength: 1,
-                                        )),
-                                  ])),
-                        }
+                        Consumer(
+                          builder: (ctx, watch, child) {
+                            final isLoading = ref.watch(groupDetailNotifierProvider(widget.group.id)).isLoading;
+                            final groupDetail = ref.watch(groupDetailNotifierProvider(widget.group.id)).value;
+
+                            if (isLoading || groupDetail == null) {
+                              return const Padding(
+                                  padding: EdgeInsets.fromLTRB(5.0, 5.0, 5.0, 5.0),
+                                  child: Column(
+                                      mainAxisAlignment: MainAxisAlignment.start,
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        SizedBox(
+                                            height: 25,
+                                            width: 250,
+                                            child: ShimmerCardList(
+                                              height: 15,
+                                              listEntryLength: 1,
+                                            )),
+                                        SizedBox(
+                                            height: 37,
+                                            width: 250,
+                                            child: ShimmerCardList(
+                                              height: 10,
+                                              listEntryLength: 2,
+                                            )),
+                                      ]));
+                            }
+
+                            return Padding(
+                                padding: const EdgeInsets.fromLTRB(16.0, 5.0, 16.0, 5.0),
+                                child: GroupShareWidget(group: groupDetail));
+                          },
+                        ),
                       ],
                     ),
                   ),
                 ],
-            body: Container(color: Theme.of(context).colorScheme.surface, child: GroupDetailList(group: widget.group))),
+            body: GroupDetailList(group: widget.group)),
         floatingActionButton:
             Column(mainAxisAlignment: MainAxisAlignment.end, crossAxisAlignment: CrossAxisAlignment.end, children: [
           FloatingActionButton.small(
