@@ -1,4 +1,5 @@
 import 'package:deun/helper/helper.dart';
+import 'package:flutter/material.dart';
 
 import '../../main.dart';
 import '../groups/group_model.dart';
@@ -99,7 +100,8 @@ class Expense {
     return expense;
   }
 
-  static Future<void> saveAll(String groupId, String? expenseId, Map<String, dynamic> formResponse) async {
+  static Future<void> saveAll(
+      BuildContext context, String groupId, String? expenseId, Map<String, dynamic> formResponse) async {
     Map<String, dynamic> upsertVals = {
       'name': formResponse['name'],
       'expense_date': formResponse['expense_date'].toString(),
@@ -172,8 +174,8 @@ class Expense {
 
     await supabase.rpc('update_group_member_shares', params: {"_group_id": groupId});
 
-    if (expenseId == null) {
-      sendExpenseNotification(expenseInsertResponse['id'], notificationReceiver);
+    if (expenseId == null && context.mounted) {
+      sendExpenseNotification(context, expenseInsertResponse['id'], notificationReceiver, amount);
     }
   }
 

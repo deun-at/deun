@@ -128,7 +128,7 @@ class _ExpenseBottomSheetState extends ConsumerState<ExpenseBottomSheet> {
               if (_formKey.currentState!.saveAndValidate()) {
                 ref.read(_isLoading.notifier).state = true; // Set loading to true
                 try {
-                  await Expense.saveAll(widget.group.id, widget.expense?.id, _formKey.currentState!.value);
+                  await Expense.saveAll(context, widget.group.id, widget.expense?.id, _formKey.currentState!.value);
                   if (context.mounted) {
                     showSnackBar(context, AppLocalizations.of(context)!.expenseCreateSuccess);
                   }

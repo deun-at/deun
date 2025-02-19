@@ -51,17 +51,31 @@ showSnackBar(BuildContext context, String message) {
   ScaffoldMessenger.of(context).showSnackBar(snackBar);
 }
 
-sendExpenseNotification(String expenseId, Set<String> notificationReceiver) async {
+sendExpenseNotification(BuildContext context, String expenseId, Set<String> notificationReceiver, double amount) {
+  supabase
+      .from('expense')
+      .select('name, ...group(group_name:name), ...user(user_display_name:display_name)')
+      .eq('id', expenseId)
+      .single()
+      .then((value) {
+    String title = AppLocalizations.of(context)!.expenseNotificationTitle(value['user_display_name']);
+    String body = AppLocalizations.of(context)!.expenseNotificationBody(value['name'], value['group_name'], amount);
+
+    sendNotification('expense', expenseId, notificationReceiver, title, body);
+  });
+}
+
+sendNotification(String type, String objectId, Set<String> notificationReceiver, String title, String body) async {
   try {
     notificationReceiver.remove(supabase.auth.currentUser?.email);
     final res = await supabase.functions.invoke('push', body: {
       'type': 'INSERT',
-      'table': 'expense',
+      'table': type,
       'record': {
-        'type': 'expense',
-        'object_id': expenseId,
-        'title': 'New Expense',
-        'body': 'A new expense has been added',
+        'type': type,
+        'object_id': objectId,
+        'title': title,
+        'body': body,
         'notification_receiver': notificationReceiver.toList(),
       }
     });

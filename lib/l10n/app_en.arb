@@ -256,6 +256,39 @@
       }
     }
   },
+  "expenseNotificationTitle": "{userDisplayName} added an expense",
+  "@expenseNotificationTitle": {
+    "description": "Notification title when a new expense was added.",
+    "placeholders": {
+      "userDisplayName": {
+        "type": "String",
+        "example": "Max Muster"
+      }
+    }
+  },
+  "expenseNotificationBody": "\"{expenseName}\" has been added to \"{groupName}\" with a total of {amount}",
+  "@expenseNotificationBody": {
+    "description": "Notification body when a new expense was added.",
+    "placeholders": {
+      "expenseName": {
+        "type": "String",
+        "example": "Groceries"
+      },
+      "groupName": {
+        "type": "String",
+        "example": "Shoppingfriends"
+      },
+      "amount": {
+        "type": "double",
+        "format": "currency",
+        "optionalParameters": {
+          "decimalDigits": 2,
+          "name": "€"
+        },
+        "example": "200.00"
+      }
+    }
+  },
   "settings": "Settings",
   "create": "Create",
   "cancel": "Cancel",

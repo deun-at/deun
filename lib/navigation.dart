@@ -222,12 +222,12 @@ class _NavigationScreenState extends ConsumerState<NavigationScreen> {
       Expense expense = await Expense.fetchDetail(message.data['expense_id']);
 
       // Navigate to the group expense list first
-      GoRouter.of(_rootNavigatorKey.currentContext!).push("/group/details", extra: {'group': expense.group});
+      GoRouter.of(_rootNavigatorKey.currentContext!).go("/group/details", extra: {'group': expense.group});
 
       // Delay opening the BottomSheet
       Future.delayed(Durations.medium1, () {
         GoRouter.of(_rootNavigatorKey.currentContext!)
-            .push("/group/details/expense", extra: {'group': expense.group, 'expense': expense});
+            .go("/group/details/expense", extra: {'group': expense.group, 'expense': expense});
       });
     }
   }
