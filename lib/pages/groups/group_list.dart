@@ -1,4 +1,5 @@
 import 'package:deun/helper/helper.dart';
+import 'package:deun/main.dart';
 import 'package:deun/widgets/empty_list_widget.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -30,121 +31,123 @@ class _GroupListState extends ConsumerState<GroupList> {
   Widget build(BuildContext context) {
     final groupList = ref.watch(groupListNotifierProvider);
 
-    return Scaffold(
-        appBar: AppBar(
-          title: Text(AppLocalizations.of(context)!.expenses),
-          centerTitle: true,
-        ),
-        body: Container(
-            color: Theme.of(context).colorScheme.surface,
-            child: switch (groupList) {
-              AsyncData(:final value) => value.isEmpty
-                  ? EmptyListWidget(
+    return ScaffoldMessenger(
+        key: groupListScaffoldMessengerKey,
+        child: Scaffold(
+            appBar: AppBar(
+              title: Text(AppLocalizations.of(context)!.expenses),
+              centerTitle: true,
+            ),
+            body: Container(
+                color: Theme.of(context).colorScheme.surface,
+                child: switch (groupList) {
+                  AsyncData(:final value) => value.isEmpty
+                      ? EmptyListWidget(
+                          label: AppLocalizations.of(context)!.groupNoEntries,
+                          onRefresh: () async {
+                            await updateGroupList();
+                          })
+                      : RefreshIndicator(
+                          onRefresh: () async {
+                            await updateGroupList();
+                          },
+                          child: Padding(
+                              padding: const EdgeInsets.only(right: 8.0, left: 8.0),
+                              child: ListView.builder(
+                                padding: EdgeInsets.zero,
+                                itemCount: value.length,
+                                itemBuilder: (context, index) {
+                                  // Access the Group instance
+                                  Group group = value[index];
+                                  Color colorSeedValue = Color(group.colorValue);
+
+                                  return Card(
+                                      elevation: 14,
+                                      color: Theme.of(context).colorScheme.surfaceContainer,
+                                      surfaceTintColor: colorSeedValue,
+                                      shadowColor: Colors.transparent,
+                                      child: InkWell(
+                                          borderRadius: BorderRadius.circular(12.0),
+                                          onTap: () {
+                                            ref.read(themeColorProvider.notifier).setColor(Color(group.colorValue));
+                                            GoRouter.of(context).push("/group/details", extra: {'group': group}).then(
+                                              (value) async {
+                                                ref.read(themeColorProvider.notifier).resetColor();
+                                              },
+                                            );
+                                          },
+                                          child: Padding(
+                                              padding: const EdgeInsets.fromLTRB(10, 5, 5, 10),
+                                              child: Column(
+                                                children: [
+                                                  Row(
+                                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                                    children: [
+                                                      Flexible(
+                                                          child: Text(
+                                                        group.name,
+                                                        style: Theme.of(context).textTheme.headlineMedium,
+                                                        overflow: TextOverflow.ellipsis,
+                                                      )),
+                                                      Directionality(
+                                                        textDirection: TextDirection.rtl,
+                                                        child: MenuAnchor(
+                                                          builder: (context, controller, child) {
+                                                            return IconButton(
+                                                              icon: const Icon(Icons.more_vert),
+                                                              onPressed: () {
+                                                                if (controller.isOpen) {
+                                                                  controller.close();
+                                                                } else {
+                                                                  controller.open();
+                                                                }
+                                                              },
+                                                            );
+                                                          },
+                                                          menuChildren: [
+                                                            MenuItemButton(
+                                                              closeOnActivate: true,
+                                                              onPressed: () {
+                                                                GoRouter.of(context)
+                                                                    .push("/group/edit", extra: {'group': group});
+                                                              },
+                                                              trailingIcon: const Icon(Icons.edit),
+                                                              child: Text(AppLocalizations.of(context)!.edit),
+                                                            ),
+                                                            MenuItemButton(
+                                                              closeOnActivate: true,
+                                                              onPressed: () => openDeleteItemDialog(context, group),
+                                                              trailingIcon: const Icon(Icons.delete),
+                                                              child: Text(AppLocalizations.of(context)!.delete),
+                                                            ),
+                                                          ],
+                                                        ),
+                                                      ),
+                                                    ],
+                                                  ),
+                                                  GroupShareWidget(group: group),
+                                                ],
+                                              ))));
+                                },
+                              ))),
+                  AsyncError() => EmptyListWidget(
                       label: AppLocalizations.of(context)!.groupNoEntries,
                       onRefresh: () async {
                         await updateGroupList();
-                      })
-                  : RefreshIndicator(
-                      onRefresh: () async {
-                        await updateGroupList();
-                      },
-                      child: Padding(
-                          padding: const EdgeInsets.only(right: 8.0, left: 8.0),
-                          child: ListView.builder(
-                            padding: EdgeInsets.zero,
-                            itemCount: value.length,
-                            itemBuilder: (context, index) {
-                              // Access the Group instance
-                              Group group = value[index];
-                              Color colorSeedValue = Color(group.colorValue);
-
-                              return Card(
-                                  elevation: 14,
-                                  color: Theme.of(context).colorScheme.surfaceContainer,
-                                  surfaceTintColor: colorSeedValue,
-                                  shadowColor: Colors.transparent,
-                                  child: InkWell(
-                                      borderRadius: BorderRadius.circular(12.0),
-                                      onTap: () {
-                                        ref.read(themeColorProvider.notifier).setColor(Color(group.colorValue));
-                                        GoRouter.of(context).push("/group/details", extra: {'group': group}).then(
-                                          (value) async {
-                                            ref.read(themeColorProvider.notifier).resetColor();
-                                          },
-                                        );
-                                      },
-                                      child: Padding(
-                                          padding: const EdgeInsets.fromLTRB(10, 5, 5, 10),
-                                          child: Column(
-                                            children: [
-                                              Row(
-                                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                                children: [
-                                                  Flexible(
-                                                      child: Text(
-                                                    group.name,
-                                                    style: Theme.of(context).textTheme.headlineMedium,
-                                                    overflow: TextOverflow.ellipsis,
-                                                  )),
-                                                  Directionality(
-                                                    textDirection: TextDirection.rtl,
-                                                    child: MenuAnchor(
-                                                      builder: (context, controller, child) {
-                                                        return IconButton(
-                                                          icon: const Icon(Icons.more_vert),
-                                                          onPressed: () {
-                                                            if (controller.isOpen) {
-                                                              controller.close();
-                                                            } else {
-                                                              controller.open();
-                                                            }
-                                                          },
-                                                        );
-                                                      },
-                                                      menuChildren: [
-                                                        MenuItemButton(
-                                                          closeOnActivate: true,
-                                                          onPressed: () {
-                                                            GoRouter.of(context)
-                                                                .push("/group/edit", extra: {'group': group});
-                                                          },
-                                                          trailingIcon: const Icon(Icons.edit),
-                                                          child: Text(AppLocalizations.of(context)!.edit),
-                                                        ),
-                                                        MenuItemButton(
-                                                          closeOnActivate: true,
-                                                          onPressed: () => openDeleteItemDialog(context, group),
-                                                          trailingIcon: const Icon(Icons.delete),
-                                                          child: Text(AppLocalizations.of(context)!.delete),
-                                                        ),
-                                                      ],
-                                                    ),
-                                                  ),
-                                                ],
-                                              ),
-                                              GroupShareWidget(group: group),
-                                            ],
-                                          ))));
-                            },
-                          ))),
-              AsyncError() => EmptyListWidget(
-                  label: AppLocalizations.of(context)!.groupNoEntries,
-                  onRefresh: () async {
-                    await updateGroupList();
-                  }),
-              _ => const ShimmerCardList(
-                  height: 100,
-                  listEntryLength: 8,
-                ),
-            }),
-        floatingActionButton: FloatingActionButton.extended(
-          heroTag: "floating_action_button_main",
-          onPressed: () {
-            GoRouter.of(context).push("/group/edit");
-          },
-          label: Text(AppLocalizations.of(context)!.addNewGroup),
-          icon: const Icon(Icons.add),
-        ));
+                      }),
+                  _ => const ShimmerCardList(
+                      height: 100,
+                      listEntryLength: 8,
+                    ),
+                }),
+            floatingActionButton: FloatingActionButton.extended(
+              heroTag: "floating_action_button_main",
+              onPressed: () {
+                GoRouter.of(context).push("/group/edit");
+              },
+              label: Text(AppLocalizations.of(context)!.addNewGroup),
+              icon: const Icon(Icons.add),
+            )));
   }
 
   void openDeleteItemDialog(BuildContext context, Group group) {
@@ -167,11 +170,12 @@ class _GroupListState extends ConsumerState<GroupList> {
               try {
                 await group.delete();
                 if (context.mounted) {
-                  showSnackBar(context, AppLocalizations.of(context)!.groupDeleteSuccess);
+                  showSnackBar(
+                      context, groupListScaffoldMessengerKey, AppLocalizations.of(context)!.groupDeleteSuccess);
                 }
               } catch (e) {
                 if (context.mounted) {
-                  showSnackBar(context, AppLocalizations.of(context)!.groupDeleteError);
+                  showSnackBar(context, groupListScaffoldMessengerKey, AppLocalizations.of(context)!.groupDeleteError);
                 }
               } finally {
                 if (context.mounted) {

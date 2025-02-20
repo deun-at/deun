@@ -1,4 +1,5 @@
 import 'package:deun/helper/helper.dart';
+import 'package:deun/main.dart';
 import 'package:deun/provider.dart';
 import 'package:deun/widgets/shimmer_card_list.dart';
 import 'package:flutter/material.dart';
@@ -91,12 +92,12 @@ class _GroupPaymentBottomSheetState extends ConsumerState<GroupPaymentBottomShee
               try {
                 await Group.payBack(widget.group.id, email, groupShare.shareAmount.abs());
                 if (context.mounted) {
-                  showSnackBar(
-                      context, AppLocalizations.of(context)!.payBackSuccess(email, groupShare.shareAmount.abs()));
+                  showSnackBar(context, groupDetailScaffoldMessengerKey,
+                      AppLocalizations.of(context)!.payBackSuccess(email, groupShare.shareAmount.abs()));
                 }
               } catch (e) {
                 if (context.mounted) {
-                  showSnackBar(context, AppLocalizations.of(context)!.payBackError);
+                  showSnackBar(context, groupDetailScaffoldMessengerKey, AppLocalizations.of(context)!.payBackError);
                 }
               } finally {
                 //pop both dialog and edit page, because this item is not existing anymore

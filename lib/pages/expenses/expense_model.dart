@@ -61,7 +61,8 @@ class Expense {
 
   delete() async {
     await supabase.from('expense').delete().eq('id', id);
-    await supabase.rpc('update_group_member_shares', params: {"_group_id": groupId, "_expense_id": id});
+    await supabase.from('expense_update_checker').delete().eq('expense_id', id);
+    await supabase.rpc('update_group_member_shares', params: {"_group_id": groupId, "_expense_id": null});
   }
 
   static Future<List<Expense>> fetchData([String? groupId, int rangeFrom = 0, int rangeTo = 0]) async {
@@ -172,7 +173,8 @@ class Expense {
       await supabase.from('expense_entry_share').insert(insertExpenseEntryShares);
     }));
 
-    await supabase.rpc('update_group_member_shares', params: {"_group_id": groupId, "_expense_id": expenseId});
+    await supabase
+        .rpc('update_group_member_shares', params: {"_group_id": groupId, "_expense_id": expenseInsertResponse['id']});
 
     if (expenseId == null && context.mounted) {
       sendExpenseNotification(context, expenseInsertResponse['id'], notificationReceiver, amount);

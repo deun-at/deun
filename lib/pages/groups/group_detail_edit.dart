@@ -122,11 +122,13 @@ class _GroupBottomSheetState extends ConsumerState<GroupBottomSheet> {
                                     try {
                                       await Group.saveAll(widget.group?.id, _formKey.currentState!.value);
                                       if (context.mounted) {
-                                        showSnackBar(context, AppLocalizations.of(context)!.groupCreateSuccess);
+                                        showSnackBar(context, groupDetailScaffoldMessengerKey,
+                                            AppLocalizations.of(context)!.groupCreateSuccess);
                                       }
                                     } catch (e) {
                                       if (context.mounted) {
-                                        showSnackBar(context, AppLocalizations.of(context)!.groupCreateError);
+                                        showSnackBar(context, groupDetailScaffoldMessengerKey,
+                                            AppLocalizations.of(context)!.groupCreateError);
                                       }
                                     } finally {
                                       if (mounted) {

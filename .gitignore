@@ -45,3 +45,4 @@ app.*.map.json
 supabase/schema.sql
 supabase/seed.sql
 .env_flutter
+supabase/push.ts

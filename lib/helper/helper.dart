@@ -1,5 +1,7 @@
 import 'package:deun/main.dart';
+import 'package:deun/provider.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
@@ -36,10 +38,8 @@ String formatDate(String? dateString) {
   }
 }
 
-showSnackBar(BuildContext context, String message) {
+showSnackBar(BuildContext context, GlobalKey<ScaffoldMessengerState> scaffoldMessengerKey, String message) {
   SnackBar snackBar = SnackBar(
-    behavior: SnackBarBehavior.floating,
-    width: 400.0,
     content: Text(message),
     action: SnackBarAction(
       label: AppLocalizations.of(context)!.close,
@@ -47,8 +47,8 @@ showSnackBar(BuildContext context, String message) {
     ),
   );
 
-  ScaffoldMessenger.of(context).hideCurrentSnackBar();
-  ScaffoldMessenger.of(context).showSnackBar(snackBar);
+  scaffoldMessengerKey.currentState?.hideCurrentSnackBar();
+  scaffoldMessengerKey.currentState?.showSnackBar(snackBar);
 }
 
 sendExpenseNotification(BuildContext context, String expenseId, Set<String> notificationReceiver, double amount) {

@@ -85,11 +85,13 @@ class _ExpenseBottomSheetState extends ConsumerState<ExpenseBottomSheet> {
               try {
                 await widget.expense!.delete();
                 if (context.mounted) {
-                  showSnackBar(context, AppLocalizations.of(context)!.expenseDeleteSuccess);
+                  showSnackBar(
+                      context, groupDetailScaffoldMessengerKey, AppLocalizations.of(context)!.expenseDeleteSuccess);
                 }
               } catch (e) {
                 if (context.mounted) {
-                  showSnackBar(context, AppLocalizations.of(context)!.expenseDeleteError);
+                  showSnackBar(
+                      context, groupDetailScaffoldMessengerKey, AppLocalizations.of(context)!.expenseDeleteError);
                 }
               } finally {
                 //pop both dialog and edit page, because this item is not existing anymore
@@ -130,11 +132,13 @@ class _ExpenseBottomSheetState extends ConsumerState<ExpenseBottomSheet> {
                 try {
                   await Expense.saveAll(context, widget.group.id, widget.expense?.id, _formKey.currentState!.value);
                   if (context.mounted) {
-                    showSnackBar(context, AppLocalizations.of(context)!.expenseCreateSuccess);
+                    showSnackBar(
+                        context, groupDetailScaffoldMessengerKey, AppLocalizations.of(context)!.expenseCreateSuccess);
                   }
                 } catch (e) {
                   if (context.mounted) {
-                    showSnackBar(context, AppLocalizations.of(context)!.expenseCreateError);
+                    showSnackBar(
+                        context, groupDetailScaffoldMessengerKey, AppLocalizations.of(context)!.expenseCreateError);
                   }
                 } finally {
                   if (mounted) {

@@ -9,6 +9,10 @@ import 'package:supabase_auth_ui/supabase_auth_ui.dart';
 import 'auth_gate.dart';
 import 'package:universal_html/html.dart' as html;
 
+final groupListScaffoldMessengerKey = GlobalKey<ScaffoldMessengerState>();
+final groupDetailScaffoldMessengerKey = GlobalKey<ScaffoldMessengerState>();
+final friendListScaffoldMessengerKey = GlobalKey<ScaffoldMessengerState>();
+
 @pragma('vm:entry-point')
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   // If you're going to use other Firebase services in the background, such as Firestore,

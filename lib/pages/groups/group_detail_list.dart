@@ -25,7 +25,7 @@ class _GroupDetailListState extends ConsumerState<GroupDetailList> {
   int oldOffset = 0;
 
   Future<void> updateExpenseList() async {
-    return ref.read(groupDetailNotifierProvider(widget.group.id).notifier).reload(widget.group.id);
+    return ref.read(expenseListNotifierProvider(widget.group.id).notifier).reload(widget.group.id);
   }
 
   @override

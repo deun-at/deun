@@ -127,7 +127,43 @@ class ExpenseListNotifier extends _$ExpenseListNotifier {
             callback: (payload) async {
               debugPrint("expense list changed");
               debugPrint(payload.toString());
-              // reload(groupId);
+
+              if (payload.eventType == PostgresChangeEvent.delete) {
+                state = state.whenData((expenses) {
+                  final index = expenses.indexWhere((e) => e.id == payload.oldRecord['expense_id']);
+                  if (index == -1) return expenses; // Expense not found, return original list
+
+                  final updatedExpenses = List<Expense>.from(expenses);
+                  updatedExpenses.removeAt(index);
+
+                  return updatedExpenses;
+                });
+                return;
+              } else if (payload.eventType == PostgresChangeEvent.update) {
+                Expense expense = await Expense.fetchDetail(payload.newRecord['expense_id']);
+
+                state = state.whenData((expenses) {
+                  final index = expenses.indexWhere((e) => e.id == expense.id);
+                  if (index == -1) return expenses; // Expense not found, return original list
+
+                  final updatedExpenses = List<Expense>.from(expenses);
+                  updatedExpenses[index] = expense;
+
+                  return updatedExpenses;
+                });
+                return;
+              } else if (payload.eventType == PostgresChangeEvent.insert) {
+                Expense expense = await Expense.fetchDetail(payload.newRecord['expense_id']);
+
+                state = state.whenData((expenses) {
+                  return [
+                    expense,
+                    ...expenses
+                  ]; //not optimal, currently just adds it to the beginning instead of sorting it by date
+                });
+
+                return;
+              }
             })
         .subscribe();
   }

@@ -203,7 +203,7 @@ class _GroupDetailNotifierProviderElement
 }
 
 String _$expenseListNotifierHash() =>
-    r'74af4a90fd4ae26a45d243d61ed497e45ab5b427';
+    r'c10c306630fc473fb7dac048245fbd13ccdc21af';
 
 abstract class _$ExpenseListNotifier
     extends BuildlessAutoDisposeAsyncNotifier<List<Expense>> {
