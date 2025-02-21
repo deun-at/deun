@@ -298,6 +298,7 @@
   "save": "Save",
   "accept": "Accept",
   "remove": "Remove",
+  "open": "Open",
   "close": "Close",
   "generalError": "Something went wrong",
   "loading": "Loading",

@@ -1,3 +1,4 @@
+import 'package:deun/helper/helper.dart';
 import 'package:deun/main.dart';
 import 'package:deun/pages/expenses/expense_model.dart';
 import 'package:deun/pages/friends/friend_list.dart';
@@ -163,7 +164,7 @@ class _NavigationScreenState extends ConsumerState<NavigationScreen> {
       sound: true,
     );
 
-    debugPrint('User granted permission: ${notificationSettings.authorizationStatus}');
+    // debugPrint('User granted permission: ${notificationSettings.authorizationStatus}');
 
     if (notificationSettings.authorizationStatus == AuthorizationStatus.denied) {
       return null;
@@ -218,18 +219,10 @@ class _NavigationScreenState extends ConsumerState<NavigationScreen> {
   }
 
   void _handleMessage(RemoteMessage message) async {
-    debugPrint('handle message: ${message.data.toString()}');
+    // debugPrint('handle message: ${message.data.toString()}');
     if (message.data['type'] == 'expense') {
       Expense expense = await Expense.fetchDetail(message.data['expense_id']);
-
-      // Navigate to the group expense list first
-      GoRouter.of(_rootNavigatorKey.currentContext!).go("/group/details", extra: {'group': expense.group});
-
-      // Delay opening the BottomSheet
-      Future.delayed(Durations.medium1, () {
-        GoRouter.of(_rootNavigatorKey.currentContext!)
-            .go("/group/details/expense", extra: {'group': expense.group, 'expense': expense});
-      });
+      navigateToExpense(_rootNavigatorKey.currentContext!, expense);
     }
   }
 
@@ -256,6 +249,7 @@ class _NavigationScreenState extends ConsumerState<NavigationScreen> {
     Color colorSelected = ref.watch(themeColorProvider);
 
     return MaterialApp.router(
+      scaffoldMessengerKey: rootScaffoldMessengerKey,
       routerConfig: _routerConfig,
       title: 'Deun',
       theme: ThemeData(colorSchemeSeed: colorSelected, useMaterial3: true, brightness: Brightness.light),
@@ -269,22 +263,42 @@ class _NavigationScreenState extends ConsumerState<NavigationScreen> {
 
 // Stateful nested navigation based on:
 // https://github.com/flutter/packages/blob/main/packages/go_router/example/lib/stateful_shell_route.dart
-class ScaffoldWithNestedNavigation extends StatelessWidget {
+class ScaffoldWithNestedNavigation extends StatefulWidget {
   const ScaffoldWithNestedNavigation({
     Key? key,
     required this.navigationShell,
   }) : super(key: key ?? const ValueKey('ScaffoldWithNestedNavigation'));
   final StatefulNavigationShell navigationShell;
 
+  @override
+  State<ScaffoldWithNestedNavigation> createState() => _ScaffoldWithNestedNavigationState();
+}
+
+class _ScaffoldWithNestedNavigationState extends State<ScaffoldWithNestedNavigation> {
   void _goBranch(int index) {
-    navigationShell.goBranch(
+    widget.navigationShell.goBranch(
       index,
       // A common pattern when using bottom navigation bars is to support
       // navigating to the initial location when tapping the item that is
       // already active. This example demonstrates how to support this behavior,
       // using the initialLocation parameter of goBranch.
-      initialLocation: index == navigationShell.currentIndex,
+      initialLocation: index == widget.navigationShell.currentIndex,
     );
+  }
+
+  @override
+  void initState() {
+    super.initState();
+
+    FirebaseMessaging.onMessage.listen((RemoteMessage message) {
+      debugPrint(message.data.toString());
+      if (message.data['type'] == 'expense') {
+        Expense.fetchDetail(message.data['expense_id']).then((expense) {
+          showMaterialBanner(context, '${message.notification!.title}\n${message.notification!.body}',
+              () => navigateToExpense(context, expense));
+        });
+      }
+    });
   }
 
   @override
@@ -295,10 +309,10 @@ class ScaffoldWithNestedNavigation extends StatelessWidget {
           systemNavigationBarIconBrightness: Theme.of(context).brightness, // ✅ Light or dark icons based on color
         ),
         child: Scaffold(
-          body: navigationShell,
+          body: widget.navigationShell,
           bottomNavigationBar: NavigationBar(
             labelBehavior: NavigationDestinationLabelBehavior.onlyShowSelected,
-            selectedIndex: navigationShell.currentIndex,
+            selectedIndex: widget.navigationShell.currentIndex,
             destinations: <Widget>[
               NavigationDestination(
                 selectedIcon: const Icon(Icons.receipt_long),

@@ -1,7 +1,7 @@
 import 'package:deun/main.dart';
-import 'package:deun/provider.dart';
+import 'package:deun/pages/expenses/expense_model.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
@@ -51,6 +51,36 @@ showSnackBar(BuildContext context, GlobalKey<ScaffoldMessengerState> scaffoldMes
   scaffoldMessengerKey.currentState?.showSnackBar(snackBar);
 }
 
+showMaterialBanner(BuildContext context, String message, Function onPressed) {
+  final messengerKey = rootScaffoldMessengerKey.currentState;
+
+  if (messengerKey == null) {
+    return;
+  }
+
+  final banner = MaterialBanner(
+    content: Text(message),
+    actions: <Widget>[
+      TextButton(
+        onPressed: () {
+          onPressed();
+          messengerKey.hideCurrentMaterialBanner();
+        },
+        child: Text(AppLocalizations.of(context)!.open),
+      ),
+      TextButton(
+        onPressed: () {
+          messengerKey.hideCurrentMaterialBanner();
+        },
+        child: Text(AppLocalizations.of(context)!.close),
+      ),
+    ],
+  );
+
+  messengerKey.hideCurrentMaterialBanner();
+  messengerKey.showMaterialBanner(banner);
+}
+
 sendExpenseNotification(BuildContext context, String expenseId, Set<String> notificationReceiver, double amount) {
   supabase
       .from('expense')
@@ -84,4 +114,15 @@ sendNotification(String type, String objectId, Set<String> notificationReceiver,
   } catch (e) {
     debugPrint(e.toString());
   }
+}
+
+navigateToExpense(BuildContext context, Expense expense) {
+  // Navigate to the group expense list first
+  GoRouter.of(context).go("/group");
+  GoRouter.of(context).push("/group/details", extra: {'group': expense.group});
+
+  // Delay opening the BottomSheet
+  Future.delayed(Durations.medium1, () {
+    GoRouter.of(context).push("/group/details/expense", extra: {'group': expense.group, 'expense': expense});
+  });
 }
