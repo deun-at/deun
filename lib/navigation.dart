@@ -263,7 +263,7 @@ class _NavigationScreenState extends ConsumerState<NavigationScreen> {
 
 // Stateful nested navigation based on:
 // https://github.com/flutter/packages/blob/main/packages/go_router/example/lib/stateful_shell_route.dart
-class ScaffoldWithNestedNavigation extends StatefulWidget {
+class ScaffoldWithNestedNavigation extends ConsumerStatefulWidget {
   const ScaffoldWithNestedNavigation({
     Key? key,
     required this.navigationShell,
@@ -271,11 +271,13 @@ class ScaffoldWithNestedNavigation extends StatefulWidget {
   final StatefulNavigationShell navigationShell;
 
   @override
-  State<ScaffoldWithNestedNavigation> createState() => _ScaffoldWithNestedNavigationState();
+  ConsumerState<ScaffoldWithNestedNavigation> createState() => _ScaffoldWithNestedNavigationState();
 }
 
-class _ScaffoldWithNestedNavigationState extends State<ScaffoldWithNestedNavigation> {
+class _ScaffoldWithNestedNavigationState extends ConsumerState<ScaffoldWithNestedNavigation> {
   void _goBranch(int index) {
+    ref.read(themeColorProvider.notifier).resetColor();
+
     widget.navigationShell.goBranch(
       index,
       // A common pattern when using bottom navigation bars is to support
