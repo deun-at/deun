@@ -151,13 +151,13 @@ class Group {
   }
 
   static Future<void> payBack(String groupId, String email, double amount) async {
-    await supabase.rpc('pay_back', params: {
+    final expenseId = await supabase.rpc('pay_back', params: {
       "_group_id": groupId,
       "_paid_by": supabase.auth.currentUser?.email,
       "_paid_for": email,
       "_amount": amount
     });
-    await supabase.rpc('update_group_member_shares', params: {"_group_id": groupId, "_expense_id": null});
+    await supabase.rpc('update_group_member_shares', params: {"_group_id": groupId, "_expense_id": expenseId});
   }
 
   Map<String, dynamic> toJson() => {
