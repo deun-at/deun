@@ -69,6 +69,7 @@ class ShimmerCardListState extends State<ShimmerCardList> with SingleTickerProvi
               blendMode: BlendMode.srcATop,
               child: ListView(
                 padding: EdgeInsets.zero,
+                shrinkWrap: true,
                 physics: const NeverScrollableScrollPhysics(),
                 children: List.generate(
                     widget.listEntryLength,

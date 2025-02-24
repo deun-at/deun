@@ -512,6 +512,23 @@ class _FriendshipDetailNotifierProviderElement
   String get email => (origin as FriendshipDetailNotifierProvider).email;
 }
 
+String _$userDetailNotifierHash() =>
+    r'965152ab0fcf97ada5d3d3f8182500c3e791ccfb';
+
+/// See also [UserDetailNotifier].
+@ProviderFor(UserDetailNotifier)
+final userDetailNotifierProvider = AutoDisposeAsyncNotifierProvider<
+    UserDetailNotifier, userModel.User>.internal(
+  UserDetailNotifier.new,
+  name: r'userDetailNotifierProvider',
+  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
+      ? null
+      : _$userDetailNotifierHash,
+  dependencies: null,
+  allTransitiveDependencies: null,
+);
+
+typedef _$UserDetailNotifier = AutoDisposeAsyncNotifier<userModel.User>;
 String _$themeColorHash() => r'4ef7e05d68a34bec800592eac7cd770666832636';
 
 /// See also [ThemeColor].

@@ -8,6 +8,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'pages/groups/group_model.dart';
 import 'pages/expenses/expense_model.dart';
+import 'pages/users/user_model.dart' as userModel;
 
 // Necessary for code-generation to work
 part 'provider.g.dart';
@@ -233,6 +234,22 @@ class FriendshipDetailNotifier extends _$FriendshipDetailNotifier {
 
   Future<Friendship> fetchFriendshipDetail(String email) async {
     return await Friendship.fetchDetail(email);
+  }
+}
+
+@riverpod
+class UserDetailNotifier extends _$UserDetailNotifier {
+  @override
+  FutureOr<userModel.User> build() async {
+    return await fetchUserDetail();
+  }
+
+  Future<void> reload() async {
+    state = await AsyncValue.guard(() async => await fetchUserDetail());
+  }
+
+  Future<userModel.User> fetchUserDetail() async {
+    return await userModel.User.fetchDetail(supabase.auth.currentUser!.email ?? '');
   }
 }
 
