@@ -1,4 +1,5 @@
 import 'package:deun/helper/helper.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:deun/pages/groups/group_member_model.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_form_builder/flutter_form_builder.dart';
@@ -14,6 +15,7 @@ import 'expense_entry_model.dart';
 import 'expense_model.dart';
 
 final _isLoading = StateProvider<bool>((ref) => false);
+final _isMiniView = StateProvider<bool>((ref) => false);
 
 class ExpenseBottomSheet extends ConsumerStatefulWidget {
   const ExpenseBottomSheet({super.key, required this.group, this.expense});
@@ -38,6 +40,7 @@ class _ExpenseBottomSheetState extends ConsumerState<ExpenseBottomSheet> {
   void initState() {
     super.initState();
     Future.microtask(() => ref.read(_isLoading.notifier).state = false); // Reset loading state
+    Future.microtask(() => ref.read(_isMiniView.notifier).state = false); // Reset loading state
 
     groupMembers = widget.group.groupMembers;
     if (widget.expense != null && widget.expense!.expenseEntries.isNotEmpty) {
@@ -59,9 +62,12 @@ class _ExpenseBottomSheetState extends ConsumerState<ExpenseBottomSheet> {
     }
 
     _draggableScrollableController.addListener(() {
-      final pixelToSize = _draggableScrollableController.pixelsToSize(170);
+      final pixelToSize = _draggableScrollableController.pixelsToSize(kIsWeb ? 150 : 170);
       if (_draggableScrollableController.size <= pixelToSize) {
+        ref.read(_isMiniView.notifier).state = true;
         _draggableScrollableController.jumpTo(pixelToSize);
+      } else {
+        ref.read(_isMiniView.notifier).state = false;
       }
     });
   }
@@ -120,6 +126,7 @@ class _ExpenseBottomSheetState extends ConsumerState<ExpenseBottomSheet> {
   Widget build(BuildContext context) {
     const double spacing = 10;
     final isLoading = ref.watch(_isLoading);
+    final isMiniView = ref.watch(_isMiniView);
 
     List<Widget> expenseActions = [];
 
@@ -176,29 +183,31 @@ class _ExpenseBottomSheetState extends ConsumerState<ExpenseBottomSheet> {
                   child: Stack(children: [
                     Scaffold(
                       body: CustomScrollView(controller: scrollController, slivers: [
-                        SliverPersistentHeader(
-                            pinned: true, // Keeps it fixed at the top
-                            floating: true, // Set to true if you want it to appear when scrolling up
-                            delegate: _SliverAppBarDelegate(
-                              minHeight: 20,
-                              maxHeight: 20,
-                              child: Container(
-                                width: double.infinity,
-                                color: Theme.of(context).colorScheme.surface,
-                                child: Align(
-                                  alignment: Alignment.topCenter,
+                        kIsWeb
+                            ? const SliverToBoxAdapter(child: SizedBox())
+                            : SliverPersistentHeader(
+                                pinned: true, // Keeps it fixed at the top
+                                floating: true, // Set to true if you want it to appear when scrolling up
+                                delegate: _SliverAppBarDelegate(
+                                  minHeight: 20,
+                                  maxHeight: 20,
                                   child: Container(
-                                    margin: const EdgeInsets.symmetric(vertical: 8.0),
-                                    width: 32.0,
-                                    height: 4.0,
-                                    decoration: BoxDecoration(
-                                      color: Theme.of(context).colorScheme.surfaceContainerHighest,
-                                      borderRadius: BorderRadius.circular(8.0),
+                                    width: double.infinity,
+                                    color: Theme.of(context).colorScheme.surface,
+                                    child: Align(
+                                      alignment: Alignment.topCenter,
+                                      child: Container(
+                                        margin: const EdgeInsets.symmetric(vertical: 8.0),
+                                        width: 32.0,
+                                        height: 4.0,
+                                        decoration: BoxDecoration(
+                                          color: Theme.of(context).colorScheme.surfaceContainerHighest,
+                                          borderRadius: BorderRadius.circular(8.0),
+                                        ),
+                                      ),
                                     ),
                                   ),
-                                ),
-                              ),
-                            )),
+                                )),
                         SliverList.list(children: [
                           Padding(
                               padding: const EdgeInsets.fromLTRB(20, 10, 20, 10),
@@ -215,6 +224,7 @@ class _ExpenseBottomSheetState extends ConsumerState<ExpenseBottomSheet> {
                                           FormBuilderField(
                                               name: "name",
                                               builder: (FormFieldState<dynamic> field) => TextFormField(
+                                                    readOnly: isMiniView,
                                                     initialValue: field.value,
                                                     style: Theme.of(context)
                                                         .textTheme
