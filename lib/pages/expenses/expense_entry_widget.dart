@@ -24,7 +24,7 @@ class ExpenseEntryWidget extends StatefulWidget {
 class _ExpenseEntryWidgetState extends State<ExpenseEntryWidget> {
   @override
   Widget build(BuildContext context) {
-    const double spacing = 10;
+    const double spacing = 8;
 
     return Column(children: [
       Card(
@@ -124,7 +124,7 @@ class _ExpenseEntryWidgetState extends State<ExpenseEntryWidget> {
                           ),
                           child: Align(
                               alignment: Alignment.topLeft,
-                              child: Wrap(spacing: 8, children: <Widget>[
+                              child: Wrap(spacing: spacing, children: <Widget>[
                                 FilterChip(
                                   label: Text(AppLocalizations.of(context)!.all),
                                   onSelected: (bool newValue) {
@@ -158,7 +158,6 @@ class _ExpenseEntryWidgetState extends State<ExpenseEntryWidget> {
                   ),
                 ],
               ))),
-      const SizedBox(height: spacing)
     ]);
   }
 }
