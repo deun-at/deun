@@ -13,7 +13,6 @@ class ModalBottomSheetPage<T> extends Page<T> {
       enableDrag: false,
       isScrollControlled: true,
       useSafeArea: true,
-      // showDragHandle: true,
       anchorPoint: anchorPoint,
       settings: this);
 }

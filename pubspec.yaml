@@ -1,10 +1,10 @@
 name: deun
 description: "Share Expenses with Friends"
-publish_to: 'none'
+publish_to: "none"
 version: 0.1.0
 
 environment:
-  sdk: '>=3.4.4 <4.0.0'
+  sdk: ">=3.4.4 <4.0.0"
 
 dependencies:
   collection: ^1.18.0
