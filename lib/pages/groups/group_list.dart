@@ -1,4 +1,3 @@
-import 'package:deun/helper/helper.dart';
 import 'package:deun/main.dart';
 import 'package:deun/widgets/empty_list_widget.dart';
 import 'package:flutter/material.dart';
@@ -89,40 +88,6 @@ class _GroupListState extends ConsumerState<GroupList> {
                                                         style: Theme.of(context).textTheme.headlineMedium,
                                                         overflow: TextOverflow.ellipsis,
                                                       )),
-                                                      Directionality(
-                                                        textDirection: TextDirection.rtl,
-                                                        child: MenuAnchor(
-                                                          builder: (context, controller, child) {
-                                                            return IconButton(
-                                                              icon: const Icon(Icons.more_vert),
-                                                              onPressed: () {
-                                                                if (controller.isOpen) {
-                                                                  controller.close();
-                                                                } else {
-                                                                  controller.open();
-                                                                }
-                                                              },
-                                                            );
-                                                          },
-                                                          menuChildren: [
-                                                            MenuItemButton(
-                                                              closeOnActivate: true,
-                                                              onPressed: () {
-                                                                GoRouter.of(context)
-                                                                    .push("/group/edit", extra: {'group': group});
-                                                              },
-                                                              trailingIcon: const Icon(Icons.edit),
-                                                              child: Text(AppLocalizations.of(context)!.edit),
-                                                            ),
-                                                            MenuItemButton(
-                                                              closeOnActivate: true,
-                                                              onPressed: () => openDeleteItemDialog(context, group),
-                                                              trailingIcon: const Icon(Icons.delete),
-                                                              child: Text(AppLocalizations.of(context)!.delete),
-                                                            ),
-                                                          ],
-                                                        ),
-                                                      ),
                                                     ],
                                                   ),
                                                   GroupShareWidget(group: group),
@@ -148,45 +113,6 @@ class _GroupListState extends ConsumerState<GroupList> {
               label: Text(AppLocalizations.of(context)!.addNewGroup),
               icon: const Icon(Icons.add),
             )));
-  }
-
-  void openDeleteItemDialog(BuildContext context, Group group) {
-    showDialog<void>(
-      context: context,
-      builder: (context) => AlertDialog(
-        content: Text(AppLocalizations.of(context)!.groupDeleteItemTitle),
-        actions: <Widget>[
-          TextButton(
-            child: Text(AppLocalizations.of(context)!.cancel),
-            onPressed: () => Navigator.of(context).pop(),
-          ),
-          FilledButton(
-            style: FilledButton.styleFrom(
-              backgroundColor: Theme.of(context).colorScheme.error,
-              foregroundColor: Theme.of(context).colorScheme.onError,
-            ),
-            child: Text(AppLocalizations.of(context)!.delete),
-            onPressed: () async {
-              try {
-                await group.delete();
-                if (context.mounted) {
-                  showSnackBar(
-                      context, groupListScaffoldMessengerKey, AppLocalizations.of(context)!.groupDeleteSuccess);
-                }
-              } catch (e) {
-                if (context.mounted) {
-                  showSnackBar(context, groupListScaffoldMessengerKey, AppLocalizations.of(context)!.groupDeleteError);
-                }
-              } finally {
-                if (context.mounted) {
-                  Navigator.of(context).pop();
-                }
-              }
-            },
-          ),
-        ],
-      ),
-    );
   }
 }
 

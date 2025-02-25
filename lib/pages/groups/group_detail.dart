@@ -69,6 +69,14 @@ class _GroupDetailState extends ConsumerState<GroupDetail> {
                           title: Text(widget.group.name, maxLines: 1, overflow: TextOverflow.ellipsis),
                           centerTitle: false,
                         ),
+                        actions: [
+                          IconButton(
+                            onPressed: () {
+                              GoRouter.of(context).push("/group/edit", extra: {'group': widget.group});
+                            },
+                            icon: const Icon(Icons.edit),
+                          )
+                        ],
                         floating: true, // Your appBar appears immediately
                         snap: true, // Your appBar displayed %100 or %0
                         pinned: true, // Your appBar pinned to top

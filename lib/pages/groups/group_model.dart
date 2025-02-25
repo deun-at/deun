@@ -74,6 +74,7 @@ class Group {
 
   delete() async {
     await supabase.from('group').delete().eq('id', id);
+    await supabase.from('group_update_checker').delete().eq('group_id', id);
   }
 
   static Future<List<Group>> fetchData() async {

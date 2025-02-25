@@ -122,6 +122,7 @@
   },
   "allDone": "all done",
   "payBack": "Pay back",
+  "payBackNoEntries": "There is nothing to pay back!",
   "payBackDialog": "Pay back {amount} to {displayName}",
   "@payBackDialog": {
     "description": "Dialog to confirm that you want to pay back money.",

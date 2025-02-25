@@ -1,4 +1,5 @@
 import 'package:deun/helper/helper.dart';
+import 'package:deun/widgets/rounded_container.dart';
 import 'package:deun/main.dart';
 import 'package:deun/provider.dart';
 import 'package:deun/widgets/shimmer_card_list.dart';
@@ -25,49 +26,58 @@ class _GroupPaymentBottomSheetState extends ConsumerState<GroupPaymentBottomShee
 
   @override
   Widget build(BuildContext context) {
-    final AsyncValue<Group> groupDetail = ref.watch(groupDetailNotifierProvider(widget.group.id));
     return DraggableScrollableSheet(
         expand: false,
-        initialChildSize: 1,
+        initialChildSize: .8,
+        snap: true,
         builder: (context, scrollController) {
-          return Scaffold(
-            appBar: AppBar(
-              leading: IconButton(
-                icon: const Icon(Icons.close),
-                onPressed: () {
-                  Navigator.pop(context);
-                },
-              ),
-              title: Text(AppLocalizations.of(context)!.payBack),
-              centerTitle: true,
-            ),
-            body: Container(
-                color: Theme.of(context).colorScheme.surface,
-                child: switch (groupDetail) {
-                  AsyncData(:final value) => ListView.builder(
-                      controller: scrollController,
-                      itemCount: value.groupSharesSummary.length,
-                      itemBuilder: (context, index) {
-                        final String email = value.groupSharesSummary.keys.elementAt(index);
-                        final GroupSharesSummary groupShare = value.groupSharesSummary.values.elementAt(index);
-                        return groupShare.shareAmount < 0
-                            ? ListTile(
+          return RoundedContainer(
+              child: Scaffold(
+                  appBar: AppBar(
+                    title: Text(AppLocalizations.of(context)!.payBack),
+                    centerTitle: true,
+                  ),
+                  body: Container(
+                      color: Theme.of(context).colorScheme.surface,
+                      child: Consumer(
+                        builder: (context, ref, child) {
+                          final Group? group = ref.watch(groupDetailNotifierProvider(widget.group.id)).value;
+
+                          if (group == null) {
+                            return const ShimmerCardList(
+                              height: 50,
+                              listEntryLength: 8,
+                            );
+                          }
+
+                          List<Widget> listViewChildren = [];
+
+                          group.groupSharesSummary.forEach((email, groupShare) {
+                            if (groupShare.shareAmount < 0) {
+                              listViewChildren.add(ListTile(
                                 title: Text(groupShare.dipslayName),
-                                subtitle: Text(groupShare.shareAmount.abs().toString()),
+                                subtitle: Text(AppLocalizations.of(context)!.toCurrency(groupShare.shareAmount.abs())),
                                 trailing: const Icon(Icons.payment),
                                 onTap: () {
                                   openPayBackDialog(context, widget.group, email, groupShare);
                                 },
-                              )
-                            : const SizedBox();
-                      },
-                    ),
-                  _ => const ShimmerCardList(
-                      height: 50,
-                      listEntryLength: 8,
-                    ),
-                }),
-          );
+                              ));
+                            }
+                          });
+
+                          if (listViewChildren.isEmpty) {
+                            listViewChildren.add(ListTile(
+                              titleTextStyle: Theme.of(context).textTheme.bodyLarge,
+                              title: Text(AppLocalizations.of(context)!.payBackNoEntries),
+                            ));
+                          }
+
+                          return ListView(
+                            controller: scrollController,
+                            children: listViewChildren,
+                          );
+                        },
+                      ))));
         });
   }
 

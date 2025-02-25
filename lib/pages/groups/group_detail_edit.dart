@@ -3,6 +3,10 @@ import 'dart:convert';
 import 'package:collection/collection.dart';
 import 'package:deun/helper/helper.dart';
 import 'package:deun/pages/friends/friendship_model.dart';
+import 'package:deun/widgets/form_loading_widget.dart';
+import 'package:deun/widgets/rounded_container.dart';
+import 'package:deun/widgets/sliver_grab_widget.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_form_builder/flutter_form_builder.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -16,6 +20,7 @@ import '../users/user_model.dart';
 import 'group_model.dart';
 
 final _isLoading = StateProvider<bool>((ref) => false);
+final _isMiniView = StateProvider<bool>((ref) => false);
 
 class GroupBottomSheet extends ConsumerStatefulWidget {
   const GroupBottomSheet({super.key, this.group});
@@ -30,10 +35,23 @@ class _GroupBottomSheetState extends ConsumerState<GroupBottomSheet> {
   final _formKey = GlobalKey<FormBuilderState>();
   final ValueNotifier<String> _searchQueryNotifier = ValueNotifier<String>("");
 
+  final DraggableScrollableController _draggableScrollableController = DraggableScrollableController();
+
   @override
   void initState() {
     super.initState();
     Future.microtask(() => ref.read(_isLoading.notifier).state = false); // Reset loading state
+    Future.microtask(() => ref.read(_isMiniView.notifier).state = false); // Reset loading state
+
+    _draggableScrollableController.addListener(() {
+      final pixelToSize = _draggableScrollableController.pixelsToSize(kIsWeb ? 150 : 170);
+      if (_draggableScrollableController.size <= pixelToSize) {
+        ref.read(_isMiniView.notifier).state = true;
+        _draggableScrollableController.jumpTo(pixelToSize);
+      } else {
+        ref.read(_isMiniView.notifier).state = false;
+      }
+    });
   }
 
   Iterable<Widget> getUserSelection(SearchController controller, FormFieldState<dynamic> field) {
@@ -92,183 +110,253 @@ class _GroupBottomSheetState extends ConsumerState<GroupBottomSheet> {
 
   @override
   Widget build(BuildContext context) {
-    const double spacing = 10;
+    const double spacing = 8;
     final isLoading = ref.watch(_isLoading);
+    final isMiniView = ref.watch(_isMiniView);
 
     return DraggableScrollableSheet(
+        controller: _draggableScrollableController,
         expand: false,
         initialChildSize: .8,
+        minChildSize: 0,
         snap: true,
-        shouldCloseOnMinExtent: false,
         builder: (context, scrollController) {
-          return PopScope(
-              canPop: !isLoading, // Prevent back navigation if loading
-              child: Stack(children: [
-                Scaffold(
-                    appBar: AppBar(
-                      leading: IconButton(
-                        icon: const Icon(Icons.close),
-                        onPressed: () {
-                          Navigator.pop(context);
-                        },
-                      ),
-                      actions: [
+          return RoundedContainer(
+            child: FormLoading(
+              isLoading: isLoading,
+              child: Scaffold(
+                body: CustomScrollView(
+                  controller: scrollController,
+                  slivers: [
+                    const SliverGrabWidget(),
+                    SliverList.list(
+                      children: [
                         Padding(
-                            padding: const EdgeInsets.only(right: 10),
-                            child: FilledButton(
-                                onPressed: () async {
-                                  if (_formKey.currentState!.saveAndValidate()) {
-                                    ref.read(_isLoading.notifier).state = true; // Set loading to true
-                                    try {
-                                      await Group.saveAll(widget.group?.id, _formKey.currentState!.value);
-                                      if (context.mounted) {
-                                        showSnackBar(context, groupDetailScaffoldMessengerKey,
-                                            AppLocalizations.of(context)!.groupCreateSuccess);
-                                      }
-                                    } catch (e) {
-                                      if (context.mounted) {
-                                        showSnackBar(context, groupDetailScaffoldMessengerKey,
-                                            AppLocalizations.of(context)!.groupCreateError);
-                                      }
-                                    } finally {
-                                      if (mounted) {
-                                        ref.read(_isLoading.notifier).state = false; // Stop loading
-                                        if (context.mounted) {
-                                          Navigator.pop(context);
-                                        }
-                                      }
-                                    }
-                                  }
-                                },
-                                child: Text(AppLocalizations.of(context)!.save)))
-                      ],
-                    ),
-                    body: SingleChildScrollView(
-                      controller: scrollController,
-                      child: Padding(
                           padding: const EdgeInsets.fromLTRB(20, 10, 20, 10),
                           child: Padding(
-                              padding: MediaQuery.of(context).viewInsets,
-                              child: FormBuilder(
-                                  key: _formKey,
-                                  clearValueOnUnregister: true,
-                                  initialValue: widget.group?.toJson() ?? {},
-                                  child: Column(
-                                    mainAxisSize: MainAxisSize.min,
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: <Widget>[
-                                      const SizedBox(height: spacing),
-                                      FormBuilderField(
-                                          name: "name",
-                                          builder: (FormFieldState<dynamic> field) => TextFormField(
-                                                initialValue: field.value,
-                                                style: Theme.of(context)
-                                                    .textTheme
-                                                    .displaySmall!
-                                                    .copyWith(color: Theme.of(context).colorScheme.primary),
-                                                autovalidateMode: AutovalidateMode.onUserInteraction,
-                                                validator: FormBuilderValidators.required(
-                                                    errorText: AppLocalizations.of(context)!.groupNameValidationEmpty),
-                                                keyboardType: TextInputType.text,
-                                                decoration: InputDecoration(
-                                                  border: InputBorder.none,
-                                                  hintText: AppLocalizations.of(context)!.addGroupTitle,
-                                                ),
-                                                onChanged: (value) => field.didChange(value),
-                                              )),
-                                      const SizedBox(height: spacing),
-                                      FormBuilderField(
-                                        name: "color_value",
-                                        builder: (FormFieldState<dynamic> field) {
-                                          return GridView.builder(
-                                              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                                                  crossAxisCount: 5, crossAxisSpacing: 8, mainAxisSpacing: 4),
-                                              padding: const EdgeInsets.all(8),
-                                              physics: const NeverScrollableScrollPhysics(),
-                                              shrinkWrap: true,
-                                              itemCount: ColorSeed.values.length,
-                                              itemBuilder: (context, i) {
-                                                return IconButton(
-                                                    icon: const Icon(Icons.radio_button_unchecked),
-                                                    selectedIcon: const Icon(Icons.radio_button_checked),
-                                                    color: ColorSeed.values[i].color,
-                                                    isSelected: (field.value == ColorSeed.values[i].color.value ||
-                                                        (field.value == null &&
-                                                            ColorSeed.values[i].color.value ==
-                                                                ColorSeed.baseColor.color.value)),
-                                                    onPressed: () {
-                                                      field.didChange(ColorSeed.values[i].color.value);
-                                                    });
-                                              });
-                                        },
-                                      ),
-                                      const Divider(),
-                                      FormBuilderField(
-                                        name: "group_members",
-                                        builder: (FormFieldState<dynamic> field) {
-                                          return SearchAnchor(
-                                            viewHintText: AppLocalizations.of(context)!.groupMemberSelectionEmpty,
-                                            builder: (context, controller) {
-                                              List<Map<String, dynamic>> groupMembers =
-                                                  Group.decodeGroupMembersString(field.value);
+                            padding: MediaQuery.of(context).viewInsets,
+                            child: FormBuilder(
+                              key: _formKey,
+                              clearValueOnUnregister: true,
+                              initialValue: widget.group?.toJson() ?? {},
+                              child: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: <Widget>[
+                                  FormBuilderField(
+                                      name: "name",
+                                      builder: (FormFieldState<dynamic> field) => TextFormField(
+                                            readOnly: isMiniView,
+                                            initialValue: field.value,
+                                            style: Theme.of(context)
+                                                .textTheme
+                                                .displaySmall!
+                                                .copyWith(color: Theme.of(context).colorScheme.primary),
+                                            autovalidateMode: AutovalidateMode.onUserInteraction,
+                                            validator: FormBuilderValidators.required(
+                                                errorText: AppLocalizations.of(context)!.groupNameValidationEmpty),
+                                            keyboardType: TextInputType.text,
+                                            decoration: InputDecoration(
+                                              border: InputBorder.none,
+                                              hintText: AppLocalizations.of(context)!.addGroupTitle,
+                                            ),
+                                            onChanged: (value) => field.didChange(value),
+                                          )),
+                                  const SizedBox(height: spacing),
+                                  FormBuilderField(
+                                    name: "color_value",
+                                    builder: (FormFieldState<dynamic> field) {
+                                      return GridView.builder(
+                                          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                                              crossAxisCount: 5, crossAxisSpacing: 8, mainAxisSpacing: 4),
+                                          padding: const EdgeInsets.all(8),
+                                          physics: const NeverScrollableScrollPhysics(),
+                                          shrinkWrap: true,
+                                          itemCount: ColorSeed.values.length,
+                                          itemBuilder: (context, i) {
+                                            return IconButton(
+                                                icon: const Icon(Icons.radio_button_unchecked),
+                                                selectedIcon: const Icon(Icons.radio_button_checked),
+                                                color: ColorSeed.values[i].color,
+                                                isSelected: (field.value == ColorSeed.values[i].color.value ||
+                                                    (field.value == null &&
+                                                        ColorSeed.values[i].color.value ==
+                                                            ColorSeed.baseColor.color.value)),
+                                                onPressed: () {
+                                                  field.didChange(ColorSeed.values[i].color.value);
+                                                });
+                                          });
+                                    },
+                                  ),
+                                  const Divider(),
+                                  FormBuilderField(
+                                    name: "group_members",
+                                    builder: (FormFieldState<dynamic> field) {
+                                      return SearchAnchor(
+                                        viewHintText: AppLocalizations.of(context)!.groupMemberSelectionEmpty,
+                                        builder: (context, controller) {
+                                          List<Map<String, dynamic>> groupMembers =
+                                              Group.decodeGroupMembersString(field.value);
 
-                                              if (groupMembers.isEmpty ||
-                                                  (groupMembers.length == 1 &&
-                                                      groupMembers.first['email'] ==
-                                                          supabase.auth.currentUser?.email)) {
-                                                return ListTile(
-                                                  leading: const Icon(Icons.people),
-                                                  title: Text(AppLocalizations.of(context)!.groupMemberSelectionEmpty),
-                                                );
-                                              }
+                                          if (groupMembers.isEmpty ||
+                                              (groupMembers.length == 1 &&
+                                                  groupMembers.first['email'] == supabase.auth.currentUser?.email)) {
+                                            return ListTile(
+                                              leading: const Icon(Icons.people),
+                                              title: Text(AppLocalizations.of(context)!.groupMemberSelectionEmpty),
+                                            );
+                                          }
 
-                                              return Padding(
-                                                  padding: const EdgeInsets.fromLTRB(10, 5, 5, 10),
-                                                  child: Column(
-                                                      crossAxisAlignment: CrossAxisAlignment.center,
-                                                      children: <Widget>[
-                                                        Wrap(
-                                                            spacing: 8,
-                                                            children: groupMembers.map((groupMember) {
-                                                              String displayName = groupMember["display_name"];
-                                                              if (groupMember["email"] ==
-                                                                  supabase.auth.currentUser?.email) {
-                                                                displayName = AppLocalizations.of(context)!.you;
-                                                              }
-                                                              return ActionChip(
-                                                                label: Text(displayName),
-                                                                avatar: const Icon(Icons.person),
-                                                                onPressed: () {
-                                                                  controller.openView();
-                                                                },
-                                                              );
-                                                            }).toList())
-                                                      ]));
-                                            },
-                                            suggestionsBuilder: (context, controller) {
-                                              if (controller.text.isEmpty) {
-                                                return getUserSelection(controller, field);
-                                              }
-                                              return getUserSuggestions(controller, field);
-                                            },
-                                            viewBuilder: (suggestions) {
-                                              return SearchView(
-                                                  searchQueryNotifier: _searchQueryNotifier, suggestions: suggestions);
-                                            },
-                                          );
+                                          return Padding(
+                                              padding: const EdgeInsets.fromLTRB(10, 5, 5, 10),
+                                              child: Column(
+                                                  crossAxisAlignment: CrossAxisAlignment.center,
+                                                  children: <Widget>[
+                                                    Wrap(
+                                                        spacing: 8,
+                                                        children: groupMembers.map((groupMember) {
+                                                          String displayName = groupMember["display_name"];
+                                                          if (groupMember["email"] ==
+                                                              supabase.auth.currentUser?.email) {
+                                                            displayName = AppLocalizations.of(context)!.you;
+                                                          }
+                                                          return ActionChip(
+                                                            label: Text(displayName),
+                                                            avatar: const Icon(Icons.person),
+                                                            onPressed: () {
+                                                              controller.openView();
+                                                            },
+                                                          );
+                                                        }).toList())
+                                                  ]));
                                         },
-                                      )
-                                    ],
-                                  )))),
-                    )),
-                if (isLoading)
-                  Container(
-                    color: Colors.black.withOpacity(0.5),
-                    child: const Center(
-                      child: CircularProgressIndicator(),
+                                        suggestionsBuilder: (context, controller) {
+                                          if (controller.text.isEmpty) {
+                                            return getUserSelection(controller, field);
+                                          }
+                                          return getUserSuggestions(controller, field);
+                                        },
+                                        viewBuilder: (suggestions) {
+                                          return SearchView(
+                                              searchQueryNotifier: _searchQueryNotifier, suggestions: suggestions);
+                                        },
+                                      );
+                                    },
+                                  ),
+                                  widget.group != null
+                                      ? Center(
+                                          child: TextButton.icon(
+                                            style: TextButton.styleFrom(
+                                              foregroundColor: Theme.of(context).colorScheme.error,
+                                              textStyle: Theme.of(context).textTheme.bodyLarge,
+                                            ),
+                                            onPressed: () => openDeleteItemDialog(context, widget.group!),
+                                            icon: const Icon(Icons.delete_outline),
+                                            label: Text(AppLocalizations.of(context)!.groupDeleteItemTitle),
+                                          ),
+                                        )
+                                      : const SizedBox(),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+                bottomNavigationBar: BottomAppBar(
+                  child: IconTheme(
+                    data: IconThemeData(color: Theme.of(context).colorScheme.surface),
+                    child: Row(
+                      children: <Widget>[
+                        IconButton(
+                          icon: const Icon(Icons.close),
+                          color: Theme.of(context).colorScheme.onSurface,
+                          onPressed: () {
+                            Navigator.pop(context);
+                          },
+                        ),
+                        const Spacer(),
+                        Padding(
+                          padding: const EdgeInsets.only(right: 10),
+                          child: FilledButton(
+                            onPressed: () async {
+                              if (_formKey.currentState!.saveAndValidate()) {
+                                ref.read(_isLoading.notifier).state = true; // Set loading to true
+                                try {
+                                  await Group.saveAll(widget.group?.id, _formKey.currentState!.value);
+                                  if (context.mounted) {
+                                    showSnackBar(context, groupDetailScaffoldMessengerKey,
+                                        AppLocalizations.of(context)!.groupCreateSuccess);
+                                  }
+                                } catch (e) {
+                                  if (context.mounted) {
+                                    showSnackBar(context, groupDetailScaffoldMessengerKey,
+                                        AppLocalizations.of(context)!.groupCreateError);
+                                  }
+                                } finally {
+                                  if (mounted) {
+                                    ref.read(_isLoading.notifier).state = false; // Stop loading
+                                    if (context.mounted) {
+                                      Navigator.pop(context);
+                                    }
+                                  }
+                                }
+                              }
+                            },
+                            child: Text(AppLocalizations.of(context)!.save),
+                          ),
+                        )
+                      ],
                     ),
                   ),
-              ]));
+                ),
+              ),
+            ),
+          );
         });
+  }
+
+  void openDeleteItemDialog(BuildContext modalContext, Group group) {
+    showDialog<void>(
+      context: context,
+      builder: (context) => AlertDialog(
+        content: Text(AppLocalizations.of(context)!.groupDeleteItemTitle),
+        actions: <Widget>[
+          TextButton(
+            child: Text(AppLocalizations.of(context)!.cancel),
+            onPressed: () => Navigator.of(context).pop(),
+          ),
+          FilledButton(
+            style: FilledButton.styleFrom(
+              backgroundColor: Theme.of(context).colorScheme.error,
+              foregroundColor: Theme.of(context).colorScheme.onError,
+            ),
+            child: Text(AppLocalizations.of(context)!.delete),
+            onPressed: () async {
+              try {
+                await group.delete();
+                if (context.mounted) {
+                  showSnackBar(
+                      context, groupDetailScaffoldMessengerKey, AppLocalizations.of(context)!.groupDeleteSuccess);
+                }
+              } catch (e) {
+                if (context.mounted) {
+                  showSnackBar(
+                      context, groupDetailScaffoldMessengerKey, AppLocalizations.of(context)!.groupDeleteError);
+                }
+              } finally {
+                if (context.mounted) {
+                  Navigator.of(context).pop();
+                  Navigator.of(modalContext).pop();
+                  Navigator.of(modalContext).pop();
+                }
+              }
+            },
+          ),
+        ],
+      ),
+    );
   }
 }
