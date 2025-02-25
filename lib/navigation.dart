@@ -70,7 +70,7 @@ class _NavigationScreenState extends ConsumerState<NavigationScreen> {
                           var extra = state.extra as Map<String, dynamic>;
                           var group = extra['group'] as Group;
 
-                          return defaultTransitionPage(state.pageKey, GroupDetail(group: group));
+                          return DefaultTransitionPage(child: GroupDetail(group: group));
                         },
                         routes: [
                           GoRoute(
@@ -226,24 +226,6 @@ class _NavigationScreenState extends ConsumerState<NavigationScreen> {
     }
   }
 
-  CustomTransitionPage<dynamic> defaultTransitionPage(LocalKey key, Widget child) {
-    return CustomTransitionPage(
-      key: key,
-      child: child,
-      transitionDuration: Durations.medium1,
-      reverseTransitionDuration: Durations.medium1,
-      transitionsBuilder: (context, animation, secondaryAnimation, child) {
-        return SlideTransition(
-          position: Tween<Offset>(
-            begin: const Offset(1, 0),
-            end: Offset.zero,
-          ).animate(animation),
-          child: child,
-        );
-      },
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     Color colorSelected = ref.watch(themeColorProvider);
@@ -336,4 +318,18 @@ class _ScaffoldWithNestedNavigationState extends ConsumerState<ScaffoldWithNeste
           ),
         ));
   }
+}
+
+class DefaultTransitionPage extends CustomTransitionPage {
+  DefaultTransitionPage({required super.child})
+      : super(
+          transitionDuration: Durations.long2,
+          reverseTransitionDuration: Durations.long2,
+          transitionsBuilder: (context, animation, secondaryAnimation, child) {
+            return FadeTransition(
+              opacity: Tween<double>(begin: 0, end: 1).animate(CurvedAnimation(parent: animation, curve: Curves.ease)),
+              child: child,
+            );
+          },
+        );
 }
