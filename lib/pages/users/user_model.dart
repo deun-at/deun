@@ -58,7 +58,9 @@ class User {
 
     if (supabase.auth.currentUser?.email != null) {
       return await supabase.from('user').update(upsertVals).eq('email', supabase.auth.currentUser?.email ?? '');
-    } else {}
+    } else {
+      throw Exception('User email is empty');
+    }
   }
 
   Map<String, dynamic> toJson() => {

@@ -157,34 +157,37 @@ class _SettingState extends ConsumerState<Setting> {
                                     ),
                                     onChanged: (value) => field.didChange(value),
                                   ))),
-                          const SizedBox(height: spacing),
                         ]),
-                        FilledButton(
-                            onPressed: () async {
-                              if (_formKey.currentState!.saveAndValidate()) {
-                                // ref.read(_isLoading.notifier).state = true; // Set loading to true
-                                try {
-                                  await User.saveAll(_formKey.currentState!.value);
-                                  if (context.mounted) {
-                                    showSnackBar(context, rootScaffoldMessengerKey,
-                                        AppLocalizations.of(context)!.settingsUserUpdateSuccess);
-                                  }
-                                } catch (e) {
-                                  if (context.mounted) {
-                                    showSnackBar(context, rootScaffoldMessengerKey,
-                                        AppLocalizations.of(context)!.settingsUserUpdateError);
-                                  }
-                                } finally {
-                                  if (mounted) {
-                                    // ref.read(_isLoading.notifier).state = false; // Stop loading
-                                    if (context.mounted) {
-                                      // Navigator.pop(context);
+                        const SizedBox(height: spacing),
+                        Align(
+                            alignment: Alignment.centerRight,
+                            child: FilledButton(
+                                onPressed: () async {
+                                  if (_formKey.currentState!.saveAndValidate()) {
+                                    // ref.read(_isLoading.notifier).state = true; // Set loading to true
+                                    try {
+                                      await User.saveAll(_formKey.currentState!.value);
+                                      if (context.mounted) {
+                                        showSnackBar(context, rootScaffoldMessengerKey,
+                                            AppLocalizations.of(context)!.settingsUserUpdateSuccess);
+                                      }
+                                    } catch (e) {
+                                      if (context.mounted) {
+                                        showSnackBar(context, rootScaffoldMessengerKey,
+                                            AppLocalizations.of(context)!.settingsUserUpdateError);
+                                      }
+                                    } finally {
+                                      if (mounted) {
+                                        // ref.read(_isLoading.notifier).state = false; // Stop loading
+                                        if (context.mounted) {
+                                          FocusScope.of(context).unfocus();
+                                          // Navigator.pop(context);
+                                        }
+                                      }
                                     }
                                   }
-                                }
-                              }
-                            },
-                            child: Text(AppLocalizations.of(context)!.save))
+                                },
+                                child: Text(AppLocalizations.of(context)!.update)))
                       ],
                     ));
               })
