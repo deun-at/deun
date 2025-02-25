@@ -326,7 +326,7 @@ class _GroupBottomSheetState extends ConsumerState<GroupBottomSheet> {
         actions: <Widget>[
           TextButton(
             child: Text(AppLocalizations.of(context)!.cancel),
-            onPressed: () => Navigator.of(context).pop(),
+            onPressed: () => Navigator.pop(context),
           ),
           FilledButton(
             style: FilledButton.styleFrom(
@@ -348,9 +348,9 @@ class _GroupBottomSheetState extends ConsumerState<GroupBottomSheet> {
                 }
               } finally {
                 if (context.mounted) {
-                  Navigator.of(context).pop();
-                  Navigator.of(modalContext).pop();
-                  Navigator.of(modalContext).pop();
+                  Navigator.pop(context);
+                  Navigator.pop(modalContext);
+                  Navigator.pop(modalContext);
                 }
               }
             },

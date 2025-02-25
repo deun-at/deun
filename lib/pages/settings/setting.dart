@@ -38,7 +38,7 @@ class _SettingState extends ConsumerState<Setting> {
                           actions: <Widget>[
                             TextButton(
                               child: Text(AppLocalizations.of(context)!.cancel),
-                              onPressed: () => Navigator.of(context).pop(),
+                              onPressed: () => Navigator.pop(context),
                             ),
                             FilledButton(
                               style: FilledButton.styleFrom(
