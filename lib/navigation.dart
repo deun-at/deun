@@ -13,7 +13,7 @@ import 'pages/expenses/expense_detail.dart';
 import 'pages/groups/group_detail.dart';
 import 'pages/groups/group_detail_edit.dart';
 import 'pages/groups/group_list.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:deun/l10n/app_localizations.dart';
 
 import 'pages/groups/group_model.dart';
 import 'pages/settings/setting.dart';
@@ -323,8 +323,8 @@ class _ScaffoldWithNestedNavigationState extends ConsumerState<ScaffoldWithNeste
 class DefaultTransitionPage extends CustomTransitionPage {
   DefaultTransitionPage({required super.child})
       : super(
-          transitionDuration: Durations.long2,
-          reverseTransitionDuration: Durations.long2,
+          transitionDuration: Durations.medium4,
+          reverseTransitionDuration: Durations.medium4,
           transitionsBuilder: (context, animation, secondaryAnimation, child) {
             return FadeTransition(
               opacity: Tween<double>(begin: 0, end: 1).animate(CurvedAnimation(parent: animation, curve: Curves.ease)),

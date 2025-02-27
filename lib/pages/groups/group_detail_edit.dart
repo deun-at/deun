@@ -11,7 +11,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_form_builder/flutter_form_builder.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:form_builder_validators/form_builder_validators.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:deun/l10n/app_localizations.dart';
 
 import '../../constants.dart';
 import '../../main.dart';
@@ -178,12 +178,12 @@ class _GroupBottomSheetState extends ConsumerState<GroupBottomSheet> {
                                                 icon: const Icon(Icons.radio_button_unchecked),
                                                 selectedIcon: const Icon(Icons.radio_button_checked),
                                                 color: ColorSeed.values[i].color,
-                                                isSelected: (field.value == ColorSeed.values[i].color.value ||
+                                                isSelected: (field.value == ColorSeed.values[i].color.toARGB32() ||
                                                     (field.value == null &&
-                                                        ColorSeed.values[i].color.value ==
-                                                            ColorSeed.baseColor.color.value)),
+                                                        ColorSeed.values[i].color.toARGB32() ==
+                                                            ColorSeed.baseColor.color.toARGB32())),
                                                 onPressed: () {
-                                                  field.didChange(ColorSeed.values[i].color.value);
+                                                  field.didChange(ColorSeed.values[i].color.toARGB32());
                                                 });
                                           });
                                     },
@@ -348,7 +348,7 @@ class _GroupBottomSheetState extends ConsumerState<GroupBottomSheet> {
                 }
               } finally {
                 if (context.mounted) {
-                  Navigator.pop(context);
+                  Navigator.pop(context); //pop both dialog and edit page, because this item is not existing anymore
                   Navigator.pop(modalContext);
                   Navigator.pop(modalContext);
                 }

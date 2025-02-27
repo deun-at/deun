@@ -3,7 +3,7 @@ import 'package:deun/widgets/empty_list_widget.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:deun/l10n/app_localizations.dart';
 
 import '../../provider.dart';
 import '../../widgets/shimmer_card_list.dart';

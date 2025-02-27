@@ -7,6 +7,7 @@ import 'group_member_model.dart';
 
 class GroupSharesSummary {
   late String dipslayName;
+  late String? paypalMe;
   late double shareAmount;
 }
 
@@ -23,12 +24,15 @@ class Group {
 
   late List<Expense>? expenses;
 
+  static const groupSelectString =
+      '*, group_shares_summary(*, ...paid_by(paid_by_display_name:display_name, paid_by_paypal_me:paypal_me), ...paid_for(paid_for_display_name:display_name, paid_for_paypal_me:paypal_me)), group_member(*, ...user(display_name:display_name))';
+
   void loadDataFromJson(Map<String, dynamic> json) {
     String? currentUserEmail = supabase.auth.currentUser?.email;
 
     id = json["id"];
     name = json["name"];
-    colorValue = json["color_value"] ?? ColorSeed.baseColor.color.value;
+    colorValue = json["color_value"] ?? ColorSeed.baseColor.color.toARGB32();
     createdAt = json["created_at"];
     userId = json["user_id"];
 
@@ -53,6 +57,7 @@ class Group {
           if (groupSharesSummary[element['paid_for']] == null) {
             groupSharesSummary[element['paid_for']] = GroupSharesSummary();
             groupSharesSummary[element['paid_for']]!.dipslayName = element['paid_for_display_name'];
+            groupSharesSummary[element['paid_for']]!.paypalMe = element['paid_for_paypal_me'];
             groupSharesSummary[element['paid_for']]!.shareAmount = 0;
           }
 
@@ -62,6 +67,7 @@ class Group {
           if (groupSharesSummary[element['paid_by']] == null) {
             groupSharesSummary[element['paid_by']] = GroupSharesSummary();
             groupSharesSummary[element['paid_by']]!.dipslayName = element['paid_by_display_name'];
+            groupSharesSummary[element['paid_by']]!.paypalMe = element['paid_by_paypal_me'];
             groupSharesSummary[element['paid_by']]!.shareAmount = 0;
           }
 
@@ -78,11 +84,8 @@ class Group {
   }
 
   static Future<List<Group>> fetchData() async {
-    List<Map<String, dynamic>> data = await supabase
-        .from('group')
-        .select(
-            '*, group_shares_summary(*, ...paid_by(paid_by_display_name:display_name), ...paid_for(paid_for_display_name:display_name)), group_member(*, ...user(display_name:display_name))')
-        .order('name', ascending: true);
+    List<Map<String, dynamic>> data =
+        await supabase.from('group').select(groupSelectString).order('name', ascending: true);
 
     List<Group> retData = List.empty(growable: true);
 
@@ -96,12 +99,7 @@ class Group {
   }
 
   static Future<Group> fetchDetail(String groupId) async {
-    Map<String, dynamic> data = await supabase
-        .from('group')
-        .select(
-            '*, group_shares_summary(*, ...paid_by(paid_by_display_name:display_name), ...paid_for(paid_for_display_name:display_name)), group_member(*, ...user(display_name:display_name))')
-        .eq('id', groupId)
-        .single();
+    Map<String, dynamic> data = await supabase.from('group').select(groupSelectString).eq('id', groupId).single();
 
     Group group = Group();
     group.loadDataFromJson(data);
@@ -125,7 +123,7 @@ class Group {
   static Future<void> saveAll(String? groupId, Map<String, dynamic> formValue) async {
     Map<String, dynamic> upsertVals = {
       "name": formValue["name"],
-      "color_value": formValue["color_value"] ?? ColorSeed.baseColor.color.value,
+      "color_value": formValue["color_value"] ?? ColorSeed.baseColor.color.toARGB32(),
       "user_id": supabase.auth.currentUser?.id
     };
 

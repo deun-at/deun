@@ -185,7 +185,9 @@
       }
     }
   },
-  "signIn": "Sign In",
+  "signInTitle": "deun.app",
+  "signInSubtitle": "Simply Split Fairly.",
+  "signInDescription": "Sign in to make the best\nout of your group trips.",
   "friends": "Friends",
   "friendsNoEntries": "No friends yet",
   "addFriendshipSelectionEmpty": "Search E-Mail",
@@ -252,6 +254,20 @@
         "optionalParameters": {
           "decimalDigits": 2,
           "name": "€"
+        },
+        "example": "200.00"
+      }
+    }
+  },
+  "toCurrencyNoPrefix": "{amount}",
+  "@toCurrencyNoPrefix": {
+    "description": "",
+    "placeholders": {
+      "amount": {
+        "type": "double",
+        "format": "currency",
+        "optionalParameters": {
+          "decimalDigits": 2
         },
         "example": "200.00"
       }

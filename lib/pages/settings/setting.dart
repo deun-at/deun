@@ -8,7 +8,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:form_builder_validators/form_builder_validators.dart';
 
 import '../../main.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:deun/l10n/app_localizations.dart';
 
 class Setting extends ConsumerStatefulWidget {
   const Setting({super.key});

@@ -8,7 +8,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'pages/groups/group_model.dart';
 import 'pages/expenses/expense_model.dart';
-import 'pages/users/user_model.dart' as userModel;
+import 'pages/users/user_model.dart' as user_model;
 
 // Necessary for code-generation to work
 part 'provider.g.dart';
@@ -240,7 +240,7 @@ class FriendshipDetailNotifier extends _$FriendshipDetailNotifier {
 @riverpod
 class UserDetailNotifier extends _$UserDetailNotifier {
   @override
-  FutureOr<userModel.User> build() async {
+  FutureOr<user_model.User> build() async {
     return await fetchUserDetail();
   }
 
@@ -248,8 +248,8 @@ class UserDetailNotifier extends _$UserDetailNotifier {
     state = await AsyncValue.guard(() async => await fetchUserDetail());
   }
 
-  Future<userModel.User> fetchUserDetail() async {
-    return await userModel.User.fetchDetail(supabase.auth.currentUser!.email ?? '');
+  Future<user_model.User> fetchUserDetail() async {
+    return await user_model.User.fetchDetail(supabase.auth.currentUser!.email ?? '');
   }
 }
 

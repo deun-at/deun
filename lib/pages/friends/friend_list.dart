@@ -6,7 +6,7 @@ import 'package:deun/widgets/empty_list_widget.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:deun/l10n/app_localizations.dart';
 
 import '../../provider.dart';
 import '../../widgets/shimmer_card_list.dart';
@@ -72,7 +72,7 @@ class _FriendListState extends ConsumerState<FriendList> {
     selectedUsers.add(supabase.auth.currentUser?.email ?? '');
 
     List<User> result = await User.fetchData(input, selectedUsers, 10);
-    if (result.isEmpty && context.mounted) {
+    if (result.isEmpty) {
       return [
         ListTile(
           title: Text(AppLocalizations.of(context)!.addFriendshipNoResult),

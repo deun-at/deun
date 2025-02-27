@@ -1,12 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:deun/l10n/app_localizations.dart';
 
 import '../../constants.dart';
 
 import './sign_in.dart';
-// import './update_password.dart';
-// import './phone_sign_in.dart';
-// import './verify_phone.dart';
 
 void main() {
   runApp(const LoginScreen());
@@ -29,10 +26,6 @@ class LoginScreen extends StatelessWidget {
       initialRoute: '/',
       routes: {
         '/': (context) => const SignUp(),
-        // '/update_password': (context) => const UpdatePassword(),
-        // '/phone_sign_in': (context) => const PhoneSignIn(),
-        // '/phone_sign_up': (context) => const PhoneSignUp(),
-        // '/verify_phone': (context) => const VerifyPhone(),
       },
       onUnknownRoute: (RouteSettings settings) {
         return MaterialPageRoute<void>(

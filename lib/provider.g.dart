@@ -19,6 +19,8 @@ final expenseListProvider = AutoDisposeFutureProvider<List<Expense>>.internal(
   allTransitiveDependencies: null,
 );
 
+@Deprecated('Will be removed in 3.0. Use Ref instead')
+// ignore: unused_element
 typedef ExpenseListRef = AutoDisposeFutureProviderRef<List<Expense>>;
 String _$groupListNotifierHash() => r'7d1676342fb07e2ca143c8cc196b6d33df55eb4a';
 
@@ -188,6 +190,8 @@ class GroupDetailNotifierProvider
   }
 }
 
+@Deprecated('Will be removed in 3.0. Use Ref instead')
+// ignore: unused_element
 mixin GroupDetailNotifierRef on AutoDisposeAsyncNotifierProviderRef<Group> {
   /// The parameter `groupId` of this provider.
   String get groupId;
@@ -333,6 +337,8 @@ class ExpenseListNotifierProvider extends AutoDisposeAsyncNotifierProviderImpl<
   }
 }
 
+@Deprecated('Will be removed in 3.0. Use Ref instead')
+// ignore: unused_element
 mixin ExpenseListNotifierRef
     on AutoDisposeAsyncNotifierProviderRef<List<Expense>> {
   /// The parameter `groupId` of this provider.
@@ -497,6 +503,8 @@ class FriendshipDetailNotifierProvider
   }
 }
 
+@Deprecated('Will be removed in 3.0. Use Ref instead')
+// ignore: unused_element
 mixin FriendshipDetailNotifierRef
     on AutoDisposeAsyncNotifierProviderRef<Friendship> {
   /// The parameter `email` of this provider.
@@ -513,12 +521,12 @@ class _FriendshipDetailNotifierProviderElement
 }
 
 String _$userDetailNotifierHash() =>
-    r'965152ab0fcf97ada5d3d3f8182500c3e791ccfb';
+    r'c09c8559275cc9173c125d0a21bc9d2e24e80467';
 
 /// See also [UserDetailNotifier].
 @ProviderFor(UserDetailNotifier)
 final userDetailNotifierProvider = AutoDisposeAsyncNotifierProvider<
-    UserDetailNotifier, userModel.User>.internal(
+    UserDetailNotifier, user_model.User>.internal(
   UserDetailNotifier.new,
   name: r'userDetailNotifierProvider',
   debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
@@ -528,7 +536,7 @@ final userDetailNotifierProvider = AutoDisposeAsyncNotifierProvider<
   allTransitiveDependencies: null,
 );
 
-typedef _$UserDetailNotifier = AutoDisposeAsyncNotifier<userModel.User>;
+typedef _$UserDetailNotifier = AutoDisposeAsyncNotifier<user_model.User>;
 String _$themeColorHash() => r'4ef7e05d68a34bec800592eac7cd770666832636';
 
 /// See also [ThemeColor].
@@ -545,4 +553,4 @@ final themeColorProvider =
 
 typedef _$ThemeColor = AutoDisposeNotifier<Color>;
 // ignore_for_file: type=lint
-// ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member
+// ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member, deprecated_member_use_from_same_package

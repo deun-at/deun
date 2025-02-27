@@ -5,7 +5,8 @@ import 'package:deun/provider.dart';
 import 'package:deun/widgets/shimmer_card_list.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:deun/l10n/app_localizations.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import 'group_model.dart';
 
@@ -52,18 +53,25 @@ class _GroupPaymentBottomSheetState extends ConsumerState<GroupPaymentBottomShee
 
                           List<Widget> listViewChildren = [];
 
-                          group.groupSharesSummary.forEach((email, groupShare) {
-                            if (groupShare.shareAmount < 0) {
-                              listViewChildren.add(ListTile(
-                                title: Text(groupShare.dipslayName),
-                                subtitle: Text(AppLocalizations.of(context)!.toCurrency(groupShare.shareAmount.abs())),
-                                trailing: const Icon(Icons.payment),
-                                onTap: () {
-                                  openPayBackDialog(context, widget.group, email, groupShare);
-                                },
-                              ));
-                            }
-                          });
+                          group.groupSharesSummary.forEach(
+                            (email, groupShare) {
+                              if (groupShare.shareAmount < 0) {
+                                listViewChildren.add(
+                                  ListTile(
+                                    title: Text(groupShare.dipslayName),
+                                    subtitle:
+                                        Text(AppLocalizations.of(context)!.toCurrency(groupShare.shareAmount.abs())),
+                                    trailing: IconButton(
+                                      icon: const Icon(Icons.payment),
+                                      onPressed: () {
+                                        openPayBackDialog(context, widget.group, email, groupShare);
+                                      },
+                                    ),
+                                  ),
+                                );
+                              }
+                            },
+                          );
 
                           if (listViewChildren.isEmpty) {
                             listViewChildren.add(ListTile(
@@ -85,20 +93,21 @@ class _GroupPaymentBottomSheetState extends ConsumerState<GroupPaymentBottomShee
     showDialog<void>(
       context: context,
       builder: (context) => AlertDialog(
-        content:
-            Text(AppLocalizations.of(context)!.payBackDialog(groupShare.dipslayName, groupShare.shareAmount.abs())),
+        title: Text(AppLocalizations.of(context)!.payBackDialog(groupShare.dipslayName, groupShare.shareAmount.abs())),
         actions: <Widget>[
           TextButton(
             child: Text(AppLocalizations.of(context)!.cancel),
             onPressed: () => Navigator.pop(context),
           ),
           FilledButton(
-            style: FilledButton.styleFrom(
-              backgroundColor: Theme.of(context).colorScheme.primary,
-              foregroundColor: Theme.of(context).colorScheme.onPrimary,
-            ),
             child: Text(AppLocalizations.of(context)!.payBack),
             onPressed: () async {
+              // if (groupShare.paypalMe == null) {
+              //   return;
+              // }
+              // if (!await launchUrl(Uri.parse("https://www.paypal.me/${groupShare.paypalMe}/200"))) {
+              //   throw Exception('Could not launch https://flutter.dev');
+              // }
               try {
                 await Group.payBack(widget.group.id, email, groupShare.shareAmount.abs());
                 if (context.mounted) {
