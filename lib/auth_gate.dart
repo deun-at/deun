@@ -26,7 +26,7 @@ class AuthGate extends StatelessWidget {
 
             String? firstName;
             String? lastName;
-            String? displayName = session.user.userMetadata?['user_name'];
+            String displayName = session.user.userMetadata?['user_name'] ?? session.user.userMetadata?['name'];
 
             if (fullName.isNotEmpty) {
               firstName = fullName[0];
