@@ -14,6 +14,7 @@ import 'pages/groups/group_detail.dart';
 import 'pages/groups/group_detail_edit.dart';
 import 'pages/groups/group_list.dart';
 import 'package:deun/l10n/app_localizations.dart';
+import 'dart:io' show Platform;
 
 import 'pages/groups/group_model.dart';
 import 'pages/settings/setting.dart';
@@ -170,12 +171,19 @@ class _NavigationScreenState extends ConsumerState<NavigationScreen> {
       return null;
     }
 
-    // For apple platforms, ensure the APNS token is available before making any FCM plugin API calls
-    final apnsToken = await FirebaseMessaging.instance.getAPNSToken();
-    if (apnsToken != null) {
-      // APNS token is available, make FCM plugin API requests...
+    if (Platform.isIOS) {
+      // For apple platforms, ensure the APNS token is available before making any FCM plugin API calls
+      final apnsToken = await FirebaseMessaging.instance.getAPNSToken();
+      if (apnsToken != null) {
+        // APNS token is available, make FCM plugin API requests...
+        _handlePush();
+      }
+    } else {
+      _handlePush();
     }
+  }
 
+  void _handlePush() async {
     final fcmToken = await FirebaseMessaging.instance
         .getToken(vapidKey: "BL4YZRDAw8gBPt37GNhz6ub5UxTtDUdjERYzFOgOI2ZdCqwwBToztXtL9Wj0QwqDfKe4CoBQjcjSP54OG3fjFvE");
 
