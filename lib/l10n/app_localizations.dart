@@ -95,7 +95,7 @@ abstract class AppLocalizations {
     Locale('en')
   ];
 
-  /// No description provided for @addNewGroup.
+  /// Button to add a new group.
   ///
   /// In en, this message translates to:
   /// **'New Group'**

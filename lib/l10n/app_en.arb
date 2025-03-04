@@ -1,7 +1,11 @@
 {
   "@@locale": "en",
   "addNewGroup": "New Group",
+  "@addNewGroup": {
+    "description": "Button to add a new group."
+  },
   "addNewExpense": "New Expense",
+  "@addNewExpense": {},
   "groups": "Groups",
   "createGroup": "Create Group",
   "editGroup": "Edit Group",
