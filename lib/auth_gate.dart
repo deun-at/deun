@@ -22,20 +22,31 @@ class AuthGate extends StatelessWidget {
 
         if (event == AuthChangeEvent.signedIn) {
           try {
-            List<String> fullName = (session.user.userMetadata?['full_name'] as String).split(' ');
-
             String? firstName;
             String? lastName;
+
+            if(session.user.userMetadata?['full_name'] != null) {
+              List<String> fullName = (session.user.userMetadata?['full_name'] as String).split(' ');
+
+              if (fullName.isNotEmpty) {
+                firstName = fullName[0];
+                fullName.removeAt(0);
+              }
+
+              if (fullName.isNotEmpty) {
+                lastName = fullName.join(' ');
+              }
+            }
+            
+            if(session.user.userMetadata?['first_name'] != null) {
+              firstName = session.user.userMetadata?['first_name'];
+            }
+            
+            if(session.user.userMetadata?['last_name'] != null) {
+              lastName = session.user.userMetadata?['last_name'];
+            }
+            
             String displayName = session.user.userMetadata?['user_name'] ?? session.user.userMetadata?['name'];
-
-            if (fullName.isNotEmpty) {
-              firstName = fullName[0];
-              fullName.removeAt(0);
-            }
-
-            if (fullName.isNotEmpty) {
-              lastName = fullName.join(' ');
-            }
 
             supabase.from("user").upsert({
               'email': session.user.email,

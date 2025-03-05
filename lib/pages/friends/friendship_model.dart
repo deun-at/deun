@@ -42,7 +42,7 @@ class Friendship {
         .select('*')
         .or("paid_by.eq.$currentEmail,paid_for.eq.$currentEmail");
 
-    debugPrint(groupSharesSummaryData.toString());
+    //debugPrint(groupSharesSummaryData.toString());
 
     for (var element in data) {
       if ((element["status"] == "accepted" && element["requester"]["email"] == currentEmail) ||
@@ -91,7 +91,7 @@ class Friendship {
         .order("email", referencedTable: "addressee")
         .limit(limit);
 
-    debugPrint(data.toString());
+    //debugPrint(data.toString());
 
     List<User> retData = [];
 

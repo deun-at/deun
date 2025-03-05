@@ -7,6 +7,10 @@ class SignUp extends StatelessWidget {
   const SignUp({super.key});
   @override
   Widget build(BuildContext context) {
+    void navigateHome(AuthResponse response) {
+      Navigator.of(context).pushReplacementNamed('/');
+    }
+
     return Scaffold(
       appBar: AppBar(title: Text(AppLocalizations.of(context)!.signInTitle), centerTitle: true),
       body: ListView(
@@ -29,14 +33,57 @@ class SignUp extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 20),
+          SupaEmailAuth(
+            redirectTo: kIsWeb ? null : 'app.deun.www://login-callback',
+            onSignInComplete: navigateHome,
+            onSignUpComplete: navigateHome,
+            
+            metadataFields: [
+              MetaDataField(
+                prefixIcon: const Icon(Icons.person),
+                label: AppLocalizations.of(context)!.settingsFirstName,
+                key: 'first_name',
+                validator: (val) {
+                  if (val == null || val.isEmpty) {
+                    return AppLocalizations.of(context)!.settingsFirstNameValidationEmpty;
+                  }
+                  return null;
+                },
+              ),
+              MetaDataField(
+                prefixIcon: const Icon(Icons.person),
+                label: AppLocalizations.of(context)!.settingsLastName,
+                key: 'last_name',
+                validator: (val) {
+                  if (val == null || val.isEmpty) {
+                    return AppLocalizations.of(context)!.settingsLastNameValidationEmpty;
+                  }
+                  return null;
+                },
+              ),
+              MetaDataField(
+                prefixIcon: const Icon(Icons.person),
+                label: AppLocalizations.of(context)!.settingsDisplayName,
+                key: 'user_name',
+                validator: (val) {
+                  if (val == null || val.isEmpty) {
+                    return AppLocalizations.of(context)!.settingsDisplayNameValidationEmpty;
+                  }
+                  return null;
+                },
+              ),
+            ],
+          ),
+          const Divider(),
           SupaSocialsAuth(
             colored: true,
             nativeGoogleAuthConfig: const NativeGoogleAuthConfig(
               webClientId: '820724879316-jauhp8t8g5r3pmir1r5gsghbn2qchav5.apps.googleusercontent.com',
               iosClientId: '820724879316-8sacuk8sjju1rvr878gl9lqin0or5h9d.apps.googleusercontent.com',
             ),
+            authScreenLaunchMode: kIsWeb ? LaunchMode.platformDefault : LaunchMode.externalApplication,
             enableNativeAppleAuth: false,
-            socialProviders: const [/*OAuthProvider.apple,*/ OAuthProvider.google, OAuthProvider.github],
+            socialProviders: const [OAuthProvider.google, /*OAuthProvider.apple, */OAuthProvider.github],
             redirectUrl: kIsWeb ? null : 'app.deun.www://login-callback',
             onSuccess: (session) {},
           ),
