@@ -48,6 +48,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get groupMemberSelectionEmpty => 'Add People';
 
   @override
+  String get groupMemberSelectionTitle => 'Added People';
+
+  @override
   String get groupExpenseNoEntries => 'Add an expense to get started';
 
   @override
@@ -309,6 +312,20 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String friendshipDialogTitle(String displayName) {
+    return '$displayName';
+  }
+
+  @override
+  String get friendshipDialogEmail => 'E-Mail:';
+
+  @override
+  String get friendshipDialogFullName => 'Full Name:';
+
+  @override
+  String get friendshipDialogRemoveAsFriend => 'Remove as friend';
+
+  @override
   String toCurrency(double amount) {
     final intl.NumberFormat amountNumberFormat = intl.NumberFormat.currency(
       locale: localeName,
@@ -349,6 +366,14 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get friendRequestNotificationTitle => 'You have a new friend request';
+
+  @override
+  String friendRequestNotificationBody(String userDisplayName) {
+    return '$userDisplayName wants to connect with you.';
+  }
+
+  @override
   String get settings => 'Settings';
 
   @override
@@ -386,6 +411,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get settingsSignOut => 'Sign out';
+
+  @override
+  String get settingsPrivacyPolicy => 'Privacy Policy';
 
   @override
   String get create => 'Create';

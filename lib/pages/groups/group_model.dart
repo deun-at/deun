@@ -120,7 +120,7 @@ class Group {
     return selectedGroupMembers;
   }
 
-  static Future<void> saveAll(String? groupId, Map<String, dynamic> formValue) async {
+  static Future<String> saveAll(String? groupId, Map<String, dynamic> formValue) async {
     Map<String, dynamic> upsertVals = {
       "name": formValue["name"],
       "color_value": formValue["color_value"] ?? ColorSeed.baseColor.color.toARGB32(),
@@ -147,6 +147,8 @@ class Group {
 
     await supabase
         .rpc('update_group_member_shares', params: {"_group_id": groupInsertResponse['id'], "_expense_id": null});
+
+    return groupInsertResponse['id'] as String;
   }
 
   static Future<void> payBack(String groupId, String email, double amount) async {

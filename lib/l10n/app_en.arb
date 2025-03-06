@@ -28,6 +28,8 @@
   "@groupEntriesError": {},
   "groupMemberSelectionEmpty": "Add People",
   "@groupMemberSelectionEmpty": {},
+  "groupMemberSelectionTitle": "Added People",
+  "@groupMemberSelectionTitle": {},
   "groupExpenseNoEntries": "Add an expense to get started",
   "@groupExpenseNoEntries": {},
   "groupDeleteError": "Error while deleting group!",
@@ -302,6 +304,22 @@
       }
     }
   },
+  "friendshipDialogTitle": "{displayName}",
+  "@friendshipDialogTitle": {
+    "description": "Title for Friendship Edit Dialog",
+    "placeholders": {
+      "displayName": {
+        "type": "String",
+        "example": "Max Muster"
+      }
+    }
+  },
+  "friendshipDialogEmail": "E-Mail:",
+  "@friendshipDialogEmail": {},
+  "friendshipDialogFullName": "Full Name:",
+  "@friendshipDialogFullName": {},
+  "friendshipDialogRemoveAsFriend": "Remove as friend",
+  "@friendshipDialogRemoveAsFriend": {},
   "toCurrency": "{amount}",
   "@toCurrency": {
     "description": "",
@@ -364,6 +382,18 @@
       }
     }
   },
+  "friendRequestNotificationTitle": "You have a new friend request",
+  "@friendRequestNotificationTitle": {},
+  "friendRequestNotificationBody": "{userDisplayName} wants to connect with you.",
+  "@friendRequestNotificationBody": {
+    "description": "Notification title when a new friend request was sent.",
+    "placeholders": {
+      "userDisplayName": {
+        "type": "String",
+        "example": "Max Muster"
+      }
+    }
+  },
   "settings": "Settings",
   "@settings": {},
   "settingsUserHeading": "User Data",
@@ -390,6 +420,8 @@
   "@settingsSignOutDialogTitle": {},
   "settingsSignOut": "Sign out",
   "@settingsSignOut": {},
+  "settingsPrivacyPolicy": "Privacy Policy",
+  "@settingsPrivacyPolicy": {},
   "create": "Create",
   "@create": {},
   "cancel": "Cancel",

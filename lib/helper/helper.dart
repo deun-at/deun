@@ -1,5 +1,6 @@
 import 'package:deun/main.dart';
 import 'package:deun/pages/expenses/expense_model.dart';
+import 'package:deun/pages/users/user_model.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
@@ -95,6 +96,22 @@ sendExpenseNotification(BuildContext context, String expenseId, Set<String> noti
   });
 }
 
+sendFriendRequestNotification(BuildContext context, Set<String> notificationReceiver) {
+  User.fetchDetail(supabase.auth.currentUser!.email ?? '').then(
+    (value) {
+      sendNotification(
+        'friendship',
+        '',
+        notificationReceiver,
+        // ignore: use_build_context_synchronously
+        AppLocalizations.of(context)!.friendRequestNotificationTitle,
+        // ignore: use_build_context_synchronously
+        AppLocalizations.of(context)!.friendRequestNotificationBody(value.displayName),
+      );
+    },
+  );
+}
+
 sendNotification(String type, String objectId, Set<String> notificationReceiver, String title, String body) async {
   try {
     notificationReceiver.remove(supabase.auth.currentUser?.email);
@@ -123,6 +140,11 @@ navigateToExpense(BuildContext context, Expense expense) {
 
   // Delay opening the BottomSheet
   Future.delayed(Durations.medium1, () {
+    // ignore: use_build_context_synchronously
     GoRouter.of(context).push("/group/details/expense", extra: {'group': expense.group, 'expense': expense});
   });
+}
+
+navigateToFriends(BuildContext context) {
+  GoRouter.of(context).go("/friend");
 }

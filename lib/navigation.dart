@@ -3,6 +3,7 @@ import 'package:deun/main.dart';
 import 'package:deun/pages/expenses/expense_model.dart';
 import 'package:deun/pages/friends/friend_list.dart';
 import 'package:deun/pages/groups/group_detail_payment.dart';
+import 'package:deun/pages/settings/privacy_policy.dart';
 import 'package:deun/provider.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
@@ -139,11 +140,19 @@ class _NavigationScreenState extends ConsumerState<NavigationScreen> {
               routes: [
                 // top route inside branch
                 GoRoute(
-                  path: '/setting',
-                  pageBuilder: (context, state) => const NoTransitionPage(
-                    child: Setting(),
-                  ),
-                ),
+                    path: '/setting',
+                    pageBuilder: (context, state) => const NoTransitionPage(
+                          child: Setting(),
+                        ),
+                    routes: [
+                      // child route
+                      GoRoute(
+                        path: 'privacy-policy',
+                        pageBuilder: (context, state) {
+                          return DefaultTransitionPage(child: PrivacyPolicy());
+                        },
+                      ),
+                    ]),
               ],
             ),
           ],
@@ -231,6 +240,8 @@ class _NavigationScreenState extends ConsumerState<NavigationScreen> {
     if (message.data['type'] == 'expense') {
       Expense expense = await Expense.fetchDetail(message.data['expense_id']);
       navigateToExpense(_rootNavigatorKey.currentContext!, expense);
+    } else if (message.data['type'] == 'friendship') {
+      navigateToFriends(_rootNavigatorKey.currentContext!);
     }
   }
 
@@ -283,12 +294,18 @@ class _ScaffoldWithNestedNavigationState extends ConsumerState<ScaffoldWithNeste
     super.initState();
 
     FirebaseMessaging.onMessage.listen((RemoteMessage message) {
-      debugPrint(message.data.toString());
       if (message.data['type'] == 'expense') {
         Expense.fetchDetail(message.data['expense_id']).then((expense) {
+          // ignore: use_build_context_synchronously
           showMaterialBanner(context, '${message.notification!.title}\n${message.notification!.body}',
               () => navigateToExpense(context, expense));
         });
+      } else if (message.data['type'] == 'friendship') {
+        showMaterialBanner(
+            // ignore: use_build_context_synchronously
+            context,
+            '${message.notification!.title}\n${message.notification!.body}',
+            () => navigateToFriends(context));
       }
     });
   }

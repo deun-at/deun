@@ -1,5 +1,4 @@
 import 'package:deun/pages/users/user_model.dart';
-import 'package:flutter/material.dart';
 
 import '../../main.dart';
 

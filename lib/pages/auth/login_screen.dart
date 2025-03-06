@@ -1,3 +1,4 @@
+import 'package:deun/pages/settings/privacy_policy.dart';
 import 'package:flutter/material.dart';
 import 'package:deun/l10n/app_localizations.dart';
 
@@ -26,6 +27,7 @@ class LoginScreen extends StatelessWidget {
       initialRoute: '/',
       routes: {
         '/': (context) => const SignUp(),
+        '/privacy-policy': (context) => const PrivacyPolicy(),
       },
       onUnknownRoute: (RouteSettings settings) {
         return MaterialPageRoute<void>(

@@ -14,16 +14,19 @@ class _EmptyListWidgetState extends State<EmptyListWidget> {
   @override
   Widget build(BuildContext context) {
     return RefreshIndicator(
-        onRefresh: () => widget.onRefresh(),
-        child: ListView(
-            // physics: const AlwaysScrollableScrollPhysics(),
-            children: [
-              const SizedBox(height: 100),
-              Center(
-                  child: Text(
-                widget.label,
-                style: Theme.of(context).textTheme.headlineMedium,
-              ))
-            ]));
+      onRefresh: () => widget.onRefresh(),
+      child: ListView(
+        children: [
+          const SizedBox(height: 100),
+          Center(
+            child: Text(
+              widget.label,
+              style: Theme.of(context).textTheme.headlineMedium,
+              textAlign: TextAlign.center,
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }

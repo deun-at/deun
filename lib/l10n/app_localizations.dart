@@ -173,6 +173,12 @@ abstract class AppLocalizations {
   /// **'Add People'**
   String get groupMemberSelectionEmpty;
 
+  /// No description provided for @groupMemberSelectionTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Added People'**
+  String get groupMemberSelectionTitle;
+
   /// No description provided for @groupExpenseNoEntries.
   ///
   /// In en, this message translates to:
@@ -503,6 +509,30 @@ abstract class AppLocalizations {
   /// **'Request to {displayName} was canceled'**
   String friendshipRequestCancel(String displayName);
 
+  /// Title for Friendship Edit Dialog
+  ///
+  /// In en, this message translates to:
+  /// **'{displayName}'**
+  String friendshipDialogTitle(String displayName);
+
+  /// No description provided for @friendshipDialogEmail.
+  ///
+  /// In en, this message translates to:
+  /// **'E-Mail:'**
+  String get friendshipDialogEmail;
+
+  /// No description provided for @friendshipDialogFullName.
+  ///
+  /// In en, this message translates to:
+  /// **'Full Name:'**
+  String get friendshipDialogFullName;
+
+  /// No description provided for @friendshipDialogRemoveAsFriend.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove as friend'**
+  String get friendshipDialogRemoveAsFriend;
+
   ///
   ///
   /// In en, this message translates to:
@@ -526,6 +556,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'\"{expenseName}\" has been added to \"{groupName}\" with a total of {amount}'**
   String expenseNotificationBody(String expenseName, String groupName, double amount);
+
+  /// No description provided for @friendRequestNotificationTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'You have a new friend request'**
+  String get friendRequestNotificationTitle;
+
+  /// Notification title when a new friend request was sent.
+  ///
+  /// In en, this message translates to:
+  /// **'{userDisplayName} wants to connect with you.'**
+  String friendRequestNotificationBody(String userDisplayName);
 
   /// No description provided for @settings.
   ///
@@ -604,6 +646,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Sign out'**
   String get settingsSignOut;
+
+  /// No description provided for @settingsPrivacyPolicy.
+  ///
+  /// In en, this message translates to:
+  /// **'Privacy Policy'**
+  String get settingsPrivacyPolicy;
 
   /// No description provided for @create.
   ///

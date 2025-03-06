@@ -12,6 +12,7 @@ import 'package:flutter_form_builder/flutter_form_builder.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:form_builder_validators/form_builder_validators.dart';
 import 'package:deun/l10n/app_localizations.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../constants.dart';
 import '../../main.dart';
@@ -237,8 +238,24 @@ class _GroupBottomSheetState extends ConsumerState<GroupBottomSheet> {
                                           return getUserSuggestions(controller, field);
                                         },
                                         viewBuilder: (suggestions) {
-                                          return SearchView(
-                                              searchQueryNotifier: _searchQueryNotifier, suggestions: suggestions);
+                                          return Column(
+                                            crossAxisAlignment: CrossAxisAlignment.start,
+                                            children: [
+                                              Padding(
+                                                padding: EdgeInsets.only(top: 10, left: 16),
+                                                child: Text(
+                                                  AppLocalizations.of(context)!.groupMemberSelectionTitle,
+                                                  style: Theme.of(context).textTheme.bodyMedium,
+                                                ),
+                                              ),
+                                              Expanded(
+                                                child: SearchView(
+                                                  searchQueryNotifier: _searchQueryNotifier,
+                                                  suggestions: suggestions,
+                                                ),
+                                              ),
+                                            ],
+                                          );
                                         },
                                       );
                                     },
@@ -251,7 +268,8 @@ class _GroupBottomSheetState extends ConsumerState<GroupBottomSheet> {
                                               textStyle: Theme.of(context).textTheme.bodyLarge,
                                             ),
                                             onPressed: () => openDeleteItemDialog(context, widget.group!),
-                                            icon: const Icon(Icons.delete_outline),
+                                            icon:
+                                                Icon(Icons.delete_outline, color: Theme.of(context).colorScheme.error),
                                             label: Text(AppLocalizations.of(context)!.groupDeleteItemTitle),
                                           ),
                                         )
@@ -283,9 +301,12 @@ class _GroupBottomSheetState extends ConsumerState<GroupBottomSheet> {
                           child: FilledButton(
                             onPressed: () async {
                               if (_formKey.currentState!.saveAndValidate()) {
+                                Group? newGroup;
                                 ref.read(_isLoading.notifier).state = true; // Set loading to true
                                 try {
-                                  await Group.saveAll(widget.group?.id, _formKey.currentState!.value);
+                                  String groupInsertId =
+                                      await Group.saveAll(widget.group?.id, _formKey.currentState!.value);
+                                  newGroup = await Group.fetchDetail(groupInsertId);
                                   if (context.mounted) {
                                     showSnackBar(context, groupDetailScaffoldMessengerKey,
                                         AppLocalizations.of(context)!.groupCreateSuccess);
@@ -300,6 +321,16 @@ class _GroupBottomSheetState extends ConsumerState<GroupBottomSheet> {
                                     ref.read(_isLoading.notifier).state = false; // Stop loading
                                     if (context.mounted) {
                                       Navigator.pop(context);
+                                      if (widget.group != null) {
+                                        Navigator.pop(context);
+                                      }
+                                      // if (newGroup != null) {
+                                      //   debugPrint("New group: ${newGroup.toJson().toString()}");
+                                      //   Future.delayed(Durations.medium1, () {
+                                      //     GoRouter.of(context).go("/group");
+                                      //     GoRouter.of(context).push("/group/details", extra: {'group': newGroup});
+                                      //   });
+                                      // }
                                     }
                                   }
                                 }

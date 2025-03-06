@@ -55,43 +55,6 @@ class _FriendListState extends ConsumerState<FriendList> {
     return ref.read(friendshipListNotifierProvider.notifier).reload();
   }
 
-  Future<Iterable<Widget>> getUserSuggestions(SearchController controller) async {
-    final String input = controller.value.text;
-
-    if (input.isEmpty) {
-      return [];
-    }
-
-    List<String> selectedUsers = List.empty(growable: true);
-
-    var currFriendships = await Friendship.fetchData();
-
-    for (var friendship in currFriendships) {
-      selectedUsers.add(friendship.user.email);
-    }
-    selectedUsers.add(supabase.auth.currentUser?.email ?? '');
-
-    List<User> result = await User.fetchData(input, selectedUsers, 10);
-    if (result.isEmpty) {
-      return [
-        ListTile(
-          title: Text(AppLocalizations.of(context)!.addFriendshipNoResult),
-        )
-      ];
-    }
-
-    return result.map((user) => ListTile(
-          title: Text(user.displayName),
-          subtitle: Text(user.email),
-          onTap: () {
-            Friendship.request(user.email);
-            showSnackBar(context, friendListScaffoldMessengerKey,
-                AppLocalizations.of(context)!.friendshipRequestSent(user.displayName));
-            controller.text = "";
-          },
-        ));
-  }
-
   @override
   Widget build(BuildContext context) {
     final AsyncValue<List<Friendship>> friendshipProvider = ref.watch(friendshipListNotifierProvider);
@@ -137,6 +100,7 @@ class _FriendListState extends ConsumerState<FriendList> {
                                   User user = friendship.user;
                                   Widget leadingHeader = const SizedBox();
                                   Widget trailingButton = const SizedBox();
+                                  Function? onPressCallback;
 
                                   if ((currStatus == "pending" || currStatus == "") &&
                                       friendship.status == "accepted") {
@@ -189,6 +153,11 @@ class _FriendListState extends ConsumerState<FriendList> {
                                         style:
                                             Theme.of(context).textTheme.bodyMedium!.copyWith(color: shareAmountColor),
                                         AppLocalizations.of(context)!.toCurrency(friendship.shareAmount));
+
+                                    onPressCallback = () {
+                                      debugPrint("loooooong press");
+                                      openFriendshipDialog(context, user);
+                                    };
                                     // trailingButton = IconButton.filledTonal(
                                     //   style: IconButton.styleFrom(
                                     //       backgroundColor: Theme.of(context).colorScheme.errorContainer,
@@ -210,7 +179,11 @@ class _FriendListState extends ConsumerState<FriendList> {
                                       title: Text(user.displayName),
                                       subtitle: Text(user.email),
                                       trailing: trailingButton,
-                                      onTap: () {},
+                                      onTap: () {
+                                        if (onPressCallback != null) {
+                                          onPressCallback();
+                                        }
+                                      },
                                     ),
                                     const Divider(height: 0),
                                   ]);
@@ -248,6 +221,81 @@ class _FriendListState extends ConsumerState<FriendList> {
             )));
   }
 
+  Future<Iterable<Widget>> getUserSuggestions(SearchController controller) async {
+    final String input = controller.value.text;
+
+    if (input.isEmpty) {
+      return [];
+    }
+
+    List<String> selectedUsers = List.empty(growable: true);
+
+    var currFriendships = await Friendship.fetchData();
+
+    for (var friendship in currFriendships) {
+      selectedUsers.add(friendship.user.email);
+    }
+    selectedUsers.add(supabase.auth.currentUser?.email ?? '');
+
+    List<User> result = await User.fetchData(input, selectedUsers, 10);
+    if (result.isEmpty) {
+      return [
+        ListTile(
+          // ignore: use_build_context_synchronously
+          title: Text(AppLocalizations.of(context)!.addFriendshipNoResult),
+        )
+      ];
+    }
+
+    return result.map((user) => ListTile(
+          title: Text(user.displayName),
+          subtitle: Text(user.email),
+          onTap: () async {
+            Friendship.request(user.email);
+            showSnackBar(context, friendListScaffoldMessengerKey,
+                AppLocalizations.of(context)!.friendshipRequestSent(user.displayName));
+            controller.closeView("");
+
+            sendFriendRequestNotification(context, {user.email});
+          },
+        ));
+  }
+
+  void openFriendshipDialog(BuildContext modalContext, User user) {
+    showDialog<void>(
+      context: context,
+      builder: (context) => SimpleDialog(
+        title: Text(AppLocalizations.of(context)!.friendshipDialogTitle(user.displayName)),
+        children: [
+          SimpleDialogOption(
+            child: Text("${AppLocalizations.of(context)!.friendshipDialogEmail} ${user.email}"),
+          ),
+          SimpleDialogOption(
+            child: Text("${AppLocalizations.of(context)!.friendshipDialogFullName} ${user.firstName} ${user.lastName}"),
+          ),
+          SizedBox(height: 20),
+          SimpleDialogOption(
+            onPressed: () {
+              openRemoveFriendDialog(context, user);
+            },
+            child: Row(
+              children: [
+                Text(
+                  AppLocalizations.of(context)!.friendshipDialogRemoveAsFriend,
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: Theme.of(context).colorScheme.error,
+                      ),
+                ),
+                const Spacer(),
+                Icon(Icons.person_remove_outlined, color: Theme.of(context).colorScheme.error),
+              ],
+            ),
+          )
+        ],
+      ),
+    );
+  }
+
   void openRemoveFriendDialog(BuildContext modalContext, User user) {
     showDialog<void>(
       context: context,
@@ -268,7 +316,8 @@ class _FriendListState extends ConsumerState<FriendList> {
               try {
                 Friendship.remove(user.email);
               } finally {
-                Navigator.pop(context);
+                Navigator.pop(context); // Close delete dialog
+                Navigator.pop(context); // Close info dialog
                 showSnackBar(context, friendListScaffoldMessengerKey,
                     AppLocalizations.of(context)!.friendRemoved(user.displayName));
               }
