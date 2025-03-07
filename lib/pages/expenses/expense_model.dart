@@ -74,7 +74,7 @@ class Expense {
     }
 
     if (filter != null) {
-      query = query.ilike('name', '%$filter%');
+      query = query.ilike('name', '%$filter%').eq('is_paid_back_row', 'false');
     }
 
     //created_at as fallback if multiple entrys are on the same date/check if name makes more senses

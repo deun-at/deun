@@ -151,21 +151,8 @@ class _FriendListState extends ConsumerState<FriendList> {
                                         AppLocalizations.of(context)!.toCurrency(friendship.shareAmount));
 
                                     onPressCallback = () {
-                                      debugPrint("loooooong press");
                                       openFriendshipDialog(context, user);
                                     };
-                                    // trailingButton = IconButton.filledTonal(
-                                    //   style: IconButton.styleFrom(
-                                    //       backgroundColor: Theme.of(context).colorScheme.errorContainer,
-                                    //       foregroundColor: Theme.of(context).colorScheme.onErrorContainer),
-                                    //   icon: const Icon(Icons.delete_outline),
-                                    //   onPressed: () {
-                                    //     openRemoveFriendDialog(
-                                    //       context,
-                                    //       user,
-                                    //     );
-                                    //   },
-                                    // );
                                   }
 
                                   currStatus = friendship.status;

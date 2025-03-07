@@ -40,12 +40,18 @@ dev_dependencies:
   build_runner: ^2.4.11
   build_web_compilers: ^4.0.10
   flutter_launcher_icons: ^0.14.2
+  flutter_native_splash: ^2.4.5
 
 msix_config:
   display_name: Deun
   msix_version: 1.0.0.2
   protocol_activation: https # Add the protocols to activate the app
   app_uri_handler_hosts: www.deun.app, deun.app # Add the app uri handler hosts. You can't use patterns here.
+
+flutter_native_splash:
+  color: "#ffffff"
+  color_dark: "#101513"
+  image: assets/icon/icon-512.png
 
 flutter:
   generate: true
