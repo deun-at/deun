@@ -28,40 +28,7 @@ class _SettingState extends ConsumerState<Setting> {
     const double heightSpacing = 12;
 
     return Scaffold(
-      // appBar: AppBar(
-      //   centerTitle: true,
-      //   title: Text(AppLocalizations.of(context)!.settings),
-      //   actions: [
-      //     IconButton.filledTonal(
-      //       onPressed: () async {
-      //         showDialog(
-      //             context: context,
-      //             builder: (context) => AlertDialog(
-      //                   content: Text(AppLocalizations.of(context)!.settingsSignOutDialogTitle),
-      //                   actions: <Widget>[
-      //                     TextButton(
-      //                       child: Text(AppLocalizations.of(context)!.cancel),
-      //                       onPressed: () => Navigator.pop(context),
-      //                     ),
-      //                     FilledButton(
-      //                       style: FilledButton.styleFrom(
-      //                         backgroundColor: Theme.of(context).colorScheme.error,
-      //                         foregroundColor: Theme.of(context).colorScheme.onError,
-      //                       ),
-      //                       child: Text(AppLocalizations.of(context)!.settingsSignOut),
-      //                       onPressed: () async {
-      //                         await supabase.auth.signOut();
-      //                       },
-      //                     ),
-      //                   ],
-      //                 ));
-      //       },
-      //       icon: const Icon(Icons.logout),
-      //     )
-      //   ],
-      // ),
       body: NestedScrollView(
-        // controller: _scrollController,
         headerSliverBuilder: (context, innerBoxIsScrolled) => [
           SliverAppBar.medium(
             title: Text(AppLocalizations.of(context)!.settings),
@@ -236,7 +203,6 @@ class _SettingState extends ConsumerState<Setting> {
                             child: FilledButton(
                               onPressed: () async {
                                 if (_formKey.currentState!.saveAndValidate()) {
-                                  // ref.read(_isLoading.notifier).state = true; // Set loading to true
                                   try {
                                     await User.saveAll(_formKey.currentState!.value);
                                     if (context.mounted) {
@@ -250,10 +216,8 @@ class _SettingState extends ConsumerState<Setting> {
                                     }
                                   } finally {
                                     if (mounted) {
-                                      // ref.read(_isLoading.notifier).state = false; // Stop loading
                                       if (context.mounted) {
                                         FocusScope.of(context).unfocus();
-                                        // Navigator.pop(context);
                                       }
                                     }
                                   }

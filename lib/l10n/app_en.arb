@@ -8,7 +8,7 @@
   "@addNewExpense": {},
   "groups": "Groups",
   "@groups": {},
-  "groupListFilter": "{filter, select, all{all} active{active} done{done} other{}}",
+  "groupListFilter": "{filter, select, all{all} active{open} done{done} other{}}",
   "@groupListFilter": {
     "description": "Filter for the group list.",
     "placeholders": {
@@ -51,6 +51,12 @@
   "@groupCreateSuccess": {},
   "expenses": "Expenses",
   "@expenses": {},
+  "expensesSearchTitle": "Search",
+  "@expensesSearchTitle": {},
+  "expensesSearchDescription": "Search for expenses",
+  "@expensesSearchDescription": {},
+  "expensesSearchEmpty": "No results found",
+  "@expensesSearchEmpty": {},
   "createExpense": "Create Expense",
   "@createExpense": {},
   "editExpense": "Edit Expense",

@@ -23,7 +23,7 @@ class AppLocalizationsDe extends AppLocalizations {
       filter,
       {
         'all': 'all',
-        'active': 'active',
+        'active': 'open',
         'done': 'done',
         'other': '',
       },
@@ -81,6 +81,15 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get expenses => 'Expenses';
+
+  @override
+  String get expensesSearchTitle => 'Search';
+
+  @override
+  String get expensesSearchDescription => 'Search for expenses';
+
+  @override
+  String get expensesSearchEmpty => 'No results found';
 
   @override
   String get createExpense => 'Create Expense';

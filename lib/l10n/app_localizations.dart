@@ -116,7 +116,7 @@ abstract class AppLocalizations {
   /// Filter for the group list.
   ///
   /// In en, this message translates to:
-  /// **'{filter, select, all{all} active{active} done{done} other{}}'**
+  /// **'{filter, select, all{all} active{open} done{done} other{}}'**
   String groupListFilter(String filter);
 
   /// No description provided for @createGroup.
@@ -220,6 +220,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Expenses'**
   String get expenses;
+
+  /// No description provided for @expensesSearchTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Search'**
+  String get expensesSearchTitle;
+
+  /// No description provided for @expensesSearchDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Search for expenses'**
+  String get expensesSearchDescription;
+
+  /// No description provided for @expensesSearchEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No results found'**
+  String get expensesSearchEmpty;
 
   /// No description provided for @createExpense.
   ///

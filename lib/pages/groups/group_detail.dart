@@ -1,4 +1,6 @@
+import 'package:deun/helper/helper.dart';
 import 'package:deun/main.dart';
+import 'package:deun/pages/expenses/expense_model.dart';
 import 'package:deun/pages/groups/group_detail_list.dart';
 import 'package:deun/pages/groups/group_list.dart';
 import 'package:deun/widgets/shimmer_card_list.dart';
@@ -118,6 +120,23 @@ class _GroupDetailState extends ConsumerState<GroupDetail> {
                               child: GroupShareWidget(group: groupDetail));
                         },
                       ),
+                      Padding(
+                        padding: EdgeInsets.all(8),
+                        child: SearchAnchor.bar(
+                          barHintText: AppLocalizations.of(context)!.expensesSearchTitle,
+                          suggestionsBuilder: (context, controller) {
+                            if (controller.text.isEmpty) {
+                              return <Widget>[
+                                ListTile(
+                                  // ignore: use_build_context_synchronously
+                                  title: Text(AppLocalizations.of(context)!.expensesSearchDescription),
+                                )
+                              ];
+                            }
+                            return getExpenseSuggestions(controller, widget.group);
+                          },
+                        ),
+                      ),
                     ],
                   ),
                 ),
@@ -154,5 +173,33 @@ class _GroupDetailState extends ConsumerState<GroupDetail> {
         ),
       ),
     );
+  }
+
+  Future<Iterable<Widget>> getExpenseSuggestions(SearchController controller, Group group) async {
+    final String input = controller.value.text;
+
+    if (input.isEmpty) {
+      return [];
+    }
+
+    List<Expense> result = await Expense.fetchData(group.id, 0, 9, input);
+    if (result.isEmpty) {
+      return [
+        ListTile(
+          // ignore: use_build_context_synchronously
+          title: Text(AppLocalizations.of(context)!.expensesSearchEmpty),
+        )
+      ];
+    }
+
+    return result.map((expense) => ListTile(
+          title: Text(expense.name),
+          subtitle: Text('test'),
+          trailing: Text(formatDate(expense.expenseDate)),
+          onTap: () async {
+            controller.closeView("");
+            GoRouter.of(context).push("/group/details/expense", extra: {'group': group, 'expense': expense});
+          },
+        ));
   }
 }
