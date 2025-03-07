@@ -1,7 +1,5 @@
 import 'dart:convert';
 
-import 'package:flutter/material.dart';
-
 import '../../constants.dart';
 import '../../main.dart';
 import '../expenses/expense_model.dart';
@@ -52,7 +50,6 @@ class Group {
     totalShareAmount = 0;
     groupSharesSummary = {};
     if (json["group_shares_summary"] != null) {
-      debugPrint(json["group_shares_summary"].toString());
       for (var element in json["group_shares_summary"]) {
         if (element['paid_for'] == currentUserEmail) {
           totalExpenses += double.parse((element['total_expenses'] ?? 0).toString());
@@ -104,17 +101,12 @@ class Group {
 
     List<Map<String, dynamic>> data = await query.order('name', ascending: true);
 
-    // debugPrint(data.toString());
     List<Group> retData = List.empty(growable: true);
 
-    try {
-      for (var element in data) {
-        Group group = Group();
-        group.loadDataFromJson(element);
-        retData.add(group);
-      }
-    } catch (e) {
-      debugPrint(e.toString());
+    for (var element in data) {
+      Group group = Group();
+      group.loadDataFromJson(element);
+      retData.add(group);
     }
 
     return retData;

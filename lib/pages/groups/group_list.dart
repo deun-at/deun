@@ -40,15 +40,8 @@ class _GroupListState extends ConsumerState<GroupList> {
         body: NestedScrollView(
           controller: _scrollController,
           headerSliverBuilder: (context, innerBoxIsScrolled) => [
-            SliverAppBar(
-              expandedHeight: 120,
-              flexibleSpace: FlexibleSpaceBar(
-                title: Text(AppLocalizations.of(context)!.expenses, maxLines: 1, overflow: TextOverflow.ellipsis),
-                centerTitle: true,
-              ),
-              floating: true, // Your appBar appears immediately
-              snap: true, // Your appBar displayed %100 or %0
-              pinned: true, // Your appBar pinned to top
+            SliverAppBar.medium(
+              title: Text(AppLocalizations.of(context)!.expenses),
             ),
             SliverToBoxAdapter(
               child: SizedBox(

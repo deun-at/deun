@@ -67,16 +67,8 @@ class _FriendListState extends ConsumerState<FriendList> {
             body: NestedScrollView(
                 controller: _scrollController,
                 headerSliverBuilder: (context, innerBoxIsScrolled) => [
-                      SliverAppBar(
-                        expandedHeight: 120,
-                        flexibleSpace: FlexibleSpaceBar(
-                          title:
-                              Text(AppLocalizations.of(context)!.friends, maxLines: 1, overflow: TextOverflow.ellipsis),
-                          centerTitle: true,
-                        ),
-                        floating: true, // Your appBar appears immediately
-                        snap: true, // Your appBar displayed %100 or %0
-                        pinned: true, // Your appBar pinned to top
+                      SliverAppBar.medium(
+                        title: Text(AppLocalizations.of(context)!.friends),
                       ),
                     ],
                 body: Container(
@@ -270,9 +262,12 @@ class _FriendListState extends ConsumerState<FriendList> {
           SimpleDialogOption(
             child: Text("${AppLocalizations.of(context)!.friendshipDialogEmail} ${user.email}"),
           ),
-          SimpleDialogOption(
-            child: Text("${AppLocalizations.of(context)!.friendshipDialogFullName} ${user.firstName} ${user.lastName}"),
-          ),
+          user.firstName == null && user.lastName == null
+              ? const SizedBox()
+              : SimpleDialogOption(
+                  child: Text(
+                      "${AppLocalizations.of(context)!.friendshipDialogFullName} ${user.firstName ?? ''} ${user.lastName ?? ''}"),
+                ),
           SizedBox(height: 20),
           SimpleDialogOption(
             onPressed: () {
@@ -290,7 +285,18 @@ class _FriendListState extends ConsumerState<FriendList> {
                 Icon(Icons.person_remove_outlined, color: Theme.of(context).colorScheme.error),
               ],
             ),
-          )
+          ),
+          SizedBox(height: 10),
+          SimpleDialogOption(
+            onPressed: () {
+              Navigator.pop(context); // Close delete dialog
+            },
+            child: Text(
+              AppLocalizations.of(context)!.close,
+              style: Theme.of(context).textTheme.bodyMedium,
+              textAlign: TextAlign.end,
+            ),
+          ),
         ],
       ),
     );

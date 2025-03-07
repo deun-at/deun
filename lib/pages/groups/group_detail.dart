@@ -66,12 +66,8 @@ class _GroupDetailState extends ConsumerState<GroupDetail> {
               physics: const BouncingScrollPhysics(),
               controller: _scrollController,
               headerSliverBuilder: (context, innerBoxIsScrolled) => [
-                SliverAppBar(
-                  expandedHeight: 120,
-                  flexibleSpace: FlexibleSpaceBar(
-                    title: Text(widget.group.name, maxLines: 1, overflow: TextOverflow.ellipsis),
-                    centerTitle: false,
-                  ),
+                SliverAppBar.medium(
+                  title: Text(widget.group.name, maxLines: 1, overflow: TextOverflow.ellipsis),
                   actions: [
                     IconButton(
                       onPressed: () {
@@ -80,9 +76,6 @@ class _GroupDetailState extends ConsumerState<GroupDetail> {
                       icon: const Icon(Icons.edit),
                     )
                   ],
-                  floating: true, // Your appBar appears immediately
-                  snap: true, // Your appBar displayed %100 or %0
-                  pinned: true, // Your appBar pinned to top
                 ),
                 SliverToBoxAdapter(
                   child: Column(
