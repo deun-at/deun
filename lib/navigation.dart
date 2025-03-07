@@ -155,6 +155,14 @@ class _NavigationScreenState extends ConsumerState<NavigationScreen> {
                     ]),
               ],
             ),
+            StatefulShellBranch(routes: [
+              GoRoute(
+                path: '/privacy-policy',
+                pageBuilder: (context, state) => const NoTransitionPage(
+                  child: PrivacyPolicy(),
+                ),
+              ),
+            ])
           ],
         ),
       ],
