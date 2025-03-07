@@ -1,4 +1,4 @@
-package com.example.deun
+package app.deun.www
 
 import io.flutter.embedding.android.FlutterActivity
 
