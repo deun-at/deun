@@ -5,6 +5,7 @@ import 'package:deun/widgets/shimmer_card_list.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_form_builder/flutter_form_builder.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:form_builder_extra_fields/form_builder_extra_fields.dart';
 import 'package:form_builder_validators/form_builder_validators.dart';
 import 'package:go_router/go_router.dart';
 
@@ -24,6 +25,7 @@ class _SettingState extends ConsumerState<Setting> {
   @override
   Widget build(BuildContext context) {
     const double spacing = 8;
+    const double heightSpacing = 12;
 
     return Scaffold(
       // appBar: AppBar(
@@ -146,7 +148,7 @@ class _SettingState extends ConsumerState<Setting> {
                                         onChanged: (value) => field.didChange(value),
                                       ),
                                     ),
-                                    const SizedBox(height: spacing),
+                                    const SizedBox(height: heightSpacing),
                                     FormBuilderField(
                                       name: "last_name",
                                       builder: (FormFieldState<dynamic> field) => TextFormField(
@@ -160,7 +162,7 @@ class _SettingState extends ConsumerState<Setting> {
                                         onChanged: (value) => field.didChange(value),
                                       ),
                                     ),
-                                    const SizedBox(height: spacing),
+                                    const SizedBox(height: heightSpacing),
                                     FormBuilderField(
                                       name: "display_name",
                                       builder: (FormFieldState<dynamic> field) => TextFormField(
@@ -180,7 +182,31 @@ class _SettingState extends ConsumerState<Setting> {
                               )
                             ],
                           ),
-                          const SizedBox(height: spacing),
+                          // const SizedBox(height: heightSpacing),
+                          // Row(
+                          //   crossAxisAlignment: CrossAxisAlignment.start,
+                          //   children: [
+                          //     const Icon(
+                          //       Icons.language,
+                          //     ),
+                          //     const SizedBox(width: spacing),
+                          //     Flexible(
+                          //       child: FormBuilderSearchableDropdown(
+                          //         name: 'locale',
+                          //         items: [
+                          //           'en',
+                          //           'de',
+                          //         ],
+                          //         decoration: InputDecoration(
+                          //           labelText: 'Language',
+                          //           border: const OutlineInputBorder(),
+                          //         ),
+                          //         filterFn: (country, filter) => country.toLowerCase().contains(filter.toLowerCase()),
+                          //       ),
+                          //     ),
+                          //   ],
+                          // ),
+                          const SizedBox(height: heightSpacing),
                           Row(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
@@ -204,7 +230,7 @@ class _SettingState extends ConsumerState<Setting> {
                               ),
                             ],
                           ),
-                          const SizedBox(height: spacing),
+                          const SizedBox(height: heightSpacing),
                           Align(
                             alignment: Alignment.centerRight,
                             child: FilledButton(

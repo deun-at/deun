@@ -60,8 +60,12 @@ class _GroupDetailListState extends ConsumerState<GroupDetailList> {
                         child: NotificationListener<ScrollNotification>(
                             child: ListView.builder(
                                 padding: EdgeInsets.zero,
-                                itemCount: expenses.length,
+                                itemCount: expenses.length + 1,
                                 itemBuilder: (context, index) {
+                                  if (index == expenses.length) {
+                                    return const SizedBox(height: 80);
+                                  }
+
                                   Expense expense = expenses[index];
 
                                   if (expense.isPaidBackRow) {

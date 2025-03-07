@@ -86,8 +86,12 @@ class _FriendListState extends ConsumerState<FriendList> {
                               },
                               child: ListView.builder(
                                 padding: EdgeInsets.zero,
-                                itemCount: value.length,
+                                itemCount: value.length + 1,
                                 itemBuilder: (context, index) {
+                                  if (index == value.length) {
+                                    return const SizedBox(height: 90);
+                                  }
+
                                   Friendship friendship = value[index];
                                   User user = friendship.user;
                                   Widget leadingHeader = const SizedBox();

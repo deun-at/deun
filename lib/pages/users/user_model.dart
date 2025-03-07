@@ -7,6 +7,7 @@ class User {
   late String? lastName;
   late String displayName;
   late String? paypalMe;
+  late String? locale;
   late String createdAt;
 
   void loadDataFromJson(Map<String, dynamic> json) {
@@ -15,6 +16,7 @@ class User {
     firstName = json["first_name"];
     lastName = json["last_name"];
     displayName = json["display_name"];
+    locale = json["locale"];
     paypalMe = json["paypal_me"];
     createdAt = json["created_at"];
   }
@@ -53,6 +55,7 @@ class User {
       'first_name': formResponse['first_name'],
       'last_name': formResponse['last_name'],
       'display_name': formResponse['display_name'],
+      'locale': formResponse['locale'],
       'paypal_me': formResponse['paypal_me'],
     };
 
@@ -69,6 +72,7 @@ class User {
         "first_name": firstName,
         "last_name": lastName,
         "display_name": displayName,
+        "locale": locale,
         "paypal_me": paypalMe,
         "created_at": createdAt,
       };

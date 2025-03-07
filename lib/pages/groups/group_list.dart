@@ -95,11 +95,14 @@ class _GroupListState extends ConsumerState<GroupList> {
                           scrollDirection: Axis.vertical,
                           shrinkWrap: true,
                           padding: EdgeInsets.zero,
-                          itemCount: value.length,
+                          itemCount: value.length + 1,
                           itemBuilder: (context, index) {
+                            if (index == value.length) {
+                              return const SizedBox(height: 80);
+                            }
+
                             // Access the Group instance
                             Group group = value[index];
-
                             return GroupListItem(group: group);
                           },
                         ),
