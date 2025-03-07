@@ -1,5 +1,7 @@
 import 'dart:convert';
 
+import 'package:flutter/material.dart';
+
 import '../../constants.dart';
 import '../../main.dart';
 import '../expenses/expense_model.dart';
@@ -21,11 +23,12 @@ class Group {
   late List<GroupMember> groupMembers;
   late Map<String, GroupSharesSummary> groupSharesSummary;
   late double totalExpenses;
+  late double totalShareAmount;
 
   late List<Expense>? expenses;
 
   static const groupSelectString =
-      '*, group_shares_summary(*, ...paid_by(paid_by_display_name:display_name, paid_by_paypal_me:paypal_me), ...paid_for(paid_for_display_name:display_name, paid_for_paypal_me:paypal_me)), group_member(*, ...user(display_name:display_name))';
+      '*, group_shares_summary_helper:group_shares_summary!inner(*), group_shares_summary(*, ...paid_by(paid_by_display_name:display_name, paid_by_paypal_me:paypal_me), ...paid_for(paid_for_display_name:display_name, paid_for_paypal_me:paypal_me)), group_member(*, ...user(display_name:display_name))';
 
   void loadDataFromJson(Map<String, dynamic> json) {
     String? currentUserEmail = supabase.auth.currentUser?.email;
@@ -46,11 +49,14 @@ class Group {
     }
 
     totalExpenses = 0;
+    totalShareAmount = 0;
     groupSharesSummary = {};
     if (json["group_shares_summary"] != null) {
+      debugPrint(json["group_shares_summary"].toString());
       for (var element in json["group_shares_summary"]) {
         if (element['paid_for'] == currentUserEmail) {
-          totalExpenses += element['total_expenses'] ?? 0;
+          totalExpenses += double.parse((element['total_expenses'] ?? 0).toString());
+          totalShareAmount = double.parse((element['total_share_amount'] ?? 0).toString());
         }
 
         if (element['paid_by'] == currentUserEmail && element['paid_for'] != currentUserEmail) {
@@ -61,8 +67,8 @@ class Group {
             groupSharesSummary[element['paid_for']]!.shareAmount = 0;
           }
 
-          groupSharesSummary[element['paid_for']]!.shareAmount =
-              groupSharesSummary[element['paid_for']]!.shareAmount + (element['share_amount'] ?? 0);
+          groupSharesSummary[element['paid_for']]!.shareAmount = groupSharesSummary[element['paid_for']]!.shareAmount +
+              double.parse((element['share_amount'] ?? 0).toString());
         } else if (element['paid_for'] == currentUserEmail && element['paid_by'] != currentUserEmail) {
           if (groupSharesSummary[element['paid_by']] == null) {
             groupSharesSummary[element['paid_by']] = GroupSharesSummary();
@@ -71,8 +77,8 @@ class Group {
             groupSharesSummary[element['paid_by']]!.shareAmount = 0;
           }
 
-          groupSharesSummary[element['paid_by']]!.shareAmount =
-              groupSharesSummary[element['paid_by']]!.shareAmount - (element['share_amount'] ?? 0);
+          groupSharesSummary[element['paid_by']]!.shareAmount = groupSharesSummary[element['paid_by']]!.shareAmount -
+              double.parse((element['share_amount'] ?? 0).toString());
         }
       }
     }
@@ -83,16 +89,32 @@ class Group {
     await supabase.from('group_update_checker').delete().eq('group_id', id);
   }
 
-  static Future<List<Group>> fetchData() async {
-    List<Map<String, dynamic>> data =
-        await supabase.from('group').select(groupSelectString).order('name', ascending: true);
+  static Future<List<Group>> fetchData(String statusFilter) async {
+    var query = supabase.from('group').select(groupSelectString);
 
+    if (statusFilter == GroupListFilter.active.value) {
+      query = query.not('group_shares_summary_helper.total_share_amount', 'eq', '0');
+      query = query.filter('group_shares_summary_helper.paid_for', 'eq', supabase.auth.currentUser?.email);
+    } else if (statusFilter == GroupListFilter.done.value) {
+      query = query.filter('group_shares_summary_helper.total_share_amount', 'eq', '0');
+      query = query.filter('group_shares_summary_helper.paid_for', 'eq', supabase.auth.currentUser?.email);
+    } else {
+      query = query.filter('group_shares_summary_helper.paid_for', 'eq', supabase.auth.currentUser?.email);
+    }
+
+    List<Map<String, dynamic>> data = await query.order('name', ascending: true);
+
+    // debugPrint(data.toString());
     List<Group> retData = List.empty(growable: true);
 
-    for (var element in data) {
-      Group group = Group();
-      group.loadDataFromJson(element);
-      retData.add(group);
+    try {
+      for (var element in data) {
+        Group group = Group();
+        group.loadDataFromJson(element);
+        retData.add(group);
+      }
+    } catch (e) {
+      debugPrint(e.toString());
     }
 
     return retData;

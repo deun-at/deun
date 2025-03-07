@@ -22,24 +22,7 @@ final expenseListProvider = AutoDisposeFutureProvider<List<Expense>>.internal(
 @Deprecated('Will be removed in 3.0. Use Ref instead')
 // ignore: unused_element
 typedef ExpenseListRef = AutoDisposeFutureProviderRef<List<Expense>>;
-String _$groupListNotifierHash() => r'7d1676342fb07e2ca143c8cc196b6d33df55eb4a';
-
-/// See also [GroupListNotifier].
-@ProviderFor(GroupListNotifier)
-final groupListNotifierProvider =
-    AutoDisposeAsyncNotifierProvider<GroupListNotifier, List<Group>>.internal(
-  GroupListNotifier.new,
-  name: r'groupListNotifierProvider',
-  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
-      ? null
-      : _$groupListNotifierHash,
-  dependencies: null,
-  allTransitiveDependencies: null,
-);
-
-typedef _$GroupListNotifier = AutoDisposeAsyncNotifier<List<Group>>;
-String _$groupDetailNotifierHash() =>
-    r'4a51f1930db65d2bce87dd5996f6ca4e745a4a65';
+String _$groupListNotifierHash() => r'1bc29dbbcaaad4a2bdd79fd070f4d64977ac2c84';
 
 /// Copied from Dart SDK
 class _SystemHash {
@@ -61,6 +44,154 @@ class _SystemHash {
     return 0x1fffffff & (hash + ((0x00003fff & hash) << 15));
   }
 }
+
+abstract class _$GroupListNotifier
+    extends BuildlessAutoDisposeAsyncNotifier<List<Group>> {
+  late final String statusFilter;
+
+  FutureOr<List<Group>> build(
+    String statusFilter,
+  );
+}
+
+/// See also [GroupListNotifier].
+@ProviderFor(GroupListNotifier)
+const groupListNotifierProvider = GroupListNotifierFamily();
+
+/// See also [GroupListNotifier].
+class GroupListNotifierFamily extends Family<AsyncValue<List<Group>>> {
+  /// See also [GroupListNotifier].
+  const GroupListNotifierFamily();
+
+  /// See also [GroupListNotifier].
+  GroupListNotifierProvider call(
+    String statusFilter,
+  ) {
+    return GroupListNotifierProvider(
+      statusFilter,
+    );
+  }
+
+  @override
+  GroupListNotifierProvider getProviderOverride(
+    covariant GroupListNotifierProvider provider,
+  ) {
+    return call(
+      provider.statusFilter,
+    );
+  }
+
+  static const Iterable<ProviderOrFamily>? _dependencies = null;
+
+  @override
+  Iterable<ProviderOrFamily>? get dependencies => _dependencies;
+
+  static const Iterable<ProviderOrFamily>? _allTransitiveDependencies = null;
+
+  @override
+  Iterable<ProviderOrFamily>? get allTransitiveDependencies =>
+      _allTransitiveDependencies;
+
+  @override
+  String? get name => r'groupListNotifierProvider';
+}
+
+/// See also [GroupListNotifier].
+class GroupListNotifierProvider extends AutoDisposeAsyncNotifierProviderImpl<
+    GroupListNotifier, List<Group>> {
+  /// See also [GroupListNotifier].
+  GroupListNotifierProvider(
+    String statusFilter,
+  ) : this._internal(
+          () => GroupListNotifier()..statusFilter = statusFilter,
+          from: groupListNotifierProvider,
+          name: r'groupListNotifierProvider',
+          debugGetCreateSourceHash:
+              const bool.fromEnvironment('dart.vm.product')
+                  ? null
+                  : _$groupListNotifierHash,
+          dependencies: GroupListNotifierFamily._dependencies,
+          allTransitiveDependencies:
+              GroupListNotifierFamily._allTransitiveDependencies,
+          statusFilter: statusFilter,
+        );
+
+  GroupListNotifierProvider._internal(
+    super._createNotifier, {
+    required super.name,
+    required super.dependencies,
+    required super.allTransitiveDependencies,
+    required super.debugGetCreateSourceHash,
+    required super.from,
+    required this.statusFilter,
+  }) : super.internal();
+
+  final String statusFilter;
+
+  @override
+  FutureOr<List<Group>> runNotifierBuild(
+    covariant GroupListNotifier notifier,
+  ) {
+    return notifier.build(
+      statusFilter,
+    );
+  }
+
+  @override
+  Override overrideWith(GroupListNotifier Function() create) {
+    return ProviderOverride(
+      origin: this,
+      override: GroupListNotifierProvider._internal(
+        () => create()..statusFilter = statusFilter,
+        from: from,
+        name: null,
+        dependencies: null,
+        allTransitiveDependencies: null,
+        debugGetCreateSourceHash: null,
+        statusFilter: statusFilter,
+      ),
+    );
+  }
+
+  @override
+  AutoDisposeAsyncNotifierProviderElement<GroupListNotifier, List<Group>>
+      createElement() {
+    return _GroupListNotifierProviderElement(this);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is GroupListNotifierProvider &&
+        other.statusFilter == statusFilter;
+  }
+
+  @override
+  int get hashCode {
+    var hash = _SystemHash.combine(0, runtimeType.hashCode);
+    hash = _SystemHash.combine(hash, statusFilter.hashCode);
+
+    return _SystemHash.finish(hash);
+  }
+}
+
+@Deprecated('Will be removed in 3.0. Use Ref instead')
+// ignore: unused_element
+mixin GroupListNotifierRef on AutoDisposeAsyncNotifierProviderRef<List<Group>> {
+  /// The parameter `statusFilter` of this provider.
+  String get statusFilter;
+}
+
+class _GroupListNotifierProviderElement
+    extends AutoDisposeAsyncNotifierProviderElement<GroupListNotifier,
+        List<Group>> with GroupListNotifierRef {
+  _GroupListNotifierProviderElement(super.provider);
+
+  @override
+  String get statusFilter => (origin as GroupListNotifierProvider).statusFilter;
+}
+
+String _$groupDetailNotifierHash() =>
+    r'4a51f1930db65d2bce87dd5996f6ca4e745a4a65';
 
 abstract class _$GroupDetailNotifier
     extends BuildlessAutoDisposeAsyncNotifier<Group> {
@@ -207,7 +338,7 @@ class _GroupDetailNotifierProviderElement
 }
 
 String _$expenseListNotifierHash() =>
-    r'c10c306630fc473fb7dac048245fbd13ccdc21af';
+    r'e76e532819dfea710736d8ce8b650bf90066876a';
 
 abstract class _$ExpenseListNotifier
     extends BuildlessAutoDisposeAsyncNotifier<List<Expense>> {

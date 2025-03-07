@@ -155,6 +155,7 @@ class _ExpenseBottomSheetState extends ConsumerState<ExpenseBottomSheet> {
                         context, groupDetailScaffoldMessengerKey, AppLocalizations.of(context)!.expenseCreateSuccess);
                   }
                 } catch (e) {
+                  debugPrint(e.toString());
                   if (context.mounted) {
                     showSnackBar(
                         context, groupDetailScaffoldMessengerKey, AppLocalizations.of(context)!.expenseCreateError);

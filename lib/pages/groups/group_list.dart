@@ -1,3 +1,4 @@
+import 'package:deun/constants.dart';
 import 'package:deun/main.dart';
 import 'package:deun/widgets/empty_list_widget.dart';
 import 'package:flutter/material.dart';
@@ -17,104 +18,112 @@ class GroupList extends ConsumerStatefulWidget {
 }
 
 class _GroupListState extends ConsumerState<GroupList> {
+  final ScrollController _scrollController = ScrollController();
+  String groupListFilter = "active";
+
   @override
   void initState() {
     super.initState();
   }
 
   Future<void> updateGroupList() async {
-    await ref.read(groupListNotifierProvider.notifier).reload();
+    await ref.read(groupListNotifierProvider(groupListFilter).notifier).reload(groupListFilter);
   }
 
   @override
   Widget build(BuildContext context) {
-    final groupList = ref.watch(groupListNotifierProvider);
+    final groupList = ref.watch(groupListNotifierProvider(groupListFilter));
 
     return ScaffoldMessenger(
       key: groupListScaffoldMessengerKey,
       child: Scaffold(
-        appBar: AppBar(
-          title: Text(AppLocalizations.of(context)!.expenses),
-          centerTitle: true,
-        ),
-        body: Container(
-          color: Theme.of(context).colorScheme.surface,
-          child: switch (groupList) {
-            AsyncData(:final value) => value.isEmpty
-                ? EmptyListWidget(
-                    label: AppLocalizations.of(context)!.groupNoEntries,
-                    onRefresh: () async {
-                      await updateGroupList();
-                    })
-                : RefreshIndicator(
-                    onRefresh: () async {
-                      await updateGroupList();
-                    },
-                    child: Padding(
-                      padding: const EdgeInsets.only(right: 8.0, left: 8.0),
-                      child: ListView.builder(
-                        padding: EdgeInsets.zero,
-                        itemCount: value.length,
-                        itemBuilder: (context, index) {
-                          // Access the Group instance
-                          Group group = value[index];
-                          Color colorSeedValue = Color(group.colorValue);
+        body: NestedScrollView(
+          controller: _scrollController,
+          headerSliverBuilder: (context, innerBoxIsScrolled) => [
+            SliverAppBar(
+              expandedHeight: 120,
+              flexibleSpace: FlexibleSpaceBar(
+                title: Text(AppLocalizations.of(context)!.expenses, maxLines: 1, overflow: TextOverflow.ellipsis),
+                centerTitle: true,
+              ),
+              floating: true, // Your appBar appears immediately
+              snap: true, // Your appBar displayed %100 or %0
+              pinned: true, // Your appBar pinned to top
+            ),
+            SliverToBoxAdapter(
+              child: SizedBox(
+                height: 60,
+                child: ListView.builder(
+                    scrollDirection: Axis.horizontal,
+                    itemCount: GroupListFilter.values.length,
+                    itemBuilder: (context, index) {
+                      double paddingLeft = 0;
+                      if (index == 0) {
+                        paddingLeft = 10;
+                      }
 
-                          return Hero(
-                            tag: "group_detail_${group.id}",
-                            child: Card(
-                              elevation: 14,
-                              color: Theme.of(context).colorScheme.surfaceContainer,
-                              surfaceTintColor: colorSeedValue,
-                              shadowColor: Colors.transparent,
-                              child: InkWell(
-                                borderRadius: BorderRadius.circular(12.0),
-                                onTap: () {
-                                  ref.read(themeColorProvider.notifier).setColor(Color(group.colorValue));
-                                  GoRouter.of(context).push("/group/details", extra: {'group': group}).then(
-                                    (value) async {
-                                      ref.read(themeColorProvider.notifier).resetColor();
-                                    },
-                                  );
+                      return Padding(
+                        padding: EdgeInsets.only(left: paddingLeft, right: 10),
+                        child: FilterChip(
+                          label:
+                              Text(AppLocalizations.of(context)!.groupListFilter(GroupListFilter.values[index].value)),
+                          selected: groupListFilter == GroupListFilter.values[index].value,
+                          onSelected: (selected) {
+                            if (selected) {
+                              setState(
+                                () {
+                                  groupListFilter = GroupListFilter.values[index].value;
                                 },
-                                child: Padding(
-                                  padding: const EdgeInsets.fromLTRB(10, 5, 5, 10),
-                                  child: Column(
-                                    children: [
-                                      Row(
-                                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                        children: [
-                                          Flexible(
-                                            child: Text(
-                                              group.name,
-                                              style: Theme.of(context).textTheme.headlineMedium,
-                                              overflow: TextOverflow.ellipsis,
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                      GroupShareWidget(group: group),
-                                    ],
-                                  ),
-                                ),
-                              ),
-                            ),
-                          );
-                        },
+                              );
+                            }
+                          },
+                        ),
+                      );
+                    }),
+              ),
+            ),
+          ],
+          body: Container(
+            color: Theme.of(context).colorScheme.surface,
+            child: switch (groupList) {
+              AsyncData(:final value) => value.isEmpty
+                  ? EmptyListWidget(
+                      label: AppLocalizations.of(context)!.groupNoEntries,
+                      onRefresh: () async {
+                        await updateGroupList();
+                      })
+                  : RefreshIndicator(
+                      onRefresh: () async {
+                        await updateGroupList();
+                      },
+                      child: Padding(
+                        padding: const EdgeInsets.only(right: 8.0, left: 8.0),
+                        child: ListView.builder(
+                          scrollDirection: Axis.vertical,
+                          shrinkWrap: true,
+                          padding: EdgeInsets.zero,
+                          itemCount: value.length,
+                          itemBuilder: (context, index) {
+                            // Access the Group instance
+                            Group group = value[index];
+
+                            return GroupListItem(group: group);
+                          },
+                        ),
                       ),
                     ),
-                  ),
-            AsyncError() => EmptyListWidget(
-                label: AppLocalizations.of(context)!.groupNoEntries,
-                onRefresh: () async {
-                  await updateGroupList();
-                },
-              ),
-            _ => const ShimmerCardList(
-                height: 100,
-                listEntryLength: 8,
-              ),
-          },
+              AsyncError() => EmptyListWidget(
+                  label: AppLocalizations.of(context)!.groupNoEntries,
+                  onRefresh: () async {
+                    await updateGroupList();
+                  },
+                ),
+              _ => const ShimmerCardList(
+                  height: 100,
+                  listEntryLength: 8,
+                ),
+            },
+          ),
         ),
         floatingActionButton: FloatingActionButton.extended(
           heroTag: "floating_action_button_main",
@@ -129,6 +138,63 @@ class _GroupListState extends ConsumerState<GroupList> {
   }
 }
 
+class GroupListItem extends ConsumerStatefulWidget {
+  const GroupListItem({super.key, required this.group});
+
+  final Group group;
+
+  @override
+  ConsumerState<ConsumerStatefulWidget> createState() => _GroupListItemState();
+}
+
+class _GroupListItemState extends ConsumerState<GroupListItem> {
+  @override
+  Widget build(BuildContext context) {
+    Color colorSeedValue = Color(widget.group.colorValue);
+
+    return Hero(
+      tag: "group_detail_${widget.group.id}",
+      child: Card(
+        elevation: 14,
+        color: Theme.of(context).colorScheme.surfaceContainer,
+        surfaceTintColor: colorSeedValue,
+        shadowColor: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(12.0),
+          onTap: () {
+            ref.read(themeColorProvider.notifier).setColor(Color(widget.group.colorValue));
+            GoRouter.of(context).push("/group/details", extra: {'group': widget.group}).then(
+              (value) async {
+                ref.read(themeColorProvider.notifier).resetColor();
+              },
+            );
+          },
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(10, 5, 5, 10),
+            child: Column(
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Flexible(
+                      child: Text(
+                        widget.group.name,
+                        style: Theme.of(context).textTheme.headlineMedium,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ],
+                ),
+                GroupShareWidget(group: widget.group),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 class GroupShareWidget extends StatelessWidget {
   const GroupShareWidget({super.key, required this.group});
 
@@ -136,8 +202,6 @@ class GroupShareWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    double totalSharedSum = 0;
-
     List<Widget> sharedWidget = group.groupSharesSummary
         .map(
           (String key, GroupSharesSummary e) {
@@ -145,7 +209,6 @@ class GroupShareWidget extends StatelessWidget {
               return MapEntry(key, const SizedBox());
             }
 
-            totalSharedSum += e.shareAmount;
             Color textColor = Colors.red;
             String paidByYourself = "";
             if (e.shareAmount > 0) {
@@ -171,15 +234,15 @@ class GroupShareWidget extends StatelessWidget {
 
     String paidByYourselfAll = "";
     Color textColorAll = Colors.red;
-    if (totalSharedSum > 0) {
+    if (group.totalShareAmount > 0) {
       paidByYourselfAll = "yes";
       textColorAll = Colors.green;
     }
 
     String totalSharedText =
-        AppLocalizations.of(context)!.groupDisplaySumAmount(paidByYourselfAll, totalSharedSum.abs());
+        AppLocalizations.of(context)!.groupDisplaySumAmount(paidByYourselfAll, group.totalShareAmount.abs());
 
-    if (totalSharedSum == 0) {
+    if (group.totalShareAmount == 0) {
       totalSharedText = AppLocalizations.of(context)!.allDone;
       textColorAll = Theme.of(context).colorScheme.onSurface;
     }

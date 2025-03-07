@@ -113,6 +113,12 @@ abstract class AppLocalizations {
   /// **'Groups'**
   String get groups;
 
+  /// Filter for the group list.
+  ///
+  /// In en, this message translates to:
+  /// **'{filter, select, all{all} active{active} done{done} other{}}'**
+  String groupListFilter(String filter);
+
   /// No description provided for @createGroup.
   ///
   /// In en, this message translates to:

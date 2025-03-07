@@ -16,6 +16,15 @@ enum ColorSeed {
   final Color color;
 }
 
+enum GroupListFilter {
+  all('all'),
+  active('active'),
+  done('done');
+
+  const GroupListFilter(this.value);
+  final String value;
+}
+
 const spacer = SizedBox(
   height: 12,
 );

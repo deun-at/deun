@@ -16,21 +16,21 @@ part 'provider.g.dart';
 @riverpod
 class GroupListNotifier extends _$GroupListNotifier {
   @override
-  FutureOr<List<Group>> build() async {
-    _subscribeToRealTimeUpdates();
+  FutureOr<List<Group>> build(String statusFilter) async {
+    _subscribeToRealTimeUpdates(statusFilter);
 
-    return await fetchGroupList();
+    return await fetchGroupList(statusFilter);
   }
 
-  Future<void> reload() async {
-    state = await AsyncValue.guard(() async => await fetchGroupList());
+  Future<void> reload(statusFilter) async {
+    state = await AsyncValue.guard(() async => await fetchGroupList(statusFilter));
   }
 
-  Future<List<Group>> fetchGroupList() async {
-    return await Group.fetchData();
+  Future<List<Group>> fetchGroupList(String statusFilter) async {
+    return await Group.fetchData(statusFilter);
   }
 
-  void _subscribeToRealTimeUpdates() {
+  void _subscribeToRealTimeUpdates(String statusFilter) {
     supabase
         .channel('public:group_list_checker')
         .onPostgresChanges(
@@ -39,7 +39,7 @@ class GroupListNotifier extends _$GroupListNotifier {
             table: 'group_update_checker',
             callback: (payload) async {
               debugPrint("group list changed");
-              reload();
+              reload(statusFilter);
             })
         .subscribe();
   }
@@ -125,7 +125,6 @@ class ExpenseListNotifier extends _$ExpenseListNotifier {
             ),
             callback: (payload) async {
               debugPrint("expense list changed");
-              debugPrint(payload.toString());
 
               if (payload.eventType == PostgresChangeEvent.delete) {
                 state = state.whenData((expenses) {
