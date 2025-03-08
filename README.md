@@ -1,3 +1,3 @@
-# deun
+# Deun
 
-Share Expenses with friends.
+Simply Split Fairly.
