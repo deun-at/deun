@@ -97,6 +97,7 @@ class Expense {
         .select(
             '*, ...paid_by(paid_by_display_name:display_name), expense_entry(*, expense_entry_share(*, ...email(display_name:display_name))), group!expense_group_id_fkey(*, group_shares_summary(*, ...paid_by(paid_by_display_name:display_name), ...paid_for(paid_for_display_name:display_name)), group_member(*, ...user(display_name:display_name)))')
         .eq('id', expenseId)
+        .order('sort_id', ascending: true, referencedTable: 'expense_entry')
         .single();
 
     Expense expense = Expense();
@@ -148,6 +149,7 @@ class Expense {
     Set<String> notificationReceiver = {};
     double amount = 0;
 
+    int sortId = 10;
     await Future.wait(expenseEntryValues.values.map((expenseEntry) async {
       amount += double.parse(expenseEntry['amount']);
 
@@ -155,7 +157,10 @@ class Expense {
         "expense_id": expenseEntry["expense_id"],
         "name": expenseEntry["name"],
         "amount": expenseEntry["amount"],
+        "sort_id": sortId
       };
+
+      sortId += 10;
 
       Map<String, dynamic> expenseEntryResult =
           await supabase.from('expense_entry').insert(insertExpenseEntry).select('id').single();

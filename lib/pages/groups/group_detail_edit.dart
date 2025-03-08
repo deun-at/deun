@@ -301,12 +301,12 @@ class _GroupBottomSheetState extends ConsumerState<GroupBottomSheet> {
                           child: FilledButton(
                             onPressed: () async {
                               if (_formKey.currentState!.saveAndValidate()) {
-                                Group? newGroup;
+                                // Group? newGroup;
                                 ref.read(_isLoading.notifier).state = true; // Set loading to true
                                 try {
                                   String groupInsertId =
                                       await Group.saveAll(widget.group?.id, _formKey.currentState!.value);
-                                  newGroup = await Group.fetchDetail(groupInsertId);
+                                  // newGroup = await Group.fetchDetail(groupInsertId);
                                   if (context.mounted) {
                                     showSnackBar(context, groupDetailScaffoldMessengerKey,
                                         AppLocalizations.of(context)!.groupCreateSuccess);
