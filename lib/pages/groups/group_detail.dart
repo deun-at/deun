@@ -121,8 +121,9 @@ class _GroupDetailState extends ConsumerState<GroupDetail> {
                         },
                       ),
                       Padding(
-                        padding: EdgeInsets.all(8),
+                        padding: EdgeInsets.all(10),
                         child: SearchAnchor.bar(
+                          barElevation: WidgetStateProperty.all(1),
                           barHintText: AppLocalizations.of(context)!.expensesSearchTitle,
                           suggestionsBuilder: (context, controller) {
                             if (controller.text.isEmpty) {
@@ -192,14 +193,18 @@ class _GroupDetailState extends ConsumerState<GroupDetail> {
       ];
     }
 
-    return result.map((expense) => ListTile(
+    return result.map((expense) {
+      
+      double expenseSum = expense.expenseEntries.values.fold<double>(0, (sum, expense) => sum + expense.amount);
+
+      return ListTile(
           title: Text(expense.name),
-          subtitle: Text('test'),
+          subtitle: Text(AppLocalizations.of(context)!.toCurrency(expenseSum)),
           trailing: Text(formatDate(expense.expenseDate)),
           onTap: () async {
             controller.closeView("");
             GoRouter.of(context).push("/group/details/expense", extra: {'group': group, 'expense': expense});
           },
-        ));
+        );},);
   }
 }
