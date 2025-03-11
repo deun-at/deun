@@ -21,18 +21,29 @@
                  to determine the Window background behind the Flutter UI. -->
             <meta-data
               android:name="io.flutter.embedding.android.NormalTheme"
-              android:resource="@style/NormalTheme"
-              />
+              android:resource="@style/NormalTheme" />
             <intent-filter>
-                <action android:name="android.intent.action.MAIN"/>
-                <category android:name="android.intent.category.LAUNCHER"/>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
-            <!-- Deep Links -->
+            <meta-data 
+              android:name="flutter_deeplinking_enabled" 
+              android:value="false" />
+            <!-- App Link sample -->
+            <intent-filter android:autoVerify="true">
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="http" />
+                <data android:scheme="https" />
+                <data android:host="www.deun.app" />
+            </intent-filter>
+
+            <!-- Deep Link sample -->
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
-                <!-- Accepts URIs that begin with YOUR_SCHEME://YOUR_HOST -->
                 <data
                   android:scheme="app.deun.www" />
             </intent-filter>
@@ -40,15 +51,15 @@
         <!-- Don't delete the meta-data below.
              This is used by the Flutter tool to generate GeneratedPluginRegistrant.java -->
         <meta-data
-            android:name="flutterEmbedding"
-            android:value="2" />
+          android:name="flutterEmbedding"
+          android:value="2" />
         <!-- Firebase Messaging Disable Analytics collection-->
         <meta-data
-            android:name="firebase_messaging_auto_init_enabled"
-            android:value="false" />
+          android:name="firebase_messaging_auto_init_enabled"
+          android:value="false" />
         <meta-data
-            android:name="firebase_analytics_collection_enabled"
-            android:value="false" />
+          android:name="firebase_analytics_collection_enabled"
+          android:value="false" />
         <meta-data
           android:name="com.google.firebase.messaging.default_notification_icon"
           android:resource="@drawable/ic_stat_ic_launcher_monochrome" />

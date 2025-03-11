@@ -1,0 +1,14 @@
+[
+  {
+    "relation": [
+      "delegate_permission/common.handle_all_urls"
+    ],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "app.deun.www",
+      "sha256_cert_fingerprints": [
+        "30:45:A2:1A:10:7A:BA:20:57:4C:4B:69:37:E6:7E:1E:E5:72:1B:C2:EB:D7:C9:7E:5E:74:B0:CF:5F:0A:FB:C8"
+      ]
+    }
+  }
+]
