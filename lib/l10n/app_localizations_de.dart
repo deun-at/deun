@@ -292,6 +292,12 @@ class AppLocalizationsDe extends AppLocalizations {
   String get signInDescription => 'Sign in to make the best\nout of your group trips.';
 
   @override
+  String get updatePasswordTitle => 'Update Password';
+
+  @override
+  String get updatePasswordToSignIn => 'Take me back to Sign Up';
+
+  @override
   String get friends => 'Friends';
 
   @override

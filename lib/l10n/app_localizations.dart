@@ -467,6 +467,18 @@ abstract class AppLocalizations {
   /// **'Sign in to make the best\nout of your group trips.'**
   String get signInDescription;
 
+  /// No description provided for @updatePasswordTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Update Password'**
+  String get updatePasswordTitle;
+
+  /// No description provided for @updatePasswordToSignIn.
+  ///
+  /// In en, this message translates to:
+  /// **'Take me back to Sign Up'**
+  String get updatePasswordToSignIn;
+
   /// No description provided for @friends.
   ///
   /// In en, this message translates to:

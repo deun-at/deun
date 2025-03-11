@@ -1,5 +1,6 @@
 import 'package:deun/helper/helper.dart';
 import 'package:deun/main.dart';
+import 'package:deun/pages/auth/update_password.dart';
 import 'package:deun/pages/expenses/expense_model.dart';
 import 'package:deun/pages/friends/friend_list.dart';
 import 'package:deun/pages/groups/group_detail_payment.dart';
@@ -155,14 +156,26 @@ class _NavigationScreenState extends ConsumerState<NavigationScreen> {
                     ]),
               ],
             ),
-            StatefulShellBranch(routes: [
-              GoRoute(
-                path: '/privacy-policy',
-                pageBuilder: (context, state) => const NoTransitionPage(
-                  child: PrivacyPolicy(),
+            StatefulShellBranch(
+              routes: [
+                GoRoute(
+                  path: '/privacy-policy',
+                  pageBuilder: (context, state) => const NoTransitionPage(
+                    child: PrivacyPolicy(),
+                  ),
                 ),
-              ),
-            ])
+              ],
+            ),
+            StatefulShellBranch(
+              routes: [
+                GoRoute(
+                  path: '/update-password',
+                  pageBuilder: (context, state) => const NoTransitionPage(
+                    child: UpdatePassword(),
+                  ),
+                ),
+              ],
+            ),
           ],
         ),
       ],
