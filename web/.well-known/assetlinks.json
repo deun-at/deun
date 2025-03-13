@@ -7,7 +7,9 @@
       "namespace": "android_app",
       "package_name": "app.deun.www",
       "sha256_cert_fingerprints": [
-        "30:45:A2:1A:10:7A:BA:20:57:4C:4B:69:37:E6:7E:1E:E5:72:1B:C2:EB:D7:C9:7E:5E:74:B0:CF:5F:0A:FB:C8"
+        "7F:32:F3:3A:CA:C2:49:A0:70:CB:D3:DA:2C:34:02:18:F8:C1:FF:3D:9F:BD:9A:67:4B:17:0C:9C:4F:FA:BB:C9",
+        "30:45:A2:1A:10:7A:BA:20:57:4C:4B:69:37:E6:7E:1E:E5:72:1B:C2:EB:D7:C9:7E:5E:74:B0:CF:5F:0A:FB:C8",
+        "6A:0D:F2:F4:52:A7:83:07:02:F5:D4:33:04:6C:5A:62:21:11:06:77:E9:E1:58:00:2A:F9:D9:0D:0B:B7:A1:E6"
       ]
     }
   }
