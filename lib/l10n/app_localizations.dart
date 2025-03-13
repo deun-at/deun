@@ -479,6 +479,36 @@ abstract class AppLocalizations {
   /// **'Take me back to Sign Up'**
   String get updatePasswordToSignIn;
 
+  /// No description provided for @updatePasswordEnterPassword.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter your password'**
+  String get updatePasswordEnterPassword;
+
+  /// No description provided for @updatePasswordPasswordLengthError.
+  ///
+  /// In en, this message translates to:
+  /// **'Please enter a password that is at least 6 characters long'**
+  String get updatePasswordPasswordLengthError;
+
+  /// No description provided for @updatePasswordPasswordResetSent.
+  ///
+  /// In en, this message translates to:
+  /// **'Password successfully updated'**
+  String get updatePasswordPasswordResetSent;
+
+  /// No description provided for @updatePasswordunexpectedError.
+  ///
+  /// In en, this message translates to:
+  /// **'An unexpected error occurred'**
+  String get updatePasswordunexpectedError;
+
+  /// No description provided for @updatePasswordUpdatePassword.
+  ///
+  /// In en, this message translates to:
+  /// **'Update Password'**
+  String get updatePasswordUpdatePassword;
+
   /// No description provided for @friends.
   ///
   /// In en, this message translates to:

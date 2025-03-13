@@ -298,6 +298,21 @@ class AppLocalizationsEn extends AppLocalizations {
   String get updatePasswordToSignIn => 'Take me back to Sign Up';
 
   @override
+  String get updatePasswordEnterPassword => 'Enter your password';
+
+  @override
+  String get updatePasswordPasswordLengthError => 'Please enter a password that is at least 6 characters long';
+
+  @override
+  String get updatePasswordPasswordResetSent => 'Password successfully updated';
+
+  @override
+  String get updatePasswordunexpectedError => 'An unexpected error occurred';
+
+  @override
+  String get updatePasswordUpdatePassword => 'Update Password';
+
+  @override
   String get friends => 'Friends';
 
   @override

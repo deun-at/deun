@@ -37,7 +37,6 @@ class SignUp extends StatelessWidget {
             redirectTo: kIsWeb ? null : 'app.deun.www://login-callback',
             onSignInComplete: navigateHome,
             onSignUpComplete: navigateHome,
-            resetPasswordRedirectTo: 'https://deun.app/#/update-password',
             metadataFields: [
               MetaDataField(
                 prefixIcon: const Icon(Icons.person),

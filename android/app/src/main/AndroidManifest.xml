@@ -38,14 +38,14 @@
                 <data android:scheme="https" />
                 <data android:host="www.deun.app" />
             </intent-filter>
-
             <!-- Deep Link sample -->
-            <intent-filter>
+            <intent-filter android:autoVerify="true">
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
                 <data
-                  android:scheme="app.deun.www" />
+                  android:scheme="app.deun.www" 
+                  android:host="login-callback" />
             </intent-filter>
         </activity>
         <!-- Don't delete the meta-data below.

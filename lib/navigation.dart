@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:deun/helper/helper.dart';
 import 'package:deun/main.dart';
 import 'package:deun/pages/auth/update_password.dart';
@@ -17,6 +19,7 @@ import 'pages/groups/group_detail_edit.dart';
 import 'pages/groups/group_list.dart';
 import 'package:deun/l10n/app_localizations.dart';
 import 'dart:io' show Platform;
+import 'package:app_links/app_links.dart';
 
 import 'pages/groups/group_model.dart';
 import 'pages/settings/setting.dart';
@@ -28,7 +31,9 @@ final _shellNavigatorFriendKey = GlobalKey<NavigatorState>(debugLabel: 'shellFri
 final _shellNavigatorSettingKey = GlobalKey<NavigatorState>(debugLabel: 'shellSetting');
 
 class NavigationScreen extends ConsumerStatefulWidget {
-  const NavigationScreen({super.key});
+  const NavigationScreen({super.key, required this.isPasswordRecovery});
+
+  final bool isPasswordRecovery;
 
   @override
   ConsumerState<NavigationScreen> createState() => _NavigationScreenState();
@@ -36,15 +41,17 @@ class NavigationScreen extends ConsumerStatefulWidget {
 
 class _NavigationScreenState extends ConsumerState<NavigationScreen> {
   late RouterConfig<Object> _routerConfig;
+  StreamSubscription<Uri>? _linkSubscription;
 
   @override
   void initState() {
     super.initState();
     _initFirebaseMessaging();
+    initDeepLinks();
 
     // the one and only GoRouter instance
     _routerConfig = GoRouter(
-      initialLocation: '/group',
+      initialLocation: widget.isPasswordRecovery ? '/update-password' : '/group',
       navigatorKey: _rootNavigatorKey,
       routes: [
         // Stateful nested navigation based on:
@@ -156,29 +163,28 @@ class _NavigationScreenState extends ConsumerState<NavigationScreen> {
                     ]),
               ],
             ),
-            StatefulShellBranch(
-              routes: [
-                GoRoute(
-                  path: '/privacy-policy',
-                  pageBuilder: (context, state) => const NoTransitionPage(
-                    child: PrivacyPolicy(),
-                  ),
-                ),
-              ],
-            ),
-            StatefulShellBranch(
-              routes: [
-                GoRoute(
-                  path: '/update-password',
-                  pageBuilder: (context, state) => const NoTransitionPage(
-                    child: UpdatePassword(),
-                  ),
-                ),
-              ],
-            ),
           ],
         ),
+        GoRoute(
+          path: '/privacy-policy',
+          pageBuilder: (context, state) => const NoTransitionPage(
+            child: PrivacyPolicy(),
+          ),
+        ),
+        GoRoute(
+          path: '/update-password',
+          pageBuilder: (context, state) => const NoTransitionPage(
+            child: UpdatePassword(),
+          ),
+        ),
       ],
+      errorBuilder: (context, state) {
+        return Scaffold(
+            appBar: AppBar(
+              title: Text('Page not found'),
+            ),
+            body: Center(child: Text('Page not found')));
+      },
     );
   }
 
@@ -264,6 +270,21 @@ class _NavigationScreenState extends ConsumerState<NavigationScreen> {
     } else if (message.data['type'] == 'friendship') {
       navigateToFriends(_rootNavigatorKey.currentContext!);
     }
+  }
+
+  Future<void> initDeepLinks() async {
+    // Handle links
+    _linkSubscription = AppLinks().uriLinkStream.listen((uri) {
+      debugPrint('onAppLink: $uri');
+      GoRouter.of(_rootNavigatorKey.currentContext!).go(uri.fragment);
+    });
+  }
+
+  @override
+  void dispose() {
+    _linkSubscription?.cancel();
+
+    super.dispose();
   }
 
   @override

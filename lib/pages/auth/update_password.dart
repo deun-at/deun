@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:supabase_auth_ui/supabase_auth_ui.dart';
 import 'package:deun/l10n/app_localizations.dart';
 
@@ -16,17 +17,15 @@ class UpdatePassword extends StatelessWidget {
             SupaResetPassword(
               accessToken: Supabase.instance.client.auth.currentSession!.accessToken,
               onSuccess: (response) {
-                Navigator.of(context).pushReplacementNamed('/');
+                GoRouter.of(context).go('/group');
               },
-            ),
-            TextButton(
-              child: Text(
-                AppLocalizations.of(context)!.updatePasswordToSignIn,
-                style: TextStyle(fontWeight: FontWeight.bold),
+              localization: SupaResetPasswordLocalization(
+                enterPassword: AppLocalizations.of(context)!.updatePasswordEnterPassword,
+                passwordLengthError: AppLocalizations.of(context)!.updatePasswordPasswordLengthError,
+                passwordResetSent: AppLocalizations.of(context)!.updatePasswordPasswordResetSent,
+                unexpectedError: AppLocalizations.of(context)!.updatePasswordunexpectedError,
+                updatePassword: AppLocalizations.of(context)!.updatePasswordUpdatePassword,
               ),
-              onPressed: () {
-                Navigator.of(context).pushReplacementNamed('/');
-              },
             ),
           ],
         ),
