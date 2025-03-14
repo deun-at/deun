@@ -41,8 +41,6 @@ class Friendship {
         .select('*')
         .or("paid_by.eq.$currentEmail,paid_for.eq.$currentEmail");
 
-    //debugPrint(groupSharesSummaryData.toString());
-
     for (var element in data) {
       if ((element["status"] == "accepted" && element["requester"]["email"] == currentEmail) ||
           element["status"] == "pending") {

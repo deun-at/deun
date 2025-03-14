@@ -1,10 +1,10 @@
 {
   "@@locale": "en",
-  "addNewGroup": "New Group",
+  "addNewGroup": "New group",
   "@addNewGroup": {
     "description": "Button to add a new group."
   },
-  "addNewExpense": "New Expense",
+  "addNewExpense": "New expense",
   "@addNewExpense": {},
   "groups": "Groups",
   "@groups": {},
@@ -17,13 +17,13 @@
       }
     }
   },
-  "createGroup": "Create Group",
+  "createGroup": "Create group",
   "@createGroup": {},
-  "editGroup": "Edit Group",
+  "editGroup": "Edit group",
   "@editGroup": {},
   "groupName": "Name",
   "@groupName": {},
-  "addGroupTitle": "Add Title",
+  "addGroupTitle": "Add title",
   "@addGroupTitle": {},
   "groupNameValidationEmpty": "Please enter a name",
   "@groupNameValidationEmpty": {},
@@ -31,14 +31,18 @@
   "@expenseDateValidationEmpty": {},
   "groupDeleteItemTitle": "Delete this group?",
   "@groupDeleteItemTitle": {},
-  "groupNoEntries": "Add a group to get started",
+  "groupNoEntries": "Add a group to get started.\nIf you are already in groups find them under all!",
   "@groupNoEntries": {},
   "groupEntriesError": "Something went wrong with loading Groups.",
   "@groupEntriesError": {},
-  "groupMemberSelectionEmpty": "Add People",
+  "groupMemberSelectionEmpty": "Search friends",
   "@groupMemberSelectionEmpty": {},
-  "groupMemberSelectionTitle": "Added People",
+  "groupMemberAddFriends": "Add friends",
+  "@groupMemberAddFriends": {},
+  "groupMemberSelectionTitle": "Added friends",
   "@groupMemberSelectionTitle": {},
+  "groupMemberResultEmpty": "No friends found!",
+  "@groupMemberResultEmpty": {},
   "groupExpenseNoEntries": "Add an expense to get started",
   "@groupExpenseNoEntries": {},
   "groupDeleteError": "Error while deleting group!",
@@ -57,15 +61,15 @@
   "@expensesSearchDescription": {},
   "expensesSearchEmpty": "No results found",
   "@expensesSearchEmpty": {},
-  "createExpense": "Create Expense",
+  "createExpense": "Create expense",
   "@createExpense": {},
-  "editExpense": "Edit Expense",
+  "editExpense": "Edit expense",
   "@editExpense": {},
-  "addExpenseTitle": "Add Title",
+  "addExpenseTitle": "Add title",
   "@addExpenseTitle": {},
   "expenseName": "Description",
   "@expenseName": {},
-  "expenseNameValidationEmpty": "Please enter a Title",
+  "expenseNameValidationEmpty": "Please enter a title",
   "@expenseNameValidationEmpty": {},
   "expenseAmount": "Amount",
   "@expenseAmount": {},
@@ -75,13 +79,13 @@
   "@expenseDate": {},
   "expensePaidBy": "Who paid?",
   "@expensePaidBy": {},
-  "expenseEntryTitle": "Add Item Title",
+  "expenseEntryTitle": "Add item title",
   "@expenseEntryTitle": {},
-  "addNewExpenseEntry": "Add Item",
+  "addNewExpenseEntry": "Add item",
   "@addNewExpenseEntry": {},
   "expenseEntryName": "Name",
   "@expenseEntryName": {},
-  "expenseEntryNameValidationEmpty": "Please enter an Item Title",
+  "expenseEntryNameValidationEmpty": "Please enter an item title",
   "@expenseEntryNameValidationEmpty": {},
   "expenseEntryAmount": "Amount",
   "@expenseEntryAmount": {},
@@ -257,6 +261,8 @@
   "@signInSubtitle": {},
   "signInDescription": "Sign in to make the best\nout of your group trips.",
   "@signInDescription": {},
+  "signInEmailTitle": "Can't use social login?\nUse email instead!",
+  "@signInEmailTitle": {},
   "updatePasswordTitle": "Update Password",
   "@updatePasswordTitle": {},
   "updatePasswordToSignIn": "Take me back to Sign Up",
@@ -378,6 +384,26 @@
       }
     }
   },
+  "groupNotificationTitle": "{userDisplayName} added a group",
+  "@groupNotificationTitle": {
+    "description": "Notification title when a new group was added.",
+    "placeholders": {
+      "userDisplayName": {
+        "type": "String",
+        "example": "Max Muster"
+      }
+    }
+  },
+  "groupNotificationBody": "\"{groupName}\" has been added.",
+  "@groupNotificationBody": {
+    "description": "Notification body when a new expense was added.",
+    "placeholders": {
+      "groupName": {
+        "type": "String",
+        "example": "Trip to Vienna"
+      }
+    }
+  },
   "expenseNotificationTitle": "{userDisplayName} added an expense",
   "@expenseNotificationTitle": {
     "description": "Notification title when a new expense was added.",
@@ -416,6 +442,18 @@
   "friendRequestNotificationBody": "{userDisplayName} wants to connect with you.",
   "@friendRequestNotificationBody": {
     "description": "Notification title when a new friend request was sent.",
+    "placeholders": {
+      "userDisplayName": {
+        "type": "String",
+        "example": "Max Muster"
+      }
+    }
+  },
+  "friendAcceptNotificationTitle": "Your friend request got accepted",
+  "@friendAcceptNotificationTitle": {},
+  "friendAcceptNotificationBody": "{userDisplayName} accepted your friend request.",
+  "@friendAcceptNotificationBody": {
+    "description": "Notification title when a friend request was accepted.",
     "placeholders": {
       "userDisplayName": {
         "type": "String",

@@ -28,8 +28,7 @@ class _ExpenseEntryWidgetState extends State<ExpenseEntryWidget> {
 
     return Column(children: [
       Card(
-          elevation: 8,
-          shadowColor: Colors.transparent,
+          elevation: 0,
           color: Theme.of(context).colorScheme.surfaceContainer,
           child: Padding(
               padding: const EdgeInsets.all(8),

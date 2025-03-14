@@ -38,7 +38,6 @@ class GroupListNotifier extends _$GroupListNotifier {
             schema: 'public',
             table: 'group_update_checker',
             callback: (payload) async {
-              debugPrint("group list changed");
               reload(statusFilter);
             })
         .subscribe();
@@ -77,7 +76,6 @@ class GroupDetailNotifier extends _$GroupDetailNotifier {
               value: groupId,
             ),
             callback: (payload) async {
-              debugPrint("group detail changed");
               reload(groupId);
             })
         .subscribe();
@@ -124,8 +122,6 @@ class ExpenseListNotifier extends _$ExpenseListNotifier {
               value: groupId,
             ),
             callback: (payload) async {
-              debugPrint("expense list changed");
-
               if (payload.eventType == PostgresChangeEvent.delete) {
                 state = state.whenData((expenses) {
                   final index = expenses.indexWhere((e) => e.id == payload.oldRecord['expense_id']);
@@ -213,7 +209,6 @@ class FriendshipListNotifier extends _$FriendshipListNotifier {
             schema: 'public',
             table: 'friendship',
             callback: (payload) {
-              debugPrint("friendship changed");
               reload();
             })
         .subscribe();

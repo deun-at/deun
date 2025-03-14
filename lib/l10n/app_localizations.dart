@@ -98,13 +98,13 @@ abstract class AppLocalizations {
   /// Button to add a new group.
   ///
   /// In en, this message translates to:
-  /// **'New Group'**
+  /// **'New group'**
   String get addNewGroup;
 
   /// No description provided for @addNewExpense.
   ///
   /// In en, this message translates to:
-  /// **'New Expense'**
+  /// **'New expense'**
   String get addNewExpense;
 
   /// No description provided for @groups.
@@ -122,13 +122,13 @@ abstract class AppLocalizations {
   /// No description provided for @createGroup.
   ///
   /// In en, this message translates to:
-  /// **'Create Group'**
+  /// **'Create group'**
   String get createGroup;
 
   /// No description provided for @editGroup.
   ///
   /// In en, this message translates to:
-  /// **'Edit Group'**
+  /// **'Edit group'**
   String get editGroup;
 
   /// No description provided for @groupName.
@@ -140,7 +140,7 @@ abstract class AppLocalizations {
   /// No description provided for @addGroupTitle.
   ///
   /// In en, this message translates to:
-  /// **'Add Title'**
+  /// **'Add title'**
   String get addGroupTitle;
 
   /// No description provided for @groupNameValidationEmpty.
@@ -164,7 +164,7 @@ abstract class AppLocalizations {
   /// No description provided for @groupNoEntries.
   ///
   /// In en, this message translates to:
-  /// **'Add a group to get started'**
+  /// **'Add a group to get started.\nIf you are already in groups find them under all!'**
   String get groupNoEntries;
 
   /// No description provided for @groupEntriesError.
@@ -176,14 +176,26 @@ abstract class AppLocalizations {
   /// No description provided for @groupMemberSelectionEmpty.
   ///
   /// In en, this message translates to:
-  /// **'Add People'**
+  /// **'Search friends'**
   String get groupMemberSelectionEmpty;
+
+  /// No description provided for @groupMemberAddFriends.
+  ///
+  /// In en, this message translates to:
+  /// **'Add friends'**
+  String get groupMemberAddFriends;
 
   /// No description provided for @groupMemberSelectionTitle.
   ///
   /// In en, this message translates to:
-  /// **'Added People'**
+  /// **'Added friends'**
   String get groupMemberSelectionTitle;
+
+  /// No description provided for @groupMemberResultEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No friends found!'**
+  String get groupMemberResultEmpty;
 
   /// No description provided for @groupExpenseNoEntries.
   ///
@@ -242,19 +254,19 @@ abstract class AppLocalizations {
   /// No description provided for @createExpense.
   ///
   /// In en, this message translates to:
-  /// **'Create Expense'**
+  /// **'Create expense'**
   String get createExpense;
 
   /// No description provided for @editExpense.
   ///
   /// In en, this message translates to:
-  /// **'Edit Expense'**
+  /// **'Edit expense'**
   String get editExpense;
 
   /// No description provided for @addExpenseTitle.
   ///
   /// In en, this message translates to:
-  /// **'Add Title'**
+  /// **'Add title'**
   String get addExpenseTitle;
 
   /// No description provided for @expenseName.
@@ -266,7 +278,7 @@ abstract class AppLocalizations {
   /// No description provided for @expenseNameValidationEmpty.
   ///
   /// In en, this message translates to:
-  /// **'Please enter a Title'**
+  /// **'Please enter a title'**
   String get expenseNameValidationEmpty;
 
   /// No description provided for @expenseAmount.
@@ -296,13 +308,13 @@ abstract class AppLocalizations {
   /// No description provided for @expenseEntryTitle.
   ///
   /// In en, this message translates to:
-  /// **'Add Item Title'**
+  /// **'Add item title'**
   String get expenseEntryTitle;
 
   /// No description provided for @addNewExpenseEntry.
   ///
   /// In en, this message translates to:
-  /// **'Add Item'**
+  /// **'Add item'**
   String get addNewExpenseEntry;
 
   /// No description provided for @expenseEntryName.
@@ -314,7 +326,7 @@ abstract class AppLocalizations {
   /// No description provided for @expenseEntryNameValidationEmpty.
   ///
   /// In en, this message translates to:
-  /// **'Please enter an Item Title'**
+  /// **'Please enter an item title'**
   String get expenseEntryNameValidationEmpty;
 
   /// No description provided for @expenseEntryAmount.
@@ -467,6 +479,12 @@ abstract class AppLocalizations {
   /// **'Sign in to make the best\nout of your group trips.'**
   String get signInDescription;
 
+  /// No description provided for @signInEmailTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Can\'t use social login?\nUse email instead!'**
+  String get signInEmailTitle;
+
   /// No description provided for @updatePasswordTitle.
   ///
   /// In en, this message translates to:
@@ -611,6 +629,18 @@ abstract class AppLocalizations {
   /// **'{amount}'**
   String toCurrencyNoPrefix(double amount);
 
+  /// Notification title when a new group was added.
+  ///
+  /// In en, this message translates to:
+  /// **'{userDisplayName} added a group'**
+  String groupNotificationTitle(String userDisplayName);
+
+  /// Notification body when a new expense was added.
+  ///
+  /// In en, this message translates to:
+  /// **'\"{groupName}\" has been added.'**
+  String groupNotificationBody(String groupName);
+
   /// Notification title when a new expense was added.
   ///
   /// In en, this message translates to:
@@ -634,6 +664,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'{userDisplayName} wants to connect with you.'**
   String friendRequestNotificationBody(String userDisplayName);
+
+  /// No description provided for @friendAcceptNotificationTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Your friend request got accepted'**
+  String get friendAcceptNotificationTitle;
+
+  /// Notification title when a friend request was accepted.
+  ///
+  /// In en, this message translates to:
+  /// **'{userDisplayName} accepted your friend request.'**
+  String friendAcceptNotificationBody(String userDisplayName);
 
   /// No description provided for @settings.
   ///

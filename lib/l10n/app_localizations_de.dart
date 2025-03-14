@@ -9,10 +9,10 @@ class AppLocalizationsDe extends AppLocalizations {
   AppLocalizationsDe([String locale = 'de']) : super(locale);
 
   @override
-  String get addNewGroup => 'New Group';
+  String get addNewGroup => 'New group';
 
   @override
-  String get addNewExpense => 'New Expense';
+  String get addNewExpense => 'New expense';
 
   @override
   String get groups => 'Groups';
@@ -32,16 +32,16 @@ class AppLocalizationsDe extends AppLocalizations {
   }
 
   @override
-  String get createGroup => 'Create Group';
+  String get createGroup => 'Create group';
 
   @override
-  String get editGroup => 'Edit Group';
+  String get editGroup => 'Edit group';
 
   @override
   String get groupName => 'Name';
 
   @override
-  String get addGroupTitle => 'Add Title';
+  String get addGroupTitle => 'Add title';
 
   @override
   String get groupNameValidationEmpty => 'Please enter a name';
@@ -53,16 +53,22 @@ class AppLocalizationsDe extends AppLocalizations {
   String get groupDeleteItemTitle => 'Delete this group?';
 
   @override
-  String get groupNoEntries => 'Add a group to get started';
+  String get groupNoEntries => 'Add a group to get started.\nIf you are already in groups find them under all!';
 
   @override
   String get groupEntriesError => 'Something went wrong with loading Groups.';
 
   @override
-  String get groupMemberSelectionEmpty => 'Add People';
+  String get groupMemberSelectionEmpty => 'Search friends';
 
   @override
-  String get groupMemberSelectionTitle => 'Added People';
+  String get groupMemberAddFriends => 'Add friends';
+
+  @override
+  String get groupMemberSelectionTitle => 'Added friends';
+
+  @override
+  String get groupMemberResultEmpty => 'No friends found!';
 
   @override
   String get groupExpenseNoEntries => 'Add an expense to get started';
@@ -92,19 +98,19 @@ class AppLocalizationsDe extends AppLocalizations {
   String get expensesSearchEmpty => 'No results found';
 
   @override
-  String get createExpense => 'Create Expense';
+  String get createExpense => 'Create expense';
 
   @override
-  String get editExpense => 'Edit Expense';
+  String get editExpense => 'Edit expense';
 
   @override
-  String get addExpenseTitle => 'Add Title';
+  String get addExpenseTitle => 'Add title';
 
   @override
   String get expenseName => 'Description';
 
   @override
-  String get expenseNameValidationEmpty => 'Please enter a Title';
+  String get expenseNameValidationEmpty => 'Please enter a title';
 
   @override
   String get expenseAmount => 'Amount';
@@ -119,16 +125,16 @@ class AppLocalizationsDe extends AppLocalizations {
   String get expensePaidBy => 'Who paid?';
 
   @override
-  String get expenseEntryTitle => 'Add Item Title';
+  String get expenseEntryTitle => 'Add item title';
 
   @override
-  String get addNewExpenseEntry => 'Add Item';
+  String get addNewExpenseEntry => 'Add item';
 
   @override
   String get expenseEntryName => 'Name';
 
   @override
-  String get expenseEntryNameValidationEmpty => 'Please enter an Item Title';
+  String get expenseEntryNameValidationEmpty => 'Please enter an item title';
 
   @override
   String get expenseEntryAmount => 'Amount';
@@ -292,6 +298,9 @@ class AppLocalizationsDe extends AppLocalizations {
   String get signInDescription => 'Sign in to make the best\nout of your group trips.';
 
   @override
+  String get signInEmailTitle => 'Can\'t use social login?\nUse email instead!';
+
+  @override
   String get updatePasswordTitle => 'Update Password';
 
   @override
@@ -393,6 +402,16 @@ class AppLocalizationsDe extends AppLocalizations {
   }
 
   @override
+  String groupNotificationTitle(String userDisplayName) {
+    return '$userDisplayName added a group';
+  }
+
+  @override
+  String groupNotificationBody(String groupName) {
+    return '\"$groupName\" has been added.';
+  }
+
+  @override
   String expenseNotificationTitle(String userDisplayName) {
     return '$userDisplayName added an expense';
   }
@@ -415,6 +434,14 @@ class AppLocalizationsDe extends AppLocalizations {
   @override
   String friendRequestNotificationBody(String userDisplayName) {
     return '$userDisplayName wants to connect with you.';
+  }
+
+  @override
+  String get friendAcceptNotificationTitle => 'Your friend request got accepted';
+
+  @override
+  String friendAcceptNotificationBody(String userDisplayName) {
+    return '$userDisplayName accepted your friend request.';
   }
 
   @override

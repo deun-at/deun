@@ -81,9 +81,8 @@ class _GroupDetailListState extends ConsumerState<GroupDetailList> {
                                         : paidBackEntryShare.displayName;
 
                                     return Card(
-                                        elevation: 8,
+                                        elevation: 0,
                                         color: Theme.of(context).colorScheme.surfaceContainer,
-                                        shadowColor: Colors.transparent,
                                         child: Padding(
                                           padding: const EdgeInsets.fromLTRB(10, 5, 10, 5),
                                           child: Text(AppLocalizations.of(context)!.groupDisplayPaidBack(
@@ -122,9 +121,6 @@ class _GroupDetailListState extends ConsumerState<GroupDetailList> {
                                               ))));
                                 }),
                             onNotification: (ScrollNotification scrollInfo) {
-                              // debugPrint(scrollInfo.metrics.pixels.toString());
-                              // debugPrint('scrollInfo.metrics.pixels: ${scrollInfo.metrics.pixels}');
-                              // debugPrint('scrollInfo.metrics.maxScrollExtent: ${scrollInfo.metrics.maxScrollExtent}');
                               if (scrollInfo.metrics.pixels >
                                   scrollInfo.metrics.maxScrollExtent - MediaQuery.of(context).size.height) {
                                 if (oldOffset ==

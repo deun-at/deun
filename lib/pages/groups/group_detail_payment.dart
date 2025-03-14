@@ -6,7 +6,6 @@ import 'package:deun/widgets/shimmer_card_list.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:deun/l10n/app_localizations.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 import 'group_model.dart';
 

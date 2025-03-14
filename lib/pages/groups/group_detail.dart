@@ -24,6 +24,7 @@ class GroupDetail extends ConsumerStatefulWidget {
 
 class _GroupDetailState extends ConsumerState<GroupDetail> {
   final ScrollController _scrollController = ScrollController();
+  final SearchController _searchController = SearchController();
   int oldLength = 0;
   bool _showText = true;
 
@@ -64,85 +65,96 @@ class _GroupDetailState extends ConsumerState<GroupDetail> {
         body: Hero(
           tag: "group_detail_${widget.group.id}",
           child: Material(
-            child: NestedScrollView(
-              physics: const BouncingScrollPhysics(),
-              controller: _scrollController,
-              headerSliverBuilder: (context, innerBoxIsScrolled) => [
-                SliverAppBar.medium(
-                  title: Text(widget.group.name, maxLines: 1, overflow: TextOverflow.ellipsis),
-                  actions: [
-                    IconButton(
-                      onPressed: () {
-                        GoRouter.of(context).push("/group/edit", extra: {'group': widget.group});
-                      },
-                      icon: const Icon(Icons.edit),
-                    )
-                  ],
-                ),
-                SliverToBoxAdapter(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Consumer(
-                        builder: (ctx, watch, child) {
-                          final isLoading = ref.watch(groupDetailNotifierProvider(widget.group.id)).isLoading;
-                          final groupDetail = ref.watch(groupDetailNotifierProvider(widget.group.id)).value;
-
-                          if (isLoading || groupDetail == null) {
-                            return const Padding(
-                              padding: EdgeInsets.fromLTRB(5.0, 5.0, 5.0, 5.0),
-                              child: Column(
-                                mainAxisAlignment: MainAxisAlignment.start,
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  SizedBox(
-                                      height: 25,
-                                      width: 250,
-                                      child: ShimmerCardList(
-                                        height: 15,
-                                        listEntryLength: 1,
-                                      )),
-                                  SizedBox(
-                                    height: 37,
-                                    width: 250,
-                                    child: ShimmerCardList(
-                                      height: 10,
-                                      listEntryLength: 2,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            );
-                          }
-
-                          return Padding(
-                              padding: const EdgeInsets.fromLTRB(16.0, 5.0, 16.0, 5.0),
-                              child: GroupShareWidget(group: groupDetail));
+            child: NotificationListener<ScrollUpdateNotification>(
+              child: NestedScrollView(
+                physics: const BouncingScrollPhysics(),
+                controller: _scrollController,
+                headerSliverBuilder: (context, innerBoxIsScrolled) => [
+                  SliverAppBar.medium(
+                    title: Text(widget.group.name, maxLines: 1, overflow: TextOverflow.ellipsis),
+                    actions: [
+                      IconButton(
+                        onPressed: () {
+                          GoRouter.of(context).push("/group/edit", extra: {'group': widget.group});
                         },
-                      ),
-                      Padding(
-                        padding: EdgeInsets.all(10),
-                        child: SearchAnchor.bar(
-                          barElevation: WidgetStateProperty.all(1),
-                          barHintText: AppLocalizations.of(context)!.expensesSearchTitle,
-                          suggestionsBuilder: (context, controller) {
-                            if (controller.text.isEmpty) {
-                              return <Widget>[
-                                ListTile(
-                                  // ignore: use_build_context_synchronously
-                                  title: Text(AppLocalizations.of(context)!.expensesSearchDescription),
-                                )
-                              ];
-                            }
-                            return getExpenseSuggestions(controller, widget.group);
-                          },
-                        ),
-                      ),
+                        icon: const Icon(Icons.edit),
+                      )
                     ],
                   ),
-                ),
-              ],
-              body: GroupDetailList(group: widget.group),
+                  SliverToBoxAdapter(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Consumer(
+                          builder: (ctx, watch, child) {
+                            final isLoading = ref.watch(groupDetailNotifierProvider(widget.group.id)).isLoading;
+                            final groupDetail = ref.watch(groupDetailNotifierProvider(widget.group.id)).value;
+
+                            if (isLoading || groupDetail == null) {
+                              return const Padding(
+                                padding: EdgeInsets.fromLTRB(5.0, 5.0, 5.0, 5.0),
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.start,
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    SizedBox(
+                                        height: 25,
+                                        width: 250,
+                                        child: ShimmerCardList(
+                                          height: 15,
+                                          listEntryLength: 1,
+                                        )),
+                                    SizedBox(
+                                      height: 37,
+                                      width: 250,
+                                      child: ShimmerCardList(
+                                        height: 10,
+                                        listEntryLength: 2,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              );
+                            }
+
+                            return Padding(
+                                padding: const EdgeInsets.fromLTRB(16.0, 5.0, 16.0, 5.0),
+                                child: GroupShareWidget(group: groupDetail));
+                          },
+                        ),
+                        Padding(
+                          padding: EdgeInsets.fromLTRB(10, 10, 10, 5),
+                          child: SearchAnchor.bar(
+                            searchController: _searchController,
+                            barElevation: WidgetStateProperty.all(0),
+                            barBackgroundColor: WidgetStateProperty.all(Theme.of(context).colorScheme.surfaceContainer),
+                            barHintText: AppLocalizations.of(context)!.expensesSearchTitle,
+                            suggestionsBuilder: (context, controller) {
+                              if (controller.text.isEmpty) {
+                                return <Widget>[
+                                  ListTile(
+                                    // ignore: use_build_context_synchronously
+                                    title: Text(AppLocalizations.of(context)!.expensesSearchDescription),
+                                  )
+                                ];
+                              }
+                              return getExpenseSuggestions(controller, widget.group);
+                            },
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+                body: GroupDetailList(group: widget.group),
+              ),
+              onNotification: (ScrollUpdateNotification notification) {
+                final FocusScopeNode currentScope = FocusScope.of(context);
+                if (notification.dragDetails != null && !currentScope.hasPrimaryFocus && currentScope.hasFocus) {
+                  FocusManager.instance.primaryFocus?.unfocus();
+                }
+                return false;
+              },
             ),
           ),
         ),
@@ -193,11 +205,11 @@ class _GroupDetailState extends ConsumerState<GroupDetail> {
       ];
     }
 
-    return result.map((expense) {
-      
-      double expenseSum = expense.expenseEntries.values.fold<double>(0, (sum, expense) => sum + expense.amount);
+    return result.map(
+      (expense) {
+        double expenseSum = expense.expenseEntries.values.fold<double>(0, (sum, expense) => sum + expense.amount);
 
-      return ListTile(
+        return ListTile(
           title: Text(expense.name),
           subtitle: Text(AppLocalizations.of(context)!.toCurrency(expenseSum)),
           trailing: Text(formatDate(expense.expenseDate)),
@@ -205,6 +217,8 @@ class _GroupDetailState extends ConsumerState<GroupDetail> {
             controller.closeView("");
             GoRouter.of(context).push("/group/details/expense", extra: {'group': group, 'expense': expense});
           },
-        );},);
+        );
+      },
+    );
   }
 }

@@ -14,6 +14,7 @@ class SignUp extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(title: Text(AppLocalizations.of(context)!.signInTitle), centerTitle: true),
       body: ListView(
+        keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
         padding: const EdgeInsets.all(24.0),
         children: [
           Image.asset(
@@ -21,16 +22,36 @@ class SignUp extends StatelessWidget {
             height: 100,
           ),
           const SizedBox(height: 20),
-          Center(
-            child: Text(AppLocalizations.of(context)!.signInSubtitle, style: Theme.of(context).textTheme.headlineSmall),
+          Text(
+            AppLocalizations.of(context)!.signInSubtitle,
+            style: Theme.of(context).textTheme.headlineSmall,
+            textAlign: TextAlign.center,
           ),
           const SizedBox(height: 20),
-          Center(
-            child: Text(
-              AppLocalizations.of(context)!.signInDescription,
-              style: Theme.of(context).textTheme.bodyLarge,
-              textAlign: TextAlign.center,
+          Text(
+            AppLocalizations.of(context)!.signInDescription,
+            style: Theme.of(context).textTheme.bodyLarge,
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 20),
+          SupaSocialsAuth(
+            colored: true,
+            nativeGoogleAuthConfig: const NativeGoogleAuthConfig(
+              webClientId: '820724879316-jauhp8t8g5r3pmir1r5gsghbn2qchav5.apps.googleusercontent.com',
+              iosClientId: '820724879316-8sacuk8sjju1rvr878gl9lqin0or5h9d.apps.googleusercontent.com',
             ),
+            authScreenLaunchMode: kIsWeb ? LaunchMode.platformDefault : LaunchMode.externalApplication,
+            enableNativeAppleAuth: false,
+            socialProviders: const [OAuthProvider.google, /*OAuthProvider.apple, */ OAuthProvider.github],
+            redirectUrl: kIsWeb ? null : 'app.deun.www://login-callback',
+            onSuccess: (session) {},
+          ),
+          const SizedBox(height: 20),
+          const Divider(),
+          Text(
+            AppLocalizations.of(context)!.signInEmailTitle,
+            style: Theme.of(context).textTheme.bodyLarge,
+            textAlign: TextAlign.center,
           ),
           const SizedBox(height: 20),
           SupaEmailAuth(
@@ -72,19 +93,6 @@ class SignUp extends StatelessWidget {
                 },
               ),
             ],
-          ),
-          const Divider(),
-          SupaSocialsAuth(
-            colored: true,
-            nativeGoogleAuthConfig: const NativeGoogleAuthConfig(
-              webClientId: '820724879316-jauhp8t8g5r3pmir1r5gsghbn2qchav5.apps.googleusercontent.com',
-              iosClientId: '820724879316-8sacuk8sjju1rvr878gl9lqin0or5h9d.apps.googleusercontent.com',
-            ),
-            authScreenLaunchMode: kIsWeb ? LaunchMode.platformDefault : LaunchMode.externalApplication,
-            enableNativeAppleAuth: false,
-            socialProviders: const [OAuthProvider.google, /*OAuthProvider.apple, */ OAuthProvider.github],
-            redirectUrl: kIsWeb ? null : 'app.deun.www://login-callback',
-            onSuccess: (session) {},
           ),
         ],
       ),

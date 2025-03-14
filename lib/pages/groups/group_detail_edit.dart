@@ -12,7 +12,6 @@ import 'package:flutter_form_builder/flutter_form_builder.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:form_builder_validators/form_builder_validators.dart';
 import 'package:deun/l10n/app_localizations.dart';
-import 'package:go_router/go_router.dart';
 
 import '../../constants.dart';
 import '../../main.dart';
@@ -37,6 +36,7 @@ class _GroupBottomSheetState extends ConsumerState<GroupBottomSheet> {
   final ValueNotifier<String> _searchQueryNotifier = ValueNotifier<String>("");
 
   final DraggableScrollableController _draggableScrollableController = DraggableScrollableController();
+  final SearchController _searchAnchorController = SearchController();
 
   @override
   void initState() {
@@ -53,6 +53,12 @@ class _GroupBottomSheetState extends ConsumerState<GroupBottomSheet> {
         ref.read(_isMiniView.notifier).state = false;
       }
     });
+  }
+
+  @override
+  void dispose() {
+    _searchAnchorController.dispose();
+    super.dispose();
   }
 
   Iterable<Widget> getUserSelection(SearchController controller, FormFieldState<dynamic> field) {
@@ -97,6 +103,10 @@ class _GroupBottomSheetState extends ConsumerState<GroupBottomSheet> {
     selectedUsers.add(supabase.auth.currentUser?.email ?? '');
 
     List<User> result = await Friendship.fetchFriends(input, selectedUsers, 10);
+
+    if (result.isEmpty) {
+      return [ListTile(title: Text(AppLocalizations.of(context)!.groupMemberResultEmpty))];
+    }
 
     return result.map((user) => ListTile(
           title: Text(user.displayName),
@@ -194,7 +204,14 @@ class _GroupBottomSheetState extends ConsumerState<GroupBottomSheet> {
                                     name: "group_members",
                                     builder: (FormFieldState<dynamic> field) {
                                       return SearchAnchor(
+                                        searchController: _searchAnchorController,
                                         viewHintText: AppLocalizations.of(context)!.groupMemberSelectionEmpty,
+                                        viewLeading: IconButton(
+                                          icon: Icon(Icons.check),
+                                          onPressed: () {
+                                            Navigator.of(context).pop();
+                                          },
+                                        ),
                                         builder: (context, controller) {
                                           List<Map<String, dynamic>> groupMembers =
                                               Group.decodeGroupMembersString(field.value);
@@ -204,7 +221,7 @@ class _GroupBottomSheetState extends ConsumerState<GroupBottomSheet> {
                                                   groupMembers.first['email'] == supabase.auth.currentUser?.email)) {
                                             return ListTile(
                                               leading: const Icon(Icons.people),
-                                              title: Text(AppLocalizations.of(context)!.groupMemberSelectionEmpty),
+                                              title: Text(AppLocalizations.of(context)!.groupMemberAddFriends),
                                             );
                                           }
 
@@ -244,7 +261,9 @@ class _GroupBottomSheetState extends ConsumerState<GroupBottomSheet> {
                                               Padding(
                                                 padding: EdgeInsets.only(top: 10, left: 16),
                                                 child: Text(
-                                                  AppLocalizations.of(context)!.groupMemberSelectionTitle,
+                                                  _searchAnchorController.text.isEmpty
+                                                      ? AppLocalizations.of(context)!.groupMemberSelectionTitle
+                                                      : AppLocalizations.of(context)!.groupMemberSelectionEmpty,
                                                   style: Theme.of(context).textTheme.bodyMedium,
                                                 ),
                                               ),
@@ -305,7 +324,7 @@ class _GroupBottomSheetState extends ConsumerState<GroupBottomSheet> {
                                 ref.read(_isLoading.notifier).state = true; // Set loading to true
                                 try {
                                   String groupInsertId =
-                                      await Group.saveAll(widget.group?.id, _formKey.currentState!.value);
+                                      await Group.saveAll(context, widget.group?.id, _formKey.currentState!.value);
                                   // newGroup = await Group.fetchDetail(groupInsertId);
                                   if (context.mounted) {
                                     showSnackBar(context, groupDetailScaffoldMessengerKey,

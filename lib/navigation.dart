@@ -275,7 +275,6 @@ class _NavigationScreenState extends ConsumerState<NavigationScreen> {
   Future<void> initDeepLinks() async {
     // Handle links
     _linkSubscription = AppLinks().uriLinkStream.listen((uri) {
-      debugPrint('onAppLink: $uri');
       GoRouter.of(_rootNavigatorKey.currentContext!).go(uri.fragment);
     });
   }
@@ -368,7 +367,7 @@ class _ScaffoldWithNestedNavigationState extends ConsumerState<ScaffoldWithNeste
               NavigationDestination(
                 selectedIcon: const Icon(Icons.receipt_long),
                 icon: const Icon(Icons.receipt_long_outlined),
-                label: AppLocalizations.of(context)!.expenses,
+                label: AppLocalizations.of(context)!.groups,
               ),
               NavigationDestination(
                 selectedIcon: const Icon(Icons.group),

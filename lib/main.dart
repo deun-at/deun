@@ -70,13 +70,8 @@ class _MyAppState extends State<MyApp> {
   // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onVerticalDragDown: (details) {
-        FocusScope.of(context).requestFocus(FocusNode());
-      },
-      child: ProviderScope(
-        child: AuthGate(),
-      ),
+    return ProviderScope(
+      child: AuthGate(),
     );
   }
 }

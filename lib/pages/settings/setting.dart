@@ -5,7 +5,6 @@ import 'package:deun/widgets/shimmer_card_list.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_form_builder/flutter_form_builder.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:form_builder_extra_fields/form_builder_extra_fields.dart';
 import 'package:form_builder_validators/form_builder_validators.dart';
 import 'package:go_router/go_router.dart';
 
@@ -28,220 +27,230 @@ class _SettingState extends ConsumerState<Setting> {
     const double heightSpacing = 12;
 
     return Scaffold(
-      body: NestedScrollView(
-        headerSliverBuilder: (context, innerBoxIsScrolled) => [
-          SliverAppBar.medium(
-            title: Text(AppLocalizations.of(context)!.settings),
-            actions: [
-              IconButton(
-                onPressed: () async {
-                  showDialog(
-                      context: context,
-                      builder: (context) => AlertDialog(
-                            content: Text(AppLocalizations.of(context)!.settingsSignOutDialogTitle),
-                            actions: <Widget>[
-                              TextButton(
-                                child: Text(AppLocalizations.of(context)!.cancel),
-                                onPressed: () => Navigator.pop(context),
-                              ),
-                              FilledButton(
-                                style: FilledButton.styleFrom(
-                                  backgroundColor: Theme.of(context).colorScheme.error,
-                                  foregroundColor: Theme.of(context).colorScheme.onError,
+      body: NotificationListener<ScrollUpdateNotification>(
+        child: NestedScrollView(
+          headerSliverBuilder: (context, innerBoxIsScrolled) => [
+            SliverAppBar.medium(
+              title: Text(AppLocalizations.of(context)!.settings),
+              actions: [
+                IconButton(
+                  onPressed: () async {
+                    showDialog(
+                        context: context,
+                        builder: (context) => AlertDialog(
+                              content: Text(AppLocalizations.of(context)!.settingsSignOutDialogTitle),
+                              actions: <Widget>[
+                                TextButton(
+                                  child: Text(AppLocalizations.of(context)!.cancel),
+                                  onPressed: () => Navigator.pop(context),
                                 ),
-                                child: Text(AppLocalizations.of(context)!.settingsSignOut),
-                                onPressed: () async {
-                                  await supabase.auth.signOut();
-                                },
-                              ),
-                            ],
-                          ));
-                },
-                icon: const Icon(Icons.logout),
-              )
-            ],
-          ),
-        ],
-        body: SingleChildScrollView(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Padding(
-                padding: const EdgeInsets.all(12),
-                child: Text(
-                  AppLocalizations.of(context)!.settingsUserHeading,
-                  style: Theme.of(context).textTheme.headlineSmall,
+                                FilledButton(
+                                  style: FilledButton.styleFrom(
+                                    backgroundColor: Theme.of(context).colorScheme.error,
+                                    foregroundColor: Theme.of(context).colorScheme.onError,
+                                  ),
+                                  child: Text(AppLocalizations.of(context)!.settingsSignOut),
+                                  onPressed: () async {
+                                    await supabase.auth.signOut();
+                                  },
+                                ),
+                              ],
+                            ));
+                  },
+                  icon: const Icon(Icons.logout),
+                )
+              ],
+            ),
+          ],
+          body: SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.all(12),
+                  child: Text(
+                    AppLocalizations.of(context)!.settingsUserHeading,
+                    style: Theme.of(context).textTheme.headlineSmall,
+                  ),
                 ),
-              ),
-              Padding(
-                padding: const EdgeInsets.all(15),
-                child: Consumer(
-                  builder: (context, ref, child) {
-                    final User? user = ref.watch(userDetailNotifierProvider).value;
+                Padding(
+                  padding: const EdgeInsets.all(15),
+                  child: Consumer(
+                    builder: (context, ref, child) {
+                      final User? user = ref.watch(userDetailNotifierProvider).value;
 
-                    if (user == null) {
-                      return const ShimmerCardList(
-                        height: 54,
-                        listEntryLength: 4,
-                      );
-                    }
+                      if (user == null) {
+                        return const ShimmerCardList(
+                          height: 54,
+                          listEntryLength: 4,
+                        );
+                      }
 
-                    return FormBuilder(
-                      key: _formKey,
-                      clearValueOnUnregister: true,
-                      initialValue: user.toJson(),
-                      child: Column(
-                        children: [
-                          Row(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              const Icon(
-                                Icons.person_outline,
-                              ),
-                              const SizedBox(width: spacing),
-                              Flexible(
-                                child: Column(
-                                  children: [
-                                    FormBuilderField(
-                                      name: "first_name",
-                                      builder: (FormFieldState<dynamic> field) => TextFormField(
-                                        initialValue: field.value,
-                                        validator: FormBuilderValidators.required(
-                                            errorText: AppLocalizations.of(context)!.settingsFirstNameValidationEmpty),
-                                        decoration: InputDecoration(
-                                          labelText: AppLocalizations.of(context)!.settingsFirstName,
-                                          border: const OutlineInputBorder(),
-                                        ),
-                                        onChanged: (value) => field.didChange(value),
-                                      ),
-                                    ),
-                                    const SizedBox(height: heightSpacing),
-                                    FormBuilderField(
-                                      name: "last_name",
-                                      builder: (FormFieldState<dynamic> field) => TextFormField(
-                                        initialValue: field.value,
-                                        validator: FormBuilderValidators.required(
-                                            errorText: AppLocalizations.of(context)!.settingsLastNameValidationEmpty),
-                                        decoration: InputDecoration(
-                                          labelText: AppLocalizations.of(context)!.settingsLastName,
-                                          border: const OutlineInputBorder(),
-                                        ),
-                                        onChanged: (value) => field.didChange(value),
-                                      ),
-                                    ),
-                                    const SizedBox(height: heightSpacing),
-                                    FormBuilderField(
-                                      name: "display_name",
-                                      builder: (FormFieldState<dynamic> field) => TextFormField(
-                                        initialValue: field.value,
-                                        validator: FormBuilderValidators.required(
-                                            errorText:
-                                                AppLocalizations.of(context)!.settingsDisplayNameValidationEmpty),
-                                        decoration: InputDecoration(
-                                          labelText: AppLocalizations.of(context)!.settingsDisplayName,
-                                          border: const OutlineInputBorder(),
-                                        ),
-                                        onChanged: (value) => field.didChange(value),
-                                      ),
-                                    ),
-                                  ],
+                      return FormBuilder(
+                        key: _formKey,
+                        clearValueOnUnregister: true,
+                        initialValue: user.toJson(),
+                        child: Column(
+                          children: [
+                            Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Icon(
+                                  Icons.person_outline,
                                 ),
-                              )
-                            ],
-                          ),
-                          // const SizedBox(height: heightSpacing),
-                          // Row(
-                          //   crossAxisAlignment: CrossAxisAlignment.start,
-                          //   children: [
-                          //     const Icon(
-                          //       Icons.language,
-                          //     ),
-                          //     const SizedBox(width: spacing),
-                          //     Flexible(
-                          //       child: FormBuilderSearchableDropdown(
-                          //         name: 'locale',
-                          //         items: [
-                          //           'en',
-                          //           'de',
-                          //         ],
-                          //         decoration: InputDecoration(
-                          //           labelText: 'Language',
-                          //           border: const OutlineInputBorder(),
-                          //         ),
-                          //         filterFn: (country, filter) => country.toLowerCase().contains(filter.toLowerCase()),
-                          //       ),
-                          //     ),
-                          //   ],
-                          // ),
-                          const SizedBox(height: heightSpacing),
-                          Row(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              const Icon(
-                                Icons.payment,
-                              ),
-                              const SizedBox(width: spacing),
-                              FormBuilderField(
-                                name: "paypal_me",
-                                builder: (FormFieldState<dynamic> field) => Flexible(
-                                  child: TextFormField(
-                                    initialValue: field.value,
-                                    decoration: InputDecoration(
-                                      labelText: AppLocalizations.of(context)!.settingsPaypalMe,
-                                      border: const OutlineInputBorder(),
-                                      prefixText: 'paypal.me/',
+                                const SizedBox(width: spacing),
+                                Flexible(
+                                  child: Column(
+                                    children: [
+                                      FormBuilderField(
+                                        name: "first_name",
+                                        builder: (FormFieldState<dynamic> field) => TextFormField(
+                                          initialValue: field.value,
+                                          validator: FormBuilderValidators.required(
+                                              errorText:
+                                                  AppLocalizations.of(context)!.settingsFirstNameValidationEmpty),
+                                          decoration: InputDecoration(
+                                            labelText: AppLocalizations.of(context)!.settingsFirstName,
+                                            border: const OutlineInputBorder(),
+                                          ),
+                                          onChanged: (value) => field.didChange(value),
+                                        ),
+                                      ),
+                                      const SizedBox(height: heightSpacing),
+                                      FormBuilderField(
+                                        name: "last_name",
+                                        builder: (FormFieldState<dynamic> field) => TextFormField(
+                                          initialValue: field.value,
+                                          validator: FormBuilderValidators.required(
+                                              errorText: AppLocalizations.of(context)!.settingsLastNameValidationEmpty),
+                                          decoration: InputDecoration(
+                                            labelText: AppLocalizations.of(context)!.settingsLastName,
+                                            border: const OutlineInputBorder(),
+                                          ),
+                                          onChanged: (value) => field.didChange(value),
+                                        ),
+                                      ),
+                                      const SizedBox(height: heightSpacing),
+                                      FormBuilderField(
+                                        name: "display_name",
+                                        builder: (FormFieldState<dynamic> field) => TextFormField(
+                                          initialValue: field.value,
+                                          validator: FormBuilderValidators.required(
+                                              errorText:
+                                                  AppLocalizations.of(context)!.settingsDisplayNameValidationEmpty),
+                                          decoration: InputDecoration(
+                                            labelText: AppLocalizations.of(context)!.settingsDisplayName,
+                                            border: const OutlineInputBorder(),
+                                          ),
+                                          onChanged: (value) => field.didChange(value),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                )
+                              ],
+                            ),
+                            // const SizedBox(height: heightSpacing),
+                            // Row(
+                            //   crossAxisAlignment: CrossAxisAlignment.start,
+                            //   children: [
+                            //     const Icon(
+                            //       Icons.language,
+                            //     ),
+                            //     const SizedBox(width: spacing),
+                            //     Flexible(
+                            //       child: FormBuilderSearchableDropdown(
+                            //         name: 'locale',
+                            //         items: [
+                            //           'en',
+                            //           'de',
+                            //         ],
+                            //         decoration: InputDecoration(
+                            //           labelText: 'Language',
+                            //           border: const OutlineInputBorder(),
+                            //         ),
+                            //         filterFn: (country, filter) => country.toLowerCase().contains(filter.toLowerCase()),
+                            //       ),
+                            //     ),
+                            //   ],
+                            // ),
+                            const SizedBox(height: heightSpacing),
+                            Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Icon(
+                                  Icons.payment,
+                                ),
+                                const SizedBox(width: spacing),
+                                FormBuilderField(
+                                  name: "paypal_me",
+                                  builder: (FormFieldState<dynamic> field) => Flexible(
+                                    child: TextFormField(
+                                      initialValue: field.value,
+                                      decoration: InputDecoration(
+                                        labelText: AppLocalizations.of(context)!.settingsPaypalMe,
+                                        border: const OutlineInputBorder(),
+                                        prefixText: 'paypal.me/',
+                                      ),
+                                      onChanged: (value) => field.didChange(value),
                                     ),
-                                    onChanged: (value) => field.didChange(value),
                                   ),
                                 ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: heightSpacing),
-                          Align(
-                            alignment: Alignment.centerRight,
-                            child: FilledButton(
-                              onPressed: () async {
-                                if (_formKey.currentState!.saveAndValidate()) {
-                                  try {
-                                    await User.saveAll(_formKey.currentState!.value);
-                                    if (context.mounted) {
-                                      showSnackBar(context, rootScaffoldMessengerKey,
-                                          AppLocalizations.of(context)!.settingsUserUpdateSuccess);
-                                    }
-                                  } catch (e) {
-                                    if (context.mounted) {
-                                      showSnackBar(context, rootScaffoldMessengerKey,
-                                          AppLocalizations.of(context)!.settingsUserUpdateError);
-                                    }
-                                  } finally {
-                                    if (mounted) {
+                              ],
+                            ),
+                            const SizedBox(height: heightSpacing),
+                            Align(
+                              alignment: Alignment.centerRight,
+                              child: FilledButton(
+                                onPressed: () async {
+                                  if (_formKey.currentState!.saveAndValidate()) {
+                                    try {
+                                      await User.saveAll(_formKey.currentState!.value);
                                       if (context.mounted) {
-                                        FocusScope.of(context).unfocus();
+                                        showSnackBar(context, rootScaffoldMessengerKey,
+                                            AppLocalizations.of(context)!.settingsUserUpdateSuccess);
+                                      }
+                                    } catch (e) {
+                                      if (context.mounted) {
+                                        showSnackBar(context, rootScaffoldMessengerKey,
+                                            AppLocalizations.of(context)!.settingsUserUpdateError);
+                                      }
+                                    } finally {
+                                      if (mounted) {
+                                        if (context.mounted) {
+                                          FocusScope.of(context).unfocus();
+                                        }
                                       }
                                     }
                                   }
-                                }
-                              },
-                              child: Text(AppLocalizations.of(context)!.update),
+                                },
+                                child: Text(AppLocalizations.of(context)!.update),
+                              ),
                             ),
-                          ),
-                        ],
-                      ),
-                    );
+                          ],
+                        ),
+                      );
+                    },
+                  ),
+                ),
+                Divider(),
+                ListTile(
+                  title: Text(AppLocalizations.of(context)!.settingsPrivacyPolicy),
+                  onTap: () {
+                    GoRouter.of(context).push('/setting/privacy-policy');
                   },
                 ),
-              ),
-              Divider(),
-              ListTile(
-                title: Text(AppLocalizations.of(context)!.settingsPrivacyPolicy),
-                onTap: () {
-                  GoRouter.of(context).push('/setting/privacy-policy');
-                },
-              ),
-            ],
+              ],
+            ),
           ),
         ),
+        onNotification: (ScrollUpdateNotification notification) {
+          final FocusScopeNode currentScope = FocusScope.of(context);
+          if (notification.dragDetails != null && !currentScope.hasPrimaryFocus && currentScope.hasFocus) {
+            FocusManager.instance.primaryFocus?.unfocus();
+          }
+          return false;
+        },
       ),
     );
   }

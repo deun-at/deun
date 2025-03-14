@@ -17,7 +17,6 @@ class LoginScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      debugShowCheckedModeBanner: false,
       title: 'Deun',
       theme: ThemeData(colorSchemeSeed: ColorSeed.baseColor.color, useMaterial3: true, brightness: Brightness.light),
       darkTheme: ThemeData(colorSchemeSeed: ColorSeed.baseColor.color, useMaterial3: true, brightness: Brightness.dark),

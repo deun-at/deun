@@ -1,5 +1,8 @@
 import 'dart:convert';
 
+import 'package:deun/helper/helper.dart';
+import 'package:flutter/material.dart';
+
 import '../../constants.dart';
 import '../../main.dart';
 import '../expenses/expense_model.dart';
@@ -134,7 +137,7 @@ class Group {
     return selectedGroupMembers;
   }
 
-  static Future<String> saveAll(String? groupId, Map<String, dynamic> formValue) async {
+  static Future<String> saveAll(BuildContext context, String? groupId, Map<String, dynamic> formValue) async {
     Map<String, dynamic> upsertVals = {
       "name": formValue["name"],
       "color_value": formValue["color_value"] ?? ColorSeed.baseColor.color.toARGB32(),
@@ -146,11 +149,17 @@ class Group {
     }
     Map<String, dynamic> groupInsertResponse = await supabase.from('group').upsert(upsertVals).select('id').single();
 
+    Set<String> notificationReceiver = {};
     List<Map<String, dynamic>> groupMembers = decodeGroupMembersString(formValue['group_members']);
 
     await supabase.from('group_member').delete().eq('group_id', groupInsertResponse['id']);
 
     if (groupMembers.isNotEmpty) {
+      notificationReceiver.addAll(groupMembers.map(
+        (groupMember) {
+          return groupMember['email'];
+        },
+      ));
       List<Map<String, dynamic>> upsertGroupMembers = [];
       upsertGroupMembers.addAll(groupMembers.map((groupMember) {
         return {'group_id': groupInsertResponse['id'], 'email': groupMember['email']};
@@ -161,6 +170,10 @@ class Group {
 
     await supabase
         .rpc('update_group_member_shares', params: {"_group_id": groupInsertResponse['id'], "_expense_id": null});
+
+    if (groupId == null && context.mounted) {
+      sendGroupNotification(context, groupInsertResponse['id'], notificationReceiver);
+    }
 
     return groupInsertResponse['id'] as String;
   }

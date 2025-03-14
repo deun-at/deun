@@ -123,6 +123,8 @@ class _FriendListState extends ConsumerState<FriendList> {
                                           Friendship.accepted(user.email);
                                           showSnackBar(context, friendListScaffoldMessengerKey,
                                               AppLocalizations.of(context)!.friendshipAccept(user.displayName));
+
+                                          sendFriendAcceptNotification(context, {user.email});
                                         },
                                       );
                                     } else {

@@ -41,7 +41,7 @@ class _GroupListState extends ConsumerState<GroupList> {
           controller: _scrollController,
           headerSliverBuilder: (context, innerBoxIsScrolled) => [
             SliverAppBar.medium(
-              title: Text(AppLocalizations.of(context)!.expenses),
+              title: Text(AppLocalizations.of(context)!.groups),
             ),
             SliverToBoxAdapter(
               child: SizedBox(
@@ -151,8 +151,7 @@ class _GroupListItemState extends ConsumerState<GroupListItem> {
     return Hero(
       tag: "group_detail_${widget.group.id}",
       child: Card(
-        elevation: 14,
-        color: Theme.of(context).colorScheme.surfaceContainer,
+        elevation: 5,
         surfaceTintColor: colorSeedValue,
         shadowColor: Colors.transparent,
         child: InkWell(

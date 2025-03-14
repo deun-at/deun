@@ -82,10 +82,24 @@ showMaterialBanner(BuildContext context, String message, Function onPressed) {
   messengerKey.showMaterialBanner(banner);
 }
 
+sendGroupNotification(BuildContext context, String groupId, Set<String> notificationReceiver) {
+  supabase
+      .from('group')
+      .select('name, ...user_id(user_display_name:display_name)')
+      .eq('id', groupId)
+      .single()
+      .then((value) {
+    String title = AppLocalizations.of(context)!.groupNotificationTitle(value['user_display_name']);
+    String body = AppLocalizations.of(context)!.groupNotificationBody(value['name']);
+
+    sendNotification('group', groupId, notificationReceiver, title, body);
+  });
+}
+
 sendExpenseNotification(BuildContext context, String expenseId, Set<String> notificationReceiver, double amount) {
   supabase
       .from('expense')
-      .select('name, ...group!expense_group_id_fkey(group_name:name), ...user(user_display_name:display_name)')
+      .select('name, ...group!expense_group_id_fkey(group_name:name), ...user_id(user_display_name:display_name)')
       .eq('id', expenseId)
       .single()
       .then((value) {
@@ -107,6 +121,22 @@ sendFriendRequestNotification(BuildContext context, Set<String> notificationRece
         AppLocalizations.of(context)!.friendRequestNotificationTitle,
         // ignore: use_build_context_synchronously
         AppLocalizations.of(context)!.friendRequestNotificationBody(value.displayName),
+      );
+    },
+  );
+}
+
+sendFriendAcceptNotification(BuildContext context, Set<String> notificationReceiver) {
+  User.fetchDetail(supabase.auth.currentUser!.email ?? '').then(
+    (value) {
+      sendNotification(
+        'friendship',
+        '',
+        notificationReceiver,
+        // ignore: use_build_context_synchronously
+        AppLocalizations.of(context)!.friendAcceptNotificationTitle,
+        // ignore: use_build_context_synchronously
+        AppLocalizations.of(context)!.friendAcceptNotificationBody(value.displayName),
       );
     },
   );
