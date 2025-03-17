@@ -1,2 +1,0 @@
-C:/work/deun/android/app/.cxx/RelWithDebInfo/345y1se5/x86/CMakeFiles/edit_cache.dir
-C:/work/deun/android/app/.cxx/RelWithDebInfo/345y1se5/x86/CMakeFiles/rebuild_cache.dir

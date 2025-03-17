@@ -188,7 +188,7 @@ class _FriendListState extends ConsumerState<FriendList> {
               viewHintText: AppLocalizations.of(context)!.addFriendshipSelectionEmpty,
               builder: (context, controller) {
                 return FloatingActionButton.extended(
-                    heroTag: "floating_action_button_main",
+                    heroTag: "floating_action_button_friends",
                     extendedIconLabelSpacing: _showText ? 10 : 0,
                     extendedPadding: _showText ? null : const EdgeInsets.all(16),
                     onPressed: () {

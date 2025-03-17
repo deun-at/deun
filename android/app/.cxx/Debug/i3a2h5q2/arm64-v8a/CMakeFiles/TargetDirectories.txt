@@ -1,2 +1,0 @@
-C:/work/deun/android/app/.cxx/Debug/i3a2h5q2/arm64-v8a/CMakeFiles/edit_cache.dir
-C:/work/deun/android/app/.cxx/Debug/i3a2h5q2/arm64-v8a/CMakeFiles/rebuild_cache.dir

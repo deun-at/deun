@@ -47,6 +47,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get groupNameValidationEmpty => 'Please enter a name';
 
   @override
+  String get groupSimplifiedExpensesTitle => 'Activate simplified expenses';
+
+  @override
   String get expenseDateValidationEmpty => 'Please enter a date';
 
   @override

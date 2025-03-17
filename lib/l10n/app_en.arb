@@ -27,6 +27,8 @@
   "@addGroupTitle": {},
   "groupNameValidationEmpty": "Please enter a name",
   "@groupNameValidationEmpty": {},
+  "groupSimplifiedExpensesTitle": "Activate simplified expenses",
+  "@groupSimplifiedExpensesTitle": {},
   "expenseDateValidationEmpty": "Please enter a date",
   "@expenseDateValidationEmpty": {},
   "groupDeleteItemTitle": "Delete this group?",

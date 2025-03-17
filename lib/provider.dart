@@ -40,7 +40,13 @@ class GroupListNotifier extends _$GroupListNotifier {
             callback: (payload) async {
               reload(statusFilter);
             })
-        .subscribe();
+        .subscribe(
+      (status, object) {
+        if (status == RealtimeSubscribeStatus.channelError) {
+          _subscribeToRealTimeUpdates(statusFilter);
+        }
+      },
+    );
   }
 }
 
@@ -78,7 +84,13 @@ class GroupDetailNotifier extends _$GroupDetailNotifier {
             callback: (payload) async {
               reload(groupId);
             })
-        .subscribe();
+        .subscribe(
+      (status, object) {
+        if (status == RealtimeSubscribeStatus.channelError) {
+          _subscribeToRealTimeUpdates(groupId);
+        }
+      },
+    );
   }
 }
 
@@ -159,7 +171,13 @@ class ExpenseListNotifier extends _$ExpenseListNotifier {
                 return;
               }
             })
-        .subscribe();
+        .subscribe(
+      (status, object) {
+        if (status == RealtimeSubscribeStatus.channelError) {
+          _subscribeToRealTimeUpdates(groupId);
+        }
+      },
+    );
   }
 
   Future<void> loadMoreEntries(String groupId) async {
@@ -205,13 +223,20 @@ class FriendshipListNotifier extends _$FriendshipListNotifier {
     supabase
         .channel('public:friendship_list')
         .onPostgresChanges(
-            event: PostgresChangeEvent.all,
-            schema: 'public',
-            table: 'friendship',
-            callback: (payload) {
-              reload();
-            })
-        .subscribe();
+          event: PostgresChangeEvent.all,
+          schema: 'public',
+          table: 'friendship',
+          callback: (payload) {
+            reload();
+          },
+        )
+        .subscribe(
+      (status, object) {
+        if (status == RealtimeSubscribeStatus.channelError) {
+          _subscribeToRealTimeUpdates();
+        }
+      },
+    );
   }
 }
 

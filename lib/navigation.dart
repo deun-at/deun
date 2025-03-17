@@ -25,7 +25,7 @@ import 'pages/groups/group_model.dart';
 import 'pages/settings/setting.dart';
 import 'widgets/modal_bottom_sheet_page.dart';
 
-final _rootNavigatorKey = GlobalKey<NavigatorState>();
+final _rootNavigatorKey = GlobalKey<NavigatorState>(debugLabel: 'root');
 final _shellNavigatorGroupKey = GlobalKey<NavigatorState>(debugLabel: 'shellGroup');
 final _shellNavigatorFriendKey = GlobalKey<NavigatorState>(debugLabel: 'shellFriend');
 final _shellNavigatorSettingKey = GlobalKey<NavigatorState>(debugLabel: 'shellSetting');
@@ -76,6 +76,7 @@ class _NavigationScreenState extends ConsumerState<NavigationScreen> {
                     // child route
                     GoRoute(
                         path: 'details',
+                        parentNavigatorKey: _rootNavigatorKey,
                         pageBuilder: (context, state) {
                           var extra = state.extra as Map<String, dynamic>;
                           var group = extra['group'] as Group;
@@ -85,6 +86,7 @@ class _NavigationScreenState extends ConsumerState<NavigationScreen> {
                         routes: [
                           GoRoute(
                               path: 'expense',
+                              parentNavigatorKey: _rootNavigatorKey,
                               pageBuilder: (context, state) {
                                 var extra = state.extra as Map<String, dynamic>;
                                 var group = extra['group'] as Group;
@@ -100,6 +102,7 @@ class _NavigationScreenState extends ConsumerState<NavigationScreen> {
                               }),
                           GoRoute(
                               path: 'payment',
+                              parentNavigatorKey: _rootNavigatorKey,
                               pageBuilder: (context, state) {
                                 var extra = state.extra as Map<String, dynamic>;
                                 var group = extra['group'] as Group;
@@ -114,6 +117,7 @@ class _NavigationScreenState extends ConsumerState<NavigationScreen> {
                         ]),
                     GoRoute(
                         path: 'edit',
+                        parentNavigatorKey: _rootNavigatorKey,
                         pageBuilder: (context, state) {
                           var extra = state.extra as Map<String, dynamic>?;
                           var group = extra?['group'] as Group?;

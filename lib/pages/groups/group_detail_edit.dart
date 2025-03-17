@@ -279,6 +279,10 @@ class _GroupBottomSheetState extends ConsumerState<GroupBottomSheet> {
                                       );
                                     },
                                   ),
+                                  FormBuilderSwitch(
+                                    name: "simplified_expenses",
+                                    title: Text(AppLocalizations.of(context)!.groupSimplifiedExpensesTitle),
+                                  ),
                                   widget.group != null
                                       ? Center(
                                           child: TextButton.icon(

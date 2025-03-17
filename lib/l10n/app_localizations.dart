@@ -149,6 +149,12 @@ abstract class AppLocalizations {
   /// **'Please enter a name'**
   String get groupNameValidationEmpty;
 
+  /// No description provided for @groupSimplifiedExpensesTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Activate simplified expenses'**
+  String get groupSimplifiedExpensesTitle;
+
   /// No description provided for @expenseDateValidationEmpty.
   ///
   /// In en, this message translates to:

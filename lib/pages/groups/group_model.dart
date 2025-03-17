@@ -1,5 +1,7 @@
 import 'dart:convert';
+import 'dart:ffi';
 
+import 'package:collection/collection.dart';
 import 'package:deun/helper/helper.dart';
 import 'package:flutter/material.dart';
 
@@ -18,6 +20,7 @@ class Group {
   late String id;
   late String name;
   late int colorValue;
+  late bool simplifiedExpenses;
   late String createdAt;
   late String userId;
 
@@ -32,11 +35,10 @@ class Group {
       '*, group_shares_summary_helper:group_shares_summary!inner(*), group_shares_summary(*, ...paid_by(paid_by_display_name:display_name, paid_by_paypal_me:paypal_me), ...paid_for(paid_for_display_name:display_name, paid_for_paypal_me:paypal_me)), group_member(*, ...user(display_name:display_name))';
 
   void loadDataFromJson(Map<String, dynamic> json) {
-    String? currentUserEmail = supabase.auth.currentUser?.email;
-
     id = json["id"];
     name = json["name"];
     colorValue = json["color_value"] ?? ColorSeed.baseColor.color.toARGB32();
+    simplifiedExpenses = json["simplified_expenses"];
     createdAt = json["created_at"];
     userId = json["user_id"];
 
@@ -49,6 +51,19 @@ class Group {
       }
     }
 
+    try {
+      if (simplifiedExpenses) {
+        calculateGroupSharesSummarySimplified(json);
+      } else {
+        calculateGroupSharesSummaryDefault(json);
+      }
+    } catch (e) {
+      debugPrint(e.toString());
+    }
+  }
+
+  calculateGroupSharesSummaryDefault(Map<String, dynamic> json) {
+    String? currentUserEmail = supabase.auth.currentUser?.email;
     totalExpenses = 0;
     totalShareAmount = 0;
     groupSharesSummary = {};
@@ -81,6 +96,90 @@ class Group {
               double.parse((element['share_amount'] ?? 0).toString());
         }
       }
+    }
+  }
+
+  calculateGroupSharesSummarySimplified(Map<String, dynamic> json) {
+    String? currentUserEmail = supabase.auth.currentUser?.email;
+    totalExpenses = 0;
+    totalShareAmount = 0;
+    groupSharesSummary = {};
+
+    Map<String, dynamic> helperArray = {};
+    if (json["group_shares_summary"] != null) {
+      Map<String, double> simplifiedExpenseArray = {};
+      for (var element in json["group_shares_summary"]) {
+        if (element['paid_for'] == currentUserEmail) {
+          totalExpenses += double.parse((element['total_expenses'] ?? 0).toString());
+          totalShareAmount = double.parse((element['total_share_amount'] ?? 0).toString());
+        }
+
+        if (simplifiedExpenseArray[element["paid_for"]] == null) {
+          simplifiedExpenseArray[element["paid_for"]] = double.parse((element['total_share_amount'] ?? 0).toString());
+        }
+
+        if (helperArray[element["paid_by"]] == null) {
+          helperArray[element["paid_by"]] = {
+            "display_name": element['paid_by_display_name'],
+            "paypal_me": element['paid_by_paypal_me'],
+          };
+        }
+
+        if (helperArray[element["paid_for"]] == null) {
+          helperArray[element["paid_for"]] = {
+            "display_name": element['paid_for_display_name'],
+            "paypal_me": element['paid_for_paypal_me'],
+          };
+        }
+      }
+
+      simplifiedExpenseArray =
+          Map.fromEntries(simplifiedExpenseArray.entries.toList()..sort((e1, e2) => e1.value.compareTo(e2.value)));
+
+      Map<String, double> finalSimplifiedExpenseArray = {};
+      while (simplifiedExpenseArray.length > 1) {
+        var firstEntry = simplifiedExpenseArray.entries.first;
+        var lastEntry = simplifiedExpenseArray.entries.last;
+
+        if (firstEntry.value < lastEntry.value) {
+          if (firstEntry.value.abs() <= lastEntry.value.abs()) {
+            if (firstEntry.key == currentUserEmail) {
+              finalSimplifiedExpenseArray[lastEntry.key] = firstEntry.value;
+            } else if (lastEntry.key == currentUserEmail) {
+              finalSimplifiedExpenseArray[firstEntry.key] = firstEntry.value.abs();
+            }
+
+            simplifiedExpenseArray[firstEntry.key] = 0;
+            simplifiedExpenseArray[lastEntry.key] = lastEntry.value.abs() - firstEntry.value.abs();
+          } else {
+            if (firstEntry.key == currentUserEmail) {
+              finalSimplifiedExpenseArray[lastEntry.key] = lastEntry.value * -1;
+            } else if (lastEntry.key == currentUserEmail) {
+              finalSimplifiedExpenseArray[firstEntry.key] = lastEntry.value;
+            }
+
+            simplifiedExpenseArray[firstEntry.key] = lastEntry.value.abs() - firstEntry.value.abs();
+            simplifiedExpenseArray[lastEntry.key] = 0;
+          }
+
+          if (simplifiedExpenseArray[firstEntry.key] == 0) {
+            simplifiedExpenseArray.remove(firstEntry.key);
+          }
+
+          if (simplifiedExpenseArray[lastEntry.key] == 0) {
+            simplifiedExpenseArray.remove(lastEntry.key);
+          }
+        } else {
+          break;
+        }
+      }
+
+      finalSimplifiedExpenseArray.forEach((key, value) {
+        groupSharesSummary[key] = GroupSharesSummary();
+        groupSharesSummary[key]!.dipslayName = helperArray[key]["display_name"] ?? '';
+        groupSharesSummary[key]!.paypalMe = helperArray[key]["paypal_me"];
+        groupSharesSummary[key]!.shareAmount = value;
+      });
     }
   }
 
@@ -141,7 +240,8 @@ class Group {
     Map<String, dynamic> upsertVals = {
       "name": formValue["name"],
       "color_value": formValue["color_value"] ?? ColorSeed.baseColor.color.toARGB32(),
-      "user_id": supabase.auth.currentUser?.id
+      "simplified_expenses": formValue["simplified_expenses"] ?? false,
+      "user_id": supabase.auth.currentUser?.id,
     };
 
     if (groupId != null) {
@@ -191,6 +291,7 @@ class Group {
   Map<String, dynamic> toJson() => {
         'name': name,
         'color_value': colorValue,
+        'simplified_expenses': simplifiedExpenses,
         'group_members': jsonEncode(groupMembers.map((groupMember) => groupMember.toJson()).toList()),
       };
 }
