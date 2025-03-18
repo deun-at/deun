@@ -36,7 +36,7 @@
                 <category android:name="android.intent.category.BROWSABLE" />
                 <data android:scheme="http" />
                 <data android:scheme="https" />
-                <data android:host="www.deun.app" />
+                <data android:host="deun.app" />
             </intent-filter>
             <!-- Deep Link sample -->
             <intent-filter android:autoVerify="true">
