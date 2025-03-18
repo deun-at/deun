@@ -1,4 +1,5 @@
 import 'package:deun/constants.dart';
+import 'package:deun/helper/helper.dart';
 import 'package:deun/main.dart';
 import 'package:deun/widgets/empty_list_widget.dart';
 import 'package:flutter/material.dart';
@@ -236,8 +237,7 @@ class GroupShareWidget extends StatelessWidget {
 
     String totalSharedText =
         AppLocalizations.of(context)!.groupDisplaySumAmount(paidByYourselfAll, group.totalShareAmount.abs());
-
-    if (group.totalShareAmount == 0) {
+    if (toNumber(group.totalShareAmount) == '0.00') {
       totalSharedText = AppLocalizations.of(context)!.allDone;
       textColorAll = Theme.of(context).colorScheme.onSurface;
     }

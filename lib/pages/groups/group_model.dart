@@ -190,13 +190,14 @@ class Group {
     var query = supabase.from('group').select(groupSelectString);
 
     if (statusFilter == GroupListFilter.active.value) {
-      query = query.not('group_shares_summary_helper.total_share_amount', 'eq', '0');
-      query = query.filter('group_shares_summary_helper.paid_for', 'eq', supabase.auth.currentUser?.email);
+      query = query.or('total_share_amount.gte.0.01,total_share_amount.lte.-0.01', referencedTable: 'group_shares_summary_helper');
+      query = query.eq('group_shares_summary_helper.paid_for', supabase.auth.currentUser?.email ?? '');
     } else if (statusFilter == GroupListFilter.done.value) {
-      query = query.filter('group_shares_summary_helper.total_share_amount', 'eq', '0');
-      query = query.filter('group_shares_summary_helper.paid_for', 'eq', supabase.auth.currentUser?.email);
+      query = query.lt("group_shares_summary_helper.total_share_amount", 0.01);
+      query = query.gt("group_shares_summary_helper.total_share_amount", -0.01);
+      query = query.eq('group_shares_summary_helper.paid_for', supabase.auth.currentUser?.email ?? '');
     } else {
-      query = query.filter('group_shares_summary_helper.paid_for', 'eq', supabase.auth.currentUser?.email);
+      query = query.eq('group_shares_summary_helper.paid_for', supabase.auth.currentUser?.email ?? '');
     }
 
     List<Map<String, dynamic>> data = await query.order('name', ascending: true);

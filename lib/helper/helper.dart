@@ -18,6 +18,11 @@ String toCurrency(double value) {
   return "€${numFormat.format(value)}";
 }
 
+String toNumber(double value) {
+  final NumberFormat numFormat = NumberFormat('###,##0.00', 'en_US');
+  return numFormat.format(value);
+}
+
 String formatDate(String? dateString) {
   if (dateString == null) return '';
   final date = DateTime.parse(dateString);
