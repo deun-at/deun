@@ -219,7 +219,7 @@ class _ExpenseBottomSheetState extends ConsumerState<ExpenseBottomSheet> {
                                         ),
                                       ),
                                       const SizedBox(height: spacing),
-                                      FormBuilderChoiceChip(
+                                      FormBuilderChoiceChips(
                                         name: "paid_by",
                                         decoration: InputDecoration(
                                           labelText: AppLocalizations.of(context)!.expensePaidBy,

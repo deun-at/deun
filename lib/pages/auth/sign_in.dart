@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:supabase_auth_ui/supabase_auth_ui.dart';
 import 'package:deun/l10n/app_localizations.dart';
+import 'dart:io' show Platform;
 
 class SignUp extends StatelessWidget {
   const SignUp({super.key});
@@ -9,6 +10,15 @@ class SignUp extends StatelessWidget {
   Widget build(BuildContext context) {
     void navigateHome(AuthResponse response) {
       Navigator.of(context).pushReplacementNamed('/');
+    }
+
+    List<OAuthProvider> oAuthProvider = [
+      OAuthProvider.google,
+      OAuthProvider.github,
+    ];
+
+    if (Platform.isIOS || Platform.isMacOS) {
+      oAuthProvider.insert(0, OAuthProvider.apple); //apple only for native ios
     }
 
     return Scaffold(
@@ -36,13 +46,13 @@ class SignUp extends StatelessWidget {
           const SizedBox(height: 20),
           SupaSocialsAuth(
             colored: true,
+            enableNativeAppleAuth: true,
             nativeGoogleAuthConfig: const NativeGoogleAuthConfig(
               webClientId: '820724879316-jauhp8t8g5r3pmir1r5gsghbn2qchav5.apps.googleusercontent.com',
               iosClientId: '820724879316-8sacuk8sjju1rvr878gl9lqin0or5h9d.apps.googleusercontent.com',
             ),
             authScreenLaunchMode: kIsWeb ? LaunchMode.platformDefault : LaunchMode.externalApplication,
-            enableNativeAppleAuth: false,
-            socialProviders: const [OAuthProvider.google, OAuthProvider.apple, OAuthProvider.github],
+            socialProviders: oAuthProvider,
             redirectUrl: kIsWeb ? null : 'app.deun.www://login-callback',
             onSuccess: (session) {},
           ),
