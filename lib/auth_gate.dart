@@ -49,14 +49,14 @@ class AuthGate extends StatelessWidget {
               lastName = session.user.userMetadata?['last_name'];
             }
 
-            String displayName = session.user.userMetadata?['user_name'] ?? session.user.userMetadata?['name'];
+            String? displayName = session.user.userMetadata?['user_name'] ?? session.user.userMetadata?['name'];
 
             supabase.from("user").upsert({
               'email': session.user.email,
               'user_id': session.user.id,
               'first_name': firstName,
               'last_name': lastName,
-              'display_name': displayName,
+              'display_name': displayName ?? '-',
             }, ignoreDuplicates: true).whenComplete(() {});
           } catch (e) {
             debugPrint(e.toString());
