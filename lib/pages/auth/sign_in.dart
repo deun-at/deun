@@ -42,7 +42,7 @@ class SignUp extends StatelessWidget {
             ),
             authScreenLaunchMode: kIsWeb ? LaunchMode.platformDefault : LaunchMode.externalApplication,
             enableNativeAppleAuth: false,
-            socialProviders: const [OAuthProvider.google, /*OAuthProvider.apple, */ OAuthProvider.github],
+            socialProviders: const [OAuthProvider.google, OAuthProvider.apple, OAuthProvider.github],
             redirectUrl: kIsWeb ? null : 'app.deun.www://login-callback',
             onSuccess: (session) {},
           ),
