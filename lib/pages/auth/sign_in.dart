@@ -17,8 +17,11 @@ class SignUp extends StatelessWidget {
       OAuthProvider.github,
     ];
 
-    if (Platform.isIOS || Platform.isMacOS) {
-      oAuthProvider.insert(0, OAuthProvider.apple); //apple only for native ios
+    if (kIsWeb) {
+    } else {
+      if (Platform.isIOS || Platform.isMacOS) {
+        oAuthProvider.insert(0, OAuthProvider.apple); //apple only for native ios
+      }
     }
 
     return Scaffold(

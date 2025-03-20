@@ -8,6 +8,7 @@ import 'package:deun/pages/friends/friend_list.dart';
 import 'package:deun/pages/groups/group_detail_payment.dart';
 import 'package:deun/pages/settings/privacy_policy.dart';
 import 'package:deun/provider.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -211,15 +212,18 @@ class _NavigationScreenState extends ConsumerState<NavigationScreen> {
       return null;
     }
 
-    if (Platform.isIOS) {
-      // For apple platforms, ensure the APNS token is available before making any FCM plugin API calls
-      final apnsToken = await FirebaseMessaging.instance.getAPNSToken();
-      if (apnsToken != null) {
-        // APNS token is available, make FCM plugin API requests...
+    if (kIsWeb) {
+    } else {
+      if (Platform.isIOS) {
+        // For apple platforms, ensure the APNS token is available before making any FCM plugin API calls
+        final apnsToken = await FirebaseMessaging.instance.getAPNSToken();
+        if (apnsToken != null) {
+          // APNS token is available, make FCM plugin API requests...
+          _handlePush();
+        }
+      } else {
         _handlePush();
       }
-    } else {
-      _handlePush();
     }
   }
 

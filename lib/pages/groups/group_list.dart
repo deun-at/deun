@@ -5,6 +5,7 @@ import 'package:deun/helper/helper.dart';
 import 'package:deun/main.dart';
 import 'package:deun/widgets/empty_list_widget.dart';
 import 'package:deun/widgets/native_ad_block.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -38,6 +39,12 @@ class _GroupListState extends ConsumerState<GroupList> {
   Widget build(BuildContext context) {
     final groupList = ref.watch(groupListNotifierProvider(groupListFilter));
 
+    SliverToBoxAdapter adSliverBox = SliverToBoxAdapter(child: SizedBox());
+
+    if (kIsWeb) {
+    } else {
+      adSliverBox = SliverToBoxAdapter(child: NativeAdBlock());
+    }
     return ScaffoldMessenger(
       key: groupListScaffoldMessengerKey,
       child: Scaffold(
@@ -79,7 +86,7 @@ class _GroupListState extends ConsumerState<GroupList> {
                     }),
               ),
             ),
-            Platform.isAndroid ? SliverToBoxAdapter(child: NativeAdBlock()) : SliverToBoxAdapter(child: SizedBox())
+            adSliverBox
           ],
           body: Container(
             color: Theme.of(context).colorScheme.surface,
