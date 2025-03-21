@@ -39,12 +39,16 @@ class _GroupListState extends ConsumerState<GroupList> {
   Widget build(BuildContext context) {
     final groupList = ref.watch(groupListNotifierProvider(groupListFilter));
 
-    SliverToBoxAdapter adSliverBox = SliverToBoxAdapter(child: SizedBox());
+    Widget adBox;
 
     if (kIsWeb) {
+      adBox = SizedBox();
     } else {
-      adSliverBox = SliverToBoxAdapter(child: NativeAdBlock());
+      adBox = NativeAdBlock(
+        adUnitId: Platform.isAndroid ? MobileAdMobs.androidGroupList.value : MobileAdMobs.iosGroupList.value,
+      );
     }
+
     return ScaffoldMessenger(
       key: groupListScaffoldMessengerKey,
       child: Scaffold(
@@ -86,7 +90,6 @@ class _GroupListState extends ConsumerState<GroupList> {
                     }),
               ),
             ),
-            adSliverBox
           ],
           body: Container(
             color: Theme.of(context).colorScheme.surface,
@@ -113,9 +116,24 @@ class _GroupListState extends ConsumerState<GroupList> {
                               return const SizedBox(height: 80);
                             }
 
+                            Widget itemWidget;
+
                             // Access the Group instance
                             Group group = value[index];
-                            return GroupListItem(group: group);
+                            GroupListItem groupListItem = GroupListItem(group: group);
+
+                            if (index == 5 || (value.length < 6 && index == value.length - 1)) {
+                              itemWidget = Column(
+                                children: [
+                                  adBox,
+                                  groupListItem,
+                                ],
+                              );
+                            } else {
+                              itemWidget = groupListItem;
+                            }
+
+                            return itemWidget;
                           },
                         ),
                       ),
@@ -248,7 +266,7 @@ class GroupShareWidget extends StatelessWidget {
 
     String totalSharedText =
         AppLocalizations.of(context)!.groupDisplaySumAmount(paidByYourselfAll, group.totalShareAmount.abs());
-    if (toNumber(group.totalShareAmount) == '0.00') {
+    if (toNumber(group.totalShareAmount.abs()) == '0.00') {
       totalSharedText = AppLocalizations.of(context)!.allDone;
       textColorAll = Theme.of(context).colorScheme.onSurface;
     }

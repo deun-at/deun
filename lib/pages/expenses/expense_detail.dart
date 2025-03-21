@@ -65,7 +65,7 @@ class _ExpenseBottomSheetState extends ConsumerState<ExpenseBottomSheet> {
     }
 
     _draggableScrollableController.addListener(() {
-      final pixelToSize = _draggableScrollableController.pixelsToSize(kIsWeb ? 150 : 170);
+      final pixelToSize = _draggableScrollableController.pixelsToSize(kIsWeb ? 150 : 190);
       if (_draggableScrollableController.size <= pixelToSize) {
         ref.read(_isMiniView.notifier).state = true;
         _draggableScrollableController.jumpTo(pixelToSize);

@@ -443,11 +443,35 @@ abstract class AppLocalizations {
   /// **'There is nothing to pay back!'**
   String get payBackNoEntries;
 
+  /// No description provided for @payBackDialogTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Pay back!'**
+  String get payBackDialogTitle;
+
   /// Dialog to confirm that you want to pay back money.
   ///
   /// In en, this message translates to:
-  /// **'Pay back {amount} to {displayName}'**
+  /// **'You owe {displayName} {amount}'**
   String payBackDialog(String displayName, double amount);
+
+  /// No description provided for @payBackDialogPaypal.
+  ///
+  /// In en, this message translates to:
+  /// **'Open Paypal link!'**
+  String get payBackDialogPaypal;
+
+  /// No description provided for @payBackDialogIban.
+  ///
+  /// In en, this message translates to:
+  /// **'Copy IBAN!'**
+  String get payBackDialogIban;
+
+  /// No description provided for @payBackDialogDone.
+  ///
+  /// In en, this message translates to:
+  /// **'Payment done'**
+  String get payBackDialogDone;
 
   /// No description provided for @payBackError.
   ///
@@ -638,25 +662,37 @@ abstract class AppLocalizations {
   /// Notification title when a new group was added.
   ///
   /// In en, this message translates to:
-  /// **'{userDisplayName} added a group'**
+  /// **'{userDisplayName} added you to a new group!'**
   String groupNotificationTitle(String userDisplayName);
 
   /// Notification body when a new expense was added.
   ///
   /// In en, this message translates to:
-  /// **'\"{groupName}\" has been added.'**
+  /// **'You now have access to \"{groupName}\".'**
   String groupNotificationBody(String groupName);
+
+  /// Notification title when somebody paid their debts back.
+  ///
+  /// In en, this message translates to:
+  /// **'{userDisplayName} paid their debts in \"{groupName}\" back!'**
+  String groupPayBackNotificationTitle(String userDisplayName, String groupName);
+
+  /// Notification body when a new expense was added.
+  ///
+  /// In en, this message translates to:
+  /// **'You should receive {amount} in the next days.'**
+  String groupPayBackNotificationBody(double amount);
 
   /// Notification title when a new expense was added.
   ///
   /// In en, this message translates to:
-  /// **'{userDisplayName} added an expense'**
+  /// **'{userDisplayName} added a new expense!'**
   String expenseNotificationTitle(String userDisplayName);
 
   /// Notification body when a new expense was added.
   ///
   /// In en, this message translates to:
-  /// **'\"{expenseName}\" has been added to \"{groupName}\" with a total of {amount}'**
+  /// **'\"{expenseName}\" has been added to \"{groupName}\" with a total of {amount}.'**
   String expenseNotificationBody(String expenseName, String groupName, double amount);
 
   /// No description provided for @friendRequestNotificationTitle.
@@ -736,6 +772,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Paypal.me link'**
   String get settingsPaypalMe;
+
+  /// No description provided for @settingsIban.
+  ///
+  /// In en, this message translates to:
+  /// **'IBAN'**
+  String get settingsIban;
 
   /// No description provided for @settingsUserUpdateSuccess.
   ///

@@ -253,6 +253,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get payBackNoEntries => 'There is nothing to pay back!';
 
   @override
+  String get payBackDialogTitle => 'Pay back!';
+
+  @override
   String payBackDialog(String displayName, double amount) {
     final intl.NumberFormat amountNumberFormat = intl.NumberFormat.currency(
       locale: localeName,
@@ -261,8 +264,17 @@ class AppLocalizationsEn extends AppLocalizations {
     );
     final String amountString = amountNumberFormat.format(amount);
 
-    return 'Pay back $amountString to $displayName';
+    return 'You owe $displayName $amountString';
   }
+
+  @override
+  String get payBackDialogPaypal => 'Open Paypal link!';
+
+  @override
+  String get payBackDialogIban => 'Copy IBAN!';
+
+  @override
+  String get payBackDialogDone => 'Payment done';
 
   @override
   String get payBackError => 'There was an error with paying back the amount. Please try again later!';
@@ -406,17 +418,34 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String groupNotificationTitle(String userDisplayName) {
-    return '$userDisplayName added a group';
+    return '$userDisplayName added you to a new group!';
   }
 
   @override
   String groupNotificationBody(String groupName) {
-    return '\"$groupName\" has been added.';
+    return 'You now have access to \"$groupName\".';
+  }
+
+  @override
+  String groupPayBackNotificationTitle(String userDisplayName, String groupName) {
+    return '$userDisplayName paid their debts in \"$groupName\" back!';
+  }
+
+  @override
+  String groupPayBackNotificationBody(double amount) {
+    final intl.NumberFormat amountNumberFormat = intl.NumberFormat.currency(
+      locale: localeName,
+      decimalDigits: 2,
+      name: '€'
+    );
+    final String amountString = amountNumberFormat.format(amount);
+
+    return 'You should receive $amountString in the next days.';
   }
 
   @override
   String expenseNotificationTitle(String userDisplayName) {
-    return '$userDisplayName added an expense';
+    return '$userDisplayName added a new expense!';
   }
 
   @override
@@ -428,7 +457,7 @@ class AppLocalizationsEn extends AppLocalizations {
     );
     final String amountString = amountNumberFormat.format(amount);
 
-    return '\"$expenseName\" has been added to \"$groupName\" with a total of $amountString';
+    return '\"$expenseName\" has been added to \"$groupName\" with a total of $amountString.';
   }
 
   @override
@@ -473,6 +502,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get settingsPaypalMe => 'Paypal.me link';
+
+  @override
+  String get settingsIban => 'IBAN';
 
   @override
   String get settingsUserUpdateSuccess => 'User data updated!';

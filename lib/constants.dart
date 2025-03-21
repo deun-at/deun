@@ -28,3 +28,13 @@ enum GroupListFilter {
 const spacer = SizedBox(
   height: 12,
 );
+
+enum MobileAdMobs {
+  androidGroupList('ca-app-pub-3679753617535056/9759096631'),
+  iosGroupList('ca-app-pub-3940256099942544/3986624511'),
+  androidExpenseList('ca-app-pub-3679753617535056/4893776594'),
+  iosExpenseList('ca-app-pub-3940256099942544/3986624511');
+
+  const MobileAdMobs(this.value);
+  final String value;
+}

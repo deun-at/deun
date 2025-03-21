@@ -194,7 +194,9 @@
   "@payBack": {},
   "payBackNoEntries": "There is nothing to pay back!",
   "@payBackNoEntries": {},
-  "payBackDialog": "Pay back {amount} to {displayName}",
+  "payBackDialogTitle": "Pay back!",
+  "@payBackDialogTitle": {},
+  "payBackDialog": "You owe {displayName} {amount}",
   "@payBackDialog": {
     "description": "Dialog to confirm that you want to pay back money.",
     "placeholders": {
@@ -213,6 +215,12 @@
       }
     }
   },
+  "payBackDialogPaypal": "Open Paypal link!",
+  "@payBackDialogPaypal": {},
+  "payBackDialogIban": "Copy IBAN!",
+  "@payBackDialogIban": {},
+  "payBackDialogDone": "Payment done",
+  "@payBackDialogDone": {},
   "payBackError": "There was an error with paying back the amount. Please try again later!",
   "@payBackError": {},
   "payBackSuccess": "You paid back {amount} to {displayName}",
@@ -386,7 +394,7 @@
       }
     }
   },
-  "groupNotificationTitle": "{userDisplayName} added a group",
+  "groupNotificationTitle": "{userDisplayName} added you to a new group!",
   "@groupNotificationTitle": {
     "description": "Notification title when a new group was added.",
     "placeholders": {
@@ -396,7 +404,7 @@
       }
     }
   },
-  "groupNotificationBody": "\"{groupName}\" has been added.",
+  "groupNotificationBody": "You now have access to \"{groupName}\".",
   "@groupNotificationBody": {
     "description": "Notification body when a new expense was added.",
     "placeholders": {
@@ -406,7 +414,36 @@
       }
     }
   },
-  "expenseNotificationTitle": "{userDisplayName} added an expense",
+  "groupPayBackNotificationTitle": "{userDisplayName} paid their debts in \"{groupName}\" back!",
+  "@groupPayBackNotificationTitle": {
+    "description": "Notification title when somebody paid their debts back.",
+    "placeholders": {
+      "userDisplayName": {
+        "type": "String",
+        "example": "Max Muster"
+      },
+      "groupName": {
+        "type": "String",
+        "example": "Trip to Vienna"
+      }
+    }
+  },
+  "groupPayBackNotificationBody": "You should receive {amount} in the next days.",
+  "@groupPayBackNotificationBody": {
+    "description": "Notification body when a new expense was added.",
+    "placeholders": {
+      "amount": {
+        "type": "double",
+        "format": "currency",
+        "optionalParameters": {
+          "decimalDigits": 2,
+          "name": "€"
+        },
+        "example": "200.00"
+      }
+    }
+  },
+  "expenseNotificationTitle": "{userDisplayName} added a new expense!",
   "@expenseNotificationTitle": {
     "description": "Notification title when a new expense was added.",
     "placeholders": {
@@ -416,7 +453,7 @@
       }
     }
   },
-  "expenseNotificationBody": "\"{expenseName}\" has been added to \"{groupName}\" with a total of {amount}",
+  "expenseNotificationBody": "\"{expenseName}\" has been added to \"{groupName}\" with a total of {amount}.",
   "@expenseNotificationBody": {
     "description": "Notification body when a new expense was added.",
     "placeholders": {
@@ -481,6 +518,8 @@
   "@settingsDisplayNameValidationEmpty": {},
   "settingsPaypalMe": "Paypal.me link",
   "@settingsPaypalMe": {},
+  "settingsIban": "IBAN",
+  "@settingsIban": {},
   "settingsUserUpdateSuccess": "User data updated!",
   "@settingsUserUpdateSuccess": {},
   "settingsUserUpdateError": "Error while updating user data!",

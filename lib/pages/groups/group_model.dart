@@ -11,6 +11,7 @@ import 'group_member_model.dart';
 class GroupSharesSummary {
   late String dipslayName;
   late String? paypalMe;
+  late String? iban;
   late double shareAmount;
 }
 
@@ -30,7 +31,7 @@ class Group {
   late List<Expense>? expenses;
 
   static const groupSelectString =
-      '*, group_shares_summary_helper:group_shares_summary!inner(*), group_shares_summary(*, ...paid_by(paid_by_display_name:display_name, paid_by_paypal_me:paypal_me), ...paid_for(paid_for_display_name:display_name, paid_for_paypal_me:paypal_me)), group_member(*, ...user(display_name:display_name))';
+      '*, group_shares_summary_helper:group_shares_summary!inner(*), group_shares_summary(*, ...paid_by(paid_by_display_name:display_name, paid_by_paypal_me:paypal_me, paid_by_iban:iban), ...paid_for(paid_for_display_name:display_name, paid_for_paypal_me:paypal_me, paid_for_iban:iban)), group_member(*, ...user(display_name:display_name))';
 
   void loadDataFromJson(Map<String, dynamic> json) {
     id = json["id"];
@@ -77,6 +78,7 @@ class Group {
             groupSharesSummary[element['paid_for']] = GroupSharesSummary();
             groupSharesSummary[element['paid_for']]!.dipslayName = element['paid_for_display_name'];
             groupSharesSummary[element['paid_for']]!.paypalMe = element['paid_for_paypal_me'];
+            groupSharesSummary[element['paid_for']]!.iban = element['paid_for_iban'];
             groupSharesSummary[element['paid_for']]!.shareAmount = 0;
           }
 
@@ -87,6 +89,7 @@ class Group {
             groupSharesSummary[element['paid_by']] = GroupSharesSummary();
             groupSharesSummary[element['paid_by']]!.dipslayName = element['paid_by_display_name'];
             groupSharesSummary[element['paid_by']]!.paypalMe = element['paid_by_paypal_me'];
+            groupSharesSummary[element['paid_by']]!.iban = element['paid_by_iban'];
             groupSharesSummary[element['paid_by']]!.shareAmount = 0;
           }
 
@@ -120,6 +123,7 @@ class Group {
           helperArray[element["paid_by"]] = {
             "display_name": element['paid_by_display_name'],
             "paypal_me": element['paid_by_paypal_me'],
+            "iban": element['paid_by_iban'],
           };
         }
 
@@ -127,6 +131,7 @@ class Group {
           helperArray[element["paid_for"]] = {
             "display_name": element['paid_for_display_name'],
             "paypal_me": element['paid_for_paypal_me'],
+            "iban": element['paid_for_iban'],
           };
         }
       }
@@ -176,6 +181,7 @@ class Group {
         groupSharesSummary[key] = GroupSharesSummary();
         groupSharesSummary[key]!.dipslayName = helperArray[key]["display_name"] ?? '';
         groupSharesSummary[key]!.paypalMe = helperArray[key]["paypal_me"];
+        groupSharesSummary[key]!.iban = helperArray[key]["iban"];
         groupSharesSummary[key]!.shareAmount = value;
       });
     }
@@ -190,7 +196,8 @@ class Group {
     var query = supabase.from('group').select(groupSelectString);
 
     if (statusFilter == GroupListFilter.active.value) {
-      query = query.or('total_share_amount.gte.0.01,total_share_amount.lte.-0.01', referencedTable: 'group_shares_summary_helper');
+      query = query.or('total_share_amount.gte.0.01,total_share_amount.lte.-0.01',
+          referencedTable: 'group_shares_summary_helper');
       query = query.eq('group_shares_summary_helper.paid_for', supabase.auth.currentUser?.email ?? '');
     } else if (statusFilter == GroupListFilter.done.value) {
       query = query.lt("group_shares_summary_helper.total_share_amount", 0.01);
@@ -254,11 +261,9 @@ class Group {
     await supabase.from('group_member').delete().eq('group_id', groupInsertResponse['id']);
 
     if (groupMembers.isNotEmpty) {
-      notificationReceiver.addAll(groupMembers.map(
-        (groupMember) {
-          return groupMember['email'];
-        },
-      ));
+      notificationReceiver.addAll(groupMembers.map((groupMember) {
+        return groupMember['email'];
+      }));
       List<Map<String, dynamic>> upsertGroupMembers = [];
       upsertGroupMembers.addAll(groupMembers.map((groupMember) {
         return {'group_id': groupInsertResponse['id'], 'email': groupMember['email']};
@@ -277,7 +282,7 @@ class Group {
     return groupInsertResponse['id'] as String;
   }
 
-  static Future<void> payBack(String groupId, String email, double amount) async {
+  static Future<void> payBack(BuildContext context, String groupId, String email, double amount) async {
     final expenseId = await supabase.rpc('pay_back', params: {
       "_group_id": groupId,
       "_paid_by": supabase.auth.currentUser?.email,
@@ -285,6 +290,10 @@ class Group {
       "_amount": amount
     });
     await supabase.rpc('update_group_member_shares', params: {"_group_id": groupId, "_expense_id": expenseId});
+
+    if (context.mounted) {
+      sendGroupPayBackNotification(context, groupId, expenseId, {email}, amount);
+    }
   }
 
   Map<String, dynamic> toJson() => {

@@ -88,17 +88,33 @@ showMaterialBanner(BuildContext context, String message, Function onPressed) {
 }
 
 sendGroupNotification(BuildContext context, String groupId, Set<String> notificationReceiver) {
-  supabase
-      .from('group')
-      .select('name, ...user_id(user_display_name:display_name)')
-      .eq('id', groupId)
-      .single()
-      .then((value) {
-    String title = AppLocalizations.of(context)!.groupNotificationTitle(value['user_display_name']);
-    String body = AppLocalizations.of(context)!.groupNotificationBody(value['name']);
+  supabase.from('group').select('name, ...user_id(user_display_name:display_name)').eq('id', groupId).single().then(
+    (value) {
+      String title = AppLocalizations.of(context)!.groupNotificationTitle(value['user_display_name']);
+      String body = AppLocalizations.of(context)!.groupNotificationBody(value['name']);
 
-    sendNotification('group', groupId, notificationReceiver, title, body);
-  });
+      sendNotification('group', groupId, notificationReceiver, title, body);
+    },
+  );
+}
+
+sendGroupPayBackNotification(
+    BuildContext context, String groupId, String expenseId, Set<String> notificationReceiver, double amount) {
+  supabase
+      .from('expense')
+      .select('name, ...group!expense_group_id_fkey(group_name:name), ...paid_by(user_display_name:display_name)')
+      .eq('id', expenseId)
+      .single()
+      .then(
+    (value) {
+      debugPrint(value.toString());
+      String title = AppLocalizations.of(context)!
+          .groupPayBackNotificationTitle(value['user_display_name'] ?? '', value['group_name']);
+      String body = AppLocalizations.of(context)!.groupPayBackNotificationBody(amount);
+
+      sendNotification('group', groupId, notificationReceiver, title, body);
+    },
+  );
 }
 
 sendExpenseNotification(BuildContext context, String expenseId, Set<String> notificationReceiver, double amount) {
@@ -107,12 +123,14 @@ sendExpenseNotification(BuildContext context, String expenseId, Set<String> noti
       .select('name, ...group!expense_group_id_fkey(group_name:name), ...user_id(user_display_name:display_name)')
       .eq('id', expenseId)
       .single()
-      .then((value) {
-    String title = AppLocalizations.of(context)!.expenseNotificationTitle(value['user_display_name']);
-    String body = AppLocalizations.of(context)!.expenseNotificationBody(value['name'], value['group_name'], amount);
+      .then(
+    (value) {
+      String title = AppLocalizations.of(context)!.expenseNotificationTitle(value['user_display_name']);
+      String body = AppLocalizations.of(context)!.expenseNotificationBody(value['name'], value['group_name'], amount);
 
-    sendNotification('expense', expenseId, notificationReceiver, title, body);
-  });
+      sendNotification('expense', expenseId, notificationReceiver, title, body);
+    },
+  );
 }
 
 sendFriendRequestNotification(BuildContext context, Set<String> notificationReceiver) {

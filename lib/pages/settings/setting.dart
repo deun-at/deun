@@ -150,30 +150,6 @@ class _SettingState extends ConsumerState<Setting> {
                                 )
                               ],
                             ),
-                            // const SizedBox(height: heightSpacing),
-                            // Row(
-                            //   crossAxisAlignment: CrossAxisAlignment.start,
-                            //   children: [
-                            //     const Icon(
-                            //       Icons.language,
-                            //     ),
-                            //     const SizedBox(width: spacing),
-                            //     Flexible(
-                            //       child: FormBuilderSearchableDropdown(
-                            //         name: 'locale',
-                            //         items: [
-                            //           'en',
-                            //           'de',
-                            //         ],
-                            //         decoration: InputDecoration(
-                            //           labelText: 'Language',
-                            //           border: const OutlineInputBorder(),
-                            //         ),
-                            //         filterFn: (country, filter) => country.toLowerCase().contains(filter.toLowerCase()),
-                            //       ),
-                            //     ),
-                            //   ],
-                            // ),
                             const SizedBox(height: heightSpacing),
                             Row(
                               crossAxisAlignment: CrossAxisAlignment.start,
@@ -182,18 +158,34 @@ class _SettingState extends ConsumerState<Setting> {
                                   Icons.payment,
                                 ),
                                 const SizedBox(width: spacing),
-                                FormBuilderField(
-                                  name: "paypal_me",
-                                  builder: (FormFieldState<dynamic> field) => Flexible(
-                                    child: TextFormField(
-                                      initialValue: field.value,
-                                      decoration: InputDecoration(
-                                        labelText: AppLocalizations.of(context)!.settingsPaypalMe,
-                                        border: const OutlineInputBorder(),
-                                        prefixText: 'paypal.me/',
+                                Flexible(
+                                  child: Column(
+                                    children: [
+                                      FormBuilderField(
+                                        name: "paypal_me",
+                                        builder: (FormFieldState<dynamic> field) => TextFormField(
+                                          initialValue: field.value,
+                                          decoration: InputDecoration(
+                                            labelText: AppLocalizations.of(context)!.settingsPaypalMe,
+                                            border: const OutlineInputBorder(),
+                                            prefixText: 'paypal.me/',
+                                          ),
+                                          onChanged: (value) => field.didChange(value),
+                                        ),
                                       ),
-                                      onChanged: (value) => field.didChange(value),
-                                    ),
+                                      const SizedBox(height: heightSpacing),
+                                      FormBuilderField(
+                                        name: "iban",
+                                        builder: (FormFieldState<dynamic> field) => TextFormField(
+                                          initialValue: field.value,
+                                          decoration: InputDecoration(
+                                            labelText: AppLocalizations.of(context)!.settingsIban,
+                                            border: const OutlineInputBorder(),
+                                          ),
+                                          onChanged: (value) => field.didChange(value),
+                                        ),
+                                      ),
+                                    ],
                                   ),
                                 ),
                               ],

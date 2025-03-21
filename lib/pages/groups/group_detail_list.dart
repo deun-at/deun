@@ -1,10 +1,15 @@
+import 'dart:io';
+
+import 'package:deun/constants.dart';
 import 'package:deun/helper/helper.dart';
 import 'package:deun/main.dart';
 import 'package:deun/pages/expenses/expense_entry_model.dart';
 import 'package:deun/pages/groups/group_model.dart';
 import 'package:deun/provider.dart';
 import 'package:deun/widgets/empty_list_widget.dart';
+import 'package:deun/widgets/native_ad_block.dart';
 import 'package:deun/widgets/shimmer_card_list.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:deun/l10n/app_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -30,6 +35,16 @@ class _GroupDetailListState extends ConsumerState<GroupDetailList> {
 
   @override
   Widget build(BuildContext context) {
+    Widget adBox;
+
+    if (kIsWeb) {
+      adBox = SizedBox();
+    } else {
+      adBox = NativeAdBlock(
+        adUnitId: Platform.isAndroid ? MobileAdMobs.androidExpenseList.value : MobileAdMobs.iosExpenseList.value,
+      );
+    }
+
     return Container(
         color: Theme.of(context).colorScheme.surface,
         child: Consumer(
@@ -56,83 +71,112 @@ class _GroupDetailListState extends ConsumerState<GroupDetailList> {
                       await updateExpenseList();
                     },
                     child: Padding(
-                        padding: const EdgeInsets.only(right: 8.0, left: 8.0),
-                        child: NotificationListener<ScrollNotification>(
-                            child: ListView.builder(
-                                padding: EdgeInsets.zero,
-                                itemCount: expenses.length + 1,
-                                itemBuilder: (context, index) {
-                                  if (index == expenses.length) {
-                                    return const SizedBox(height: 80);
-                                  }
+                      padding: const EdgeInsets.only(right: 8.0, left: 8.0),
+                      child: NotificationListener<ScrollNotification>(
+                        child: ListView.builder(
+                          padding: EdgeInsets.zero,
+                          itemCount: expenses.length + 1,
+                          itemBuilder: (context, index) {
+                            if (index == expenses.length) {
+                              return const SizedBox(height: 80);
+                            }
 
-                                  Expense expense = expenses[index];
+                            Widget itemWidget;
 
-                                  if (expense.isPaidBackRow) {
-                                    String? currentUserEmail = supabase.auth.currentUser?.email;
-                                    ExpenseEntryShare paidBackEntryShare =
-                                        expense.expenseEntries.entries.first.value.expenseEntryShares.first;
+                            Expense expense = expenses[index];
+                            Widget expenseListItem;
 
-                                    String paidByDisplayName = expense.paidBy == currentUserEmail
-                                        ? AppLocalizations.of(context)!.you
-                                        : (expense.paidByDisplayName ?? "");
-                                    String paidToDisplayName = paidBackEntryShare.email == currentUserEmail
-                                        ? AppLocalizations.of(context)!.you
-                                        : paidBackEntryShare.displayName;
+                            if (expense.isPaidBackRow) {
+                              String? currentUserEmail = supabase.auth.currentUser?.email;
+                              ExpenseEntryShare paidBackEntryShare =
+                                  expense.expenseEntries.entries.first.value.expenseEntryShares.first;
 
-                                    return Card(
-                                        elevation: 0,
-                                        color: Theme.of(context).colorScheme.surfaceContainer,
-                                        child: Padding(
-                                          padding: const EdgeInsets.fromLTRB(10, 5, 10, 5),
-                                          child: Text(AppLocalizations.of(context)!.groupDisplayPaidBack(
-                                              paidByDisplayName, paidToDisplayName, expense.amount)),
-                                        ));
-                                  }
+                              String paidByDisplayName = expense.paidBy == currentUserEmail
+                                  ? AppLocalizations.of(context)!.you
+                                  : (expense.paidByDisplayName ?? "");
+                              String paidToDisplayName = paidBackEntryShare.email == currentUserEmail
+                                  ? AppLocalizations.of(context)!.you
+                                  : paidBackEntryShare.displayName;
 
-                                  return Card(
-                                      color: Theme.of(context).colorScheme.surfaceContainer,
-                                      shadowColor: Colors.transparent,
-                                      child: InkWell(
-                                          borderRadius: BorderRadius.circular(12.0),
-                                          onTap: () {
-                                            GoRouter.of(context).push("/group/details/expense",
-                                                extra: {'group': widget.group, 'expense': expense});
-                                          },
-                                          child: Padding(
-                                              padding: const EdgeInsets.fromLTRB(10, 5, 10, 5),
-                                              child: Column(
-                                                children: [
-                                                  Row(
-                                                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                                      crossAxisAlignment: CrossAxisAlignment.start,
-                                                      children: [
-                                                        Flexible(
-                                                            child: Text(
-                                                          expense.name,
-                                                          style: Theme.of(context).textTheme.headlineMedium,
-                                                          overflow: TextOverflow.ellipsis,
-                                                        )),
-                                                        Text(formatDate(expense.expenseDate),
-                                                            style: Theme.of(context).textTheme.bodySmall)
-                                                      ]),
-                                                  ExpenseShareWidget(expense: expense),
-                                                ],
-                                              ))));
-                                }),
-                            onNotification: (ScrollNotification scrollInfo) {
-                              if (scrollInfo.metrics.pixels >
-                                  scrollInfo.metrics.maxScrollExtent - MediaQuery.of(context).size.height) {
-                                if (oldOffset ==
-                                    ref.read(expenseListNotifierProvider(widget.group.id).notifier).offset) {
-                                  // make sure ListView has newest data after previous loadMore
-                                  ref
-                                      .read(expenseListNotifierProvider(widget.group.id).notifier)
-                                      .loadMoreEntries(widget.group.id);
-                                }
-                              }
-                              return false;
-                            })));
+                              expenseListItem = SizedBox(
+                                width: double.infinity,
+                                child: Card(
+                                  elevation: 0,
+                                  color: Theme.of(context).colorScheme.surfaceContainer,
+                                  child: Padding(
+                                    padding: const EdgeInsets.fromLTRB(10, 5, 10, 5),
+                                    child: Text(AppLocalizations.of(context)!
+                                        .groupDisplayPaidBack(paidByDisplayName, paidToDisplayName, expense.amount)),
+                                  ),
+                                ),
+                              );
+                            } else {
+                              expenseListItem = Card(
+                                color: Theme.of(context).colorScheme.surfaceContainer,
+                                shadowColor: Colors.transparent,
+                                child: InkWell(
+                                  borderRadius: BorderRadius.circular(12.0),
+                                  onTap: () {
+                                    GoRouter.of(context).push(
+                                      "/group/details/expense",
+                                      extra: {'group': widget.group, 'expense': expense},
+                                    );
+                                  },
+                                  child: Padding(
+                                    padding: const EdgeInsets.fromLTRB(10, 5, 10, 5),
+                                    child: Column(
+                                      children: [
+                                        Row(
+                                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                            crossAxisAlignment: CrossAxisAlignment.start,
+                                            children: [
+                                              Flexible(
+                                                  child: Text(
+                                                expense.name,
+                                                style: Theme.of(context).textTheme.headlineMedium,
+                                                overflow: TextOverflow.ellipsis,
+                                              )),
+                                              Text(formatDate(expense.expenseDate),
+                                                  style: Theme.of(context).textTheme.bodySmall)
+                                            ]),
+                                        ExpenseShareWidget(expense: expense),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              );
+                            }
+
+                            if (index == 0) {
+                              itemWidget = Column(
+                                mainAxisSize: MainAxisSize.max,
+                                children: [
+                                  adBox,
+                                  expenseListItem,
+                                ],
+                              );
+                            } else {
+                              itemWidget = expenseListItem;
+                            }
+
+                            return itemWidget;
+                          },
+                        ),
+                        onNotification: (ScrollNotification scrollInfo) {
+                          if (scrollInfo.metrics.pixels >
+                              scrollInfo.metrics.maxScrollExtent - MediaQuery.of(context).size.height) {
+                            if (oldOffset == ref.read(expenseListNotifierProvider(widget.group.id).notifier).offset) {
+                              // make sure ListView has newest data after previous loadMore
+                              ref
+                                  .read(expenseListNotifierProvider(widget.group.id).notifier)
+                                  .loadMoreEntries(widget.group.id);
+                            }
+                          }
+                          return false;
+                        },
+                      ),
+                    ),
+                  );
           },
         ));
   }

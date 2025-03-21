@@ -7,6 +7,7 @@ class User {
   late String? lastName;
   late String displayName;
   late String? paypalMe;
+  late String? iban;
   late String? locale;
   late String createdAt;
 
@@ -18,6 +19,7 @@ class User {
     displayName = json["display_name"];
     locale = json["locale"];
     paypalMe = json["paypal_me"];
+    iban = json["iban"];
     createdAt = json["created_at"];
   }
 
@@ -57,6 +59,7 @@ class User {
       'display_name': formResponse['display_name'],
       'locale': formResponse['locale'],
       'paypal_me': formResponse['paypal_me'],
+      'iban': formResponse['iban'],
     };
 
     if (supabase.auth.currentUser?.email != null) {
@@ -74,6 +77,7 @@ class User {
         "display_name": displayName,
         "locale": locale,
         "paypal_me": paypalMe,
+        "iban": iban,
         "created_at": createdAt,
       };
 }

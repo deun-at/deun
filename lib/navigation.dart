@@ -161,6 +161,7 @@ class _NavigationScreenState extends ConsumerState<NavigationScreen> {
                       // child route
                       GoRoute(
                         path: 'privacy-policy',
+                        parentNavigatorKey: _rootNavigatorKey,
                         pageBuilder: (context, state) {
                           return DefaultTransitionPage(child: PrivacyPolicy());
                         },
