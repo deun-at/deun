@@ -107,7 +107,6 @@ sendGroupPayBackNotification(
       .single()
       .then(
     (value) {
-      debugPrint(value.toString());
       String title = AppLocalizations.of(context)!
           .groupPayBackNotificationTitle(value['user_display_name'] ?? '', value['group_name']);
       String body = AppLocalizations.of(context)!.groupPayBackNotificationBody(amount);

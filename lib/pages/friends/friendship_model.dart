@@ -88,8 +88,6 @@ class Friendship {
         .order("email", referencedTable: "addressee")
         .limit(limit);
 
-    //debugPrint(data.toString());
-
     List<User> retData = [];
 
     for (var element in data) {
