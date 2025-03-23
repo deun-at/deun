@@ -73,12 +73,34 @@ class _GroupDetailState extends ConsumerState<GroupDetail> {
                   SliverAppBar.medium(
                     title: Text(widget.group.name, maxLines: 1, overflow: TextOverflow.ellipsis),
                     actions: [
+                      SearchAnchor(
+                        builder: (context, controller) {
+                          return IconButton(
+                            onPressed: () {
+                              controller.openView();
+                            },
+                            icon: const Icon(Icons.search),
+                          );
+                        },
+                        searchController: _searchController,
+                        suggestionsBuilder: (context, controller) {
+                          if (controller.text.isEmpty) {
+                            return <Widget>[
+                              ListTile(
+                                // ignore: use_build_context_synchronously
+                                title: Text(AppLocalizations.of(context)!.expensesSearchDescription),
+                              )
+                            ];
+                          }
+                          return getExpenseSuggestions(controller, widget.group);
+                        },
+                      ),
                       IconButton(
                         onPressed: () {
                           GoRouter.of(context).push("/group/edit", extra: {'group': widget.group});
                         },
                         icon: const Icon(Icons.edit),
-                      )
+                      ),
                     ],
                   ),
                   SliverToBoxAdapter(
@@ -121,26 +143,6 @@ class _GroupDetailState extends ConsumerState<GroupDetail> {
                                 padding: const EdgeInsets.fromLTRB(16.0, 5.0, 16.0, 5.0),
                                 child: GroupShareWidget(group: groupDetail));
                           },
-                        ),
-                        Padding(
-                          padding: EdgeInsets.fromLTRB(10, 10, 10, 5),
-                          child: SearchAnchor.bar(
-                            searchController: _searchController,
-                            barElevation: WidgetStateProperty.all(0),
-                            barBackgroundColor: WidgetStateProperty.all(Theme.of(context).colorScheme.surfaceContainer),
-                            barHintText: AppLocalizations.of(context)!.expensesSearchTitle,
-                            suggestionsBuilder: (context, controller) {
-                              if (controller.text.isEmpty) {
-                                return <Widget>[
-                                  ListTile(
-                                    // ignore: use_build_context_synchronously
-                                    title: Text(AppLocalizations.of(context)!.expensesSearchDescription),
-                                  )
-                                ];
-                              }
-                              return getExpenseSuggestions(controller, widget.group);
-                            },
-                          ),
                         ),
                       ],
                     ),

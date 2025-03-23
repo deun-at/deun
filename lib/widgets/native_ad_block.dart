@@ -20,12 +20,15 @@ class _NativeAdBlockState extends State<NativeAdBlock> {
       alignment: Alignment.center,
       child: ConstrainedBox(
         constraints: const BoxConstraints(
-          minWidth: 350,
-          maxWidth: 350,
-          minHeight: 100,
-          maxHeight: 100,
+          minWidth: double.infinity,
+          maxWidth: double.infinity,
+          minHeight: 120,
+          maxHeight: 120,
         ),
-        child: (_nativeAdIsLoaded && _nativeAd != null) ? AdWidget(ad: _nativeAd!) : SizedBox(),
+        child: Padding(
+          padding: EdgeInsets.only(left: 5, right: 5),
+          child: (_nativeAdIsLoaded && _nativeAd != null) ? AdWidget(ad: _nativeAd!) : SizedBox(),
+        ),
       ),
     );
   }
@@ -57,6 +60,7 @@ class _NativeAdBlockState extends State<NativeAdBlock> {
         callToActionTextStyle: NativeTemplateTextStyle(
           size: 16.0,
         ),
+        cornerRadius: 8.0,
         primaryTextStyle: NativeTemplateTextStyle(
           textColor: Colors.black38,
           backgroundColor: Colors.white70,

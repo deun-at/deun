@@ -176,44 +176,56 @@ class GroupListItem extends ConsumerStatefulWidget {
 class _GroupListItemState extends ConsumerState<GroupListItem> {
   @override
   Widget build(BuildContext context) {
+    ThemeData themeData = Theme.of(context);
     Color colorSeedValue = Color(widget.group.colorValue);
 
     return Hero(
       tag: "group_detail_${widget.group.id}",
-      child: Card(
-        elevation: 5,
-        surfaceTintColor: colorSeedValue,
-        shadowColor: Colors.transparent,
-        child: InkWell(
-          borderRadius: BorderRadius.circular(12.0),
-          onTap: () {
-            ref.read(themeColorProvider.notifier).setColor(Color(widget.group.colorValue));
-            GoRouter.of(context).push("/group/details", extra: {'group': widget.group}).then(
-              (value) async {
-                ref.read(themeColorProvider.notifier).resetColor();
-              },
+      child: Theme(
+        data: themeData.copyWith(
+            colorScheme: ColorScheme.fromSeed(seedColor: colorSeedValue, brightness: themeData.brightness)),
+        child: Builder(
+          builder: (context) {
+            ThemeData cardThemeData = Theme.of(context);
+            ColorScheme cardColorScheme = cardThemeData.colorScheme;
+
+            return Card(
+              elevation: 5,
+              shadowColor: Colors.transparent,
+              surfaceTintColor: cardColorScheme.primary,
+              child: InkWell(
+                borderRadius: BorderRadius.circular(12.0),
+                onTap: () {
+                  ref.read(themeColorProvider.notifier).setColor(Color(widget.group.colorValue));
+                  GoRouter.of(context).push("/group/details", extra: {'group': widget.group}).then(
+                    (value) async {
+                      ref.read(themeColorProvider.notifier).resetColor();
+                    },
+                  );
+                },
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(10, 5, 5, 10),
+                  child: Column(
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Flexible(
+                            child: Text(
+                              widget.group.name,
+                              style: Theme.of(context).textTheme.headlineMedium,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
+                      ),
+                      GroupShareWidget(group: widget.group),
+                    ],
+                  ),
+                ),
+              ),
             );
           },
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(10, 5, 5, 10),
-            child: Column(
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Flexible(
-                      child: Text(
-                        widget.group.name,
-                        style: Theme.of(context).textTheme.headlineMedium,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                  ],
-                ),
-                GroupShareWidget(group: widget.group),
-              ],
-            ),
-          ),
         ),
       ),
     );

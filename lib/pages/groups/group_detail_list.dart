@@ -36,6 +36,8 @@ class _GroupDetailListState extends ConsumerState<GroupDetailList> {
   @override
   Widget build(BuildContext context) {
     Widget adBox;
+    ThemeData cardThemeData = Theme.of(context);
+    ColorScheme cardColorScheme = cardThemeData.colorScheme;
 
     if (kIsWeb) {
       adBox = SizedBox();
@@ -78,7 +80,7 @@ class _GroupDetailListState extends ConsumerState<GroupDetailList> {
                           itemCount: expenses.length + 1,
                           itemBuilder: (context, index) {
                             if (index == expenses.length) {
-                              return const SizedBox(height: 80);
+                              return const SizedBox(height: 100);
                             }
 
                             Widget itemWidget;
@@ -101,8 +103,9 @@ class _GroupDetailListState extends ConsumerState<GroupDetailList> {
                               expenseListItem = SizedBox(
                                 width: double.infinity,
                                 child: Card(
-                                  elevation: 0,
-                                  color: Theme.of(context).colorScheme.surfaceContainer,
+                                  elevation: 5,
+                                  shadowColor: Colors.transparent,
+                                  surfaceTintColor: cardColorScheme.primary,
                                   child: Padding(
                                     padding: const EdgeInsets.fromLTRB(10, 5, 10, 5),
                                     child: Text(AppLocalizations.of(context)!
@@ -112,8 +115,9 @@ class _GroupDetailListState extends ConsumerState<GroupDetailList> {
                               );
                             } else {
                               expenseListItem = Card(
-                                color: Theme.of(context).colorScheme.surfaceContainer,
+                                elevation: 5,
                                 shadowColor: Colors.transparent,
+                                surfaceTintColor: cardColorScheme.primary,
                                 child: InkWell(
                                   borderRadius: BorderRadius.circular(12.0),
                                   onTap: () {
