@@ -1,6 +1,8 @@
+import 'package:async_preferences/async_preferences.dart';
 import 'package:deun/helper/helper.dart';
 import 'package:deun/pages/users/user_model.dart';
 import 'package:deun/provider.dart';
+import 'package:deun/widgets/initialization_helper.dart';
 import 'package:deun/widgets/shimmer_card_list.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_form_builder/flutter_form_builder.dart';
@@ -20,6 +22,18 @@ class Setting extends ConsumerStatefulWidget {
 
 class _SettingState extends ConsumerState<Setting> {
   final _formKey = GlobalKey<FormBuilderState>();
+  final _initializationHelper = InitializationHelper();
+
+// We will use a Future to read the setting that
+  // tells us if the user is under the GDPR
+  late final Future<bool> _future;
+
+  @override
+  void initState() {
+    super.initState();
+
+    _future = _isUnderGdpr();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -82,7 +96,7 @@ class _SettingState extends ConsumerState<Setting> {
                       if (user == null) {
                         return const ShimmerCardList(
                           height: 54,
-                          listEntryLength: 4,
+                          listEntryLength: 5,
                         );
                       }
 
@@ -232,6 +246,42 @@ class _SettingState extends ConsumerState<Setting> {
                     GoRouter.of(context).push('/setting/privacy-policy');
                   },
                 ),
+                FutureBuilder(
+                  future: _future,
+                  builder: (context, snapshot) {
+                    // Show it only if the user is under the GDPR
+                    if (snapshot.hasData && snapshot.data == true) {
+                      return ListTile(
+                          title: Text(AppLocalizations.of(context)!.settingsPrivacyPreferences),
+                          onTap: () async {
+                            final scaffoldMessenger = ScaffoldMessenger.of(context);
+
+                            // Show the consent message again
+                            final didChangePreferences = await _initializationHelper.changePrivacyPreferences();
+
+                            // Give feedback to the user that their
+                            // preferences have been correctly modified
+                            scaffoldMessenger.showSnackBar(
+                              SnackBar(
+                                content: Text(
+                                  didChangePreferences
+                                      ? AppLocalizations.of(context)!.settingsPrivacyPreferencesSuccess
+                                      : AppLocalizations.of(context)!.settingsPrivacyPreferencesError,
+                                ),
+                              ),
+                            );
+                          });
+                    } else {
+                      return SizedBox();
+                    }
+                  },
+                ),
+                ListTile(
+                  title: Text(AppLocalizations.of(context)!.contact),
+                  onTap: () {
+                    GoRouter.of(context).push('/setting/contact');
+                  },
+                ),
               ],
             ),
           ),
@@ -245,5 +295,13 @@ class _SettingState extends ConsumerState<Setting> {
         },
       ),
     );
+  }
+
+  Future<bool> _isUnderGdpr() async {
+    // Initialize AsyncPreferences and checks if the IABTCF_gdprApplies
+    // parameter is 1, if it is the user is under the GDPR,
+    // any other value could be interpreted as not under the GDPR
+    final preferences = AsyncPreferences();
+    return await preferences.getInt('IABTCF_gdprApplies') == 1;
   }
 }

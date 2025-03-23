@@ -6,8 +6,10 @@ import 'package:deun/pages/auth/update_password.dart';
 import 'package:deun/pages/expenses/expense_model.dart';
 import 'package:deun/pages/friends/friend_list.dart';
 import 'package:deun/pages/groups/group_detail_payment.dart';
+import 'package:deun/pages/settings/contact.dart';
 import 'package:deun/pages/settings/privacy_policy.dart';
 import 'package:deun/provider.dart';
+import 'package:deun/widgets/initialization_helper.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
@@ -49,6 +51,11 @@ class _NavigationScreenState extends ConsumerState<NavigationScreen> {
     super.initState();
     _initFirebaseMessaging();
     initDeepLinks();
+
+    if (!kIsWeb) {
+      final _initializationHelper = InitializationHelper();
+      _initializationHelper.initialize();
+    }
 
     // the one and only GoRouter instance
     _routerConfig = GoRouter(
@@ -166,6 +173,14 @@ class _NavigationScreenState extends ConsumerState<NavigationScreen> {
                           return DefaultTransitionPage(child: PrivacyPolicy());
                         },
                       ),
+                      // child route
+                      GoRoute(
+                        path: 'contact',
+                        parentNavigatorKey: _rootNavigatorKey,
+                        pageBuilder: (context, state) {
+                          return DefaultTransitionPage(child: Contact());
+                        },
+                      ),
                     ]),
               ],
             ),
@@ -175,6 +190,12 @@ class _NavigationScreenState extends ConsumerState<NavigationScreen> {
           path: '/privacy-policy',
           pageBuilder: (context, state) => const NoTransitionPage(
             child: PrivacyPolicy(),
+          ),
+        ),
+        GoRoute(
+          path: '/contact',
+          pageBuilder: (context, state) => const NoTransitionPage(
+            child: Contact(),
           ),
         ),
         GoRoute(

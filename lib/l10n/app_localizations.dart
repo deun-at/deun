@@ -809,6 +809,84 @@ abstract class AppLocalizations {
   /// **'Privacy Policy'**
   String get settingsPrivacyPolicy;
 
+  /// No description provided for @settingsPrivacyPreferences.
+  ///
+  /// In en, this message translates to:
+  /// **'Change privacy preferences'**
+  String get settingsPrivacyPreferences;
+
+  /// No description provided for @settingsPrivacyPreferencesSuccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Your privacy choices have been updated'**
+  String get settingsPrivacyPreferencesSuccess;
+
+  /// No description provided for @settingsPrivacyPreferencesError.
+  ///
+  /// In en, this message translates to:
+  /// **'An error occurred while trying to change your privacy choices'**
+  String get settingsPrivacyPreferencesError;
+
+  /// No description provided for @contact.
+  ///
+  /// In en, this message translates to:
+  /// **'Contact'**
+  String get contact;
+
+  /// No description provided for @contactName.
+  ///
+  /// In en, this message translates to:
+  /// **'Full Name'**
+  String get contactName;
+
+  /// No description provided for @contactNameValidationEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'Please enter a full name'**
+  String get contactNameValidationEmpty;
+
+  /// No description provided for @contactCompany.
+  ///
+  /// In en, this message translates to:
+  /// **'Company (optional)'**
+  String get contactCompany;
+
+  /// No description provided for @contactEmail.
+  ///
+  /// In en, this message translates to:
+  /// **'E-Mail'**
+  String get contactEmail;
+
+  /// No description provided for @contactEmailValidationEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'Please enter an email'**
+  String get contactEmailValidationEmpty;
+
+  /// No description provided for @contactDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Description'**
+  String get contactDescription;
+
+  /// No description provided for @contactDescriptionValidationEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'Please enter a description'**
+  String get contactDescriptionValidationEmpty;
+
+  /// No description provided for @contactSendSuccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Support request sent!'**
+  String get contactSendSuccess;
+
+  /// No description provided for @contactSendError.
+  ///
+  /// In en, this message translates to:
+  /// **'Error while requesting the support!'**
+  String get contactSendError;
+
   /// No description provided for @create.
   ///
   /// In en, this message translates to:
@@ -868,6 +946,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Close'**
   String get close;
+
+  /// No description provided for @send.
+  ///
+  /// In en, this message translates to:
+  /// **'Send'**
+  String get send;
 
   /// No description provided for @generalError.
   ///

@@ -185,6 +185,19 @@ sendNotification(String type, String objectId, Set<String> notificationReceiver,
   }
 }
 
+sendContactMail(Map<String, dynamic> contactInfo) async {
+  try {
+    final res = await supabase.functions.invoke('send-contact-email', body: {
+      'message':
+          "Name: ${contactInfo['name']} <br>Company: ${contactInfo['company'] ?? '-'}<br>E-Mail: ${contactInfo['email']}<br><br>Description: ${contactInfo['description']}"
+    });
+    final data = res.data;
+    debugPrint(data.toString());
+  } catch (e) {
+    debugPrint(e.toString());
+  }
+}
+
 navigateToExpense(BuildContext context, Expense expense) {
   // Navigate to the group expense list first
   GoRouter.of(context).go("/group");

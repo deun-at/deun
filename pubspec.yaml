@@ -8,6 +8,7 @@ environment:
 
 dependencies:
   app_links: ^6.4.0
+  async_preferences: ^1.0.2
   collection: ^1.18.0
   firebase_core: ^3.10.1
   firebase_messaging: ^15.2.1

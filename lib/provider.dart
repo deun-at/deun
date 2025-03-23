@@ -122,6 +122,7 @@ class ExpenseListNotifier extends _$ExpenseListNotifier {
   }
 
   void _subscribeToRealTimeUpdates(String groupId) {
+    debugPrint('haaans');
     supabase
         .channel('public:expense_list_checker')
         .onPostgresChanges(

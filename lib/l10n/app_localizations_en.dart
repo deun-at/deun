@@ -522,6 +522,45 @@ class AppLocalizationsEn extends AppLocalizations {
   String get settingsPrivacyPolicy => 'Privacy Policy';
 
   @override
+  String get settingsPrivacyPreferences => 'Change privacy preferences';
+
+  @override
+  String get settingsPrivacyPreferencesSuccess => 'Your privacy choices have been updated';
+
+  @override
+  String get settingsPrivacyPreferencesError => 'An error occurred while trying to change your privacy choices';
+
+  @override
+  String get contact => 'Contact';
+
+  @override
+  String get contactName => 'Full Name';
+
+  @override
+  String get contactNameValidationEmpty => 'Please enter a full name';
+
+  @override
+  String get contactCompany => 'Company (optional)';
+
+  @override
+  String get contactEmail => 'E-Mail';
+
+  @override
+  String get contactEmailValidationEmpty => 'Please enter an email';
+
+  @override
+  String get contactDescription => 'Description';
+
+  @override
+  String get contactDescriptionValidationEmpty => 'Please enter a description';
+
+  @override
+  String get contactSendSuccess => 'Support request sent!';
+
+  @override
+  String get contactSendError => 'Error while requesting the support!';
+
+  @override
   String get create => 'Create';
 
   @override
@@ -550,6 +589,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get close => 'Close';
+
+  @override
+  String get send => 'Send';
 
   @override
   String get generalError => 'Something went wrong';
