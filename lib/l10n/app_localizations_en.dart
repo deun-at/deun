@@ -561,6 +561,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get contactSendError => 'Error while requesting the support!';
 
   @override
+  String get deleteAccount => 'Delete account';
+
+  @override
+  String get deleteAccountError => 'Error while trying to delete the user account. Please contact app.deun@gmail.com for support.';
+
+  @override
   String get create => 'Create';
 
   @override

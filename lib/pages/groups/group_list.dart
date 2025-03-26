@@ -242,7 +242,7 @@ class GroupShareWidget extends StatelessWidget {
     List<Widget> sharedWidget = group.groupSharesSummary
         .map(
           (String key, GroupSharesSummary e) {
-            if (e.shareAmount == 0) {
+            if (toNumber(e.shareAmount.abs()) == '0.00') {
               return MapEntry(key, const SizedBox());
             }
 

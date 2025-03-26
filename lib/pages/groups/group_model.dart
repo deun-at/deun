@@ -21,7 +21,7 @@ class Group {
   late int colorValue;
   late bool simplifiedExpenses;
   late String createdAt;
-  late String userId;
+  late String? userId;
 
   late List<GroupMember> groupMembers;
   late Map<String, GroupSharesSummary> groupSharesSummary;

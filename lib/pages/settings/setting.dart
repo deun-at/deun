@@ -282,6 +282,18 @@ class _SettingState extends ConsumerState<Setting> {
                     GoRouter.of(context).push('/setting/contact');
                   },
                 ),
+                const SizedBox(height: heightSpacing),
+                const Divider(),
+                const SizedBox(height: heightSpacing),
+                ListTile(
+                  title: Text(AppLocalizations.of(context)!.deleteAccount),
+                  textColor: Theme.of(context).colorScheme.error,
+                  iconColor: Theme.of(context).colorScheme.error,
+                  leading: Icon(Icons.delete),
+                  onTap: () async {
+                    openDeleteUserDialog(context);
+                  },
+                ),
               ],
             ),
           ),
@@ -303,5 +315,38 @@ class _SettingState extends ConsumerState<Setting> {
     // any other value could be interpreted as not under the GDPR
     final preferences = AsyncPreferences();
     return await preferences.getInt('IABTCF_gdprApplies') == 1;
+  }
+
+  void openDeleteUserDialog(BuildContext modalContext) {
+    showDialog<void>(
+      context: context,
+      builder: (context) => AlertDialog(
+        content: Text(AppLocalizations.of(context)!.deleteAccount),
+        actions: <Widget>[
+          TextButton(
+            child: Text(AppLocalizations.of(context)!.cancel),
+            onPressed: () => Navigator.pop(context),
+          ),
+          FilledButton(
+            style: FilledButton.styleFrom(
+              backgroundColor: Theme.of(context).colorScheme.error,
+              foregroundColor: Theme.of(context).colorScheme.onError,
+            ),
+            child: Text(AppLocalizations.of(context)!.delete),
+            onPressed: () async {
+              try {
+                await supabase.functions.invoke('delete-user-account');
+                await supabase.auth.signOut(); // Clean up local session
+              } catch (e) {
+                if (context.mounted) {
+                  showSnackBar(
+                      context, groupDetailScaffoldMessengerKey, AppLocalizations.of(context)!.deleteAccountError);
+                }
+              }
+            },
+          ),
+        ],
+      ),
+    );
   }
 }

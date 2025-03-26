@@ -1,3 +1,8 @@
+import 'dart:io';
+
+import 'package:deun/constants.dart';
+import 'package:deun/widgets/native_ad_block.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:deun/helper/helper.dart';
 import 'package:deun/main.dart';
 import 'package:deun/pages/expenses/expense_model.dart';
@@ -59,6 +64,14 @@ class _GroupDetailState extends ConsumerState<GroupDetail> {
 
   @override
   Widget build(BuildContext context) {
+    Widget adBox;
+    if (kIsWeb) {
+      adBox = SizedBox();
+    } else {
+      adBox = NativeAdBlock(
+        adUnitId: Platform.isAndroid ? MobileAdMobs.androidExpenseList.value : MobileAdMobs.iosExpenseList.value,
+      );
+    }
     return ScaffoldMessenger(
       key: groupDetailScaffoldMessengerKey,
       child: Scaffold(
@@ -144,6 +157,7 @@ class _GroupDetailState extends ConsumerState<GroupDetail> {
                                 child: GroupShareWidget(group: groupDetail));
                           },
                         ),
+                        adBox,
                       ],
                     ),
                   ),

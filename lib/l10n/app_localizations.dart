@@ -887,6 +887,18 @@ abstract class AppLocalizations {
   /// **'Error while requesting the support!'**
   String get contactSendError;
 
+  /// No description provided for @deleteAccount.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete account'**
+  String get deleteAccount;
+
+  /// No description provided for @deleteAccountError.
+  ///
+  /// In en, this message translates to:
+  /// **'Error while trying to delete the user account. Please contact app.deun@gmail.com for support.'**
+  String get deleteAccountError;
+
   /// No description provided for @create.
   ///
   /// In en, this message translates to:

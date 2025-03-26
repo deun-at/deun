@@ -44,21 +44,25 @@ class _GroupBottomSheetState extends ConsumerState<GroupBottomSheet> {
     Future.microtask(() => ref.read(_isLoading.notifier).state = false); // Reset loading state
     Future.microtask(() => ref.read(_isMiniView.notifier).state = false); // Reset loading state
 
-    _draggableScrollableController.addListener(() {
-      final pixelToSize = _draggableScrollableController.pixelsToSize(kIsWeb ? 150 : 190);
-      if (_draggableScrollableController.size <= pixelToSize) {
-        ref.read(_isMiniView.notifier).state = true;
-        _draggableScrollableController.jumpTo(pixelToSize);
-      } else {
-        ref.read(_isMiniView.notifier).state = false;
-      }
-    });
+    _draggableScrollableController.addListener(showMiniViewListener);
   }
 
   @override
   void dispose() {
+    _draggableScrollableController.removeListener(showMiniViewListener);
+    _draggableScrollableController.dispose();
     _searchAnchorController.dispose();
     super.dispose();
+  }
+
+  showMiniViewListener() {
+    final pixelToSize = _draggableScrollableController.pixelsToSize(kIsWeb ? 150 : 190);
+    if (_draggableScrollableController.size <= pixelToSize) {
+      ref.read(_isMiniView.notifier).state = true;
+      _draggableScrollableController.jumpTo(pixelToSize);
+    } else {
+      ref.read(_isMiniView.notifier).state = false;
+    }
   }
 
   Iterable<Widget> getUserSelection(SearchController controller, FormFieldState<dynamic> field) {

@@ -41,12 +41,12 @@ class GroupListNotifier extends _$GroupListNotifier {
               reload(statusFilter);
             })
         .subscribe(
-      (status, object) {
-        if (status == RealtimeSubscribeStatus.channelError) {
-          _subscribeToRealTimeUpdates(statusFilter);
-        }
-      },
-    );
+            // (status, object) {
+            //   if (status == RealtimeSubscribeStatus.channelError) {
+            //     _subscribeToRealTimeUpdates(statusFilter);
+            //   }
+            // },
+            );
   }
 }
 
@@ -85,12 +85,12 @@ class GroupDetailNotifier extends _$GroupDetailNotifier {
               reload(groupId);
             })
         .subscribe(
-      (status, object) {
-        if (status == RealtimeSubscribeStatus.channelError) {
-          _subscribeToRealTimeUpdates(groupId);
-        }
-      },
-    );
+            // (status, object) {
+            //   if (status == RealtimeSubscribeStatus.channelError) {
+            //     _subscribeToRealTimeUpdates(groupId);
+            //   }
+            // },
+            );
   }
 }
 
@@ -122,7 +122,6 @@ class ExpenseListNotifier extends _$ExpenseListNotifier {
   }
 
   void _subscribeToRealTimeUpdates(String groupId) {
-    debugPrint('haaans');
     supabase
         .channel('public:expense_list_checker')
         .onPostgresChanges(
@@ -173,12 +172,12 @@ class ExpenseListNotifier extends _$ExpenseListNotifier {
               }
             })
         .subscribe(
-      (status, object) {
-        if (status == RealtimeSubscribeStatus.channelError) {
-          _subscribeToRealTimeUpdates(groupId);
-        }
-      },
-    );
+            // (status, object) {
+            //   if (status == RealtimeSubscribeStatus.channelError) {
+            //     _subscribeToRealTimeUpdates(groupId);
+            //   }
+            // },
+            );
   }
 
   Future<void> loadMoreEntries(String groupId) async {
@@ -232,12 +231,12 @@ class FriendshipListNotifier extends _$FriendshipListNotifier {
           },
         )
         .subscribe(
-      (status, object) {
-        if (status == RealtimeSubscribeStatus.channelError) {
-          _subscribeToRealTimeUpdates();
-        }
-      },
-    );
+            // (status, object) {
+            //   if (status == RealtimeSubscribeStatus.channelError) {
+            //     _subscribeToRealTimeUpdates();
+            //   }
+            // },
+            );
   }
 }
 
