@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:collection/collection.dart';
 import 'package:deun/helper/helper.dart';
 import 'package:deun/pages/friends/friendship_model.dart';
+import 'package:deun/provider.dart';
 import 'package:deun/widgets/form_loading_widget.dart';
 import 'package:deun/widgets/rounded_container.dart';
 import 'package:deun/widgets/sliver_grab_widget.dart';
@@ -12,6 +13,7 @@ import 'package:flutter_form_builder/flutter_form_builder.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:form_builder_validators/form_builder_validators.dart';
 import 'package:deun/l10n/app_localizations.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../constants.dart';
 import '../../main.dart';
@@ -337,12 +339,12 @@ class _GroupBottomSheetState extends ConsumerState<GroupBottomSheet> {
                           child: FilledButton(
                             onPressed: () async {
                               if (_formKey.currentState!.saveAndValidate()) {
-                                // Group? newGroup;
+                                Group? newGroup;
                                 ref.read(_isLoading.notifier).state = true; // Set loading to true
                                 try {
                                   String groupInsertId =
                                       await Group.saveAll(context, widget.group?.id, _formKey.currentState!.value);
-                                  // newGroup = await Group.fetchDetail(groupInsertId);
+                                  newGroup = await Group.fetchDetail(groupInsertId);
                                   if (context.mounted) {
                                     showSnackBar(context, groupDetailScaffoldMessengerKey,
                                         AppLocalizations.of(context)!.groupCreateSuccess);
@@ -356,17 +358,10 @@ class _GroupBottomSheetState extends ConsumerState<GroupBottomSheet> {
                                   if (mounted) {
                                     ref.read(_isLoading.notifier).state = false; // Stop loading
                                     if (context.mounted) {
-                                      Navigator.pop(context);
-                                      if (widget.group != null) {
-                                        Navigator.pop(context);
+                                      if (newGroup != null) {
+                                        GoRouter.of(context).go("/group");
+                                        GoRouter.of(context).push("/group/details", extra: {'group': newGroup});
                                       }
-                                      // if (newGroup != null) {
-                                      //   debugPrint("New group: ${newGroup.toJson().toString()}");
-                                      //   Future.delayed(Durations.medium1, () {
-                                      //     GoRouter.of(context).go("/group");
-                                      //     GoRouter.of(context).push("/group/details", extra: {'group': newGroup});
-                                      //   });
-                                      // }
                                     }
                                   }
                                 }

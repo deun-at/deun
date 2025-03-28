@@ -1,10 +1,15 @@
+import 'dart:io';
+
+import 'package:deun/constants.dart';
 import 'package:deun/helper/helper.dart';
 import 'package:deun/main.dart';
 import 'package:deun/pages/expenses/expense_entry_model.dart';
 import 'package:deun/pages/groups/group_model.dart';
 import 'package:deun/provider.dart';
 import 'package:deun/widgets/empty_list_widget.dart';
+import 'package:deun/widgets/native_ad_block.dart';
 import 'package:deun/widgets/shimmer_card_list.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:deun/l10n/app_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -32,6 +37,15 @@ class _GroupDetailListState extends ConsumerState<GroupDetailList> {
   Widget build(BuildContext context) {
     ThemeData cardThemeData = Theme.of(context);
     ColorScheme cardColorScheme = cardThemeData.colorScheme;
+
+    Widget adBox;
+    if (kIsWeb) {
+      adBox = SizedBox();
+    } else {
+      adBox = NativeAdBlock(
+        adUnitId: Platform.isAndroid ? MobileAdMobs.androidExpenseList.value : MobileAdMobs.iosExpenseList.value,
+      );
+    }
 
     return Container(
         color: Theme.of(context).colorScheme.surface,
@@ -69,6 +83,7 @@ class _GroupDetailListState extends ConsumerState<GroupDetailList> {
                               return const SizedBox(height: 100);
                             }
 
+                            Widget itemWidget;
                             Expense expense = expenses[index];
                             Widget expenseListItem;
 
@@ -135,7 +150,18 @@ class _GroupDetailListState extends ConsumerState<GroupDetailList> {
                               );
                             }
 
-                            return expenseListItem;
+                            if (index == 5 || (expenses.length < 6 && index == expenses.length - 1)) {
+                              itemWidget = Column(
+                                children: [
+                                  adBox,
+                                  expenseListItem,
+                                ],
+                              );
+                            } else {
+                              itemWidget = expenseListItem;
+                            }
+
+                            return itemWidget;
                           },
                         ),
                         onNotification: (ScrollNotification scrollInfo) {

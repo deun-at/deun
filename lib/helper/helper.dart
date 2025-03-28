@@ -1,5 +1,6 @@
 import 'package:deun/main.dart';
 import 'package:deun/pages/expenses/expense_model.dart';
+import 'package:deun/pages/groups/group_model.dart';
 import 'package:deun/pages/users/user_model.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
@@ -198,10 +199,14 @@ sendContactMail(Map<String, dynamic> contactInfo) async {
   }
 }
 
-navigateToExpense(BuildContext context, Expense expense) {
-  // Navigate to the group expense list first
+navigateToGroup(BuildContext context, Group group) {
+  // Navigate to the group detail page
   GoRouter.of(context).go("/group");
-  GoRouter.of(context).push("/group/details", extra: {'group': expense.group});
+  GoRouter.of(context).push("/group/details", extra: {'group': group});
+}
+
+navigateToExpense(BuildContext context, Expense expense) {
+  navigateToGroup(context, expense.group);
 
   // Delay opening the BottomSheet
   Future.delayed(Durations.medium1, () {

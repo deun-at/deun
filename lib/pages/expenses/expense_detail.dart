@@ -1,5 +1,4 @@
 import 'package:deun/helper/helper.dart';
-import 'package:deun/navigation.dart';
 import 'package:deun/widgets/form_loading_widget.dart';
 import 'package:deun/widgets/rounded_container.dart';
 import 'package:deun/widgets/sliver_grab_widget.dart';
@@ -76,12 +75,14 @@ class _ExpenseBottomSheetState extends ConsumerState<ExpenseBottomSheet> {
   }
 
   showMiniViewListener() {
-    final pixelToSize = _draggableScrollableController.pixelsToSize(kIsWeb ? 150 : 190);
-    if (_draggableScrollableController.size <= pixelToSize) {
-      ref.read(_isMiniView.notifier).state = true;
-      _draggableScrollableController.jumpTo(pixelToSize);
-    } else {
-      ref.read(_isMiniView.notifier).state = false;
+    if (mounted) {
+      final pixelToSize = _draggableScrollableController.pixelsToSize(kIsWeb ? 150 : 190);
+      if (_draggableScrollableController.size <= pixelToSize) {
+        ref.read(_isMiniView.notifier).state = true;
+        _draggableScrollableController.jumpTo(pixelToSize);
+      } else {
+        ref.read(_isMiniView.notifier).state = false;
+      }
     }
   }
 
@@ -171,7 +172,6 @@ class _ExpenseBottomSheetState extends ConsumerState<ExpenseBottomSheet> {
                   }
                 } finally {
                   if (mounted) {
-                    ref.read(_isLoading.notifier).state = false; // Stop loading
                     if (context.mounted) {
                       Navigator.pop(context);
                     }

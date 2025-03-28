@@ -22,8 +22,8 @@ class _NativeAdBlockState extends State<NativeAdBlock> {
         constraints: const BoxConstraints(
           minWidth: double.infinity,
           maxWidth: double.infinity,
-          minHeight: 120,
-          maxHeight: 120,
+          minHeight: 50,
+          maxHeight: 100,
         ),
         child: Padding(
           padding: EdgeInsets.only(left: 5, right: 5),

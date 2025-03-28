@@ -294,11 +294,20 @@ class _NavigationScreenState extends ConsumerState<NavigationScreen> {
 
   void _handleMessage(RemoteMessage message) async {
     // debugPrint('handle message: ${message.data.toString()}');
-    if (message.data['type'] == 'expense') {
-      Expense expense = await Expense.fetchDetail(message.data['expense_id']);
-      navigateToExpense(_rootNavigatorKey.currentContext!, expense);
-    } else if (message.data['type'] == 'friendship') {
-      navigateToFriends(_rootNavigatorKey.currentContext!);
+    switch (message.data['type']) {
+      case 'group':
+        Group group = await Group.fetchDetail(message.data['group_id']);
+        navigateToGroup(_rootNavigatorKey.currentContext!, group);
+        break;
+      case 'expense':
+        Expense expense = await Expense.fetchDetail(message.data['expense_id']);
+        navigateToExpense(_rootNavigatorKey.currentContext!, expense);
+        break;
+      case 'friendship':
+        navigateToFriends(_rootNavigatorKey.currentContext!);
+        break;
+      default:
+        break;
     }
   }
 

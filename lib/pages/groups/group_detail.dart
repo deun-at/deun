@@ -64,14 +64,6 @@ class _GroupDetailState extends ConsumerState<GroupDetail> {
 
   @override
   Widget build(BuildContext context) {
-    Widget adBox;
-    if (kIsWeb) {
-      adBox = SizedBox();
-    } else {
-      adBox = NativeAdBlock(
-        adUnitId: Platform.isAndroid ? MobileAdMobs.androidExpenseList.value : MobileAdMobs.iosExpenseList.value,
-      );
-    }
     return ScaffoldMessenger(
       key: groupDetailScaffoldMessengerKey,
       child: Scaffold(
@@ -157,12 +149,13 @@ class _GroupDetailState extends ConsumerState<GroupDetail> {
                                 child: GroupShareWidget(group: groupDetail));
                           },
                         ),
-                        adBox,
                       ],
                     ),
                   ),
                 ],
-                body: GroupDetailList(group: widget.group),
+                body: SafeArea(
+                  child: GroupDetailList(group: widget.group),
+                ),
               ),
               onNotification: (ScrollUpdateNotification notification) {
                 final FocusScopeNode currentScope = FocusScope.of(context);
