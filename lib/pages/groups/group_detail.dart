@@ -79,6 +79,7 @@ class _GroupDetailState extends ConsumerState<GroupDetail> {
         body: Hero(
           tag: "group_detail_${widget.group.id}",
           child: Material(
+            color: Theme.of(context).colorScheme.surfaceContainer,
             child: NotificationListener<ScrollUpdateNotification>(
               child: NestedScrollView(
                 physics: const BouncingScrollPhysics(),
