@@ -71,7 +71,7 @@ class _NativeAdBlockState extends State<NativeAdBlock> {
 
   @override
   void dispose() {
-    super.dispose();
     _nativeAd?.dispose();
+    super.dispose();
   }
 }

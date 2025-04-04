@@ -1,14 +1,14 @@
 import 'dart:io';
 
 import 'package:deun/constants.dart';
-import 'package:deun/widgets/native_ad_block.dart';
-import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:deun/helper/helper.dart';
 import 'package:deun/main.dart';
 import 'package:deun/pages/expenses/expense_model.dart';
 import 'package:deun/pages/groups/group_detail_list.dart';
 import 'package:deun/pages/groups/group_list.dart';
+import 'package:deun/widgets/native_ad_block.dart';
 import 'package:deun/widgets/shimmer_card_list.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:deun/l10n/app_localizations.dart';
@@ -31,12 +31,21 @@ class _GroupDetailState extends ConsumerState<GroupDetail> {
   final ScrollController _scrollController = ScrollController();
   final SearchController _searchController = SearchController();
   int oldLength = 0;
+  Widget? _adBox;
   bool _showText = true;
 
   @override
   void initState() {
     super.initState();
     _scrollController.addListener(_handleScroll);
+
+    if (kIsWeb) {
+      _adBox = SizedBox();
+    } else {
+      _adBox = NativeAdBlock(
+        adUnitId: Platform.isAndroid ? MobileAdMobs.androidExpenseList.value : MobileAdMobs.iosExpenseList.value,
+      );
+    }
   }
 
   @override
@@ -154,7 +163,11 @@ class _GroupDetailState extends ConsumerState<GroupDetail> {
                   ),
                 ],
                 body: SafeArea(
-                  child: GroupDetailList(group: widget.group),
+                  top: false,
+                  child: GroupDetailList(
+                    group: widget.group,
+                    adBox: _adBox,
+                  ),
                 ),
               ),
               onNotification: (ScrollUpdateNotification notification) {

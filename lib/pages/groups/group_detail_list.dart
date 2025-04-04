@@ -1,15 +1,10 @@
-import 'dart:io';
-
-import 'package:deun/constants.dart';
 import 'package:deun/helper/helper.dart';
 import 'package:deun/main.dart';
 import 'package:deun/pages/expenses/expense_entry_model.dart';
 import 'package:deun/pages/groups/group_model.dart';
 import 'package:deun/provider.dart';
 import 'package:deun/widgets/empty_list_widget.dart';
-import 'package:deun/widgets/native_ad_block.dart';
 import 'package:deun/widgets/shimmer_card_list.dart';
-import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:deun/l10n/app_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -18,9 +13,10 @@ import 'package:go_router/go_router.dart';
 import '../expenses/expense_model.dart';
 
 class GroupDetailList extends ConsumerStatefulWidget {
-  const GroupDetailList({super.key, required this.group});
+  const GroupDetailList({super.key, required this.group, this.adBox});
 
   final Group group;
+  final Widget? adBox;
 
   @override
   ConsumerState<GroupDetailList> createState() => _GroupDetailListState();
@@ -37,15 +33,6 @@ class _GroupDetailListState extends ConsumerState<GroupDetailList> {
   Widget build(BuildContext context) {
     ThemeData cardThemeData = Theme.of(context);
     ColorScheme cardColorScheme = cardThemeData.colorScheme;
-
-    Widget adBox;
-    if (kIsWeb) {
-      adBox = SizedBox();
-    } else {
-      adBox = NativeAdBlock(
-        adUnitId: Platform.isAndroid ? MobileAdMobs.androidExpenseList.value : MobileAdMobs.iosExpenseList.value,
-      );
-    }
 
     return Container(
         color: Theme.of(context).colorScheme.surface,
@@ -80,7 +67,7 @@ class _GroupDetailListState extends ConsumerState<GroupDetailList> {
                           itemCount: expenses.length + 1,
                           itemBuilder: (context, index) {
                             if (index == expenses.length) {
-                              return const SizedBox(height: 100);
+                              return const SizedBox(height: 90);
                             }
 
                             Widget itemWidget;
@@ -153,7 +140,7 @@ class _GroupDetailListState extends ConsumerState<GroupDetailList> {
                             if (index == 5 || (expenses.length < 6 && index == expenses.length - 1)) {
                               itemWidget = Column(
                                 children: [
-                                  adBox,
+                                  widget.adBox ?? SizedBox(),
                                   expenseListItem,
                                 ],
                               );

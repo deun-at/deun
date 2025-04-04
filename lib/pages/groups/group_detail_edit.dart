@@ -3,7 +3,6 @@ import 'dart:convert';
 import 'package:collection/collection.dart';
 import 'package:deun/helper/helper.dart';
 import 'package:deun/pages/friends/friendship_model.dart';
-import 'package:deun/provider.dart';
 import 'package:deun/widgets/form_loading_widget.dart';
 import 'package:deun/widgets/rounded_container.dart';
 import 'package:deun/widgets/sliver_grab_widget.dart';

@@ -25,10 +25,19 @@ class GroupList extends ConsumerStatefulWidget {
 class _GroupListState extends ConsumerState<GroupList> {
   final ScrollController _scrollController = ScrollController();
   String groupListFilter = "active";
+  Widget? _adBox;
 
   @override
   void initState() {
     super.initState();
+
+    if (kIsWeb) {
+      _adBox = SizedBox();
+    } else {
+      _adBox = NativeAdBlock(
+        adUnitId: Platform.isAndroid ? MobileAdMobs.androidGroupList.value : MobileAdMobs.iosGroupList.value,
+      );
+    }
   }
 
   Future<void> updateGroupList() async {
@@ -38,16 +47,6 @@ class _GroupListState extends ConsumerState<GroupList> {
   @override
   Widget build(BuildContext context) {
     final groupList = ref.watch(groupListNotifierProvider(groupListFilter));
-
-    Widget adBox;
-
-    if (kIsWeb) {
-      adBox = SizedBox();
-    } else {
-      adBox = NativeAdBlock(
-        adUnitId: Platform.isAndroid ? MobileAdMobs.androidGroupList.value : MobileAdMobs.iosGroupList.value,
-      );
-    }
 
     return ScaffoldMessenger(
       key: groupListScaffoldMessengerKey,
@@ -122,10 +121,10 @@ class _GroupListState extends ConsumerState<GroupList> {
                             Group group = value[index];
                             GroupListItem groupListItem = GroupListItem(group: group);
 
-                            if (index == 5 || (value.length < 6 && index == value.length - 1)) {
+                            if ((index == 5 || (value.length < 6 && index == value.length - 1)) && _adBox != null) {
                               itemWidget = Column(
                                 children: [
-                                  adBox,
+                                  _adBox!,
                                   groupListItem,
                                 ],
                               );
