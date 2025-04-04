@@ -14,10 +14,11 @@ class _SlidingGradientTransform extends GradientTransform {
 }
 
 class ShimmerCardList extends StatefulWidget {
-  const ShimmerCardList({super.key, required this.height, required this.listEntryLength});
+  const ShimmerCardList({super.key, required this.height, required this.listEntryLength, this.isNegative = false});
 
   final double height;
   final int listEntryLength;
+  final bool isNegative;
 
   @override
   State<StatefulWidget> createState() => ShimmerCardListState();
@@ -39,21 +40,38 @@ class ShimmerCardListState extends State<ShimmerCardList> with SingleTickerProvi
     super.dispose();
   }
 
-  LinearGradient get gradient => LinearGradient(
-        colors: [
-          Theme.of(context).colorScheme.surfaceContainer,
-          Theme.of(context).colorScheme.surfaceContainerHighest,
-          Theme.of(context).colorScheme.surfaceContainer,
-        ],
-        stops: const [
-          0,
-          0.2,
-          0.3,
-        ],
-        begin: const Alignment(-1.0, -0.3),
-        end: const Alignment(1.0, 0.3),
-        transform: _SlidingGradientTransform(slidePercent: _shimmerController.value),
-      );
+  LinearGradient get gradient {
+    ThemeData themeData = Theme.of(context);
+
+    Color color;
+    Color shimmerColor;
+
+    if (!widget.isNegative) {
+      color = themeData.colorScheme.surfaceContainer;
+      shimmerColor = themeData.colorScheme.surfaceContainerHighest;
+    } else {
+      color = themeData.brightness == Brightness.light
+          ? themeData.colorScheme.surfaceContainerLowest
+          : themeData.colorScheme.surfaceContainerHighest;
+      shimmerColor = themeData.colorScheme.surfaceContainer;
+    }
+
+    return LinearGradient(
+      colors: [
+        color,
+        shimmerColor,
+        color,
+      ],
+      stops: const [
+        0,
+        0.2,
+        0.3,
+      ],
+      begin: const Alignment(-1.0, -0.3),
+      end: const Alignment(1.0, 0.3),
+      transform: _SlidingGradientTransform(slidePercent: _shimmerController.value),
+    );
+  }
 
   Listenable get shimmerChanges => _shimmerController;
 

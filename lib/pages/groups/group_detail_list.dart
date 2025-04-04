@@ -32,142 +32,140 @@ class _GroupDetailListState extends ConsumerState<GroupDetailList> {
   @override
   Widget build(BuildContext context) {
     ThemeData cardThemeData = Theme.of(context);
-    ColorScheme cardColorScheme = cardThemeData.colorScheme;
+    Color cardColor = cardThemeData.brightness == Brightness.light
+        ? cardThemeData.colorScheme.surfaceContainerLowest
+        : cardThemeData.colorScheme.surfaceContainerHighest;
 
     return Container(
-        color: Theme.of(context).colorScheme.surface,
-        child: Consumer(
-          builder: (context, ref, child) {
-            final isLoading = ref.watch(expenseListNotifierProvider(widget.group.id)).isLoading;
-            final expenses = ref.watch(expenseListNotifierProvider(widget.group.id)).value;
-            oldOffset = ref.read(expenseListNotifierProvider(widget.group.id).notifier).offset;
+      color: Theme.of(context).colorScheme.surfaceContainer,
+      child: Consumer(
+        builder: (context, ref, child) {
+          final isLoading = ref.watch(expenseListNotifierProvider(widget.group.id)).isLoading;
+          final expenses = ref.watch(expenseListNotifierProvider(widget.group.id)).value;
+          oldOffset = ref.read(expenseListNotifierProvider(widget.group.id).notifier).offset;
 
-            if (isLoading) {
-              return const ShimmerCardList(
-                height: 120,
-                listEntryLength: 8,
-              );
-            }
+          if (isLoading) {
+            return const ShimmerCardList(height: 80, listEntryLength: 8, isNegative: true);
+          }
 
-            return expenses!.isEmpty
-                ? EmptyListWidget(
-                    label: AppLocalizations.of(context)!.groupExpenseNoEntries,
-                    onRefresh: () async {
-                      await updateExpenseList();
-                    })
-                : RefreshIndicator(
-                    onRefresh: () async {
-                      await updateExpenseList();
-                    },
-                    child: Padding(
-                      padding: const EdgeInsets.only(right: 8.0, left: 8.0),
-                      child: NotificationListener<ScrollNotification>(
-                        child: ListView.builder(
-                          padding: EdgeInsets.zero,
-                          itemCount: expenses.length + 1,
-                          itemBuilder: (context, index) {
-                            if (index == expenses.length) {
-                              return const SizedBox(height: 90);
-                            }
-
-                            Widget itemWidget;
-                            Expense expense = expenses[index];
-                            Widget expenseListItem;
-
-                            if (expense.isPaidBackRow) {
-                              String? currentUserEmail = supabase.auth.currentUser?.email;
-                              ExpenseEntryShare paidBackEntryShare =
-                                  expense.expenseEntries.entries.first.value.expenseEntryShares.first;
-
-                              String paidByDisplayName = expense.paidBy == currentUserEmail
-                                  ? AppLocalizations.of(context)!.you
-                                  : (expense.paidByDisplayName ?? "");
-                              String paidToDisplayName = paidBackEntryShare.email == currentUserEmail
-                                  ? AppLocalizations.of(context)!.you
-                                  : paidBackEntryShare.displayName;
-
-                              expenseListItem = SizedBox(
-                                width: double.infinity,
-                                child: Card(
-                                  elevation: 5,
-                                  shadowColor: Colors.transparent,
-                                  surfaceTintColor: cardColorScheme.primary,
-                                  child: Padding(
-                                    padding: const EdgeInsets.fromLTRB(10, 5, 10, 5),
-                                    child: Text(AppLocalizations.of(context)!
-                                        .groupDisplayPaidBack(paidByDisplayName, paidToDisplayName, expense.amount)),
-                                  ),
-                                ),
-                              );
-                            } else {
-                              expenseListItem = Card(
-                                elevation: 5,
-                                shadowColor: Colors.transparent,
-                                surfaceTintColor: cardColorScheme.primary,
-                                child: InkWell(
-                                  borderRadius: BorderRadius.circular(12.0),
-                                  onTap: () {
-                                    GoRouter.of(context).push(
-                                      "/group/details/expense",
-                                      extra: {'group': widget.group, 'expense': expense},
-                                    );
-                                  },
-                                  child: Padding(
-                                    padding: const EdgeInsets.fromLTRB(10, 5, 10, 5),
-                                    child: Column(
-                                      children: [
-                                        Row(
-                                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                            crossAxisAlignment: CrossAxisAlignment.start,
-                                            children: [
-                                              Flexible(
-                                                  child: Text(
-                                                expense.name,
-                                                style: Theme.of(context).textTheme.headlineMedium,
-                                                overflow: TextOverflow.ellipsis,
-                                              )),
-                                              Text(formatDate(expense.expenseDate),
-                                                  style: Theme.of(context).textTheme.bodySmall)
-                                            ]),
-                                        ExpenseShareWidget(expense: expense),
-                                      ],
-                                    ),
-                                  ),
-                                ),
-                              );
-                            }
-
-                            if (index == 5 || (expenses.length < 6 && index == expenses.length - 1)) {
-                              itemWidget = Column(
-                                children: [
-                                  widget.adBox ?? SizedBox(),
-                                  expenseListItem,
-                                ],
-                              );
-                            } else {
-                              itemWidget = expenseListItem;
-                            }
-
-                            return itemWidget;
-                          },
-                        ),
-                        onNotification: (ScrollNotification scrollInfo) {
-                          if (scrollInfo.metrics.pixels >
-                              scrollInfo.metrics.maxScrollExtent - MediaQuery.of(context).size.height) {
-                            if (oldOffset == ref.read(expenseListNotifierProvider(widget.group.id).notifier).offset) {
-                              // make sure ListView has newest data after previous loadMore
-                              ref
-                                  .read(expenseListNotifierProvider(widget.group.id).notifier)
-                                  .loadMoreEntries(widget.group.id);
-                            }
+          return expenses!.isEmpty
+              ? EmptyListWidget(
+                  label: AppLocalizations.of(context)!.groupExpenseNoEntries,
+                  onRefresh: () async {
+                    await updateExpenseList();
+                  })
+              : RefreshIndicator(
+                  onRefresh: () async {
+                    await updateExpenseList();
+                  },
+                  child: Padding(
+                    padding: const EdgeInsets.only(right: 8.0, left: 8.0),
+                    child: NotificationListener<ScrollNotification>(
+                      child: ListView.builder(
+                        padding: EdgeInsets.zero,
+                        itemCount: expenses.length + 1,
+                        itemBuilder: (context, index) {
+                          if (index == expenses.length) {
+                            return const SizedBox(height: 90);
                           }
-                          return false;
+
+                          Widget itemWidget;
+                          Expense expense = expenses[index];
+                          Widget expenseListItem;
+
+                          if (expense.isPaidBackRow) {
+                            String? currentUserEmail = supabase.auth.currentUser?.email;
+                            ExpenseEntryShare paidBackEntryShare =
+                                expense.expenseEntries.entries.first.value.expenseEntryShares.first;
+
+                            String paidByDisplayName = expense.paidBy == currentUserEmail
+                                ? AppLocalizations.of(context)!.you
+                                : (expense.paidByDisplayName ?? "");
+                            String paidToDisplayName = paidBackEntryShare.email == currentUserEmail
+                                ? AppLocalizations.of(context)!.you
+                                : paidBackEntryShare.displayName;
+
+                            expenseListItem = SizedBox(
+                              width: double.infinity,
+                              child: Card(
+                                elevation: 0,
+                                color: cardColor,
+                                child: Padding(
+                                  padding: const EdgeInsets.fromLTRB(10, 5, 10, 5),
+                                  child: Text(AppLocalizations.of(context)!
+                                      .groupDisplayPaidBack(paidByDisplayName, paidToDisplayName, expense.amount)),
+                                ),
+                              ),
+                            );
+                          } else {
+                            expenseListItem = Card(
+                              elevation: 0,
+                              color: cardColor,
+                              child: InkWell(
+                                borderRadius: BorderRadius.circular(12.0),
+                                onTap: () {
+                                  GoRouter.of(context).push(
+                                    "/group/details/expense",
+                                    extra: {'group': widget.group, 'expense': expense},
+                                  );
+                                },
+                                child: Padding(
+                                  padding: const EdgeInsets.fromLTRB(10, 5, 10, 5),
+                                  child: Column(
+                                    children: [
+                                      Row(
+                                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          children: [
+                                            Flexible(
+                                                child: Text(
+                                              expense.name,
+                                              style: Theme.of(context).textTheme.headlineMedium,
+                                              overflow: TextOverflow.ellipsis,
+                                            )),
+                                            Text(formatDate(expense.expenseDate),
+                                                style: Theme.of(context).textTheme.bodySmall)
+                                          ]),
+                                      ExpenseShareWidget(expense: expense),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            );
+                          }
+
+                          if (index == 5 || (expenses.length < 6 && index == expenses.length - 1)) {
+                            itemWidget = Column(
+                              children: [
+                                widget.adBox ?? SizedBox(),
+                                expenseListItem,
+                              ],
+                            );
+                          } else {
+                            itemWidget = expenseListItem;
+                          }
+
+                          return itemWidget;
                         },
                       ),
+                      onNotification: (ScrollNotification scrollInfo) {
+                        if (scrollInfo.metrics.pixels >
+                            scrollInfo.metrics.maxScrollExtent - MediaQuery.of(context).size.height) {
+                          if (oldOffset == ref.read(expenseListNotifierProvider(widget.group.id).notifier).offset) {
+                            // make sure ListView has newest data after previous loadMore
+                            ref
+                                .read(expenseListNotifierProvider(widget.group.id).notifier)
+                                .loadMoreEntries(widget.group.id);
+                          }
+                        }
+                        return false;
+                      },
                     ),
-                  );
-          },
-        ));
+                  ),
+                );
+        },
+      ),
+    );
   }
 }
 

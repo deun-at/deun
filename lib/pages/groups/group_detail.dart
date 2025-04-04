@@ -86,6 +86,7 @@ class _GroupDetailState extends ConsumerState<GroupDetail> {
                 headerSliverBuilder: (context, innerBoxIsScrolled) => [
                   SliverAppBar.medium(
                     title: Text(widget.group.name, maxLines: 1, overflow: TextOverflow.ellipsis),
+                    backgroundColor: Theme.of(context).colorScheme.surfaceContainer,
                     actions: [
                       SearchAnchor(
                         builder: (context, controller) {
@@ -118,47 +119,44 @@ class _GroupDetailState extends ConsumerState<GroupDetail> {
                     ],
                   ),
                   SliverToBoxAdapter(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Consumer(
-                          builder: (ctx, watch, child) {
-                            final isLoading = ref.watch(groupDetailNotifierProvider(widget.group.id)).isLoading;
-                            final groupDetail = ref.watch(groupDetailNotifierProvider(widget.group.id)).value;
+                    child: Container(
+                      color: Theme.of(context).colorScheme.surfaceContainer,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Consumer(
+                            builder: (ctx, watch, child) {
+                              final isLoading = ref.watch(groupDetailNotifierProvider(widget.group.id)).isLoading;
+                              final groupDetail = ref.watch(groupDetailNotifierProvider(widget.group.id)).value;
 
-                            if (isLoading || groupDetail == null) {
-                              return const Padding(
-                                padding: EdgeInsets.fromLTRB(5.0, 5.0, 5.0, 5.0),
-                                child: Column(
-                                  mainAxisAlignment: MainAxisAlignment.start,
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    SizedBox(
-                                        height: 25,
+                              if (isLoading || groupDetail == null) {
+                                return const Padding(
+                                  padding: EdgeInsets.fromLTRB(5.0, 5.0, 5.0, 5.0),
+                                  child: Column(
+                                    mainAxisAlignment: MainAxisAlignment.start,
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      SizedBox(
+                                          height: 25,
+                                          width: 250,
+                                          child: ShimmerCardList(height: 15, listEntryLength: 1, isNegative: true)),
+                                      SizedBox(
+                                        height: 37,
                                         width: 250,
-                                        child: ShimmerCardList(
-                                          height: 15,
-                                          listEntryLength: 1,
-                                        )),
-                                    SizedBox(
-                                      height: 37,
-                                      width: 250,
-                                      child: ShimmerCardList(
-                                        height: 10,
-                                        listEntryLength: 2,
+                                        child: ShimmerCardList(height: 10, listEntryLength: 2, isNegative: true),
                                       ),
-                                    ),
-                                  ],
-                                ),
-                              );
-                            }
+                                    ],
+                                  ),
+                                );
+                              }
 
-                            return Padding(
-                                padding: const EdgeInsets.fromLTRB(16.0, 5.0, 16.0, 5.0),
-                                child: GroupShareWidget(group: groupDetail));
-                          },
-                        ),
-                      ],
+                              return Padding(
+                                  padding: const EdgeInsets.fromLTRB(16.0, 5.0, 16.0, 5.0),
+                                  child: GroupShareWidget(group: groupDetail));
+                            },
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 ],

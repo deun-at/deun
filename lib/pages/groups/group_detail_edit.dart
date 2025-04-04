@@ -59,6 +59,7 @@ class _GroupBottomSheetState extends ConsumerState<GroupBottomSheet> {
   showMiniViewListener() {
     final pixelToSize = _draggableScrollableController.pixelsToSize(kIsWeb ? 150 : 190);
     if (_draggableScrollableController.size <= pixelToSize) {
+      FocusScope.of(context).unfocus();
       ref.read(_isMiniView.notifier).state = true;
       _draggableScrollableController.jumpTo(pixelToSize);
     } else {
