@@ -28,6 +28,8 @@ class _SettingState extends ConsumerState<Setting> {
   // tells us if the user is under the GDPR
   late final Future<bool> _future;
 
+  List<String> localeOptions = AppLocalizations.supportedLocales.map((l) => l.toLanguageTag()).toList();
+
   @override
   void initState() {
     super.initState();
@@ -39,6 +41,15 @@ class _SettingState extends ConsumerState<Setting> {
   Widget build(BuildContext context) {
     const double spacing = 8;
     const double heightSpacing = 12;
+
+    String? initialLocale;
+    Locale currentLocale = Localizations.localeOf(context);
+
+    bool isSupported = AppLocalizations.supportedLocales.contains(currentLocale);
+
+    if (isSupported) {
+      initialLocale = currentLocale.toLanguageTag();
+    }
 
     return Scaffold(
       body: NotificationListener<ScrollUpdateNotification>(
@@ -199,6 +210,27 @@ class _SettingState extends ConsumerState<Setting> {
                                           onChanged: (value) => field.didChange(value),
                                         ),
                                       ),
+                                      const SizedBox(height: heightSpacing),
+                                      FormBuilderDropdown(
+                                        name: 'locale',
+                                        decoration: InputDecoration(
+                                          labelText: AppLocalizations.of(context)!.settingsLocale,
+                                          border: const OutlineInputBorder(),
+                                        ),
+                                        initialValue: initialLocale,
+                                        items: [
+                                          DropdownMenuItem(
+                                            value: null,
+                                            child: Text(AppLocalizations.of(context)!.localeSelectorSystem),
+                                          ),
+                                          ...localeOptions.map(
+                                            (locale) => DropdownMenuItem(
+                                              value: locale,
+                                              child: Text(AppLocalizations.of(context)!.localeSelector(locale)),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
                                     ],
                                   ),
                                 ),
@@ -215,12 +247,21 @@ class _SettingState extends ConsumerState<Setting> {
                                       if (context.mounted) {
                                         showSnackBar(context, rootScaffoldMessengerKey,
                                             AppLocalizations.of(context)!.settingsUserUpdateSuccess);
+
+                                        if (_formKey.currentState!.value['locale'] == null) {
+                                          ref.read(localeNotifierProvider.notifier).resetLocale();
+                                        } else {
+                                          ref
+                                              .read(localeNotifierProvider.notifier)
+                                              .setLocale(Locale(_formKey.currentState!.value['locale']));
+                                        }
                                       }
                                     } catch (e) {
                                       if (context.mounted) {
                                         showSnackBar(context, rootScaffoldMessengerKey,
                                             AppLocalizations.of(context)!.settingsUserUpdateError);
                                       }
+                                      debugPrint(e.toString());
                                     } finally {
                                       if (mounted) {
                                         if (context.mounted) {

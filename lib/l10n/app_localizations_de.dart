@@ -9,22 +9,22 @@ class AppLocalizationsDe extends AppLocalizations {
   AppLocalizationsDe([String locale = 'de']) : super(locale);
 
   @override
-  String get addNewGroup => 'New group';
+  String get addNewGroup => 'Neue Gruppe';
 
   @override
-  String get addNewExpense => 'New expense';
+  String get addNewExpense => 'Neue Ausgabe';
 
   @override
-  String get groups => 'Groups';
+  String get groups => 'Gruppen';
 
   @override
   String groupListFilter(String filter) {
     String _temp0 = intl.Intl.selectLogic(
       filter,
       {
-        'all': 'all',
-        'active': 'open',
-        'done': 'done',
+        'all': 'alle',
+        'active': 'offen',
+        'done': 'abgeschlossen',
         'other': '',
       },
     );
@@ -32,145 +32,145 @@ class AppLocalizationsDe extends AppLocalizations {
   }
 
   @override
-  String get createGroup => 'Create group';
+  String get createGroup => 'Gruppe erstellen';
 
   @override
-  String get editGroup => 'Edit group';
+  String get editGroup => 'Gruppe bearbeiten';
 
   @override
   String get groupName => 'Name';
 
   @override
-  String get addGroupTitle => 'Add title';
+  String get addGroupTitle => 'Titel hinzufügen';
 
   @override
-  String get groupNameValidationEmpty => 'Please enter a name';
+  String get groupNameValidationEmpty => 'Bitte gib einen Namen ein!';
 
   @override
-  String get groupSimplifiedExpensesTitle => 'Activate simplified expenses';
+  String get groupSimplifiedExpensesTitle => 'Vereinfachte Ausgaben aktivieren';
 
   @override
-  String get expenseDateValidationEmpty => 'Please enter a date';
+  String get expenseDateValidationEmpty => 'Bitte gib ein Datum ein!';
 
   @override
-  String get groupDeleteItemTitle => 'Delete this group?';
+  String get groupDeleteItemTitle => 'Diese Gruppe löschen?';
 
   @override
-  String get groupNoEntries => 'Add a group to get started.\nIf you are already in groups find them under all!';
+  String get groupNoEntries => 'Füge eine Gruppe hinzu, um zu starten.';
 
   @override
-  String get groupEntriesError => 'Something went wrong with loading Groups.';
+  String get groupEntriesError => 'Es trat ein Problem beim Laden der Gruppen auf.';
 
   @override
-  String get groupMemberSelectionEmpty => 'Search friends';
+  String get groupMemberSelectionEmpty => 'Freunde suchen';
 
   @override
-  String get groupMemberAddFriends => 'Add friends';
+  String get groupMemberAddFriends => 'Freunde hinzufügen';
 
   @override
-  String get groupMemberSelectionTitle => 'Added friends';
+  String get groupMemberSelectionTitle => 'Hinzugefügte Freunde';
 
   @override
-  String get groupMemberResultEmpty => 'No friends found!';
+  String get groupMemberResultEmpty => 'Keine Freunde gefunden!';
 
   @override
-  String get groupExpenseNoEntries => 'Add an expense to get started';
+  String get groupExpenseNoEntries => 'Füge eine Ausgabe hinzu, um zu starten.';
 
   @override
-  String get groupDeleteError => 'Error while deleting group!';
+  String get groupDeleteError => 'Fehler beim Löschen der Gruppe!';
 
   @override
-  String get groupDeleteSuccess => 'Group deleted!';
+  String get groupDeleteSuccess => 'Gruppe gelöscht!';
 
   @override
-  String get groupCreateError => 'Error while creating group!';
+  String get groupCreateError => 'Fehler beim Erstellen der Gruppe!';
 
   @override
-  String get groupCreateSuccess => 'Group created!';
+  String get groupCreateSuccess => 'Gruppe erstellt!';
 
   @override
-  String get expenses => 'Expenses';
+  String get expenses => 'Ausgaben';
 
   @override
-  String get expensesSearchTitle => 'Search';
+  String get expensesSearchTitle => 'Suche';
 
   @override
-  String get expensesSearchDescription => 'Search for expenses';
+  String get expensesSearchDescription => 'Nach Ausgaben suchen';
 
   @override
-  String get expensesSearchEmpty => 'No results found';
+  String get expensesSearchEmpty => 'Keine Ergebnisse gefunden!';
 
   @override
-  String get createExpense => 'Create expense';
+  String get createExpense => 'Ausgabe erstellen';
 
   @override
-  String get editExpense => 'Edit expense';
+  String get editExpense => 'Ausgabe bearbeiten';
 
   @override
-  String get addExpenseTitle => 'Add title';
+  String get addExpenseTitle => 'Titel hinzufügen';
 
   @override
-  String get expenseName => 'Description';
+  String get expenseName => 'Beschreibung';
 
   @override
-  String get expenseNameValidationEmpty => 'Please enter a title';
+  String get expenseNameValidationEmpty => 'Bitte gib einen Titel ein!';
 
   @override
-  String get expenseAmount => 'Amount';
+  String get expenseAmount => 'Betrag';
 
   @override
-  String get expenseAmountValidationEmpty => 'Please enter an amount';
+  String get expenseAmountValidationEmpty => 'Bitte gib einen Betrag ein!';
 
   @override
-  String get expenseDate => 'When did it happen?';
+  String get expenseDate => 'Wann wurde gezahlt?';
 
   @override
-  String get expensePaidBy => 'Who paid?';
+  String get expensePaidBy => 'Wer hat gezahlt?';
 
   @override
-  String get expenseEntryTitle => 'Add item title';
+  String get expenseEntryTitle => 'Eintrag Titel hinzufügen';
 
   @override
-  String get addNewExpenseEntry => 'Add item';
+  String get addNewExpenseEntry => 'Eintrag hinzufügen';
 
   @override
   String get expenseEntryName => 'Name';
 
   @override
-  String get expenseEntryNameValidationEmpty => 'Please enter an item title';
+  String get expenseEntryNameValidationEmpty => 'Bitte gib einen Eintrag Titel ein!';
 
   @override
-  String get expenseEntryAmount => 'Amount';
+  String get expenseEntryAmount => 'Betrag';
 
   @override
-  String get expenseEntryAmountValidationEmpty => 'Please enter an amount';
+  String get expenseEntryAmountValidationEmpty => 'Bitte gib einen Betrag ein!';
 
   @override
-  String get expenseEntrySharesLable => 'Who used it?';
+  String get expenseEntrySharesLable => 'Wer war dabei?';
 
   @override
-  String get expenseEntrySharesValidationEmpty => 'Please select at least one person';
+  String get expenseEntrySharesValidationEmpty => 'Bitte wähle mindestens eine Person aus!';
 
   @override
-  String get expenseDeleteItemTitle => 'Delete this expense?';
+  String get expenseDeleteItemTitle => 'Diese Ausgabe löschen?';
 
   @override
-  String get expenseDeleteError => 'Error while deleting expense!';
+  String get expenseDeleteError => 'Fehler beim Löschen der Ausgabe!';
 
   @override
-  String get expenseDeleteSuccess => 'Expense deleted!';
+  String get expenseDeleteSuccess => 'Ausgabe gelöscht!';
 
   @override
-  String get expenseCreateError => 'Error while creating expense!';
+  String get expenseCreateError => 'Fehler beim Erstellen der Ausgabe!';
 
   @override
-  String get expenseCreateSuccess => 'Expense created!';
+  String get expenseCreateSuccess => 'Ausgabe erstellt!';
 
   @override
-  String get expenseNoEntries => 'So empty here :(';
+  String get expenseNoEntries => 'So leer hier :(';
 
   @override
-  String expenseDisplayAmount(String displayName, String expenseType, double amount) {
+  String expenseDisplayAmount(String displayNameYourself, String displayName, String expenseType, double amount) {
     final intl.NumberFormat amountNumberFormat = intl.NumberFormat.currency(
       locale: localeName,
       decimalDigits: 2,
@@ -179,19 +179,26 @@ class AppLocalizationsDe extends AppLocalizations {
     final String amountString = amountNumberFormat.format(amount);
 
     String _temp0 = intl.Intl.selectLogic(
+      displayNameYourself,
+      {
+        'yes': 'hast',
+        'other': 'hat',
+      },
+    );
+    String _temp1 = intl.Intl.selectLogic(
       expenseType,
       {
-        'paid': 'paid',
-        'lent': 'lent',
-        'borrowed': 'borrowed',
+        'paid': 'gezahlt',
+        'lent': 'geliehen',
+        'borrowed': 'geborgt',
         'other': '',
       },
     );
-    return '$displayName $_temp0 $amountString';
+    return '$displayName $_temp0 $amountString $_temp1';
   }
 
   @override
-  String get expenseNoShares => 'You are not involved';
+  String get expenseNoShares => 'Du bist nicht beteiligt';
 
   @override
   String groupDisplayAmount(String displayName, String paidByYourself, double amount) {
@@ -205,8 +212,8 @@ class AppLocalizationsDe extends AppLocalizations {
     String _temp0 = intl.Intl.selectLogic(
       paidByYourself,
       {
-        'yes': '$displayName owes you',
-        'other': 'You owe $displayName',
+        'yes': '$displayName schuldet dir',
+        'other': 'Du schuldest $displayName',
       },
     );
     return '$_temp0 $amountString';
@@ -224,11 +231,11 @@ class AppLocalizationsDe extends AppLocalizations {
     String _temp0 = intl.Intl.selectLogic(
       paidByYourself,
       {
-        'yes': 'You are owed',
-        'other': 'You owe',
+        'yes': 'Du hast $amountString gut',
+        'other': 'Du hast $amountString Schulden',
       },
     );
-    return '$_temp0 $amountString';
+    return '$_temp0';
   }
 
   @override
@@ -240,20 +247,20 @@ class AppLocalizationsDe extends AppLocalizations {
     );
     final String amountString = amountNumberFormat.format(amount);
 
-    return 'Total expenses $amountString';
+    return 'Gesamtausgaben $amountString';
   }
 
   @override
-  String get allDone => 'all done';
+  String get allDone => 'Alles erledigt';
 
   @override
-  String get payBack => 'Pay back';
+  String get payBack => 'Zurückzahlen';
 
   @override
-  String get payBackNoEntries => 'There is nothing to pay back!';
+  String get payBackNoEntries => 'Es gibt nichts zurückzuzahlen!';
 
   @override
-  String get payBackDialogTitle => 'Pay back!';
+  String get payBackDialogTitle => 'Zurückzahlen!';
 
   @override
   String payBackDialog(String displayName, double amount) {
@@ -264,20 +271,20 @@ class AppLocalizationsDe extends AppLocalizations {
     );
     final String amountString = amountNumberFormat.format(amount);
 
-    return 'You owe $displayName $amountString';
+    return 'Du schuldest $displayName $amountString';
   }
 
   @override
-  String get payBackDialogPaypal => 'Open Paypal link!';
+  String get payBackDialogPaypal => 'Paypal-Link öffnen';
 
   @override
-  String get payBackDialogIban => 'Copy IBAN!';
+  String get payBackDialogIban => 'IBAN kopieren';
 
   @override
-  String get payBackDialogDone => 'Payment done';
+  String get payBackDialogDone => 'Als bezahlt markieren';
 
   @override
-  String get payBackError => 'There was an error with paying back the amount. Please try again later!';
+  String get payBackError => 'Es gab einen Fehler beim Zurückzahlen des Betrags. Bitte versuche es später noch einmal!';
 
   @override
   String payBackSuccess(String displayName, double amount) {
@@ -288,11 +295,11 @@ class AppLocalizationsDe extends AppLocalizations {
     );
     final String amountString = amountNumberFormat.format(amount);
 
-    return 'You paid back $amountString to $displayName';
+    return 'Du hast $displayName $amountString zurückgezahlt';
   }
 
   @override
-  String groupDisplayPaidBack(String paidBy, String paidFor, double amount) {
+  String groupDisplayPaidBack(String paidByYourself, String paidBy, String paidForYourself, String paidFor, double amount) {
     final intl.NumberFormat amountNumberFormat = intl.NumberFormat.currency(
       locale: localeName,
       decimalDigits: 2,
@@ -300,98 +307,112 @@ class AppLocalizationsDe extends AppLocalizations {
     );
     final String amountString = amountNumberFormat.format(amount);
 
-    return '$paidBy paid back $amountString to $paidFor';
+    String _temp0 = intl.Intl.selectLogic(
+      paidByYourself,
+      {
+        'yes': 'hast',
+        'other': 'hat',
+      },
+    );
+    String _temp1 = intl.Intl.selectLogic(
+      paidForYourself,
+      {
+        'yes': 'dir',
+        'other': '$paidFor',
+      },
+    );
+    return '$paidBy $_temp0 $_temp1 $amountString zurückgezahlt';
   }
 
   @override
-  String get signInTitle => 'deun.app';
+  String get signInTitle => 'Anmelden';
 
   @override
-  String get signInSubtitle => 'Simply Split Fairly.';
+  String get signInSubtitle => 'Bitte melde dich mit deinem Konto an.';
 
   @override
-  String get signInDescription => 'Sign in to make the best\nout of your group trips.';
+  String get signInDescription => 'Gib deine E-Mail und dein Passwort ein, um fortzufahren.';
 
   @override
-  String get signInEmailTitle => 'Can\'t use social login?\nUse email instead!';
+  String get signInEmailTitle => 'E-Mail';
 
   @override
-  String get updatePasswordTitle => 'Update Password';
+  String get updatePasswordTitle => 'Passwort aktualisieren';
 
   @override
-  String get updatePasswordToSignIn => 'Take me back to Sign Up';
+  String get updatePasswordToSignIn => 'Verwende dein neues Passwort, um dich anzumelden.';
 
   @override
-  String get updatePasswordEnterPassword => 'Enter your password';
+  String get updatePasswordEnterPassword => 'Gib dein neues Passwort ein';
 
   @override
-  String get updatePasswordPasswordLengthError => 'Please enter a password that is at least 6 characters long';
+  String get updatePasswordPasswordLengthError => 'Das Passwort muss mindestens 8 Zeichen lang sein.';
 
   @override
-  String get updatePasswordPasswordResetSent => 'Password successfully updated';
+  String get updatePasswordPasswordResetSent => 'Ein Link zum Zurücksetzen des Passworts wurde gesendet.';
 
   @override
-  String get updatePasswordunexpectedError => 'An unexpected error occurred';
+  String get updatePasswordunexpectedError => 'Ein unerwarteter Fehler ist aufgetreten. Bitte versuche es später noch einmal.';
 
   @override
-  String get updatePasswordUpdatePassword => 'Update Password';
+  String get updatePasswordUpdatePassword => 'Passwort aktualisieren';
 
   @override
-  String get friends => 'Friends';
+  String get friends => 'Freunde';
 
   @override
-  String get friendsNoEntries => 'No friends yet';
+  String get friendsNoEntries => 'Keine Freunde gefunden.';
 
   @override
-  String get addFriendshipSelectionEmpty => 'Search E-Mail';
+  String get addFriendshipSelectionEmpty => 'Bitte wähle einen Freund aus.';
 
   @override
-  String get addFriendshipNoResult => 'No User found with this E-Mail!';
+  String get addFriendshipNoResult => 'Es wurden keine Freunde gefunden.';
 
   @override
-  String get requestFriendship => 'Add friend';
+  String get requestFriendship => 'Freund hinzufügen';
 
   @override
-  String get friendsPending => 'Pending';
+  String get friendsPending => 'Ausstehende Freundschaften';
 
   @override
   String friendshipRequestSent(String displayName) {
-    return 'Request sent to $displayName';
+    return 'Freundschaftsanfrage gesendet.';
   }
 
   @override
   String removeFriend(String displayName) {
-    return 'Remove $displayName as a friend';
+    return 'Freund entfernen';
   }
 
   @override
   String friendRemoved(String displayName) {
-    return '$displayName was removed as a friend';
+    return 'Freund entfernt.';
   }
 
   @override
   String friendshipAccept(String displayName) {
-    return '$displayName was accepted as a friend';
+    return 'Anfrage annehmen';
   }
 
   @override
   String friendshipRequestCancel(String displayName) {
-    return 'Request to $displayName was canceled';
+    return 'Freundschaftsanfrage abbrechen';
   }
 
   @override
   String friendshipDialogTitle(String displayName) {
-    return '$displayName';
+    return 'Freundschaftsanfrage';
   }
 
   @override
   String get friendshipDialogEmail => 'E-Mail:';
 
   @override
-  String get friendshipDialogFullName => 'Full Name:';
+  String get friendshipDialogFullName => 'Vollständiger Name:';
 
   @override
-  String get friendshipDialogRemoveAsFriend => 'Remove as friend';
+  String get friendshipDialogRemoveAsFriend => 'Als Freund entfernen';
 
   @override
   String toCurrency(double amount) {
@@ -477,137 +498,156 @@ class AppLocalizationsDe extends AppLocalizations {
   }
 
   @override
-  String get settings => 'Settings';
+  String get settings => 'Einstellungen';
 
   @override
-  String get settingsUserHeading => 'User Data';
+  String get settingsUserHeading => 'Benutzereinstellungen';
 
   @override
-  String get settingsFirstName => 'First name';
+  String get settingsFirstName => 'Vorname';
 
   @override
-  String get settingsFirstNameValidationEmpty => 'Please enter a First name';
+  String get settingsFirstNameValidationEmpty => 'Bitte gib einen Vornamen ein!';
 
   @override
-  String get settingsLastName => 'Last name';
+  String get settingsLastName => 'Nachname';
 
   @override
-  String get settingsLastNameValidationEmpty => 'Please enter a Last name';
+  String get settingsLastNameValidationEmpty => 'Bitte gib einen Nachnamen ein!';
 
   @override
-  String get settingsDisplayName => 'Display name';
+  String get settingsDisplayName => 'Anzeigename';
 
   @override
-  String get settingsDisplayNameValidationEmpty => 'Please enter a Display name';
+  String get settingsDisplayNameValidationEmpty => 'Bitte gib einen Anzeigenamen ein!';
 
   @override
-  String get settingsPaypalMe => 'Paypal.me link';
+  String get settingsPaypalMe => 'PayPal.me';
 
   @override
   String get settingsIban => 'IBAN';
 
   @override
-  String get settingsUserUpdateSuccess => 'User data updated!';
+  String get settingsLocale => 'Sprache';
 
   @override
-  String get settingsUserUpdateError => 'Error while updating user data!';
+  String get settingsUserUpdateSuccess => 'Benutzerdaten erfolgreich aktualisiert.';
 
   @override
-  String get settingsSignOutDialogTitle => 'Are you sure you want to sign out?';
+  String get settingsUserUpdateError => 'Fehler beim Aktualisieren der Benutzerdaten.';
 
   @override
-  String get settingsSignOut => 'Sign out';
+  String get settingsSignOutDialogTitle => 'Wirklich abmelden?';
 
   @override
-  String get settingsPrivacyPolicy => 'Privacy Policy';
+  String get settingsSignOut => 'Abmelden';
 
   @override
-  String get settingsPrivacyPreferences => 'Change privacy preferences';
+  String get settingsPrivacyPolicy => 'Datenschutzrichtlinien';
 
   @override
-  String get settingsPrivacyPreferencesSuccess => 'Your privacy choices have been updated';
+  String get settingsPrivacyPreferences => 'Datenschutzeinstellungen';
 
   @override
-  String get settingsPrivacyPreferencesError => 'An error occurred while trying to change your privacy choices';
+  String get settingsPrivacyPreferencesSuccess => 'Datenschutzeinstellungen erfolgreich gespeichert.';
 
   @override
-  String get contact => 'Contact';
+  String get settingsPrivacyPreferencesError => 'Fehler beim Speichern der Datenschutzeinstellungen.';
 
   @override
-  String get contactName => 'Full Name';
+  String get contact => 'Kontakt';
 
   @override
-  String get contactNameValidationEmpty => 'Please enter a full name';
+  String get contactName => 'Name';
 
   @override
-  String get contactCompany => 'Company (optional)';
+  String get contactNameValidationEmpty => 'Bitte gib einen Namen ein!';
+
+  @override
+  String get contactCompany => 'Unternehmen';
 
   @override
   String get contactEmail => 'E-Mail';
 
   @override
-  String get contactEmailValidationEmpty => 'Please enter an email';
+  String get contactEmailValidationEmpty => 'Bitte gib eine E-Mail ein!';
 
   @override
-  String get contactDescription => 'Description';
+  String get contactDescription => 'Beschreibung';
 
   @override
-  String get contactDescriptionValidationEmpty => 'Please enter a description';
+  String get contactDescriptionValidationEmpty => 'Bitte gib eine Beschreibung ein!';
 
   @override
-  String get contactSendSuccess => 'Support request sent!';
+  String get contactSendSuccess => 'Nachricht erfolgreich gesendet.';
 
   @override
-  String get contactSendError => 'Error while requesting the support!';
+  String get contactSendError => 'Fehler beim Senden der Nachricht.';
 
   @override
-  String get deleteAccount => 'Delete account';
+  String get deleteAccount => 'Konto löschen';
 
   @override
-  String get deleteAccountError => 'Error while trying to delete the user account. Please contact app.deun@gmail.com for support.';
+  String get deleteAccountError => 'Fehler beim Löschen des Kontos.';
 
   @override
-  String get create => 'Create';
+  String get create => 'Erstellen';
 
   @override
-  String get cancel => 'Cancel';
+  String get cancel => 'Abbrechen';
 
   @override
-  String get delete => 'Delete';
+  String get delete => 'Löschen';
 
   @override
-  String get edit => 'Edit';
+  String get edit => 'Bearbeiten';
 
   @override
-  String get update => 'Update';
+  String get update => 'Aktualisieren';
 
   @override
-  String get save => 'Save';
+  String get save => 'Speichern';
 
   @override
-  String get accept => 'Accept';
+  String get accept => 'Akzeptieren';
 
   @override
-  String get remove => 'Remove';
+  String get remove => 'Entfernen';
 
   @override
-  String get open => 'Open';
+  String get open => 'Öffnen';
 
   @override
-  String get close => 'Close';
+  String get close => 'Schließen';
 
   @override
-  String get send => 'Send';
+  String get send => 'Senden';
 
   @override
-  String get generalError => 'Something went wrong';
+  String get generalError => 'Ein Fehler ist aufgetreten.';
 
   @override
-  String get loading => 'Loading';
+  String get loading => 'Lädt...';
 
   @override
-  String get you => 'You';
+  String get you => 'Du';
 
   @override
-  String get all => 'All';
+  String get all => 'Alle';
+
+  @override
+  String localeSelector(String locale) {
+    String _temp0 = intl.Intl.selectLogic(
+      locale,
+      {
+        'de': 'Deutsch',
+        'en': 'English',
+        'other': '',
+      },
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get localeSelectorSystem => 'Systemsprache';
 }

@@ -115,30 +115,35 @@ class _ExpenseEntryWidgetState extends State<ExpenseEntryWidget> {
                       Set<String> fieldValue = field.value;
 
                       return InputDecorator(
-                          decoration: InputDecoration(
-                            label: Text(AppLocalizations.of(context)!.expenseEntrySharesLable),
-                            errorText: field.errorText,
-                            border: InputBorder.none,
-                            contentPadding: const EdgeInsets.all(0),
-                          ),
-                          child: Align(
-                              alignment: Alignment.topLeft,
-                              child: Wrap(spacing: spacing, children: <Widget>[
-                                FilterChip(
-                                  label: Text(AppLocalizations.of(context)!.all),
-                                  onSelected: (bool newValue) {
-                                    if (newValue) {
-                                      fieldValue = widget.groupMembers.map((e) => e.email).toSet();
-                                    } else {
-                                      fieldValue = <String>{};
-                                    }
+                        decoration: InputDecoration(
+                          label: Text(AppLocalizations.of(context)!.expenseEntrySharesLable),
+                          errorText: field.errorText,
+                          border: InputBorder.none,
+                          contentPadding: const EdgeInsets.all(0),
+                        ),
+                        child: Align(
+                          alignment: Alignment.topLeft,
+                          child: Wrap(
+                            spacing: spacing,
+                            children: <Widget>[
+                              FilterChip(
+                                showCheckmark: false,
+                                label: Text(AppLocalizations.of(context)!.all),
+                                onSelected: (bool newValue) {
+                                  if (newValue) {
+                                    fieldValue = widget.groupMembers.map((e) => e.email).toSet();
+                                  } else {
+                                    fieldValue = <String>{};
+                                  }
 
-                                    field.didChange(fieldValue);
-                                  },
-                                  selected: fieldValue.length == widget.groupMembers.length,
-                                ),
-                                ...widget.groupMembers.map((groupMember) {
+                                  field.didChange(fieldValue);
+                                },
+                                selected: fieldValue.length == widget.groupMembers.length,
+                              ),
+                              ...widget.groupMembers.map(
+                                (groupMember) {
                                   return FilterChip(
+                                      showCheckmark: false,
                                       label: Text(groupMember.email == supabase.auth.currentUser?.email
                                           ? AppLocalizations.of(context)!.you
                                           : groupMember.displayName),
@@ -151,8 +156,12 @@ class _ExpenseEntryWidgetState extends State<ExpenseEntryWidget> {
                                         field.didChange(fieldValue);
                                       },
                                       selected: fieldValue.contains(groupMember.email));
-                                }),
-                              ])));
+                                },
+                              ),
+                            ],
+                          ),
+                        ),
+                      );
                     },
                   ),
                 ],

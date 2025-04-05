@@ -40,13 +40,7 @@ class GroupListNotifier extends _$GroupListNotifier {
             callback: (payload) async {
               reload(statusFilter);
             })
-        .subscribe(
-            // (status, object) {
-            //   if (status == RealtimeSubscribeStatus.channelError) {
-            //     _subscribeToRealTimeUpdates(statusFilter);
-            //   }
-            // },
-            );
+        .subscribe();
   }
 }
 
@@ -84,13 +78,7 @@ class GroupDetailNotifier extends _$GroupDetailNotifier {
             callback: (payload) async {
               reload(groupId);
             })
-        .subscribe(
-            // (status, object) {
-            //   if (status == RealtimeSubscribeStatus.channelError) {
-            //     _subscribeToRealTimeUpdates(groupId);
-            //   }
-            // },
-            );
+        .subscribe();
   }
 }
 
@@ -171,13 +159,7 @@ class ExpenseListNotifier extends _$ExpenseListNotifier {
                 return;
               }
             })
-        .subscribe(
-            // (status, object) {
-            //   if (status == RealtimeSubscribeStatus.channelError) {
-            //     _subscribeToRealTimeUpdates(groupId);
-            //   }
-            // },
-            );
+        .subscribe();
   }
 
   Future<void> loadMoreEntries(String groupId) async {
@@ -230,13 +212,18 @@ class FriendshipListNotifier extends _$FriendshipListNotifier {
             reload();
           },
         )
-        .subscribe(
-            // (status, object) {
-            //   if (status == RealtimeSubscribeStatus.channelError) {
-            //     _subscribeToRealTimeUpdates();
-            //   }
-            // },
-            );
+        .subscribe();
+
+    supabase
+        .channel('public:friendship_list_group_checker')
+        .onPostgresChanges(
+            event: PostgresChangeEvent.all,
+            schema: 'public',
+            table: 'group_update_checker',
+            callback: (payload) async {
+              reload();
+            })
+        .subscribe();
   }
 }
 
@@ -279,4 +266,13 @@ class ThemeColor extends _$ThemeColor {
 
   void setColor(Color color) => state = color;
   void resetColor() => state = ColorSeed.baseColor.color;
+}
+
+@riverpod
+class LocaleNotifier extends _$LocaleNotifier {
+  @override
+  Locale? build() => null;
+
+  void setLocale(Locale locale) => state = locale;
+  void resetLocale() => state = null;
 }

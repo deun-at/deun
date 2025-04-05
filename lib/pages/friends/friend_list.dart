@@ -1,12 +1,15 @@
 import 'package:deun/helper/helper.dart';
 import 'package:deun/main.dart';
 import 'package:deun/pages/friends/friendship_model.dart';
+import 'package:deun/pages/groups/group_model.dart';
 import 'package:deun/pages/users/user_model.dart';
 import 'package:deun/widgets/empty_list_widget.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:deun/l10n/app_localizations.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../provider.dart';
 import '../../widgets/shimmer_card_list.dart';
@@ -153,7 +156,7 @@ class _FriendListState extends ConsumerState<FriendList> {
                                         AppLocalizations.of(context)!.toCurrency(friendship.shareAmount));
 
                                     onPressCallback = () {
-                                      openFriendshipDialog(context, user);
+                                      openFriendshipDialog(context, user, friendship);
                                     };
                                   }
 
@@ -246,7 +249,10 @@ class _FriendListState extends ConsumerState<FriendList> {
         ));
   }
 
-  void openFriendshipDialog(BuildContext modalContext, User user) {
+  void openFriendshipDialog(BuildContext modalContext, User user, Friendship friendship) {
+    Color activeColor = Theme.of(context).colorScheme.onSurface;
+    Color disabledColor = Theme.of(context).colorScheme.outline;
+
     showDialog<void>(
       context: context,
       builder: (context) => SimpleDialog(
@@ -261,10 +267,100 @@ class _FriendListState extends ConsumerState<FriendList> {
                   child: Text(
                       "${AppLocalizations.of(context)!.friendshipDialogFullName} ${user.firstName ?? ''} ${user.lastName ?? ''}"),
                 ),
-          SizedBox(height: 20),
+          Divider(),
+          ...(friendship.shareAmount < -0.01
+              ? [
+                  SimpleDialogOption(
+                    child: Text(
+                      AppLocalizations.of(context)!.payBackDialog(user.displayName, friendship.shareAmount.abs()),
+                    ),
+                  ),
+                  SimpleDialogOption(
+                    onPressed: () async {
+                      if (user.paypalMe == null || user.paypalMe!.isEmpty) {
+                        return;
+                      }
+                      if (!await launchUrl(
+                          Uri.parse("https://www.paypal.me/${user.paypalMe}/${friendship.shareAmount.abs()}"))) {
+                        throw Exception(
+                            'Could not launch https://www.paypal.me/${user.paypalMe}/${friendship.shareAmount.abs()}');
+                      }
+                    },
+                    child: Row(
+                      children: [
+                        Text(
+                          AppLocalizations.of(context)!.payBackDialogPaypal,
+                          style: Theme.of(context).textTheme.bodyMedium!.copyWith(
+                              color: user.paypalMe == null || user.paypalMe!.isEmpty ? disabledColor : activeColor),
+                        ),
+                        const Spacer(),
+                        Icon(
+                          Icons.payments_outlined,
+                          color: user.paypalMe == null || user.paypalMe!.isEmpty ? disabledColor : activeColor,
+                        ),
+                      ],
+                    ),
+                  ),
+                  SimpleDialogOption(
+                    onPressed: () {
+                      if (user.iban == null || user.iban!.isEmpty) {
+                        return;
+                      }
+
+                      Clipboard.setData(ClipboardData(text: user.iban as String)).then((_) {});
+                    },
+                    child: Row(
+                      children: [
+                        Text(
+                          AppLocalizations.of(context)!.payBackDialogIban,
+                          style: Theme.of(context)
+                              .textTheme
+                              .bodyMedium!
+                              .copyWith(color: user.iban == null || user.iban!.isEmpty ? disabledColor : activeColor),
+                        ),
+                        const Spacer(),
+                        Icon(Icons.credit_card,
+                            color: user.iban == null || user.iban!.isEmpty ? disabledColor : activeColor),
+                      ],
+                    ),
+                  ),
+                  SimpleDialogOption(
+                    onPressed: () async {
+                      try {
+                        await Group.payBackAll(context, user.email, friendship.shareAmount.abs());
+                        if (context.mounted) {
+                          showSnackBar(context, friendListScaffoldMessengerKey,
+                              AppLocalizations.of(context)!.payBackSuccess(user.email, friendship.shareAmount.abs()));
+                        }
+                      } catch (e) {
+                        debugPrint(e.toString());
+                        if (context.mounted) {
+                          showSnackBar(
+                              context, friendListScaffoldMessengerKey, AppLocalizations.of(context)!.payBackError);
+                        }
+                      } finally {
+                        if (context.mounted) {
+                          Navigator.pop(context); // Close friendship dialog
+                        }
+                      }
+                    },
+                    child: Row(
+                      children: [
+                        Text(
+                          AppLocalizations.of(context)!.payBackDialogDone,
+                          style: Theme.of(context).textTheme.bodyMedium!.copyWith(color: activeColor),
+                        ),
+                        const Spacer(),
+                        Icon(Icons.credit_score, color: activeColor),
+                      ],
+                    ),
+                  ),
+                  Divider(),
+                ]
+              : []),
           SimpleDialogOption(
             onPressed: () {
-              openRemoveFriendDialog(context, user);
+              openRemoveFriendDialog(user);
             },
             child: Row(
               children: [
@@ -279,10 +375,11 @@ class _FriendListState extends ConsumerState<FriendList> {
               ],
             ),
           ),
+          Divider(),
           SizedBox(height: 10),
           SimpleDialogOption(
             onPressed: () {
-              Navigator.pop(context); // Close delete dialog
+              Navigator.pop(context); // Close friendship dialog
             },
             child: Text(
               AppLocalizations.of(context)!.close,
@@ -295,7 +392,7 @@ class _FriendListState extends ConsumerState<FriendList> {
     );
   }
 
-  void openRemoveFriendDialog(BuildContext modalContext, User user) {
+  void openRemoveFriendDialog(User user) {
     showDialog<void>(
       context: context,
       builder: (context) => AlertDialog(

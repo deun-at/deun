@@ -9,7 +9,7 @@ import '../expenses/expense_model.dart';
 import 'group_member_model.dart';
 
 class GroupSharesSummary {
-  late String dipslayName;
+  late String displayName;
   late String? paypalMe;
   late String? iban;
   late double shareAmount;
@@ -76,7 +76,7 @@ class Group {
         if (element['paid_by'] == currentUserEmail && element['paid_for'] != currentUserEmail) {
           if (groupSharesSummary[element['paid_for']] == null) {
             groupSharesSummary[element['paid_for']] = GroupSharesSummary();
-            groupSharesSummary[element['paid_for']]!.dipslayName = element['paid_for_display_name'];
+            groupSharesSummary[element['paid_for']]!.displayName = element['paid_for_display_name'];
             groupSharesSummary[element['paid_for']]!.paypalMe = element['paid_for_paypal_me'];
             groupSharesSummary[element['paid_for']]!.iban = element['paid_for_iban'];
             groupSharesSummary[element['paid_for']]!.shareAmount = 0;
@@ -87,7 +87,7 @@ class Group {
         } else if (element['paid_for'] == currentUserEmail && element['paid_by'] != currentUserEmail) {
           if (groupSharesSummary[element['paid_by']] == null) {
             groupSharesSummary[element['paid_by']] = GroupSharesSummary();
-            groupSharesSummary[element['paid_by']]!.dipslayName = element['paid_by_display_name'];
+            groupSharesSummary[element['paid_by']]!.displayName = element['paid_by_display_name'];
             groupSharesSummary[element['paid_by']]!.paypalMe = element['paid_by_paypal_me'];
             groupSharesSummary[element['paid_by']]!.iban = element['paid_by_iban'];
             groupSharesSummary[element['paid_by']]!.shareAmount = 0;
@@ -179,7 +179,7 @@ class Group {
 
       finalSimplifiedExpenseArray.forEach((key, value) {
         groupSharesSummary[key] = GroupSharesSummary();
-        groupSharesSummary[key]!.dipslayName = helperArray[key]["display_name"] ?? '';
+        groupSharesSummary[key]!.displayName = helperArray[key]["display_name"] ?? '';
         groupSharesSummary[key]!.paypalMe = helperArray[key]["paypal_me"];
         groupSharesSummary[key]!.iban = helperArray[key]["iban"];
         groupSharesSummary[key]!.shareAmount = value;
@@ -192,19 +192,24 @@ class Group {
     await supabase.from('group_update_checker').delete().eq('group_id', id);
   }
 
-  static Future<List<Group>> fetchData(String statusFilter) async {
+  static Future<List<Group>> fetchData(String statusFilter, {String? paidTo}) async {
+    var currentUserEmail = supabase.auth.currentUser?.email ?? '';
     var query = supabase.from('group').select(groupSelectString);
 
     if (statusFilter == GroupListFilter.active.value) {
       query = query.or('total_share_amount.gte.0.01,total_share_amount.lte.-0.01',
           referencedTable: 'group_shares_summary_helper');
-      query = query.eq('group_shares_summary_helper.paid_for', supabase.auth.currentUser?.email ?? '');
     } else if (statusFilter == GroupListFilter.done.value) {
       query = query.lt("group_shares_summary_helper.total_share_amount", 0.01);
       query = query.gt("group_shares_summary_helper.total_share_amount", -0.01);
-      query = query.eq('group_shares_summary_helper.paid_for', supabase.auth.currentUser?.email ?? '');
-    } else {
-      query = query.eq('group_shares_summary_helper.paid_for', supabase.auth.currentUser?.email ?? '');
+    }
+
+    query = query.eq('group_shares_summary_helper.paid_for', currentUserEmail);
+
+    if (paidTo != null) {
+      query = query.or(
+          'and(paid_by.eq.$currentUserEmail,paid_for.eq.$paidTo),and(paid_by.eq.$paidTo,paid_for.eq.$currentUserEmail)',
+          referencedTable: 'group_shares_summary_helper');
     }
 
     List<Map<String, dynamic>> data = await query.order('name', ascending: true);
@@ -282,7 +287,8 @@ class Group {
     return groupInsertResponse['id'] as String;
   }
 
-  static Future<void> payBack(BuildContext context, String groupId, String email, double amount) async {
+  static Future<void> payBack(BuildContext context, String groupId, String email, double amount,
+      {bool sendNotification = true}) async {
     final expenseId = await supabase.rpc('pay_back', params: {
       "_group_id": groupId,
       "_paid_by": supabase.auth.currentUser?.email,
@@ -291,9 +297,26 @@ class Group {
     });
     await supabase.rpc('update_group_member_shares', params: {"_group_id": groupId, "_expense_id": expenseId});
 
-    if (context.mounted) {
+    if (context.mounted && sendNotification) {
       sendGroupPayBackNotification(context, groupId, expenseId, {email}, amount);
     }
+  }
+
+  static Future<void> payBackAll(BuildContext context, String email, double amount) async {
+    final groupList = await Group.fetchData(GroupListFilter.active.value, paidTo: email);
+
+    await Future.wait(groupList.map((groupData) async {
+      double groupAmount = 0;
+      groupData.groupSharesSummary.forEach((key, groupShare) {
+        if (key == email) {
+          groupAmount += groupShare.shareAmount;
+        }
+      });
+
+      if (groupAmount.abs() >= 0.01) {
+        await Group.payBack(context, groupData.id, email, amount, sendNotification: false);
+      }
+    }));
   }
 
   Map<String, dynamic> toJson() => {

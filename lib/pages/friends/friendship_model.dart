@@ -1,3 +1,5 @@
+import 'package:deun/constants.dart';
+import 'package:deun/pages/groups/group_model.dart';
 import 'package:deun/pages/users/user_model.dart';
 
 import '../../main.dart';
@@ -24,22 +26,18 @@ class Friendship {
 
   static Future<List<Friendship>> fetchData() async {
     String currentEmail = supabase.auth.currentUser?.email ?? '';
-    var query = supabase
+
+    List<Map<String, dynamic>> data = await supabase
         .from('friendship')
         .select('*, requester(*), addressee(*)')
-        .or("addressee.eq.$currentEmail,requester.eq.$currentEmail");
-
-    List<Map<String, dynamic>> data = await query
+        .or("addressee.eq.$currentEmail,requester.eq.$currentEmail")
         .order('status', ascending: true)
         .order('display_name', referencedTable: 'requester', ascending: false)
         .order('display_name', referencedTable: 'addressee', ascending: false);
 
     List<Friendship> retData = List.empty(growable: true);
 
-    List<Map<String, dynamic>> groupSharesSummaryData = await supabase
-        .from('group_shares_summary')
-        .select('*')
-        .or("paid_by.eq.$currentEmail,paid_for.eq.$currentEmail");
+    final groupList = await Group.fetchData(GroupListFilter.active.value);
 
     for (var element in data) {
       if ((element["status"] == "accepted" && element["requester"]["email"] == currentEmail) ||
@@ -49,14 +47,16 @@ class Friendship {
         friendship.shareAmount = 0;
 
         if (element["status"] == "accepted") {
-          for (var groupSharesSummary in groupSharesSummaryData) {
-            if (groupSharesSummary["paid_by"] == currentEmail &&
-                groupSharesSummary["paid_for"] == friendship.user.email) {
-              friendship.shareAmount += groupSharesSummary["share_amount"] ?? 0;
-            } else if (groupSharesSummary["paid_for"] == currentEmail &&
-                groupSharesSummary["paid_by"] == friendship.user.email) {
-              friendship.shareAmount -= groupSharesSummary["share_amount"] ?? 0;
-            }
+          for (var group in groupList) {
+            group.groupSharesSummary.forEach((key, groupShare) {
+              if (key == friendship.user.email) {
+                friendship.shareAmount += groupShare.shareAmount;
+              }
+            });
+          }
+
+          if (friendship.shareAmount.abs() < 0.01) {
+            friendship.shareAmount = 0;
           }
         }
 

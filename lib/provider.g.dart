@@ -22,7 +22,7 @@ final expenseListProvider = AutoDisposeFutureProvider<List<Expense>>.internal(
 @Deprecated('Will be removed in 3.0. Use Ref instead')
 // ignore: unused_element
 typedef ExpenseListRef = AutoDisposeFutureProviderRef<List<Expense>>;
-String _$groupListNotifierHash() => r'1bc29dbbcaaad4a2bdd79fd070f4d64977ac2c84';
+String _$groupListNotifierHash() => r'1214efad4e0d659657e5a62586d94a0d5e2d9542';
 
 /// Copied from Dart SDK
 class _SystemHash {
@@ -191,7 +191,7 @@ class _GroupListNotifierProviderElement
 }
 
 String _$groupDetailNotifierHash() =>
-    r'4a51f1930db65d2bce87dd5996f6ca4e745a4a65';
+    r'bca4c35a57e36bb9e2645300767bfd5a46f41f47';
 
 abstract class _$GroupDetailNotifier
     extends BuildlessAutoDisposeAsyncNotifier<Group> {
@@ -338,7 +338,7 @@ class _GroupDetailNotifierProviderElement
 }
 
 String _$expenseListNotifierHash() =>
-    r'e76e532819dfea710736d8ce8b650bf90066876a';
+    r'7f8a5c9800763dba7316ab7c391431a9a7f7445a';
 
 abstract class _$ExpenseListNotifier
     extends BuildlessAutoDisposeAsyncNotifier<List<Expense>> {
@@ -486,7 +486,7 @@ class _ExpenseListNotifierProviderElement
 }
 
 String _$friendshipListNotifierHash() =>
-    r'b10672c661b7b864fe6cbd5154cf7d64b649f036';
+    r'4c6f3e2f143d7fbf46f09d9a6bef9549dcbcb565';
 
 /// See also [FriendshipListNotifier].
 @ProviderFor(FriendshipListNotifier)
@@ -683,5 +683,21 @@ final themeColorProvider =
 );
 
 typedef _$ThemeColor = AutoDisposeNotifier<Color>;
+String _$localeNotifierHash() => r'5c0c6044e089a089e96f0c1b78f3994f9224f611';
+
+/// See also [LocaleNotifier].
+@ProviderFor(LocaleNotifier)
+final localeNotifierProvider =
+    AutoDisposeNotifierProvider<LocaleNotifier, Locale?>.internal(
+  LocaleNotifier.new,
+  name: r'localeNotifierProvider',
+  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
+      ? null
+      : _$localeNotifierHash,
+  dependencies: null,
+  allTransitiveDependencies: null,
+);
+
+typedef _$LocaleNotifier = AutoDisposeNotifier<Locale?>;
 // ignore_for_file: type=lint
 // ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member, deprecated_member_use_from_same_package

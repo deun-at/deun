@@ -231,9 +231,14 @@ class _ExpenseBottomSheetState extends ConsumerState<ExpenseBottomSheet> {
                                       ),
                                       const SizedBox(height: spacing),
                                       FormBuilderChoiceChips(
+                                        showCheckmark: false,
                                         name: "paid_by",
                                         decoration: InputDecoration(
                                           labelText: AppLocalizations.of(context)!.expensePaidBy,
+                                          labelStyle: Theme.of(context)
+                                              .textTheme
+                                              .bodyLarge!
+                                              .copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
                                           border: InputBorder.none,
                                           contentPadding: const EdgeInsets.all(0),
                                         ),
@@ -260,6 +265,10 @@ class _ExpenseBottomSheetState extends ConsumerState<ExpenseBottomSheet> {
                                         decoration: InputDecoration(
                                           border: InputBorder.none,
                                           labelText: AppLocalizations.of(context)!.expenseDate,
+                                          labelStyle: Theme.of(context)
+                                              .textTheme
+                                              .bodyLarge!
+                                              .copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
                                           hintText: AppLocalizations.of(context)!.addExpenseTitle,
                                         ),
                                       ),

@@ -44,19 +44,19 @@ class AppLocalizationsEn extends AppLocalizations {
   String get addGroupTitle => 'Add title';
 
   @override
-  String get groupNameValidationEmpty => 'Please enter a name';
+  String get groupNameValidationEmpty => 'Please enter a name!';
 
   @override
   String get groupSimplifiedExpensesTitle => 'Activate simplified expenses';
 
   @override
-  String get expenseDateValidationEmpty => 'Please enter a date';
+  String get expenseDateValidationEmpty => 'Please enter a date!';
 
   @override
   String get groupDeleteItemTitle => 'Delete this group?';
 
   @override
-  String get groupNoEntries => 'Add a group to get started.\nIf you are already in groups find them under all!';
+  String get groupNoEntries => 'Add a group to get started.';
 
   @override
   String get groupEntriesError => 'Something went wrong with loading Groups.';
@@ -113,13 +113,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get expenseName => 'Description';
 
   @override
-  String get expenseNameValidationEmpty => 'Please enter a title';
+  String get expenseNameValidationEmpty => 'Please enter a title!';
 
   @override
   String get expenseAmount => 'Amount';
 
   @override
-  String get expenseAmountValidationEmpty => 'Please enter an amount';
+  String get expenseAmountValidationEmpty => 'Please enter an amount!';
 
   @override
   String get expenseDate => 'When did it happen?';
@@ -137,19 +137,19 @@ class AppLocalizationsEn extends AppLocalizations {
   String get expenseEntryName => 'Name';
 
   @override
-  String get expenseEntryNameValidationEmpty => 'Please enter an item title';
+  String get expenseEntryNameValidationEmpty => 'Please enter an item title!';
 
   @override
   String get expenseEntryAmount => 'Amount';
 
   @override
-  String get expenseEntryAmountValidationEmpty => 'Please enter an amount';
+  String get expenseEntryAmountValidationEmpty => 'Please enter an amount!';
 
   @override
   String get expenseEntrySharesLable => 'Who used it?';
 
   @override
-  String get expenseEntrySharesValidationEmpty => 'Please select at least one person';
+  String get expenseEntrySharesValidationEmpty => 'Please select at least one person!';
 
   @override
   String get expenseDeleteItemTitle => 'Delete this expense?';
@@ -170,7 +170,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get expenseNoEntries => 'So empty here :(';
 
   @override
-  String expenseDisplayAmount(String displayName, String expenseType, double amount) {
+  String expenseDisplayAmount(String displayNameYourself, String displayName, String expenseType, double amount) {
     final intl.NumberFormat amountNumberFormat = intl.NumberFormat.currency(
       locale: localeName,
       decimalDigits: 2,
@@ -268,13 +268,13 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get payBackDialogPaypal => 'Open Paypal link!';
+  String get payBackDialogPaypal => 'Open Paypal link';
 
   @override
-  String get payBackDialogIban => 'Copy IBAN!';
+  String get payBackDialogIban => 'Copy IBAN';
 
   @override
-  String get payBackDialogDone => 'Payment done';
+  String get payBackDialogDone => 'Mark as paid';
 
   @override
   String get payBackError => 'There was an error with paying back the amount. Please try again later!';
@@ -292,7 +292,7 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String groupDisplayPaidBack(String paidBy, String paidFor, double amount) {
+  String groupDisplayPaidBack(String paidByYourself, String paidBy, String paidForYourself, String paidFor, double amount) {
     final intl.NumberFormat amountNumberFormat = intl.NumberFormat.currency(
       locale: localeName,
       decimalDigits: 2,
@@ -486,25 +486,28 @@ class AppLocalizationsEn extends AppLocalizations {
   String get settingsFirstName => 'First name';
 
   @override
-  String get settingsFirstNameValidationEmpty => 'Please enter a First name';
+  String get settingsFirstNameValidationEmpty => 'Please enter a First name!';
 
   @override
   String get settingsLastName => 'Last name';
 
   @override
-  String get settingsLastNameValidationEmpty => 'Please enter a Last name';
+  String get settingsLastNameValidationEmpty => 'Please enter a Last name!';
 
   @override
   String get settingsDisplayName => 'Display name';
 
   @override
-  String get settingsDisplayNameValidationEmpty => 'Please enter a Display name';
+  String get settingsDisplayNameValidationEmpty => 'Please enter a Display name!';
 
   @override
   String get settingsPaypalMe => 'Paypal.me link';
 
   @override
   String get settingsIban => 'IBAN';
+
+  @override
+  String get settingsLocale => 'Language';
 
   @override
   String get settingsUserUpdateSuccess => 'User data updated!';
@@ -537,7 +540,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get contactName => 'Full Name';
 
   @override
-  String get contactNameValidationEmpty => 'Please enter a full name';
+  String get contactNameValidationEmpty => 'Please enter a full name!';
 
   @override
   String get contactCompany => 'Company (optional)';
@@ -546,13 +549,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get contactEmail => 'E-Mail';
 
   @override
-  String get contactEmailValidationEmpty => 'Please enter an email';
+  String get contactEmailValidationEmpty => 'Please enter an email!';
 
   @override
   String get contactDescription => 'Description';
 
   @override
-  String get contactDescriptionValidationEmpty => 'Please enter a description';
+  String get contactDescriptionValidationEmpty => 'Please enter a description!';
 
   @override
   String get contactSendSuccess => 'Support request sent!';
@@ -610,4 +613,20 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get all => 'All';
+
+  @override
+  String localeSelector(String locale) {
+    String _temp0 = intl.Intl.selectLogic(
+      locale,
+      {
+        'de': 'Deutsch',
+        'en': 'English',
+        'other': '',
+      },
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get localeSelectorSystem => 'System default';
 }

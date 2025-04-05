@@ -25,15 +25,15 @@
   "@groupName": {},
   "addGroupTitle": "Add title",
   "@addGroupTitle": {},
-  "groupNameValidationEmpty": "Please enter a name",
+  "groupNameValidationEmpty": "Please enter a name!",
   "@groupNameValidationEmpty": {},
   "groupSimplifiedExpensesTitle": "Activate simplified expenses",
   "@groupSimplifiedExpensesTitle": {},
-  "expenseDateValidationEmpty": "Please enter a date",
+  "expenseDateValidationEmpty": "Please enter a date!",
   "@expenseDateValidationEmpty": {},
   "groupDeleteItemTitle": "Delete this group?",
   "@groupDeleteItemTitle": {},
-  "groupNoEntries": "Add a group to get started.\nIf you are already in groups find them under all!",
+  "groupNoEntries": "Add a group to get started.",
   "@groupNoEntries": {},
   "groupEntriesError": "Something went wrong with loading Groups.",
   "@groupEntriesError": {},
@@ -71,11 +71,11 @@
   "@addExpenseTitle": {},
   "expenseName": "Description",
   "@expenseName": {},
-  "expenseNameValidationEmpty": "Please enter a title",
+  "expenseNameValidationEmpty": "Please enter a title!",
   "@expenseNameValidationEmpty": {},
   "expenseAmount": "Amount",
   "@expenseAmount": {},
-  "expenseAmountValidationEmpty": "Please enter an amount",
+  "expenseAmountValidationEmpty": "Please enter an amount!",
   "@expenseAmountValidationEmpty": {},
   "expenseDate": "When did it happen?",
   "@expenseDate": {},
@@ -87,15 +87,15 @@
   "@addNewExpenseEntry": {},
   "expenseEntryName": "Name",
   "@expenseEntryName": {},
-  "expenseEntryNameValidationEmpty": "Please enter an item title",
+  "expenseEntryNameValidationEmpty": "Please enter an item title!",
   "@expenseEntryNameValidationEmpty": {},
   "expenseEntryAmount": "Amount",
   "@expenseEntryAmount": {},
-  "expenseEntryAmountValidationEmpty": "Please enter an amount",
+  "expenseEntryAmountValidationEmpty": "Please enter an amount!",
   "@expenseEntryAmountValidationEmpty": {},
   "expenseEntrySharesLable": "Who used it?",
   "@expenseEntrySharesLable": {},
-  "expenseEntrySharesValidationEmpty": "Please select at least one person",
+  "expenseEntrySharesValidationEmpty": "Please select at least one person!",
   "@expenseEntrySharesValidationEmpty": {},
   "expenseDeleteItemTitle": "Delete this expense?",
   "@expenseDeleteItemTitle": {},
@@ -113,6 +113,9 @@
   "@expenseDisplayAmount": {
     "description": "Lable in the expense list of what you are owed/what you owe per user.",
     "placeholders": {
+      "displayNameYourself": {
+        "type": "String"
+      },
       "displayName": {
         "type": "String",
         "example": "Max Muster"
@@ -215,11 +218,11 @@
       }
     }
   },
-  "payBackDialogPaypal": "Open Paypal link!",
+  "payBackDialogPaypal": "Open Paypal link",
   "@payBackDialogPaypal": {},
-  "payBackDialogIban": "Copy IBAN!",
+  "payBackDialogIban": "Copy IBAN",
   "@payBackDialogIban": {},
-  "payBackDialogDone": "Payment done",
+  "payBackDialogDone": "Mark as paid",
   "@payBackDialogDone": {},
   "payBackError": "There was an error with paying back the amount. Please try again later!",
   "@payBackError": {},
@@ -246,9 +249,15 @@
   "@groupDisplayPaidBack": {
     "description": "ListTile in the group detail of who paid back money.",
     "placeholders": {
+      "paidByYourself": {
+        "type": "String"
+      },
       "paidBy": {
         "type": "String",
         "example": "Max Muster"
+      },
+      "paidForYourself": {
+        "type": "String"
       },
       "paidFor": {
         "type": "String",
@@ -506,20 +515,22 @@
   "@settingsUserHeading": {},
   "settingsFirstName": "First name",
   "@settingsFirstName": {},
-  "settingsFirstNameValidationEmpty": "Please enter a First name",
+  "settingsFirstNameValidationEmpty": "Please enter a First name!",
   "@settingsFirstNameValidationEmpty": {},
   "settingsLastName": "Last name",
   "@settingsLastName": {},
-  "settingsLastNameValidationEmpty": "Please enter a Last name",
+  "settingsLastNameValidationEmpty": "Please enter a Last name!",
   "@settingsLastNameValidationEmpty": {},
   "settingsDisplayName": "Display name",
   "@settingsDisplayName": {},
-  "settingsDisplayNameValidationEmpty": "Please enter a Display name",
+  "settingsDisplayNameValidationEmpty": "Please enter a Display name!",
   "@settingsDisplayNameValidationEmpty": {},
   "settingsPaypalMe": "Paypal.me link",
   "@settingsPaypalMe": {},
   "settingsIban": "IBAN",
   "@settingsIban": {},
+  "settingsLocale": "Language",
+  "@settingsLocale": {},
   "settingsUserUpdateSuccess": "User data updated!",
   "@settingsUserUpdateSuccess": {},
   "settingsUserUpdateError": "Error while updating user data!",
@@ -540,17 +551,17 @@
   "@contact": {},
   "contactName": "Full Name",
   "@contactName": {},
-  "contactNameValidationEmpty": "Please enter a full name",
+  "contactNameValidationEmpty": "Please enter a full name!",
   "@contactNameValidationEmpty": {},
   "contactCompany": "Company (optional)",
   "@contactCompany": {},
   "contactEmail": "E-Mail",
   "@contactEmail": {},
-  "contactEmailValidationEmpty": "Please enter an email",
+  "contactEmailValidationEmpty": "Please enter an email!",
   "@contactEmailValidationEmpty": {},
   "contactDescription": "Description",
   "@contactDescription": {},
-  "contactDescriptionValidationEmpty": "Please enter a description",
+  "contactDescriptionValidationEmpty": "Please enter a description!",
   "@contactDescriptionValidationEmpty": {},
   "contactSendSuccess": "Support request sent!",
   "@contactSendSuccess": {},
@@ -589,5 +600,15 @@
   "you": "You",
   "@you": {},
   "all": "All",
-  "@all": {}
+  "@all": {},
+  "localeSelector": "{locale, select, de{Deutsch} en{English} other{}}",
+  "@localeSelector": {
+    "placeholders": {
+      "locale": {
+        "type": "String"
+      }
+    }
+  },
+  "localeSelectorSystem": "System default",
+  "@localeSelectorSystem": {}
 }

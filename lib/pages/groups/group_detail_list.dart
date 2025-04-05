@@ -78,9 +78,11 @@ class _GroupDetailListState extends ConsumerState<GroupDetailList> {
                             ExpenseEntryShare paidBackEntryShare =
                                 expense.expenseEntries.entries.first.value.expenseEntryShares.first;
 
+                            String paidByYourself = expense.paidBy == currentUserEmail ? 'yes' : '';
                             String paidByDisplayName = expense.paidBy == currentUserEmail
                                 ? AppLocalizations.of(context)!.you
                                 : (expense.paidByDisplayName ?? "");
+                            String paidToYourself = paidBackEntryShare.email == currentUserEmail ? 'yes' : '';
                             String paidToDisplayName = paidBackEntryShare.email == currentUserEmail
                                 ? AppLocalizations.of(context)!.you
                                 : paidBackEntryShare.displayName;
@@ -92,8 +94,8 @@ class _GroupDetailListState extends ConsumerState<GroupDetailList> {
                                 color: cardColor,
                                 child: Padding(
                                   padding: const EdgeInsets.fromLTRB(10, 5, 10, 5),
-                                  child: Text(AppLocalizations.of(context)!
-                                      .groupDisplayPaidBack(paidByDisplayName, paidToDisplayName, expense.amount)),
+                                  child: Text(AppLocalizations.of(context)!.groupDisplayPaidBack(paidByYourself,
+                                      paidByDisplayName, paidToYourself, paidToDisplayName, expense.amount)),
                                 ),
                               ),
                             );
@@ -187,6 +189,7 @@ class _ExpenseShareWidgetState extends State<ExpenseShareWidget> {
 
     Widget? sharedWidget;
     String paidWidgetLable = AppLocalizations.of(context)!.expenseDisplayAmount(
+        currentUserPaid ? 'yes' : '',
         currentUserPaid ? AppLocalizations.of(context)!.you : (widget.expense.paidByDisplayName ?? ""),
         "paid",
         widget.expense.amount);
@@ -197,10 +200,10 @@ class _ExpenseShareWidgetState extends State<ExpenseShareWidget> {
 
       if (currentUserPaid) {
         textLabel = AppLocalizations.of(context)!.expenseDisplayAmount(
-            AppLocalizations.of(context)!.you, "lent", widget.expense.amount - (currentUserShares ?? 0));
+            'yes', AppLocalizations.of(context)!.you, "lent", widget.expense.amount - (currentUserShares ?? 0));
       } else {
         textLabel = AppLocalizations.of(context)!
-            .expenseDisplayAmount(AppLocalizations.of(context)!.you, "borrowed", (currentUserShares ?? 0));
+            .expenseDisplayAmount('yes', AppLocalizations.of(context)!.you, "borrowed", (currentUserShares ?? 0));
       }
       sharedWidget = Align(
         alignment: Alignment.bottomLeft,

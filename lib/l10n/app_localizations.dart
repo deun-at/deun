@@ -146,7 +146,7 @@ abstract class AppLocalizations {
   /// No description provided for @groupNameValidationEmpty.
   ///
   /// In en, this message translates to:
-  /// **'Please enter a name'**
+  /// **'Please enter a name!'**
   String get groupNameValidationEmpty;
 
   /// No description provided for @groupSimplifiedExpensesTitle.
@@ -158,7 +158,7 @@ abstract class AppLocalizations {
   /// No description provided for @expenseDateValidationEmpty.
   ///
   /// In en, this message translates to:
-  /// **'Please enter a date'**
+  /// **'Please enter a date!'**
   String get expenseDateValidationEmpty;
 
   /// No description provided for @groupDeleteItemTitle.
@@ -170,7 +170,7 @@ abstract class AppLocalizations {
   /// No description provided for @groupNoEntries.
   ///
   /// In en, this message translates to:
-  /// **'Add a group to get started.\nIf you are already in groups find them under all!'**
+  /// **'Add a group to get started.'**
   String get groupNoEntries;
 
   /// No description provided for @groupEntriesError.
@@ -284,7 +284,7 @@ abstract class AppLocalizations {
   /// No description provided for @expenseNameValidationEmpty.
   ///
   /// In en, this message translates to:
-  /// **'Please enter a title'**
+  /// **'Please enter a title!'**
   String get expenseNameValidationEmpty;
 
   /// No description provided for @expenseAmount.
@@ -296,7 +296,7 @@ abstract class AppLocalizations {
   /// No description provided for @expenseAmountValidationEmpty.
   ///
   /// In en, this message translates to:
-  /// **'Please enter an amount'**
+  /// **'Please enter an amount!'**
   String get expenseAmountValidationEmpty;
 
   /// No description provided for @expenseDate.
@@ -332,7 +332,7 @@ abstract class AppLocalizations {
   /// No description provided for @expenseEntryNameValidationEmpty.
   ///
   /// In en, this message translates to:
-  /// **'Please enter an item title'**
+  /// **'Please enter an item title!'**
   String get expenseEntryNameValidationEmpty;
 
   /// No description provided for @expenseEntryAmount.
@@ -344,7 +344,7 @@ abstract class AppLocalizations {
   /// No description provided for @expenseEntryAmountValidationEmpty.
   ///
   /// In en, this message translates to:
-  /// **'Please enter an amount'**
+  /// **'Please enter an amount!'**
   String get expenseEntryAmountValidationEmpty;
 
   /// No description provided for @expenseEntrySharesLable.
@@ -356,7 +356,7 @@ abstract class AppLocalizations {
   /// No description provided for @expenseEntrySharesValidationEmpty.
   ///
   /// In en, this message translates to:
-  /// **'Please select at least one person'**
+  /// **'Please select at least one person!'**
   String get expenseEntrySharesValidationEmpty;
 
   /// No description provided for @expenseDeleteItemTitle.
@@ -399,7 +399,7 @@ abstract class AppLocalizations {
   ///
   /// In en, this message translates to:
   /// **'{displayName} {expenseType, select, paid{paid} lent{lent} borrowed{borrowed} other{}} {amount}'**
-  String expenseDisplayAmount(String displayName, String expenseType, double amount);
+  String expenseDisplayAmount(String displayNameYourself, String displayName, String expenseType, double amount);
 
   /// No description provided for @expenseNoShares.
   ///
@@ -458,19 +458,19 @@ abstract class AppLocalizations {
   /// No description provided for @payBackDialogPaypal.
   ///
   /// In en, this message translates to:
-  /// **'Open Paypal link!'**
+  /// **'Open Paypal link'**
   String get payBackDialogPaypal;
 
   /// No description provided for @payBackDialogIban.
   ///
   /// In en, this message translates to:
-  /// **'Copy IBAN!'**
+  /// **'Copy IBAN'**
   String get payBackDialogIban;
 
   /// No description provided for @payBackDialogDone.
   ///
   /// In en, this message translates to:
-  /// **'Payment done'**
+  /// **'Mark as paid'**
   String get payBackDialogDone;
 
   /// No description provided for @payBackError.
@@ -489,7 +489,7 @@ abstract class AppLocalizations {
   ///
   /// In en, this message translates to:
   /// **'{paidBy} paid back {amount} to {paidFor}'**
-  String groupDisplayPaidBack(String paidBy, String paidFor, double amount);
+  String groupDisplayPaidBack(String paidByYourself, String paidBy, String paidForYourself, String paidFor, double amount);
 
   /// No description provided for @signInTitle.
   ///
@@ -740,7 +740,7 @@ abstract class AppLocalizations {
   /// No description provided for @settingsFirstNameValidationEmpty.
   ///
   /// In en, this message translates to:
-  /// **'Please enter a First name'**
+  /// **'Please enter a First name!'**
   String get settingsFirstNameValidationEmpty;
 
   /// No description provided for @settingsLastName.
@@ -752,7 +752,7 @@ abstract class AppLocalizations {
   /// No description provided for @settingsLastNameValidationEmpty.
   ///
   /// In en, this message translates to:
-  /// **'Please enter a Last name'**
+  /// **'Please enter a Last name!'**
   String get settingsLastNameValidationEmpty;
 
   /// No description provided for @settingsDisplayName.
@@ -764,7 +764,7 @@ abstract class AppLocalizations {
   /// No description provided for @settingsDisplayNameValidationEmpty.
   ///
   /// In en, this message translates to:
-  /// **'Please enter a Display name'**
+  /// **'Please enter a Display name!'**
   String get settingsDisplayNameValidationEmpty;
 
   /// No description provided for @settingsPaypalMe.
@@ -778,6 +778,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'IBAN'**
   String get settingsIban;
+
+  /// No description provided for @settingsLocale.
+  ///
+  /// In en, this message translates to:
+  /// **'Language'**
+  String get settingsLocale;
 
   /// No description provided for @settingsUserUpdateSuccess.
   ///
@@ -842,7 +848,7 @@ abstract class AppLocalizations {
   /// No description provided for @contactNameValidationEmpty.
   ///
   /// In en, this message translates to:
-  /// **'Please enter a full name'**
+  /// **'Please enter a full name!'**
   String get contactNameValidationEmpty;
 
   /// No description provided for @contactCompany.
@@ -860,7 +866,7 @@ abstract class AppLocalizations {
   /// No description provided for @contactEmailValidationEmpty.
   ///
   /// In en, this message translates to:
-  /// **'Please enter an email'**
+  /// **'Please enter an email!'**
   String get contactEmailValidationEmpty;
 
   /// No description provided for @contactDescription.
@@ -872,7 +878,7 @@ abstract class AppLocalizations {
   /// No description provided for @contactDescriptionValidationEmpty.
   ///
   /// In en, this message translates to:
-  /// **'Please enter a description'**
+  /// **'Please enter a description!'**
   String get contactDescriptionValidationEmpty;
 
   /// No description provided for @contactSendSuccess.
@@ -988,6 +994,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'All'**
   String get all;
+
+  /// No description provided for @localeSelector.
+  ///
+  /// In en, this message translates to:
+  /// **'{locale, select, de{Deutsch} en{English} other{}}'**
+  String localeSelector(String locale);
+
+  /// No description provided for @localeSelectorSystem.
+  ///
+  /// In en, this message translates to:
+  /// **'System default'**
+  String get localeSelectorSystem;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

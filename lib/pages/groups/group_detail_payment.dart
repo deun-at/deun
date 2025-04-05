@@ -59,7 +59,7 @@ class _GroupPaymentBottomSheetState extends ConsumerState<GroupPaymentBottomShee
                               if (groupShare.shareAmount < 0 && toNumber(groupShare.shareAmount) != '-0.00') {
                                 listViewChildren.add(
                                   ListTile(
-                                    title: Text(groupShare.dipslayName),
+                                    title: Text(groupShare.displayName),
                                     subtitle:
                                         Text(AppLocalizations.of(context)!.toCurrency(groupShare.shareAmount.abs())),
                                     trailing: const Icon(Icons.payment),
@@ -99,14 +99,14 @@ class _GroupPaymentBottomSheetState extends ConsumerState<GroupPaymentBottomShee
         children: [
           SimpleDialogOption(
             child: Text(
-              AppLocalizations.of(context)!.payBackDialog(groupShare.dipslayName, groupShare.shareAmount.abs()),
+              AppLocalizations.of(context)!.payBackDialog(groupShare.displayName, groupShare.shareAmount.abs()),
               style: Theme.of(context).textTheme.bodyLarge!.copyWith(color: activeColor),
             ),
           ),
           Divider(),
           SimpleDialogOption(
             onPressed: () async {
-              if (groupShare.paypalMe == null) {
+              if (groupShare.paypalMe == null || groupShare.paypalMe!.isEmpty) {
                 return;
               }
               if (!await launchUrl(
@@ -119,22 +119,20 @@ class _GroupPaymentBottomSheetState extends ConsumerState<GroupPaymentBottomShee
               children: [
                 Text(
                   AppLocalizations.of(context)!.payBackDialogPaypal,
-                  style: Theme.of(context)
-                      .textTheme
-                      .bodyMedium!
-                      .copyWith(color: groupShare.paypalMe == null ? disabledColor : activeColor),
+                  style: Theme.of(context).textTheme.bodyMedium!.copyWith(
+                      color: groupShare.paypalMe == null || groupShare.paypalMe!.isEmpty ? disabledColor : activeColor),
                 ),
                 const Spacer(),
                 Icon(
                   Icons.payments_outlined,
-                  color: groupShare.paypalMe == null ? disabledColor : activeColor,
+                  color: groupShare.paypalMe == null || groupShare.paypalMe!.isEmpty ? disabledColor : activeColor,
                 ),
               ],
             ),
           ),
           SimpleDialogOption(
             onPressed: () {
-              if (groupShare.iban == null) {
+              if (groupShare.iban == null || groupShare.iban!.isEmpty) {
                 return;
               }
 
@@ -144,13 +142,12 @@ class _GroupPaymentBottomSheetState extends ConsumerState<GroupPaymentBottomShee
               children: [
                 Text(
                   AppLocalizations.of(context)!.payBackDialogIban,
-                  style: Theme.of(context)
-                      .textTheme
-                      .bodyMedium!
-                      .copyWith(color: groupShare.iban == null ? disabledColor : activeColor),
+                  style: Theme.of(context).textTheme.bodyMedium!.copyWith(
+                      color: groupShare.iban == null || groupShare.iban!.isEmpty ? disabledColor : activeColor),
                 ),
                 const Spacer(),
-                Icon(Icons.credit_card, color: groupShare.iban == null ? disabledColor : activeColor),
+                Icon(Icons.credit_card,
+                    color: groupShare.iban == null || groupShare.iban!.isEmpty ? disabledColor : activeColor),
               ],
             ),
           ),

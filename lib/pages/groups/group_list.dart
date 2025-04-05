@@ -257,7 +257,7 @@ class GroupShareWidget extends StatelessWidget {
               Align(
                 alignment: Alignment.bottomLeft,
                 child: Text(
-                  AppLocalizations.of(context)!.groupDisplayAmount(e.dipslayName, paidByYourself, e.shareAmount.abs()),
+                  AppLocalizations.of(context)!.groupDisplayAmount(e.displayName, paidByYourself, e.shareAmount.abs()),
                   style: Theme.of(context).textTheme.labelLarge!.copyWith(color: textColor),
                 ),
               ),

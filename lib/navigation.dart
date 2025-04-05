@@ -49,6 +49,7 @@ class _NavigationScreenState extends ConsumerState<NavigationScreen> {
   @override
   void initState() {
     super.initState();
+    _initUserLocale();
     _initFirebaseMessaging();
     initDeepLinks();
 
@@ -215,6 +216,15 @@ class _NavigationScreenState extends ConsumerState<NavigationScreen> {
     );
   }
 
+  _initUserLocale() async {
+    //initialize Prefered Language
+    final user = await supabase.from("user").select("*").eq("email", supabase.auth.currentUser!.email ?? '').single();
+
+    if (user["locale"] != null) {
+      ref.read(localeNotifierProvider.notifier).setLocale(Locale(user["locale"]));
+    }
+  }
+
   _initFirebaseMessaging() async {
     // You may set the permission requests to "provisional" which allows the user to choose what type
     // of notifications they would like to receive once the user receives a notification.
@@ -327,6 +337,7 @@ class _NavigationScreenState extends ConsumerState<NavigationScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final locale = ref.watch(localeNotifierProvider);
     Color colorSelected = ref.watch(themeColorProvider);
 
     return MaterialApp.router(
@@ -336,8 +347,16 @@ class _NavigationScreenState extends ConsumerState<NavigationScreen> {
       theme: ThemeData(colorSchemeSeed: colorSelected, useMaterial3: true, brightness: Brightness.light),
       darkTheme: ThemeData(colorSchemeSeed: colorSelected, useMaterial3: true, brightness: Brightness.dark),
       themeMode: ThemeMode.system,
+      locale: locale,
       localizationsDelegates: AppLocalizations.localizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
+      localeResolutionCallback: (locale, supportedLocales) {
+        if (locale == null) {
+          return Locale('en');
+        }
+
+        return supportedLocales.contains(locale) ? locale : Locale('en');
+      },
     );
   }
 }
