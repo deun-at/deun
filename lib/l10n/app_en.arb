@@ -547,7 +547,7 @@
   "@settingsPrivacyPreferencesSuccess": {},
   "settingsPrivacyPreferencesError": "An error occurred while trying to change your privacy choices",
   "@settingsPrivacyPreferencesError": {},
-  "contact": "Contact",
+  "contact": "Support",
   "@contact": {},
   "contactSubtitle": "Whether you're seeking support, have feedback, or are interested in collaborating with us, please fill out the form below or write us a mail to app.deun@gmail.com!",
   "@contactSubtitle": {},

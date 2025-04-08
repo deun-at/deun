@@ -836,7 +836,7 @@ abstract class AppLocalizations {
   /// No description provided for @contact.
   ///
   /// In en, this message translates to:
-  /// **'Contact'**
+  /// **'Support'**
   String get contact;
 
   /// No description provided for @contactSubtitle.

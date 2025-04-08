@@ -534,7 +534,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get settingsPrivacyPreferencesError => 'An error occurred while trying to change your privacy choices';
 
   @override
-  String get contact => 'Contact';
+  String get contact => 'Support';
 
   @override
   String get contactSubtitle => 'Whether you\'re seeking support, have feedback, or are interested in collaborating with us, please fill out the form below or write us a mail to app.deun@gmail.com!';

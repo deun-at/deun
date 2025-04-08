@@ -555,7 +555,7 @@ class AppLocalizationsDe extends AppLocalizations {
   String get settingsPrivacyPreferencesError => 'Fehler beim Speichern der Datenschutzeinstellungen.';
 
   @override
-  String get contact => 'Kontakt';
+  String get contact => 'Support';
 
   @override
   String get contactSubtitle => 'Egal, ob du Unterstützung suchst, Feedback hast oder an einer Zusammenarbeit interessiert bist - fülle einfach das untenstehende Formular aus oder schreibe uns eine E-Mail an app.deun@gmail.com!';
