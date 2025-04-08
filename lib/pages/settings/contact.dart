@@ -38,6 +38,10 @@ class _ContactState extends State<StatefulWidget> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Padding(
+                  padding: const EdgeInsets.only(left: 15, right: 15),
+                  child: Text(AppLocalizations.of(context)!.contactSubtitle),
+                ),
+                Padding(
                   padding: const EdgeInsets.all(15),
                   child: FormBuilder(
                     key: _formKey,
@@ -125,7 +129,7 @@ class _ContactState extends State<StatefulWidget> {
                                 }
                               }
                             },
-                            child: Text(AppLocalizations.of(context)!.send),
+                            child: Text(AppLocalizations.of(context)!.contactUs),
                           ),
                         ),
                       ],

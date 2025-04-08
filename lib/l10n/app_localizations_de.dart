@@ -558,6 +558,9 @@ class AppLocalizationsDe extends AppLocalizations {
   String get contact => 'Kontakt';
 
   @override
+  String get contactSubtitle => 'Egal, ob du Unterstützung suchst, Feedback hast oder an einer Zusammenarbeit interessiert bist - fülle einfach das untenstehende Formular aus oder schreibe uns eine E-Mail an app.deun@gmail.com!';
+
+  @override
   String get contactName => 'Name';
 
   @override
@@ -577,6 +580,9 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get contactDescriptionValidationEmpty => 'Bitte gib eine Beschreibung ein!';
+
+  @override
+  String get contactUs => 'Kontaktiere uns';
 
   @override
   String get contactSendSuccess => 'Nachricht erfolgreich gesendet.';

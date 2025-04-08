@@ -50,6 +50,7 @@ class _ExpenseBottomSheetState extends ConsumerState<ExpenseBottomSheet> {
       _newTextFieldId = widget.expense!.expenseEntries.length;
       widget.expense!.expenseEntries.forEach((key, expenseEntry) {
         expenseEntryFields.add(ExpenseEntryWidget(
+            key: ValueKey(expenseEntry.index),
             expenseEntry: expenseEntry,
             index: expenseEntry.index,
             onRemove: () => onRemove(expenseEntry),
@@ -58,6 +59,7 @@ class _ExpenseBottomSheetState extends ConsumerState<ExpenseBottomSheet> {
     } else {
       ExpenseEntry _expenseEntry = ExpenseEntry(index: _newTextFieldId++);
       expenseEntryFields.add(ExpenseEntryWidget(
+          key: ValueKey(_expenseEntry.index),
           expenseEntry: _expenseEntry,
           index: _expenseEntry.index,
           onRemove: () => onRemove(_expenseEntry),
@@ -90,7 +92,6 @@ class _ExpenseBottomSheetState extends ConsumerState<ExpenseBottomSheet> {
   void onRemove(ExpenseEntry expenseEntry) {
     setState(() {
       int index = expenseEntryFields.indexWhere((element) => element.expenseEntry.index == expenseEntry.index);
-
       expenseEntryFields.removeAt(index);
     });
   }
@@ -284,6 +285,7 @@ class _ExpenseBottomSheetState extends ConsumerState<ExpenseBottomSheet> {
                                               ExpenseEntry _expenseEntry = ExpenseEntry(index: _newTextFieldId++);
                                               expenseEntryFields.add(
                                                 ExpenseEntryWidget(
+                                                  key: ValueKey(_expenseEntry.index),
                                                   expenseEntry: _expenseEntry,
                                                   index: _expenseEntry.index,
                                                   onRemove: () => onRemove(_expenseEntry),

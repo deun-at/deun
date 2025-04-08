@@ -537,6 +537,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get contact => 'Contact';
 
   @override
+  String get contactSubtitle => 'Whether you\'re seeking support, have feedback, or are interested in collaborating with us, please fill out the form below or write us a mail to app.deun@gmail.com!';
+
+  @override
   String get contactName => 'Full Name';
 
   @override
@@ -556,6 +559,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get contactDescriptionValidationEmpty => 'Please enter a description!';
+
+  @override
+  String get contactUs => 'Contact Us';
 
   @override
   String get contactSendSuccess => 'Support request sent!';

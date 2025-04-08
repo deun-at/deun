@@ -839,6 +839,12 @@ abstract class AppLocalizations {
   /// **'Contact'**
   String get contact;
 
+  /// No description provided for @contactSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Whether you\'re seeking support, have feedback, or are interested in collaborating with us, please fill out the form below or write us a mail to app.deun@gmail.com!'**
+  String get contactSubtitle;
+
   /// No description provided for @contactName.
   ///
   /// In en, this message translates to:
@@ -880,6 +886,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Please enter a description!'**
   String get contactDescriptionValidationEmpty;
+
+  /// No description provided for @contactUs.
+  ///
+  /// In en, this message translates to:
+  /// **'Contact Us'**
+  String get contactUs;
 
   /// No description provided for @contactSendSuccess.
   ///

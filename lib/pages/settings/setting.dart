@@ -42,15 +42,6 @@ class _SettingState extends ConsumerState<Setting> {
     const double spacing = 8;
     const double heightSpacing = 12;
 
-    String? initialLocale;
-    Locale currentLocale = Localizations.localeOf(context);
-
-    bool isSupported = AppLocalizations.supportedLocales.contains(currentLocale);
-
-    if (isSupported) {
-      initialLocale = currentLocale.toLanguageTag();
-    }
-
     return Scaffold(
       body: NotificationListener<ScrollUpdateNotification>(
         child: NestedScrollView(
@@ -103,11 +94,12 @@ class _SettingState extends ConsumerState<Setting> {
                   child: Consumer(
                     builder: (context, ref, child) {
                       final User? user = ref.watch(userDetailNotifierProvider).value;
+                      final locale = ref.watch(localeNotifierProvider);
 
                       if (user == null) {
                         return const ShimmerCardList(
                           height: 54,
-                          listEntryLength: 5,
+                          listEntryLength: 6,
                         );
                       }
 
@@ -213,11 +205,11 @@ class _SettingState extends ConsumerState<Setting> {
                                       const SizedBox(height: heightSpacing),
                                       FormBuilderDropdown(
                                         name: 'locale',
+                                        initialValue: locale?.toLanguageTag(),
                                         decoration: InputDecoration(
                                           labelText: AppLocalizations.of(context)!.settingsLocale,
                                           border: const OutlineInputBorder(),
                                         ),
-                                        initialValue: initialLocale,
                                         items: [
                                           DropdownMenuItem(
                                             value: null,
