@@ -22,7 +22,7 @@ final expenseListProvider = AutoDisposeFutureProvider<List<Expense>>.internal(
 @Deprecated('Will be removed in 3.0. Use Ref instead')
 // ignore: unused_element
 typedef ExpenseListRef = AutoDisposeFutureProviderRef<List<Expense>>;
-String _$groupListNotifierHash() => r'1214efad4e0d659657e5a62586d94a0d5e2d9542';
+String _$groupListNotifierHash() => r'43f0188b3564872c366005969d261b7580dbd8bf';
 
 /// Copied from Dart SDK
 class _SystemHash {
@@ -191,7 +191,7 @@ class _GroupListNotifierProviderElement
 }
 
 String _$groupDetailNotifierHash() =>
-    r'bca4c35a57e36bb9e2645300767bfd5a46f41f47';
+    r'b3f3afe5eb5f2bc47dbc8ffafa47b32852d52e02';
 
 abstract class _$GroupDetailNotifier
     extends BuildlessAutoDisposeAsyncNotifier<Group> {
@@ -338,7 +338,7 @@ class _GroupDetailNotifierProviderElement
 }
 
 String _$expenseListNotifierHash() =>
-    r'7f8a5c9800763dba7316ab7c391431a9a7f7445a';
+    r'd26d6627ab55c65ec7b34f568a34cffa55aa419f';
 
 abstract class _$ExpenseListNotifier
     extends BuildlessAutoDisposeAsyncNotifier<List<Expense>> {
@@ -486,7 +486,7 @@ class _ExpenseListNotifierProviderElement
 }
 
 String _$friendshipListNotifierHash() =>
-    r'4c6f3e2f143d7fbf46f09d9a6bef9549dcbcb565';
+    r'98fa8b7b5dcabc1704ae2c0653d1f0ae383b6645';
 
 /// See also [FriendshipListNotifier].
 @ProviderFor(FriendshipListNotifier)

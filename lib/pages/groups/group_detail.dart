@@ -127,8 +127,9 @@ class _GroupDetailState extends ConsumerState<GroupDetail> {
                         children: [
                           Consumer(
                             builder: (ctx, watch, child) {
-                              final isLoading = ref.watch(groupDetailNotifierProvider(widget.group.id)).isLoading;
-                              final groupDetail = ref.watch(groupDetailNotifierProvider(widget.group.id)).value;
+                              final groupDetailState = ref.watch(groupDetailNotifierProvider(widget.group.id));
+                              final isLoading = groupDetailState.isLoading;
+                              final groupDetail = groupDetailState.value;
 
                               if (isLoading || groupDetail == null) {
                                 return const Padding(

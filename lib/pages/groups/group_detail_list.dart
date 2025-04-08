@@ -40,8 +40,9 @@ class _GroupDetailListState extends ConsumerState<GroupDetailList> {
       color: Theme.of(context).colorScheme.surfaceContainer,
       child: Consumer(
         builder: (context, ref, child) {
-          final isLoading = ref.watch(expenseListNotifierProvider(widget.group.id)).isLoading;
-          final expenses = ref.watch(expenseListNotifierProvider(widget.group.id)).value;
+          final expenseListState = ref.watch(expenseListNotifierProvider(widget.group.id));
+          final isLoading = expenseListState.isLoading;
+          final expenses = expenseListState.value;
           oldOffset = ref.read(expenseListNotifierProvider(widget.group.id).notifier).offset;
 
           if (isLoading) {

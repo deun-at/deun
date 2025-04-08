@@ -303,10 +303,9 @@ class _NavigationScreenState extends ConsumerState<NavigationScreen> {
   }
 
   void _handleMessage(RemoteMessage message) async {
-    // debugPrint('handle message: ${message.data.toString()}');
     switch (message.data['type']) {
       case 'group':
-        Group group = await Group.fetchDetail(message.data['group_id']);
+        Group group = await Group.fetchDetail(message.data['expense_id']);
         navigateToGroup(_rootNavigatorKey.currentContext!, group);
         break;
       case 'expense':
@@ -393,19 +392,19 @@ class _ScaffoldWithNestedNavigationState extends ConsumerState<ScaffoldWithNeste
     super.initState();
 
     FirebaseMessaging.onMessage.listen((RemoteMessage message) {
-      if (message.data['type'] == 'expense') {
-        Expense.fetchDetail(message.data['expense_id']).then((expense) {
-          // ignore: use_build_context_synchronously
-          showMaterialBanner(context, '${message.notification!.title}\n${message.notification!.body}',
-              () => navigateToExpense(context, expense));
-        });
-      } else if (message.data['type'] == 'friendship') {
-        showMaterialBanner(
-            // ignore: use_build_context_synchronously
-            context,
-            '${message.notification!.title}\n${message.notification!.body}',
-            () => navigateToFriends(context));
-      }
+      // if (message.data['type'] == 'expense') {
+      //   Expense.fetchDetail(message.data['expense_id']).then((expense) {
+      //     // ignore: use_build_context_synchronously
+      //     showMaterialBanner(context, '${message.notification!.title}\n${message.notification!.body}',
+      //         () => navigateToExpense(context, expense));
+      //   });
+      // } else if (message.data['type'] == 'friendship') {
+      //   showMaterialBanner(
+      //       // ignore: use_build_context_synchronously
+      //       context,
+      //       '${message.notification!.title}\n${message.notification!.body}',
+      //       () => navigateToFriends(context));
+      // }
     });
   }
 

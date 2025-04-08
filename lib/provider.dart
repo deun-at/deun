@@ -40,7 +40,9 @@ class GroupListNotifier extends _$GroupListNotifier {
             callback: (payload) async {
               reload(statusFilter);
             })
-        .subscribe();
+        .subscribe((status, _) {
+      debugPrint('---subscribe--- groupList ${status.toString()}');
+    });
   }
 }
 
@@ -78,7 +80,9 @@ class GroupDetailNotifier extends _$GroupDetailNotifier {
             callback: (payload) async {
               reload(groupId);
             })
-        .subscribe();
+        .subscribe((status, _) {
+      debugPrint('---subscribe--- groupDetails ${status.toString()}');
+    });
   }
 }
 
@@ -159,7 +163,9 @@ class ExpenseListNotifier extends _$ExpenseListNotifier {
                 return;
               }
             })
-        .subscribe();
+        .subscribe((status, _) {
+      debugPrint('---subscribe--- expenseList ${status.toString()}');
+    });
   }
 
   Future<void> loadMoreEntries(String groupId) async {
@@ -212,7 +218,9 @@ class FriendshipListNotifier extends _$FriendshipListNotifier {
             reload();
           },
         )
-        .subscribe();
+        .subscribe((status, _) {
+      debugPrint('---subscribe--- friendshipList ${status.toString()}');
+    });
 
     supabase
         .channel('public:friendship_list_group_checker')
@@ -223,7 +231,9 @@ class FriendshipListNotifier extends _$FriendshipListNotifier {
             callback: (payload) async {
               reload();
             })
-        .subscribe();
+        .subscribe((status, _) {
+      debugPrint('---subscribe--- friendshipGroupList ${status.toString()}');
+    });
   }
 }
 
