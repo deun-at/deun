@@ -376,7 +376,7 @@ class AppLocalizationsDe extends AppLocalizations {
   String get addFriendshipPendingRequests => 'Added Me';
 
   @override
-  String get addFriendshipAllContacts => 'Find Friends';
+  String get addFriendshipAllContacts => 'Find Friends from Contacts';
 
   @override
   String get addFriendshipContactPermission => 'Request access to your contacts.';

@@ -1,7 +1,6 @@
 import 'package:deun/constants.dart';
 import 'package:deun/pages/groups/group_model.dart';
 import 'package:deun/pages/users/user_model.dart';
-import 'package:flutter/rendering.dart';
 
 import '../../main.dart';
 

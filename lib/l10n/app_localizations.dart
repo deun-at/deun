@@ -596,7 +596,7 @@ abstract class AppLocalizations {
   /// No description provided for @addFriendshipAllContacts.
   ///
   /// In en, this message translates to:
-  /// **'Find Friends'**
+  /// **'Find Friends from Contacts'**
   String get addFriendshipAllContacts;
 
   /// No description provided for @addFriendshipContactPermission.
