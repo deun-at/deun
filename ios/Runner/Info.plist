@@ -74,5 +74,7 @@
 		<false/>
 		<key>GADApplicationIdentifier</key>
 		<string>ca-app-pub-3679753617535056~4418417265</string>
+    <key>NSContactsUsageDescription</key>
+    <string>to invite contacts to use the app and to find contacts and add them as a friend.</string>
 	</dict>
 </plist>

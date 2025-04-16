@@ -106,3 +106,29 @@ class ShimmerCardListState extends State<ShimmerCardList> with SingleTickerProvi
         });
   }
 }
+
+class ShimmerCardListTile extends StatelessWidget {
+  const ShimmerCardListTile({super.key, this.listTileAmount = 1});
+  final int listTileAmount;
+
+  @override
+  Widget build(BuildContext context) {
+    return ListView.builder(
+      padding: EdgeInsets.zero,
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      itemCount: listTileAmount,
+      itemBuilder: (context, index) {
+        return Padding(
+            padding: const EdgeInsets.fromLTRB(5.0, 8.0, 5.0, 8.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                SizedBox(width: 150, child: ShimmerCardList(height: 15, listEntryLength: 1)),
+                SizedBox(width: 250, child: ShimmerCardList(height: 15, listEntryLength: 1)),
+              ],
+            ));
+      },
+    );
+  }
+}

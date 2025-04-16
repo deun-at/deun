@@ -4,6 +4,7 @@ import 'package:deun/helper/helper.dart';
 import 'package:deun/main.dart';
 import 'package:deun/pages/auth/update_password.dart';
 import 'package:deun/pages/expenses/expense_model.dart';
+import 'package:deun/pages/friends/friend_add.dart';
 import 'package:deun/pages/friends/friend_list.dart';
 import 'package:deun/pages/groups/group_detail_payment.dart';
 import 'package:deun/pages/settings/contact.dart';
@@ -148,11 +149,19 @@ class _NavigationScreenState extends ConsumerState<NavigationScreen> {
               routes: [
                 // top route inside branch
                 GoRoute(
-                  path: '/friend',
-                  pageBuilder: (context, state) => const NoTransitionPage(
-                    child: FriendList(),
-                  ),
-                ),
+                    path: '/friend',
+                    pageBuilder: (context, state) => const NoTransitionPage(child: FriendList()),
+                    routes: [
+                      GoRoute(
+                          path: 'add',
+                          parentNavigatorKey: _rootNavigatorKey,
+                          pageBuilder: (context, state) {
+                            return ModalBottomSheetPage(
+                              key: state.pageKey,
+                              builder: (context) => FriendAddBottomSheet(),
+                            );
+                          }),
+                    ]),
               ],
             ),
             // third branch (Setting)
@@ -410,36 +419,31 @@ class _ScaffoldWithNestedNavigationState extends ConsumerState<ScaffoldWithNeste
 
   @override
   Widget build(BuildContext context) {
-    return AnnotatedRegion<SystemUiOverlayStyle>(
-        value: SystemUiOverlayStyle(
-          systemNavigationBarColor: Theme.of(context).colorScheme.surfaceContainer, // ✅ Matches BottomNavigationBar
-          systemNavigationBarIconBrightness: Theme.of(context).brightness, // ✅ Light or dark icons based on color
-        ),
-        child: Scaffold(
-          body: widget.navigationShell,
-          bottomNavigationBar: NavigationBar(
-            labelBehavior: NavigationDestinationLabelBehavior.onlyShowSelected,
-            selectedIndex: widget.navigationShell.currentIndex,
-            destinations: <Widget>[
-              NavigationDestination(
-                selectedIcon: const Icon(Icons.receipt_long),
-                icon: const Icon(Icons.receipt_long_outlined),
-                label: AppLocalizations.of(context)!.groups,
-              ),
-              NavigationDestination(
-                selectedIcon: const Icon(Icons.group),
-                icon: const Icon(Icons.group_outlined),
-                label: AppLocalizations.of(context)!.friends,
-              ),
-              NavigationDestination(
-                selectedIcon: const Icon(Icons.settings),
-                icon: const Icon(Icons.settings_outlined),
-                label: AppLocalizations.of(context)!.settings,
-              ),
-            ],
-            onDestinationSelected: _goBranch,
+    return Scaffold(
+      body: widget.navigationShell,
+      bottomNavigationBar: NavigationBar(
+        labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
+        selectedIndex: widget.navigationShell.currentIndex,
+        destinations: <Widget>[
+          NavigationDestination(
+            selectedIcon: const Icon(Icons.receipt_long),
+            icon: const Icon(Icons.receipt_long_outlined),
+            label: AppLocalizations.of(context)!.groups,
           ),
-        ));
+          NavigationDestination(
+            selectedIcon: const Icon(Icons.group),
+            icon: const Icon(Icons.group_outlined),
+            label: AppLocalizations.of(context)!.friends,
+          ),
+          NavigationDestination(
+            selectedIcon: const Icon(Icons.settings),
+            icon: const Icon(Icons.settings_outlined),
+            label: AppLocalizations.of(context)!.settings,
+          ),
+        ],
+        onDestinationSelected: _goBranch,
+      ),
+    );
   }
 }
 

@@ -298,12 +298,32 @@
   "@updatePasswordUpdatePassword": {},
   "friends": "Friends",
   "@friends": {},
+  "addFriends": "Add friends",
+  "@addFriends": {},
   "friendsNoEntries": "No friends yet",
   "@friendsNoEntries": {},
-  "addFriendshipSelectionEmpty": "Search E-Mail",
+  "addFriendshipSelectionEmpty": "Search for Name or E-Mail",
   "@addFriendshipSelectionEmpty": {},
+  "addFriendshipSearchResult": "Search Result",
+  "@addFriendshipSearchResult": {},
+  "addFriendshipPendingRequests": "Added Me",
+  "@addFriendshipPendingRequests": {},
+  "addFriendshipAllContacts": "Find Friends",
+  "@addFriendshipAllContacts": {},
+  "addFriendshipContactPermission": "Request access to your contacts.",
+  "@addFriendshipContactPermission": {},
+  "addFriendshipContactPermissionSubtitle": "Please make shure that you have given the app permission to access your contacts.",
+  "@addFriendshipContactPermissionSubtitle": {},
+  "addFriendshipRequested": "Pending Friendship Requests",
+  "@addFriendshipRequested": {},
+  "addFriendshipRequestedNoResult": "No pending requests found!",
+  "@addFriendshipRequestedNoResult": {},
   "addFriendshipNoResult": "No User found with this E-Mail!",
   "@addFriendshipNoResult": {},
+  "addFriendshipRequestNoResult": "No friend request found!",
+  "@addFriendshipRequestNoResult": {},
+  "addFriendshipContactNoResult": "No Contacts found!",
+  "@addFriendshipContactNoResult": {},
   "requestFriendship": "Add friend",
   "@requestFriendship": {},
   "friendsPending": "Pending",
@@ -351,6 +371,16 @@
   "friendshipRequestCancel": "Request to {displayName} was canceled",
   "@friendshipRequestCancel": {
     "description": "Snackbar message when a friendship request was canceled.",
+    "placeholders": {
+      "displayName": {
+        "type": "String",
+        "example": "Max Muster"
+      }
+    }
+  },
+  "friendshipRequestDecline": "Request from {displayName} was declined",
+  "@friendshipRequestDecline": {
+    "description": "Snackbar message when a friendship request was declined.",
     "placeholders": {
       "displayName": {
         "type": "String",
@@ -509,6 +539,18 @@
       }
     }
   },
+  "friendDeclineNotificationTitle": "Your friend request got declined",
+  "@friendDeclineNotificationTitle": {},
+  "friendDeclineNotificationBody": "{userDisplayName} declined your friend request.",
+  "@friendDeclineNotificationBody": {
+    "description": "Notification title when a friend request was declined.",
+    "placeholders": {
+      "userDisplayName": {
+        "type": "String",
+        "example": "Max Muster"
+      }
+    }
+  },
   "settings": "Settings",
   "@settings": {},
   "settingsUserHeading": "User Data",
@@ -575,6 +617,8 @@
   "@deleteAccount": {},
   "deleteAccountError": "Error while trying to delete the user account. Please contact app.deun@gmail.com for support.",
   "@deleteAccountError": {},
+  "errorLoadingData": "Error while loading data!",
+  "@errorLoadingData": {},
   "create": "Create",
   "@create": {},
   "cancel": "Cancel",
@@ -587,6 +631,10 @@
   "@update": {},
   "save": "Save",
   "@save": {},
+  "add": "Add",
+  "@add": {},
+  "invite": "Invite",
+  "@invite": {},
   "accept": "Accept",
   "@accept": {},
   "remove": "Remove",

@@ -563,6 +563,12 @@ abstract class AppLocalizations {
   /// **'Friends'**
   String get friends;
 
+  /// No description provided for @addFriends.
+  ///
+  /// In en, this message translates to:
+  /// **'Add friends'**
+  String get addFriends;
+
   /// No description provided for @friendsNoEntries.
   ///
   /// In en, this message translates to:
@@ -572,14 +578,68 @@ abstract class AppLocalizations {
   /// No description provided for @addFriendshipSelectionEmpty.
   ///
   /// In en, this message translates to:
-  /// **'Search E-Mail'**
+  /// **'Search for Name or E-Mail'**
   String get addFriendshipSelectionEmpty;
+
+  /// No description provided for @addFriendshipSearchResult.
+  ///
+  /// In en, this message translates to:
+  /// **'Search Result'**
+  String get addFriendshipSearchResult;
+
+  /// No description provided for @addFriendshipPendingRequests.
+  ///
+  /// In en, this message translates to:
+  /// **'Added Me'**
+  String get addFriendshipPendingRequests;
+
+  /// No description provided for @addFriendshipAllContacts.
+  ///
+  /// In en, this message translates to:
+  /// **'Find Friends'**
+  String get addFriendshipAllContacts;
+
+  /// No description provided for @addFriendshipContactPermission.
+  ///
+  /// In en, this message translates to:
+  /// **'Request access to your contacts.'**
+  String get addFriendshipContactPermission;
+
+  /// No description provided for @addFriendshipContactPermissionSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Please make shure that you have given the app permission to access your contacts.'**
+  String get addFriendshipContactPermissionSubtitle;
+
+  /// No description provided for @addFriendshipRequested.
+  ///
+  /// In en, this message translates to:
+  /// **'Pending Friendship Requests'**
+  String get addFriendshipRequested;
+
+  /// No description provided for @addFriendshipRequestedNoResult.
+  ///
+  /// In en, this message translates to:
+  /// **'No pending requests found!'**
+  String get addFriendshipRequestedNoResult;
 
   /// No description provided for @addFriendshipNoResult.
   ///
   /// In en, this message translates to:
   /// **'No User found with this E-Mail!'**
   String get addFriendshipNoResult;
+
+  /// No description provided for @addFriendshipRequestNoResult.
+  ///
+  /// In en, this message translates to:
+  /// **'No friend request found!'**
+  String get addFriendshipRequestNoResult;
+
+  /// No description provided for @addFriendshipContactNoResult.
+  ///
+  /// In en, this message translates to:
+  /// **'No Contacts found!'**
+  String get addFriendshipContactNoResult;
 
   /// No description provided for @requestFriendship.
   ///
@@ -622,6 +682,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Request to {displayName} was canceled'**
   String friendshipRequestCancel(String displayName);
+
+  /// Snackbar message when a friendship request was declined.
+  ///
+  /// In en, this message translates to:
+  /// **'Request from {displayName} was declined'**
+  String friendshipRequestDecline(String displayName);
 
   /// Title for Friendship Edit Dialog
   ///
@@ -718,6 +784,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'{userDisplayName} accepted your friend request.'**
   String friendAcceptNotificationBody(String userDisplayName);
+
+  /// No description provided for @friendDeclineNotificationTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Your friend request got declined'**
+  String get friendDeclineNotificationTitle;
+
+  /// Notification title when a friend request was declined.
+  ///
+  /// In en, this message translates to:
+  /// **'{userDisplayName} declined your friend request.'**
+  String friendDeclineNotificationBody(String userDisplayName);
 
   /// No description provided for @settings.
   ///
@@ -917,6 +995,12 @@ abstract class AppLocalizations {
   /// **'Error while trying to delete the user account. Please contact app.deun@gmail.com for support.'**
   String get deleteAccountError;
 
+  /// No description provided for @errorLoadingData.
+  ///
+  /// In en, this message translates to:
+  /// **'Error while loading data!'**
+  String get errorLoadingData;
+
   /// No description provided for @create.
   ///
   /// In en, this message translates to:
@@ -952,6 +1036,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Save'**
   String get save;
+
+  /// No description provided for @add.
+  ///
+  /// In en, this message translates to:
+  /// **'Add'**
+  String get add;
+
+  /// No description provided for @invite.
+  ///
+  /// In en, this message translates to:
+  /// **'Invite'**
+  String get invite;
 
   /// No description provided for @accept.
   ///

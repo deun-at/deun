@@ -340,13 +340,43 @@ class AppLocalizationsEn extends AppLocalizations {
   String get friends => 'Friends';
 
   @override
+  String get addFriends => 'Add friends';
+
+  @override
   String get friendsNoEntries => 'No friends yet';
 
   @override
-  String get addFriendshipSelectionEmpty => 'Search E-Mail';
+  String get addFriendshipSelectionEmpty => 'Search for Name or E-Mail';
+
+  @override
+  String get addFriendshipSearchResult => 'Search Result';
+
+  @override
+  String get addFriendshipPendingRequests => 'Added Me';
+
+  @override
+  String get addFriendshipAllContacts => 'Find Friends';
+
+  @override
+  String get addFriendshipContactPermission => 'Request access to your contacts.';
+
+  @override
+  String get addFriendshipContactPermissionSubtitle => 'Please make shure that you have given the app permission to access your contacts.';
+
+  @override
+  String get addFriendshipRequested => 'Pending Friendship Requests';
+
+  @override
+  String get addFriendshipRequestedNoResult => 'No pending requests found!';
 
   @override
   String get addFriendshipNoResult => 'No User found with this E-Mail!';
+
+  @override
+  String get addFriendshipRequestNoResult => 'No friend request found!';
+
+  @override
+  String get addFriendshipContactNoResult => 'No Contacts found!';
 
   @override
   String get requestFriendship => 'Add friend';
@@ -377,6 +407,11 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String friendshipRequestCancel(String displayName) {
     return 'Request to $displayName was canceled';
+  }
+
+  @override
+  String friendshipRequestDecline(String displayName) {
+    return 'Request from $displayName was declined';
   }
 
   @override
@@ -474,6 +509,14 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String friendAcceptNotificationBody(String userDisplayName) {
     return '$userDisplayName accepted your friend request.';
+  }
+
+  @override
+  String get friendDeclineNotificationTitle => 'Your friend request got declined';
+
+  @override
+  String friendDeclineNotificationBody(String userDisplayName) {
+    return '$userDisplayName declined your friend request.';
   }
 
   @override
@@ -576,6 +619,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get deleteAccountError => 'Error while trying to delete the user account. Please contact app.deun@gmail.com for support.';
 
   @override
+  String get errorLoadingData => 'Error while loading data!';
+
+  @override
   String get create => 'Create';
 
   @override
@@ -592,6 +638,12 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get save => 'Save';
+
+  @override
+  String get add => 'Add';
+
+  @override
+  String get invite => 'Invite';
 
   @override
   String get accept => 'Accept';

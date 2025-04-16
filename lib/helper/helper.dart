@@ -165,6 +165,22 @@ sendFriendAcceptNotification(BuildContext context, Set<String> notificationRecei
   );
 }
 
+sendFriendDeclineNotification(BuildContext context, Set<String> notificationReceiver) {
+  User.fetchDetail(supabase.auth.currentUser!.email ?? '').then(
+    (value) {
+      sendNotification(
+        'friendship',
+        '',
+        notificationReceiver,
+        // ignore: use_build_context_synchronously
+        AppLocalizations.of(context)!.friendDeclineNotificationTitle,
+        // ignore: use_build_context_synchronously
+        AppLocalizations.of(context)!.friendDeclineNotificationBody(value.displayName),
+      );
+    },
+  );
+}
+
 sendNotification(String type, String objectId, Set<String> notificationReceiver, String title, String body) async {
   try {
     notificationReceiver.remove(supabase.auth.currentUser?.email);
@@ -217,4 +233,12 @@ navigateToExpense(BuildContext context, Expense expense) {
 
 navigateToFriends(BuildContext context) {
   GoRouter.of(context).go("/friend");
+}
+
+void refreshSuggestions(SearchController searchController) {
+  const String _zeroWidthSpace = '\u200B';
+  final previousText = searchController.text;
+  searchController.text =
+      '$_zeroWidthSpace$previousText'; // This will trigger updateSuggestions and call `suggestionsBuilder`.
+  searchController.text = previousText;
 }

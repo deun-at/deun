@@ -1,6 +1,7 @@
 import 'package:deun/constants.dart';
 import 'package:deun/pages/groups/group_model.dart';
 import 'package:deun/pages/users/user_model.dart';
+import 'package:flutter/rendering.dart';
 
 import '../../main.dart';
 
@@ -30,9 +31,8 @@ class Friendship {
     List<Map<String, dynamic>> data = await supabase
         .from('friendship')
         .select('*, requester(*), addressee(*)')
-        .or("addressee.eq.$currentEmail,requester.eq.$currentEmail")
-        .order('status', ascending: true)
-        .order('display_name', referencedTable: 'requester', ascending: false)
+        .eq('status', 'accepted')
+        .eq('requester', currentEmail)
         .order('display_name', referencedTable: 'addressee', ascending: false);
 
     List<Friendship> retData = List.empty(growable: true);
@@ -40,28 +40,58 @@ class Friendship {
     final groupList = await Group.fetchData(GroupListFilter.active.value);
 
     for (var element in data) {
-      if ((element["status"] == "accepted" && element["requester"]["email"] == currentEmail) ||
-          element["status"] == "pending") {
-        Friendship friendship = Friendship();
-        friendship.loadDataFromJson(element);
-        friendship.shareAmount = 0;
+      Friendship friendship = Friendship();
+      friendship.loadDataFromJson(element);
+      friendship.shareAmount = 0;
 
-        if (element["status"] == "accepted") {
-          for (var group in groupList) {
-            group.groupSharesSummary.forEach((key, groupShare) {
-              if (key == friendship.user.email) {
-                friendship.shareAmount += groupShare.shareAmount;
-              }
-            });
+      for (var group in groupList) {
+        group.groupSharesSummary.forEach((key, groupShare) {
+          if (key == friendship.user.email) {
+            friendship.shareAmount += groupShare.shareAmount;
           }
-
-          if (friendship.shareAmount.abs() < 0.01) {
-            friendship.shareAmount = 0;
-          }
-        }
-
-        retData.add(friendship);
+        });
       }
+
+      if (friendship.shareAmount.abs() < 0.01) {
+        friendship.shareAmount = 0;
+      }
+
+      retData.add(friendship);
+    }
+
+    retData.sort((a, b) {
+      if (a.shareAmount == 0 && b.shareAmount != 0) {
+        return 1;
+      } else if (a.shareAmount != 0 && b.shareAmount == 0) {
+        return -1;
+      } else if (a.shareAmount == 0 && b.shareAmount == 0) {
+        return a.user.displayName.toLowerCase().compareTo(b.user.displayName.toLowerCase());
+      } else if (a.shareAmount == b.shareAmount) {
+        return a.user.displayName.toLowerCase().compareTo(b.user.displayName.toLowerCase());
+      } else {
+        return b.shareAmount.compareTo(a.shareAmount);
+      }
+    });
+
+    return retData;
+  }
+
+  static Future<List<Friendship>> getRequestedFriendships() async {
+    String currentEmail = supabase.auth.currentUser?.email ?? '';
+
+    List<Map<String, dynamic>> data = await supabase
+        .from('friendship')
+        .select('*, requester(*), addressee(*)')
+        .or("addressee.eq.$currentEmail,requester.eq.$currentEmail")
+        .order('status', ascending: true)
+        .order('display_name', referencedTable: 'addressee', ascending: false);
+
+    List<Friendship> retData = List.empty(growable: true);
+
+    for (var element in data) {
+      Friendship friendship = Friendship();
+      friendship.loadDataFromJson(element);
+      retData.add(friendship);
     }
 
     return retData;
@@ -127,6 +157,14 @@ class Friendship {
         .delete()
         .eq("requester", supabase.auth.currentUser?.email ?? '')
         .eq("addressee", email);
+  }
+
+  static Future<void> decline(String email) async {
+    await supabase
+        .from("friendship")
+        .delete()
+        .eq("addressee", supabase.auth.currentUser?.email ?? '')
+        .eq("requester", email);
   }
 
   static Future<void> remove(String email) async {

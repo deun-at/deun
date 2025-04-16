@@ -14,6 +14,7 @@ final GlobalKey<ScaffoldMessengerState> rootScaffoldMessengerKey = GlobalKey<Sca
 final GlobalKey<ScaffoldMessengerState> groupListScaffoldMessengerKey = GlobalKey<ScaffoldMessengerState>();
 final GlobalKey<ScaffoldMessengerState> groupDetailScaffoldMessengerKey = GlobalKey<ScaffoldMessengerState>();
 final GlobalKey<ScaffoldMessengerState> friendListScaffoldMessengerKey = GlobalKey<ScaffoldMessengerState>();
+final GlobalKey<ScaffoldMessengerState> friendAddScaffoldMessengerKey = GlobalKey<ScaffoldMessengerState>();
 
 @pragma('vm:entry-point')
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {

@@ -361,13 +361,43 @@ class AppLocalizationsDe extends AppLocalizations {
   String get friends => 'Freunde';
 
   @override
+  String get addFriends => 'Add friends';
+
+  @override
   String get friendsNoEntries => 'Keine Freunde gefunden.';
 
   @override
   String get addFriendshipSelectionEmpty => 'Bitte wähle einen Freund aus.';
 
   @override
+  String get addFriendshipSearchResult => 'Search Result';
+
+  @override
+  String get addFriendshipPendingRequests => 'Added Me';
+
+  @override
+  String get addFriendshipAllContacts => 'Find Friends';
+
+  @override
+  String get addFriendshipContactPermission => 'Request access to your contacts.';
+
+  @override
+  String get addFriendshipContactPermissionSubtitle => 'Please make shure that you have given the app permission to access your contacts.';
+
+  @override
+  String get addFriendshipRequested => 'Pending Friendship Requests';
+
+  @override
+  String get addFriendshipRequestedNoResult => 'No pending requests found!';
+
+  @override
   String get addFriendshipNoResult => 'Es wurden keine Freunde gefunden.';
+
+  @override
+  String get addFriendshipRequestNoResult => 'No friend request found!';
+
+  @override
+  String get addFriendshipContactNoResult => 'No Contacts found!';
 
   @override
   String get requestFriendship => 'Freund hinzufügen';
@@ -392,12 +422,17 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String friendshipAccept(String displayName) {
-    return 'Anfrage annehmen';
+    return '$displayName wurde als Freund hinzugefügt.';
   }
 
   @override
   String friendshipRequestCancel(String displayName) {
     return 'Freundschaftsanfrage abbrechen';
+  }
+
+  @override
+  String friendshipRequestDecline(String displayName) {
+    return 'Freundschaftsanfrage von $displayName wurde abgelehnt.';
   }
 
   @override
@@ -495,6 +530,14 @@ class AppLocalizationsDe extends AppLocalizations {
   @override
   String friendAcceptNotificationBody(String userDisplayName) {
     return '$userDisplayName accepted your friend request.';
+  }
+
+  @override
+  String get friendDeclineNotificationTitle => 'Your friend request got declined';
+
+  @override
+  String friendDeclineNotificationBody(String userDisplayName) {
+    return '$userDisplayName declined your friend request.';
   }
 
   @override
@@ -597,6 +640,9 @@ class AppLocalizationsDe extends AppLocalizations {
   String get deleteAccountError => 'Fehler beim Löschen des Kontos.';
 
   @override
+  String get errorLoadingData => 'Error while loading data!';
+
+  @override
   String get create => 'Erstellen';
 
   @override
@@ -613,6 +659,12 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get save => 'Speichern';
+
+  @override
+  String get add => 'Add';
+
+  @override
+  String get invite => 'Invite';
 
   @override
   String get accept => 'Akzeptieren';

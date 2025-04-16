@@ -1,3 +1,5 @@
+import 'package:flutter/material.dart';
+
 import '../../main.dart';
 
 class User {
@@ -23,17 +25,16 @@ class User {
     createdAt = json["created_at"];
   }
 
-  static Future<List<User>> fetchData(String searchString, List<String> selectedUsers, int limit) async {
-    List<Map<String, dynamic>> data = await supabase
-        .from("user")
-        .select("*")
-        .eq("email", searchString)
-        .not('email', 'in', '(${selectedUsers.join(',')})')
-        .order("email")
-        .limit(limit);
+  static Future<List<User>> fetchData(String searchString, List<String> selectedUsers, int? limit) async {
+    var query =
+        supabase.from("user").select("*").ilike('email', searchString).not('email', 'in', selectedUsers).order("email");
 
+    if (limit != null) {
+      query = query.limit(limit);
+    }
+
+    List<Map<String, dynamic>> data = await query;
     List<User> retData = [];
-
     for (var element in data) {
       User user = User();
       user.loadDataFromJson(element);
