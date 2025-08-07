@@ -699,5 +699,176 @@ final localeNotifierProvider =
 );
 
 typedef _$LocaleNotifier = AutoDisposeNotifier<Locale?>;
+String _$groupStatisticsNotifierHash() =>
+    r'60f5dd7776e285e25c214c28e1ee18030f6bd1c7';
+
+abstract class _$GroupStatisticsNotifier
+    extends BuildlessAutoDisposeAsyncNotifier<StatisticsData> {
+  late final String groupId;
+  late final int monthsBack;
+
+  FutureOr<StatisticsData> build(
+    String groupId, {
+    int monthsBack = 12,
+  });
+}
+
+/// See also [GroupStatisticsNotifier].
+@ProviderFor(GroupStatisticsNotifier)
+const groupStatisticsNotifierProvider = GroupStatisticsNotifierFamily();
+
+/// See also [GroupStatisticsNotifier].
+class GroupStatisticsNotifierFamily extends Family<AsyncValue<StatisticsData>> {
+  /// See also [GroupStatisticsNotifier].
+  const GroupStatisticsNotifierFamily();
+
+  /// See also [GroupStatisticsNotifier].
+  GroupStatisticsNotifierProvider call(
+    String groupId, {
+    int monthsBack = 12,
+  }) {
+    return GroupStatisticsNotifierProvider(
+      groupId,
+      monthsBack: monthsBack,
+    );
+  }
+
+  @override
+  GroupStatisticsNotifierProvider getProviderOverride(
+    covariant GroupStatisticsNotifierProvider provider,
+  ) {
+    return call(
+      provider.groupId,
+      monthsBack: provider.monthsBack,
+    );
+  }
+
+  static const Iterable<ProviderOrFamily>? _dependencies = null;
+
+  @override
+  Iterable<ProviderOrFamily>? get dependencies => _dependencies;
+
+  static const Iterable<ProviderOrFamily>? _allTransitiveDependencies = null;
+
+  @override
+  Iterable<ProviderOrFamily>? get allTransitiveDependencies =>
+      _allTransitiveDependencies;
+
+  @override
+  String? get name => r'groupStatisticsNotifierProvider';
+}
+
+/// See also [GroupStatisticsNotifier].
+class GroupStatisticsNotifierProvider
+    extends AutoDisposeAsyncNotifierProviderImpl<GroupStatisticsNotifier,
+        StatisticsData> {
+  /// See also [GroupStatisticsNotifier].
+  GroupStatisticsNotifierProvider(
+    String groupId, {
+    int monthsBack = 12,
+  }) : this._internal(
+          () => GroupStatisticsNotifier()
+            ..groupId = groupId
+            ..monthsBack = monthsBack,
+          from: groupStatisticsNotifierProvider,
+          name: r'groupStatisticsNotifierProvider',
+          debugGetCreateSourceHash:
+              const bool.fromEnvironment('dart.vm.product')
+                  ? null
+                  : _$groupStatisticsNotifierHash,
+          dependencies: GroupStatisticsNotifierFamily._dependencies,
+          allTransitiveDependencies:
+              GroupStatisticsNotifierFamily._allTransitiveDependencies,
+          groupId: groupId,
+          monthsBack: monthsBack,
+        );
+
+  GroupStatisticsNotifierProvider._internal(
+    super._createNotifier, {
+    required super.name,
+    required super.dependencies,
+    required super.allTransitiveDependencies,
+    required super.debugGetCreateSourceHash,
+    required super.from,
+    required this.groupId,
+    required this.monthsBack,
+  }) : super.internal();
+
+  final String groupId;
+  final int monthsBack;
+
+  @override
+  FutureOr<StatisticsData> runNotifierBuild(
+    covariant GroupStatisticsNotifier notifier,
+  ) {
+    return notifier.build(
+      groupId,
+      monthsBack: monthsBack,
+    );
+  }
+
+  @override
+  Override overrideWith(GroupStatisticsNotifier Function() create) {
+    return ProviderOverride(
+      origin: this,
+      override: GroupStatisticsNotifierProvider._internal(
+        () => create()
+          ..groupId = groupId
+          ..monthsBack = monthsBack,
+        from: from,
+        name: null,
+        dependencies: null,
+        allTransitiveDependencies: null,
+        debugGetCreateSourceHash: null,
+        groupId: groupId,
+        monthsBack: monthsBack,
+      ),
+    );
+  }
+
+  @override
+  AutoDisposeAsyncNotifierProviderElement<GroupStatisticsNotifier,
+      StatisticsData> createElement() {
+    return _GroupStatisticsNotifierProviderElement(this);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is GroupStatisticsNotifierProvider &&
+        other.groupId == groupId &&
+        other.monthsBack == monthsBack;
+  }
+
+  @override
+  int get hashCode {
+    var hash = _SystemHash.combine(0, runtimeType.hashCode);
+    hash = _SystemHash.combine(hash, groupId.hashCode);
+    hash = _SystemHash.combine(hash, monthsBack.hashCode);
+
+    return _SystemHash.finish(hash);
+  }
+}
+
+@Deprecated('Will be removed in 3.0. Use Ref instead')
+// ignore: unused_element
+mixin GroupStatisticsNotifierRef
+    on AutoDisposeAsyncNotifierProviderRef<StatisticsData> {
+  /// The parameter `groupId` of this provider.
+  String get groupId;
+
+  /// The parameter `monthsBack` of this provider.
+  int get monthsBack;
+}
+
+class _GroupStatisticsNotifierProviderElement
+    extends AutoDisposeAsyncNotifierProviderElement<GroupStatisticsNotifier,
+        StatisticsData> with GroupStatisticsNotifierRef {
+  _GroupStatisticsNotifierProviderElement(super.provider);
+
+  @override
+  String get groupId => (origin as GroupStatisticsNotifierProvider).groupId;
+  @override
+  int get monthsBack => (origin as GroupStatisticsNotifierProvider).monthsBack;
+}
 // ignore_for_file: type=lint
 // ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member, deprecated_member_use_from_same_package

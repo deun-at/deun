@@ -998,7 +998,7 @@ abstract class AppLocalizations {
   /// No description provided for @errorLoadingData.
   ///
   /// In en, this message translates to:
-  /// **'Error while loading data!'**
+  /// **'Error loading data'**
   String get errorLoadingData;
 
   /// No description provided for @create.
@@ -1114,6 +1114,102 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'System default'**
   String get localeSelectorSystem;
+
+  /// No description provided for @statistics.
+  ///
+  /// In en, this message translates to:
+  /// **'Statistics'**
+  String get statistics;
+
+  /// No description provided for @lastMonths.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{Last month} other{Last {count} months}}'**
+  String lastMonths(int count);
+
+  /// No description provided for @retry.
+  ///
+  /// In en, this message translates to:
+  /// **'Retry'**
+  String get retry;
+
+  /// No description provided for @noExpenseData.
+  ///
+  /// In en, this message translates to:
+  /// **'No expense data available'**
+  String get noExpenseData;
+
+  /// No description provided for @noExpenseDataDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Add some expenses to see statistics'**
+  String get noExpenseDataDescription;
+
+  /// No description provided for @filterMembers.
+  ///
+  /// In en, this message translates to:
+  /// **'Filter Members'**
+  String get filterMembers;
+
+  /// No description provided for @selectNone.
+  ///
+  /// In en, this message translates to:
+  /// **'Select None'**
+  String get selectNone;
+
+  /// No description provided for @selectAll.
+  ///
+  /// In en, this message translates to:
+  /// **'Select All'**
+  String get selectAll;
+
+  /// No description provided for @monthlyTrend.
+  ///
+  /// In en, this message translates to:
+  /// **'Monthly Spending Trend'**
+  String get monthlyTrend;
+
+  /// No description provided for @memberComparison.
+  ///
+  /// In en, this message translates to:
+  /// **'Member Spending Comparison'**
+  String get memberComparison;
+
+  /// No description provided for @summary.
+  ///
+  /// In en, this message translates to:
+  /// **'Summary'**
+  String get summary;
+
+  /// No description provided for @totalSpending.
+  ///
+  /// In en, this message translates to:
+  /// **'Total Spending'**
+  String get totalSpending;
+
+  /// No description provided for @averagePerMonth.
+  ///
+  /// In en, this message translates to:
+  /// **'Average per Month'**
+  String get averagePerMonth;
+
+  /// No description provided for @selectedMembers.
+  ///
+  /// In en, this message translates to:
+  /// **'Selected Members'**
+  String get selectedMembers;
+
+  /// No description provided for @noDataToDisplay.
+  ///
+  /// In en, this message translates to:
+  /// **'No data to display'**
+  String get noDataToDisplay;
+
+  /// Short currency format for charts
+  ///
+  /// In en, this message translates to:
+  /// **'{amount}'**
+  String toCurrencyShort(double amount);
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

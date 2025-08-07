@@ -640,7 +640,7 @@ class AppLocalizationsDe extends AppLocalizations {
   String get deleteAccountError => 'Fehler beim Löschen des Kontos.';
 
   @override
-  String get errorLoadingData => 'Error while loading data!';
+  String get errorLoadingData => 'Error loading data';
 
   @override
   String get create => 'Erstellen';
@@ -708,4 +708,69 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get localeSelectorSystem => 'Systemsprache';
+
+  @override
+  String get statistics => 'Statistics';
+
+  @override
+  String lastMonths(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Last $count months',
+      one: 'Last month',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get retry => 'Retry';
+
+  @override
+  String get noExpenseData => 'No expense data available';
+
+  @override
+  String get noExpenseDataDescription => 'Add some expenses to see statistics';
+
+  @override
+  String get filterMembers => 'Filter Members';
+
+  @override
+  String get selectNone => 'Select None';
+
+  @override
+  String get selectAll => 'Select All';
+
+  @override
+  String get monthlyTrend => 'Monthly Spending Trend';
+
+  @override
+  String get memberComparison => 'Member Spending Comparison';
+
+  @override
+  String get summary => 'Summary';
+
+  @override
+  String get totalSpending => 'Total Spending';
+
+  @override
+  String get averagePerMonth => 'Average per Month';
+
+  @override
+  String get selectedMembers => 'Selected Members';
+
+  @override
+  String get noDataToDisplay => 'No data to display';
+
+  @override
+  String toCurrencyShort(double amount) {
+    final intl.NumberFormat amountNumberFormat = intl.NumberFormat.compactSimpleCurrency(
+      locale: localeName,
+      decimalDigits: 0,
+      name: '€'
+    );
+    final String amountString = amountNumberFormat.format(amount);
+
+    return '$amountString';
+  }
 }

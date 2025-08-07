@@ -113,6 +113,12 @@ class _GroupDetailState extends ConsumerState<GroupDetail> {
                       ),
                       IconButton(
                         onPressed: () {
+                          GoRouter.of(context).push("/group/details/statistics", extra: {'group': widget.group});
+                        },
+                        icon: const Icon(Icons.analytics),
+                      ),
+                      IconButton(
+                        onPressed: () {
                           GoRouter.of(context).push("/group/edit", extra: {'group': widget.group});
                         },
                         icon: const Icon(Icons.edit),

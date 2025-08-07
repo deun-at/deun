@@ -662,5 +662,58 @@
     }
   },
   "localeSelectorSystem": "System default",
-  "@localeSelectorSystem": {}
+  "@localeSelectorSystem": {},
+  "statistics": "Statistics",
+  "@statistics": {},
+  "lastMonths": "{count, plural, =1{Last month} other{Last {count} months}}",
+  "@lastMonths": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "errorLoadingData": "Error loading data",
+  "@errorLoadingData": {},
+  "retry": "Retry",
+  "@retry": {},
+  "noExpenseData": "No expense data available",
+  "@noExpenseData": {},
+  "noExpenseDataDescription": "Add some expenses to see statistics",
+  "@noExpenseDataDescription": {},
+  "filterMembers": "Filter Members",
+  "@filterMembers": {},
+  "selectNone": "Select None",
+  "@selectNone": {},
+  "selectAll": "Select All",
+  "@selectAll": {},
+  "monthlyTrend": "Monthly Spending Trend",
+  "@monthlyTrend": {},
+  "memberComparison": "Member Spending Comparison",
+  "@memberComparison": {},
+  "summary": "Summary",
+  "@summary": {},
+  "totalSpending": "Total Spending",
+  "@totalSpending": {},
+  "averagePerMonth": "Average per Month",
+  "@averagePerMonth": {},
+  "selectedMembers": "Selected Members",
+  "@selectedMembers": {},
+  "noDataToDisplay": "No data to display",
+  "@noDataToDisplay": {},
+  "toCurrencyShort": "{amount}",
+  "@toCurrencyShort": {
+    "description": "Short currency format for charts",
+    "placeholders": {
+      "amount": {
+        "type": "double",
+        "format": "compactSimpleCurrency",
+        "optionalParameters": {
+          "decimalDigits": 0,
+          "name": "€"
+        },
+        "example": "2K"
+      }
+    }
+  }
 }
