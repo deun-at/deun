@@ -81,7 +81,6 @@ class StatisticsData {
 
     // Get all existing month-member combinations
     Set<String> existingCombinations = originalData.map((s) => '${s.month}_${s.email}').toSet();
-    print('Existing combinations: $existingCombinations');
     // Create a map for quick lookup of display names
     Map<String, String> emailToDisplayName = {};
     for (MonthlySpending spending in originalData) {
@@ -93,9 +92,7 @@ class StatisticsData {
     for (String month in allMonths) {
       for (String email in allGroupMemberEmails) {
         String combination = '${month}_$email';
-        print('Checking combination: $combination');
         if (!existingCombinations.contains(combination)) {
-          print('Adding zero spending for $combination');
           MonthlySpending zeroSpending = MonthlySpending();
           zeroSpending.month = month;
           zeroSpending.email = email;
@@ -103,8 +100,6 @@ class StatisticsData {
           zeroSpending.totalSpent = 0.0;
           zeroSpending.monthDate = DateTime.parse(month);
           additionalSpending.add(zeroSpending);
-        } else {
-          print('Combination already exists: $combination');
         }
       }
     }

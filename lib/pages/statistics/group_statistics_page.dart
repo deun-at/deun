@@ -327,17 +327,34 @@ class _GroupStatisticsPageState extends ConsumerState<GroupStatisticsPage> {
     }
 
     final sortedMonths = monthlyTotals.keys.toList()..sort();
-    final spots = <FlSpot>[];
+    final barGroups = <BarChartGroupData>[];
 
     for (int i = 0; i < sortedMonths.length; i++) {
-      spots.add(FlSpot(i.toDouble(), monthlyTotals[sortedMonths[i]]!));
+      barGroups.add(
+        BarChartGroupData(
+          x: i,
+          barRods: [
+            BarChartRodData(
+              toY: monthlyTotals[sortedMonths[i]]!,
+              color: Theme.of(context).colorScheme.primary,
+              width: 16,
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(4)),
+            ),
+          ],
+        ),
+      );
     }
 
-    return LineChart(
-      LineChartData(
+    final maxValue = monthlyTotals.values.isNotEmpty ? monthlyTotals.values.reduce((a, b) => a > b ? a : b) : 100;
+
+    return BarChart(
+      BarChartData(
+        alignment: BarChartAlignment.spaceAround,
+        maxY: maxValue * 1.2,
+        barGroups: barGroups,
         gridData: FlGridData(
           show: true,
-          drawVerticalLine: false, // Disable vertical grid lines to avoid label confusion
+          drawVerticalLine: false,
           horizontalInterval: null,
           getDrawingHorizontalLine: (value) {
             return FlLine(
@@ -351,10 +368,9 @@ class _GroupStatisticsPageState extends ConsumerState<GroupStatisticsPage> {
             sideTitles: SideTitles(
               showTitles: true,
               reservedSize: 30,
-              interval: 1, // Show label for every month
+              interval: 1,
               getTitlesWidget: (value, meta) {
                 final index = value.toInt();
-                // Only show labels for whole number values to avoid duplicates
                 if (value != index.toDouble()) return const SizedBox.shrink();
 
                 if (index >= 0 && index < sortedMonths.length) {
@@ -390,63 +406,36 @@ class _GroupStatisticsPageState extends ConsumerState<GroupStatisticsPage> {
           show: true,
           border: Border.all(color: Theme.of(context).colorScheme.outline.withOpacity(0.2)),
         ),
-        lineTouchData: LineTouchData(
+        barTouchData: BarTouchData(
           enabled: true,
-          touchTooltipData: LineTouchTooltipData(
-            getTooltipColor: (touchedSpot) => Theme.of(context).colorScheme.inverseSurface,
+          touchTooltipData: BarTouchTooltipData(
+            getTooltipColor: (group) => Theme.of(context).colorScheme.inverseSurface,
             tooltipRoundedRadius: 8,
             tooltipPadding: const EdgeInsets.all(8),
             tooltipMargin: 8,
-            getTooltipItems: (List<LineBarSpot> touchedBarSpots) {
-              return touchedBarSpots.map((barSpot) {
-                final monthIndex = barSpot.x.toInt();
-                if (monthIndex >= 0 && monthIndex < sortedMonths.length) {
-                  final date = DateTime.parse(sortedMonths[monthIndex]);
-                  final monthName = DateFormat('MMM yyyy').format(date);
-                  final amount = toCurrency(barSpot.y);
+            getTooltipItem: (group, groupIndex, rod, rodIndex) {
+              if (groupIndex >= 0 && groupIndex < sortedMonths.length) {
+                final date = DateTime.parse(sortedMonths[groupIndex]);
+                final monthName = DateFormat('MMM yyyy').format(date);
+                final amount = toCurrency(rod.toY);
 
-                  return LineTooltipItem(
-                    '$monthName\n$amount',
-                    TextStyle(
-                      color: Theme.of(context).colorScheme.onInverseSurface,
-                      fontWeight: FontWeight.w600,
-                      fontSize: 12,
-                    ),
-                  );
-                }
-                return null;
-              }).toList();
+                return BarTooltipItem(
+                  '$monthName\n$amount',
+                  TextStyle(
+                    color: Theme.of(context).colorScheme.onInverseSurface,
+                    fontWeight: FontWeight.w600,
+                    fontSize: 12,
+                  ),
+                );
+              }
+              return null;
             },
           ),
-          touchCallback: (FlTouchEvent event, LineTouchResponse? touchResponse) {
+          touchCallback: (FlTouchEvent event, BarTouchResponse? touchResponse) {
             // Handle touch events if needed
           },
           handleBuiltInTouches: true,
         ),
-        lineBarsData: [
-          LineChartBarData(
-            spots: spots,
-            isCurved: true,
-            color: Theme.of(context).colorScheme.primary,
-            barWidth: 3,
-            isStrokeCapRound: true,
-            dotData: FlDotData(
-              show: true,
-              getDotPainter: (spot, percent, barData, index) {
-                return FlDotCirclePainter(
-                  radius: 4,
-                  color: Theme.of(context).colorScheme.primary,
-                  strokeWidth: 2,
-                  strokeColor: Theme.of(context).colorScheme.surface,
-                );
-              },
-            ),
-            belowBarData: BarAreaData(
-              show: true,
-              color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
-            ),
-          ),
-        ],
       ),
     );
   }
