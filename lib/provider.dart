@@ -9,7 +9,6 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'pages/groups/group_model.dart';
 import 'pages/expenses/expense_model.dart';
 import 'pages/users/user_model.dart' as user_model;
-import 'pages/statistics/statistics_model.dart';
 
 // Necessary for code-generation to work
 part 'provider.g.dart';
@@ -286,20 +285,4 @@ class LocaleNotifier extends _$LocaleNotifier {
 
   void setLocale(Locale locale) => state = locale;
   void resetLocale() => state = null;
-}
-
-@riverpod
-class GroupStatisticsNotifier extends _$GroupStatisticsNotifier {
-  @override
-  FutureOr<StatisticsData> build(String groupId, {int monthsBack = 12}) async {
-    return await fetchGroupStatistics(groupId, monthsBack: monthsBack);
-  }
-
-  Future<void> reload(String groupId, {int monthsBack = 12}) async {
-    state = await AsyncValue.guard(() async => await fetchGroupStatistics(groupId, monthsBack: monthsBack));
-  }
-
-  Future<StatisticsData> fetchGroupStatistics(String groupId, {int monthsBack = 12}) async {
-    return await StatisticsData.fetchGroupStatistics(groupId, monthsBack: monthsBack);
-  }
 }

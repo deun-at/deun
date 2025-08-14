@@ -21,7 +21,6 @@ import 'pages/expenses/expense_detail.dart';
 import 'pages/groups/group_detail.dart';
 import 'pages/groups/group_detail_edit.dart';
 import 'pages/groups/group_list.dart';
-import 'pages/statistics/group_statistics_page.dart';
 import 'package:deun/l10n/app_localizations.dart';
 import 'dart:io' show Platform;
 import 'package:app_links/app_links.dart';
@@ -124,15 +123,6 @@ class _NavigationScreenState extends ConsumerState<NavigationScreen> {
                                     group: group,
                                   ),
                                 );
-                              }),
-                          GoRoute(
-                              path: 'statistics',
-                              parentNavigatorKey: _rootNavigatorKey,
-                              pageBuilder: (context, state) {
-                                var extra = state.extra as Map<String, dynamic>;
-                                var group = extra['group'] as Group;
-
-                                return DefaultTransitionPage(child: GroupStatisticsPage(group: group));
                               }),
                         ]),
                     GoRoute(
