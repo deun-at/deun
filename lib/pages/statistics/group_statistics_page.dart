@@ -39,7 +39,7 @@ class _GroupStatisticsPageState extends ConsumerState<GroupStatisticsPage> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.group.name, maxLines: 1, overflow: TextOverflow.ellipsis),
+        title: Text("Statistics", maxLines: 1, overflow: TextOverflow.ellipsis),
       ),
       body: state.when(
         loading: () => const Center(child: CircularProgressIndicator()),
@@ -52,8 +52,6 @@ class _GroupStatisticsPageState extends ConsumerState<GroupStatisticsPage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                Text('Monthly expenses', style: Theme.of(context).textTheme.headlineSmall),
-                const SizedBox(height: 12),
                 Card(
                   clipBehavior: Clip.antiAlias,
                   elevation: 0,
@@ -157,76 +155,67 @@ class _GroupStatisticsPageState extends ConsumerState<GroupStatisticsPage> {
                             style: Theme.of(context).textTheme.bodyMedium,
                           ),
                         ),
-                        const SizedBox(height: 16),
-                        Builder(builder: (context) {
-                          final selectedBucket = (() {
-                            final currentMonths = data.months;
-                            if (_selectedMonthStart == null) return currentMonths.last;
-                            final match = currentMonths.where((b) => b.start == _selectedMonthStart).toList();
-                            return match.isEmpty ? currentMonths.last : match.first;
-                          })();
-                          final args = GroupMonthMemberTotalsArgs(
-                            groupId: widget.group.id,
-                            monthStart: selectedBucket.start,
-                            monthEnd: selectedBucket.end,
-                          );
-                          final detailsState = ref.watch(groupMonthMemberTotalsNotifierProvider(args));
-
-                          return Column(
-                            crossAxisAlignment: CrossAxisAlignment.stretch,
-                            children: [
-                              Text(
-                                'Details ${selectedBucket.start.month.toString().padLeft(2, '0')}/${selectedBucket.start.year % 100}',
-                                style: Theme.of(context).textTheme.titleMedium,
-                              ),
-                              const SizedBox(height: 8),
-                              Card(
-                                clipBehavior: Clip.antiAlias,
-                                elevation: 0,
-                                surfaceTintColor: Theme.of(context).colorScheme.primary,
-                                child: Padding(
-                                  padding: const EdgeInsets.symmetric(vertical: 4),
-                                  child: detailsState.when(
-                                    loading: () => const Padding(
-                                      padding: EdgeInsets.all(16.0),
-                                      child: Center(child: CircularProgressIndicator()),
-                                    ),
-                                    error: (e, st) => Padding(
-                                      padding: const EdgeInsets.all(16.0),
-                                      child: Text(e.toString()),
-                                    ),
-                                    data: (list) {
-                                      if (list.isEmpty) {
-                                        return const Padding(
-                                          padding: EdgeInsets.all(16.0),
-                                          child: Text('No expenses'),
-                                        );
-                                      }
-                                      return ListView.separated(
-                                        shrinkWrap: true,
-                                        physics: const NeverScrollableScrollPhysics(),
-                                        itemCount: list.length,
-                                        separatorBuilder: (_, __) => const Divider(height: 1),
-                                        itemBuilder: (ctx, i) {
-                                          final item = list[i];
-                                          return ListTile(
-                                            dense: true,
-                                            title: Text(item.displayName),
-                                            trailing: Text(toCurrency(item.total)),
-                                          );
-                                        },
-                                      );
-                                    },
-                                  ),
-                                ),
-                              ),
-                            ],
-                          );
-                        }),
                       ],
                     ),
                   ),
                 ),
+                const SizedBox(height: 8),
+                Builder(builder: (context) {
+                  final selectedBucket = (() {
+                    final currentMonths = data.months;
+                    if (_selectedMonthStart == null) return currentMonths.last;
+                    final match = currentMonths.where((b) => b.start == _selectedMonthStart).toList();
+                    return match.isEmpty ? currentMonths.last : match.first;
+                  })();
+                  final args = GroupMonthMemberTotalsArgs(
+                    groupId: widget.group.id,
+                    monthStart: selectedBucket.start,
+                    monthEnd: selectedBucket.end,
+                  );
+                  final detailsState = ref.watch(groupMonthMemberTotalsNotifierProvider(args));
+
+                  return Card(
+                    clipBehavior: Clip.antiAlias,
+                    elevation: 0,
+                    surfaceTintColor: Theme.of(context).colorScheme.primary,
+                    child: Padding(
+                      padding: const EdgeInsets.all(16.0),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          Text(
+                            'Details ${selectedBucket.start.month.toString().padLeft(2, '0')}/${selectedBucket.start.year % 100}',
+                            style: Theme.of(context).textTheme.titleMedium,
+                          ),
+                          const SizedBox(height: 12),
+                          detailsState.when(
+                            loading: () => const Center(child: CircularProgressIndicator()),
+                            error: (e, st) => Text(e.toString()),
+                            data: (list) {
+                              if (list.isEmpty) {
+                                return const Text('No expenses');
+                              }
+                              return ListView.separated(
+                                shrinkWrap: true,
+                                physics: const NeverScrollableScrollPhysics(),
+                                itemCount: list.length,
+                                separatorBuilder: (_, __) => const Divider(height: 1),
+                                itemBuilder: (ctx, i) {
+                                  final item = list[i];
+                                  return ListTile(
+                                    dense: true,
+                                    title: Text(item.displayName),
+                                    trailing: Text(toCurrency(item.total)),
+                                  );
+                                },
+                              );
+                            },
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                }),
               ],
             ),
           );
