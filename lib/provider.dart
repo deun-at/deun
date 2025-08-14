@@ -9,6 +9,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'pages/groups/group_model.dart';
 import 'pages/expenses/expense_model.dart';
 import 'pages/users/user_model.dart' as user_model;
+import 'pages/statistics/statistics_models.dart';
 
 // Necessary for code-generation to work
 part 'provider.g.dart';
@@ -285,4 +286,98 @@ class LocaleNotifier extends _$LocaleNotifier {
 
   void setLocale(Locale locale) => state = locale;
   void resetLocale() => state = null;
+}
+
+@riverpod
+class GroupMonthlyTotalsNotifier extends _$GroupMonthlyTotalsNotifier {
+  @override
+  FutureOr<GroupMonthlyTotalsState> build(String groupId) async {
+    return await _loadRange(groupId, 0);
+  }
+
+  Future<void> loadOffset(String groupId, int endOffsetMonths) async {
+    state = await AsyncValue.guard(() async => await _loadRange(groupId, endOffsetMonths));
+  }
+
+  Future<GroupMonthlyTotalsState> _loadRange(String groupId, int endOffsetMonths) async {
+    DateTime now = DateTime.now();
+    // Determine the last included month start for this page (0 = current month)
+    DateTime lastIncludedMonthStart = DateTime(now.year, now.month - endOffsetMonths, 1);
+
+    // Build 6 months ending at lastIncludedMonthStart
+    List<DateTime> starts = [];
+    for (int i = 5; i >= 0; i--) {
+      starts.add(DateTime(lastIncludedMonthStart.year, lastIncludedMonthStart.month - i, 1));
+    }
+    final List<DateTime> ends = starts.map((s) => DateTime(s.year, s.month + 1, 1)).toList();
+
+    // Fetch expenses for range
+    final expenses = await Expense.fetchRange(groupId, starts.first, ends.last);
+
+    // Aggregate into months
+    final List<double> totals = List<double>.filled(6, 0);
+    for (final expense in expenses) {
+      final date = DateTime.parse(expense.expenseDate);
+      for (int i = 0; i < 6; i++) {
+        if (!date.isBefore(starts[i]) && date.isBefore(ends[i])) {
+          final sum = expense.expenseEntries.values.fold<double>(0, (acc, e) => acc + e.amount);
+          totals[i] = totals[i] + sum;
+          break;
+        }
+      }
+    }
+
+    final months = List<MonthBucket>.generate(6, (i) => MonthBucket(start: starts[i], end: ends[i], total: totals[i]));
+
+    return GroupMonthlyTotalsState(groupId: groupId, endOffsetMonths: endOffsetMonths, months: months);
+  }
+}
+
+@riverpod
+class GroupMonthMemberTotalsNotifier extends _$GroupMonthMemberTotalsNotifier {
+  @override
+  FutureOr<List<MemberMonthTotal>> build(GroupMonthMemberTotalsArgs args) async {
+    return await _load(args);
+  }
+
+  Future<List<MemberMonthTotal>> _load(GroupMonthMemberTotalsArgs args) async {
+    final expenses = await Expense.fetchRange(args.groupId, args.monthStart, args.monthEnd);
+
+    final Map<String, MemberMonthTotal> byMember = {};
+    for (final expense in expenses) {
+      for (final entry in expense.expenseEntries.values) {
+        if (entry.expenseEntryShares.isEmpty) {
+          // If no shares stored, fall back to paidBy if available
+          final email = expense.paidBy ?? 'unknown';
+          final displayName = expense.paidByDisplayName ?? 'Unknown';
+          final existing = byMember[email];
+          byMember[email] = MemberMonthTotal(
+            email: email,
+            displayName: displayName,
+            total: (existing?.total ?? 0) + entry.amount,
+          );
+        } else {
+          for (final share in entry.expenseEntryShares) {
+            final amount = entry.amount * (share.percentage / 100);
+            final existing = byMember[share.email];
+            byMember[share.email] = MemberMonthTotal(
+              email: share.email,
+              displayName: share.displayName,
+              total: (existing?.total ?? 0) + amount,
+            );
+          }
+        }
+      }
+    }
+
+    // Ensure members with zero are present if group has members
+    final group = await Group.fetchDetail(args.groupId);
+    for (final m in group.groupMembers) {
+      byMember[m.email] = byMember[m.email] ?? MemberMonthTotal(email: m.email, displayName: m.displayName, total: 0);
+    }
+
+    final list = byMember.values.toList();
+    list.sort((a, b) => b.total.compareTo(a.total));
+    return list;
+  }
 }

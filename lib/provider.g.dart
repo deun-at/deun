@@ -699,5 +699,309 @@ final localeNotifierProvider =
 );
 
 typedef _$LocaleNotifier = AutoDisposeNotifier<Locale?>;
+String _$groupMonthlyTotalsNotifierHash() =>
+    r'987e1779d1d14a1606a8ee789c9165551812f65d';
+
+abstract class _$GroupMonthlyTotalsNotifier
+    extends BuildlessAutoDisposeAsyncNotifier<GroupMonthlyTotalsState> {
+  late final String groupId;
+
+  FutureOr<GroupMonthlyTotalsState> build(
+    String groupId,
+  );
+}
+
+/// See also [GroupMonthlyTotalsNotifier].
+@ProviderFor(GroupMonthlyTotalsNotifier)
+const groupMonthlyTotalsNotifierProvider = GroupMonthlyTotalsNotifierFamily();
+
+/// See also [GroupMonthlyTotalsNotifier].
+class GroupMonthlyTotalsNotifierFamily
+    extends Family<AsyncValue<GroupMonthlyTotalsState>> {
+  /// See also [GroupMonthlyTotalsNotifier].
+  const GroupMonthlyTotalsNotifierFamily();
+
+  /// See also [GroupMonthlyTotalsNotifier].
+  GroupMonthlyTotalsNotifierProvider call(
+    String groupId,
+  ) {
+    return GroupMonthlyTotalsNotifierProvider(
+      groupId,
+    );
+  }
+
+  @override
+  GroupMonthlyTotalsNotifierProvider getProviderOverride(
+    covariant GroupMonthlyTotalsNotifierProvider provider,
+  ) {
+    return call(
+      provider.groupId,
+    );
+  }
+
+  static const Iterable<ProviderOrFamily>? _dependencies = null;
+
+  @override
+  Iterable<ProviderOrFamily>? get dependencies => _dependencies;
+
+  static const Iterable<ProviderOrFamily>? _allTransitiveDependencies = null;
+
+  @override
+  Iterable<ProviderOrFamily>? get allTransitiveDependencies =>
+      _allTransitiveDependencies;
+
+  @override
+  String? get name => r'groupMonthlyTotalsNotifierProvider';
+}
+
+/// See also [GroupMonthlyTotalsNotifier].
+class GroupMonthlyTotalsNotifierProvider
+    extends AutoDisposeAsyncNotifierProviderImpl<GroupMonthlyTotalsNotifier,
+        GroupMonthlyTotalsState> {
+  /// See also [GroupMonthlyTotalsNotifier].
+  GroupMonthlyTotalsNotifierProvider(
+    String groupId,
+  ) : this._internal(
+          () => GroupMonthlyTotalsNotifier()..groupId = groupId,
+          from: groupMonthlyTotalsNotifierProvider,
+          name: r'groupMonthlyTotalsNotifierProvider',
+          debugGetCreateSourceHash:
+              const bool.fromEnvironment('dart.vm.product')
+                  ? null
+                  : _$groupMonthlyTotalsNotifierHash,
+          dependencies: GroupMonthlyTotalsNotifierFamily._dependencies,
+          allTransitiveDependencies:
+              GroupMonthlyTotalsNotifierFamily._allTransitiveDependencies,
+          groupId: groupId,
+        );
+
+  GroupMonthlyTotalsNotifierProvider._internal(
+    super._createNotifier, {
+    required super.name,
+    required super.dependencies,
+    required super.allTransitiveDependencies,
+    required super.debugGetCreateSourceHash,
+    required super.from,
+    required this.groupId,
+  }) : super.internal();
+
+  final String groupId;
+
+  @override
+  FutureOr<GroupMonthlyTotalsState> runNotifierBuild(
+    covariant GroupMonthlyTotalsNotifier notifier,
+  ) {
+    return notifier.build(
+      groupId,
+    );
+  }
+
+  @override
+  Override overrideWith(GroupMonthlyTotalsNotifier Function() create) {
+    return ProviderOverride(
+      origin: this,
+      override: GroupMonthlyTotalsNotifierProvider._internal(
+        () => create()..groupId = groupId,
+        from: from,
+        name: null,
+        dependencies: null,
+        allTransitiveDependencies: null,
+        debugGetCreateSourceHash: null,
+        groupId: groupId,
+      ),
+    );
+  }
+
+  @override
+  AutoDisposeAsyncNotifierProviderElement<GroupMonthlyTotalsNotifier,
+      GroupMonthlyTotalsState> createElement() {
+    return _GroupMonthlyTotalsNotifierProviderElement(this);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is GroupMonthlyTotalsNotifierProvider &&
+        other.groupId == groupId;
+  }
+
+  @override
+  int get hashCode {
+    var hash = _SystemHash.combine(0, runtimeType.hashCode);
+    hash = _SystemHash.combine(hash, groupId.hashCode);
+
+    return _SystemHash.finish(hash);
+  }
+}
+
+@Deprecated('Will be removed in 3.0. Use Ref instead')
+// ignore: unused_element
+mixin GroupMonthlyTotalsNotifierRef
+    on AutoDisposeAsyncNotifierProviderRef<GroupMonthlyTotalsState> {
+  /// The parameter `groupId` of this provider.
+  String get groupId;
+}
+
+class _GroupMonthlyTotalsNotifierProviderElement
+    extends AutoDisposeAsyncNotifierProviderElement<GroupMonthlyTotalsNotifier,
+        GroupMonthlyTotalsState> with GroupMonthlyTotalsNotifierRef {
+  _GroupMonthlyTotalsNotifierProviderElement(super.provider);
+
+  @override
+  String get groupId => (origin as GroupMonthlyTotalsNotifierProvider).groupId;
+}
+
+String _$groupMonthMemberTotalsNotifierHash() =>
+    r'ec2a4d5864fd1376cf358db9b7ada2f89104b870';
+
+abstract class _$GroupMonthMemberTotalsNotifier
+    extends BuildlessAutoDisposeAsyncNotifier<List<MemberMonthTotal>> {
+  late final GroupMonthMemberTotalsArgs args;
+
+  FutureOr<List<MemberMonthTotal>> build(
+    GroupMonthMemberTotalsArgs args,
+  );
+}
+
+/// See also [GroupMonthMemberTotalsNotifier].
+@ProviderFor(GroupMonthMemberTotalsNotifier)
+const groupMonthMemberTotalsNotifierProvider =
+    GroupMonthMemberTotalsNotifierFamily();
+
+/// See also [GroupMonthMemberTotalsNotifier].
+class GroupMonthMemberTotalsNotifierFamily
+    extends Family<AsyncValue<List<MemberMonthTotal>>> {
+  /// See also [GroupMonthMemberTotalsNotifier].
+  const GroupMonthMemberTotalsNotifierFamily();
+
+  /// See also [GroupMonthMemberTotalsNotifier].
+  GroupMonthMemberTotalsNotifierProvider call(
+    GroupMonthMemberTotalsArgs args,
+  ) {
+    return GroupMonthMemberTotalsNotifierProvider(
+      args,
+    );
+  }
+
+  @override
+  GroupMonthMemberTotalsNotifierProvider getProviderOverride(
+    covariant GroupMonthMemberTotalsNotifierProvider provider,
+  ) {
+    return call(
+      provider.args,
+    );
+  }
+
+  static const Iterable<ProviderOrFamily>? _dependencies = null;
+
+  @override
+  Iterable<ProviderOrFamily>? get dependencies => _dependencies;
+
+  static const Iterable<ProviderOrFamily>? _allTransitiveDependencies = null;
+
+  @override
+  Iterable<ProviderOrFamily>? get allTransitiveDependencies =>
+      _allTransitiveDependencies;
+
+  @override
+  String? get name => r'groupMonthMemberTotalsNotifierProvider';
+}
+
+/// See also [GroupMonthMemberTotalsNotifier].
+class GroupMonthMemberTotalsNotifierProvider
+    extends AutoDisposeAsyncNotifierProviderImpl<GroupMonthMemberTotalsNotifier,
+        List<MemberMonthTotal>> {
+  /// See also [GroupMonthMemberTotalsNotifier].
+  GroupMonthMemberTotalsNotifierProvider(
+    GroupMonthMemberTotalsArgs args,
+  ) : this._internal(
+          () => GroupMonthMemberTotalsNotifier()..args = args,
+          from: groupMonthMemberTotalsNotifierProvider,
+          name: r'groupMonthMemberTotalsNotifierProvider',
+          debugGetCreateSourceHash:
+              const bool.fromEnvironment('dart.vm.product')
+                  ? null
+                  : _$groupMonthMemberTotalsNotifierHash,
+          dependencies: GroupMonthMemberTotalsNotifierFamily._dependencies,
+          allTransitiveDependencies:
+              GroupMonthMemberTotalsNotifierFamily._allTransitiveDependencies,
+          args: args,
+        );
+
+  GroupMonthMemberTotalsNotifierProvider._internal(
+    super._createNotifier, {
+    required super.name,
+    required super.dependencies,
+    required super.allTransitiveDependencies,
+    required super.debugGetCreateSourceHash,
+    required super.from,
+    required this.args,
+  }) : super.internal();
+
+  final GroupMonthMemberTotalsArgs args;
+
+  @override
+  FutureOr<List<MemberMonthTotal>> runNotifierBuild(
+    covariant GroupMonthMemberTotalsNotifier notifier,
+  ) {
+    return notifier.build(
+      args,
+    );
+  }
+
+  @override
+  Override overrideWith(GroupMonthMemberTotalsNotifier Function() create) {
+    return ProviderOverride(
+      origin: this,
+      override: GroupMonthMemberTotalsNotifierProvider._internal(
+        () => create()..args = args,
+        from: from,
+        name: null,
+        dependencies: null,
+        allTransitiveDependencies: null,
+        debugGetCreateSourceHash: null,
+        args: args,
+      ),
+    );
+  }
+
+  @override
+  AutoDisposeAsyncNotifierProviderElement<GroupMonthMemberTotalsNotifier,
+      List<MemberMonthTotal>> createElement() {
+    return _GroupMonthMemberTotalsNotifierProviderElement(this);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is GroupMonthMemberTotalsNotifierProvider &&
+        other.args == args;
+  }
+
+  @override
+  int get hashCode {
+    var hash = _SystemHash.combine(0, runtimeType.hashCode);
+    hash = _SystemHash.combine(hash, args.hashCode);
+
+    return _SystemHash.finish(hash);
+  }
+}
+
+@Deprecated('Will be removed in 3.0. Use Ref instead')
+// ignore: unused_element
+mixin GroupMonthMemberTotalsNotifierRef
+    on AutoDisposeAsyncNotifierProviderRef<List<MemberMonthTotal>> {
+  /// The parameter `args` of this provider.
+  GroupMonthMemberTotalsArgs get args;
+}
+
+class _GroupMonthMemberTotalsNotifierProviderElement
+    extends AutoDisposeAsyncNotifierProviderElement<
+        GroupMonthMemberTotalsNotifier,
+        List<MemberMonthTotal>> with GroupMonthMemberTotalsNotifierRef {
+  _GroupMonthMemberTotalsNotifierProviderElement(super.provider);
+
+  @override
+  GroupMonthMemberTotalsArgs get args =>
+      (origin as GroupMonthMemberTotalsNotifierProvider).args;
+}
 // ignore_for_file: type=lint
 // ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member, deprecated_member_use_from_same_package
