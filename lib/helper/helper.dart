@@ -6,20 +6,12 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:deun/l10n/app_localizations.dart';
-import 'package:jiffy/jiffy.dart';
 
 String toHumanDateString(String? dateTimeIn) {
   if (dateTimeIn == null) return '';
 
   DateFormat format = DateFormat("dd.MM.yyyy");
   return format.format(DateTime.parse(dateTimeIn));
-}
-
-String toSQLDateStringJiffy(Jiffy? dateTimeIn) {
-  if (dateTimeIn == null) return '';
-
-  DateFormat format = DateFormat("yyyy-MM-dd");
-  return format.format(dateTimeIn.dateTime);
 }
 
 String toCurrency(double value) {
