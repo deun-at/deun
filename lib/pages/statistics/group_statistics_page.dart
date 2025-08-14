@@ -4,7 +4,7 @@ import 'package:deun/pages/groups/group_model.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
+import 'package:deun/pages/statistics/statistics_models.dart';
 
 class GroupStatisticsPage extends ConsumerStatefulWidget {
   const GroupStatisticsPage({super.key, required this.group});
@@ -18,6 +18,7 @@ class GroupStatisticsPage extends ConsumerStatefulWidget {
 class _GroupStatisticsPageState extends ConsumerState<GroupStatisticsPage> {
   final PageController _pageController = PageController(initialPage: 0);
   int _currentChunkIndex = 0; // each page = 6 months chunk
+  DateTime? _selectedMonthStart;
 
   @override
   void dispose() {
@@ -68,6 +69,9 @@ class _GroupStatisticsPageState extends ConsumerState<GroupStatisticsPage> {
                             reverse: true, // swipe the other direction for older months
                             controller: _pageController,
                             onPageChanged: (index) {
+                              setState(() {
+                                _selectedMonthStart = null; // reset selection for the new page
+                              });
                               _loadChunk(index);
                             },
                             itemBuilder: (ctx, index) {
@@ -129,14 +133,15 @@ class _GroupStatisticsPageState extends ConsumerState<GroupStatisticsPage> {
                                     enabled: true,
                                     handleBuiltInTouches: true,
                                     touchCallback: (event, response) {
-                                      if (!event.isInterestedForInteractions || response == null) return;
+                                      // Only react to taps, not swipes/pans
+                                      if (response == null) return;
+                                      // Only react to taps: ignore pans/drags
+                                      if (!(event is FlTapUpEvent || event is FlLongPressEnd)) return;
                                       final spot = response.spot;
                                       if (spot == null) return;
                                       final bucket = pageMonths[spot.touchedBarGroupIndex];
-                                      GoRouter.of(context).push('/group/details/statistics/month', extra: {
-                                        'group': widget.group,
-                                        'monthStart': bucket.start,
-                                        'monthEnd': bucket.end,
+                                      setState(() {
+                                        _selectedMonthStart = bucket.start;
                                       });
                                     },
                                   ),
@@ -152,6 +157,72 @@ class _GroupStatisticsPageState extends ConsumerState<GroupStatisticsPage> {
                             style: Theme.of(context).textTheme.bodyMedium,
                           ),
                         ),
+                        const SizedBox(height: 16),
+                        Builder(builder: (context) {
+                          final selectedBucket = (() {
+                            final currentMonths = data.months;
+                            if (_selectedMonthStart == null) return currentMonths.last;
+                            final match = currentMonths.where((b) => b.start == _selectedMonthStart).toList();
+                            return match.isEmpty ? currentMonths.last : match.first;
+                          })();
+                          final args = GroupMonthMemberTotalsArgs(
+                            groupId: widget.group.id,
+                            monthStart: selectedBucket.start,
+                            monthEnd: selectedBucket.end,
+                          );
+                          final detailsState = ref.watch(groupMonthMemberTotalsNotifierProvider(args));
+
+                          return Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: [
+                              Text(
+                                'Details ${selectedBucket.start.month.toString().padLeft(2, '0')}/${selectedBucket.start.year % 100}',
+                                style: Theme.of(context).textTheme.titleMedium,
+                              ),
+                              const SizedBox(height: 8),
+                              Card(
+                                clipBehavior: Clip.antiAlias,
+                                elevation: 0,
+                                surfaceTintColor: Theme.of(context).colorScheme.primary,
+                                child: Padding(
+                                  padding: const EdgeInsets.symmetric(vertical: 4),
+                                  child: detailsState.when(
+                                    loading: () => const Padding(
+                                      padding: EdgeInsets.all(16.0),
+                                      child: Center(child: CircularProgressIndicator()),
+                                    ),
+                                    error: (e, st) => Padding(
+                                      padding: const EdgeInsets.all(16.0),
+                                      child: Text(e.toString()),
+                                    ),
+                                    data: (list) {
+                                      if (list.isEmpty) {
+                                        return const Padding(
+                                          padding: EdgeInsets.all(16.0),
+                                          child: Text('No expenses'),
+                                        );
+                                      }
+                                      return ListView.separated(
+                                        shrinkWrap: true,
+                                        physics: const NeverScrollableScrollPhysics(),
+                                        itemCount: list.length,
+                                        separatorBuilder: (_, __) => const Divider(height: 1),
+                                        itemBuilder: (ctx, i) {
+                                          final item = list[i];
+                                          return ListTile(
+                                            dense: true,
+                                            title: Text(item.displayName),
+                                            trailing: Text(toCurrency(item.total)),
+                                          );
+                                        },
+                                      );
+                                    },
+                                  ),
+                                ),
+                              ),
+                            ],
+                          );
+                        }),
                       ],
                     ),
                   ),
