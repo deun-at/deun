@@ -91,6 +91,28 @@ class Expense {
     return retData;
   }
 
+  static Future<List<Expense>> fetchRange(String groupId, DateTime start, DateTime end) async {
+    var query = supabase
+        .from('expense')
+        .select(
+            '*, ...paid_by(paid_by_display_name:display_name), expense_entry(*, expense_entry_share(*, ...email(display_name:display_name))), group!expense_group_id_fkey(*, group_shares_summary(*, ...paid_by(paid_by_display_name:display_name), ...paid_for(paid_for_display_name:display_name)), group_member(*, ...user(display_name:display_name)))')
+        .eq('group_id', groupId)
+        .gte('expense_date', start.toIso8601String())
+        .lt('expense_date', end.toIso8601String())
+        .order('expense_date')
+        .order('created_at');
+
+    List<Map<String, dynamic>> data = await query;
+
+    List<Expense> retData = List.empty(growable: true);
+    for (var element in data) {
+      Expense expense = Expense();
+      expense.loadDataFromJson(element);
+      retData.add(expense);
+    }
+    return retData;
+  }
+
   static Future<Expense> fetchDetail(String expenseId) async {
     Map<String, dynamic> data = await supabase
         .from('expense')

@@ -20,6 +20,8 @@ import 'pages/expenses/expense_detail.dart';
 import 'pages/groups/group_detail.dart';
 import 'pages/groups/group_detail_edit.dart';
 import 'pages/groups/group_list.dart';
+import 'pages/statistics/group_statistics_page.dart';
+import 'pages/statistics/month_detail_bottom_sheet.dart';
 import 'package:deun/l10n/app_localizations.dart';
 import 'dart:io' show Platform;
 import 'package:app_links/app_links.dart';
@@ -109,6 +111,35 @@ class _NavigationScreenState extends ConsumerState<NavigationScreen> {
                                   ),
                                 );
                               }),
+                          GoRoute(
+                              path: 'statistics',
+                              parentNavigatorKey: _rootNavigatorKey,
+                              pageBuilder: (context, state) {
+                                var extra = state.extra as Map<String, dynamic>;
+                                var group = extra['group'] as Group;
+
+                                return DefaultTransitionPage(child: GroupStatisticsPage(group: group));
+                              },
+                              routes: [
+                                GoRoute(
+                                    path: 'month',
+                                    parentNavigatorKey: _rootNavigatorKey,
+                                    pageBuilder: (context, state) {
+                                      var extra = state.extra as Map<String, dynamic>;
+                                      var group = extra['group'] as Group;
+                                      var monthStart = extra['monthStart'] as DateTime;
+                                      var monthEnd = extra['monthEnd'] as DateTime;
+
+                                      return ModalBottomSheetPage(
+                                        key: state.pageKey,
+                                        builder: (context) => StatisticsMonthDetailBottomSheet(
+                                          group: group,
+                                          monthStart: monthStart,
+                                          monthEnd: monthEnd,
+                                        ),
+                                      );
+                                    }),
+                              ]),
                           GoRoute(
                               path: 'payment',
                               parentNavigatorKey: _rootNavigatorKey,
