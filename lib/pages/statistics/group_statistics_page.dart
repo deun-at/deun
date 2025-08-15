@@ -19,7 +19,7 @@ class GroupStatisticsPage extends ConsumerStatefulWidget {
 class _GroupStatisticsPageState extends ConsumerState<GroupStatisticsPage> {
   final PageController _pageController = PageController(initialPage: 0);
   int _currentChunkIndex = 0; // each page = 6 months chunk
-  DateTime? _selectedMonthStart;
+  MonthBucket? _selectedMonth;
 
   @override
   void dispose() {
@@ -60,6 +60,9 @@ class _GroupStatisticsPageState extends ConsumerState<GroupStatisticsPage> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
+                        Text(
+                            "${DateFormat("MMMM yyyy").format(_selectedMonth?.start ?? data.months.last.start)}: ${toCurrency(_selectedMonth?.total ?? data.months.last.total)}",
+                            style: Theme.of(context).textTheme.titleMedium),
                         SizedBox(
                           height: 260,
                           child: PageView.builder(
@@ -67,7 +70,7 @@ class _GroupStatisticsPageState extends ConsumerState<GroupStatisticsPage> {
                             controller: _pageController,
                             onPageChanged: (index) {
                               setState(() {
-                                _selectedMonthStart = null; // reset selection for the new page
+                                _selectedMonth = null; // reset selection for the new page
                               });
                               _loadChunk(index);
                             },
@@ -80,7 +83,7 @@ class _GroupStatisticsPageState extends ConsumerState<GroupStatisticsPage> {
 
                               return BarChart(
                                 BarChartData(
-                                  gridData: FlGridData(show: true, drawVerticalLine: false),
+                                  gridData: FlGridData(show: false),
                                   borderData: FlBorderData(show: false),
                                   titlesData: FlTitlesData(
                                     bottomTitles: AxisTitles(
@@ -95,6 +98,7 @@ class _GroupStatisticsPageState extends ConsumerState<GroupStatisticsPage> {
                                             child: Text(DateFormat("MMM").format(d)),
                                           );
                                         },
+                                        reservedSize: 25,
                                       ),
                                     ),
                                     rightTitles: AxisTitles(
@@ -114,7 +118,18 @@ class _GroupStatisticsPageState extends ConsumerState<GroupStatisticsPage> {
                                       ),
                                     ),
                                     leftTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                                    topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                                    topTitles: AxisTitles(
+                                      sideTitles: SideTitles(
+                                        showTitles: true,
+                                        getTitlesWidget: (value, meta) {
+                                          return SideTitleWidget(
+                                            axisSide: meta.axisSide,
+                                            child: Text(""),
+                                          );
+                                        },
+                                        reservedSize: 10,
+                                      ),
+                                    ),
                                   ),
                                   barGroups: pageMonths.asMap().entries.map((entry) {
                                     final i = entry.key;
@@ -126,7 +141,9 @@ class _GroupStatisticsPageState extends ConsumerState<GroupStatisticsPage> {
                                           toY: m.total,
                                           width: 18,
                                           borderRadius: BorderRadius.circular(6),
-                                          color: Theme.of(context).colorScheme.primary,
+                                          color: (_selectedMonth?.start ?? data.months.last.start) == m.start
+                                              ? Theme.of(context).colorScheme.primary
+                                              : Theme.of(context).colorScheme.primaryContainer,
                                         ),
                                       ],
                                       showingTooltipIndicators: [0],
@@ -137,14 +154,11 @@ class _GroupStatisticsPageState extends ConsumerState<GroupStatisticsPage> {
                                     touchTooltipData: BarTouchTooltipData(
                                       getTooltipColor: (groupData) => Colors.transparent,
                                       tooltipPadding: EdgeInsets.zero,
-                                      tooltipMargin: 8,
+                                      tooltipMargin: 0,
                                       getTooltipItem: (group, groupIndex, rod, rodIndex) {
                                         return BarTooltipItem(
-                                          toCurrency(rod.toY),
-                                          TextStyle(
-                                            color: Theme.of(context).colorScheme.primary,
-                                            fontWeight: FontWeight.bold,
-                                          ),
+                                          "",
+                                          TextStyle(color: Colors.transparent),
                                         );
                                       },
                                     ),
@@ -157,7 +171,7 @@ class _GroupStatisticsPageState extends ConsumerState<GroupStatisticsPage> {
                                       if (spot == null) return;
                                       final bucket = pageMonths[spot.touchedBarGroupIndex];
                                       setState(() {
-                                        _selectedMonthStart = bucket.start;
+                                        _selectedMonth = bucket;
                                       });
                                     },
                                   ),
@@ -174,8 +188,8 @@ class _GroupStatisticsPageState extends ConsumerState<GroupStatisticsPage> {
                 Builder(builder: (context) {
                   final selectedBucket = (() {
                     final currentMonths = data.months;
-                    if (_selectedMonthStart == null) return currentMonths.last;
-                    final match = currentMonths.where((b) => b.start == _selectedMonthStart).toList();
+                    if (_selectedMonth == null) return currentMonths.last;
+                    final match = currentMonths.where((b) => b.start == _selectedMonth!.start).toList();
                     return match.isEmpty ? currentMonths.last : match.first;
                   })();
                   final args = GroupMonthMemberTotalsArgs(
