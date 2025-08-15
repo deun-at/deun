@@ -700,7 +700,7 @@ final localeNotifierProvider =
 
 typedef _$LocaleNotifier = AutoDisposeNotifier<Locale?>;
 String _$groupMonthlyTotalsNotifierHash() =>
-    r'987e1779d1d14a1606a8ee789c9165551812f65d';
+    r'c122b417d05c3cfedb425aff18f3e944086bd18a';
 
 abstract class _$GroupMonthlyTotalsNotifier
     extends BuildlessAutoDisposeAsyncNotifier<GroupMonthlyTotalsState> {
@@ -1002,6 +1002,314 @@ class _GroupMonthMemberTotalsNotifierProviderElement
   @override
   GroupMonthMemberTotalsArgs get args =>
       (origin as GroupMonthMemberTotalsNotifierProvider).args;
+}
+
+String _$groupMonthCategoryTotalsNotifierHash() =>
+    r'774d3310017b5e2cfe5efead4a6889b160ad63d1';
+
+abstract class _$GroupMonthCategoryTotalsNotifier
+    extends BuildlessAutoDisposeAsyncNotifier<List<CategoryMonthTotal>> {
+  late final GroupMonthCategoryTotalsArgs args;
+
+  FutureOr<List<CategoryMonthTotal>> build(
+    GroupMonthCategoryTotalsArgs args,
+  );
+}
+
+/// See also [GroupMonthCategoryTotalsNotifier].
+@ProviderFor(GroupMonthCategoryTotalsNotifier)
+const groupMonthCategoryTotalsNotifierProvider =
+    GroupMonthCategoryTotalsNotifierFamily();
+
+/// See also [GroupMonthCategoryTotalsNotifier].
+class GroupMonthCategoryTotalsNotifierFamily
+    extends Family<AsyncValue<List<CategoryMonthTotal>>> {
+  /// See also [GroupMonthCategoryTotalsNotifier].
+  const GroupMonthCategoryTotalsNotifierFamily();
+
+  /// See also [GroupMonthCategoryTotalsNotifier].
+  GroupMonthCategoryTotalsNotifierProvider call(
+    GroupMonthCategoryTotalsArgs args,
+  ) {
+    return GroupMonthCategoryTotalsNotifierProvider(
+      args,
+    );
+  }
+
+  @override
+  GroupMonthCategoryTotalsNotifierProvider getProviderOverride(
+    covariant GroupMonthCategoryTotalsNotifierProvider provider,
+  ) {
+    return call(
+      provider.args,
+    );
+  }
+
+  static const Iterable<ProviderOrFamily>? _dependencies = null;
+
+  @override
+  Iterable<ProviderOrFamily>? get dependencies => _dependencies;
+
+  static const Iterable<ProviderOrFamily>? _allTransitiveDependencies = null;
+
+  @override
+  Iterable<ProviderOrFamily>? get allTransitiveDependencies =>
+      _allTransitiveDependencies;
+
+  @override
+  String? get name => r'groupMonthCategoryTotalsNotifierProvider';
+}
+
+/// See also [GroupMonthCategoryTotalsNotifier].
+class GroupMonthCategoryTotalsNotifierProvider
+    extends AutoDisposeAsyncNotifierProviderImpl<
+        GroupMonthCategoryTotalsNotifier, List<CategoryMonthTotal>> {
+  /// See also [GroupMonthCategoryTotalsNotifier].
+  GroupMonthCategoryTotalsNotifierProvider(
+    GroupMonthCategoryTotalsArgs args,
+  ) : this._internal(
+          () => GroupMonthCategoryTotalsNotifier()..args = args,
+          from: groupMonthCategoryTotalsNotifierProvider,
+          name: r'groupMonthCategoryTotalsNotifierProvider',
+          debugGetCreateSourceHash:
+              const bool.fromEnvironment('dart.vm.product')
+                  ? null
+                  : _$groupMonthCategoryTotalsNotifierHash,
+          dependencies: GroupMonthCategoryTotalsNotifierFamily._dependencies,
+          allTransitiveDependencies:
+              GroupMonthCategoryTotalsNotifierFamily._allTransitiveDependencies,
+          args: args,
+        );
+
+  GroupMonthCategoryTotalsNotifierProvider._internal(
+    super._createNotifier, {
+    required super.name,
+    required super.dependencies,
+    required super.allTransitiveDependencies,
+    required super.debugGetCreateSourceHash,
+    required super.from,
+    required this.args,
+  }) : super.internal();
+
+  final GroupMonthCategoryTotalsArgs args;
+
+  @override
+  FutureOr<List<CategoryMonthTotal>> runNotifierBuild(
+    covariant GroupMonthCategoryTotalsNotifier notifier,
+  ) {
+    return notifier.build(
+      args,
+    );
+  }
+
+  @override
+  Override overrideWith(GroupMonthCategoryTotalsNotifier Function() create) {
+    return ProviderOverride(
+      origin: this,
+      override: GroupMonthCategoryTotalsNotifierProvider._internal(
+        () => create()..args = args,
+        from: from,
+        name: null,
+        dependencies: null,
+        allTransitiveDependencies: null,
+        debugGetCreateSourceHash: null,
+        args: args,
+      ),
+    );
+  }
+
+  @override
+  AutoDisposeAsyncNotifierProviderElement<GroupMonthCategoryTotalsNotifier,
+      List<CategoryMonthTotal>> createElement() {
+    return _GroupMonthCategoryTotalsNotifierProviderElement(this);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is GroupMonthCategoryTotalsNotifierProvider &&
+        other.args == args;
+  }
+
+  @override
+  int get hashCode {
+    var hash = _SystemHash.combine(0, runtimeType.hashCode);
+    hash = _SystemHash.combine(hash, args.hashCode);
+
+    return _SystemHash.finish(hash);
+  }
+}
+
+@Deprecated('Will be removed in 3.0. Use Ref instead')
+// ignore: unused_element
+mixin GroupMonthCategoryTotalsNotifierRef
+    on AutoDisposeAsyncNotifierProviderRef<List<CategoryMonthTotal>> {
+  /// The parameter `args` of this provider.
+  GroupMonthCategoryTotalsArgs get args;
+}
+
+class _GroupMonthCategoryTotalsNotifierProviderElement
+    extends AutoDisposeAsyncNotifierProviderElement<
+        GroupMonthCategoryTotalsNotifier,
+        List<CategoryMonthTotal>> with GroupMonthCategoryTotalsNotifierRef {
+  _GroupMonthCategoryTotalsNotifierProviderElement(super.provider);
+
+  @override
+  GroupMonthCategoryTotalsArgs get args =>
+      (origin as GroupMonthCategoryTotalsNotifierProvider).args;
+}
+
+String _$categoryExpenseDetailsNotifierHash() =>
+    r'650441b46e73be35d40f2f11f81a8eb177afb316';
+
+abstract class _$CategoryExpenseDetailsNotifier
+    extends BuildlessAutoDisposeAsyncNotifier<List<CategoryExpenseDetail>> {
+  late final CategoryExpenseDetailsArgs args;
+
+  FutureOr<List<CategoryExpenseDetail>> build(
+    CategoryExpenseDetailsArgs args,
+  );
+}
+
+/// See also [CategoryExpenseDetailsNotifier].
+@ProviderFor(CategoryExpenseDetailsNotifier)
+const categoryExpenseDetailsNotifierProvider =
+    CategoryExpenseDetailsNotifierFamily();
+
+/// See also [CategoryExpenseDetailsNotifier].
+class CategoryExpenseDetailsNotifierFamily
+    extends Family<AsyncValue<List<CategoryExpenseDetail>>> {
+  /// See also [CategoryExpenseDetailsNotifier].
+  const CategoryExpenseDetailsNotifierFamily();
+
+  /// See also [CategoryExpenseDetailsNotifier].
+  CategoryExpenseDetailsNotifierProvider call(
+    CategoryExpenseDetailsArgs args,
+  ) {
+    return CategoryExpenseDetailsNotifierProvider(
+      args,
+    );
+  }
+
+  @override
+  CategoryExpenseDetailsNotifierProvider getProviderOverride(
+    covariant CategoryExpenseDetailsNotifierProvider provider,
+  ) {
+    return call(
+      provider.args,
+    );
+  }
+
+  static const Iterable<ProviderOrFamily>? _dependencies = null;
+
+  @override
+  Iterable<ProviderOrFamily>? get dependencies => _dependencies;
+
+  static const Iterable<ProviderOrFamily>? _allTransitiveDependencies = null;
+
+  @override
+  Iterable<ProviderOrFamily>? get allTransitiveDependencies =>
+      _allTransitiveDependencies;
+
+  @override
+  String? get name => r'categoryExpenseDetailsNotifierProvider';
+}
+
+/// See also [CategoryExpenseDetailsNotifier].
+class CategoryExpenseDetailsNotifierProvider
+    extends AutoDisposeAsyncNotifierProviderImpl<CategoryExpenseDetailsNotifier,
+        List<CategoryExpenseDetail>> {
+  /// See also [CategoryExpenseDetailsNotifier].
+  CategoryExpenseDetailsNotifierProvider(
+    CategoryExpenseDetailsArgs args,
+  ) : this._internal(
+          () => CategoryExpenseDetailsNotifier()..args = args,
+          from: categoryExpenseDetailsNotifierProvider,
+          name: r'categoryExpenseDetailsNotifierProvider',
+          debugGetCreateSourceHash:
+              const bool.fromEnvironment('dart.vm.product')
+                  ? null
+                  : _$categoryExpenseDetailsNotifierHash,
+          dependencies: CategoryExpenseDetailsNotifierFamily._dependencies,
+          allTransitiveDependencies:
+              CategoryExpenseDetailsNotifierFamily._allTransitiveDependencies,
+          args: args,
+        );
+
+  CategoryExpenseDetailsNotifierProvider._internal(
+    super._createNotifier, {
+    required super.name,
+    required super.dependencies,
+    required super.allTransitiveDependencies,
+    required super.debugGetCreateSourceHash,
+    required super.from,
+    required this.args,
+  }) : super.internal();
+
+  final CategoryExpenseDetailsArgs args;
+
+  @override
+  FutureOr<List<CategoryExpenseDetail>> runNotifierBuild(
+    covariant CategoryExpenseDetailsNotifier notifier,
+  ) {
+    return notifier.build(
+      args,
+    );
+  }
+
+  @override
+  Override overrideWith(CategoryExpenseDetailsNotifier Function() create) {
+    return ProviderOverride(
+      origin: this,
+      override: CategoryExpenseDetailsNotifierProvider._internal(
+        () => create()..args = args,
+        from: from,
+        name: null,
+        dependencies: null,
+        allTransitiveDependencies: null,
+        debugGetCreateSourceHash: null,
+        args: args,
+      ),
+    );
+  }
+
+  @override
+  AutoDisposeAsyncNotifierProviderElement<CategoryExpenseDetailsNotifier,
+      List<CategoryExpenseDetail>> createElement() {
+    return _CategoryExpenseDetailsNotifierProviderElement(this);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is CategoryExpenseDetailsNotifierProvider &&
+        other.args == args;
+  }
+
+  @override
+  int get hashCode {
+    var hash = _SystemHash.combine(0, runtimeType.hashCode);
+    hash = _SystemHash.combine(hash, args.hashCode);
+
+    return _SystemHash.finish(hash);
+  }
+}
+
+@Deprecated('Will be removed in 3.0. Use Ref instead')
+// ignore: unused_element
+mixin CategoryExpenseDetailsNotifierRef
+    on AutoDisposeAsyncNotifierProviderRef<List<CategoryExpenseDetail>> {
+  /// The parameter `args` of this provider.
+  CategoryExpenseDetailsArgs get args;
+}
+
+class _CategoryExpenseDetailsNotifierProviderElement
+    extends AutoDisposeAsyncNotifierProviderElement<
+        CategoryExpenseDetailsNotifier,
+        List<CategoryExpenseDetail>> with CategoryExpenseDetailsNotifierRef {
+  _CategoryExpenseDetailsNotifierProviderElement(super.provider);
+
+  @override
+  CategoryExpenseDetailsArgs get args =>
+      (origin as CategoryExpenseDetailsNotifierProvider).args;
 }
 // ignore_for_file: type=lint
 // ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member, deprecated_member_use_from_same_package

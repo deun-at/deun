@@ -53,3 +53,63 @@ class MemberMonthTotal extends Equatable {
   @override
   List<Object?> get props => [email, displayName, total];
 }
+
+class CategoryMonthTotal extends Equatable {
+  final String categoryName;
+  final String categoryDisplayName;
+  final double total;
+
+  const CategoryMonthTotal({required this.categoryName, required this.categoryDisplayName, required this.total});
+
+  @override
+  List<Object?> get props => [categoryName, categoryDisplayName, total];
+}
+
+class GroupMonthCategoryTotalsArgs extends Equatable {
+  final String groupId;
+  final DateTime monthStart;
+  final DateTime monthEnd;
+
+  const GroupMonthCategoryTotalsArgs({required this.groupId, required this.monthStart, required this.monthEnd});
+
+  @override
+  List<Object?> get props => [groupId, monthStart, monthEnd];
+}
+
+class CategoryExpenseDetail extends Equatable {
+  final String expenseId;
+  final String expenseName;
+  final String expenseDate;
+  final double amount;
+  final String paidBy;
+  final String paidByDisplayName;
+
+  const CategoryExpenseDetail({
+    required this.expenseId,
+    required this.expenseName,
+    required this.expenseDate,
+    required this.amount,
+    required this.paidBy,
+    required this.paidByDisplayName,
+  });
+
+  @override
+  List<Object?> get props => [expenseId, expenseName, expenseDate, amount, paidBy, paidByDisplayName];
+}
+
+class CategoryExpenseDetailsArgs extends Equatable {
+  final String groupId;
+  final String categoryName;
+  final DateTime monthStart;
+  final DateTime monthEnd;
+
+  const CategoryExpenseDetailsArgs({
+    required this.groupId,
+    required this.categoryName,
+    required this.monthStart,
+    required this.monthEnd,
+  });
+
+  @override
+  List<Object?> get props => [groupId, categoryName, monthStart, monthEnd];
+}
