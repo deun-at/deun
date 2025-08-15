@@ -16,6 +16,8 @@ import '../groups/group_model.dart';
 import 'expense_entry_widget.dart';
 import 'expense_entry_model.dart';
 import 'expense_model.dart';
+import 'expense_category.dart';
+import '../../widgets/category_selector.dart';
 
 final _isLoading = StateProvider<bool>((ref) => false);
 final _isMiniView = StateProvider<bool>((ref) => false);
@@ -38,6 +40,7 @@ class _ExpenseBottomSheetState extends ConsumerState<ExpenseBottomSheet> {
   int _newTextFieldId = 0;
 
   final DraggableScrollableController _draggableScrollableController = DraggableScrollableController();
+  ExpenseCategory? _detectedCategory;
 
   @override
   void initState() {
@@ -46,6 +49,7 @@ class _ExpenseBottomSheetState extends ConsumerState<ExpenseBottomSheet> {
     Future.microtask(() => ref.read(_isMiniView.notifier).state = false); // Reset loading state
 
     groupMembers = widget.group.groupMembers;
+    _detectedCategory = widget.expense?.category;
     if (widget.expense != null && widget.expense!.expenseEntries.isNotEmpty) {
       _newTextFieldId = widget.expense!.expenseEntries.length;
       widget.expense!.expenseEntries.forEach((key, expenseEntry) {
@@ -94,6 +98,23 @@ class _ExpenseBottomSheetState extends ConsumerState<ExpenseBottomSheet> {
       int index = expenseEntryFields.indexWhere((element) => element.expenseEntry.index == expenseEntry.index);
       expenseEntryFields.removeAt(index);
     });
+  }
+
+  void detectAndUpdateCategory(String title) {
+    if (title.isNotEmpty) {
+      final detectedCategory = CategoryDetector.detectCategory(title);
+      final currentCategory = _formKey.currentState?.fields['category']?.value as ExpenseCategory?;
+
+      // Only auto-update if no category is currently selected or if the existing category is 'other'
+      if (currentCategory == null || currentCategory == ExpenseCategory.other) {
+        if (detectedCategory != ExpenseCategory.other) {
+          setState(() {
+            _detectedCategory = detectedCategory;
+          });
+          _formKey.currentState?.fields['category']?.didChange(detectedCategory);
+        }
+      }
+    }
   }
 
   void openDeleteItemDialog(BuildContext modalContext, Expense expense) {
@@ -227,7 +248,12 @@ class _ExpenseBottomSheetState extends ConsumerState<ExpenseBottomSheet> {
                                             border: InputBorder.none,
                                             hintText: AppLocalizations.of(context)!.addExpenseTitle,
                                           ),
-                                          onChanged: (value) => field.didChange(value),
+                                          onChanged: (value) {
+                                            field.didChange(value);
+                                            if (value.isNotEmpty) {
+                                              detectAndUpdateCategory(value);
+                                            }
+                                          },
                                         ),
                                       ),
                                       const SizedBox(height: spacing),
@@ -272,6 +298,12 @@ class _ExpenseBottomSheetState extends ConsumerState<ExpenseBottomSheet> {
                                               .copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
                                           hintText: AppLocalizations.of(context)!.addExpenseTitle,
                                         ),
+                                      ),
+                                      const SizedBox(height: spacing),
+                                      CategorySelector(
+                                        name: "category",
+                                        initialValue: _detectedCategory ?? widget.expense?.category,
+                                        enabled: !isMiniView,
                                       ),
                                       const SizedBox(height: spacing),
                                       ...expenseEntryFields,
