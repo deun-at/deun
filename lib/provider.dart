@@ -8,6 +8,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'pages/groups/group_model.dart';
 import 'pages/expenses/expense_model.dart';
+import 'pages/expenses/expense_category.dart';
 import 'pages/users/user_model.dart' as user_model;
 import 'pages/statistics/statistics_models.dart';
 
@@ -379,5 +380,83 @@ class GroupMonthMemberTotalsNotifier extends _$GroupMonthMemberTotalsNotifier {
     final list = byMember.values.toList();
     list.sort((a, b) => b.total.compareTo(a.total));
     return list;
+  }
+}
+
+@riverpod
+class GroupMonthCategoryTotalsNotifier extends _$GroupMonthCategoryTotalsNotifier {
+  @override
+  FutureOr<List<CategoryMonthTotal>> build(GroupMonthCategoryTotalsArgs args) async {
+    return await _load(args);
+  }
+
+  Future<List<CategoryMonthTotal>> _load(GroupMonthCategoryTotalsArgs args) async {
+    final expenses = await Expense.fetchRange(args.groupId, args.monthStart, args.monthEnd);
+
+    final Map<String, double> byCategory = {};
+    for (final expense in expenses) {
+      final categoryName = expense.category?.name ?? 'other';
+      final sum = expense.expenseEntries.values.fold<double>(0, (acc, e) => acc + e.amount);
+      byCategory[categoryName] = (byCategory[categoryName] ?? 0) + sum;
+    }
+
+    // Filter out categories with zero amount and convert to list
+    final list = byCategory.entries.where((entry) => entry.value > 0).map((entry) {
+      final category = ExpenseCategory.values.firstWhere(
+        (c) => c.name == entry.key,
+        orElse: () => ExpenseCategory.other,
+      );
+      return CategoryMonthTotal(
+        categoryName: entry.key,
+        categoryDisplayName: category.name,
+        total: entry.value,
+      );
+    }).toList();
+
+    // Sort by total (descending), but keep 'other' category at the end
+    list.sort((a, b) {
+      if (a.categoryName == 'other' && b.categoryName != 'other') return 1;
+      if (b.categoryName == 'other' && a.categoryName != 'other') return -1;
+      return b.total.compareTo(a.total);
+    });
+
+    return list;
+  }
+}
+
+@riverpod
+class CategoryExpenseDetailsNotifier extends _$CategoryExpenseDetailsNotifier {
+  @override
+  FutureOr<List<CategoryExpenseDetail>> build(CategoryExpenseDetailsArgs args) async {
+    return await _load(args);
+  }
+
+  Future<List<CategoryExpenseDetail>> _load(CategoryExpenseDetailsArgs args) async {
+    final expenses = await Expense.fetchRange(args.groupId, args.monthStart, args.monthEnd);
+
+    // Filter expenses by category
+    final categoryExpenses = expenses.where((expense) {
+      final categoryName = expense.category?.name ?? 'other';
+      return categoryName == args.categoryName;
+    }).toList();
+
+    // Convert to CategoryExpenseDetail list
+    final List<CategoryExpenseDetail> details = [];
+    for (final expense in categoryExpenses) {
+      final sum = expense.expenseEntries.values.fold<double>(0, (acc, e) => acc + e.amount);
+      details.add(CategoryExpenseDetail(
+        expenseId: expense.id,
+        expenseName: expense.name,
+        expenseDate: expense.expenseDate,
+        amount: sum,
+        paidBy: expense.paidBy ?? 'unknown',
+        paidByDisplayName: expense.paidByDisplayName ?? 'Unknown',
+      ));
+    }
+
+    // Sort by date (newest first)
+    details.sort((a, b) => DateTime.parse(b.expenseDate).compareTo(DateTime.parse(a.expenseDate)));
+
+    return details;
   }
 }

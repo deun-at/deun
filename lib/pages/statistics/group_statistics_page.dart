@@ -1,6 +1,9 @@
 import 'package:deun/helper/helper.dart';
 import 'package:deun/provider.dart';
 import 'package:deun/pages/groups/group_model.dart';
+import 'package:deun/pages/expenses/expense_category.dart';
+import 'package:deun/pages/statistics/category_detail_bottom_sheet.dart';
+import 'package:deun/l10n/app_localizations.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -192,12 +195,13 @@ class _GroupStatisticsPageState extends ConsumerState<GroupStatisticsPage> {
                     final match = currentMonths.where((b) => b.start == _selectedMonth!.start).toList();
                     return match.isEmpty ? currentMonths.last : match.first;
                   })();
-                  final args = GroupMonthMemberTotalsArgs(
+                  final args = GroupMonthCategoryTotalsArgs(
                     groupId: widget.group.id,
                     monthStart: selectedBucket.start,
                     monthEnd: selectedBucket.end,
                   );
-                  final detailsState = ref.watch(groupMonthMemberTotalsNotifierProvider(args));
+                  final detailsState = ref.watch(groupMonthCategoryTotalsNotifierProvider(args));
+                  final localizations = AppLocalizations.of(context)!;
 
                   return Card(
                     clipBehavior: Clip.antiAlias,
@@ -209,7 +213,7 @@ class _GroupStatisticsPageState extends ConsumerState<GroupStatisticsPage> {
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
                           Text(
-                            'Details ${DateFormat("MMMM yyyy").format(selectedBucket.start)}',
+                            'Categories ${DateFormat("MMMM yyyy").format(selectedBucket.start)}',
                             style: Theme.of(context).textTheme.titleMedium,
                           ),
                           const SizedBox(height: 12),
@@ -227,10 +231,37 @@ class _GroupStatisticsPageState extends ConsumerState<GroupStatisticsPage> {
                                 separatorBuilder: (_, __) => const Divider(height: 1),
                                 itemBuilder: (ctx, i) {
                                   final item = list[i];
+                                  final category = ExpenseCategory.values.firstWhere(
+                                    (c) => c.name == item.categoryName,
+                                    orElse: () => ExpenseCategory.other,
+                                  );
                                   return ListTile(
                                     dense: true,
-                                    title: Text(item.displayName),
+                                    leading: Icon(
+                                      category.getIcon(),
+                                      size: 20,
+                                      color: Theme.of(context).colorScheme.primary,
+                                    ),
+                                    title: Text(category.getDisplayName(localizations)),
                                     trailing: Text(toCurrency(item.total)),
+                                    onTap: () {
+                                      showModalBottomSheet(
+                                        context: context,
+                                        isScrollControlled: true,
+                                        backgroundColor: Colors.transparent,
+                                        builder: (context) => DraggableScrollableSheet(
+                                          initialChildSize: 0.5,
+                                          minChildSize: 0.3,
+                                          maxChildSize: 0.9,
+                                          builder: (context, scrollController) => CategoryDetailBottomSheet(
+                                            groupId: widget.group.id,
+                                            categoryName: item.categoryName,
+                                            monthStart: selectedBucket.start,
+                                            monthEnd: selectedBucket.end,
+                                          ),
+                                        ),
+                                      );
+                                    },
                                   );
                                 },
                               );
