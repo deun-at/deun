@@ -5,6 +5,7 @@ import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:deun/pages/statistics/statistics_models.dart';
+import 'package:intl/intl.dart';
 
 class GroupStatisticsPage extends ConsumerStatefulWidget {
   const GroupStatisticsPage({super.key, required this.group});
@@ -45,8 +46,6 @@ class _GroupStatisticsPageState extends ConsumerState<GroupStatisticsPage> {
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, st) => Center(child: Text(e.toString())),
         data: (data) {
-          // Static page layout; only the chart area is swipeable in 6-month steps
-          final months = data.months;
           return Padding(
             padding: const EdgeInsets.all(16.0),
             child: Column(
@@ -78,38 +77,43 @@ class _GroupStatisticsPageState extends ConsumerState<GroupStatisticsPage> {
                               }
 
                               final pageMonths = data.months;
-                              final maxY = pageMonths.fold<double>(0, (acc, m) => m.total > acc ? m.total : acc);
 
                               return BarChart(
                                 BarChartData(
                                   gridData: FlGridData(show: true, drawVerticalLine: false),
                                   borderData: FlBorderData(show: false),
-                                  maxY: maxY == 0 ? 100 : maxY * 1.2,
                                   titlesData: FlTitlesData(
                                     bottomTitles: AxisTitles(
                                       sideTitles: SideTitles(
                                         showTitles: true,
                                         getTitlesWidget: (value, meta) {
                                           final idx = value.toInt();
-                                          if (idx < 0 || idx >= pageMonths.length) return const SizedBox.shrink();
+                                          if (idx < 0 || idx >= pageMonths.length) return SizedBox.shrink();
                                           final d = pageMonths[idx].start;
-                                          return Padding(
-                                            padding: const EdgeInsets.only(top: 6),
-                                            child: Text('${d.month.toString().padLeft(2, '0')}/${d.year % 100}'),
+                                          return SideTitleWidget(
+                                            axisSide: meta.axisSide,
+                                            child: Text(DateFormat("MMM").format(d)),
                                           );
                                         },
                                       ),
                                     ),
-                                    leftTitles: AxisTitles(
+                                    rightTitles: AxisTitles(
                                       sideTitles: SideTitles(
+                                        reservedSize: 50,
                                         showTitles: true,
-                                        reservedSize: 44,
                                         getTitlesWidget: (value, meta) {
-                                          return Text(toCurrency(value.toDouble()));
+                                          if (value == 0 || value >= meta.max) {
+                                            return SideTitleWidget(
+                                              axisSide: meta.axisSide,
+                                              child: Text(meta.formattedValue),
+                                            );
+                                          } else {
+                                            return SizedBox.shrink();
+                                          }
                                         },
                                       ),
                                     ),
-                                    rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                                    leftTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
                                     topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
                                   ),
                                   barGroups: pageMonths.asMap().entries.map((entry) {
@@ -125,13 +129,27 @@ class _GroupStatisticsPageState extends ConsumerState<GroupStatisticsPage> {
                                           color: Theme.of(context).colorScheme.primary,
                                         ),
                                       ],
+                                      showingTooltipIndicators: [0],
                                     );
                                   }).toList(),
                                   barTouchData: BarTouchData(
                                     enabled: true,
+                                    touchTooltipData: BarTouchTooltipData(
+                                      getTooltipColor: (groupData) => Colors.transparent,
+                                      tooltipPadding: EdgeInsets.zero,
+                                      tooltipMargin: 8,
+                                      getTooltipItem: (group, groupIndex, rod, rodIndex) {
+                                        return BarTooltipItem(
+                                          toCurrency(rod.toY),
+                                          TextStyle(
+                                            color: Theme.of(context).colorScheme.primary,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        );
+                                      },
+                                    ),
                                     handleBuiltInTouches: true,
                                     touchCallback: (event, response) {
-                                      // Only react to taps, not swipes/pans
                                       if (response == null) return;
                                       // Only react to taps: ignore pans/drags
                                       if (!(event is FlTapUpEvent || event is FlLongPressEnd)) return;
@@ -146,13 +164,6 @@ class _GroupStatisticsPageState extends ConsumerState<GroupStatisticsPage> {
                                 ),
                               );
                             },
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        Center(
-                          child: Text(
-                            '${months.first.start.month.toString().padLeft(2, '0')}/${months.first.start.year % 100} - ${months.last.start.month.toString().padLeft(2, '0')}/${months.last.start.year % 100}',
-                            style: Theme.of(context).textTheme.bodyMedium,
                           ),
                         ),
                       ],
@@ -184,7 +195,7 @@ class _GroupStatisticsPageState extends ConsumerState<GroupStatisticsPage> {
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
                           Text(
-                            'Details ${selectedBucket.start.month.toString().padLeft(2, '0')}/${selectedBucket.start.year % 100}',
+                            'Details ${DateFormat("MMMM yyyy").format(selectedBucket.start)}',
                             style: Theme.of(context).textTheme.titleMedium,
                           ),
                           const SizedBox(height: 12),
