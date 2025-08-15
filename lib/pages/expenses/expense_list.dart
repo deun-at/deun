@@ -81,12 +81,27 @@ class _ExpenseListState extends ConsumerState<ExpenseList> {
                                         padding: const EdgeInsets.fromLTRB(10, 5, 5, 10),
                                         child: Column(
                                           children: [
-                                            Align(
-                                              alignment: Alignment.bottomLeft,
-                                              child: Text(
-                                                expense.name,
-                                                style: Theme.of(context).textTheme.headlineMedium,
-                                              ),
+                                            Row(
+                                              children: [
+                                                if (expense.category != null)
+                                                  Padding(
+                                                    padding: const EdgeInsets.only(right: 8.0),
+                                                    child: Icon(
+                                                      expense.category!.getIcon(),
+                                                      size: 20,
+                                                      color: Theme.of(context).colorScheme.primary,
+                                                    ),
+                                                  ),
+                                                Expanded(
+                                                  child: Align(
+                                                    alignment: Alignment.bottomLeft,
+                                                    child: Text(
+                                                      expense.name,
+                                                      style: Theme.of(context).textTheme.headlineMedium,
+                                                    ),
+                                                  ),
+                                                ),
+                                              ],
                                             ),
                                             Align(
                                               alignment: Alignment.bottomLeft,

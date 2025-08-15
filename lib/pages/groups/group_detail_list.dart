@@ -117,19 +117,36 @@ class _GroupDetailListState extends ConsumerState<GroupDetailList> {
                                   child: Column(
                                     children: [
                                       Row(
-                                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                          crossAxisAlignment: CrossAxisAlignment.start,
-                                          children: [
-                                            Flexible(
-                                                child: Text(
+                                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          Flexible(
+                                            child: Text(
                                               expense.name,
                                               style: Theme.of(context).textTheme.headlineMedium,
                                               overflow: TextOverflow.ellipsis,
-                                            )),
-                                            Text(formatDate(expense.expenseDate),
-                                                style: Theme.of(context).textTheme.bodySmall)
-                                          ]),
-                                      ExpenseShareWidget(expense: expense),
+                                            ),
+                                          ),
+                                          Text(formatDate(expense.expenseDate),
+                                              style: Theme.of(context).textTheme.bodySmall)
+                                        ],
+                                      ),
+                                      Row(
+                                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          ExpenseShareWidget(expense: expense),
+                                          if (expense.category != null)
+                                            Padding(
+                                              padding: const EdgeInsets.only(left: 8.0),
+                                              child: Icon(
+                                                expense.category!.getIcon(),
+                                                size: 20,
+                                                color: Theme.of(context).colorScheme.onSurface,
+                                              ),
+                                            ),
+                                        ],
+                                      )
                                     ],
                                   ),
                                 ),
@@ -220,15 +237,18 @@ class _ExpenseShareWidgetState extends State<ExpenseShareWidget> {
       }
     }
 
-    return Column(children: [
-      Align(
-        alignment: Alignment.bottomLeft,
-        child: Text(
-          paidWidgetLable,
-          style: Theme.of(context).textTheme.labelLarge?.copyWith(color: paidWidgetTextColor),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Align(
+          alignment: Alignment.bottomLeft,
+          child: Text(
+            paidWidgetLable,
+            style: Theme.of(context).textTheme.labelLarge?.copyWith(color: paidWidgetTextColor),
+          ),
         ),
-      ),
-      sharedWidget ?? const SizedBox(),
-    ]);
+        sharedWidget ?? const SizedBox(),
+      ],
+    );
   }
 }

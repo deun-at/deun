@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import '../../main.dart';
 import '../groups/group_model.dart';
 import 'expense_entry_model.dart';
+import 'expense_category.dart';
 
 class Expense {
   late String id;
@@ -15,6 +16,7 @@ class Expense {
   late String expenseDate;
   late String createdAt;
   late bool isPaidBackRow;
+  late ExpenseCategory? category;
 
   late Map<String, ExpenseEntry> expenseEntries;
 
@@ -35,6 +37,7 @@ class Expense {
     paidByDisplayName = json["paid_by_display_name"];
     createdAt = json["created_at"];
     isPaidBackRow = json["is_paid_back_row"];
+    category = ExpenseCategory.fromString(json["category"]);
 
     amount = 0.0;
     expenseEntries = <String, ExpenseEntry>{};
@@ -135,7 +138,8 @@ class Expense {
       'expense_date': formResponse['expense_date'].toString(),
       'paid_by': formResponse['paid_by'],
       'group_id': groupId,
-      'user_id': supabase.auth.currentUser?.id
+      'user_id': supabase.auth.currentUser?.id,
+      'category': (formResponse['category'] as ExpenseCategory?)?.name
     };
 
     if (expenseId != null) {
@@ -216,6 +220,7 @@ class Expense {
     Map<String, dynamic> jsonValue = {
       'name': name,
       'paid_by': paidBy,
+      'category': category?.name,
     };
 
     expenseEntries.forEach((key, value) {

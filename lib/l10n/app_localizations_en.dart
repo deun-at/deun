@@ -687,4 +687,70 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get localeSelectorSystem => 'System default';
+
+  @override
+  String get expenseCategory => 'Category';
+
+  @override
+  String get categoryFood => 'Food';
+
+  @override
+  String get categoryTransport => 'Transport';
+
+  @override
+  String get categoryShopping => 'Shopping';
+
+  @override
+  String get categoryEntertainment => 'Entertainment';
+
+  @override
+  String get categoryHealth => 'Health';
+
+  @override
+  String get categoryTravel => 'Travel';
+
+  @override
+  String get categoryBills => 'Bills';
+
+  @override
+  String get categoryGroceries => 'Groceries';
+
+  @override
+  String get categoryRestaurants => 'Restaurants';
+
+  @override
+  String get categoryCoffee => 'Coffee';
+
+  @override
+  String get categoryGas => 'Gas';
+
+  @override
+  String get categoryParking => 'Parking';
+
+  @override
+  String get categoryAccommodation => 'Accommodation';
+
+  @override
+  String get categoryGifts => 'Gifts';
+
+  @override
+  String get categoryEducation => 'Education';
+
+  @override
+  String get categorySports => 'Sports';
+
+  @override
+  String get categoryBeauty => 'Beauty';
+
+  @override
+  String get categoryTechnology => 'Technology';
+
+  @override
+  String get categoryClothing => 'Clothing';
+
+  @override
+  String get categoryHome => 'Home';
+
+  @override
+  String get categoryOther => 'Other';
 }
