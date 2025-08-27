@@ -6,1310 +6,970 @@ part of 'provider.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$expenseListHash() => r'00dca8aef60e04c10e83bf68f036038277de8956';
+@ProviderFor(GroupListNotifier)
+const groupListNotifierProvider = GroupListNotifierFamily._();
 
-/// See also [expenseList].
-@ProviderFor(expenseList)
-final expenseListProvider = AutoDisposeFutureProvider<List<Expense>>.internal(
-  expenseList,
-  name: r'expenseListProvider',
-  debugGetCreateSourceHash:
-      const bool.fromEnvironment('dart.vm.product') ? null : _$expenseListHash,
-  dependencies: null,
-  allTransitiveDependencies: null,
-);
+final class GroupListNotifierProvider
+    extends $AsyncNotifierProvider<GroupListNotifier, List<Group>> {
+  const GroupListNotifierProvider._(
+      {required GroupListNotifierFamily super.from,
+      required String super.argument})
+      : super(
+          retry: null,
+          name: r'groupListNotifierProvider',
+          isAutoDispose: true,
+          dependencies: null,
+          $allTransitiveDependencies: null,
+        );
 
-@Deprecated('Will be removed in 3.0. Use Ref instead')
-// ignore: unused_element
-typedef ExpenseListRef = AutoDisposeFutureProviderRef<List<Expense>>;
-String _$groupListNotifierHash() => r'43f0188b3564872c366005969d261b7580dbd8bf';
+  @override
+  String debugGetCreateSourceHash() => _$groupListNotifierHash();
 
-/// Copied from Dart SDK
-class _SystemHash {
-  _SystemHash._();
-
-  static int combine(int hash, int value) {
-    // ignore: parameter_assignments
-    hash = 0x1fffffff & (hash + value);
-    // ignore: parameter_assignments
-    hash = 0x1fffffff & (hash + ((0x0007ffff & hash) << 10));
-    return hash ^ (hash >> 6);
+  @override
+  String toString() {
+    return r'groupListNotifierProvider'
+        ''
+        '($argument)';
   }
 
-  static int finish(int hash) {
-    // ignore: parameter_assignments
-    hash = 0x1fffffff & (hash + ((0x03ffffff & hash) << 3));
-    // ignore: parameter_assignments
-    hash = hash ^ (hash >> 11);
-    return 0x1fffffff & (hash + ((0x00003fff & hash) << 15));
+  @$internal
+  @override
+  GroupListNotifier create() => GroupListNotifier();
+
+  @override
+  bool operator ==(Object other) {
+    return other is GroupListNotifierProvider && other.argument == argument;
+  }
+
+  @override
+  int get hashCode {
+    return argument.hashCode;
   }
 }
 
-abstract class _$GroupListNotifier
-    extends BuildlessAutoDisposeAsyncNotifier<List<Group>> {
-  late final String statusFilter;
+String _$groupListNotifierHash() => r'deb99cdeb12b236dfaaa4cbb7d7546a460f28b79';
+
+final class GroupListNotifierFamily extends $Family
+    with
+        $ClassFamilyOverride<GroupListNotifier, AsyncValue<List<Group>>,
+            List<Group>, FutureOr<List<Group>>, String> {
+  const GroupListNotifierFamily._()
+      : super(
+          retry: null,
+          name: r'groupListNotifierProvider',
+          dependencies: null,
+          $allTransitiveDependencies: null,
+          isAutoDispose: true,
+        );
+
+  GroupListNotifierProvider call(
+    String statusFilter,
+  ) =>
+      GroupListNotifierProvider._(argument: statusFilter, from: this);
+
+  @override
+  String toString() => r'groupListNotifierProvider';
+}
+
+abstract class _$GroupListNotifier extends $AsyncNotifier<List<Group>> {
+  late final _$args = ref.$arg as String;
+  String get statusFilter => _$args;
 
   FutureOr<List<Group>> build(
     String statusFilter,
   );
+  @$mustCallSuper
+  @override
+  void runBuild() {
+    final created = build(
+      _$args,
+    );
+    final ref = this.ref as $Ref<AsyncValue<List<Group>>, List<Group>>;
+    final element = ref.element as $ClassProviderElement<
+        AnyNotifier<AsyncValue<List<Group>>, List<Group>>,
+        AsyncValue<List<Group>>,
+        Object?,
+        Object?>;
+    element.handleValue(ref, created);
+  }
 }
 
-/// See also [GroupListNotifier].
-@ProviderFor(GroupListNotifier)
-const groupListNotifierProvider = GroupListNotifierFamily();
+@ProviderFor(GroupDetailNotifier)
+const groupDetailNotifierProvider = GroupDetailNotifierFamily._();
 
-/// See also [GroupListNotifier].
-class GroupListNotifierFamily extends Family<AsyncValue<List<Group>>> {
-  /// See also [GroupListNotifier].
-  const GroupListNotifierFamily();
-
-  /// See also [GroupListNotifier].
-  GroupListNotifierProvider call(
-    String statusFilter,
-  ) {
-    return GroupListNotifierProvider(
-      statusFilter,
-    );
-  }
-
-  @override
-  GroupListNotifierProvider getProviderOverride(
-    covariant GroupListNotifierProvider provider,
-  ) {
-    return call(
-      provider.statusFilter,
-    );
-  }
-
-  static const Iterable<ProviderOrFamily>? _dependencies = null;
-
-  @override
-  Iterable<ProviderOrFamily>? get dependencies => _dependencies;
-
-  static const Iterable<ProviderOrFamily>? _allTransitiveDependencies = null;
-
-  @override
-  Iterable<ProviderOrFamily>? get allTransitiveDependencies =>
-      _allTransitiveDependencies;
-
-  @override
-  String? get name => r'groupListNotifierProvider';
-}
-
-/// See also [GroupListNotifier].
-class GroupListNotifierProvider extends AutoDisposeAsyncNotifierProviderImpl<
-    GroupListNotifier, List<Group>> {
-  /// See also [GroupListNotifier].
-  GroupListNotifierProvider(
-    String statusFilter,
-  ) : this._internal(
-          () => GroupListNotifier()..statusFilter = statusFilter,
-          from: groupListNotifierProvider,
-          name: r'groupListNotifierProvider',
-          debugGetCreateSourceHash:
-              const bool.fromEnvironment('dart.vm.product')
-                  ? null
-                  : _$groupListNotifierHash,
-          dependencies: GroupListNotifierFamily._dependencies,
-          allTransitiveDependencies:
-              GroupListNotifierFamily._allTransitiveDependencies,
-          statusFilter: statusFilter,
+final class GroupDetailNotifierProvider
+    extends $AsyncNotifierProvider<GroupDetailNotifier, Group> {
+  const GroupDetailNotifierProvider._(
+      {required GroupDetailNotifierFamily super.from,
+      required String super.argument})
+      : super(
+          retry: null,
+          name: r'groupDetailNotifierProvider',
+          isAutoDispose: true,
+          dependencies: null,
+          $allTransitiveDependencies: null,
         );
 
-  GroupListNotifierProvider._internal(
-    super._createNotifier, {
-    required super.name,
-    required super.dependencies,
-    required super.allTransitiveDependencies,
-    required super.debugGetCreateSourceHash,
-    required super.from,
-    required this.statusFilter,
-  }) : super.internal();
-
-  final String statusFilter;
+  @override
+  String debugGetCreateSourceHash() => _$groupDetailNotifierHash();
 
   @override
-  FutureOr<List<Group>> runNotifierBuild(
-    covariant GroupListNotifier notifier,
-  ) {
-    return notifier.build(
-      statusFilter,
-    );
+  String toString() {
+    return r'groupDetailNotifierProvider'
+        ''
+        '($argument)';
   }
 
+  @$internal
   @override
-  Override overrideWith(GroupListNotifier Function() create) {
-    return ProviderOverride(
-      origin: this,
-      override: GroupListNotifierProvider._internal(
-        () => create()..statusFilter = statusFilter,
-        from: from,
-        name: null,
-        dependencies: null,
-        allTransitiveDependencies: null,
-        debugGetCreateSourceHash: null,
-        statusFilter: statusFilter,
-      ),
-    );
-  }
-
-  @override
-  AutoDisposeAsyncNotifierProviderElement<GroupListNotifier, List<Group>>
-      createElement() {
-    return _GroupListNotifierProviderElement(this);
-  }
+  GroupDetailNotifier create() => GroupDetailNotifier();
 
   @override
   bool operator ==(Object other) {
-    return other is GroupListNotifierProvider &&
-        other.statusFilter == statusFilter;
+    return other is GroupDetailNotifierProvider && other.argument == argument;
   }
 
   @override
   int get hashCode {
-    var hash = _SystemHash.combine(0, runtimeType.hashCode);
-    hash = _SystemHash.combine(hash, statusFilter.hashCode);
-
-    return _SystemHash.finish(hash);
+    return argument.hashCode;
   }
 }
 
-@Deprecated('Will be removed in 3.0. Use Ref instead')
-// ignore: unused_element
-mixin GroupListNotifierRef on AutoDisposeAsyncNotifierProviderRef<List<Group>> {
-  /// The parameter `statusFilter` of this provider.
-  String get statusFilter;
-}
+String _$groupDetailNotifierHash() =>
+    r'45fe0a2c5c3065ba01a82d18e4f81e22ceb8f304';
 
-class _GroupListNotifierProviderElement
-    extends AutoDisposeAsyncNotifierProviderElement<GroupListNotifier,
-        List<Group>> with GroupListNotifierRef {
-  _GroupListNotifierProviderElement(super.provider);
+final class GroupDetailNotifierFamily extends $Family
+    with
+        $ClassFamilyOverride<GroupDetailNotifier, AsyncValue<Group>, Group,
+            FutureOr<Group>, String> {
+  const GroupDetailNotifierFamily._()
+      : super(
+          retry: null,
+          name: r'groupDetailNotifierProvider',
+          dependencies: null,
+          $allTransitiveDependencies: null,
+          isAutoDispose: true,
+        );
+
+  GroupDetailNotifierProvider call(
+    String groupId,
+  ) =>
+      GroupDetailNotifierProvider._(argument: groupId, from: this);
 
   @override
-  String get statusFilter => (origin as GroupListNotifierProvider).statusFilter;
+  String toString() => r'groupDetailNotifierProvider';
 }
 
-String _$groupDetailNotifierHash() =>
-    r'b3f3afe5eb5f2bc47dbc8ffafa47b32852d52e02';
-
-abstract class _$GroupDetailNotifier
-    extends BuildlessAutoDisposeAsyncNotifier<Group> {
-  late final String groupId;
+abstract class _$GroupDetailNotifier extends $AsyncNotifier<Group> {
+  late final _$args = ref.$arg as String;
+  String get groupId => _$args;
 
   FutureOr<Group> build(
     String groupId,
   );
+  @$mustCallSuper
+  @override
+  void runBuild() {
+    final created = build(
+      _$args,
+    );
+    final ref = this.ref as $Ref<AsyncValue<Group>, Group>;
+    final element = ref.element as $ClassProviderElement<
+        AnyNotifier<AsyncValue<Group>, Group>,
+        AsyncValue<Group>,
+        Object?,
+        Object?>;
+    element.handleValue(ref, created);
+  }
 }
 
-/// See also [GroupDetailNotifier].
-@ProviderFor(GroupDetailNotifier)
-const groupDetailNotifierProvider = GroupDetailNotifierFamily();
+@ProviderFor(ExpenseListNotifier)
+const expenseListNotifierProvider = ExpenseListNotifierFamily._();
 
-/// See also [GroupDetailNotifier].
-class GroupDetailNotifierFamily extends Family<AsyncValue<Group>> {
-  /// See also [GroupDetailNotifier].
-  const GroupDetailNotifierFamily();
-
-  /// See also [GroupDetailNotifier].
-  GroupDetailNotifierProvider call(
-    String groupId,
-  ) {
-    return GroupDetailNotifierProvider(
-      groupId,
-    );
-  }
-
-  @override
-  GroupDetailNotifierProvider getProviderOverride(
-    covariant GroupDetailNotifierProvider provider,
-  ) {
-    return call(
-      provider.groupId,
-    );
-  }
-
-  static const Iterable<ProviderOrFamily>? _dependencies = null;
-
-  @override
-  Iterable<ProviderOrFamily>? get dependencies => _dependencies;
-
-  static const Iterable<ProviderOrFamily>? _allTransitiveDependencies = null;
-
-  @override
-  Iterable<ProviderOrFamily>? get allTransitiveDependencies =>
-      _allTransitiveDependencies;
-
-  @override
-  String? get name => r'groupDetailNotifierProvider';
-}
-
-/// See also [GroupDetailNotifier].
-class GroupDetailNotifierProvider
-    extends AutoDisposeAsyncNotifierProviderImpl<GroupDetailNotifier, Group> {
-  /// See also [GroupDetailNotifier].
-  GroupDetailNotifierProvider(
-    String groupId,
-  ) : this._internal(
-          () => GroupDetailNotifier()..groupId = groupId,
-          from: groupDetailNotifierProvider,
-          name: r'groupDetailNotifierProvider',
-          debugGetCreateSourceHash:
-              const bool.fromEnvironment('dart.vm.product')
-                  ? null
-                  : _$groupDetailNotifierHash,
-          dependencies: GroupDetailNotifierFamily._dependencies,
-          allTransitiveDependencies:
-              GroupDetailNotifierFamily._allTransitiveDependencies,
-          groupId: groupId,
+final class ExpenseListNotifierProvider
+    extends $AsyncNotifierProvider<ExpenseListNotifier, List<Expense>> {
+  const ExpenseListNotifierProvider._(
+      {required ExpenseListNotifierFamily super.from,
+      required String super.argument})
+      : super(
+          retry: null,
+          name: r'expenseListNotifierProvider',
+          isAutoDispose: true,
+          dependencies: null,
+          $allTransitiveDependencies: null,
         );
 
-  GroupDetailNotifierProvider._internal(
-    super._createNotifier, {
-    required super.name,
-    required super.dependencies,
-    required super.allTransitiveDependencies,
-    required super.debugGetCreateSourceHash,
-    required super.from,
-    required this.groupId,
-  }) : super.internal();
-
-  final String groupId;
+  @override
+  String debugGetCreateSourceHash() => _$expenseListNotifierHash();
 
   @override
-  FutureOr<Group> runNotifierBuild(
-    covariant GroupDetailNotifier notifier,
-  ) {
-    return notifier.build(
-      groupId,
-    );
+  String toString() {
+    return r'expenseListNotifierProvider'
+        ''
+        '($argument)';
   }
 
+  @$internal
   @override
-  Override overrideWith(GroupDetailNotifier Function() create) {
-    return ProviderOverride(
-      origin: this,
-      override: GroupDetailNotifierProvider._internal(
-        () => create()..groupId = groupId,
-        from: from,
-        name: null,
-        dependencies: null,
-        allTransitiveDependencies: null,
-        debugGetCreateSourceHash: null,
-        groupId: groupId,
-      ),
-    );
-  }
-
-  @override
-  AutoDisposeAsyncNotifierProviderElement<GroupDetailNotifier, Group>
-      createElement() {
-    return _GroupDetailNotifierProviderElement(this);
-  }
+  ExpenseListNotifier create() => ExpenseListNotifier();
 
   @override
   bool operator ==(Object other) {
-    return other is GroupDetailNotifierProvider && other.groupId == groupId;
+    return other is ExpenseListNotifierProvider && other.argument == argument;
   }
 
   @override
   int get hashCode {
-    var hash = _SystemHash.combine(0, runtimeType.hashCode);
-    hash = _SystemHash.combine(hash, groupId.hashCode);
-
-    return _SystemHash.finish(hash);
+    return argument.hashCode;
   }
 }
 
-@Deprecated('Will be removed in 3.0. Use Ref instead')
-// ignore: unused_element
-mixin GroupDetailNotifierRef on AutoDisposeAsyncNotifierProviderRef<Group> {
-  /// The parameter `groupId` of this provider.
-  String get groupId;
-}
+String _$expenseListNotifierHash() =>
+    r'bb2328de7de7e29da3e4373c14cf843f3c9d9327';
 
-class _GroupDetailNotifierProviderElement
-    extends AutoDisposeAsyncNotifierProviderElement<GroupDetailNotifier, Group>
-    with GroupDetailNotifierRef {
-  _GroupDetailNotifierProviderElement(super.provider);
+final class ExpenseListNotifierFamily extends $Family
+    with
+        $ClassFamilyOverride<ExpenseListNotifier, AsyncValue<List<Expense>>,
+            List<Expense>, FutureOr<List<Expense>>, String> {
+  const ExpenseListNotifierFamily._()
+      : super(
+          retry: null,
+          name: r'expenseListNotifierProvider',
+          dependencies: null,
+          $allTransitiveDependencies: null,
+          isAutoDispose: true,
+        );
+
+  ExpenseListNotifierProvider call(
+    String groupId,
+  ) =>
+      ExpenseListNotifierProvider._(argument: groupId, from: this);
 
   @override
-  String get groupId => (origin as GroupDetailNotifierProvider).groupId;
+  String toString() => r'expenseListNotifierProvider';
 }
 
-String _$expenseListNotifierHash() =>
-    r'd26d6627ab55c65ec7b34f568a34cffa55aa419f';
-
-abstract class _$ExpenseListNotifier
-    extends BuildlessAutoDisposeAsyncNotifier<List<Expense>> {
-  late final String groupId;
+abstract class _$ExpenseListNotifier extends $AsyncNotifier<List<Expense>> {
+  late final _$args = ref.$arg as String;
+  String get groupId => _$args;
 
   FutureOr<List<Expense>> build(
     String groupId,
   );
+  @$mustCallSuper
+  @override
+  void runBuild() {
+    final created = build(
+      _$args,
+    );
+    final ref = this.ref as $Ref<AsyncValue<List<Expense>>, List<Expense>>;
+    final element = ref.element as $ClassProviderElement<
+        AnyNotifier<AsyncValue<List<Expense>>, List<Expense>>,
+        AsyncValue<List<Expense>>,
+        Object?,
+        Object?>;
+    element.handleValue(ref, created);
+  }
 }
 
-/// See also [ExpenseListNotifier].
-@ProviderFor(ExpenseListNotifier)
-const expenseListNotifierProvider = ExpenseListNotifierFamily();
+@ProviderFor(expenseList)
+const expenseListProvider = ExpenseListProvider._();
 
-/// See also [ExpenseListNotifier].
-class ExpenseListNotifierFamily extends Family<AsyncValue<List<Expense>>> {
-  /// See also [ExpenseListNotifier].
-  const ExpenseListNotifierFamily();
-
-  /// See also [ExpenseListNotifier].
-  ExpenseListNotifierProvider call(
-    String groupId,
-  ) {
-    return ExpenseListNotifierProvider(
-      groupId,
-    );
-  }
-
-  @override
-  ExpenseListNotifierProvider getProviderOverride(
-    covariant ExpenseListNotifierProvider provider,
-  ) {
-    return call(
-      provider.groupId,
-    );
-  }
-
-  static const Iterable<ProviderOrFamily>? _dependencies = null;
-
-  @override
-  Iterable<ProviderOrFamily>? get dependencies => _dependencies;
-
-  static const Iterable<ProviderOrFamily>? _allTransitiveDependencies = null;
-
-  @override
-  Iterable<ProviderOrFamily>? get allTransitiveDependencies =>
-      _allTransitiveDependencies;
-
-  @override
-  String? get name => r'expenseListNotifierProvider';
-}
-
-/// See also [ExpenseListNotifier].
-class ExpenseListNotifierProvider extends AutoDisposeAsyncNotifierProviderImpl<
-    ExpenseListNotifier, List<Expense>> {
-  /// See also [ExpenseListNotifier].
-  ExpenseListNotifierProvider(
-    String groupId,
-  ) : this._internal(
-          () => ExpenseListNotifier()..groupId = groupId,
-          from: expenseListNotifierProvider,
-          name: r'expenseListNotifierProvider',
-          debugGetCreateSourceHash:
-              const bool.fromEnvironment('dart.vm.product')
-                  ? null
-                  : _$expenseListNotifierHash,
-          dependencies: ExpenseListNotifierFamily._dependencies,
-          allTransitiveDependencies:
-              ExpenseListNotifierFamily._allTransitiveDependencies,
-          groupId: groupId,
+final class ExpenseListProvider extends $FunctionalProvider<
+        AsyncValue<List<Expense>>, List<Expense>, FutureOr<List<Expense>>>
+    with $FutureModifier<List<Expense>>, $FutureProvider<List<Expense>> {
+  const ExpenseListProvider._()
+      : super(
+          from: null,
+          argument: null,
+          retry: null,
+          name: r'expenseListProvider',
+          isAutoDispose: true,
+          dependencies: null,
+          $allTransitiveDependencies: null,
         );
 
-  ExpenseListNotifierProvider._internal(
-    super._createNotifier, {
-    required super.name,
-    required super.dependencies,
-    required super.allTransitiveDependencies,
-    required super.debugGetCreateSourceHash,
-    required super.from,
-    required this.groupId,
-  }) : super.internal();
+  @override
+  String debugGetCreateSourceHash() => _$expenseListHash();
 
-  final String groupId;
+  @$internal
+  @override
+  $FutureProviderElement<List<Expense>> $createElement(
+          $ProviderPointer pointer) =>
+      $FutureProviderElement(pointer);
 
   @override
-  FutureOr<List<Expense>> runNotifierBuild(
-    covariant ExpenseListNotifier notifier,
-  ) {
-    return notifier.build(
-      groupId,
-    );
-  }
-
-  @override
-  Override overrideWith(ExpenseListNotifier Function() create) {
-    return ProviderOverride(
-      origin: this,
-      override: ExpenseListNotifierProvider._internal(
-        () => create()..groupId = groupId,
-        from: from,
-        name: null,
-        dependencies: null,
-        allTransitiveDependencies: null,
-        debugGetCreateSourceHash: null,
-        groupId: groupId,
-      ),
-    );
-  }
-
-  @override
-  AutoDisposeAsyncNotifierProviderElement<ExpenseListNotifier, List<Expense>>
-      createElement() {
-    return _ExpenseListNotifierProviderElement(this);
-  }
-
-  @override
-  bool operator ==(Object other) {
-    return other is ExpenseListNotifierProvider && other.groupId == groupId;
-  }
-
-  @override
-  int get hashCode {
-    var hash = _SystemHash.combine(0, runtimeType.hashCode);
-    hash = _SystemHash.combine(hash, groupId.hashCode);
-
-    return _SystemHash.finish(hash);
+  FutureOr<List<Expense>> create(Ref ref) {
+    return expenseList(ref);
   }
 }
 
-@Deprecated('Will be removed in 3.0. Use Ref instead')
-// ignore: unused_element
-mixin ExpenseListNotifierRef
-    on AutoDisposeAsyncNotifierProviderRef<List<Expense>> {
-  /// The parameter `groupId` of this provider.
-  String get groupId;
-}
+String _$expenseListHash() => r'00dca8aef60e04c10e83bf68f036038277de8956';
 
-class _ExpenseListNotifierProviderElement
-    extends AutoDisposeAsyncNotifierProviderElement<ExpenseListNotifier,
-        List<Expense>> with ExpenseListNotifierRef {
-  _ExpenseListNotifierProviderElement(super.provider);
+@ProviderFor(FriendshipListNotifier)
+const friendshipListNotifierProvider = FriendshipListNotifierProvider._();
+
+final class FriendshipListNotifierProvider
+    extends $AsyncNotifierProvider<FriendshipListNotifier, List<Friendship>> {
+  const FriendshipListNotifierProvider._()
+      : super(
+          from: null,
+          argument: null,
+          retry: null,
+          name: r'friendshipListNotifierProvider',
+          isAutoDispose: true,
+          dependencies: null,
+          $allTransitiveDependencies: null,
+        );
 
   @override
-  String get groupId => (origin as ExpenseListNotifierProvider).groupId;
+  String debugGetCreateSourceHash() => _$friendshipListNotifierHash();
+
+  @$internal
+  @override
+  FriendshipListNotifier create() => FriendshipListNotifier();
 }
 
 String _$friendshipListNotifierHash() =>
     r'98fa8b7b5dcabc1704ae2c0653d1f0ae383b6645';
 
-/// See also [FriendshipListNotifier].
-@ProviderFor(FriendshipListNotifier)
-final friendshipListNotifierProvider = AutoDisposeAsyncNotifierProvider<
-    FriendshipListNotifier, List<Friendship>>.internal(
-  FriendshipListNotifier.new,
-  name: r'friendshipListNotifierProvider',
-  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
-      ? null
-      : _$friendshipListNotifierHash,
-  dependencies: null,
-  allTransitiveDependencies: null,
-);
-
-typedef _$FriendshipListNotifier = AutoDisposeAsyncNotifier<List<Friendship>>;
-String _$friendshipDetailNotifierHash() =>
-    r'9bea82c9be1fd123e7a3d773ea57fda328e2e8f7';
-
-abstract class _$FriendshipDetailNotifier
-    extends BuildlessAutoDisposeAsyncNotifier<Friendship> {
-  late final String email;
-
-  FutureOr<Friendship> build(
-    String email,
-  );
+abstract class _$FriendshipListNotifier
+    extends $AsyncNotifier<List<Friendship>> {
+  FutureOr<List<Friendship>> build();
+  @$mustCallSuper
+  @override
+  void runBuild() {
+    final created = build();
+    final ref =
+        this.ref as $Ref<AsyncValue<List<Friendship>>, List<Friendship>>;
+    final element = ref.element as $ClassProviderElement<
+        AnyNotifier<AsyncValue<List<Friendship>>, List<Friendship>>,
+        AsyncValue<List<Friendship>>,
+        Object?,
+        Object?>;
+    element.handleValue(ref, created);
+  }
 }
 
-/// See also [FriendshipDetailNotifier].
 @ProviderFor(FriendshipDetailNotifier)
-const friendshipDetailNotifierProvider = FriendshipDetailNotifierFamily();
+const friendshipDetailNotifierProvider = FriendshipDetailNotifierFamily._();
 
-/// See also [FriendshipDetailNotifier].
-class FriendshipDetailNotifierFamily extends Family<AsyncValue<Friendship>> {
-  /// See also [FriendshipDetailNotifier].
-  const FriendshipDetailNotifierFamily();
-
-  /// See also [FriendshipDetailNotifier].
-  FriendshipDetailNotifierProvider call(
-    String email,
-  ) {
-    return FriendshipDetailNotifierProvider(
-      email,
-    );
-  }
-
-  @override
-  FriendshipDetailNotifierProvider getProviderOverride(
-    covariant FriendshipDetailNotifierProvider provider,
-  ) {
-    return call(
-      provider.email,
-    );
-  }
-
-  static const Iterable<ProviderOrFamily>? _dependencies = null;
-
-  @override
-  Iterable<ProviderOrFamily>? get dependencies => _dependencies;
-
-  static const Iterable<ProviderOrFamily>? _allTransitiveDependencies = null;
-
-  @override
-  Iterable<ProviderOrFamily>? get allTransitiveDependencies =>
-      _allTransitiveDependencies;
-
-  @override
-  String? get name => r'friendshipDetailNotifierProvider';
-}
-
-/// See also [FriendshipDetailNotifier].
-class FriendshipDetailNotifierProvider
-    extends AutoDisposeAsyncNotifierProviderImpl<FriendshipDetailNotifier,
-        Friendship> {
-  /// See also [FriendshipDetailNotifier].
-  FriendshipDetailNotifierProvider(
-    String email,
-  ) : this._internal(
-          () => FriendshipDetailNotifier()..email = email,
-          from: friendshipDetailNotifierProvider,
+final class FriendshipDetailNotifierProvider
+    extends $AsyncNotifierProvider<FriendshipDetailNotifier, Friendship> {
+  const FriendshipDetailNotifierProvider._(
+      {required FriendshipDetailNotifierFamily super.from,
+      required String super.argument})
+      : super(
+          retry: null,
           name: r'friendshipDetailNotifierProvider',
-          debugGetCreateSourceHash:
-              const bool.fromEnvironment('dart.vm.product')
-                  ? null
-                  : _$friendshipDetailNotifierHash,
-          dependencies: FriendshipDetailNotifierFamily._dependencies,
-          allTransitiveDependencies:
-              FriendshipDetailNotifierFamily._allTransitiveDependencies,
-          email: email,
+          isAutoDispose: true,
+          dependencies: null,
+          $allTransitiveDependencies: null,
         );
 
-  FriendshipDetailNotifierProvider._internal(
-    super._createNotifier, {
-    required super.name,
-    required super.dependencies,
-    required super.allTransitiveDependencies,
-    required super.debugGetCreateSourceHash,
-    required super.from,
-    required this.email,
-  }) : super.internal();
-
-  final String email;
+  @override
+  String debugGetCreateSourceHash() => _$friendshipDetailNotifierHash();
 
   @override
-  FutureOr<Friendship> runNotifierBuild(
-    covariant FriendshipDetailNotifier notifier,
-  ) {
-    return notifier.build(
-      email,
-    );
+  String toString() {
+    return r'friendshipDetailNotifierProvider'
+        ''
+        '($argument)';
   }
 
+  @$internal
   @override
-  Override overrideWith(FriendshipDetailNotifier Function() create) {
-    return ProviderOverride(
-      origin: this,
-      override: FriendshipDetailNotifierProvider._internal(
-        () => create()..email = email,
-        from: from,
-        name: null,
-        dependencies: null,
-        allTransitiveDependencies: null,
-        debugGetCreateSourceHash: null,
-        email: email,
-      ),
-    );
-  }
-
-  @override
-  AutoDisposeAsyncNotifierProviderElement<FriendshipDetailNotifier, Friendship>
-      createElement() {
-    return _FriendshipDetailNotifierProviderElement(this);
-  }
+  FriendshipDetailNotifier create() => FriendshipDetailNotifier();
 
   @override
   bool operator ==(Object other) {
-    return other is FriendshipDetailNotifierProvider && other.email == email;
+    return other is FriendshipDetailNotifierProvider &&
+        other.argument == argument;
   }
 
   @override
   int get hashCode {
-    var hash = _SystemHash.combine(0, runtimeType.hashCode);
-    hash = _SystemHash.combine(hash, email.hashCode);
-
-    return _SystemHash.finish(hash);
+    return argument.hashCode;
   }
 }
 
-@Deprecated('Will be removed in 3.0. Use Ref instead')
-// ignore: unused_element
-mixin FriendshipDetailNotifierRef
-    on AutoDisposeAsyncNotifierProviderRef<Friendship> {
-  /// The parameter `email` of this provider.
-  String get email;
-}
+String _$friendshipDetailNotifierHash() =>
+    r'9bea82c9be1fd123e7a3d773ea57fda328e2e8f7';
 
-class _FriendshipDetailNotifierProviderElement
-    extends AutoDisposeAsyncNotifierProviderElement<FriendshipDetailNotifier,
-        Friendship> with FriendshipDetailNotifierRef {
-  _FriendshipDetailNotifierProviderElement(super.provider);
+final class FriendshipDetailNotifierFamily extends $Family
+    with
+        $ClassFamilyOverride<FriendshipDetailNotifier, AsyncValue<Friendship>,
+            Friendship, FutureOr<Friendship>, String> {
+  const FriendshipDetailNotifierFamily._()
+      : super(
+          retry: null,
+          name: r'friendshipDetailNotifierProvider',
+          dependencies: null,
+          $allTransitiveDependencies: null,
+          isAutoDispose: true,
+        );
+
+  FriendshipDetailNotifierProvider call(
+    String email,
+  ) =>
+      FriendshipDetailNotifierProvider._(argument: email, from: this);
 
   @override
-  String get email => (origin as FriendshipDetailNotifierProvider).email;
+  String toString() => r'friendshipDetailNotifierProvider';
+}
+
+abstract class _$FriendshipDetailNotifier extends $AsyncNotifier<Friendship> {
+  late final _$args = ref.$arg as String;
+  String get email => _$args;
+
+  FutureOr<Friendship> build(
+    String email,
+  );
+  @$mustCallSuper
+  @override
+  void runBuild() {
+    final created = build(
+      _$args,
+    );
+    final ref = this.ref as $Ref<AsyncValue<Friendship>, Friendship>;
+    final element = ref.element as $ClassProviderElement<
+        AnyNotifier<AsyncValue<Friendship>, Friendship>,
+        AsyncValue<Friendship>,
+        Object?,
+        Object?>;
+    element.handleValue(ref, created);
+  }
+}
+
+@ProviderFor(UserDetailNotifier)
+const userDetailNotifierProvider = UserDetailNotifierProvider._();
+
+final class UserDetailNotifierProvider
+    extends $AsyncNotifierProvider<UserDetailNotifier, user_model.User> {
+  const UserDetailNotifierProvider._()
+      : super(
+          from: null,
+          argument: null,
+          retry: null,
+          name: r'userDetailNotifierProvider',
+          isAutoDispose: true,
+          dependencies: null,
+          $allTransitiveDependencies: null,
+        );
+
+  @override
+  String debugGetCreateSourceHash() => _$userDetailNotifierHash();
+
+  @$internal
+  @override
+  UserDetailNotifier create() => UserDetailNotifier();
 }
 
 String _$userDetailNotifierHash() =>
     r'c09c8559275cc9173c125d0a21bc9d2e24e80467';
 
-/// See also [UserDetailNotifier].
-@ProviderFor(UserDetailNotifier)
-final userDetailNotifierProvider = AutoDisposeAsyncNotifierProvider<
-    UserDetailNotifier, user_model.User>.internal(
-  UserDetailNotifier.new,
-  name: r'userDetailNotifierProvider',
-  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
-      ? null
-      : _$userDetailNotifierHash,
-  dependencies: null,
-  allTransitiveDependencies: null,
-);
+abstract class _$UserDetailNotifier extends $AsyncNotifier<user_model.User> {
+  FutureOr<user_model.User> build();
+  @$mustCallSuper
+  @override
+  void runBuild() {
+    final created = build();
+    final ref = this.ref as $Ref<AsyncValue<user_model.User>, user_model.User>;
+    final element = ref.element as $ClassProviderElement<
+        AnyNotifier<AsyncValue<user_model.User>, user_model.User>,
+        AsyncValue<user_model.User>,
+        Object?,
+        Object?>;
+    element.handleValue(ref, created);
+  }
+}
 
-typedef _$UserDetailNotifier = AutoDisposeAsyncNotifier<user_model.User>;
-String _$themeColorHash() => r'4ef7e05d68a34bec800592eac7cd770666832636';
-
-/// See also [ThemeColor].
 @ProviderFor(ThemeColor)
-final themeColorProvider =
-    AutoDisposeNotifierProvider<ThemeColor, Color>.internal(
-  ThemeColor.new,
-  name: r'themeColorProvider',
-  debugGetCreateSourceHash:
-      const bool.fromEnvironment('dart.vm.product') ? null : _$themeColorHash,
-  dependencies: null,
-  allTransitiveDependencies: null,
-);
+const themeColorProvider = ThemeColorProvider._();
 
-typedef _$ThemeColor = AutoDisposeNotifier<Color>;
-String _$localeNotifierHash() => r'5c0c6044e089a089e96f0c1b78f3994f9224f611';
-
-/// See also [LocaleNotifier].
-@ProviderFor(LocaleNotifier)
-final localeNotifierProvider =
-    AutoDisposeNotifierProvider<LocaleNotifier, Locale?>.internal(
-  LocaleNotifier.new,
-  name: r'localeNotifierProvider',
-  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
-      ? null
-      : _$localeNotifierHash,
-  dependencies: null,
-  allTransitiveDependencies: null,
-);
-
-typedef _$LocaleNotifier = AutoDisposeNotifier<Locale?>;
-String _$groupMonthlyTotalsNotifierHash() =>
-    r'c122b417d05c3cfedb425aff18f3e944086bd18a';
-
-abstract class _$GroupMonthlyTotalsNotifier
-    extends BuildlessAutoDisposeAsyncNotifier<GroupMonthlyTotalsState> {
-  late final String groupId;
-
-  FutureOr<GroupMonthlyTotalsState> build(
-    String groupId,
-  );
-}
-
-/// See also [GroupMonthlyTotalsNotifier].
-@ProviderFor(GroupMonthlyTotalsNotifier)
-const groupMonthlyTotalsNotifierProvider = GroupMonthlyTotalsNotifierFamily();
-
-/// See also [GroupMonthlyTotalsNotifier].
-class GroupMonthlyTotalsNotifierFamily
-    extends Family<AsyncValue<GroupMonthlyTotalsState>> {
-  /// See also [GroupMonthlyTotalsNotifier].
-  const GroupMonthlyTotalsNotifierFamily();
-
-  /// See also [GroupMonthlyTotalsNotifier].
-  GroupMonthlyTotalsNotifierProvider call(
-    String groupId,
-  ) {
-    return GroupMonthlyTotalsNotifierProvider(
-      groupId,
-    );
-  }
-
-  @override
-  GroupMonthlyTotalsNotifierProvider getProviderOverride(
-    covariant GroupMonthlyTotalsNotifierProvider provider,
-  ) {
-    return call(
-      provider.groupId,
-    );
-  }
-
-  static const Iterable<ProviderOrFamily>? _dependencies = null;
-
-  @override
-  Iterable<ProviderOrFamily>? get dependencies => _dependencies;
-
-  static const Iterable<ProviderOrFamily>? _allTransitiveDependencies = null;
-
-  @override
-  Iterable<ProviderOrFamily>? get allTransitiveDependencies =>
-      _allTransitiveDependencies;
-
-  @override
-  String? get name => r'groupMonthlyTotalsNotifierProvider';
-}
-
-/// See also [GroupMonthlyTotalsNotifier].
-class GroupMonthlyTotalsNotifierProvider
-    extends AutoDisposeAsyncNotifierProviderImpl<GroupMonthlyTotalsNotifier,
-        GroupMonthlyTotalsState> {
-  /// See also [GroupMonthlyTotalsNotifier].
-  GroupMonthlyTotalsNotifierProvider(
-    String groupId,
-  ) : this._internal(
-          () => GroupMonthlyTotalsNotifier()..groupId = groupId,
-          from: groupMonthlyTotalsNotifierProvider,
-          name: r'groupMonthlyTotalsNotifierProvider',
-          debugGetCreateSourceHash:
-              const bool.fromEnvironment('dart.vm.product')
-                  ? null
-                  : _$groupMonthlyTotalsNotifierHash,
-          dependencies: GroupMonthlyTotalsNotifierFamily._dependencies,
-          allTransitiveDependencies:
-              GroupMonthlyTotalsNotifierFamily._allTransitiveDependencies,
-          groupId: groupId,
+final class ThemeColorProvider extends $NotifierProvider<ThemeColor, Color> {
+  const ThemeColorProvider._()
+      : super(
+          from: null,
+          argument: null,
+          retry: null,
+          name: r'themeColorProvider',
+          isAutoDispose: true,
+          dependencies: null,
+          $allTransitiveDependencies: null,
         );
 
-  GroupMonthlyTotalsNotifierProvider._internal(
-    super._createNotifier, {
-    required super.name,
-    required super.dependencies,
-    required super.allTransitiveDependencies,
-    required super.debugGetCreateSourceHash,
-    required super.from,
-    required this.groupId,
-  }) : super.internal();
-
-  final String groupId;
-
   @override
-  FutureOr<GroupMonthlyTotalsState> runNotifierBuild(
-    covariant GroupMonthlyTotalsNotifier notifier,
-  ) {
-    return notifier.build(
-      groupId,
-    );
-  }
+  String debugGetCreateSourceHash() => _$themeColorHash();
 
+  @$internal
   @override
-  Override overrideWith(GroupMonthlyTotalsNotifier Function() create) {
-    return ProviderOverride(
+  ThemeColor create() => ThemeColor();
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(Color value) {
+    return $ProviderOverride(
       origin: this,
-      override: GroupMonthlyTotalsNotifierProvider._internal(
-        () => create()..groupId = groupId,
-        from: from,
-        name: null,
-        dependencies: null,
-        allTransitiveDependencies: null,
-        debugGetCreateSourceHash: null,
-        groupId: groupId,
-      ),
+      providerOverride: $SyncValueProvider<Color>(value),
     );
   }
+}
+
+String _$themeColorHash() => r'4ef7e05d68a34bec800592eac7cd770666832636';
+
+abstract class _$ThemeColor extends $Notifier<Color> {
+  Color build();
+  @$mustCallSuper
+  @override
+  void runBuild() {
+    final created = build();
+    final ref = this.ref as $Ref<Color, Color>;
+    final element = ref.element as $ClassProviderElement<
+        AnyNotifier<Color, Color>, Color, Object?, Object?>;
+    element.handleValue(ref, created);
+  }
+}
+
+@ProviderFor(LocaleNotifier)
+const localeNotifierProvider = LocaleNotifierProvider._();
+
+final class LocaleNotifierProvider
+    extends $NotifierProvider<LocaleNotifier, Locale?> {
+  const LocaleNotifierProvider._()
+      : super(
+          from: null,
+          argument: null,
+          retry: null,
+          name: r'localeNotifierProvider',
+          isAutoDispose: true,
+          dependencies: null,
+          $allTransitiveDependencies: null,
+        );
 
   @override
-  AutoDisposeAsyncNotifierProviderElement<GroupMonthlyTotalsNotifier,
-      GroupMonthlyTotalsState> createElement() {
-    return _GroupMonthlyTotalsNotifierProviderElement(this);
+  String debugGetCreateSourceHash() => _$localeNotifierHash();
+
+  @$internal
+  @override
+  LocaleNotifier create() => LocaleNotifier();
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(Locale? value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<Locale?>(value),
+    );
   }
+}
+
+String _$localeNotifierHash() => r'5c0c6044e089a089e96f0c1b78f3994f9224f611';
+
+abstract class _$LocaleNotifier extends $Notifier<Locale?> {
+  Locale? build();
+  @$mustCallSuper
+  @override
+  void runBuild() {
+    final created = build();
+    final ref = this.ref as $Ref<Locale?, Locale?>;
+    final element = ref.element as $ClassProviderElement<
+        AnyNotifier<Locale?, Locale?>, Locale?, Object?, Object?>;
+    element.handleValue(ref, created);
+  }
+}
+
+@ProviderFor(GroupMonthlyTotalsNotifier)
+const groupMonthlyTotalsNotifierProvider = GroupMonthlyTotalsNotifierFamily._();
+
+final class GroupMonthlyTotalsNotifierProvider extends $AsyncNotifierProvider<
+    GroupMonthlyTotalsNotifier, GroupMonthlyTotalsState> {
+  const GroupMonthlyTotalsNotifierProvider._(
+      {required GroupMonthlyTotalsNotifierFamily super.from,
+      required String super.argument})
+      : super(
+          retry: null,
+          name: r'groupMonthlyTotalsNotifierProvider',
+          isAutoDispose: true,
+          dependencies: null,
+          $allTransitiveDependencies: null,
+        );
+
+  @override
+  String debugGetCreateSourceHash() => _$groupMonthlyTotalsNotifierHash();
+
+  @override
+  String toString() {
+    return r'groupMonthlyTotalsNotifierProvider'
+        ''
+        '($argument)';
+  }
+
+  @$internal
+  @override
+  GroupMonthlyTotalsNotifier create() => GroupMonthlyTotalsNotifier();
 
   @override
   bool operator ==(Object other) {
     return other is GroupMonthlyTotalsNotifierProvider &&
-        other.groupId == groupId;
+        other.argument == argument;
   }
 
   @override
   int get hashCode {
-    var hash = _SystemHash.combine(0, runtimeType.hashCode);
-    hash = _SystemHash.combine(hash, groupId.hashCode);
-
-    return _SystemHash.finish(hash);
+    return argument.hashCode;
   }
 }
 
-@Deprecated('Will be removed in 3.0. Use Ref instead')
-// ignore: unused_element
-mixin GroupMonthlyTotalsNotifierRef
-    on AutoDisposeAsyncNotifierProviderRef<GroupMonthlyTotalsState> {
-  /// The parameter `groupId` of this provider.
-  String get groupId;
-}
+String _$groupMonthlyTotalsNotifierHash() =>
+    r'c122b417d05c3cfedb425aff18f3e944086bd18a';
 
-class _GroupMonthlyTotalsNotifierProviderElement
-    extends AutoDisposeAsyncNotifierProviderElement<GroupMonthlyTotalsNotifier,
-        GroupMonthlyTotalsState> with GroupMonthlyTotalsNotifierRef {
-  _GroupMonthlyTotalsNotifierProviderElement(super.provider);
+final class GroupMonthlyTotalsNotifierFamily extends $Family
+    with
+        $ClassFamilyOverride<
+            GroupMonthlyTotalsNotifier,
+            AsyncValue<GroupMonthlyTotalsState>,
+            GroupMonthlyTotalsState,
+            FutureOr<GroupMonthlyTotalsState>,
+            String> {
+  const GroupMonthlyTotalsNotifierFamily._()
+      : super(
+          retry: null,
+          name: r'groupMonthlyTotalsNotifierProvider',
+          dependencies: null,
+          $allTransitiveDependencies: null,
+          isAutoDispose: true,
+        );
+
+  GroupMonthlyTotalsNotifierProvider call(
+    String groupId,
+  ) =>
+      GroupMonthlyTotalsNotifierProvider._(argument: groupId, from: this);
 
   @override
-  String get groupId => (origin as GroupMonthlyTotalsNotifierProvider).groupId;
+  String toString() => r'groupMonthlyTotalsNotifierProvider';
+}
+
+abstract class _$GroupMonthlyTotalsNotifier
+    extends $AsyncNotifier<GroupMonthlyTotalsState> {
+  late final _$args = ref.$arg as String;
+  String get groupId => _$args;
+
+  FutureOr<GroupMonthlyTotalsState> build(
+    String groupId,
+  );
+  @$mustCallSuper
+  @override
+  void runBuild() {
+    final created = build(
+      _$args,
+    );
+    final ref = this.ref
+        as $Ref<AsyncValue<GroupMonthlyTotalsState>, GroupMonthlyTotalsState>;
+    final element = ref.element as $ClassProviderElement<
+        AnyNotifier<AsyncValue<GroupMonthlyTotalsState>,
+            GroupMonthlyTotalsState>,
+        AsyncValue<GroupMonthlyTotalsState>,
+        Object?,
+        Object?>;
+    element.handleValue(ref, created);
+  }
+}
+
+@ProviderFor(GroupMonthMemberTotalsNotifier)
+const groupMonthMemberTotalsNotifierProvider =
+    GroupMonthMemberTotalsNotifierFamily._();
+
+final class GroupMonthMemberTotalsNotifierProvider
+    extends $AsyncNotifierProvider<GroupMonthMemberTotalsNotifier,
+        List<MemberMonthTotal>> {
+  const GroupMonthMemberTotalsNotifierProvider._(
+      {required GroupMonthMemberTotalsNotifierFamily super.from,
+      required GroupMonthMemberTotalsArgs super.argument})
+      : super(
+          retry: null,
+          name: r'groupMonthMemberTotalsNotifierProvider',
+          isAutoDispose: true,
+          dependencies: null,
+          $allTransitiveDependencies: null,
+        );
+
+  @override
+  String debugGetCreateSourceHash() => _$groupMonthMemberTotalsNotifierHash();
+
+  @override
+  String toString() {
+    return r'groupMonthMemberTotalsNotifierProvider'
+        ''
+        '($argument)';
+  }
+
+  @$internal
+  @override
+  GroupMonthMemberTotalsNotifier create() => GroupMonthMemberTotalsNotifier();
+
+  @override
+  bool operator ==(Object other) {
+    return other is GroupMonthMemberTotalsNotifierProvider &&
+        other.argument == argument;
+  }
+
+  @override
+  int get hashCode {
+    return argument.hashCode;
+  }
 }
 
 String _$groupMonthMemberTotalsNotifierHash() =>
     r'ec2a4d5864fd1376cf358db9b7ada2f89104b870';
 
+final class GroupMonthMemberTotalsNotifierFamily extends $Family
+    with
+        $ClassFamilyOverride<
+            GroupMonthMemberTotalsNotifier,
+            AsyncValue<List<MemberMonthTotal>>,
+            List<MemberMonthTotal>,
+            FutureOr<List<MemberMonthTotal>>,
+            GroupMonthMemberTotalsArgs> {
+  const GroupMonthMemberTotalsNotifierFamily._()
+      : super(
+          retry: null,
+          name: r'groupMonthMemberTotalsNotifierProvider',
+          dependencies: null,
+          $allTransitiveDependencies: null,
+          isAutoDispose: true,
+        );
+
+  GroupMonthMemberTotalsNotifierProvider call(
+    GroupMonthMemberTotalsArgs args,
+  ) =>
+      GroupMonthMemberTotalsNotifierProvider._(argument: args, from: this);
+
+  @override
+  String toString() => r'groupMonthMemberTotalsNotifierProvider';
+}
+
 abstract class _$GroupMonthMemberTotalsNotifier
-    extends BuildlessAutoDisposeAsyncNotifier<List<MemberMonthTotal>> {
-  late final GroupMonthMemberTotalsArgs args;
+    extends $AsyncNotifier<List<MemberMonthTotal>> {
+  late final _$args = ref.$arg as GroupMonthMemberTotalsArgs;
+  GroupMonthMemberTotalsArgs get args => _$args;
 
   FutureOr<List<MemberMonthTotal>> build(
     GroupMonthMemberTotalsArgs args,
   );
+  @$mustCallSuper
+  @override
+  void runBuild() {
+    final created = build(
+      _$args,
+    );
+    final ref = this.ref
+        as $Ref<AsyncValue<List<MemberMonthTotal>>, List<MemberMonthTotal>>;
+    final element = ref.element as $ClassProviderElement<
+        AnyNotifier<AsyncValue<List<MemberMonthTotal>>, List<MemberMonthTotal>>,
+        AsyncValue<List<MemberMonthTotal>>,
+        Object?,
+        Object?>;
+    element.handleValue(ref, created);
+  }
 }
 
-/// See also [GroupMonthMemberTotalsNotifier].
-@ProviderFor(GroupMonthMemberTotalsNotifier)
-const groupMonthMemberTotalsNotifierProvider =
-    GroupMonthMemberTotalsNotifierFamily();
+@ProviderFor(GroupMonthCategoryTotalsNotifier)
+const groupMonthCategoryTotalsNotifierProvider =
+    GroupMonthCategoryTotalsNotifierFamily._();
 
-/// See also [GroupMonthMemberTotalsNotifier].
-class GroupMonthMemberTotalsNotifierFamily
-    extends Family<AsyncValue<List<MemberMonthTotal>>> {
-  /// See also [GroupMonthMemberTotalsNotifier].
-  const GroupMonthMemberTotalsNotifierFamily();
-
-  /// See also [GroupMonthMemberTotalsNotifier].
-  GroupMonthMemberTotalsNotifierProvider call(
-    GroupMonthMemberTotalsArgs args,
-  ) {
-    return GroupMonthMemberTotalsNotifierProvider(
-      args,
-    );
-  }
-
-  @override
-  GroupMonthMemberTotalsNotifierProvider getProviderOverride(
-    covariant GroupMonthMemberTotalsNotifierProvider provider,
-  ) {
-    return call(
-      provider.args,
-    );
-  }
-
-  static const Iterable<ProviderOrFamily>? _dependencies = null;
-
-  @override
-  Iterable<ProviderOrFamily>? get dependencies => _dependencies;
-
-  static const Iterable<ProviderOrFamily>? _allTransitiveDependencies = null;
-
-  @override
-  Iterable<ProviderOrFamily>? get allTransitiveDependencies =>
-      _allTransitiveDependencies;
-
-  @override
-  String? get name => r'groupMonthMemberTotalsNotifierProvider';
-}
-
-/// See also [GroupMonthMemberTotalsNotifier].
-class GroupMonthMemberTotalsNotifierProvider
-    extends AutoDisposeAsyncNotifierProviderImpl<GroupMonthMemberTotalsNotifier,
-        List<MemberMonthTotal>> {
-  /// See also [GroupMonthMemberTotalsNotifier].
-  GroupMonthMemberTotalsNotifierProvider(
-    GroupMonthMemberTotalsArgs args,
-  ) : this._internal(
-          () => GroupMonthMemberTotalsNotifier()..args = args,
-          from: groupMonthMemberTotalsNotifierProvider,
-          name: r'groupMonthMemberTotalsNotifierProvider',
-          debugGetCreateSourceHash:
-              const bool.fromEnvironment('dart.vm.product')
-                  ? null
-                  : _$groupMonthMemberTotalsNotifierHash,
-          dependencies: GroupMonthMemberTotalsNotifierFamily._dependencies,
-          allTransitiveDependencies:
-              GroupMonthMemberTotalsNotifierFamily._allTransitiveDependencies,
-          args: args,
+final class GroupMonthCategoryTotalsNotifierProvider
+    extends $AsyncNotifierProvider<GroupMonthCategoryTotalsNotifier,
+        List<CategoryMonthTotal>> {
+  const GroupMonthCategoryTotalsNotifierProvider._(
+      {required GroupMonthCategoryTotalsNotifierFamily super.from,
+      required GroupMonthCategoryTotalsArgs super.argument})
+      : super(
+          retry: null,
+          name: r'groupMonthCategoryTotalsNotifierProvider',
+          isAutoDispose: true,
+          dependencies: null,
+          $allTransitiveDependencies: null,
         );
 
-  GroupMonthMemberTotalsNotifierProvider._internal(
-    super._createNotifier, {
-    required super.name,
-    required super.dependencies,
-    required super.allTransitiveDependencies,
-    required super.debugGetCreateSourceHash,
-    required super.from,
-    required this.args,
-  }) : super.internal();
-
-  final GroupMonthMemberTotalsArgs args;
+  @override
+  String debugGetCreateSourceHash() => _$groupMonthCategoryTotalsNotifierHash();
 
   @override
-  FutureOr<List<MemberMonthTotal>> runNotifierBuild(
-    covariant GroupMonthMemberTotalsNotifier notifier,
-  ) {
-    return notifier.build(
-      args,
-    );
+  String toString() {
+    return r'groupMonthCategoryTotalsNotifierProvider'
+        ''
+        '($argument)';
   }
 
+  @$internal
   @override
-  Override overrideWith(GroupMonthMemberTotalsNotifier Function() create) {
-    return ProviderOverride(
-      origin: this,
-      override: GroupMonthMemberTotalsNotifierProvider._internal(
-        () => create()..args = args,
-        from: from,
-        name: null,
-        dependencies: null,
-        allTransitiveDependencies: null,
-        debugGetCreateSourceHash: null,
-        args: args,
-      ),
-    );
-  }
-
-  @override
-  AutoDisposeAsyncNotifierProviderElement<GroupMonthMemberTotalsNotifier,
-      List<MemberMonthTotal>> createElement() {
-    return _GroupMonthMemberTotalsNotifierProviderElement(this);
-  }
+  GroupMonthCategoryTotalsNotifier create() =>
+      GroupMonthCategoryTotalsNotifier();
 
   @override
   bool operator ==(Object other) {
-    return other is GroupMonthMemberTotalsNotifierProvider &&
-        other.args == args;
+    return other is GroupMonthCategoryTotalsNotifierProvider &&
+        other.argument == argument;
   }
 
   @override
   int get hashCode {
-    var hash = _SystemHash.combine(0, runtimeType.hashCode);
-    hash = _SystemHash.combine(hash, args.hashCode);
-
-    return _SystemHash.finish(hash);
+    return argument.hashCode;
   }
-}
-
-@Deprecated('Will be removed in 3.0. Use Ref instead')
-// ignore: unused_element
-mixin GroupMonthMemberTotalsNotifierRef
-    on AutoDisposeAsyncNotifierProviderRef<List<MemberMonthTotal>> {
-  /// The parameter `args` of this provider.
-  GroupMonthMemberTotalsArgs get args;
-}
-
-class _GroupMonthMemberTotalsNotifierProviderElement
-    extends AutoDisposeAsyncNotifierProviderElement<
-        GroupMonthMemberTotalsNotifier,
-        List<MemberMonthTotal>> with GroupMonthMemberTotalsNotifierRef {
-  _GroupMonthMemberTotalsNotifierProviderElement(super.provider);
-
-  @override
-  GroupMonthMemberTotalsArgs get args =>
-      (origin as GroupMonthMemberTotalsNotifierProvider).args;
 }
 
 String _$groupMonthCategoryTotalsNotifierHash() =>
     r'774d3310017b5e2cfe5efead4a6889b160ad63d1';
 
+final class GroupMonthCategoryTotalsNotifierFamily extends $Family
+    with
+        $ClassFamilyOverride<
+            GroupMonthCategoryTotalsNotifier,
+            AsyncValue<List<CategoryMonthTotal>>,
+            List<CategoryMonthTotal>,
+            FutureOr<List<CategoryMonthTotal>>,
+            GroupMonthCategoryTotalsArgs> {
+  const GroupMonthCategoryTotalsNotifierFamily._()
+      : super(
+          retry: null,
+          name: r'groupMonthCategoryTotalsNotifierProvider',
+          dependencies: null,
+          $allTransitiveDependencies: null,
+          isAutoDispose: true,
+        );
+
+  GroupMonthCategoryTotalsNotifierProvider call(
+    GroupMonthCategoryTotalsArgs args,
+  ) =>
+      GroupMonthCategoryTotalsNotifierProvider._(argument: args, from: this);
+
+  @override
+  String toString() => r'groupMonthCategoryTotalsNotifierProvider';
+}
+
 abstract class _$GroupMonthCategoryTotalsNotifier
-    extends BuildlessAutoDisposeAsyncNotifier<List<CategoryMonthTotal>> {
-  late final GroupMonthCategoryTotalsArgs args;
+    extends $AsyncNotifier<List<CategoryMonthTotal>> {
+  late final _$args = ref.$arg as GroupMonthCategoryTotalsArgs;
+  GroupMonthCategoryTotalsArgs get args => _$args;
 
   FutureOr<List<CategoryMonthTotal>> build(
     GroupMonthCategoryTotalsArgs args,
   );
+  @$mustCallSuper
+  @override
+  void runBuild() {
+    final created = build(
+      _$args,
+    );
+    final ref = this.ref
+        as $Ref<AsyncValue<List<CategoryMonthTotal>>, List<CategoryMonthTotal>>;
+    final element = ref.element as $ClassProviderElement<
+        AnyNotifier<AsyncValue<List<CategoryMonthTotal>>,
+            List<CategoryMonthTotal>>,
+        AsyncValue<List<CategoryMonthTotal>>,
+        Object?,
+        Object?>;
+    element.handleValue(ref, created);
+  }
 }
 
-/// See also [GroupMonthCategoryTotalsNotifier].
-@ProviderFor(GroupMonthCategoryTotalsNotifier)
-const groupMonthCategoryTotalsNotifierProvider =
-    GroupMonthCategoryTotalsNotifierFamily();
+@ProviderFor(CategoryExpenseDetailsNotifier)
+const categoryExpenseDetailsNotifierProvider =
+    CategoryExpenseDetailsNotifierFamily._();
 
-/// See also [GroupMonthCategoryTotalsNotifier].
-class GroupMonthCategoryTotalsNotifierFamily
-    extends Family<AsyncValue<List<CategoryMonthTotal>>> {
-  /// See also [GroupMonthCategoryTotalsNotifier].
-  const GroupMonthCategoryTotalsNotifierFamily();
-
-  /// See also [GroupMonthCategoryTotalsNotifier].
-  GroupMonthCategoryTotalsNotifierProvider call(
-    GroupMonthCategoryTotalsArgs args,
-  ) {
-    return GroupMonthCategoryTotalsNotifierProvider(
-      args,
-    );
-  }
-
-  @override
-  GroupMonthCategoryTotalsNotifierProvider getProviderOverride(
-    covariant GroupMonthCategoryTotalsNotifierProvider provider,
-  ) {
-    return call(
-      provider.args,
-    );
-  }
-
-  static const Iterable<ProviderOrFamily>? _dependencies = null;
-
-  @override
-  Iterable<ProviderOrFamily>? get dependencies => _dependencies;
-
-  static const Iterable<ProviderOrFamily>? _allTransitiveDependencies = null;
-
-  @override
-  Iterable<ProviderOrFamily>? get allTransitiveDependencies =>
-      _allTransitiveDependencies;
-
-  @override
-  String? get name => r'groupMonthCategoryTotalsNotifierProvider';
-}
-
-/// See also [GroupMonthCategoryTotalsNotifier].
-class GroupMonthCategoryTotalsNotifierProvider
-    extends AutoDisposeAsyncNotifierProviderImpl<
-        GroupMonthCategoryTotalsNotifier, List<CategoryMonthTotal>> {
-  /// See also [GroupMonthCategoryTotalsNotifier].
-  GroupMonthCategoryTotalsNotifierProvider(
-    GroupMonthCategoryTotalsArgs args,
-  ) : this._internal(
-          () => GroupMonthCategoryTotalsNotifier()..args = args,
-          from: groupMonthCategoryTotalsNotifierProvider,
-          name: r'groupMonthCategoryTotalsNotifierProvider',
-          debugGetCreateSourceHash:
-              const bool.fromEnvironment('dart.vm.product')
-                  ? null
-                  : _$groupMonthCategoryTotalsNotifierHash,
-          dependencies: GroupMonthCategoryTotalsNotifierFamily._dependencies,
-          allTransitiveDependencies:
-              GroupMonthCategoryTotalsNotifierFamily._allTransitiveDependencies,
-          args: args,
+final class CategoryExpenseDetailsNotifierProvider
+    extends $AsyncNotifierProvider<CategoryExpenseDetailsNotifier,
+        List<CategoryExpenseDetail>> {
+  const CategoryExpenseDetailsNotifierProvider._(
+      {required CategoryExpenseDetailsNotifierFamily super.from,
+      required CategoryExpenseDetailsArgs super.argument})
+      : super(
+          retry: null,
+          name: r'categoryExpenseDetailsNotifierProvider',
+          isAutoDispose: true,
+          dependencies: null,
+          $allTransitiveDependencies: null,
         );
 
-  GroupMonthCategoryTotalsNotifierProvider._internal(
-    super._createNotifier, {
-    required super.name,
-    required super.dependencies,
-    required super.allTransitiveDependencies,
-    required super.debugGetCreateSourceHash,
-    required super.from,
-    required this.args,
-  }) : super.internal();
-
-  final GroupMonthCategoryTotalsArgs args;
+  @override
+  String debugGetCreateSourceHash() => _$categoryExpenseDetailsNotifierHash();
 
   @override
-  FutureOr<List<CategoryMonthTotal>> runNotifierBuild(
-    covariant GroupMonthCategoryTotalsNotifier notifier,
-  ) {
-    return notifier.build(
-      args,
-    );
+  String toString() {
+    return r'categoryExpenseDetailsNotifierProvider'
+        ''
+        '($argument)';
   }
 
+  @$internal
   @override
-  Override overrideWith(GroupMonthCategoryTotalsNotifier Function() create) {
-    return ProviderOverride(
-      origin: this,
-      override: GroupMonthCategoryTotalsNotifierProvider._internal(
-        () => create()..args = args,
-        from: from,
-        name: null,
-        dependencies: null,
-        allTransitiveDependencies: null,
-        debugGetCreateSourceHash: null,
-        args: args,
-      ),
-    );
-  }
-
-  @override
-  AutoDisposeAsyncNotifierProviderElement<GroupMonthCategoryTotalsNotifier,
-      List<CategoryMonthTotal>> createElement() {
-    return _GroupMonthCategoryTotalsNotifierProviderElement(this);
-  }
+  CategoryExpenseDetailsNotifier create() => CategoryExpenseDetailsNotifier();
 
   @override
   bool operator ==(Object other) {
-    return other is GroupMonthCategoryTotalsNotifierProvider &&
-        other.args == args;
+    return other is CategoryExpenseDetailsNotifierProvider &&
+        other.argument == argument;
   }
 
   @override
   int get hashCode {
-    var hash = _SystemHash.combine(0, runtimeType.hashCode);
-    hash = _SystemHash.combine(hash, args.hashCode);
-
-    return _SystemHash.finish(hash);
+    return argument.hashCode;
   }
-}
-
-@Deprecated('Will be removed in 3.0. Use Ref instead')
-// ignore: unused_element
-mixin GroupMonthCategoryTotalsNotifierRef
-    on AutoDisposeAsyncNotifierProviderRef<List<CategoryMonthTotal>> {
-  /// The parameter `args` of this provider.
-  GroupMonthCategoryTotalsArgs get args;
-}
-
-class _GroupMonthCategoryTotalsNotifierProviderElement
-    extends AutoDisposeAsyncNotifierProviderElement<
-        GroupMonthCategoryTotalsNotifier,
-        List<CategoryMonthTotal>> with GroupMonthCategoryTotalsNotifierRef {
-  _GroupMonthCategoryTotalsNotifierProviderElement(super.provider);
-
-  @override
-  GroupMonthCategoryTotalsArgs get args =>
-      (origin as GroupMonthCategoryTotalsNotifierProvider).args;
 }
 
 String _$categoryExpenseDetailsNotifierHash() =>
     r'650441b46e73be35d40f2f11f81a8eb177afb316';
 
+final class CategoryExpenseDetailsNotifierFamily extends $Family
+    with
+        $ClassFamilyOverride<
+            CategoryExpenseDetailsNotifier,
+            AsyncValue<List<CategoryExpenseDetail>>,
+            List<CategoryExpenseDetail>,
+            FutureOr<List<CategoryExpenseDetail>>,
+            CategoryExpenseDetailsArgs> {
+  const CategoryExpenseDetailsNotifierFamily._()
+      : super(
+          retry: null,
+          name: r'categoryExpenseDetailsNotifierProvider',
+          dependencies: null,
+          $allTransitiveDependencies: null,
+          isAutoDispose: true,
+        );
+
+  CategoryExpenseDetailsNotifierProvider call(
+    CategoryExpenseDetailsArgs args,
+  ) =>
+      CategoryExpenseDetailsNotifierProvider._(argument: args, from: this);
+
+  @override
+  String toString() => r'categoryExpenseDetailsNotifierProvider';
+}
+
 abstract class _$CategoryExpenseDetailsNotifier
-    extends BuildlessAutoDisposeAsyncNotifier<List<CategoryExpenseDetail>> {
-  late final CategoryExpenseDetailsArgs args;
+    extends $AsyncNotifier<List<CategoryExpenseDetail>> {
+  late final _$args = ref.$arg as CategoryExpenseDetailsArgs;
+  CategoryExpenseDetailsArgs get args => _$args;
 
   FutureOr<List<CategoryExpenseDetail>> build(
     CategoryExpenseDetailsArgs args,
   );
-}
-
-/// See also [CategoryExpenseDetailsNotifier].
-@ProviderFor(CategoryExpenseDetailsNotifier)
-const categoryExpenseDetailsNotifierProvider =
-    CategoryExpenseDetailsNotifierFamily();
-
-/// See also [CategoryExpenseDetailsNotifier].
-class CategoryExpenseDetailsNotifierFamily
-    extends Family<AsyncValue<List<CategoryExpenseDetail>>> {
-  /// See also [CategoryExpenseDetailsNotifier].
-  const CategoryExpenseDetailsNotifierFamily();
-
-  /// See also [CategoryExpenseDetailsNotifier].
-  CategoryExpenseDetailsNotifierProvider call(
-    CategoryExpenseDetailsArgs args,
-  ) {
-    return CategoryExpenseDetailsNotifierProvider(
-      args,
+  @$mustCallSuper
+  @override
+  void runBuild() {
+    final created = build(
+      _$args,
     );
-  }
-
-  @override
-  CategoryExpenseDetailsNotifierProvider getProviderOverride(
-    covariant CategoryExpenseDetailsNotifierProvider provider,
-  ) {
-    return call(
-      provider.args,
-    );
-  }
-
-  static const Iterable<ProviderOrFamily>? _dependencies = null;
-
-  @override
-  Iterable<ProviderOrFamily>? get dependencies => _dependencies;
-
-  static const Iterable<ProviderOrFamily>? _allTransitiveDependencies = null;
-
-  @override
-  Iterable<ProviderOrFamily>? get allTransitiveDependencies =>
-      _allTransitiveDependencies;
-
-  @override
-  String? get name => r'categoryExpenseDetailsNotifierProvider';
-}
-
-/// See also [CategoryExpenseDetailsNotifier].
-class CategoryExpenseDetailsNotifierProvider
-    extends AutoDisposeAsyncNotifierProviderImpl<CategoryExpenseDetailsNotifier,
-        List<CategoryExpenseDetail>> {
-  /// See also [CategoryExpenseDetailsNotifier].
-  CategoryExpenseDetailsNotifierProvider(
-    CategoryExpenseDetailsArgs args,
-  ) : this._internal(
-          () => CategoryExpenseDetailsNotifier()..args = args,
-          from: categoryExpenseDetailsNotifierProvider,
-          name: r'categoryExpenseDetailsNotifierProvider',
-          debugGetCreateSourceHash:
-              const bool.fromEnvironment('dart.vm.product')
-                  ? null
-                  : _$categoryExpenseDetailsNotifierHash,
-          dependencies: CategoryExpenseDetailsNotifierFamily._dependencies,
-          allTransitiveDependencies:
-              CategoryExpenseDetailsNotifierFamily._allTransitiveDependencies,
-          args: args,
-        );
-
-  CategoryExpenseDetailsNotifierProvider._internal(
-    super._createNotifier, {
-    required super.name,
-    required super.dependencies,
-    required super.allTransitiveDependencies,
-    required super.debugGetCreateSourceHash,
-    required super.from,
-    required this.args,
-  }) : super.internal();
-
-  final CategoryExpenseDetailsArgs args;
-
-  @override
-  FutureOr<List<CategoryExpenseDetail>> runNotifierBuild(
-    covariant CategoryExpenseDetailsNotifier notifier,
-  ) {
-    return notifier.build(
-      args,
-    );
-  }
-
-  @override
-  Override overrideWith(CategoryExpenseDetailsNotifier Function() create) {
-    return ProviderOverride(
-      origin: this,
-      override: CategoryExpenseDetailsNotifierProvider._internal(
-        () => create()..args = args,
-        from: from,
-        name: null,
-        dependencies: null,
-        allTransitiveDependencies: null,
-        debugGetCreateSourceHash: null,
-        args: args,
-      ),
-    );
-  }
-
-  @override
-  AutoDisposeAsyncNotifierProviderElement<CategoryExpenseDetailsNotifier,
-      List<CategoryExpenseDetail>> createElement() {
-    return _CategoryExpenseDetailsNotifierProviderElement(this);
-  }
-
-  @override
-  bool operator ==(Object other) {
-    return other is CategoryExpenseDetailsNotifierProvider &&
-        other.args == args;
-  }
-
-  @override
-  int get hashCode {
-    var hash = _SystemHash.combine(0, runtimeType.hashCode);
-    hash = _SystemHash.combine(hash, args.hashCode);
-
-    return _SystemHash.finish(hash);
+    final ref = this.ref as $Ref<AsyncValue<List<CategoryExpenseDetail>>,
+        List<CategoryExpenseDetail>>;
+    final element = ref.element as $ClassProviderElement<
+        AnyNotifier<AsyncValue<List<CategoryExpenseDetail>>,
+            List<CategoryExpenseDetail>>,
+        AsyncValue<List<CategoryExpenseDetail>>,
+        Object?,
+        Object?>;
+    element.handleValue(ref, created);
   }
 }
 
-@Deprecated('Will be removed in 3.0. Use Ref instead')
-// ignore: unused_element
-mixin CategoryExpenseDetailsNotifierRef
-    on AutoDisposeAsyncNotifierProviderRef<List<CategoryExpenseDetail>> {
-  /// The parameter `args` of this provider.
-  CategoryExpenseDetailsArgs get args;
-}
-
-class _CategoryExpenseDetailsNotifierProviderElement
-    extends AutoDisposeAsyncNotifierProviderElement<
-        CategoryExpenseDetailsNotifier,
-        List<CategoryExpenseDetail>> with CategoryExpenseDetailsNotifierRef {
-  _CategoryExpenseDetailsNotifierProviderElement(super.provider);
-
-  @override
-  CategoryExpenseDetailsArgs get args =>
-      (origin as CategoryExpenseDetailsNotifierProvider).args;
-}
 // ignore_for_file: type=lint
 // ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member, deprecated_member_use_from_same_package

@@ -29,63 +29,66 @@ class _GroupPaymentBottomSheetState extends ConsumerState<GroupPaymentBottomShee
   @override
   Widget build(BuildContext context) {
     return DraggableScrollableSheet(
-        expand: false,
-        initialChildSize: .8,
-        snap: true,
-        builder: (context, scrollController) {
-          return RoundedContainer(
-              child: Scaffold(
-                  appBar: AppBar(
-                    title: Text(AppLocalizations.of(context)!.payBack),
-                    centerTitle: true,
-                  ),
-                  body: Container(
-                      color: Theme.of(context).colorScheme.surface,
-                      child: Consumer(
-                        builder: (context, ref, child) {
-                          final Group? group = ref.watch(groupDetailNotifierProvider(widget.group.id)).value;
+      expand: false,
+      initialChildSize: .8,
+      snap: true,
+      builder: (context, scrollController) {
+        return RoundedContainer(
+          child: Scaffold(
+            appBar: AppBar(
+              title: Text(AppLocalizations.of(context)!.payBack),
+              centerTitle: true,
+            ),
+            body: Container(
+              color: Theme.of(context).colorScheme.surface,
+              child: Consumer(
+                builder: (context, ref, child) {
+                  final Group? group = ref.watch(groupDetailNotifierProvider(widget.group.id)).value;
 
-                          if (group == null) {
-                            return const ShimmerCardList(
-                              height: 50,
-                              listEntryLength: 8,
-                            );
-                          }
+                  if (group == null) {
+                    return const ShimmerCardList(
+                      height: 50,
+                      listEntryLength: 8,
+                    );
+                  }
 
-                          List<Widget> listViewChildren = [];
+                  List<Widget> listViewChildren = [];
 
-                          group.groupSharesSummary.forEach(
-                            (email, groupShare) {
-                              if (groupShare.shareAmount < 0 && toNumber(groupShare.shareAmount) != '-0.00') {
-                                listViewChildren.add(
-                                  ListTile(
-                                    title: Text(groupShare.displayName),
-                                    subtitle:
-                                        Text(AppLocalizations.of(context)!.toCurrency(groupShare.shareAmount.abs())),
-                                    trailing: const Icon(Icons.payment),
-                                    onTap: () {
-                                      openPayBackDialog(context, widget.group, email, groupShare);
-                                    },
-                                  ),
-                                );
-                              }
+                  group.groupSharesSummary.forEach(
+                    (email, groupShare) {
+                      if (groupShare.shareAmount < 0 && toNumber(groupShare.shareAmount) != '-0.00') {
+                        listViewChildren.add(
+                          ListTile(
+                            title: Text(groupShare.displayName),
+                            subtitle: Text(AppLocalizations.of(context)!.toCurrency(groupShare.shareAmount.abs())),
+                            trailing: const Icon(Icons.payment),
+                            onTap: () {
+                              openPayBackDialog(context, widget.group, email, groupShare);
                             },
-                          );
+                          ),
+                        );
+                      }
+                    },
+                  );
 
-                          if (listViewChildren.isEmpty) {
-                            listViewChildren.add(ListTile(
-                              titleTextStyle: Theme.of(context).textTheme.bodyLarge,
-                              title: Text(AppLocalizations.of(context)!.payBackNoEntries),
-                            ));
-                          }
+                  if (listViewChildren.isEmpty) {
+                    listViewChildren.add(ListTile(
+                      titleTextStyle: Theme.of(context).textTheme.bodyLarge,
+                      title: Text(AppLocalizations.of(context)!.payBackNoEntries),
+                    ));
+                  }
 
-                          return ListView(
-                            controller: scrollController,
-                            children: listViewChildren,
-                          );
-                        },
-                      ))));
-        });
+                  return ListView(
+                    controller: scrollController,
+                    children: listViewChildren,
+                  );
+                },
+              ),
+            ),
+          ),
+        );
+      },
+    );
   }
 
   void openPayBackDialog(BuildContext modalContext, Group group, String email, GroupSharesSummary groupShare) {

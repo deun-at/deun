@@ -19,8 +19,28 @@ import 'expense_model.dart';
 import 'expense_category.dart';
 import '../../widgets/category_selector.dart';
 
-final _isLoading = StateProvider<bool>((ref) => false);
-final _isMiniView = StateProvider<bool>((ref) => false);
+class IsLoadingNotifier extends Notifier<bool> {
+  @override
+  bool build() => false;
+
+  @override
+  set state(bool newState) => super.state = newState;
+
+  bool update(bool Function(bool state) cb) => state = cb(state);
+}
+
+class IsMiniViewNotifier extends Notifier<bool> {
+  @override
+  bool build() => false;
+
+  @override
+  set state(bool newState) => super.state = newState;
+
+  bool update(bool Function(bool state) cb) => state = cb(state);
+}
+
+final _isLoading = NotifierProvider<IsLoadingNotifier, bool>(IsLoadingNotifier.new);
+final _isMiniView = NotifierProvider<IsMiniViewNotifier, bool>(IsMiniViewNotifier.new);
 
 class ExpenseBottomSheet extends ConsumerStatefulWidget {
   const ExpenseBottomSheet({super.key, required this.group, this.expense});
@@ -80,7 +100,7 @@ class _ExpenseBottomSheetState extends ConsumerState<ExpenseBottomSheet> {
     super.dispose();
   }
 
-  showMiniViewListener() {
+  void showMiniViewListener() {
     if (mounted) {
       final pixelToSize = _draggableScrollableController.pixelsToSize(kIsWeb ? 150 : 190);
       if (_draggableScrollableController.size <= pixelToSize) {

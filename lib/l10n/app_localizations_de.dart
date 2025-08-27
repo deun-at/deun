@@ -59,7 +59,8 @@ class AppLocalizationsDe extends AppLocalizations {
   String get groupNoEntries => 'Füge eine Gruppe hinzu, um zu starten.';
 
   @override
-  String get groupEntriesError => 'Es trat ein Problem beim Laden der Gruppen auf.';
+  String get groupEntriesError =>
+      'Es trat ein Problem beim Laden der Gruppen auf.';
 
   @override
   String get groupMemberSelectionEmpty => 'Freunde suchen';
@@ -137,7 +138,8 @@ class AppLocalizationsDe extends AppLocalizations {
   String get expenseEntryName => 'Name';
 
   @override
-  String get expenseEntryNameValidationEmpty => 'Bitte gib einen Eintrag Titel ein!';
+  String get expenseEntryNameValidationEmpty =>
+      'Bitte gib einen Eintrag Titel ein!';
 
   @override
   String get expenseEntryAmount => 'Betrag';
@@ -149,7 +151,8 @@ class AppLocalizationsDe extends AppLocalizations {
   String get expenseEntrySharesLable => 'Wer war dabei?';
 
   @override
-  String get expenseEntrySharesValidationEmpty => 'Bitte wähle mindestens eine Person aus!';
+  String get expenseEntrySharesValidationEmpty =>
+      'Bitte wähle mindestens eine Person aus!';
 
   @override
   String get expenseDeleteItemTitle => 'Diese Ausgabe löschen?';
@@ -170,12 +173,10 @@ class AppLocalizationsDe extends AppLocalizations {
   String get expenseNoEntries => 'So leer hier :(';
 
   @override
-  String expenseDisplayAmount(String displayNameYourself, String displayName, String expenseType, double amount) {
+  String expenseDisplayAmount(String displayNameYourself, String displayName,
+      String expenseType, double amount) {
     final intl.NumberFormat amountNumberFormat = intl.NumberFormat.currency(
-      locale: localeName,
-      decimalDigits: 2,
-      name: '€'
-    );
+        locale: localeName, decimalDigits: 2, name: '€');
     final String amountString = amountNumberFormat.format(amount);
 
     String _temp0 = intl.Intl.selectLogic(
@@ -201,12 +202,10 @@ class AppLocalizationsDe extends AppLocalizations {
   String get expenseNoShares => 'Du bist nicht beteiligt';
 
   @override
-  String groupDisplayAmount(String displayName, String paidByYourself, double amount) {
+  String groupDisplayAmount(
+      String displayName, String paidByYourself, double amount) {
     final intl.NumberFormat amountNumberFormat = intl.NumberFormat.currency(
-      locale: localeName,
-      decimalDigits: 2,
-      name: '€'
-    );
+        locale: localeName, decimalDigits: 2, name: '€');
     final String amountString = amountNumberFormat.format(amount);
 
     String _temp0 = intl.Intl.selectLogic(
@@ -222,10 +221,7 @@ class AppLocalizationsDe extends AppLocalizations {
   @override
   String groupDisplaySumAmount(String paidByYourself, double amount) {
     final intl.NumberFormat amountNumberFormat = intl.NumberFormat.currency(
-      locale: localeName,
-      decimalDigits: 2,
-      name: '€'
-    );
+        locale: localeName, decimalDigits: 2, name: '€');
     final String amountString = amountNumberFormat.format(amount);
 
     String _temp0 = intl.Intl.selectLogic(
@@ -241,10 +237,7 @@ class AppLocalizationsDe extends AppLocalizations {
   @override
   String totalExpensesAmount(double amount) {
     final intl.NumberFormat amountNumberFormat = intl.NumberFormat.currency(
-      locale: localeName,
-      decimalDigits: 2,
-      name: '€'
-    );
+        locale: localeName, decimalDigits: 2, name: '€');
     final String amountString = amountNumberFormat.format(amount);
 
     return 'Gesamtausgaben $amountString';
@@ -265,10 +258,7 @@ class AppLocalizationsDe extends AppLocalizations {
   @override
   String payBackDialog(String displayName, double amount) {
     final intl.NumberFormat amountNumberFormat = intl.NumberFormat.currency(
-      locale: localeName,
-      decimalDigits: 2,
-      name: '€'
-    );
+        locale: localeName, decimalDigits: 2, name: '€');
     final String amountString = amountNumberFormat.format(amount);
 
     return 'Du schuldest $displayName $amountString';
@@ -284,27 +274,23 @@ class AppLocalizationsDe extends AppLocalizations {
   String get payBackDialogDone => 'Als bezahlt markieren';
 
   @override
-  String get payBackError => 'Es gab einen Fehler beim Zurückzahlen des Betrags. Bitte versuche es später noch einmal!';
+  String get payBackError =>
+      'Es gab einen Fehler beim Zurückzahlen des Betrags. Bitte versuche es später noch einmal!';
 
   @override
   String payBackSuccess(String displayName, double amount) {
     final intl.NumberFormat amountNumberFormat = intl.NumberFormat.currency(
-      locale: localeName,
-      decimalDigits: 2,
-      name: '€'
-    );
+        locale: localeName, decimalDigits: 2, name: '€');
     final String amountString = amountNumberFormat.format(amount);
 
     return 'Du hast $displayName $amountString zurückgezahlt';
   }
 
   @override
-  String groupDisplayPaidBack(String paidByYourself, String paidBy, String paidForYourself, String paidFor, double amount) {
+  String groupDisplayPaidBack(String paidByYourself, String paidBy,
+      String paidForYourself, String paidFor, double amount) {
     final intl.NumberFormat amountNumberFormat = intl.NumberFormat.currency(
-      locale: localeName,
-      decimalDigits: 2,
-      name: '€'
-    );
+        locale: localeName, decimalDigits: 2, name: '€');
     final String amountString = amountNumberFormat.format(amount);
 
     String _temp0 = intl.Intl.selectLogic(
@@ -331,7 +317,8 @@ class AppLocalizationsDe extends AppLocalizations {
   String get signInSubtitle => 'Bitte melde dich mit deinem Konto an.';
 
   @override
-  String get signInDescription => 'Gib deine E-Mail und dein Passwort ein, um fortzufahren.';
+  String get signInDescription =>
+      'Gib deine E-Mail und dein Passwort ein, um fortzufahren.';
 
   @override
   String get signInEmailTitle => 'E-Mail';
@@ -340,19 +327,23 @@ class AppLocalizationsDe extends AppLocalizations {
   String get updatePasswordTitle => 'Passwort aktualisieren';
 
   @override
-  String get updatePasswordToSignIn => 'Verwende dein neues Passwort, um dich anzumelden.';
+  String get updatePasswordToSignIn =>
+      'Verwende dein neues Passwort, um dich anzumelden.';
 
   @override
   String get updatePasswordEnterPassword => 'Gib dein neues Passwort ein';
 
   @override
-  String get updatePasswordPasswordLengthError => 'Das Passwort muss mindestens 8 Zeichen lang sein.';
+  String get updatePasswordPasswordLengthError =>
+      'Das Passwort muss mindestens 8 Zeichen lang sein.';
 
   @override
-  String get updatePasswordPasswordResetSent => 'Ein Link zum Zurücksetzen des Passworts wurde gesendet.';
+  String get updatePasswordPasswordResetSent =>
+      'Ein Link zum Zurücksetzen des Passworts wurde gesendet.';
 
   @override
-  String get updatePasswordunexpectedError => 'Ein unerwarteter Fehler ist aufgetreten. Bitte versuche es später noch einmal.';
+  String get updatePasswordunexpectedError =>
+      'Ein unerwarteter Fehler ist aufgetreten. Bitte versuche es später noch einmal.';
 
   @override
   String get updatePasswordUpdatePassword => 'Passwort aktualisieren';
@@ -379,10 +370,12 @@ class AppLocalizationsDe extends AppLocalizations {
   String get addFriendshipAllContacts => 'Find Friends from Contacts';
 
   @override
-  String get addFriendshipContactPermission => 'Request access to your contacts.';
+  String get addFriendshipContactPermission =>
+      'Request access to your contacts.';
 
   @override
-  String get addFriendshipContactPermissionSubtitle => 'Please make shure that you have given the app permission to access your contacts.';
+  String get addFriendshipContactPermissionSubtitle =>
+      'Please make shure that you have given the app permission to access your contacts.';
 
   @override
   String get addFriendshipRequested => 'Pending Friendship Requests';
@@ -452,10 +445,7 @@ class AppLocalizationsDe extends AppLocalizations {
   @override
   String toCurrency(double amount) {
     final intl.NumberFormat amountNumberFormat = intl.NumberFormat.currency(
-      locale: localeName,
-      decimalDigits: 2,
-      name: '€'
-    );
+        locale: localeName, decimalDigits: 2, name: '€');
     final String amountString = amountNumberFormat.format(amount);
 
     return '$amountString';
@@ -463,10 +453,8 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String toCurrencyNoPrefix(double amount) {
-    final intl.NumberFormat amountNumberFormat = intl.NumberFormat.currency(
-      locale: localeName,
-      decimalDigits: 2
-    );
+    final intl.NumberFormat amountNumberFormat =
+        intl.NumberFormat.currency(locale: localeName, decimalDigits: 2);
     final String amountString = amountNumberFormat.format(amount);
 
     return '$amountString';
@@ -483,17 +471,15 @@ class AppLocalizationsDe extends AppLocalizations {
   }
 
   @override
-  String groupPayBackNotificationTitle(String userDisplayName, String groupName) {
+  String groupPayBackNotificationTitle(
+      String userDisplayName, String groupName) {
     return '$userDisplayName paid their debts in \"$groupName\" back!';
   }
 
   @override
   String groupPayBackNotificationBody(double amount) {
     final intl.NumberFormat amountNumberFormat = intl.NumberFormat.currency(
-      locale: localeName,
-      decimalDigits: 2,
-      name: '€'
-    );
+        locale: localeName, decimalDigits: 2, name: '€');
     final String amountString = amountNumberFormat.format(amount);
 
     return 'You should receive $amountString in the next days.';
@@ -505,12 +491,10 @@ class AppLocalizationsDe extends AppLocalizations {
   }
 
   @override
-  String expenseNotificationBody(String expenseName, String groupName, double amount) {
+  String expenseNotificationBody(
+      String expenseName, String groupName, double amount) {
     final intl.NumberFormat amountNumberFormat = intl.NumberFormat.currency(
-      locale: localeName,
-      decimalDigits: 2,
-      name: '€'
-    );
+        locale: localeName, decimalDigits: 2, name: '€');
     final String amountString = amountNumberFormat.format(amount);
 
     return '\"$expenseName\" has been added to \"$groupName\" with a total of $amountString.';
@@ -525,7 +509,8 @@ class AppLocalizationsDe extends AppLocalizations {
   }
 
   @override
-  String get friendAcceptNotificationTitle => 'Your friend request got accepted';
+  String get friendAcceptNotificationTitle =>
+      'Your friend request got accepted';
 
   @override
   String friendAcceptNotificationBody(String userDisplayName) {
@@ -533,7 +518,8 @@ class AppLocalizationsDe extends AppLocalizations {
   }
 
   @override
-  String get friendDeclineNotificationTitle => 'Your friend request got declined';
+  String get friendDeclineNotificationTitle =>
+      'Your friend request got declined';
 
   @override
   String friendDeclineNotificationBody(String userDisplayName) {
@@ -550,19 +536,22 @@ class AppLocalizationsDe extends AppLocalizations {
   String get settingsFirstName => 'Vorname';
 
   @override
-  String get settingsFirstNameValidationEmpty => 'Bitte gib einen Vornamen ein!';
+  String get settingsFirstNameValidationEmpty =>
+      'Bitte gib einen Vornamen ein!';
 
   @override
   String get settingsLastName => 'Nachname';
 
   @override
-  String get settingsLastNameValidationEmpty => 'Bitte gib einen Nachnamen ein!';
+  String get settingsLastNameValidationEmpty =>
+      'Bitte gib einen Nachnamen ein!';
 
   @override
   String get settingsDisplayName => 'Anzeigename';
 
   @override
-  String get settingsDisplayNameValidationEmpty => 'Bitte gib einen Anzeigenamen ein!';
+  String get settingsDisplayNameValidationEmpty =>
+      'Bitte gib einen Anzeigenamen ein!';
 
   @override
   String get settingsPaypalMe => 'PayPal.me';
@@ -574,10 +563,12 @@ class AppLocalizationsDe extends AppLocalizations {
   String get settingsLocale => 'Sprache';
 
   @override
-  String get settingsUserUpdateSuccess => 'Benutzerdaten erfolgreich aktualisiert.';
+  String get settingsUserUpdateSuccess =>
+      'Benutzerdaten erfolgreich aktualisiert.';
 
   @override
-  String get settingsUserUpdateError => 'Fehler beim Aktualisieren der Benutzerdaten.';
+  String get settingsUserUpdateError =>
+      'Fehler beim Aktualisieren der Benutzerdaten.';
 
   @override
   String get settingsSignOutDialogTitle => 'Wirklich abmelden?';
@@ -592,16 +583,19 @@ class AppLocalizationsDe extends AppLocalizations {
   String get settingsPrivacyPreferences => 'Datenschutzeinstellungen';
 
   @override
-  String get settingsPrivacyPreferencesSuccess => 'Datenschutzeinstellungen erfolgreich gespeichert.';
+  String get settingsPrivacyPreferencesSuccess =>
+      'Datenschutzeinstellungen erfolgreich gespeichert.';
 
   @override
-  String get settingsPrivacyPreferencesError => 'Fehler beim Speichern der Datenschutzeinstellungen.';
+  String get settingsPrivacyPreferencesError =>
+      'Fehler beim Speichern der Datenschutzeinstellungen.';
 
   @override
   String get contact => 'Support';
 
   @override
-  String get contactSubtitle => 'Egal, ob du Unterstützung suchst, Feedback hast oder an einer Zusammenarbeit interessiert bist - fülle einfach das untenstehende Formular aus oder schreibe uns eine E-Mail an app.deun@gmail.com!';
+  String get contactSubtitle =>
+      'Egal, ob du Unterstützung suchst, Feedback hast oder an einer Zusammenarbeit interessiert bist - fülle einfach das untenstehende Formular aus oder schreibe uns eine E-Mail an app.deun@gmail.com!';
 
   @override
   String get contactName => 'Name';
@@ -622,7 +616,8 @@ class AppLocalizationsDe extends AppLocalizations {
   String get contactDescription => 'Beschreibung';
 
   @override
-  String get contactDescriptionValidationEmpty => 'Bitte gib eine Beschreibung ein!';
+  String get contactDescriptionValidationEmpty =>
+      'Bitte gib eine Beschreibung ein!';
 
   @override
   String get contactUs => 'Kontaktiere uns';

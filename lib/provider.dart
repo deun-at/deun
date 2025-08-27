@@ -2,7 +2,6 @@ import 'package:deun/constants.dart';
 import 'package:deun/main.dart';
 import 'package:deun/pages/friends/friendship_model.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -24,7 +23,7 @@ class GroupListNotifier extends _$GroupListNotifier {
     return await fetchGroupList(statusFilter);
   }
 
-  Future<void> reload(statusFilter) async {
+  Future<void> reload(String statusFilter) async {
     state = await AsyncValue.guard(() async => await fetchGroupList(statusFilter));
   }
 
@@ -57,7 +56,7 @@ class GroupDetailNotifier extends _$GroupDetailNotifier {
     return await fetchGroupDetail(groupId);
   }
 
-  Future<void> reload(groupId) async {
+  Future<void> reload(String groupId) async {
     state = await AsyncValue.guard(() async => await fetchGroupDetail(groupId));
   }
 
@@ -101,7 +100,7 @@ class ExpenseListNotifier extends _$ExpenseListNotifier {
     return await fetchExpenseList(groupId, _offset, _offset + pageSize - 1);
   }
 
-  Future<void> reload(groupId) async {
+  Future<void> reload(String groupId) async {
     _offset = 0;
     _hasMore = true;
 

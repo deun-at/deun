@@ -97,7 +97,7 @@ class _GroupStatisticsPageState extends ConsumerState<GroupStatisticsPage> {
                                           if (idx < 0 || idx >= pageMonths.length) return SizedBox.shrink();
                                           final d = pageMonths[idx].start;
                                           return SideTitleWidget(
-                                            axisSide: meta.axisSide,
+                                            meta: meta,
                                             child: Text(DateFormat("MMM").format(d)),
                                           );
                                         },
@@ -111,7 +111,7 @@ class _GroupStatisticsPageState extends ConsumerState<GroupStatisticsPage> {
                                         getTitlesWidget: (value, meta) {
                                           if (value == 0 || value >= meta.max) {
                                             return SideTitleWidget(
-                                              axisSide: meta.axisSide,
+                                              meta: meta,
                                               child: Text(meta.formattedValue),
                                             );
                                           } else {
@@ -126,7 +126,7 @@ class _GroupStatisticsPageState extends ConsumerState<GroupStatisticsPage> {
                                         showTitles: true,
                                         getTitlesWidget: (value, meta) {
                                           return SideTitleWidget(
-                                            axisSide: meta.axisSide,
+                                            meta: meta,
                                             child: Text(""),
                                           );
                                         },

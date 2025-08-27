@@ -1,5 +1,3 @@
-import 'dart:io';
-
 import 'package:deun/constants.dart';
 import 'package:deun/helper/helper.dart';
 import 'package:deun/main.dart';
@@ -13,6 +11,7 @@ import 'package:deun/l10n/app_localizations.dart';
 
 import '../../provider.dart';
 import '../../widgets/shimmer_card_list.dart';
+import 'group_list_item.dart';
 import 'group_model.dart';
 
 class GroupList extends ConsumerStatefulWidget {
@@ -34,14 +33,17 @@ class _GroupListState extends ConsumerState<GroupList> {
     if (kIsWeb) {
       _adBox = SizedBox();
     } else {
-      _adBox = NativeAdBlock(
-        adUnitId: Platform.isAndroid ? MobileAdMobs.androidGroupList.value : MobileAdMobs.iosGroupList.value,
-      );
+      _adBox = const SizedBox();
+      // _adBox = NativeAdBlock(
+      //   adUnitId: Platform.isAndroid ? MobileAdMobs.androidGroupList.value : MobileAdMobs.iosGroupList.value,
+      // );
     }
   }
 
   Future<void> updateGroupList() async {
-    await ref.read(groupListNotifierProvider(groupListFilter).notifier).reload(groupListFilter);
+    await ref
+        .read(groupListNotifierProvider(groupListFilter).notifier)
+        .reload(groupListFilter);
   }
 
   @override
@@ -72,9 +74,10 @@ class _GroupListState extends ConsumerState<GroupList> {
                       return Padding(
                         padding: EdgeInsets.only(left: paddingLeft, right: 10),
                         child: FilterChip(
-                          label:
-                              Text(AppLocalizations.of(context)!.groupListFilter(GroupListFilter.values[index].value)),
-                          selected: groupListFilter == GroupListFilter.values[index].value,
+                          label: Text(AppLocalizations.of(context)!
+                              .groupListFilter(GroupListFilter.values[index].value)),
+                          selected:
+                              groupListFilter == GroupListFilter.values[index].value,
                           onSelected: (selected) {
                             if (selected) {
                               setState(
@@ -121,7 +124,9 @@ class _GroupListState extends ConsumerState<GroupList> {
                             Group group = value[index];
                             GroupListItem groupListItem = GroupListItem(group: group);
 
-                            if ((index == 5 || (value.length < 6 && index == value.length - 1)) && _adBox != null) {
+                            if ((index == 5 ||
+                                    (value.length < 6 && index == value.length - 1)) &&
+                                _adBox != null) {
                               itemWidget = Column(
                                 children: [
                                   _adBox!,
@@ -160,150 +165,5 @@ class _GroupListState extends ConsumerState<GroupList> {
         ),
       ),
     );
-  }
-}
-
-class GroupListItem extends ConsumerStatefulWidget {
-  const GroupListItem({super.key, required this.group});
-
-  final Group group;
-
-  @override
-  ConsumerState<ConsumerStatefulWidget> createState() => _GroupListItemState();
-}
-
-class _GroupListItemState extends ConsumerState<GroupListItem> {
-  @override
-  Widget build(BuildContext context) {
-    ThemeData themeData = Theme.of(context);
-    Color colorSeedValue = Color(widget.group.colorValue);
-
-    return Hero(
-      tag: "group_detail_${widget.group.id}",
-      child: Theme(
-        data: themeData.copyWith(
-            colorScheme: ColorScheme.fromSeed(seedColor: colorSeedValue, brightness: themeData.brightness)),
-        child: Builder(
-          builder: (context) {
-            ThemeData cardThemeData = Theme.of(context);
-            ColorScheme cardColorScheme = cardThemeData.colorScheme;
-
-            return Card(
-              elevation: 5,
-              shadowColor: Colors.transparent,
-              surfaceTintColor: cardColorScheme.primary,
-              child: InkWell(
-                borderRadius: BorderRadius.circular(12.0),
-                onTap: () {
-                  ref.read(themeColorProvider.notifier).setColor(Color(widget.group.colorValue));
-                  GoRouter.of(context).push("/group/details", extra: {'group': widget.group}).then(
-                    (value) async {
-                      ref.read(themeColorProvider.notifier).resetColor();
-                    },
-                  );
-                },
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(10, 5, 5, 10),
-                  child: Column(
-                    children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Flexible(
-                            child: Text(
-                              widget.group.name,
-                              style: Theme.of(context).textTheme.headlineMedium,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ),
-                        ],
-                      ),
-                      GroupShareWidget(group: widget.group),
-                    ],
-                  ),
-                ),
-              ),
-            );
-          },
-        ),
-      ),
-    );
-  }
-}
-
-class GroupShareWidget extends StatelessWidget {
-  const GroupShareWidget({super.key, required this.group});
-
-  final Group group;
-
-  @override
-  Widget build(BuildContext context) {
-    List<Widget> sharedWidget = group.groupSharesSummary
-        .map(
-          (String key, GroupSharesSummary e) {
-            if (toNumber(e.shareAmount.abs()) == '0.00') {
-              return MapEntry(key, const SizedBox());
-            }
-
-            Color textColor = Colors.red;
-            String paidByYourself = "";
-            if (e.shareAmount > 0) {
-              paidByYourself = "yes";
-              textColor = Colors.green;
-            }
-
-            return MapEntry(
-              key,
-              Align(
-                alignment: Alignment.bottomLeft,
-                child: Text(
-                  AppLocalizations.of(context)!.groupDisplayAmount(e.displayName, paidByYourself, e.shareAmount.abs()),
-                  style: Theme.of(context).textTheme.labelLarge!.copyWith(color: textColor),
-                ),
-              ),
-            );
-          },
-        )
-        .entries
-        .map((e) => e.value)
-        .toList();
-
-    String paidByYourselfAll = "";
-    Color textColorAll = Colors.red;
-    if (group.totalShareAmount > 0) {
-      paidByYourselfAll = "yes";
-      textColorAll = Colors.green;
-    }
-
-    String totalSharedText =
-        AppLocalizations.of(context)!.groupDisplaySumAmount(paidByYourselfAll, group.totalShareAmount.abs());
-    if (toNumber(group.totalShareAmount.abs()) == '0.00') {
-      totalSharedText = AppLocalizations.of(context)!.allDone;
-      textColorAll = Theme.of(context).colorScheme.onSurface;
-    }
-
-    sharedWidget.insert(
-      0,
-      Align(
-        alignment: Alignment.bottomLeft,
-        child: Text(
-          AppLocalizations.of(context)!.totalExpensesAmount(group.totalExpenses.abs()),
-          style: Theme.of(context).textTheme.titleMedium,
-        ),
-      ),
-    );
-
-    sharedWidget.insert(
-      1,
-      Align(
-        alignment: Alignment.bottomLeft,
-        child: Text(
-          totalSharedText,
-          style: Theme.of(context).textTheme.titleMedium!.copyWith(color: textColorAll),
-        ),
-      ),
-    );
-
-    return Column(children: sharedWidget);
   }
 }

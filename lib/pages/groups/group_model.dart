@@ -61,7 +61,7 @@ class Group {
     }
   }
 
-  calculateGroupSharesSummaryDefault(Map<String, dynamic> json) {
+  void calculateGroupSharesSummaryDefault(Map<String, dynamic> json) {
     String? currentUserEmail = supabase.auth.currentUser?.email;
     totalExpenses = 0;
     totalShareAmount = 0;
@@ -100,7 +100,7 @@ class Group {
     }
   }
 
-  calculateGroupSharesSummarySimplified(Map<String, dynamic> json) {
+  void calculateGroupSharesSummarySimplified(Map<String, dynamic> json) {
     String? currentUserEmail = supabase.auth.currentUser?.email;
     totalExpenses = 0;
     totalShareAmount = 0;
@@ -187,7 +187,7 @@ class Group {
     }
   }
 
-  delete() async {
+  Future<void> delete() async {
     await supabase.from('group').delete().eq('id', id);
     await supabase.from('group_update_checker').delete().eq('group_id', id);
   }
