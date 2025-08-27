@@ -45,7 +45,7 @@ String formatDate(String? dateString) {
   }
 }
 
-showSnackBar(BuildContext context, GlobalKey<ScaffoldMessengerState> scaffoldMessengerKey, String message) {
+void showSnackBar(BuildContext context, GlobalKey<ScaffoldMessengerState> scaffoldMessengerKey, String message) {
   SnackBar snackBar = SnackBar(
     content: Text(message),
     action: SnackBarAction(
@@ -58,7 +58,7 @@ showSnackBar(BuildContext context, GlobalKey<ScaffoldMessengerState> scaffoldMes
   scaffoldMessengerKey.currentState?.showSnackBar(snackBar);
 }
 
-showMaterialBanner(BuildContext context, String message, Function onPressed) {
+void showMaterialBanner(BuildContext context, String message, Function onPressed) {
   final messengerKey = rootScaffoldMessengerKey.currentState;
 
   if (messengerKey == null) {
@@ -88,7 +88,7 @@ showMaterialBanner(BuildContext context, String message, Function onPressed) {
   messengerKey.showMaterialBanner(banner);
 }
 
-sendGroupNotification(BuildContext context, String groupId, Set<String> notificationReceiver) {
+void sendGroupNotification(BuildContext context, String groupId, Set<String> notificationReceiver) {
   supabase.from('group').select('name, ...user_id(user_display_name:display_name)').eq('id', groupId).single().then(
     (value) {
       String title = AppLocalizations.of(context)!.groupNotificationTitle(value['user_display_name']);
@@ -99,7 +99,7 @@ sendGroupNotification(BuildContext context, String groupId, Set<String> notifica
   );
 }
 
-sendGroupPayBackNotification(
+void sendGroupPayBackNotification(
     BuildContext context, String groupId, String expenseId, Set<String> notificationReceiver, double amount) {
   supabase
       .from('expense')
@@ -117,7 +117,7 @@ sendGroupPayBackNotification(
   );
 }
 
-sendExpenseNotification(BuildContext context, String expenseId, Set<String> notificationReceiver, double amount) {
+void sendExpenseNotification(BuildContext context, String expenseId, Set<String> notificationReceiver, double amount) {
   supabase
       .from('expense')
       .select('name, ...group!expense_group_id_fkey(group_name:name), ...user_id(user_display_name:display_name)')
@@ -133,7 +133,7 @@ sendExpenseNotification(BuildContext context, String expenseId, Set<String> noti
   );
 }
 
-sendFriendRequestNotification(BuildContext context, Set<String> notificationReceiver) {
+void sendFriendRequestNotification(BuildContext context, Set<String> notificationReceiver) {
   User.fetchDetail(supabase.auth.currentUser!.email ?? '').then(
     (value) {
       sendNotification(
@@ -149,7 +149,7 @@ sendFriendRequestNotification(BuildContext context, Set<String> notificationRece
   );
 }
 
-sendFriendAcceptNotification(BuildContext context, Set<String> notificationReceiver) {
+void sendFriendAcceptNotification(BuildContext context, Set<String> notificationReceiver) {
   User.fetchDetail(supabase.auth.currentUser!.email ?? '').then(
     (value) {
       sendNotification(
@@ -165,7 +165,7 @@ sendFriendAcceptNotification(BuildContext context, Set<String> notificationRecei
   );
 }
 
-sendFriendDeclineNotification(BuildContext context, Set<String> notificationReceiver) {
+void sendFriendDeclineNotification(BuildContext context, Set<String> notificationReceiver) {
   User.fetchDetail(supabase.auth.currentUser!.email ?? '').then(
     (value) {
       sendNotification(
@@ -181,7 +181,7 @@ sendFriendDeclineNotification(BuildContext context, Set<String> notificationRece
   );
 }
 
-sendNotification(String type, String objectId, Set<String> notificationReceiver, String title, String body) async {
+Future<void> sendNotification(String type, String objectId, Set<String> notificationReceiver, String title, String body) async {
   try {
     notificationReceiver.remove(supabase.auth.currentUser?.email);
     final res = await supabase.functions.invoke('push', body: {
@@ -202,7 +202,7 @@ sendNotification(String type, String objectId, Set<String> notificationReceiver,
   }
 }
 
-sendContactMail(Map<String, dynamic> contactInfo) async {
+Future<void> sendContactMail(Map<String, dynamic> contactInfo) async {
   try {
     final res = await supabase.functions.invoke('send-contact-email', body: {
       'message':
@@ -215,13 +215,13 @@ sendContactMail(Map<String, dynamic> contactInfo) async {
   }
 }
 
-navigateToGroup(BuildContext context, Group group) {
+void navigateToGroup(BuildContext context, Group group) {
   // Navigate to the group detail page
   GoRouter.of(context).go("/group");
   GoRouter.of(context).push("/group/details", extra: {'group': group});
 }
 
-navigateToExpense(BuildContext context, Expense expense) {
+void navigateToExpense(BuildContext context, Expense expense) {
   navigateToGroup(context, expense.group);
 
   // Delay opening the BottomSheet
@@ -231,7 +231,7 @@ navigateToExpense(BuildContext context, Expense expense) {
   });
 }
 
-navigateToFriends(BuildContext context) {
+void navigateToFriends(BuildContext context) {
   GoRouter.of(context).go("/friend");
 }
 

@@ -20,8 +20,28 @@ import '../../widgets/search_view.dart';
 import '../users/user_model.dart';
 import 'group_model.dart';
 
-final _isLoading = StateProvider<bool>((ref) => false);
-final _isMiniView = StateProvider<bool>((ref) => false);
+class IsLoadingNotifier extends Notifier<bool> {
+  @override
+  bool build() => false;
+
+  @override
+  set state(bool newState) => super.state = newState;
+
+  bool update(bool Function(bool state) cb) => state = cb(state);
+}
+
+class IsMiniViewNotifier extends Notifier<bool> {
+  @override
+  bool build() => false;
+
+  @override
+  set state(bool newState) => super.state = newState;
+
+  bool update(bool Function(bool state) cb) => state = cb(state);
+}
+
+final _isLoading = NotifierProvider<IsLoadingNotifier, bool>(IsLoadingNotifier.new);
+final _isMiniView = NotifierProvider<IsMiniViewNotifier, bool>(IsMiniViewNotifier.new);
 
 class GroupBottomSheet extends ConsumerStatefulWidget {
   const GroupBottomSheet({super.key, this.group});
@@ -36,14 +56,17 @@ class _GroupBottomSheetState extends ConsumerState<GroupBottomSheet> {
   final _formKey = GlobalKey<FormBuilderState>();
   final ValueNotifier<String> _searchQueryNotifier = ValueNotifier<String>("");
 
-  final DraggableScrollableController _draggableScrollableController = DraggableScrollableController();
+  final DraggableScrollableController _draggableScrollableController =
+      DraggableScrollableController();
   final SearchController _searchAnchorController = SearchController();
 
   @override
   void initState() {
     super.initState();
-    Future.microtask(() => ref.read(_isLoading.notifier).state = false); // Reset loading state
-    Future.microtask(() => ref.read(_isMiniView.notifier).state = false); // Reset loading state
+    Future.microtask(
+        () => ref.read(_isLoading.notifier).state = false); // Reset loading state
+    Future.microtask(
+        () => ref.read(_isMiniView.notifier).state = false); // Reset loading state
 
     _draggableScrollableController.addListener(showMiniViewListener);
   }
@@ -56,7 +79,7 @@ class _GroupBottomSheetState extends ConsumerState<GroupBottomSheet> {
     super.dispose();
   }
 
-  showMiniViewListener() {
+  void showMiniViewListener() {
     final pixelToSize = _draggableScrollableController.pixelsToSize(kIsWeb ? 150 : 190);
     if (_draggableScrollableController.size <= pixelToSize) {
       FocusScope.of(context).unfocus();
@@ -67,7 +90,8 @@ class _GroupBottomSheetState extends ConsumerState<GroupBottomSheet> {
     }
   }
 
-  Iterable<Widget> getUserSelection(SearchController controller, FormFieldState<dynamic> field) {
+  Iterable<Widget> getUserSelection(
+      SearchController controller, FormFieldState<dynamic> field) {
     List<Map<String, dynamic>> groupMembers = Group.decodeGroupMembersString(field.value);
 
     return groupMembers.mapIndexed((index, user) {
@@ -92,11 +116,13 @@ class _GroupBottomSheetState extends ConsumerState<GroupBottomSheet> {
         );
       }
 
-      return ListTile(title: Text(titleText), subtitle: Text(user["email"]), trailing: iconButton);
+      return ListTile(
+          title: Text(titleText), subtitle: Text(user["email"]), trailing: iconButton);
     });
   }
 
-  Future<Iterable<Widget>> getUserSuggestions(SearchController controller, FormFieldState<dynamic> field) async {
+  Future<Iterable<Widget>> getUserSuggestions(
+      SearchController controller, FormFieldState<dynamic> field) async {
     final String input = controller.value.text;
     List<dynamic> nbs = Group.decodeGroupMembersString(field.value);
 
@@ -111,7 +137,9 @@ class _GroupBottomSheetState extends ConsumerState<GroupBottomSheet> {
     List<User> result = await Friendship.fetchFriends(input, selectedUsers, 10);
 
     if (result.isEmpty) {
-      return [ListTile(title: Text(AppLocalizations.of(context)!.groupMemberResultEmpty))];
+      return [
+        ListTile(title: Text(AppLocalizations.of(context)!.groupMemberResultEmpty))
+      ];
     }
 
     return result.map((user) => ListTile(
@@ -163,45 +191,64 @@ class _GroupBottomSheetState extends ConsumerState<GroupBottomSheet> {
                                   children: <Widget>[
                                     FormBuilderField(
                                         name: "name",
-                                        builder: (FormFieldState<dynamic> field) => TextFormField(
+                                        builder: (FormFieldState<dynamic> field) =>
+                                            TextFormField(
                                               readOnly: isMiniView,
                                               initialValue: field.value,
                                               style: Theme.of(context)
                                                   .textTheme
                                                   .displaySmall!
-                                                  .copyWith(color: Theme.of(context).colorScheme.primary),
-                                              autovalidateMode: AutovalidateMode.onUserInteraction,
+                                                  .copyWith(
+                                                      color: Theme.of(context)
+                                                          .colorScheme
+                                                          .primary),
+                                              autovalidateMode:
+                                                  AutovalidateMode.onUserInteraction,
                                               validator: FormBuilderValidators.required(
-                                                  errorText: AppLocalizations.of(context)!.groupNameValidationEmpty),
+                                                  errorText: AppLocalizations.of(context)!
+                                                      .groupNameValidationEmpty),
                                               keyboardType: TextInputType.text,
                                               decoration: InputDecoration(
                                                 border: InputBorder.none,
-                                                hintText: AppLocalizations.of(context)!.addGroupTitle,
+                                                hintText: AppLocalizations.of(context)!
+                                                    .addGroupTitle,
                                               ),
-                                              onChanged: (value) => field.didChange(value),
+                                              onChanged: (value) =>
+                                                  field.didChange(value),
                                             )),
                                     const SizedBox(height: spacing),
                                     FormBuilderField(
                                       name: "color_value",
                                       builder: (FormFieldState<dynamic> field) {
                                         return GridView.builder(
-                                            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                                                crossAxisCount: 5, crossAxisSpacing: 8, mainAxisSpacing: 4),
+                                            gridDelegate:
+                                                const SliverGridDelegateWithFixedCrossAxisCount(
+                                                    crossAxisCount: 5,
+                                                    crossAxisSpacing: 8,
+                                                    mainAxisSpacing: 4),
                                             padding: const EdgeInsets.all(8),
                                             physics: const NeverScrollableScrollPhysics(),
                                             shrinkWrap: true,
                                             itemCount: ColorSeed.values.length,
                                             itemBuilder: (context, i) {
                                               return IconButton(
-                                                  icon: const Icon(Icons.radio_button_unchecked),
-                                                  selectedIcon: const Icon(Icons.radio_button_checked),
+                                                  icon: const Icon(
+                                                      Icons.radio_button_unchecked),
+                                                  selectedIcon: const Icon(
+                                                      Icons.radio_button_checked),
                                                   color: ColorSeed.values[i].color,
-                                                  isSelected: (field.value == ColorSeed.values[i].color.toARGB32() ||
+                                                  isSelected: (field.value ==
+                                                          ColorSeed.values[i].color
+                                                              .toARGB32() ||
                                                       (field.value == null &&
-                                                          ColorSeed.values[i].color.toARGB32() ==
-                                                              ColorSeed.baseColor.color.toARGB32())),
+                                                          ColorSeed.values[i].color
+                                                                  .toARGB32() ==
+                                                              ColorSeed.baseColor.color
+                                                                  .toARGB32())),
                                                   onPressed: () {
-                                                    field.didChange(ColorSeed.values[i].color.toARGB32());
+                                                    field.didChange(ColorSeed
+                                                        .values[i].color
+                                                        .toARGB32());
                                                   });
                                             });
                                       },
@@ -212,7 +259,8 @@ class _GroupBottomSheetState extends ConsumerState<GroupBottomSheet> {
                                       builder: (FormFieldState<dynamic> field) {
                                         return SearchAnchor(
                                           searchController: _searchAnchorController,
-                                          viewHintText: AppLocalizations.of(context)!.groupMemberSelectionEmpty,
+                                          viewHintText: AppLocalizations.of(context)!
+                                              .groupMemberSelectionEmpty,
                                           viewLeading: IconButton(
                                             icon: Icon(Icons.check),
                                             onPressed: () {
@@ -221,33 +269,47 @@ class _GroupBottomSheetState extends ConsumerState<GroupBottomSheet> {
                                           ),
                                           builder: (context, controller) {
                                             List<Map<String, dynamic>> groupMembers =
-                                                Group.decodeGroupMembersString(field.value);
+                                                Group.decodeGroupMembersString(
+                                                    field.value);
 
                                             if (groupMembers.isEmpty ||
                                                 (groupMembers.length == 1 &&
-                                                    groupMembers.first['email'] == supabase.auth.currentUser?.email)) {
+                                                    groupMembers.first['email'] ==
+                                                        supabase
+                                                            .auth.currentUser?.email)) {
                                               return ListTile(
                                                 leading: const Icon(Icons.people),
-                                                title: Text(AppLocalizations.of(context)!.groupMemberAddFriends),
+                                                title: Text(AppLocalizations.of(context)!
+                                                    .groupMemberAddFriends),
                                               );
                                             }
 
                                             return Padding(
-                                                padding: const EdgeInsets.fromLTRB(10, 5, 5, 10),
+                                                padding: const EdgeInsets.fromLTRB(
+                                                    10, 5, 5, 10),
                                                 child: Column(
-                                                    crossAxisAlignment: CrossAxisAlignment.center,
+                                                    crossAxisAlignment:
+                                                        CrossAxisAlignment.center,
                                                     children: <Widget>[
                                                       Wrap(
                                                           spacing: 8,
-                                                          children: groupMembers.map((groupMember) {
-                                                            String displayName = groupMember["display_name"];
+                                                          children: groupMembers
+                                                              .map((groupMember) {
+                                                            String displayName =
+                                                                groupMember[
+                                                                    "display_name"];
                                                             if (groupMember["email"] ==
-                                                                supabase.auth.currentUser?.email) {
-                                                              displayName = AppLocalizations.of(context)!.you;
+                                                                supabase.auth.currentUser
+                                                                    ?.email) {
+                                                              displayName =
+                                                                  AppLocalizations.of(
+                                                                          context)!
+                                                                      .you;
                                                             }
                                                             return ActionChip(
                                                               label: Text(displayName),
-                                                              avatar: const Icon(Icons.person),
+                                                              avatar: const Icon(
+                                                                  Icons.person),
                                                               onPressed: () {
                                                                 controller.openView();
                                                               },
@@ -263,20 +325,27 @@ class _GroupBottomSheetState extends ConsumerState<GroupBottomSheet> {
                                           },
                                           viewBuilder: (suggestions) {
                                             return Column(
-                                              crossAxisAlignment: CrossAxisAlignment.start,
+                                              crossAxisAlignment:
+                                                  CrossAxisAlignment.start,
                                               children: [
                                                 Padding(
-                                                  padding: EdgeInsets.only(top: 10, left: 16),
+                                                  padding:
+                                                      EdgeInsets.only(top: 10, left: 16),
                                                   child: Text(
                                                     _searchAnchorController.text.isEmpty
-                                                        ? AppLocalizations.of(context)!.groupMemberSelectionTitle
-                                                        : AppLocalizations.of(context)!.groupMemberSelectionEmpty,
-                                                    style: Theme.of(context).textTheme.bodyMedium,
+                                                        ? AppLocalizations.of(context)!
+                                                            .groupMemberSelectionTitle
+                                                        : AppLocalizations.of(context)!
+                                                            .groupMemberSelectionEmpty,
+                                                    style: Theme.of(context)
+                                                        .textTheme
+                                                        .bodyMedium,
                                                   ),
                                                 ),
                                                 Expanded(
                                                   child: SearchView(
-                                                    searchQueryNotifier: _searchQueryNotifier,
+                                                    searchQueryNotifier:
+                                                        _searchQueryNotifier,
                                                     suggestions: suggestions,
                                                   ),
                                                 ),
@@ -288,19 +357,26 @@ class _GroupBottomSheetState extends ConsumerState<GroupBottomSheet> {
                                     ),
                                     FormBuilderSwitch(
                                       name: "simplified_expenses",
-                                      title: Text(AppLocalizations.of(context)!.groupSimplifiedExpensesTitle),
+                                      title: Text(AppLocalizations.of(context)!
+                                          .groupSimplifiedExpensesTitle),
                                     ),
                                     widget.group != null
                                         ? Center(
                                             child: TextButton.icon(
                                               style: TextButton.styleFrom(
-                                                foregroundColor: Theme.of(context).colorScheme.error,
-                                                textStyle: Theme.of(context).textTheme.bodyLarge,
+                                                foregroundColor:
+                                                    Theme.of(context).colorScheme.error,
+                                                textStyle:
+                                                    Theme.of(context).textTheme.bodyLarge,
                                               ),
-                                              onPressed: () => openDeleteItemDialog(context, widget.group!),
+                                              onPressed: () => openDeleteItemDialog(
+                                                  context, widget.group!),
                                               icon: Icon(Icons.delete_outline,
-                                                  color: Theme.of(context).colorScheme.error),
-                                              label: Text(AppLocalizations.of(context)!.groupDeleteItemTitle),
+                                                  color: Theme.of(context)
+                                                      .colorScheme
+                                                      .error),
+                                              label: Text(AppLocalizations.of(context)!
+                                                  .groupDeleteItemTitle),
                                             ),
                                           )
                                         : const SizedBox(),
@@ -315,7 +391,9 @@ class _GroupBottomSheetState extends ConsumerState<GroupBottomSheet> {
                   ),
                   onNotification: (ScrollUpdateNotification notification) {
                     final FocusScopeNode currentScope = FocusScope.of(context);
-                    if (notification.dragDetails != null && !currentScope.hasPrimaryFocus && currentScope.hasFocus) {
+                    if (notification.dragDetails != null &&
+                        !currentScope.hasPrimaryFocus &&
+                        currentScope.hasFocus) {
                       FocusManager.instance.primaryFocus?.unfocus();
                     }
                     return false;
@@ -340,10 +418,11 @@ class _GroupBottomSheetState extends ConsumerState<GroupBottomSheet> {
                             onPressed: () async {
                               if (_formKey.currentState!.saveAndValidate()) {
                                 Group? newGroup;
-                                ref.read(_isLoading.notifier).state = true; // Set loading to true
+                                ref.read(_isLoading.notifier).state =
+                                    true; // Set loading to true
                                 try {
-                                  String groupInsertId =
-                                      await Group.saveAll(context, widget.group?.id, _formKey.currentState!.value);
+                                  String groupInsertId = await Group.saveAll(context,
+                                      widget.group?.id, _formKey.currentState!.value);
                                   newGroup = await Group.fetchDetail(groupInsertId);
                                   if (context.mounted) {
                                     showSnackBar(context, groupDetailScaffoldMessengerKey,
@@ -356,11 +435,13 @@ class _GroupBottomSheetState extends ConsumerState<GroupBottomSheet> {
                                   }
                                 } finally {
                                   if (mounted) {
-                                    ref.read(_isLoading.notifier).state = false; // Stop loading
+                                    ref.read(_isLoading.notifier).state =
+                                        false; // Stop loading
                                     if (context.mounted) {
                                       if (newGroup != null) {
                                         GoRouter.of(context).go("/group");
-                                        GoRouter.of(context).push("/group/details", extra: {'group': newGroup});
+                                        GoRouter.of(context).push("/group/details",
+                                            extra: {'group': newGroup});
                                       }
                                     }
                                   }
@@ -400,17 +481,18 @@ class _GroupBottomSheetState extends ConsumerState<GroupBottomSheet> {
               try {
                 await group.delete();
                 if (context.mounted) {
-                  showSnackBar(
-                      context, groupDetailScaffoldMessengerKey, AppLocalizations.of(context)!.groupDeleteSuccess);
+                  showSnackBar(context, groupDetailScaffoldMessengerKey,
+                      AppLocalizations.of(context)!.groupDeleteSuccess);
                 }
               } catch (e) {
                 if (context.mounted) {
-                  showSnackBar(
-                      context, groupDetailScaffoldMessengerKey, AppLocalizations.of(context)!.groupDeleteError);
+                  showSnackBar(context, groupDetailScaffoldMessengerKey,
+                      AppLocalizations.of(context)!.groupDeleteError);
                 }
               } finally {
                 if (context.mounted) {
-                  Navigator.pop(context); //pop both dialog and edit page, because this item is not existing anymore
+                  Navigator.pop(
+                      context); //pop both dialog and edit page, because this item is not existing anymore
                   Navigator.pop(modalContext);
                   Navigator.pop(modalContext);
                 }

@@ -62,7 +62,7 @@ class Expense {
     }
   }
 
-  delete() async {
+  Future<void> delete() async {
     await supabase.from('expense').delete().eq('id', id);
     await supabase.from('expense_update_checker').delete().eq('expense_id', id);
     await supabase.rpc('update_group_member_shares', params: {"_group_id": groupId, "_expense_id": null});

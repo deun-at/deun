@@ -88,11 +88,11 @@ class _NavigationScreenState extends ConsumerState<NavigationScreen> {
                     GoRoute(
                         path: 'details',
                         parentNavigatorKey: _rootNavigatorKey,
-                        pageBuilder: (context, state) {
+                        builder: (context, state) {
                           var extra = state.extra as Map<String, dynamic>;
                           var group = extra['group'] as Group;
 
-                          return DefaultTransitionPage(child: GroupDetail(group: group));
+                          return GroupDetail(group: group);
                         },
                         routes: [
                           GoRoute(
@@ -114,11 +114,11 @@ class _NavigationScreenState extends ConsumerState<NavigationScreen> {
                           GoRoute(
                               path: 'statistics',
                               parentNavigatorKey: _rootNavigatorKey,
-                              pageBuilder: (context, state) {
+                              builder: (context, state) {
                                 var extra = state.extra as Map<String, dynamic>;
                                 var group = extra['group'] as Group;
 
-                                return DefaultTransitionPage(child: GroupStatisticsPage(group: group));
+                                return GroupStatisticsPage(group: group);
                               },
                               routes: [
                                 GoRoute(
@@ -209,16 +209,16 @@ class _NavigationScreenState extends ConsumerState<NavigationScreen> {
                       GoRoute(
                         path: 'privacy-policy',
                         parentNavigatorKey: _rootNavigatorKey,
-                        pageBuilder: (context, state) {
-                          return DefaultTransitionPage(child: PrivacyPolicy());
+                        builder: (context, state) {
+                          return PrivacyPolicy();
                         },
                       ),
                       // child route
                       GoRoute(
                         path: 'contact',
                         parentNavigatorKey: _rootNavigatorKey,
-                        pageBuilder: (context, state) {
-                          return DefaultTransitionPage(child: Contact());
+                        builder: (context, state) {
+                          return Contact();
                         },
                       ),
                     ]),
@@ -255,7 +255,7 @@ class _NavigationScreenState extends ConsumerState<NavigationScreen> {
     );
   }
 
-  _initUserLocale() async {
+  Future<void> _initUserLocale() async {
     //initialize Prefered Language
     final user = await supabase.from("user").select("*").eq("email", supabase.auth.currentUser!.email ?? '').single();
 
@@ -264,7 +264,7 @@ class _NavigationScreenState extends ConsumerState<NavigationScreen> {
     }
   }
 
-  _initFirebaseMessaging() async {
+  Future<Null> _initFirebaseMessaging() async {
     // You may set the permission requests to "provisional" which allows the user to choose what type
     // of notifications they would like to receive once the user receives a notification.
     final notificationSettings = await FirebaseMessaging.instance.requestPermission(
@@ -382,8 +382,28 @@ class _NavigationScreenState extends ConsumerState<NavigationScreen> {
       scaffoldMessengerKey: rootScaffoldMessengerKey,
       routerConfig: _routerConfig,
       title: 'Deun',
-      theme: ThemeData(colorSchemeSeed: colorSelected, useMaterial3: true, brightness: Brightness.light),
-      darkTheme: ThemeData(colorSchemeSeed: colorSelected, useMaterial3: true, brightness: Brightness.dark),
+      theme: ThemeData(
+        colorSchemeSeed: colorSelected,
+        useMaterial3: true,
+        brightness: Brightness.light,
+        pageTransitionsTheme: const PageTransitionsTheme(
+          builders: <TargetPlatform, PageTransitionsBuilder>{
+            // Set the predictive back transitions for Android.
+            TargetPlatform.android: PredictiveBackPageTransitionsBuilder(),
+          },
+        ),
+      ),
+      darkTheme: ThemeData(
+        colorSchemeSeed: colorSelected,
+        useMaterial3: true,
+        brightness: Brightness.dark,
+        pageTransitionsTheme: const PageTransitionsTheme(
+          builders: <TargetPlatform, PageTransitionsBuilder>{
+            // Set the predictive back transitions for Android.
+            TargetPlatform.android: PredictiveBackPageTransitionsBuilder(),
+          },
+        ),
+      ),
       themeMode: ThemeMode.system,
       locale: locale,
       localizationsDelegates: AppLocalizations.localizationsDelegates,
@@ -475,18 +495,4 @@ class _ScaffoldWithNestedNavigationState extends ConsumerState<ScaffoldWithNeste
       ),
     );
   }
-}
-
-class DefaultTransitionPage extends CustomTransitionPage {
-  DefaultTransitionPage({required super.child})
-      : super(
-          transitionDuration: Durations.medium4,
-          reverseTransitionDuration: Durations.medium4,
-          transitionsBuilder: (context, animation, secondaryAnimation, child) {
-            return FadeTransition(
-              opacity: Tween<double>(begin: 0, end: 1).animate(CurvedAnimation(parent: animation, curve: Curves.ease)),
-              child: child,
-            );
-          },
-        );
 }
