@@ -9,6 +9,7 @@ import 'package:flutter/material.dart';
 import 'package:deun/l10n/app_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 import '../expenses/expense_model.dart';
 
@@ -140,10 +141,11 @@ class _GroupDetailListState extends ConsumerState<GroupDetailList> {
                                         Flexible(
                                           child: Text(
                                             expense.name,
-                                            style: Theme.of(context)
+                                            style: GoogleFonts.notoSerif(
+                                              textStyle: Theme.of(context)
                                                 .textTheme
                                                 .headlineMedium!
-                                                .copyWith(color: textColor),
+                                                .copyWith(color: textColor, fontWeight: FontWeight.w900)),
                                             overflow: TextOverflow.ellipsis,
                                           ),
                                         ),
