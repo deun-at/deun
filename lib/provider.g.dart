@@ -515,7 +515,7 @@ final class ThemeColorProvider extends $NotifierProvider<ThemeColor, Color> {
   }
 }
 
-String _$themeColorHash() => r'4ef7e05d68a34bec800592eac7cd770666832636';
+String _$themeColorHash() => r'98cc6f9878defc73ab82ff40763299c45a5086ce';
 
 abstract class _$ThemeColor extends $Notifier<Color> {
   Color build();

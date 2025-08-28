@@ -273,10 +273,10 @@ class UserDetailNotifier extends _$UserDetailNotifier {
 @riverpod
 class ThemeColor extends _$ThemeColor {
   @override
-  Color build() => ColorSeed.baseColor.color;
+  Color build() => ColorSeed.blue.color;
 
   void setColor(Color color) => state = color;
-  void resetColor() => state = ColorSeed.baseColor.color;
+  void resetColor() => state = ColorSeed.blue.color;
 }
 
 @riverpod

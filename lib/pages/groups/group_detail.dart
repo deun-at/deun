@@ -157,13 +157,12 @@ class _GroupDetailState extends ConsumerState<GroupDetail> {
                                     width: 250,
                                     child: ShimmerCardList(
                                         height: 15,
-                                        listEntryLength: 1,
-                                        isNegative: true)),
+                                        listEntryLength: 1)),
                                 SizedBox(
                                   height: 37,
                                   width: 250,
                                   child: ShimmerCardList(
-                                      height: 10, listEntryLength: 2, isNegative: true),
+                                      height: 10, listEntryLength: 2),
                                 ),
                               ],
                             ),

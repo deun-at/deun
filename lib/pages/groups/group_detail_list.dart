@@ -53,7 +53,7 @@ class _GroupDetailListState extends ConsumerState<GroupDetailList> {
             ref.read(expenseListNotifierProvider(widget.group.id).notifier).offset;
 
         if (isLoading) {
-          return const ShimmerCardList(height: 80, listEntryLength: 8, isNegative: true);
+          return const ShimmerCardList(height: 80, listEntryLength: 8);
         }
 
         return expenses!.isEmpty

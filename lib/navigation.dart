@@ -132,7 +132,8 @@ class _NavigationScreenState extends ConsumerState<NavigationScreen> {
 
                                       return ModalBottomSheetPage(
                                         key: state.pageKey,
-                                        builder: (context) => StatisticsMonthDetailBottomSheet(
+                                        builder: (context) =>
+                                            StatisticsMonthDetailBottomSheet(
                                           group: group,
                                           monthStart: monthStart,
                                           monthEnd: monthEnd,
@@ -180,7 +181,8 @@ class _NavigationScreenState extends ConsumerState<NavigationScreen> {
                 // top route inside branch
                 GoRoute(
                     path: '/friend',
-                    pageBuilder: (context, state) => const NoTransitionPage(child: FriendList()),
+                    pageBuilder: (context, state) =>
+                        const NoTransitionPage(child: FriendList()),
                     routes: [
                       GoRoute(
                           path: 'add',
@@ -257,7 +259,11 @@ class _NavigationScreenState extends ConsumerState<NavigationScreen> {
 
   Future<void> _initUserLocale() async {
     //initialize Prefered Language
-    final user = await supabase.from("user").select("*").eq("email", supabase.auth.currentUser!.email ?? '').single();
+    final user = await supabase
+        .from("user")
+        .select("*")
+        .eq("email", supabase.auth.currentUser!.email ?? '')
+        .single();
 
     if (user["locale"] != null) {
       ref.read(localeNotifierProvider.notifier).setLocale(Locale(user["locale"]));
@@ -299,8 +305,9 @@ class _NavigationScreenState extends ConsumerState<NavigationScreen> {
   }
 
   void _handlePush() async {
-    final fcmToken = await FirebaseMessaging.instance
-        .getToken(vapidKey: "BL4YZRDAw8gBPt37GNhz6ub5UxTtDUdjERYzFOgOI2ZdCqwwBToztXtL9Wj0QwqDfKe4CoBQjcjSP54OG3fjFvE");
+    final fcmToken = await FirebaseMessaging.instance.getToken(
+        vapidKey:
+            "BL4YZRDAw8gBPt37GNhz6ub5UxTtDUdjERYzFOgOI2ZdCqwwBToztXtL9Wj0QwqDfKe4CoBQjcjSP54OG3fjFvE");
 
     if (fcmToken != null) {
       try {
@@ -383,26 +390,61 @@ class _NavigationScreenState extends ConsumerState<NavigationScreen> {
       routerConfig: _routerConfig,
       title: 'Deun',
       theme: ThemeData(
-        colorSchemeSeed: colorSelected,
-        useMaterial3: true,
-        brightness: Brightness.light,
+        colorScheme:
+            ColorScheme.fromSeed(seedColor: colorSelected, brightness: Brightness.light)
+                .copyWith(
+          surface: Color(0xffefedee),
+          surfaceBright: Color(0xfffef7ff),
+          surfaceDim: Color(0xffded8e1),
+          onSurface: Color(0xff1d1d1d),
+          onSurfaceVariant: Color(0xff494949),
+          surfaceContainerHighest: Color(0xffe4e4e4),
+          surfaceContainerHigh: Color(0xffebebeb),
+          surfaceContainer: Color(0xfff2f2f2),
+          surfaceContainerLow: Color(0xfff5f5f5),
+          surfaceContainerLowest: Color(0xffffffff),
+          inverseSurface: Color(0xff323232),
+          surfaceTint: Color(0xff7a7a7a),
+        ),
         pageTransitionsTheme: const PageTransitionsTheme(
           builders: <TargetPlatform, PageTransitionsBuilder>{
             // Set the predictive back transitions for Android.
             TargetPlatform.android: PredictiveBackPageTransitionsBuilder(),
           },
         ),
+        appBarTheme: Theme.of(context).appBarTheme.copyWith(
+              surfaceTintColor: Colors.transparent,
+              backgroundColor: Color(0xffefedee),
+            ),
       ),
       darkTheme: ThemeData(
-        colorSchemeSeed: colorSelected,
-        useMaterial3: true,
-        brightness: Brightness.dark,
+        colorScheme:
+            ColorScheme.fromSeed(seedColor: colorSelected, brightness: Brightness.dark)
+                .copyWith(
+          surface: Color(0xff1f2021),
+          surfaceBright: Color(0xfffef7ff),
+          surfaceDim: Color(0xffded8e1),
+          onSurface: Color(0xffe4e4e4),
+          onSurfaceVariant: Color(0xffcacaca),
+          surfaceContainerHighest: Color(0xff373737),
+          surfaceContainerHigh: Color(0xff2c2c2c),
+          surfaceContainer: Color(0xff222222),
+          surfaceContainerLow: Color(0xff1d1d1d),
+          surfaceContainerLowest: Color(0xff101010),
+          inverseSurface: Color(0xffe4e4e4),
+          onInverseSurface: Color(0xff323232),
+          surfaceTint: Color(0xffdddddd),
+        ),
         pageTransitionsTheme: const PageTransitionsTheme(
           builders: <TargetPlatform, PageTransitionsBuilder>{
             // Set the predictive back transitions for Android.
             TargetPlatform.android: PredictiveBackPageTransitionsBuilder(),
           },
         ),
+        appBarTheme: Theme.of(context).appBarTheme.copyWith(
+              surfaceTintColor: Colors.transparent,
+              backgroundColor: Color(0xff1f2021),
+            ),
       ),
       themeMode: ThemeMode.system,
       locale: locale,
@@ -429,10 +471,12 @@ class ScaffoldWithNestedNavigation extends ConsumerStatefulWidget {
   final StatefulNavigationShell navigationShell;
 
   @override
-  ConsumerState<ScaffoldWithNestedNavigation> createState() => _ScaffoldWithNestedNavigationState();
+  ConsumerState<ScaffoldWithNestedNavigation> createState() =>
+      _ScaffoldWithNestedNavigationState();
 }
 
-class _ScaffoldWithNestedNavigationState extends ConsumerState<ScaffoldWithNestedNavigation> {
+class _ScaffoldWithNestedNavigationState
+    extends ConsumerState<ScaffoldWithNestedNavigation> {
   void _goBranch(int index) {
     ref.read(themeColorProvider.notifier).resetColor();
 
