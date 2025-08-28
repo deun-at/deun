@@ -63,33 +63,33 @@ class _GroupListState extends ConsumerState<GroupList> {
               child: SizedBox(
                 height: 60,
                 child: ListView.builder(
-                    scrollDirection: Axis.horizontal,
-                    itemCount: GroupListFilter.values.length,
-                    itemBuilder: (context, index) {
-                      double paddingLeft = 0;
-                      if (index == 0) {
-                        paddingLeft = 10;
-                      }
+                  scrollDirection: Axis.horizontal,
+                  itemCount: GroupListFilter.values.length,
+                  itemBuilder: (context, index) {
+                    double paddingLeft = 0;
+                    if (index == 0) {
+                      paddingLeft = 10;
+                    }
 
-                      return Padding(
-                        padding: EdgeInsets.only(left: paddingLeft, right: 10),
-                        child: FilterChip(
-                          label: Text(AppLocalizations.of(context)!
-                              .groupListFilter(GroupListFilter.values[index].value)),
-                          selected:
-                              groupListFilter == GroupListFilter.values[index].value,
-                          onSelected: (selected) {
-                            if (selected) {
-                              setState(
-                                () {
-                                  groupListFilter = GroupListFilter.values[index].value;
-                                },
-                              );
-                            }
-                          },
-                        ),
-                      );
-                    }),
+                    return Padding(
+                      padding: EdgeInsets.only(left: paddingLeft, right: 10),
+                      child: FilterChip(
+                        label: Text(AppLocalizations.of(context)!
+                            .groupListFilter(GroupListFilter.values[index].value)),
+                        selected: groupListFilter == GroupListFilter.values[index].value,
+                        onSelected: (selected) {
+                          if (selected) {
+                            setState(
+                              () {
+                                groupListFilter = GroupListFilter.values[index].value;
+                              },
+                            );
+                          }
+                        },
+                      ),
+                    );
+                  },
+                ),
               ),
             ),
           ],
