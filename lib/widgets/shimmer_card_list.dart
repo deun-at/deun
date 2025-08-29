@@ -14,11 +14,10 @@ class _SlidingGradientTransform extends GradientTransform {
 }
 
 class ShimmerCardList extends StatefulWidget {
-  const ShimmerCardList({super.key, required this.height, required this.listEntryLength, this.isNegative = false});
+  const ShimmerCardList({super.key, required this.height, required this.listEntryLength});
 
   final double height;
   final int listEntryLength;
-  final bool isNegative;
 
   @override
   State<StatefulWidget> createState() => ShimmerCardListState();
@@ -42,19 +41,13 @@ class ShimmerCardListState extends State<ShimmerCardList> with SingleTickerProvi
 
   LinearGradient get gradient {
     ThemeData themeData = Theme.of(context);
+    ColorScheme colorScheme = themeData.colorScheme;
 
-    Color color;
-    Color shimmerColor;
+    Color color = themeData.brightness == Brightness.light
+        ? colorScheme.surfaceContainerLowest
+        : colorScheme.surfaceContainerHighest;
 
-    if (!widget.isNegative) {
-      color = themeData.colorScheme.surfaceContainer;
-      shimmerColor = themeData.colorScheme.surfaceContainerHighest;
-    } else {
-      color = themeData.brightness == Brightness.light
-          ? themeData.colorScheme.surfaceContainerLowest
-          : themeData.colorScheme.surfaceContainerHighest;
-      shimmerColor = themeData.colorScheme.surfaceContainer;
-    }
+    Color shimmerColor = themeData.colorScheme.surface;
 
     return LinearGradient(
       colors: [
@@ -92,7 +85,7 @@ class ShimmerCardListState extends State<ShimmerCardList> with SingleTickerProvi
                 children: List.generate(
                     widget.listEntryLength,
                     (index) => Padding(
-                          padding: const EdgeInsets.fromLTRB(8.0, 8.0, 8.0, 0),
+                          padding: const EdgeInsets.fromLTRB(4.0, 1.0, 4.0, 1.0),
                           child: Container(
                             width: double.infinity,
                             height: widget.height,

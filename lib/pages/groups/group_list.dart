@@ -148,9 +148,12 @@ class _GroupListState extends ConsumerState<GroupList> {
                     await updateGroupList();
                   },
                 ),
-              _ => const ShimmerCardList(
-                  height: 100,
-                  listEntryLength: 8,
+              _ => const Padding(
+                  padding: const EdgeInsets.only(right: 8.0, left: 8.0),
+                  child: ShimmerCardList(
+                    height: 100,
+                    listEntryLength: 8,
+                  ),
                 ),
             },
           ),
