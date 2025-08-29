@@ -3,6 +3,7 @@ import 'package:deun/main.dart';
 import 'package:deun/pages/friends/friendship_model.dart';
 import 'package:deun/pages/groups/group_model.dart';
 import 'package:deun/pages/users/user_model.dart';
+import 'package:deun/widgets/card_list_view_builder.dart';
 import 'package:deun/widgets/empty_list_widget.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -35,11 +36,8 @@ class _FriendListState extends ConsumerState<FriendList> {
     ColorScheme colorScheme = themeData.colorScheme;
 
     Color listTileBackgroundColor = themeData.brightness == Brightness.light
-        ? colorScheme.onPrimary
-        : colorScheme.onInverseSurface;
-
-    Radius outRadius = Radius.circular(20);
-    Radius midRadius = Radius.circular(5);
+        ? colorScheme.surfaceContainerLowest
+        : colorScheme.surfaceContainerHighest;
 
     return ScaffoldMessenger(
       key: friendListScaffoldMessengerKey,
@@ -57,21 +55,21 @@ class _FriendListState extends ConsumerState<FriendList> {
               ],
             ),
           ],
-          body: Container(
-            color: Theme.of(context).colorScheme.surface,
-            child: switch (friendshipProvider) {
-              AsyncData(:final value) => value.isEmpty
-                  ? EmptyListWidget(
-                      label: AppLocalizations.of(context)!.friendsNoEntries,
-                      onRefresh: () async {
-                        updateFriendshipList();
-                      })
-                  : RefreshIndicator(
-                      onRefresh: () async {
-                        updateFriendshipList();
-                      },
-                      child: ListView.builder(
-                        padding: EdgeInsets.zero,
+          body: switch (friendshipProvider) {
+            AsyncData(:final value) => value.isEmpty
+                ? EmptyListWidget(
+                    label: AppLocalizations.of(context)!.friendsNoEntries,
+                    onRefresh: () async {
+                      updateFriendshipList();
+                    })
+                : RefreshIndicator(
+                    onRefresh: () async {
+                      updateFriendshipList();
+                    },
+                    child: Padding(
+                      padding: EdgeInsets.fromLTRB(8, 0, 8, 0),
+                      child: CardListView.builder(
+                        color: listTileBackgroundColor,
                         itemCount: value.length,
                         itemBuilder: (context, index) {
                           Friendship friendship = value[index];
@@ -85,59 +83,35 @@ class _FriendListState extends ConsumerState<FriendList> {
                             shareAmountColor = Colors.green;
                           }
 
-                          Radius topRadius = midRadius;
-                          Radius bottomRadius = midRadius;
-                          if(index == 0) {
-                            topRadius = outRadius;
-                          }
-
-                          if(index == value.length - 1) {
-                            bottomRadius = outRadius;
-                          }
-
-                          return Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Card(
-                                margin: EdgeInsetsGeometry.fromLTRB(8, 1, 8, 1),
-                                shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadiusGeometry.vertical(
-                                        top: topRadius,
-                                        bottom: bottomRadius)),
-                                elevation: 0,
-                                color: listTileBackgroundColor,
-                                child: ListTile(
-                                  title: Text(user.displayName),
-                                  subtitle: Text(user.email),
-                                  trailing: Text(
-                                      style: Theme.of(context)
-                                          .textTheme
-                                          .bodyMedium!
-                                          .copyWith(color: shareAmountColor),
-                                      AppLocalizations.of(context)!
-                                          .toCurrency(friendship.shareAmount)),
-                                  onTap: () {
-                                    openFriendshipDialog(context, user, friendship);
-                                  },
-                                ),
-                              )
-                            ],
+                          return ListTile(
+                            title: Text(user.displayName),
+                            subtitle: Text(user.email),
+                            trailing: Text(
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .bodyMedium!
+                                    .copyWith(color: shareAmountColor),
+                                AppLocalizations.of(context)!
+                                    .toCurrency(friendship.shareAmount)),
+                            onTap: () {
+                              openFriendshipDialog(context, user, friendship);
+                            },
                           );
                         },
                       ),
                     ),
-              AsyncError() => EmptyListWidget(
-                  label: AppLocalizations.of(context)!.friendsNoEntries,
-                  onRefresh: () async {
-                    await updateFriendshipList();
-                  },
-                ),
-              _ => const ShimmerCardList(
-                  height: 70,
-                  listEntryLength: 20,
-                ),
-            },
-          ),
+                  ),
+            AsyncError() => EmptyListWidget(
+                label: AppLocalizations.of(context)!.friendsNoEntries,
+                onRefresh: () async {
+                  await updateFriendshipList();
+                },
+              ),
+            _ => const ShimmerCardList(
+                height: 70,
+                listEntryLength: 20,
+              ),
+          },
         ),
       ),
     );

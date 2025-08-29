@@ -416,6 +416,8 @@ class _NavigationScreenState extends ConsumerState<NavigationScreen> {
               surfaceTintColor: Colors.transparent,
               backgroundColor: Color(0xffefedee),
             ),
+        cardTheme:
+            Theme.of(context).cardTheme.copyWith(margin: EdgeInsets.fromLTRB(4, 1, 4, 1)),
       ),
       darkTheme: ThemeData(
         colorScheme:
@@ -445,6 +447,8 @@ class _NavigationScreenState extends ConsumerState<NavigationScreen> {
               surfaceTintColor: Colors.transparent,
               backgroundColor: Color(0xff1f2021),
             ),
+        cardTheme:
+            Theme.of(context).cardTheme.copyWith(margin: EdgeInsets.fromLTRB(4, 1, 4, 1)),
       ),
       themeMode: ThemeMode.system,
       locale: locale,
