@@ -55,7 +55,7 @@ class GroupShareWidget extends StatelessWidget {
         .groupDisplaySumAmount(paidByYourselfAll, group.totalShareAmount.abs());
     if (toNumber(group.totalShareAmount.abs()) == '0.00') {
       totalSharedText = AppLocalizations.of(context)!.allDone;
-      textColorAll = Theme.of(context).colorScheme.primaryContainer;
+      textColorAll = textColor ?? Theme.of(context).colorScheme.onSurface;
     }
 
     sharedWidget.insert(

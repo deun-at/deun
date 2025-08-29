@@ -107,10 +107,12 @@ class _FriendListState extends ConsumerState<FriendList> {
                   await updateFriendshipList();
                 },
               ),
-            _ => const ShimmerCardList(
-                height: 70,
-                listEntryLength: 20,
-              ),
+            _ => const Padding(
+                padding: EdgeInsets.fromLTRB(8, 0, 8, 0),
+                child: ShimmerCardList(
+                  height: 70,
+                  listEntryLength: 25,
+                )),
           },
         ),
       ),

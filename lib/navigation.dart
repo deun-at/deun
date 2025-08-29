@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:deun/helper/helper.dart';
 import 'package:deun/main.dart';
 import 'package:deun/pages/auth/update_password.dart';
+import 'package:deun/pages/expenses/expense_detail.dart';
 import 'package:deun/pages/expenses/expense_model.dart';
 import 'package:deun/pages/friends/friend_add.dart';
 import 'package:deun/pages/friends/friend_list.dart';
@@ -16,7 +17,6 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'pages/expenses/expense_detail.dart';
 import 'pages/groups/group_detail.dart';
 import 'pages/groups/group_detail_edit.dart';
 import 'pages/groups/group_list.dart';
@@ -98,18 +98,15 @@ class _NavigationScreenState extends ConsumerState<NavigationScreen> {
                           GoRoute(
                               path: 'expense',
                               parentNavigatorKey: _rootNavigatorKey,
-                              pageBuilder: (context, state) {
+                              builder: (context, state) {
                                 var extra = state.extra as Map<String, dynamic>;
                                 var group = extra['group'] as Group;
                                 var expense = extra['expense'] as Expense?;
 
-                                return ModalBottomSheetPage(
-                                  key: state.pageKey,
-                                  builder: (context) => ExpenseBottomSheet(
+                                return ExpenseDetail(
                                     group: group,
                                     expense: expense,
-                                  ),
-                                );
+                                  );
                               }),
                           GoRoute(
                               path: 'statistics',
