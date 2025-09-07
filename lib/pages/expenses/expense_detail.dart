@@ -1,5 +1,6 @@
 import 'package:deun/helper/helper.dart';
 import 'package:deun/pages/groups/group_member_model.dart';
+import 'package:deun/widgets/card_list_view_builder.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_form_builder/flutter_form_builder.dart';
 import 'package:deun/l10n/app_localizations.dart';
@@ -26,7 +27,6 @@ class ExpenseDetail extends ConsumerStatefulWidget {
 }
 
 class _ExpenseDetailState extends ConsumerState<ExpenseDetail> {
-  final ScrollController _scrollController = ScrollController();
   final _formKey = GlobalKey<FormBuilderState>();
   List<GroupMember> groupMembers = [];
   ColorSeed groupColor = ColorSeed.baseColor;
@@ -141,39 +141,46 @@ class _ExpenseDetailState extends ConsumerState<ExpenseDetail> {
 
     List<Widget> expenseActions = [];
 
-    expenseActions.add(FilledButton(
-            onPressed: () async {
-              if (_formKey.currentState!.saveAndValidate()) {
-                try {
-                  await Expense.saveAll(context, widget.group.id, widget.expense?.id,
-                      _formKey.currentState!.value);
-                  if (context.mounted) {
-                    showSnackBar(context, groupDetailScaffoldMessengerKey,
-                        AppLocalizations.of(context)!.expenseCreateSuccess);
-                  }
-                } catch (e) {
-                  if (context.mounted) {
-                    showSnackBar(context, groupDetailScaffoldMessengerKey,
-                        AppLocalizations.of(context)!.expenseCreateError);
-                  }
-                } finally {
-                  if (mounted) {
-                    if (context.mounted) {
-                      Navigator.pop(context);
-                    }
-                  }
-                }
+    Widget saveExpenseButton = FilledButton(
+      onPressed: () async {
+        if (_formKey.currentState!.saveAndValidate()) {
+          try {
+            await Expense.saveAll(context, widget.group.id, widget.expense?.id,
+                _formKey.currentState!.value);
+            if (context.mounted) {
+              showSnackBar(context, groupDetailScaffoldMessengerKey,
+                  AppLocalizations.of(context)!.expenseCreateSuccess);
+            }
+          } catch (e) {
+            if (context.mounted) {
+              showSnackBar(context, groupDetailScaffoldMessengerKey,
+                  AppLocalizations.of(context)!.expenseCreateError);
+            }
+          } finally {
+            if (mounted) {
+              if (context.mounted) {
+                Navigator.pop(context);
               }
-            },
-            child: Text(AppLocalizations.of(context)!.save),),);
+            }
+          }
+        }
+      },
+      child: Text(AppLocalizations.of(context)!.save),
+    );
 
     if (widget.expense != null) {
+      expenseActions.add(saveExpenseButton);
+
       expenseActions.add(IconButton(
         onPressed: () {
           openDeleteItemDialog(context, widget.expense!);
         },
         icon: Icon(Icons.delete_outline, color: Theme.of(context).colorScheme.onSurface),
       ));
+    } else {
+      expenseActions.add(
+        Padding(padding: EdgeInsetsGeometry.only(right: 8), child: saveExpenseButton),
+      );
     }
 
     return Scaffold(
@@ -183,7 +190,7 @@ class _ExpenseDetailState extends ConsumerState<ExpenseDetail> {
         body: ListView(
           children: [
             Padding(
-              padding: const EdgeInsets.fromLTRB(20, 10, 20, 40),
+              padding: const EdgeInsets.only(top: 10, bottom: 40),
               child: FormBuilder(
                 key: _formKey,
                 clearValueOnUnregister: true,
@@ -206,6 +213,7 @@ class _ExpenseDetailState extends ConsumerState<ExpenseDetail> {
                         decoration: InputDecoration(
                           border: InputBorder.none,
                           hintText: AppLocalizations.of(context)!.addExpenseTitle,
+                          contentPadding: EdgeInsets.only(left: 8, right: 8),
                         ),
                         onChanged: (value) {
                           field.didChange(value);
@@ -224,7 +232,7 @@ class _ExpenseDetailState extends ConsumerState<ExpenseDetail> {
                         labelStyle: Theme.of(context).textTheme.bodyLarge!.copyWith(
                             color: Theme.of(context).colorScheme.onSurfaceVariant),
                         border: InputBorder.none,
-                        contentPadding: const EdgeInsets.all(0),
+                        contentPadding: EdgeInsets.only(left: 8, right: 8),
                       ),
                       initialValue:
                           widget.expense?.paidBy ?? supabase.auth.currentUser?.email,
@@ -253,6 +261,7 @@ class _ExpenseDetailState extends ConsumerState<ExpenseDetail> {
                         labelStyle: Theme.of(context).textTheme.bodyLarge!.copyWith(
                             color: Theme.of(context).colorScheme.onSurfaceVariant),
                         hintText: AppLocalizations.of(context)!.addExpenseTitle,
+                        contentPadding: EdgeInsets.only(left: 8, right: 8),
                       ),
                     ),
                     const SizedBox(height: spacing),
@@ -261,7 +270,7 @@ class _ExpenseDetailState extends ConsumerState<ExpenseDetail> {
                       initialValue: _detectedCategory ?? widget.expense?.category,
                     ),
                     const SizedBox(height: spacing),
-                    ...expenseEntryFields,
+                    CardColumn(children: expenseEntryFields),
                     Center(
                         child: FilledButton.tonalIcon(
                       icon: const Icon(Icons.add),

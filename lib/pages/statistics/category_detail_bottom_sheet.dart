@@ -2,8 +2,10 @@ import 'package:deun/helper/helper.dart';
 import 'package:deun/pages/expenses/expense_category.dart';
 import 'package:deun/pages/statistics/statistics_models.dart';
 import 'package:deun/provider.dart';
+import 'package:deun/widgets/card_list_view_builder.dart';
 import 'package:deun/widgets/rounded_container.dart';
 import 'package:deun/widgets/shimmer_card_list.dart';
+import 'package:deun/widgets/sliver_grab_widget.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
@@ -39,118 +41,134 @@ class CategoryDetailBottomSheet extends ConsumerWidget {
       orElse: () => ExpenseCategory.other,
     );
 
-    return DraggableScrollableSheet(
-      expand: true,
-      initialChildSize: .8,
-      snap: true,
-      builder: (context, scrollController) {
-        return RoundedContainer(
-          child: Scaffold(
-            appBar: AppBar(
-              title: Row(
-                children: [
-                  Icon(
-                    category.getIcon(),
-                    size: 24,
-                    color: Theme.of(context).colorScheme.primary,
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          category.getDisplayName(localizations),
-                          style: Theme.of(context).textTheme.titleLarge,
-                        ),
-                        Text(
-                          DateFormat("MMMM yyyy").format(monthStart),
-                          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                color: Theme.of(context).colorScheme.onSurfaceVariant,
-                              ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-              centerTitle: true,
-            ),
-            body: Container(
-              color: Theme.of(context).colorScheme.surface,
-              child: state.when(
-                loading: () => const Center(
-                  child: ShimmerCardList(
-                    height: 60,
-                    listEntryLength: 8,
-                  ),
-                ),
-                error: (error, stackTrace) => Center(
-                  child: Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: Text(
-                      'Error: $error',
-                      style: TextStyle(color: Theme.of(context).colorScheme.error),
-                    ),
-                  ),
-                ),
-                data: (expenses) {
-                  if (expenses.isEmpty) {
-                    return const Center(
-                      child: Padding(
-                        padding: EdgeInsets.all(32),
-                        child: Text('No expenses found'),
+    return SafeArea(
+      child: DraggableScrollableSheet(
+        expand: false,
+        initialChildSize: .8,
+        builder: (context, scrollController) {
+          return RoundedContainer(
+            child: Scaffold(
+              body: CustomScrollView(controller: scrollController, slivers: [
+                const SliverGrabWidget(),
+                SliverAppBar(
+                  pinned: true,
+                  title: Row(
+                    children: [
+                      Icon(
+                        category.getIcon(),
                       ),
-                    );
-                  }
-
-                  return ListView.separated(
-                    controller: scrollController,
-                    padding: const EdgeInsets.only(bottom: 16),
-                    itemCount: expenses.length,
-                    separatorBuilder: (context, index) => const Divider(height: 1),
-                    itemBuilder: (context, index) {
-                      final expense = expenses[index];
-                      final date = DateTime.parse(expense.expenseDate);
-
-                      return ListTile(
-                        title: Text(
-                          expense.expenseName,
-                          style: Theme.of(context).textTheme.bodyLarge,
-                        ),
-                        subtitle: Column(
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              DateFormat("MMM d, yyyy").format(date),
-                              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                    color: Theme.of(context).colorScheme.onSurfaceVariant,
-                                  ),
+                              category.getDisplayName(localizations),
+                              style: Theme.of(context).textTheme.titleLarge,
                             ),
                             Text(
-                              'Paid by ${expense.paidByDisplayName}',
-                              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                              DateFormat("MMMM yyyy").format(monthStart),
+                              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                                     color: Theme.of(context).colorScheme.onSurfaceVariant,
                                   ),
                             ),
                           ],
                         ),
-                        trailing: Text(
-                          toCurrency(expense.amount),
-                          style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                                fontWeight: FontWeight.w600,
-                              ),
+                      ),
+                    ],
+                  ),
+                ),
+                state.when(
+                  loading: () => SliverToBoxAdapter(
+                    child: ShimmerCardList(
+                      height: 60,
+                      listEntryLength: 8,
+                    ),
+                  ),
+                  error: (error, stackTrace) => SliverToBoxAdapter(
+                      child: Center(
+                    child: Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: Text(
+                        'Error: $error',
+                        style: TextStyle(color: Theme.of(context).colorScheme.error),
+                      ),
+                    ),
+                  )),
+                  data: (expenses) {
+                    if (expenses.isEmpty) {
+                      return const SliverToBoxAdapter(
+                          child: Center(
+                        child: Padding(
+                          padding: EdgeInsets.all(32),
+                          child: Text('No expenses found'),
                         ),
-                        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-                      );
-                    },
-                  );
-                },
-              ),
+                      ));
+                    }
+
+                    return SliverList.builder(
+                      itemCount: expenses.length,
+                      itemBuilder: (context, index) {
+                        final expense = expenses[index];
+                        final date = DateTime.parse(expense.expenseDate);
+
+                        bool isTop = false;
+                        bool isBottom = false;
+
+                        if (index == 0) {
+                          isTop = true;
+                        }
+
+                        if (index == expenses.length - 1) {
+                          isBottom = true;
+                        }
+
+                        return CardListTile(
+                          isTop: isTop,
+                          isBottom: isBottom,
+                          child: ListTile(
+                            title: Text(
+                              expense.expenseName,
+                              style: Theme.of(context).textTheme.bodyLarge,
+                            ),
+                            subtitle: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  DateFormat("MMM d, yyyy").format(date),
+                                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                        color: Theme.of(context)
+                                            .colorScheme
+                                            .onSurfaceVariant,
+                                      ),
+                                ),
+                                Text(
+                                  'Paid by ${expense.paidByDisplayName}',
+                                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                        color: Theme.of(context)
+                                            .colorScheme
+                                            .onSurfaceVariant,
+                                      ),
+                                ),
+                              ],
+                            ),
+                            trailing: Text(
+                              toCurrency(expense.amount),
+                              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                            ),
+                          ),
+                        );
+                      },
+                    );
+                  },
+                ),
+              ]),
             ),
-          ),
-        );
-      },
+          );
+        },
+      ),
     );
   }
 }

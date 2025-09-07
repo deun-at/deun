@@ -1,7 +1,10 @@
+import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_form_builder/flutter_form_builder.dart';
 import 'package:deun/l10n/app_localizations.dart';
 import 'package:deun/pages/expenses/expense_category.dart';
+
+import 'card_list_view_builder.dart';
 
 class CategorySelector extends StatefulWidget {
   const CategorySelector({
@@ -30,6 +33,8 @@ class _CategorySelectorState extends State<CategorySelector> {
     super.initState();
     _searchController = SearchController();
     _selectedCategory = widget.initialValue;
+
+    _selectedCategory ??= ExpenseCategory.other;
   }
 
   @override
@@ -78,63 +83,22 @@ class _CategorySelectorState extends State<CategorySelector> {
         return SearchAnchor(
           searchController: _searchController,
           builder: (BuildContext context, SearchController controller) {
-            return InkWell(
-              onTap: widget.enabled
-                  ? () {
-                      controller.text = ''; // Clear search field when opening
-                      controller.openView();
-                    }
-                  : null,
-              child: InputDecorator(
-                decoration: InputDecoration(
-                  labelText: localizations.expenseCategory,
-                  labelStyle: Theme.of(context)
-                      .textTheme
-                      .bodyLarge!
-                      .copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
-                  border: InputBorder.none,
-                  contentPadding: const EdgeInsets.all(0),
-                  suffixIcon: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      if (_selectedCategory != null && widget.enabled)
-                        IconButton(
-                          icon: const Icon(Icons.clear),
-                          onPressed: () {
-                            _selectCategory(null);
-                            field.didChange(null);
-                          },
-                        ),
-                      Icon(
-                        Icons.arrow_drop_down,
-                        color: Theme.of(context).colorScheme.onSurfaceVariant,
-                      ),
-                    ],
-                  ),
+            return CardListTile(
+              isTop: true,
+              isBottom: true,
+              child: ListTile(
+                leading: Icon(
+                  _selectedCategory!.getIcon(),
                 ),
-                child: _selectedCategory != null
-                    ? Row(
-                        children: [
-                          Icon(
-                            _selectedCategory!.getIcon(),
-                            size: 20,
-                            color: Theme.of(context).colorScheme.primary,
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Text(
-                              _selectedCategory!.getDisplayName(localizations),
-                              style: Theme.of(context).textTheme.bodyMedium,
-                            ),
-                          ),
-                        ],
-                      )
-                    : Text(
-                        '',
-                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                              color: Theme.of(context).colorScheme.onSurfaceVariant,
-                            ),
-                      ),
+                title: Text(
+                  _selectedCategory!.getDisplayName(localizations),
+                ),
+                onTap: widget.enabled
+                    ? () {
+                        controller.text = ''; // Clear search field when opening
+                        controller.openView();
+                      }
+                    : null,
               ),
             );
           },
@@ -143,23 +107,39 @@ class _CategorySelectorState extends State<CategorySelector> {
             final filteredCategories = query.isEmpty
                 ? ExpenseCategory.values.toList()
                 : ExpenseCategory.values.where((category) {
-                    final categoryName = category.getDisplayName(localizations).toLowerCase();
+                    final categoryName =
+                        category.getDisplayName(localizations).toLowerCase();
                     return categoryName.contains(query);
                   }).toList();
 
-            return filteredCategories.map((category) {
-              return ListTile(
-                leading: Icon(
-                  category.getIcon(),
-                  color: Theme.of(context).colorScheme.primary,
-                ),
-                title: Text(category.getDisplayName(localizations)),
-                onTap: () {
-                  _selectCategory(category);
-                  field.didChange(category);
-                  controller.closeView(category.getDisplayName(localizations));
-                },
-              );
+            int categoriesLength = filteredCategories.length;
+
+            return filteredCategories.mapIndexed((index, category) {
+              bool isTop = false;
+              bool isBottom = false;
+
+              if (index == 0) {
+                isTop = true;
+              }
+
+              if (index == categoriesLength - 1) {
+                isBottom = true;
+              }
+
+              return CardListTile(
+                  isTop: isTop,
+                  isBottom: isBottom,
+                  child: ListTile(
+                    leading: Icon(
+                      category.getIcon(),
+                    ),
+                    title: Text(category.getDisplayName(localizations)),
+                    onTap: () {
+                      _selectCategory(category);
+                      field.didChange(category);
+                      controller.closeView(category.getDisplayName(localizations));
+                    },
+                  ));
             }).toList();
           },
         );

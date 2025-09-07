@@ -20,68 +20,45 @@ class _GroupListItemState extends ConsumerState<GroupListItem> {
   @override
   Widget build(BuildContext context) {
     ThemeData themeData = Theme.of(context);
-    Color colorSeedValue = Color(widget.group.colorValue);
+    ColorScheme colorScheme = themeData.colorScheme;
 
-    return Theme(
-      data: themeData.copyWith(
-          colorScheme: ColorScheme.fromSeed(
-              seedColor: colorSeedValue, brightness: themeData.brightness)),
-      child: Builder(
-        builder: (context) {
-          ThemeData themeData = Theme.of(context);
-          ColorScheme colorScheme = themeData.colorScheme;
+    Color textColor = themeData.brightness == Brightness.light
+        ? colorScheme.primaryContainer
+        : colorScheme.primary;
 
-          Color cardColor = themeData.brightness == Brightness.light
-              ? colorScheme.primary
-              : colorScheme.primaryContainer;
-          Color textColor = themeData.brightness == Brightness.light
-              ? colorScheme.primaryContainer
-              : colorScheme.primary;
-
-          return Card(
-            elevation: 0,
-            color: cardColor,
-            child: InkWell(
-              borderRadius: BorderRadius.circular(12.0),
-              onTap: () {
-                ref
-                    .read(themeColorProvider.notifier)
-                    .setColor(Color(widget.group.colorValue));
-                GoRouter.of(context)
-                    .push("/group/details", extra: {'group': widget.group}).then(
-                  (value) async {
-                    ref.read(themeColorProvider.notifier).resetColor();
-                  },
-                );
-              },
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(10, 5, 5, 10),
-                child: Column(
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Flexible(
-                          child: Text(
-                            widget.group.name,
-                            style: GoogleFonts.notoSerif(
-                                textStyle: Theme.of(context)
-                                    .textTheme
-                                    .headlineMedium!
-                                    .copyWith(
-                                        fontWeight: FontWeight.w900, color: textColor)),
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                      ],
-                    ),
-                    GroupShareWidget(group: widget.group, textColor: textColor),
-                  ],
+    return InkWell(
+      borderRadius: BorderRadius.circular(12.0),
+      onTap: () {
+        ref.read(themeColorProvider.notifier).setColor(Color(widget.group.colorValue));
+        GoRouter.of(context).push("/group/details", extra: {'group': widget.group}).then(
+          (value) async {
+            ref.read(themeColorProvider.notifier).resetColor();
+          },
+        );
+      },
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(10, 5, 5, 10),
+        child: Column(
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Flexible(
+                  child: Text(
+                    widget.group.name,
+                    style: GoogleFonts.robotoSerif(
+                        textStyle: Theme.of(context)
+                            .textTheme
+                            .headlineSmall!
+                            .copyWith(fontWeight: FontWeight.w900, color: textColor)),
+                    overflow: TextOverflow.ellipsis,
+                  ),
                 ),
-              ),
+              ],
             ),
-          );
-        },
+            GroupShareWidget(group: widget.group, textColor: textColor),
+          ],
+        ),
       ),
     );
   }

@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:collection/collection.dart';
 import 'package:deun/helper/helper.dart';
 import 'package:deun/pages/friends/friendship_model.dart';
+import 'package:deun/widgets/card_list_view_builder.dart';
 import 'package:deun/widgets/form_loading_widget.dart';
 import 'package:deun/widgets/rounded_container.dart';
 import 'package:deun/widgets/sliver_grab_widget.dart';
@@ -94,6 +95,8 @@ class _GroupBottomSheetState extends ConsumerState<GroupBottomSheet> {
       SearchController controller, FormFieldState<dynamic> field) {
     List<Map<String, dynamic>> groupMembers = Group.decodeGroupMembersString(field.value);
 
+    int groupMembersLength = groupMembers.length;
+
     return groupMembers.mapIndexed((index, user) {
       String titleText = "";
       Widget iconButton;
@@ -105,7 +108,10 @@ class _GroupBottomSheetState extends ConsumerState<GroupBottomSheet> {
         );
       } else {
         titleText = "${user["display_name"]}";
-        iconButton = IconButton(
+        iconButton = IconButton.filled(
+          style: IconButton.styleFrom(
+              backgroundColor: Theme.of(context).colorScheme.error,
+              foregroundColor: Theme.of(context).colorScheme.onError),
           icon: const Icon(Icons.delete),
           onPressed: () {
             groupMembers.removeAt(index);
@@ -116,8 +122,24 @@ class _GroupBottomSheetState extends ConsumerState<GroupBottomSheet> {
         );
       }
 
-      return ListTile(
-          title: Text(titleText), subtitle: Text(user["email"]), trailing: iconButton);
+      bool isTop = false;
+      bool isBottom = false;
+
+      if (index == 0) {
+        isTop = true;
+      }
+
+      if (index == groupMembersLength - 1) {
+        isBottom = true;
+      }
+
+      return CardListTile(
+          isTop: isTop,
+          isBottom: isBottom,
+          child: ListTile(
+              title: Text(titleText),
+              subtitle: Text(user["email"]),
+              trailing: iconButton));
     });
   }
 
@@ -134,15 +156,36 @@ class _GroupBottomSheetState extends ConsumerState<GroupBottomSheet> {
 
     selectedUsers.add(supabase.auth.currentUser?.email ?? '');
 
-    List<User> result = await Friendship.fetchFriends(input, selectedUsers, 10);
+    List<User> result = await Friendship.fetchFriends(input, selectedUsers, 99);
 
     if (result.isEmpty) {
       return [
-        ListTile(title: Text(AppLocalizations.of(context)!.groupMemberResultEmpty))
+        CardListTile(
+            isTop: true,
+            isBottom: true,
+            child: ListTile(
+                title: Text(AppLocalizations.of(context)!.groupMemberResultEmpty)))
       ];
     }
 
-    return result.map((user) => ListTile(
+    int resultLength = result.length;
+
+    return result.mapIndexed((index, user) {
+      bool isTop = false;
+      bool isBottom = false;
+
+      if (index == 0) {
+        isTop = true;
+      }
+
+      if (index == resultLength - 1) {
+        isBottom = true;
+      }
+
+      return CardListTile(
+        isTop: isTop,
+        isBottom: isBottom,
+        child: ListTile(
           title: Text(user.displayName),
           subtitle: Text(user.email),
           onTap: () {
@@ -150,7 +193,9 @@ class _GroupBottomSheetState extends ConsumerState<GroupBottomSheet> {
             field.didChange(jsonEncode(nbs));
             controller.text = "";
           },
-        ));
+        ),
+      );
+    });
   }
 
   @override

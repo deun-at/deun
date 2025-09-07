@@ -1,7 +1,7 @@
 name: deun
 description: "Simply Split Fairly."
 publish_to: "none"
-version: 0.1.9+9
+version: 1.0.0+10
 
 environment:
   sdk: ">=3.6.0 <4.0.0"
@@ -56,8 +56,8 @@ dev_dependencies:
   mockito: ^5.4.5
 
 flutter_native_splash:
-  color: "#ffffff"
-  color_dark: "#101513"
+  color: "#efedee"
+  color_dark: "#1f2021"
   image: assets/icon/icon-512.png
 
 flutter:
@@ -65,3 +65,4 @@ flutter:
   uses-material-design: true
   assets:
     - assets/icon/icon-512.png
+    - assets/google_fonts/

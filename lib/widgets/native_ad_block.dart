@@ -56,14 +56,18 @@ class _NativeAdBlockState extends State<NativeAdBlock> {
       ),
       nativeTemplateStyle: NativeTemplateStyle(
         templateType: TemplateType.small,
-        mainBackgroundColor: Colors.white12,
+        mainBackgroundColor: Theme.of(context).colorScheme.surfaceContainerLowest,
         callToActionTextStyle: NativeTemplateTextStyle(
-          size: 16.0,
+          backgroundColor: Theme.of(context).colorScheme.primary,
+          textColor: Theme.of(context).colorScheme.onPrimary,
         ),
-        cornerRadius: 8.0,
         primaryTextStyle: NativeTemplateTextStyle(
-          textColor: Colors.black38,
-          backgroundColor: Colors.white70,
+          textColor: Theme.of(context).colorScheme.onSurface,
+          backgroundColor: Theme.of(context).colorScheme.surfaceContainerLowest,
+        ),
+        secondaryTextStyle: NativeTemplateTextStyle(
+          textColor: Theme.of(context).colorScheme.onSurface,
+          backgroundColor: Theme.of(context).colorScheme.surfaceContainerLowest,
         ),
       ),
     )..load();
