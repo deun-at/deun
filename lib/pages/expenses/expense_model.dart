@@ -100,6 +100,7 @@ class Expense {
         .select(
             '*, ...paid_by(paid_by_display_name:display_name), expense_entry(*, expense_entry_share(*, ...email(display_name:display_name))), group!expense_group_id_fkey(*, group_shares_summary(*, ...paid_by(paid_by_display_name:display_name), ...paid_for(paid_for_display_name:display_name)), group_member(*, ...user(display_name:display_name)))')
         .eq('group_id', groupId)
+        .eq('is_paid_back_row', false)
         .gte('expense_date', start.toIso8601String())
         .lt('expense_date', end.toIso8601String())
         .order('expense_date')

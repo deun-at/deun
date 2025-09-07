@@ -17,6 +17,7 @@ import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../provider.dart';
 
+import '../../widgets/card_list_view_builder.dart';
 import 'group_model.dart';
 import 'group_share_widget.dart';
 
@@ -33,7 +34,7 @@ class _GroupDetailState extends ConsumerState<GroupDetail> {
   final ScrollController _scrollController = ScrollController();
   final SearchController _searchController = SearchController();
   int oldLength = 0;
-  Widget? _adBox;
+  Widget? _adBlock;
   bool _showText = true;
 
   @override
@@ -42,12 +43,13 @@ class _GroupDetailState extends ConsumerState<GroupDetail> {
     _scrollController.addListener(_handleScroll);
 
     if (kIsWeb) {
-      _adBox = SizedBox();
+      _adBlock = SizedBox();
     } else {
-      _adBox = const SizedBox();
-      // _adBox = NativeAdBlock(
-      //   adUnitId: Platform.isAndroid ? MobileAdMobs.androidExpenseList.value : MobileAdMobs.iosExpenseList.value,
-      // );
+      _adBlock = NativeAdBlock(
+        adUnitId: Platform.isAndroid
+            ? MobileAdMobs.androidExpenseList.value
+            : MobileAdMobs.iosExpenseList.value,
+      );
     }
   }
 
@@ -87,7 +89,7 @@ class _GroupDetailState extends ConsumerState<GroupDetail> {
             headerSliverBuilder: (context, innerBoxIsScrolled) => [
               SliverAppBar.medium(
                 title: Text(widget.group.name,
-                    style: GoogleFonts.notoSerif(
+                    style: GoogleFonts.robotoSerif(
                         textStyle: Theme.of(context)
                             .textTheme
                             .headlineMedium!
@@ -108,11 +110,14 @@ class _GroupDetailState extends ConsumerState<GroupDetail> {
                     suggestionsBuilder: (context, controller) {
                       if (controller.text.isEmpty) {
                         return <Widget>[
-                          ListTile(
-                            // ignore: use_build_context_synchronously
-                            title: Text(
-                                AppLocalizations.of(context)!.expensesSearchDescription),
-                          )
+                          CardListTile(
+                            isTop: true,
+                            isBottom: true,
+                            child: ListTile(
+                              title: Text(AppLocalizations.of(context)!
+                                  .expensesSearchDescription),
+                            ),
+                          ),
                         ];
                       }
                       return getExpenseSuggestions(controller, widget.group);
@@ -147,22 +152,25 @@ class _GroupDetailState extends ConsumerState<GroupDetail> {
 
                         if (isLoading || groupDetail == null) {
                           return const Padding(
-                            padding: EdgeInsets.fromLTRB(5.0, 5.0, 5.0, 5.0),
+                            padding: EdgeInsets.only(bottom: 5.0, top: 5.0),
                             child: Column(
                               mainAxisAlignment: MainAxisAlignment.start,
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 SizedBox(
-                                    height: 25,
+                                    height: 30,
                                     width: 250,
-                                    child: ShimmerCardList(
-                                        height: 15,
-                                        listEntryLength: 1)),
+                                    child:
+                                        ShimmerCardList(height: 20, listEntryLength: 1)),
                                 SizedBox(
-                                  height: 37,
+                                  height: 16,
                                   width: 250,
-                                  child: ShimmerCardList(
-                                      height: 10, listEntryLength: 2),
+                                  child: ShimmerCardList(height: 10, listEntryLength: 1),
+                                ),
+                                SizedBox(
+                                  height: 16,
+                                  width: 250,
+                                  child: ShimmerCardList(height: 10, listEntryLength: 1),
                                 ),
                               ],
                             ),
@@ -170,8 +178,8 @@ class _GroupDetailState extends ConsumerState<GroupDetail> {
                         }
 
                         return Padding(
-                            padding: const EdgeInsets.fromLTRB(16.0, 5.0, 16.0, 5.0),
-                            child: GroupShareWidget(group: groupDetail));
+                            padding: const EdgeInsets.fromLTRB(10.0, 5.0, 10.0, 5.0),
+                            child: GroupShareWidget(group: groupDetail!));
                       },
                     ),
                   ],
@@ -182,7 +190,7 @@ class _GroupDetailState extends ConsumerState<GroupDetail> {
               top: false,
               child: GroupDetailList(
                 group: widget.group,
-                adBox: _adBox,
+                adBlock: _adBlock,
               ),
             ),
           ),
@@ -241,27 +249,49 @@ class _GroupDetailState extends ConsumerState<GroupDetail> {
     List<Expense> result = await Expense.fetchData(group.id, 0, 9, input);
     if (result.isEmpty) {
       return [
-        ListTile(
-          // ignore: use_build_context_synchronously
-          title: Text(AppLocalizations.of(context)!.expensesSearchEmpty),
-        )
+        CardListTile(
+          isTop: true,
+          isBottom: true,
+          child: ListTile(
+            title: Text(AppLocalizations.of(context)!.expensesSearchEmpty),
+          ),
+        ),
       ];
     }
+
+    int resultLength = result.length;
+    int index = 0;
 
     return result.map(
       (expense) {
         double expenseSum = expense.expenseEntries.values
             .fold<double>(0, (sum, expense) => sum + expense.amount);
 
-        return ListTile(
-          title: Text(expense.name),
-          subtitle: Text(AppLocalizations.of(context)!.toCurrency(expenseSum)),
-          trailing: Text(formatDate(expense.expenseDate)),
-          onTap: () async {
-            controller.closeView("");
-            GoRouter.of(context).push("/group/details/expense",
-                extra: {'group': group, 'expense': expense});
-          },
+        bool isTop = false;
+        bool isBottom = false;
+        if (index == 0) {
+          isTop = true;
+        }
+
+        if (index == resultLength - 1) {
+          isBottom = true;
+        }
+
+        index++;
+
+        return CardListTile(
+          isTop: isTop,
+          isBottom: isBottom,
+          child: ListTile(
+            title: Text(expense.name),
+            subtitle: Text(AppLocalizations.of(context)!.toCurrency(expenseSum)),
+            trailing: Text(formatDate(expense.expenseDate)),
+            onTap: () async {
+              controller.closeView("");
+              GoRouter.of(context).push("/group/details/expense",
+                  extra: {'group': group, 'expense': expense});
+            },
+          ),
         );
       },
     );

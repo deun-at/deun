@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import 'card_list_view_builder.dart';
+
 class _SlidingGradientTransform extends GradientTransform {
   const _SlidingGradientTransform({
     required this.slidePercent,
@@ -23,7 +25,8 @@ class ShimmerCardList extends StatefulWidget {
   State<StatefulWidget> createState() => ShimmerCardListState();
 }
 
-class ShimmerCardListState extends State<ShimmerCardList> with SingleTickerProviderStateMixin {
+class ShimmerCardListState extends State<ShimmerCardList>
+    with SingleTickerProviderStateMixin {
   late AnimationController _shimmerController;
 
   @override
@@ -43,10 +46,7 @@ class ShimmerCardListState extends State<ShimmerCardList> with SingleTickerProvi
     ThemeData themeData = Theme.of(context);
     ColorScheme colorScheme = themeData.colorScheme;
 
-    Color color = themeData.brightness == Brightness.light
-        ? colorScheme.surfaceContainerLowest
-        : colorScheme.surfaceContainerHighest;
-
+    Color color = colorScheme.surfaceContainerLowest;
     Color shimmerColor = themeData.colorScheme.surface;
 
     return LinearGradient(
@@ -78,50 +78,18 @@ class ShimmerCardListState extends State<ShimmerCardList> with SingleTickerProvi
                 return gradient.createShader(bounds);
               },
               blendMode: BlendMode.srcATop,
-              child: ListView(
-                padding: EdgeInsets.zero,
+              child: CardListView(
                 shrinkWrap: true,
                 physics: const NeverScrollableScrollPhysics(),
-                children: List.generate(
-                    widget.listEntryLength,
-                    (index) => Padding(
-                          padding: const EdgeInsets.fromLTRB(4.0, 1.0, 4.0, 1.0),
-                          child: Container(
-                            width: double.infinity,
-                            height: widget.height,
-                            decoration: BoxDecoration(
-                              color: Colors.black,
-                              borderRadius: BorderRadius.circular(16),
-                            ),
-                          ),
-                        )),
+                color: Colors.black,
+                itemCount: widget.listEntryLength,
+                itemBuilder: (context, index) {
+                  return SizedBox(
+                    width: double.infinity,
+                    height: widget.height,
+                  );
+                },
               ));
         });
-  }
-}
-
-class ShimmerCardListTile extends StatelessWidget {
-  const ShimmerCardListTile({super.key, this.listTileAmount = 1});
-  final int listTileAmount;
-
-  @override
-  Widget build(BuildContext context) {
-    return ListView.builder(
-      padding: EdgeInsets.zero,
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      itemCount: listTileAmount,
-      itemBuilder: (context, index) {
-        return Padding(
-            padding: const EdgeInsets.fromLTRB(5.0, 8.0, 5.0, 8.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                SizedBox(width: 150, child: ShimmerCardList(height: 15, listEntryLength: 1)),
-                SizedBox(width: 250, child: ShimmerCardList(height: 15, listEntryLength: 1)),
-              ],
-            ));
-      },
-    );
   }
 }

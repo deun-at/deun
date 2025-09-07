@@ -13,6 +13,8 @@ import 'package:go_router/go_router.dart';
 import '../../main.dart';
 import 'package:deun/l10n/app_localizations.dart';
 
+import '../../widgets/card_list_view_builder.dart';
+
 class Setting extends ConsumerStatefulWidget {
   const Setting({super.key});
 
@@ -28,7 +30,8 @@ class _SettingState extends ConsumerState<Setting> {
   // tells us if the user is under the GDPR
   late final Future<bool> _future;
 
-  List<String> localeOptions = AppLocalizations.supportedLocales.map((l) => l.toLanguageTag()).toList();
+  List<String> localeOptions =
+      AppLocalizations.supportedLocales.map((l) => l.toLanguageTag()).toList();
 
   @override
   void initState() {
@@ -54,7 +57,8 @@ class _SettingState extends ConsumerState<Setting> {
                     showDialog(
                         context: context,
                         builder: (context) => AlertDialog(
-                              content: Text(AppLocalizations.of(context)!.settingsSignOutDialogTitle),
+                              content: Text(AppLocalizations.of(context)!
+                                  .settingsSignOutDialogTitle),
                               actions: <Widget>[
                                 TextButton(
                                   child: Text(AppLocalizations.of(context)!.cancel),
@@ -63,9 +67,11 @@ class _SettingState extends ConsumerState<Setting> {
                                 FilledButton(
                                   style: FilledButton.styleFrom(
                                     backgroundColor: Theme.of(context).colorScheme.error,
-                                    foregroundColor: Theme.of(context).colorScheme.onError,
+                                    foregroundColor:
+                                        Theme.of(context).colorScheme.onError,
                                   ),
-                                  child: Text(AppLocalizations.of(context)!.settingsSignOut),
+                                  child:
+                                      Text(AppLocalizations.of(context)!.settingsSignOut),
                                   onPressed: () async {
                                     await supabase.auth.signOut();
                                   },
@@ -83,14 +89,7 @@ class _SettingState extends ConsumerState<Setting> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Padding(
-                  padding: const EdgeInsets.all(12),
-                  child: Text(
-                    AppLocalizations.of(context)!.settingsUserHeading,
-                    style: Theme.of(context).textTheme.headlineSmall,
-                  ),
-                ),
-                Padding(
-                  padding: const EdgeInsets.all(15),
+                  padding: const EdgeInsets.all(10),
                   child: Consumer(
                     builder: (context, ref, child) {
                       final User? user = ref.watch(userDetailNotifierProvider).value;
@@ -121,13 +120,15 @@ class _SettingState extends ConsumerState<Setting> {
                                     children: [
                                       FormBuilderField(
                                         name: "first_name",
-                                        builder: (FormFieldState<dynamic> field) => TextFormField(
+                                        builder: (FormFieldState<dynamic> field) =>
+                                            TextFormField(
                                           initialValue: field.value,
                                           validator: FormBuilderValidators.required(
-                                              errorText:
-                                                  AppLocalizations.of(context)!.settingsFirstNameValidationEmpty),
+                                              errorText: AppLocalizations.of(context)!
+                                                  .settingsFirstNameValidationEmpty),
                                           decoration: InputDecoration(
-                                            labelText: AppLocalizations.of(context)!.settingsFirstName,
+                                            labelText: AppLocalizations.of(context)!
+                                                .settingsFirstName,
                                             border: const OutlineInputBorder(),
                                           ),
                                           onChanged: (value) => field.didChange(value),
@@ -136,12 +137,15 @@ class _SettingState extends ConsumerState<Setting> {
                                       const SizedBox(height: heightSpacing),
                                       FormBuilderField(
                                         name: "last_name",
-                                        builder: (FormFieldState<dynamic> field) => TextFormField(
+                                        builder: (FormFieldState<dynamic> field) =>
+                                            TextFormField(
                                           initialValue: field.value,
                                           validator: FormBuilderValidators.required(
-                                              errorText: AppLocalizations.of(context)!.settingsLastNameValidationEmpty),
+                                              errorText: AppLocalizations.of(context)!
+                                                  .settingsLastNameValidationEmpty),
                                           decoration: InputDecoration(
-                                            labelText: AppLocalizations.of(context)!.settingsLastName,
+                                            labelText: AppLocalizations.of(context)!
+                                                .settingsLastName,
                                             border: const OutlineInputBorder(),
                                           ),
                                           onChanged: (value) => field.didChange(value),
@@ -150,13 +154,15 @@ class _SettingState extends ConsumerState<Setting> {
                                       const SizedBox(height: heightSpacing),
                                       FormBuilderField(
                                         name: "display_name",
-                                        builder: (FormFieldState<dynamic> field) => TextFormField(
+                                        builder: (FormFieldState<dynamic> field) =>
+                                            TextFormField(
                                           initialValue: field.value,
                                           validator: FormBuilderValidators.required(
-                                              errorText:
-                                                  AppLocalizations.of(context)!.settingsDisplayNameValidationEmpty),
+                                              errorText: AppLocalizations.of(context)!
+                                                  .settingsDisplayNameValidationEmpty),
                                           decoration: InputDecoration(
-                                            labelText: AppLocalizations.of(context)!.settingsDisplayName,
+                                            labelText: AppLocalizations.of(context)!
+                                                .settingsDisplayName,
                                             border: const OutlineInputBorder(),
                                           ),
                                           onChanged: (value) => field.didChange(value),
@@ -180,10 +186,12 @@ class _SettingState extends ConsumerState<Setting> {
                                     children: [
                                       FormBuilderField(
                                         name: "paypal_me",
-                                        builder: (FormFieldState<dynamic> field) => TextFormField(
+                                        builder: (FormFieldState<dynamic> field) =>
+                                            TextFormField(
                                           initialValue: field.value,
                                           decoration: InputDecoration(
-                                            labelText: AppLocalizations.of(context)!.settingsPaypalMe,
+                                            labelText: AppLocalizations.of(context)!
+                                                .settingsPaypalMe,
                                             border: const OutlineInputBorder(),
                                             prefixText: 'paypal.me/',
                                           ),
@@ -193,10 +201,12 @@ class _SettingState extends ConsumerState<Setting> {
                                       const SizedBox(height: heightSpacing),
                                       FormBuilderField(
                                         name: "iban",
-                                        builder: (FormFieldState<dynamic> field) => TextFormField(
+                                        builder: (FormFieldState<dynamic> field) =>
+                                            TextFormField(
                                           initialValue: field.value,
                                           decoration: InputDecoration(
-                                            labelText: AppLocalizations.of(context)!.settingsIban,
+                                            labelText: AppLocalizations.of(context)!
+                                                .settingsIban,
                                             border: const OutlineInputBorder(),
                                           ),
                                           onChanged: (value) => field.didChange(value),
@@ -207,18 +217,21 @@ class _SettingState extends ConsumerState<Setting> {
                                         name: 'locale',
                                         initialValue: locale?.toLanguageTag(),
                                         decoration: InputDecoration(
-                                          labelText: AppLocalizations.of(context)!.settingsLocale,
+                                          labelText: AppLocalizations.of(context)!
+                                              .settingsLocale,
                                           border: const OutlineInputBorder(),
                                         ),
                                         items: [
                                           DropdownMenuItem(
                                             value: null,
-                                            child: Text(AppLocalizations.of(context)!.localeSelectorSystem),
+                                            child: Text(AppLocalizations.of(context)!
+                                                .localeSelectorSystem),
                                           ),
                                           ...localeOptions.map(
                                             (locale) => DropdownMenuItem(
                                               value: locale,
-                                              child: Text(AppLocalizations.of(context)!.localeSelector(locale)),
+                                              child: Text(AppLocalizations.of(context)!
+                                                  .localeSelector(locale)),
                                             ),
                                           ),
                                         ],
@@ -237,21 +250,31 @@ class _SettingState extends ConsumerState<Setting> {
                                     try {
                                       await User.saveAll(_formKey.currentState!.value);
                                       if (context.mounted) {
-                                        showSnackBar(context, rootScaffoldMessengerKey,
-                                            AppLocalizations.of(context)!.settingsUserUpdateSuccess);
+                                        showSnackBar(
+                                            context,
+                                            rootScaffoldMessengerKey,
+                                            AppLocalizations.of(context)!
+                                                .settingsUserUpdateSuccess);
 
-                                        if (_formKey.currentState!.value['locale'] == null) {
-                                          ref.read(localeNotifierProvider.notifier).resetLocale();
+                                        if (_formKey.currentState!.value['locale'] ==
+                                            null) {
+                                          ref
+                                              .read(localeNotifierProvider.notifier)
+                                              .resetLocale();
                                         } else {
                                           ref
                                               .read(localeNotifierProvider.notifier)
-                                              .setLocale(Locale(_formKey.currentState!.value['locale']));
+                                              .setLocale(Locale(_formKey
+                                                  .currentState!.value['locale']));
                                         }
                                       }
                                     } catch (e) {
                                       if (context.mounted) {
-                                        showSnackBar(context, rootScaffoldMessengerKey,
-                                            AppLocalizations.of(context)!.settingsUserUpdateError);
+                                        showSnackBar(
+                                            context,
+                                            rootScaffoldMessengerKey,
+                                            AppLocalizations.of(context)!
+                                                .settingsUserUpdateError);
                                       }
                                       debugPrint(e.toString());
                                     } finally {
@@ -272,60 +295,72 @@ class _SettingState extends ConsumerState<Setting> {
                     },
                   ),
                 ),
-                Divider(),
-                ListTile(
-                  title: Text(AppLocalizations.of(context)!.settingsPrivacyPolicy),
-                  onTap: () {
-                    GoRouter.of(context).push('/setting/privacy-policy');
-                  },
+                SizedBox(height: heightSpacing),
+                CardListTile(
+                  isTop: true,
+                  child: ListTile(
+                    title: Text(AppLocalizations.of(context)!.settingsPrivacyPolicy),
+                    onTap: () {
+                      GoRouter.of(context).push('/setting/privacy-policy');
+                    },
+                  ),
                 ),
                 FutureBuilder(
                   future: _future,
                   builder: (context, snapshot) {
                     // Show it only if the user is under the GDPR
                     if (snapshot.hasData && snapshot.data == true) {
-                      return ListTile(
-                          title: Text(AppLocalizations.of(context)!.settingsPrivacyPreferences),
-                          onTap: () async {
-                            final scaffoldMessenger = ScaffoldMessenger.of(context);
+                      return CardListTile(
+                          child: ListTile(
+                              title: Text(AppLocalizations.of(context)!
+                                  .settingsPrivacyPreferences),
+                              onTap: () async {
+                                final scaffoldMessenger = ScaffoldMessenger.of(context);
 
-                            // Show the consent message again
-                            final didChangePreferences = await _initializationHelper.changePrivacyPreferences();
+                                // Show the consent message again
+                                final didChangePreferences = await _initializationHelper
+                                    .changePrivacyPreferences();
 
-                            // Give feedback to the user that their
-                            // preferences have been correctly modified
-                            scaffoldMessenger.showSnackBar(
-                              SnackBar(
-                                content: Text(
-                                  didChangePreferences
-                                      ? AppLocalizations.of(context)!.settingsPrivacyPreferencesSuccess
-                                      : AppLocalizations.of(context)!.settingsPrivacyPreferencesError,
-                                ),
-                              ),
-                            );
-                          });
+                                // Give feedback to the user that their
+                                // preferences have been correctly modified
+                                scaffoldMessenger.showSnackBar(
+                                  SnackBar(
+                                    content: Text(
+                                      didChangePreferences
+                                          ? AppLocalizations.of(context)!
+                                              .settingsPrivacyPreferencesSuccess
+                                          : AppLocalizations.of(context)!
+                                              .settingsPrivacyPreferencesError,
+                                    ),
+                                  ),
+                                );
+                              }));
                     } else {
                       return SizedBox();
                     }
                   },
                 ),
-                ListTile(
-                  title: Text(AppLocalizations.of(context)!.contact),
-                  onTap: () {
-                    GoRouter.of(context).push('/setting/contact');
-                  },
-                ),
-                const SizedBox(height: heightSpacing),
-                const Divider(),
-                const SizedBox(height: heightSpacing),
-                ListTile(
-                  title: Text(AppLocalizations.of(context)!.deleteAccount),
-                  textColor: Theme.of(context).colorScheme.error,
-                  iconColor: Theme.of(context).colorScheme.error,
-                  leading: Icon(Icons.delete),
-                  onTap: () async {
-                    openDeleteUserDialog(context);
-                  },
+                CardListTile(
+                    isBottom: true,
+                    child: ListTile(
+                      title: Text(AppLocalizations.of(context)!.contact),
+                      onTap: () {
+                        GoRouter.of(context).push('/setting/contact');
+                      },
+                    )),
+                SizedBox(height: heightSpacing),
+                CardListTile(
+                  isTop: true,
+                  isBottom: true,
+                  child: ListTile(
+                    title: Text(AppLocalizations.of(context)!.deleteAccount),
+                    textColor: Theme.of(context).colorScheme.error,
+                    iconColor: Theme.of(context).colorScheme.error,
+                    leading: Icon(Icons.delete),
+                    onTap: () async {
+                      openDeleteUserDialog(context);
+                    },
+                  ),
                 ),
               ],
             ),
@@ -333,7 +368,9 @@ class _SettingState extends ConsumerState<Setting> {
         ),
         onNotification: (ScrollUpdateNotification notification) {
           final FocusScopeNode currentScope = FocusScope.of(context);
-          if (notification.dragDetails != null && !currentScope.hasPrimaryFocus && currentScope.hasFocus) {
+          if (notification.dragDetails != null &&
+              !currentScope.hasPrimaryFocus &&
+              currentScope.hasFocus) {
             FocusManager.instance.primaryFocus?.unfocus();
           }
           return false;
@@ -372,8 +409,8 @@ class _SettingState extends ConsumerState<Setting> {
                 await supabase.auth.signOut(); // Clean up local session
               } catch (e) {
                 if (context.mounted) {
-                  showSnackBar(
-                      context, groupDetailScaffoldMessengerKey, AppLocalizations.of(context)!.deleteAccountError);
+                  showSnackBar(context, groupDetailScaffoldMessengerKey,
+                      AppLocalizations.of(context)!.deleteAccountError);
                 }
               }
             },

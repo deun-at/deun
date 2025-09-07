@@ -35,10 +35,6 @@ class _FriendListState extends ConsumerState<FriendList> {
     ThemeData themeData = Theme.of(context);
     ColorScheme colorScheme = themeData.colorScheme;
 
-    Color listTileBackgroundColor = themeData.brightness == Brightness.light
-        ? colorScheme.surfaceContainerLowest
-        : colorScheme.surfaceContainerHighest;
-
     return ScaffoldMessenger(
       key: friendListScaffoldMessengerKey,
       child: Scaffold(
@@ -66,39 +62,35 @@ class _FriendListState extends ConsumerState<FriendList> {
                     onRefresh: () async {
                       updateFriendshipList();
                     },
-                    child: Padding(
-                      padding: EdgeInsets.fromLTRB(8, 0, 8, 0),
-                      child: CardListView.builder(
-                        color: listTileBackgroundColor,
-                        itemCount: value.length,
-                        itemBuilder: (context, index) {
-                          Friendship friendship = value[index];
-                          User user = friendship.user;
+                    child: CardListView(
+                      color: colorScheme.surfaceContainerLowest,
+                      itemCount: value.length,
+                      itemBuilder: (context, index) {
+                        Friendship friendship = value[index];
+                        User user = friendship.user;
 
-                          Color shareAmountColor =
-                              Theme.of(context).colorScheme.onSurface;
-                          if (friendship.shareAmount < 0) {
-                            shareAmountColor = Colors.red;
-                          } else if (friendship.shareAmount > 0) {
-                            shareAmountColor = Colors.green;
-                          }
+                        Color shareAmountColor = Theme.of(context).colorScheme.onSurface;
+                        if (friendship.shareAmount < 0) {
+                          shareAmountColor = Colors.red;
+                        } else if (friendship.shareAmount > 0) {
+                          shareAmountColor = Colors.green;
+                        }
 
-                          return ListTile(
-                            title: Text(user.displayName),
-                            subtitle: Text(user.email),
-                            trailing: Text(
-                                style: Theme.of(context)
-                                    .textTheme
-                                    .bodyMedium!
-                                    .copyWith(color: shareAmountColor),
-                                AppLocalizations.of(context)!
-                                    .toCurrency(friendship.shareAmount)),
-                            onTap: () {
-                              openFriendshipDialog(context, user, friendship);
-                            },
-                          );
-                        },
-                      ),
+                        return ListTile(
+                          title: Text(user.displayName),
+                          subtitle: Text(user.email),
+                          trailing: Text(
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .bodyMedium!
+                                  .copyWith(color: shareAmountColor),
+                              AppLocalizations.of(context)!
+                                  .toCurrency(friendship.shareAmount)),
+                          onTap: () {
+                            openFriendshipDialog(context, user, friendship);
+                          },
+                        );
+                      },
                     ),
                   ),
             AsyncError() => EmptyListWidget(
@@ -107,12 +99,10 @@ class _FriendListState extends ConsumerState<FriendList> {
                   await updateFriendshipList();
                 },
               ),
-            _ => const Padding(
-                padding: EdgeInsets.fromLTRB(8, 0, 8, 0),
-                child: ShimmerCardList(
-                  height: 70,
-                  listEntryLength: 25,
-                )),
+            _ => const ShimmerCardList(
+                height: 70,
+                listEntryLength: 25,
+              ),
           },
         ),
       ),

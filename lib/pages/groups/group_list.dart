@@ -1,6 +1,8 @@
+import 'dart:io';
+
 import 'package:deun/constants.dart';
-import 'package:deun/helper/helper.dart';
 import 'package:deun/main.dart';
+import 'package:deun/widgets/card_list_view_builder.dart';
 import 'package:deun/widgets/empty_list_widget.dart';
 import 'package:deun/widgets/native_ad_block.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
@@ -24,19 +26,20 @@ class GroupList extends ConsumerStatefulWidget {
 class _GroupListState extends ConsumerState<GroupList> {
   final ScrollController _scrollController = ScrollController();
   String groupListFilter = "active";
-  Widget? _adBox;
+  Widget? _adBlock;
 
   @override
   void initState() {
     super.initState();
 
     if (kIsWeb) {
-      _adBox = SizedBox();
+      _adBlock = SizedBox();
     } else {
-      _adBox = const SizedBox();
-      // _adBox = NativeAdBlock(
-      //   adUnitId: Platform.isAndroid ? MobileAdMobs.androidGroupList.value : MobileAdMobs.iosGroupList.value,
-      // );
+      _adBlock = NativeAdBlock(
+        adUnitId: Platform.isAndroid
+            ? MobileAdMobs.androidGroupList.value
+            : MobileAdMobs.iosGroupList.value,
+      );
     }
   }
 
@@ -106,40 +109,17 @@ class _GroupListState extends ConsumerState<GroupList> {
                       onRefresh: () async {
                         await updateGroupList();
                       },
-                      child: Padding(
-                        padding: const EdgeInsets.only(right: 8.0, left: 8.0),
-                        child: ListView.builder(
-                          scrollDirection: Axis.vertical,
-                          shrinkWrap: true,
-                          padding: EdgeInsets.zero,
-                          itemCount: value.length + 1,
-                          itemBuilder: (context, index) {
-                            if (index == value.length) {
-                              return const SizedBox(height: 80);
-                            }
-
-                            Widget itemWidget;
-
-                            // Access the Group instance
-                            Group group = value[index];
-                            GroupListItem groupListItem = GroupListItem(group: group);
-
-                            if ((index == 5 ||
-                                    (value.length < 6 && index == value.length - 1)) &&
-                                _adBox != null) {
-                              itemWidget = Column(
-                                children: [
-                                  _adBox!,
-                                  groupListItem,
-                                ],
-                              );
-                            } else {
-                              itemWidget = groupListItem;
-                            }
-
-                            return itemWidget;
-                          },
-                        ),
+                      child: GroupCardListView(
+                        shrinkWrap: true,
+                        adBlock: _adBlock,
+                        groupList: value,
+                        addSpacer: true,
+                        itemCount: value.length,
+                        itemBuilder: (context, index) {
+                          // Access the Group instance
+                          Group group = value[index];
+                          return GroupListItem(group: group);
+                        },
                       ),
                     ),
               AsyncError() => EmptyListWidget(
@@ -148,13 +128,10 @@ class _GroupListState extends ConsumerState<GroupList> {
                     await updateGroupList();
                   },
                 ),
-              _ => const Padding(
-                  padding: const EdgeInsets.only(right: 8.0, left: 8.0),
-                  child: ShimmerCardList(
-                    height: 100,
-                    listEntryLength: 8,
-                  ),
-                ),
+              _ => ShimmerCardList(
+                  height: 100,
+                  listEntryLength: 8,
+                )
             },
           ),
         ),

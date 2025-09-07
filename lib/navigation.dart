@@ -104,9 +104,9 @@ class _NavigationScreenState extends ConsumerState<NavigationScreen> {
                                 var expense = extra['expense'] as Expense?;
 
                                 return ExpenseDetail(
-                                    group: group,
-                                    expense: expense,
-                                  );
+                                  group: group,
+                                  expense: expense,
+                                );
                               }),
                           GoRoute(
                               path: 'statistics',
@@ -413,8 +413,15 @@ class _NavigationScreenState extends ConsumerState<NavigationScreen> {
               surfaceTintColor: Colors.transparent,
               backgroundColor: Color(0xffefedee),
             ),
-        cardTheme:
-            Theme.of(context).cardTheme.copyWith(margin: EdgeInsets.fromLTRB(4, 1, 4, 1)),
+        cardTheme: Theme.of(context)
+            .cardTheme
+            .copyWith(margin: EdgeInsets.fromLTRB(10, 1, 10, 1)),
+        listTileTheme: Theme.of(context)
+            .listTileTheme
+            .copyWith(contentPadding: EdgeInsetsDirectional.only(start: 16.0, end: 16.0)),
+        searchViewTheme: Theme.of(context).searchViewTheme.copyWith(
+              dividerColor: Colors.transparent,
+            ),
       ),
       darkTheme: ThemeData(
         colorScheme:
@@ -444,8 +451,15 @@ class _NavigationScreenState extends ConsumerState<NavigationScreen> {
               surfaceTintColor: Colors.transparent,
               backgroundColor: Color(0xff1f2021),
             ),
-        cardTheme:
-            Theme.of(context).cardTheme.copyWith(margin: EdgeInsets.fromLTRB(4, 1, 4, 1)),
+        cardTheme: Theme.of(context)
+            .cardTheme
+            .copyWith(margin: EdgeInsets.fromLTRB(10, 1, 10, 1)),
+        listTileTheme: Theme.of(context)
+            .listTileTheme
+            .copyWith(contentPadding: EdgeInsetsDirectional.only(start: 16.0, end: 16.0)),
+        searchViewTheme: Theme.of(context).searchViewTheme.copyWith(
+              dividerColor: Colors.transparent,
+            ),
       ),
       themeMode: ThemeMode.system,
       locale: locale,
