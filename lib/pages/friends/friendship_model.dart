@@ -136,18 +136,20 @@ class Friendship {
   }
 
   static Future<void> accepted(String email) async {
-    await supabase.from("friendship").upsert([
-      {
-        "requester": supabase.auth.currentUser?.email,
-        "addressee": email,
-        "status": "accepted",
-      },
-      {
-        "requester": email,
-        "addressee": supabase.auth.currentUser?.email,
-        "status": "accepted",
-      }
-    ]);
+    if(email != supabase.auth.currentUser?.email) {
+      await supabase.from("friendship").upsert([
+        {
+          "requester": supabase.auth.currentUser?.email,
+          "addressee": email,
+          "status": "accepted",
+        },
+        {
+          "requester": email,
+          "addressee": supabase.auth.currentUser?.email,
+          "status": "accepted",
+        }
+      ]);
+    }
   }
 
   static Future<void> cancel(String email) async {

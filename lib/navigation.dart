@@ -7,6 +7,8 @@ import 'package:deun/pages/expenses/expense_detail.dart';
 import 'package:deun/pages/expenses/expense_model.dart';
 import 'package:deun/pages/friends/friend_add.dart';
 import 'package:deun/pages/friends/friend_list.dart';
+import 'package:deun/pages/friends/friend_qr_page.dart';
+import 'package:deun/pages/friends/friend_accept_page.dart';
 import 'package:deun/pages/groups/group_detail_payment.dart';
 import 'package:deun/pages/settings/contact.dart';
 import 'package:deun/pages/settings/privacy_policy.dart';
@@ -190,6 +192,19 @@ class _NavigationScreenState extends ConsumerState<NavigationScreen> {
                               builder: (context) => FriendAddBottomSheet(),
                             );
                           }),
+                      GoRoute(
+                        path: 'qr',
+                        parentNavigatorKey: _rootNavigatorKey,
+                        builder: (context, state) => const FriendQrPage(),
+                      ),
+                      GoRoute(
+                        path: 'accept',
+                        parentNavigatorKey: _rootNavigatorKey,
+                        builder: (context, state) {
+                          final email = state.uri.queryParameters['email'];
+                          return FriendAcceptPage(email: email);
+                        },
+                      ),
                     ]),
               ],
             ),
