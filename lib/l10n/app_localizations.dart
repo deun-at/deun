@@ -551,11 +551,11 @@ abstract class AppLocalizations {
   /// **'Password successfully updated'**
   String get updatePasswordPasswordResetSent;
 
-  /// No description provided for @updatePasswordunexpectedError.
+  /// No description provided for @updatePasswordUnexpectedError.
   ///
   /// In en, this message translates to:
   /// **'An unexpected error occurred'**
-  String get updatePasswordunexpectedError;
+  String get updatePasswordUnexpectedError;
 
   /// No description provided for @updatePasswordUpdatePassword.
   ///

@@ -23,7 +23,7 @@ class UpdatePassword extends StatelessWidget {
                 enterPassword: AppLocalizations.of(context)!.updatePasswordEnterPassword,
                 passwordLengthError: AppLocalizations.of(context)!.updatePasswordPasswordLengthError,
                 passwordResetSent: AppLocalizations.of(context)!.updatePasswordPasswordResetSent,
-                unexpectedError: AppLocalizations.of(context)!.updatePasswordunexpectedError,
+                unexpectedError: AppLocalizations.of(context)!.updatePasswordUnexpectedError,
                 updatePassword: AppLocalizations.of(context)!.updatePasswordUpdatePassword,
               ),
             ),
