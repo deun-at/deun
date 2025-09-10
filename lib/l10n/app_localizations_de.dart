@@ -342,7 +342,7 @@ class AppLocalizationsDe extends AppLocalizations {
       'Ein Link zum Zurücksetzen des Passworts wurde gesendet.';
 
   @override
-  String get updatePasswordunexpectedError =>
+  String get updatePasswordUnexpectedError =>
       'Ein unerwarteter Fehler ist aufgetreten. Bitte versuche es später noch einmal.';
 
   @override
@@ -352,45 +352,47 @@ class AppLocalizationsDe extends AppLocalizations {
   String get friends => 'Freunde';
 
   @override
-  String get addFriends => 'Add friends';
+  String get addFriends => 'Freunde hinzufügen';
 
   @override
   String get friendsNoEntries => 'Keine Freunde gefunden.';
 
   @override
-  String get addFriendshipSelectionEmpty => 'Bitte wähle einen Freund aus.';
+  String get addFriendshipSelectionEmpty => 'Suche nach Namen oder E-Mail';
 
   @override
-  String get addFriendshipSearchResult => 'Search Result';
+  String get addFriendshipSearchResult => 'Suchergebnis';
 
   @override
-  String get addFriendshipPendingRequests => 'Added Me';
+  String get addFriendshipPendingRequests => 'Mich hinzugefügt';
 
   @override
-  String get addFriendshipAllContacts => 'Find Friends from Contacts';
+  String get addFriendshipAllContacts => 'Freunde aus Kontakten finden';
 
   @override
   String get addFriendshipContactPermission =>
-      'Request access to your contacts.';
+      'Zugriff auf deine Kontakte anfordern.';
 
   @override
   String get addFriendshipContactPermissionSubtitle =>
-      'Please make shure that you have given the app permission to access your contacts.';
+      'Bitte stelle sicher, dass du der App Zugriff auf deine Kontakte gewährt hast.';
 
   @override
-  String get addFriendshipRequested => 'Pending Friendship Requests';
+  String get addFriendshipRequested => 'Ausstehende Freundschaftsanfragen';
 
   @override
-  String get addFriendshipRequestedNoResult => 'No pending requests found!';
+  String get addFriendshipRequestedNoResult =>
+      'Keine ausstehenden Anfragen gefunden!';
 
   @override
   String get addFriendshipNoResult => 'Es wurden keine Freunde gefunden.';
 
   @override
-  String get addFriendshipRequestNoResult => 'No friend request found!';
+  String get addFriendshipRequestNoResult =>
+      'Keine Freundschaftsanfrage gefunden!';
 
   @override
-  String get addFriendshipContactNoResult => 'No Contacts found!';
+  String get addFriendshipContactNoResult => 'Keine Kontakte gefunden!';
 
   @override
   String get requestFriendship => 'Freund hinzufügen';
@@ -430,7 +432,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String friendshipDialogTitle(String displayName) {
-    return 'Freundschaftsanfrage';
+    return '$displayName';
   }
 
   @override
@@ -635,7 +637,7 @@ class AppLocalizationsDe extends AppLocalizations {
   String get deleteAccountError => 'Fehler beim Löschen des Kontos.';
 
   @override
-  String get errorLoadingData => 'Error while loading data!';
+  String get errorLoadingData => 'Fehler beim Laden der Daten!';
 
   @override
   String get create => 'Erstellen';
@@ -656,10 +658,10 @@ class AppLocalizationsDe extends AppLocalizations {
   String get save => 'Speichern';
 
   @override
-  String get add => 'Add';
+  String get add => 'Hinzufügen';
 
   @override
-  String get invite => 'Invite';
+  String get invite => 'Einladen';
 
   @override
   String get accept => 'Akzeptieren';

@@ -317,7 +317,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get updatePasswordPasswordResetSent => 'Password successfully updated';
 
   @override
-  String get updatePasswordunexpectedError => 'An unexpected error occurred';
+  String get updatePasswordUnexpectedError => 'An unexpected error occurred';
 
   @override
   String get updatePasswordUpdatePassword => 'Update Password';
