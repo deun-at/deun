@@ -10,6 +10,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:deun/l10n/app_localizations.dart';
 import 'package:go_router/go_router.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../provider.dart';
@@ -41,8 +42,21 @@ class _FriendListState extends ConsumerState<FriendList> {
         body: NestedScrollView(
           headerSliverBuilder: (context, innerBoxIsScrolled) => [
             SliverAppBar.medium(
-              title: Text(AppLocalizations.of(context)!.friends),
+              title: Text(AppLocalizations.of(context)!.friends,
+                  style: GoogleFonts.robotoSerif(
+                      textStyle: Theme.of(context)
+                          .textTheme
+                          .headlineMedium!
+                          .copyWith(fontWeight: FontWeight.w900)),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis),
               actions: [
+                IconButton(
+                    onPressed: () {
+                      GoRouter.of(context).push('/friend/qr');
+                    },
+                    tooltip: 'QR',
+                    icon: const Icon(Icons.qr_code)),
                 IconButton(
                     onPressed: () {
                       GoRouter.of(context).push("/friend/add");
