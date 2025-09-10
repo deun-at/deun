@@ -769,4 +769,54 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get categoryOther => 'Sonstiges';
+
+  @override
+  String get qr => 'QR';
+
+  @override
+  String get friendQrTitle => 'Freund per QR hinzufügen';
+
+  @override
+  String get friendQrTabScan => 'Scannen';
+
+  @override
+  String get friendQrTabMyCode => 'Mein Code';
+
+  @override
+  String get friendQrNotRecognized => 'QR nicht erkannt';
+
+  @override
+  String get copyLink => 'Link kopieren';
+
+  @override
+  String get friendQrLetFriendScan =>
+      'Lass deinen Freund diesen Code scannen, um dich hinzuzufügen.';
+
+  @override
+  String get friendQrLinkCopiedInstruction =>
+      'Link kopiert. Wenn deine Systemkamera QR-App-Links unterstützt, zeige diesen Code auf dem anderen Gerät und scanne ihn.';
+
+  @override
+  String get statisticsTitle => 'Statistiken';
+
+  @override
+  String get statisticsNoExpenses => 'Keine Ausgaben';
+
+  @override
+  String get statisticsNoExpensesFound => 'Keine Ausgaben gefunden';
+
+  @override
+  String statisticsDetails(String month, String year) {
+    return 'Details $month/$year';
+  }
+
+  @override
+  String paidBy(String displayName) {
+    return 'Bezahlt von $displayName';
+  }
+
+  @override
+  String statisticsCategories(String monthYear) {
+    return 'Kategorien $monthYear';
+  }
 }

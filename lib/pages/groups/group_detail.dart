@@ -92,7 +92,7 @@ class _GroupDetailState extends ConsumerState<GroupDetail> {
                     style: GoogleFonts.robotoSerif(
                         textStyle: Theme.of(context)
                             .textTheme
-                            .headlineMedium!
+                            .titleLarge!
                             .copyWith(fontWeight: FontWeight.w900)),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis),

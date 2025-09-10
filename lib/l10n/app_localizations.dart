@@ -1254,6 +1254,90 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Other'**
   String get categoryOther;
+
+  /// No description provided for @qr.
+  ///
+  /// In en, this message translates to:
+  /// **'QR'**
+  String get qr;
+
+  /// No description provided for @friendQrTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Add Friend via QR'**
+  String get friendQrTitle;
+
+  /// No description provided for @friendQrTabScan.
+  ///
+  /// In en, this message translates to:
+  /// **'Scan'**
+  String get friendQrTabScan;
+
+  /// No description provided for @friendQrTabMyCode.
+  ///
+  /// In en, this message translates to:
+  /// **'My Code'**
+  String get friendQrTabMyCode;
+
+  /// No description provided for @friendQrNotRecognized.
+  ///
+  /// In en, this message translates to:
+  /// **'QR not recognized'**
+  String get friendQrNotRecognized;
+
+  /// No description provided for @copyLink.
+  ///
+  /// In en, this message translates to:
+  /// **'Copy link'**
+  String get copyLink;
+
+  /// No description provided for @friendQrLetFriendScan.
+  ///
+  /// In en, this message translates to:
+  /// **'Let your friend scan this code to add you.'**
+  String get friendQrLetFriendScan;
+
+  /// No description provided for @friendQrLinkCopiedInstruction.
+  ///
+  /// In en, this message translates to:
+  /// **'Link copied. If your system camera supports QR app links, show this code on the other device and scan.'**
+  String get friendQrLinkCopiedInstruction;
+
+  /// No description provided for @statisticsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Statistics'**
+  String get statisticsTitle;
+
+  /// No description provided for @statisticsNoExpenses.
+  ///
+  /// In en, this message translates to:
+  /// **'No expenses'**
+  String get statisticsNoExpenses;
+
+  /// No description provided for @statisticsNoExpensesFound.
+  ///
+  /// In en, this message translates to:
+  /// **'No expenses found'**
+  String get statisticsNoExpensesFound;
+
+  /// No description provided for @statisticsDetails.
+  ///
+  /// In en, this message translates to:
+  /// **'Details {month}/{year}'**
+  String statisticsDetails(String month, String year);
+
+  /// No description provided for @paidBy.
+  ///
+  /// In en, this message translates to:
+  /// **'Paid by {displayName}'**
+  String paidBy(String displayName);
+
+  /// No description provided for @statisticsCategories.
+  ///
+  /// In en, this message translates to:
+  /// **'Categories {monthYear}'**
+  String statisticsCategories(String monthYear);
 }
 
 class _AppLocalizationsDelegate

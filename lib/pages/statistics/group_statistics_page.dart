@@ -47,7 +47,7 @@ class _GroupStatisticsPageState extends ConsumerState<GroupStatisticsPage> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text("Statistics", maxLines: 1, overflow: TextOverflow.ellipsis),
+        title: Text(AppLocalizations.of(context)!.statisticsTitle, maxLines: 1, overflow: TextOverflow.ellipsis),
       ),
       body: SafeArea(
         child: state.when(
@@ -231,7 +231,9 @@ class _GroupStatisticsPageState extends ConsumerState<GroupStatisticsPage> {
                           title: Padding(
                             padding: EdgeInsetsGeometry.only(top: 10),
                             child: Text(
-                              'Categories ${DateFormat("MMMM yyyy").format(selectedBucket.start)}',
+                              AppLocalizations.of(context)!.statisticsCategories(
+                                DateFormat("MMMM yyyy").format(selectedBucket.start),
+                              ),
                               style: Theme.of(context).textTheme.bodyMedium,
                             ),
                           ),
@@ -243,8 +245,8 @@ class _GroupStatisticsPageState extends ConsumerState<GroupStatisticsPage> {
                           error: (e, st) => Text(e.toString()),
                           data: (list) {
                             if (list.isEmpty) {
-                              return const CardListTile(
-                                  child: ListTile(title: Text('No expenses')));
+                              return CardListTile(
+                                  child: ListTile(title: Text(AppLocalizations.of(context)!.statisticsNoExpenses)));
                             }
                             return CardListView(
                               shrinkWrap: true,

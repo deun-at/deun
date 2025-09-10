@@ -97,11 +97,11 @@ class CategoryDetailBottomSheet extends ConsumerWidget {
                   )),
                   data: (expenses) {
                     if (expenses.isEmpty) {
-                      return const SliverToBoxAdapter(
+                      return SliverToBoxAdapter(
                           child: Center(
                         child: Padding(
-                          padding: EdgeInsets.all(32),
-                          child: Text('No expenses found'),
+                          padding: const EdgeInsets.all(32),
+                          child: Text(localizations.statisticsNoExpensesFound),
                         ),
                       ));
                     }
@@ -143,7 +143,7 @@ class CategoryDetailBottomSheet extends ConsumerWidget {
                                       ),
                                 ),
                                 Text(
-                                  'Paid by ${expense.paidByDisplayName}',
+                                  localizations.paidBy(expense.paidByDisplayName),
                                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
                                         color: Theme.of(context)
                                             .colorScheme

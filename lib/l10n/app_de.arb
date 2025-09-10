@@ -165,5 +165,35 @@
   "categoryTechnology": "Technologie",
   "categoryClothing": "Kleidung",
   "categoryHome": "Zuhause",
-  "categoryOther": "Sonstiges"
+  "categoryOther": "Sonstiges",
+  "qr": "QR",
+  "friendQrTitle": "Freund per QR hinzufügen",
+  "friendQrTabScan": "Scannen",
+  "friendQrTabMyCode": "Mein Code",
+  "friendQrNotRecognized": "QR nicht erkannt",
+  "copyLink": "Link kopieren",
+  "friendQrLetFriendScan": "Lass deinen Freund diesen Code scannen, um dich hinzuzufügen.",
+  "friendQrLinkCopiedInstruction": "Link kopiert. Wenn deine Systemkamera QR-App-Links unterstützt, zeige diesen Code auf dem anderen Gerät und scanne ihn.",
+  "statisticsTitle": "Statistiken",
+  "statisticsNoExpenses": "Keine Ausgaben",
+  "statisticsNoExpensesFound": "Keine Ausgaben gefunden",
+  "statisticsDetails": "Details {month}/{year}",
+  "@statisticsDetails": {
+    "placeholders": {
+      "month": {"type": "String"},
+      "year": {"type": "String"}
+    }
+  },
+  "paidBy": "Bezahlt von {displayName}",
+  "@paidBy": {
+    "placeholders": {
+      "displayName": {"type": "String"}
+    }
+  },
+  "statisticsCategories": "Kategorien {monthYear}",
+  "@statisticsCategories": {
+    "placeholders": {
+      "monthYear": {"type": "String"}
+    }
+  }
 }
