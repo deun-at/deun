@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:deun/l10n/app_localizations.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -91,7 +92,8 @@ class _FriendQrPageState extends State<FriendQrPage> {
       }
 
       if (mounted) {
-        showSnackBar(context, rootScaffoldMessengerKey, 'QR not recognized');
+        showSnackBar(context, rootScaffoldMessengerKey,
+            AppLocalizations.of(context)!.friendQrNotRecognized);
       }
     } finally {
       // Delay a bit to prevent immediate re-scan
@@ -106,11 +108,11 @@ class _FriendQrPageState extends State<FriendQrPage> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text('Add Friend via QR',
+        title: Text(AppLocalizations.of(context)!.friendQrTitle,
             style: GoogleFonts.robotoSerif(
                 textStyle: Theme.of(context)
                     .textTheme
-                    .headlineMedium!
+                    .titleLarge!
                     .copyWith(fontWeight: FontWeight.w900)),
             maxLines: 1,
             overflow: TextOverflow.ellipsis),
@@ -120,9 +122,12 @@ class _FriendQrPageState extends State<FriendQrPage> {
           const SizedBox(height: 12),
           Center(
             child: SegmentedButton<int>(
-              segments: const [
-                ButtonSegment(value: 0, label: Text('Scan')),
-                ButtonSegment(value: 1, label: Text('My Code')),
+              segments: [
+                ButtonSegment(
+                    value: 0, label: Text(AppLocalizations.of(context)!.friendQrTabScan)),
+                ButtonSegment(
+                    value: 1,
+                    label: Text(AppLocalizations.of(context)!.friendQrTabMyCode)),
               ],
               selected: {_tabIndex},
               onSelectionChanged: (s) => setState(() => _tabIndex = s.first),
@@ -172,11 +177,11 @@ class _FriendQrPageState extends State<FriendQrPage> {
                   await Clipboard.setData(ClipboardData(text: url));
                   if (mounted) {
                     showSnackBar(context, rootScaffoldMessengerKey,
-                        'Link copied. If your system camera supports QR app links, show this code on the other device and scan.');
+                        AppLocalizations.of(context)!.friendQrLinkCopiedInstruction);
                   }
                 },
                 icon: const Icon(Icons.link),
-                tooltip: 'Copy link',
+                tooltip: AppLocalizations.of(context)!.copyLink,
               ),
             ],
           ),
@@ -186,7 +191,8 @@ class _FriendQrPageState extends State<FriendQrPage> {
   }
 
   Widget _buildMyCode(BuildContext context, Uri link) {
-    return SingleChildScrollView(child: Center(
+    return SingleChildScrollView(
+        child: Center(
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -204,8 +210,9 @@ class _FriendQrPageState extends State<FriendQrPage> {
           ),
           const SizedBox(height: 16),
           Text(
-            'Let your friend scan this code to add you.',
+            AppLocalizations.of(context)!.friendQrLetFriendScan,
             style: Theme.of(context).textTheme.bodyMedium,
+            textAlign: TextAlign.center,
           ),
           const SizedBox(height: 16),
           Wrap(
@@ -216,7 +223,7 @@ class _FriendQrPageState extends State<FriendQrPage> {
                   await Clipboard.setData(ClipboardData(text: link.toString()));
                 },
                 icon: const Icon(Icons.copy),
-                label: const Text('Copy link'),
+                label: Text(AppLocalizations.of(context)!.copyLink),
               ),
             ],
           ),

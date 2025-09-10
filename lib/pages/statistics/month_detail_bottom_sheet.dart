@@ -4,6 +4,7 @@ import 'package:deun/pages/statistics/statistics_models.dart';
 import 'package:deun/provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:deun/l10n/app_localizations.dart';
 
 class StatisticsMonthDetailBottomSheet extends ConsumerWidget {
   const StatisticsMonthDetailBottomSheet(
@@ -25,7 +26,10 @@ class StatisticsMonthDetailBottomSheet extends ConsumerWidget {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Text('Details ${monthStart.month.toString().padLeft(2, '0')}/${monthStart.year}',
+            Text(AppLocalizations.of(context)!.statisticsDetails(
+                  monthStart.month.toString().padLeft(2, '0'),
+                  monthStart.year.toString(),
+                ),
                 style: Theme.of(context).textTheme.titleMedium),
             const SizedBox(height: 12),
             state.when(
@@ -33,7 +37,7 @@ class StatisticsMonthDetailBottomSheet extends ConsumerWidget {
               error: (e, st) => Text(e.toString()),
               data: (list) {
                 if (list.isEmpty) {
-                  return const Text('No expenses');
+                  return Text(AppLocalizations.of(context)!.statisticsNoExpenses);
                 }
                 return Flexible(
                   child: ListView.separated(

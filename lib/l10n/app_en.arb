@@ -706,5 +706,46 @@
   "categoryHome": "Home",
   "@categoryHome": {},
   "categoryOther": "Other",
-  "@categoryOther": {}
+  "@categoryOther": {},
+  "qr": "QR",
+  "@qr": {},
+  "friendQrTitle": "Add Friend via QR",
+  "@friendQrTitle": {},
+  "friendQrTabScan": "Scan",
+  "@friendQrTabScan": {},
+  "friendQrTabMyCode": "My Code",
+  "@friendQrTabMyCode": {},
+  "friendQrNotRecognized": "QR not recognized",
+  "@friendQrNotRecognized": {},
+  "copyLink": "Copy link",
+  "@copyLink": {},
+  "friendQrLetFriendScan": "Let your friend scan this code to add you.",
+  "@friendQrLetFriendScan": {},
+  "friendQrLinkCopiedInstruction": "Link copied. If your system camera supports QR app links, show this code on the other device and scan.",
+  "@friendQrLinkCopiedInstruction": {},
+  "statisticsTitle": "Statistics",
+  "@statisticsTitle": {},
+  "statisticsNoExpenses": "No expenses",
+  "@statisticsNoExpenses": {},
+  "statisticsNoExpensesFound": "No expenses found",
+  "@statisticsNoExpensesFound": {},
+  "statisticsDetails": "Details {month}/{year}",
+  "@statisticsDetails": {
+    "placeholders": {
+      "month": {"type": "String"},
+      "year": {"type": "String"}
+    }
+  },
+  "paidBy": "Paid by {displayName}",
+  "@paidBy": {
+    "placeholders": {
+      "displayName": {"type": "String"}
+    }
+  },
+  "statisticsCategories": "Categories {monthYear}",
+  "@statisticsCategories": {
+    "placeholders": {
+      "monthYear": {"type": "String"}
+    }
+  }
 }

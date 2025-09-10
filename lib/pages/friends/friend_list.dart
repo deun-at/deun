@@ -46,7 +46,7 @@ class _FriendListState extends ConsumerState<FriendList> {
                   style: GoogleFonts.robotoSerif(
                       textStyle: Theme.of(context)
                           .textTheme
-                          .headlineMedium!
+                          .titleLarge!
                           .copyWith(fontWeight: FontWeight.w900)),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis),
@@ -55,7 +55,7 @@ class _FriendListState extends ConsumerState<FriendList> {
                     onPressed: () {
                       GoRouter.of(context).push('/friend/qr');
                     },
-                    tooltip: 'QR',
+                    tooltip: AppLocalizations.of(context)!.qr, 
                     icon: const Icon(Icons.qr_code)),
                 IconButton(
                     onPressed: () {

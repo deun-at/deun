@@ -739,4 +739,54 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get categoryOther => 'Other';
+
+  @override
+  String get qr => 'QR';
+
+  @override
+  String get friendQrTitle => 'Add Friend via QR';
+
+  @override
+  String get friendQrTabScan => 'Scan';
+
+  @override
+  String get friendQrTabMyCode => 'My Code';
+
+  @override
+  String get friendQrNotRecognized => 'QR not recognized';
+
+  @override
+  String get copyLink => 'Copy link';
+
+  @override
+  String get friendQrLetFriendScan =>
+      'Let your friend scan this code to add you.';
+
+  @override
+  String get friendQrLinkCopiedInstruction =>
+      'Link copied. If your system camera supports QR app links, show this code on the other device and scan.';
+
+  @override
+  String get statisticsTitle => 'Statistics';
+
+  @override
+  String get statisticsNoExpenses => 'No expenses';
+
+  @override
+  String get statisticsNoExpensesFound => 'No expenses found';
+
+  @override
+  String statisticsDetails(String month, String year) {
+    return 'Details $month/$year';
+  }
+
+  @override
+  String paidBy(String displayName) {
+    return 'Paid by $displayName';
+  }
+
+  @override
+  String statisticsCategories(String monthYear) {
+    return 'Categories $monthYear';
+  }
 }

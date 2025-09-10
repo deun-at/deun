@@ -27,7 +27,7 @@ class _FriendAcceptPageState extends State<FriendAcceptPage> {
   Future<void> _accept() async {
     final email = widget.email;
     if (email == null || email.isEmpty) {
-      setState(() => _error = 'Missing email in link');
+      setState(() => _error = AppLocalizations.of(context)!.generalError);
       return;
     }
 
@@ -37,7 +37,7 @@ class _FriendAcceptPageState extends State<FriendAcceptPage> {
       showSnackBar(
           context,
           rootScaffoldMessengerKey,
-          'Friend added: $email');
+          AppLocalizations.of(context)!.friendshipAccept(email));
       // Go to friends list
       GoRouter.of(context).go('/friend');
     } catch (e) {
@@ -50,7 +50,7 @@ class _FriendAcceptPageState extends State<FriendAcceptPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Add Friend')),
+      appBar: AppBar(title: Text(AppLocalizations.of(context)!.requestFriendship)),
       body: Center(
         child: _error != null
             ? Column(
