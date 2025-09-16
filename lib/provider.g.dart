@@ -20,7 +20,7 @@ final class GroupListNotifierProvider
       : super(
           retry: null,
           name: r'groupListProvider',
-          isAutoDispose: true,
+          isAutoDispose: false,
           dependencies: null,
           $allTransitiveDependencies: null,
         );
@@ -50,7 +50,7 @@ final class GroupListNotifierProvider
   }
 }
 
-String _$groupListNotifierHash() => r'deb99cdeb12b236dfaaa4cbb7d7546a460f28b79';
+String _$groupListNotifierHash() => r'7f46a1830b9e530c5476fe2981fd8808b43d4adb';
 
 final class GroupListNotifierFamily extends $Family
     with
@@ -62,7 +62,7 @@ final class GroupListNotifierFamily extends $Family
           name: r'groupListProvider',
           dependencies: null,
           $allTransitiveDependencies: null,
-          isAutoDispose: true,
+          isAutoDispose: false,
         );
 
   GroupListNotifierProvider call(
@@ -108,7 +108,7 @@ final class GroupDetailNotifierProvider
       : super(
           retry: null,
           name: r'groupDetailProvider',
-          isAutoDispose: true,
+          isAutoDispose: false,
           dependencies: null,
           $allTransitiveDependencies: null,
         );
@@ -139,7 +139,7 @@ final class GroupDetailNotifierProvider
 }
 
 String _$groupDetailNotifierHash() =>
-    r'45fe0a2c5c3065ba01a82d18e4f81e22ceb8f304';
+    r'bee431d71ab07a0212aa380032396d4786a3abfa';
 
 final class GroupDetailNotifierFamily extends $Family
     with
@@ -151,7 +151,7 @@ final class GroupDetailNotifierFamily extends $Family
           name: r'groupDetailProvider',
           dependencies: null,
           $allTransitiveDependencies: null,
-          isAutoDispose: true,
+          isAutoDispose: false,
         );
 
   GroupDetailNotifierProvider call(
@@ -197,7 +197,7 @@ final class ExpenseListNotifierProvider
       : super(
           retry: null,
           name: r'expenseListProvider',
-          isAutoDispose: true,
+          isAutoDispose: false,
           dependencies: null,
           $allTransitiveDependencies: null,
         );
@@ -228,7 +228,7 @@ final class ExpenseListNotifierProvider
 }
 
 String _$expenseListNotifierHash() =>
-    r'bb2328de7de7e29da3e4373c14cf843f3c9d9327';
+    r'd1130a78128b77539484f877e96a3ad489c4f40b';
 
 final class ExpenseListNotifierFamily extends $Family
     with
@@ -240,7 +240,7 @@ final class ExpenseListNotifierFamily extends $Family
           name: r'expenseListProvider',
           dependencies: null,
           $allTransitiveDependencies: null,
-          isAutoDispose: true,
+          isAutoDispose: false,
         );
 
   ExpenseListNotifierProvider call(
@@ -286,7 +286,7 @@ final class FriendshipListNotifierProvider
           argument: null,
           retry: null,
           name: r'friendshipListProvider',
-          isAutoDispose: true,
+          isAutoDispose: false,
           dependencies: null,
           $allTransitiveDependencies: null,
         );
@@ -300,7 +300,7 @@ final class FriendshipListNotifierProvider
 }
 
 String _$friendshipListNotifierHash() =>
-    r'98fa8b7b5dcabc1704ae2c0653d1f0ae383b6645';
+    r'423d5ccdf47c98cd1b72a202ca847319f463c386';
 
 abstract class _$FriendshipListNotifier
     extends $AsyncNotifier<List<Friendship>> {
