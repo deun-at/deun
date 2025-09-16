@@ -14,12 +14,22 @@ import 'pages/statistics/statistics_models.dart';
 // Necessary for code-generation to work
 part 'provider.g.dart';
 
-@riverpod
+@Riverpod(keepAlive: true)
 class GroupListNotifier extends _$GroupListNotifier {
+  RealtimeChannel? _channel;
+
   @override
   FutureOr<List<Group>> build(String statusFilter) async {
     _subscribeToRealTimeUpdates(statusFilter);
-    
+
+    // Ensure channel is cleaned up when provider is disposed
+    ref.onDispose(() {
+      if (_channel != null) {
+        supabase.removeChannel(_channel!);
+        _channel = null;
+      }
+    });
+
     return await fetchGroupList(statusFilter);
   }
 
@@ -32,14 +42,62 @@ class GroupListNotifier extends _$GroupListNotifier {
   }
 
   void _subscribeToRealTimeUpdates(String statusFilter) {
-    supabase
-        .channel('public:group_list_checker')
+    if (_channel != null) return; // already subscribed
+
+    final channelName = 'public:group_list_checker:$statusFilter';
+
+    _channel = supabase
+        .channel(channelName)
         .onPostgresChanges(
             event: PostgresChangeEvent.all,
             schema: 'public',
             table: 'group_update_checker',
             callback: (payload) async {
-              reload(statusFilter);
+              debugPrint(payload.eventType.toString());
+              if (payload.eventType == PostgresChangeEvent.delete) {
+                final groupId = payload.oldRecord['group_id'];
+                state = state.whenData((groups) {
+                  final index = groups.indexWhere((g) => g.id == groupId);
+                  if (index == -1) return groups; // Group not found
+                  final updated = List<Group>.from(groups);
+                  updated.removeAt(index);
+                  return updated;
+                });
+                return;
+              } else if (payload.eventType == PostgresChangeEvent.update ||
+                  payload.eventType == PostgresChangeEvent.insert) {
+                final groupId = payload.newRecord['group_id'];
+                final group = await Group.fetchDetail(groupId);
+
+                bool matchesFilter;
+                final absAmt = group.totalShareAmount.abs();
+                if (statusFilter == GroupListFilter.active.value) {
+                  matchesFilter = absAmt >= 0.01;
+                } else if (statusFilter == GroupListFilter.done.value) {
+                  matchesFilter = absAmt < 0.01;
+                } else {
+                  matchesFilter = true;
+                }
+
+                state = state.whenData((groups) {
+                  final updated = List<Group>.from(groups);
+                  final index = updated.indexWhere((g) => g.id == group.id);
+
+                  if (!matchesFilter) {
+                    if (index != -1) updated.removeAt(index);
+                    return updated;
+                  }
+
+                  if (index != -1) {
+                    updated[index] = group;
+                  } else {
+                    updated.add(group);
+                    updated.sort((a, b) => a.name.compareTo(b.name));
+                  }
+                  return updated;
+                });
+                return;
+              }
             })
         .subscribe((status, _) {
       debugPrint('---subscribe--- groupList ${status.toString()}');
@@ -47,11 +105,21 @@ class GroupListNotifier extends _$GroupListNotifier {
   }
 }
 
-@riverpod
+@Riverpod(keepAlive: true)
 class GroupDetailNotifier extends _$GroupDetailNotifier {
+  RealtimeChannel? _channel;
+
   @override
   FutureOr<Group> build(String groupId) async {
     _subscribeToRealTimeUpdates(groupId);
+
+    // Ensure channel is cleaned up when provider is disposed
+    ref.onDispose(() {
+      if (_channel != null) {
+        supabase.removeChannel(_channel!);
+        _channel = null;
+      }
+    });
 
     return await fetchGroupDetail(groupId);
   }
@@ -67,8 +135,12 @@ class GroupDetailNotifier extends _$GroupDetailNotifier {
   }
 
   void _subscribeToRealTimeUpdates(String groupId) {
-    supabase
-        .channel('public:group_detail_checker')
+    if (_channel != null) return; // already subscribed
+
+    final channelName = 'public:group_detail_checker:$groupId';
+
+    _channel = supabase
+        .channel(channelName)
         .onPostgresChanges(
             event: PostgresChangeEvent.all,
             schema: 'public',
@@ -87,8 +159,9 @@ class GroupDetailNotifier extends _$GroupDetailNotifier {
   }
 }
 
-@riverpod
+@Riverpod(keepAlive: true)
 class ExpenseListNotifier extends _$ExpenseListNotifier {
+  RealtimeChannel? _channel;
   static const int pageSize = 20;
   int _offset = 0;
   bool _hasMore = true;
@@ -97,6 +170,14 @@ class ExpenseListNotifier extends _$ExpenseListNotifier {
   FutureOr<List<Expense>> build(String groupId) async {
     _subscribeToRealTimeUpdates(groupId);
 
+    // Ensure channel is cleaned up when provider is disposed
+    ref.onDispose(() {
+      if (_channel != null) {
+        supabase.removeChannel(_channel!);
+        _channel = null;
+      }
+    });
+
     return await fetchExpenseList(groupId, _offset, _offset + pageSize - 1);
   }
 
@@ -104,19 +185,26 @@ class ExpenseListNotifier extends _$ExpenseListNotifier {
     _offset = 0;
     _hasMore = true;
 
-    state = await AsyncValue.guard(() async => await fetchExpenseList(groupId, _offset, _offset + pageSize - 1));
+    state = await AsyncValue.guard(
+        () async => await fetchExpenseList(groupId, _offset, _offset + pageSize - 1));
   }
 
   int get offset => _offset;
 
-  Future<List<Expense>> fetchExpenseList(String groupId, int rangeFrom, int rangeTo) async {
+  Future<List<Expense>> fetchExpenseList(
+      String groupId, int rangeFrom, int rangeTo) async {
     List<Expense> expenses = await Expense.fetchData(groupId, rangeFrom, rangeTo);
     return expenses;
   }
 
   void _subscribeToRealTimeUpdates(String groupId) {
-    supabase
-        .channel('public:expense_list_checker')
+    if (_channel != null) return; // already subscribed
+
+
+    final channelName = 'public:expense_list_checker:$groupId';
+
+    _channel = supabase
+        .channel(channelName)
         .onPostgresChanges(
             event: PostgresChangeEvent.all,
             schema: 'public',
@@ -128,39 +216,38 @@ class ExpenseListNotifier extends _$ExpenseListNotifier {
             ),
             callback: (payload) async {
               if (payload.eventType == PostgresChangeEvent.delete) {
+                final expenseId = payload.oldRecord['expense_id'];
                 state = state.whenData((expenses) {
-                  final index = expenses.indexWhere((e) => e.id == payload.oldRecord['expense_id']);
-                  if (index == -1) return expenses; // Expense not found, return original list
-
-                  final updatedExpenses = List<Expense>.from(expenses);
-                  updatedExpenses.removeAt(index);
-
-                  return updatedExpenses;
+                  final index = expenses.indexWhere((e) => e.id == expenseId);
+                  if (index == -1) return expenses; // Group not found
+                  final updated = List<Expense>.from(expenses);
+                  updated.removeAt(index);
+                  return updated;
                 });
                 return;
-              } else if (payload.eventType == PostgresChangeEvent.update) {
-                Expense expense = await Expense.fetchDetail(payload.newRecord['expense_id']);
+              } else if (payload.eventType == PostgresChangeEvent.update ||
+                  payload.eventType == PostgresChangeEvent.insert) {
+                final expenseId = payload.newRecord['expense_id'];
+                final expense = await Expense.fetchDetail(expenseId);
 
                 state = state.whenData((expenses) {
-                  final index = expenses.indexWhere((e) => e.id == expense.id);
-                  if (index == -1) return expenses; // Expense not found, return original list
+                  final updated = List<Expense>.from(expenses);
+                  final index = updated.indexWhere((g) => g.id == expense.id);
 
-                  final updatedExpenses = List<Expense>.from(expenses);
-                  updatedExpenses[index] = expense;
-
-                  return updatedExpenses;
+                  if (index != -1) {
+                    updated[index] = expense;
+                  } else {
+                    updated.add(expense);
+                  }
+                  updated.sort((a, b) {
+                    int dateComparison = -a.expenseDate.compareTo(b.expenseDate);
+                    if (dateComparison == 0) {
+                      return -a.createdAt.compareTo(b.createdAt);
+                    }
+                    return dateComparison;
+                  });
+                  return updated;
                 });
-                return;
-              } else if (payload.eventType == PostgresChangeEvent.insert) {
-                Expense expense = await Expense.fetchDetail(payload.newRecord['expense_id']);
-
-                state = state.whenData((expenses) {
-                  return [
-                    expense,
-                    ...expenses
-                  ]; //not optimal, currently just adds it to the beginning instead of sorting it by date
-                });
-
                 return;
               }
             })
@@ -186,11 +273,20 @@ class ExpenseListNotifier extends _$ExpenseListNotifier {
   }
 }
 
-@riverpod
+@Riverpod(keepAlive: true)
 class FriendshipListNotifier extends _$FriendshipListNotifier {
+  RealtimeChannel? _channel;
   @override
   FutureOr<List<Friendship>> build() async {
     _subscribeToRealTimeUpdates();
+
+    // Ensure channel is cleaned up when provider is disposed
+    ref.onDispose(() {
+      if (_channel != null) {
+        supabase.removeChannel(_channel!);
+        _channel = null;
+      }
+    });
 
     return await fetchFriendshipList();
   }
@@ -204,7 +300,9 @@ class FriendshipListNotifier extends _$FriendshipListNotifier {
   }
 
   void _subscribeToRealTimeUpdates() {
-    supabase
+    if (_channel != null) return; // already subscribed
+
+    _channel = supabase
         .channel('public:friendship_list')
         .onPostgresChanges(
           event: PostgresChangeEvent.all,
@@ -271,6 +369,7 @@ class ThemeColor extends _$ThemeColor {
   Color build() => ColorSeed.blue.color;
 
   void setColor(Color color) => state = color;
+
   void resetColor() => state = ColorSeed.blue.color;
 }
 
@@ -280,6 +379,7 @@ class LocaleNotifier extends _$LocaleNotifier {
   Locale? build() => null;
 
   void setLocale(Locale locale) => state = locale;
+
   void resetLocale() => state = null;
 }
 
@@ -291,7 +391,8 @@ class GroupMonthlyTotalsNotifier extends _$GroupMonthlyTotalsNotifier {
   }
 
   Future<void> loadOffset(String groupId, int endOffsetMonths) async {
-    state = await AsyncValue.guard(() async => await _loadRange(groupId, endOffsetMonths));
+    state =
+        await AsyncValue.guard(() async => await _loadRange(groupId, endOffsetMonths));
   }
 
   Future<GroupMonthlyTotalsState> _loadRange(String groupId, int endOffsetMonths) async {
@@ -302,9 +403,11 @@ class GroupMonthlyTotalsNotifier extends _$GroupMonthlyTotalsNotifier {
     // Build 6 months ending at lastIncludedMonthStart
     List<DateTime> starts = [];
     for (int i = 5; i >= 0; i--) {
-      starts.add(DateTime(lastIncludedMonthStart.year, lastIncludedMonthStart.month - i, 1));
+      starts.add(
+          DateTime(lastIncludedMonthStart.year, lastIncludedMonthStart.month - i, 1));
     }
-    final List<DateTime> ends = starts.map((s) => DateTime(s.year, s.month + 1, 1)).toList();
+    final List<DateTime> ends =
+        starts.map((s) => DateTime(s.year, s.month + 1, 1)).toList();
 
     // Fetch expenses for range
     final expenses = await Expense.fetchRange(groupId, starts.first, ends.last);
@@ -315,16 +418,19 @@ class GroupMonthlyTotalsNotifier extends _$GroupMonthlyTotalsNotifier {
       final date = DateTime.parse(expense.expenseDate);
       for (int i = 0; i < 6; i++) {
         if (!date.isBefore(starts[i]) && date.isBefore(ends[i])) {
-          final sum = expense.expenseEntries.values.fold<double>(0, (acc, e) => acc + e.amount);
+          final sum =
+              expense.expenseEntries.values.fold<double>(0, (acc, e) => acc + e.amount);
           totals[i] = totals[i] + sum;
           break;
         }
       }
     }
 
-    final months = List<MonthBucket>.generate(6, (i) => MonthBucket(start: starts[i], end: ends[i], total: totals[i]));
+    final months = List<MonthBucket>.generate(
+        6, (i) => MonthBucket(start: starts[i], end: ends[i], total: totals[i]));
 
-    return GroupMonthlyTotalsState(groupId: groupId, endOffsetMonths: endOffsetMonths, months: months);
+    return GroupMonthlyTotalsState(
+        groupId: groupId, endOffsetMonths: endOffsetMonths, months: months);
   }
 }
 
@@ -336,7 +442,8 @@ class GroupMonthMemberTotalsNotifier extends _$GroupMonthMemberTotalsNotifier {
   }
 
   Future<List<MemberMonthTotal>> _load(GroupMonthMemberTotalsArgs args) async {
-    final expenses = await Expense.fetchRange(args.groupId, args.monthStart, args.monthEnd);
+    final expenses =
+        await Expense.fetchRange(args.groupId, args.monthStart, args.monthEnd);
 
     final Map<String, MemberMonthTotal> byMember = {};
     for (final expense in expenses) {
@@ -368,7 +475,8 @@ class GroupMonthMemberTotalsNotifier extends _$GroupMonthMemberTotalsNotifier {
     // Ensure members with zero are present if group has members
     final group = await Group.fetchDetail(args.groupId);
     for (final m in group.groupMembers) {
-      byMember[m.email] = byMember[m.email] ?? MemberMonthTotal(email: m.email, displayName: m.displayName, total: 0);
+      byMember[m.email] = byMember[m.email] ??
+          MemberMonthTotal(email: m.email, displayName: m.displayName, total: 0);
     }
 
     final list = byMember.values.toList();
@@ -385,12 +493,14 @@ class GroupMonthCategoryTotalsNotifier extends _$GroupMonthCategoryTotalsNotifie
   }
 
   Future<List<CategoryMonthTotal>> _load(GroupMonthCategoryTotalsArgs args) async {
-    final expenses = await Expense.fetchRange(args.groupId, args.monthStart, args.monthEnd);
+    final expenses =
+        await Expense.fetchRange(args.groupId, args.monthStart, args.monthEnd);
 
     final Map<String, double> byCategory = {};
     for (final expense in expenses) {
       final categoryName = expense.category?.name ?? 'other';
-      final sum = expense.expenseEntries.values.fold<double>(0, (acc, e) => acc + e.amount);
+      final sum =
+          expense.expenseEntries.values.fold<double>(0, (acc, e) => acc + e.amount);
       byCategory[categoryName] = (byCategory[categoryName] ?? 0) + sum;
     }
 
@@ -426,7 +536,8 @@ class CategoryExpenseDetailsNotifier extends _$CategoryExpenseDetailsNotifier {
   }
 
   Future<List<CategoryExpenseDetail>> _load(CategoryExpenseDetailsArgs args) async {
-    final expenses = await Expense.fetchRange(args.groupId, args.monthStart, args.monthEnd);
+    final expenses =
+        await Expense.fetchRange(args.groupId, args.monthStart, args.monthEnd);
 
     // Filter expenses by category
     final categoryExpenses = expenses.where((expense) {
@@ -437,7 +548,8 @@ class CategoryExpenseDetailsNotifier extends _$CategoryExpenseDetailsNotifier {
     // Convert to CategoryExpenseDetail list
     final List<CategoryExpenseDetail> details = [];
     for (final expense in categoryExpenses) {
-      final sum = expense.expenseEntries.values.fold<double>(0, (acc, e) => acc + e.amount);
+      final sum =
+          expense.expenseEntries.values.fold<double>(0, (acc, e) => acc + e.amount);
       details.add(CategoryExpenseDetail(
         expenseId: expense.id,
         expenseName: expense.name,
@@ -449,7 +561,8 @@ class CategoryExpenseDetailsNotifier extends _$CategoryExpenseDetailsNotifier {
     }
 
     // Sort by date (newest first)
-    details.sort((a, b) => DateTime.parse(b.expenseDate).compareTo(DateTime.parse(a.expenseDate)));
+    details.sort(
+        (a, b) => DateTime.parse(b.expenseDate).compareTo(DateTime.parse(a.expenseDate)));
 
     return details;
   }
