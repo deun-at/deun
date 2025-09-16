@@ -92,8 +92,8 @@ class GroupListNotifier extends _$GroupListNotifier {
                     updated[index] = group;
                   } else {
                     updated.add(group);
-                    updated.sort((a, b) => a.name.compareTo(b.name));
                   }
+                  updated.sort((a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()));
                   return updated;
                 });
                 return;
@@ -257,13 +257,13 @@ class ExpenseListNotifier extends _$ExpenseListNotifier {
   }
 
   Future<void> loadMoreEntries(String groupId) async {
-    if (!_hasMore || state.isLoading) return; // ✅ Stop if no more data
+    if (!_hasMore || state.isLoading) return;
 
-    _offset += pageSize; // ✅ Increase the offset for the next page
+    _offset += pageSize;
     final newExpenses = await Expense.fetchData(groupId, _offset, _offset + pageSize - 1);
 
     if (newExpenses.isEmpty) {
-      _hasMore = false; // ✅ No more data to load
+      _hasMore = false;
       return;
     }
 
@@ -562,7 +562,7 @@ class CategoryExpenseDetailsNotifier extends _$CategoryExpenseDetailsNotifier {
 
     // Sort by date (newest first)
     details.sort(
-        (a, b) => DateTime.parse(b.expenseDate).compareTo(DateTime.parse(a.expenseDate)));
+        (a, b) => -a.expenseDate.compareTo(b.expenseDate));
 
     return details;
   }

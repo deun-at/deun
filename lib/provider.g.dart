@@ -50,7 +50,7 @@ final class GroupListNotifierProvider
   }
 }
 
-String _$groupListNotifierHash() => r'7f46a1830b9e530c5476fe2981fd8808b43d4adb';
+String _$groupListNotifierHash() => r'795bc735adef973a8f0ad19bdf28cf439b63831f';
 
 final class GroupListNotifierFamily extends $Family
     with
@@ -884,7 +884,7 @@ final class CategoryExpenseDetailsNotifierProvider
 }
 
 String _$categoryExpenseDetailsNotifierHash() =>
-    r'650441b46e73be35d40f2f11f81a8eb177afb316';
+    r'ffff35936b8d514d5980ed453c57f126aeec19be';
 
 final class CategoryExpenseDetailsNotifierFamily extends $Family
     with
