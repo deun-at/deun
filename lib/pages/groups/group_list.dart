@@ -44,14 +44,12 @@ class _GroupListState extends ConsumerState<GroupList> {
   }
 
   Future<void> updateGroupList() async {
-    await ref
-        .read(groupListNotifierProvider(groupListFilter).notifier)
-        .reload(groupListFilter);
+    ref.read(groupListProvider(groupListFilter).notifier).reload(groupListFilter);
   }
 
   @override
   Widget build(BuildContext context) {
-    final groupList = ref.watch(groupListNotifierProvider(groupListFilter));
+    final groupList = ref.watch(groupListProvider(groupListFilter));
 
     return ScaffoldMessenger(
       key: groupListScaffoldMessengerKey,
@@ -118,7 +116,7 @@ class _GroupListState extends ConsumerState<GroupList> {
                         itemBuilder: (context, index) {
                           // Access the Group instance
                           Group group = value[index];
-                          return GroupListItem(group: group);
+                          return GroupListItem(key: ValueKey(group.id), group: group);
                         },
                       ),
                     ),

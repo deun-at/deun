@@ -6,8 +6,11 @@ part of 'provider.dart';
 // RiverpodGenerator
 // **************************************************************************
 
+// GENERATED CODE - DO NOT MODIFY BY HAND
+// ignore_for_file: type=lint, type=warning
+
 @ProviderFor(GroupListNotifier)
-const groupListNotifierProvider = GroupListNotifierFamily._();
+const groupListProvider = GroupListNotifierFamily._();
 
 final class GroupListNotifierProvider
     extends $AsyncNotifierProvider<GroupListNotifier, List<Group>> {
@@ -16,7 +19,7 @@ final class GroupListNotifierProvider
       required String super.argument})
       : super(
           retry: null,
-          name: r'groupListNotifierProvider',
+          name: r'groupListProvider',
           isAutoDispose: true,
           dependencies: null,
           $allTransitiveDependencies: null,
@@ -27,7 +30,7 @@ final class GroupListNotifierProvider
 
   @override
   String toString() {
-    return r'groupListNotifierProvider'
+    return r'groupListProvider'
         ''
         '($argument)';
   }
@@ -56,7 +59,7 @@ final class GroupListNotifierFamily extends $Family
   const GroupListNotifierFamily._()
       : super(
           retry: null,
-          name: r'groupListNotifierProvider',
+          name: r'groupListProvider',
           dependencies: null,
           $allTransitiveDependencies: null,
           isAutoDispose: true,
@@ -68,7 +71,7 @@ final class GroupListNotifierFamily extends $Family
       GroupListNotifierProvider._(argument: statusFilter, from: this);
 
   @override
-  String toString() => r'groupListNotifierProvider';
+  String toString() => r'groupListProvider';
 }
 
 abstract class _$GroupListNotifier extends $AsyncNotifier<List<Group>> {
@@ -95,7 +98,7 @@ abstract class _$GroupListNotifier extends $AsyncNotifier<List<Group>> {
 }
 
 @ProviderFor(GroupDetailNotifier)
-const groupDetailNotifierProvider = GroupDetailNotifierFamily._();
+const groupDetailProvider = GroupDetailNotifierFamily._();
 
 final class GroupDetailNotifierProvider
     extends $AsyncNotifierProvider<GroupDetailNotifier, Group> {
@@ -104,7 +107,7 @@ final class GroupDetailNotifierProvider
       required String super.argument})
       : super(
           retry: null,
-          name: r'groupDetailNotifierProvider',
+          name: r'groupDetailProvider',
           isAutoDispose: true,
           dependencies: null,
           $allTransitiveDependencies: null,
@@ -115,7 +118,7 @@ final class GroupDetailNotifierProvider
 
   @override
   String toString() {
-    return r'groupDetailNotifierProvider'
+    return r'groupDetailProvider'
         ''
         '($argument)';
   }
@@ -145,7 +148,7 @@ final class GroupDetailNotifierFamily extends $Family
   const GroupDetailNotifierFamily._()
       : super(
           retry: null,
-          name: r'groupDetailNotifierProvider',
+          name: r'groupDetailProvider',
           dependencies: null,
           $allTransitiveDependencies: null,
           isAutoDispose: true,
@@ -157,7 +160,7 @@ final class GroupDetailNotifierFamily extends $Family
       GroupDetailNotifierProvider._(argument: groupId, from: this);
 
   @override
-  String toString() => r'groupDetailNotifierProvider';
+  String toString() => r'groupDetailProvider';
 }
 
 abstract class _$GroupDetailNotifier extends $AsyncNotifier<Group> {
@@ -184,7 +187,7 @@ abstract class _$GroupDetailNotifier extends $AsyncNotifier<Group> {
 }
 
 @ProviderFor(ExpenseListNotifier)
-const expenseListNotifierProvider = ExpenseListNotifierFamily._();
+const expenseListProvider = ExpenseListNotifierFamily._();
 
 final class ExpenseListNotifierProvider
     extends $AsyncNotifierProvider<ExpenseListNotifier, List<Expense>> {
@@ -193,7 +196,7 @@ final class ExpenseListNotifierProvider
       required String super.argument})
       : super(
           retry: null,
-          name: r'expenseListNotifierProvider',
+          name: r'expenseListProvider',
           isAutoDispose: true,
           dependencies: null,
           $allTransitiveDependencies: null,
@@ -204,7 +207,7 @@ final class ExpenseListNotifierProvider
 
   @override
   String toString() {
-    return r'expenseListNotifierProvider'
+    return r'expenseListProvider'
         ''
         '($argument)';
   }
@@ -234,7 +237,7 @@ final class ExpenseListNotifierFamily extends $Family
   const ExpenseListNotifierFamily._()
       : super(
           retry: null,
-          name: r'expenseListNotifierProvider',
+          name: r'expenseListProvider',
           dependencies: null,
           $allTransitiveDependencies: null,
           isAutoDispose: true,
@@ -246,7 +249,7 @@ final class ExpenseListNotifierFamily extends $Family
       ExpenseListNotifierProvider._(argument: groupId, from: this);
 
   @override
-  String toString() => r'expenseListNotifierProvider';
+  String toString() => r'expenseListProvider';
 }
 
 abstract class _$ExpenseListNotifier extends $AsyncNotifier<List<Expense>> {
@@ -272,42 +275,8 @@ abstract class _$ExpenseListNotifier extends $AsyncNotifier<List<Expense>> {
   }
 }
 
-@ProviderFor(expenseList)
-const expenseListProvider = ExpenseListProvider._();
-
-final class ExpenseListProvider extends $FunctionalProvider<
-        AsyncValue<List<Expense>>, List<Expense>, FutureOr<List<Expense>>>
-    with $FutureModifier<List<Expense>>, $FutureProvider<List<Expense>> {
-  const ExpenseListProvider._()
-      : super(
-          from: null,
-          argument: null,
-          retry: null,
-          name: r'expenseListProvider',
-          isAutoDispose: true,
-          dependencies: null,
-          $allTransitiveDependencies: null,
-        );
-
-  @override
-  String debugGetCreateSourceHash() => _$expenseListHash();
-
-  @$internal
-  @override
-  $FutureProviderElement<List<Expense>> $createElement(
-          $ProviderPointer pointer) =>
-      $FutureProviderElement(pointer);
-
-  @override
-  FutureOr<List<Expense>> create(Ref ref) {
-    return expenseList(ref);
-  }
-}
-
-String _$expenseListHash() => r'00dca8aef60e04c10e83bf68f036038277de8956';
-
 @ProviderFor(FriendshipListNotifier)
-const friendshipListNotifierProvider = FriendshipListNotifierProvider._();
+const friendshipListProvider = FriendshipListNotifierProvider._();
 
 final class FriendshipListNotifierProvider
     extends $AsyncNotifierProvider<FriendshipListNotifier, List<Friendship>> {
@@ -316,7 +285,7 @@ final class FriendshipListNotifierProvider
           from: null,
           argument: null,
           retry: null,
-          name: r'friendshipListNotifierProvider',
+          name: r'friendshipListProvider',
           isAutoDispose: true,
           dependencies: null,
           $allTransitiveDependencies: null,
@@ -352,7 +321,7 @@ abstract class _$FriendshipListNotifier
 }
 
 @ProviderFor(FriendshipDetailNotifier)
-const friendshipDetailNotifierProvider = FriendshipDetailNotifierFamily._();
+const friendshipDetailProvider = FriendshipDetailNotifierFamily._();
 
 final class FriendshipDetailNotifierProvider
     extends $AsyncNotifierProvider<FriendshipDetailNotifier, Friendship> {
@@ -361,7 +330,7 @@ final class FriendshipDetailNotifierProvider
       required String super.argument})
       : super(
           retry: null,
-          name: r'friendshipDetailNotifierProvider',
+          name: r'friendshipDetailProvider',
           isAutoDispose: true,
           dependencies: null,
           $allTransitiveDependencies: null,
@@ -372,7 +341,7 @@ final class FriendshipDetailNotifierProvider
 
   @override
   String toString() {
-    return r'friendshipDetailNotifierProvider'
+    return r'friendshipDetailProvider'
         ''
         '($argument)';
   }
@@ -403,7 +372,7 @@ final class FriendshipDetailNotifierFamily extends $Family
   const FriendshipDetailNotifierFamily._()
       : super(
           retry: null,
-          name: r'friendshipDetailNotifierProvider',
+          name: r'friendshipDetailProvider',
           dependencies: null,
           $allTransitiveDependencies: null,
           isAutoDispose: true,
@@ -415,7 +384,7 @@ final class FriendshipDetailNotifierFamily extends $Family
       FriendshipDetailNotifierProvider._(argument: email, from: this);
 
   @override
-  String toString() => r'friendshipDetailNotifierProvider';
+  String toString() => r'friendshipDetailProvider';
 }
 
 abstract class _$FriendshipDetailNotifier extends $AsyncNotifier<Friendship> {
@@ -442,16 +411,16 @@ abstract class _$FriendshipDetailNotifier extends $AsyncNotifier<Friendship> {
 }
 
 @ProviderFor(UserDetailNotifier)
-const userDetailNotifierProvider = UserDetailNotifierProvider._();
+const userDetailProvider = UserDetailNotifierProvider._();
 
 final class UserDetailNotifierProvider
-    extends $AsyncNotifierProvider<UserDetailNotifier, user_model.User> {
+    extends $AsyncNotifierProvider<UserDetailNotifier, SupaUser> {
   const UserDetailNotifierProvider._()
       : super(
           from: null,
           argument: null,
           retry: null,
-          name: r'userDetailNotifierProvider',
+          name: r'userDetailProvider',
           isAutoDispose: true,
           dependencies: null,
           $allTransitiveDependencies: null,
@@ -466,18 +435,18 @@ final class UserDetailNotifierProvider
 }
 
 String _$userDetailNotifierHash() =>
-    r'c09c8559275cc9173c125d0a21bc9d2e24e80467';
+    r'7e551e2977cefd6d121644b606288a205e6445d7';
 
-abstract class _$UserDetailNotifier extends $AsyncNotifier<user_model.User> {
-  FutureOr<user_model.User> build();
+abstract class _$UserDetailNotifier extends $AsyncNotifier<SupaUser> {
+  FutureOr<SupaUser> build();
   @$mustCallSuper
   @override
   void runBuild() {
     final created = build();
-    final ref = this.ref as $Ref<AsyncValue<user_model.User>, user_model.User>;
+    final ref = this.ref as $Ref<AsyncValue<SupaUser>, SupaUser>;
     final element = ref.element as $ClassProviderElement<
-        AnyNotifier<AsyncValue<user_model.User>, user_model.User>,
-        AsyncValue<user_model.User>,
+        AnyNotifier<AsyncValue<SupaUser>, SupaUser>,
+        AsyncValue<SupaUser>,
         Object?,
         Object?>;
     element.handleValue(ref, created);
@@ -531,7 +500,7 @@ abstract class _$ThemeColor extends $Notifier<Color> {
 }
 
 @ProviderFor(LocaleNotifier)
-const localeNotifierProvider = LocaleNotifierProvider._();
+const localeProvider = LocaleNotifierProvider._();
 
 final class LocaleNotifierProvider
     extends $NotifierProvider<LocaleNotifier, Locale?> {
@@ -540,7 +509,7 @@ final class LocaleNotifierProvider
           from: null,
           argument: null,
           retry: null,
-          name: r'localeNotifierProvider',
+          name: r'localeProvider',
           isAutoDispose: true,
           dependencies: null,
           $allTransitiveDependencies: null,
@@ -578,7 +547,7 @@ abstract class _$LocaleNotifier extends $Notifier<Locale?> {
 }
 
 @ProviderFor(GroupMonthlyTotalsNotifier)
-const groupMonthlyTotalsNotifierProvider = GroupMonthlyTotalsNotifierFamily._();
+const groupMonthlyTotalsProvider = GroupMonthlyTotalsNotifierFamily._();
 
 final class GroupMonthlyTotalsNotifierProvider extends $AsyncNotifierProvider<
     GroupMonthlyTotalsNotifier, GroupMonthlyTotalsState> {
@@ -587,7 +556,7 @@ final class GroupMonthlyTotalsNotifierProvider extends $AsyncNotifierProvider<
       required String super.argument})
       : super(
           retry: null,
-          name: r'groupMonthlyTotalsNotifierProvider',
+          name: r'groupMonthlyTotalsProvider',
           isAutoDispose: true,
           dependencies: null,
           $allTransitiveDependencies: null,
@@ -598,7 +567,7 @@ final class GroupMonthlyTotalsNotifierProvider extends $AsyncNotifierProvider<
 
   @override
   String toString() {
-    return r'groupMonthlyTotalsNotifierProvider'
+    return r'groupMonthlyTotalsProvider'
         ''
         '($argument)';
   }
@@ -633,7 +602,7 @@ final class GroupMonthlyTotalsNotifierFamily extends $Family
   const GroupMonthlyTotalsNotifierFamily._()
       : super(
           retry: null,
-          name: r'groupMonthlyTotalsNotifierProvider',
+          name: r'groupMonthlyTotalsProvider',
           dependencies: null,
           $allTransitiveDependencies: null,
           isAutoDispose: true,
@@ -645,7 +614,7 @@ final class GroupMonthlyTotalsNotifierFamily extends $Family
       GroupMonthlyTotalsNotifierProvider._(argument: groupId, from: this);
 
   @override
-  String toString() => r'groupMonthlyTotalsNotifierProvider';
+  String toString() => r'groupMonthlyTotalsProvider';
 }
 
 abstract class _$GroupMonthlyTotalsNotifier
@@ -675,8 +644,7 @@ abstract class _$GroupMonthlyTotalsNotifier
 }
 
 @ProviderFor(GroupMonthMemberTotalsNotifier)
-const groupMonthMemberTotalsNotifierProvider =
-    GroupMonthMemberTotalsNotifierFamily._();
+const groupMonthMemberTotalsProvider = GroupMonthMemberTotalsNotifierFamily._();
 
 final class GroupMonthMemberTotalsNotifierProvider
     extends $AsyncNotifierProvider<GroupMonthMemberTotalsNotifier,
@@ -686,7 +654,7 @@ final class GroupMonthMemberTotalsNotifierProvider
       required GroupMonthMemberTotalsArgs super.argument})
       : super(
           retry: null,
-          name: r'groupMonthMemberTotalsNotifierProvider',
+          name: r'groupMonthMemberTotalsProvider',
           isAutoDispose: true,
           dependencies: null,
           $allTransitiveDependencies: null,
@@ -697,7 +665,7 @@ final class GroupMonthMemberTotalsNotifierProvider
 
   @override
   String toString() {
-    return r'groupMonthMemberTotalsNotifierProvider'
+    return r'groupMonthMemberTotalsProvider'
         ''
         '($argument)';
   }
@@ -732,7 +700,7 @@ final class GroupMonthMemberTotalsNotifierFamily extends $Family
   const GroupMonthMemberTotalsNotifierFamily._()
       : super(
           retry: null,
-          name: r'groupMonthMemberTotalsNotifierProvider',
+          name: r'groupMonthMemberTotalsProvider',
           dependencies: null,
           $allTransitiveDependencies: null,
           isAutoDispose: true,
@@ -744,7 +712,7 @@ final class GroupMonthMemberTotalsNotifierFamily extends $Family
       GroupMonthMemberTotalsNotifierProvider._(argument: args, from: this);
 
   @override
-  String toString() => r'groupMonthMemberTotalsNotifierProvider';
+  String toString() => r'groupMonthMemberTotalsProvider';
 }
 
 abstract class _$GroupMonthMemberTotalsNotifier
@@ -773,7 +741,7 @@ abstract class _$GroupMonthMemberTotalsNotifier
 }
 
 @ProviderFor(GroupMonthCategoryTotalsNotifier)
-const groupMonthCategoryTotalsNotifierProvider =
+const groupMonthCategoryTotalsProvider =
     GroupMonthCategoryTotalsNotifierFamily._();
 
 final class GroupMonthCategoryTotalsNotifierProvider
@@ -784,7 +752,7 @@ final class GroupMonthCategoryTotalsNotifierProvider
       required GroupMonthCategoryTotalsArgs super.argument})
       : super(
           retry: null,
-          name: r'groupMonthCategoryTotalsNotifierProvider',
+          name: r'groupMonthCategoryTotalsProvider',
           isAutoDispose: true,
           dependencies: null,
           $allTransitiveDependencies: null,
@@ -795,7 +763,7 @@ final class GroupMonthCategoryTotalsNotifierProvider
 
   @override
   String toString() {
-    return r'groupMonthCategoryTotalsNotifierProvider'
+    return r'groupMonthCategoryTotalsProvider'
         ''
         '($argument)';
   }
@@ -831,7 +799,7 @@ final class GroupMonthCategoryTotalsNotifierFamily extends $Family
   const GroupMonthCategoryTotalsNotifierFamily._()
       : super(
           retry: null,
-          name: r'groupMonthCategoryTotalsNotifierProvider',
+          name: r'groupMonthCategoryTotalsProvider',
           dependencies: null,
           $allTransitiveDependencies: null,
           isAutoDispose: true,
@@ -843,7 +811,7 @@ final class GroupMonthCategoryTotalsNotifierFamily extends $Family
       GroupMonthCategoryTotalsNotifierProvider._(argument: args, from: this);
 
   @override
-  String toString() => r'groupMonthCategoryTotalsNotifierProvider';
+  String toString() => r'groupMonthCategoryTotalsProvider';
 }
 
 abstract class _$GroupMonthCategoryTotalsNotifier
@@ -873,8 +841,7 @@ abstract class _$GroupMonthCategoryTotalsNotifier
 }
 
 @ProviderFor(CategoryExpenseDetailsNotifier)
-const categoryExpenseDetailsNotifierProvider =
-    CategoryExpenseDetailsNotifierFamily._();
+const categoryExpenseDetailsProvider = CategoryExpenseDetailsNotifierFamily._();
 
 final class CategoryExpenseDetailsNotifierProvider
     extends $AsyncNotifierProvider<CategoryExpenseDetailsNotifier,
@@ -884,7 +851,7 @@ final class CategoryExpenseDetailsNotifierProvider
       required CategoryExpenseDetailsArgs super.argument})
       : super(
           retry: null,
-          name: r'categoryExpenseDetailsNotifierProvider',
+          name: r'categoryExpenseDetailsProvider',
           isAutoDispose: true,
           dependencies: null,
           $allTransitiveDependencies: null,
@@ -895,7 +862,7 @@ final class CategoryExpenseDetailsNotifierProvider
 
   @override
   String toString() {
-    return r'categoryExpenseDetailsNotifierProvider'
+    return r'categoryExpenseDetailsProvider'
         ''
         '($argument)';
   }
@@ -930,7 +897,7 @@ final class CategoryExpenseDetailsNotifierFamily extends $Family
   const CategoryExpenseDetailsNotifierFamily._()
       : super(
           retry: null,
-          name: r'categoryExpenseDetailsNotifierProvider',
+          name: r'categoryExpenseDetailsProvider',
           dependencies: null,
           $allTransitiveDependencies: null,
           isAutoDispose: true,
@@ -942,7 +909,7 @@ final class CategoryExpenseDetailsNotifierFamily extends $Family
       CategoryExpenseDetailsNotifierProvider._(argument: args, from: this);
 
   @override
-  String toString() => r'categoryExpenseDetailsNotifierProvider';
+  String toString() => r'categoryExpenseDetailsProvider';
 }
 
 abstract class _$CategoryExpenseDetailsNotifier
@@ -970,6 +937,3 @@ abstract class _$CategoryExpenseDetailsNotifier
     element.handleValue(ref, created);
   }
 }
-
-// ignore_for_file: type=lint
-// ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member, deprecated_member_use_from_same_package

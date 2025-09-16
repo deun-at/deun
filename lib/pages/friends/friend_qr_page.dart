@@ -7,7 +7,6 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:deun/l10n/app_localizations.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:qr_flutter/qr_flutter.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 class FriendQrPage extends StatefulWidget {
   const FriendQrPage({super.key});

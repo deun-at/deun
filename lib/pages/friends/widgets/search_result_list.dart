@@ -5,7 +5,7 @@ import 'package:deun/widgets/shimmer_card_list.dart';
 import 'package:flutter/material.dart';
 
 class SearchResultList extends StatelessWidget {
-  final Future<List<User>> userSearchFuture;
+  final Future<List<SupaUser>> userSearchFuture;
   final Function(String userEmail, String displayName) onRequest;
   final GlobalKey<ScaffoldMessengerState> scaffoldMessengerKey;
   final String searchText;
@@ -24,7 +24,7 @@ class SearchResultList extends StatelessWidget {
       return Container();
     }
 
-    return FutureBuilder<List<User>>(
+    return FutureBuilder<List<SupaUser>>(
       future: userSearchFuture,
       builder: (context, userList) {
         Widget widget;

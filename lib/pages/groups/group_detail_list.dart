@@ -29,7 +29,7 @@ class _GroupDetailListState extends ConsumerState<GroupDetailList> {
 
   Future<void> updateExpenseList() async {
     return ref
-        .read(expenseListNotifierProvider(widget.group.id).notifier)
+        .read(expenseListProvider(widget.group.id).notifier)
         .reload(widget.group.id);
   }
 
@@ -47,11 +47,11 @@ class _GroupDetailListState extends ConsumerState<GroupDetailList> {
 
     return Consumer(
       builder: (context, ref, child) {
-        final expenseListState = ref.watch(expenseListNotifierProvider(widget.group.id));
+        final expenseListState = ref.watch(expenseListProvider(widget.group.id));
         final isLoading = expenseListState.isLoading;
         final expenses = expenseListState.value;
         oldOffset =
-            ref.read(expenseListNotifierProvider(widget.group.id).notifier).offset;
+            ref.read(expenseListProvider(widget.group.id).notifier).offset;
 
         if (isLoading) {
           return const ShimmerCardList(height: 80, listEntryLength: 15);
@@ -185,11 +185,11 @@ class _GroupDetailListState extends ConsumerState<GroupDetailList> {
                             MediaQuery.of(context).size.height) {
                       if (oldOffset ==
                           ref
-                              .read(expenseListNotifierProvider(widget.group.id).notifier)
+                              .read(expenseListProvider(widget.group.id).notifier)
                               .offset) {
                         // make sure ListView has newest data after previous loadMore
                         ref
-                            .read(expenseListNotifierProvider(widget.group.id).notifier)
+                            .read(expenseListProvider(widget.group.id).notifier)
                             .loadMoreEntries(widget.group.id);
                       }
                     }

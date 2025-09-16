@@ -5,7 +5,6 @@ import 'package:deun/helper/helper.dart';
 import 'package:deun/main.dart';
 import 'package:deun/pages/expenses/expense_model.dart';
 import 'package:deun/pages/groups/group_detail_list.dart';
-import 'package:deun/pages/groups/group_list.dart';
 import 'package:deun/widgets/native_ad_block.dart';
 import 'package:deun/widgets/shimmer_card_list.dart';
 import 'package:flutter/foundation.dart';
@@ -146,7 +145,7 @@ class _GroupDetailState extends ConsumerState<GroupDetail> {
                     Consumer(
                       builder: (ctx, watch, child) {
                         final groupDetailState =
-                            ref.watch(groupDetailNotifierProvider(widget.group.id));
+                            ref.watch(groupDetailProvider(widget.group.id));
                         final isLoading = groupDetailState.isLoading;
                         final groupDetail = groupDetailState.value;
 
@@ -179,7 +178,7 @@ class _GroupDetailState extends ConsumerState<GroupDetail> {
 
                         return Padding(
                             padding: const EdgeInsets.fromLTRB(10.0, 5.0, 10.0, 5.0),
-                            child: GroupShareWidget(group: groupDetail!));
+                            child: GroupShareWidget(group: groupDetail));
                       },
                     ),
                   ],

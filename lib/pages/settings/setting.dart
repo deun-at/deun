@@ -92,8 +92,8 @@ class _SettingState extends ConsumerState<Setting> {
                   padding: const EdgeInsets.all(10),
                   child: Consumer(
                     builder: (context, ref, child) {
-                      final User? user = ref.watch(userDetailNotifierProvider).value;
-                      final locale = ref.watch(localeNotifierProvider);
+                      final SupaUser? user = ref.watch(userDetailProvider).value;
+                      final locale = ref.watch(localeProvider);
 
                       if (user == null) {
                         return const ShimmerCardList(
@@ -248,7 +248,7 @@ class _SettingState extends ConsumerState<Setting> {
                                 onPressed: () async {
                                   if (_formKey.currentState!.saveAndValidate()) {
                                     try {
-                                      await User.saveAll(_formKey.currentState!.value);
+                                      await SupaUser.saveAll(_formKey.currentState!.value);
                                       if (context.mounted) {
                                         showSnackBar(
                                             context,
@@ -259,11 +259,11 @@ class _SettingState extends ConsumerState<Setting> {
                                         if (_formKey.currentState!.value['locale'] ==
                                             null) {
                                           ref
-                                              .read(localeNotifierProvider.notifier)
+                                              .read(localeProvider.notifier)
                                               .resetLocale();
                                         } else {
                                           ref
-                                              .read(localeNotifierProvider.notifier)
+                                              .read(localeProvider.notifier)
                                               .setLocale(Locale(_formKey
                                                   .currentState!.value['locale']));
                                         }

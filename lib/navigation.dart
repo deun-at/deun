@@ -278,7 +278,7 @@ class _NavigationScreenState extends ConsumerState<NavigationScreen> {
         .single();
 
     if (user["locale"] != null) {
-      ref.read(localeNotifierProvider.notifier).setLocale(Locale(user["locale"]));
+      ref.read(localeProvider.notifier).setLocale(Locale(user["locale"]));
     }
   }
 
@@ -394,7 +394,7 @@ class _NavigationScreenState extends ConsumerState<NavigationScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final locale = ref.watch(localeNotifierProvider);
+    final locale = ref.watch(localeProvider);
     Color colorSelected = ref.watch(themeColorProvider);
 
     return MaterialApp.router(

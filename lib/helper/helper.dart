@@ -134,7 +134,7 @@ void sendExpenseNotification(BuildContext context, String expenseId, Set<String>
 }
 
 void sendFriendRequestNotification(BuildContext context, Set<String> notificationReceiver) {
-  User.fetchDetail(supabase.auth.currentUser!.email ?? '').then(
+  SupaUser.fetchDetail(supabase.auth.currentUser!.email ?? '').then(
     (value) {
       sendNotification(
         'friendship',
@@ -150,7 +150,7 @@ void sendFriendRequestNotification(BuildContext context, Set<String> notificatio
 }
 
 void sendFriendAcceptNotification(BuildContext context, Set<String> notificationReceiver) {
-  User.fetchDetail(supabase.auth.currentUser!.email ?? '').then(
+  SupaUser.fetchDetail(supabase.auth.currentUser!.email ?? '').then(
     (value) {
       sendNotification(
         'friendship',
@@ -166,7 +166,7 @@ void sendFriendAcceptNotification(BuildContext context, Set<String> notification
 }
 
 void sendFriendDeclineNotification(BuildContext context, Set<String> notificationReceiver) {
-  User.fetchDetail(supabase.auth.currentUser!.email ?? '').then(
+  SupaUser.fetchDetail(supabase.auth.currentUser!.email ?? '').then(
     (value) {
       sendNotification(
         'friendship',
