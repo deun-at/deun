@@ -5,7 +5,7 @@ import 'package:deun/widgets/shimmer_card_list.dart';
 import 'package:flutter/material.dart';
 
 class ContactSuggestionList extends StatelessWidget {
-  final Future<List<User>> userContactFuture;
+  final Future<List<SupaUser>> userContactFuture;
   final Function(String userEmail, String displayName) onRequest;
   final GlobalKey<ScaffoldMessengerState> scaffoldMessengerKey;
 
@@ -18,7 +18,7 @@ class ContactSuggestionList extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return FutureBuilder<List<User>>(
+    return FutureBuilder<List<SupaUser>>(
       future: userContactFuture,
       builder: (context, snapshot) {
         Widget widget;

@@ -45,7 +45,7 @@ class _GroupPaymentBottomSheetState extends ConsumerState<GroupPaymentBottomShee
               child: Consumer(
                 builder: (context, ref, child) {
                   final Group? group =
-                      ref.watch(groupDetailNotifierProvider(widget.group.id)).value;
+                      ref.watch(groupDetailProvider(widget.group.id)).value;
 
                   if (group == null) {
                     return const ShimmerCardList(

@@ -8,7 +8,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'pages/groups/group_model.dart';
 import 'pages/expenses/expense_model.dart';
 import 'pages/expenses/expense_category.dart';
-import 'pages/users/user_model.dart' as user_model;
+import 'pages/users/user_model.dart';
 import 'pages/statistics/statistics_models.dart';
 
 // Necessary for code-generation to work
@@ -19,7 +19,7 @@ class GroupListNotifier extends _$GroupListNotifier {
   @override
   FutureOr<List<Group>> build(String statusFilter) async {
     _subscribeToRealTimeUpdates(statusFilter);
-
+    
     return await fetchGroupList(statusFilter);
   }
 
@@ -187,11 +187,6 @@ class ExpenseListNotifier extends _$ExpenseListNotifier {
 }
 
 @riverpod
-Future<List<Expense>> expenseList(Ref ref) async {
-  return await Expense.fetchData();
-}
-
-@riverpod
 class FriendshipListNotifier extends _$FriendshipListNotifier {
   @override
   FutureOr<List<Friendship>> build() async {
@@ -257,7 +252,7 @@ class FriendshipDetailNotifier extends _$FriendshipDetailNotifier {
 @riverpod
 class UserDetailNotifier extends _$UserDetailNotifier {
   @override
-  FutureOr<user_model.User> build() async {
+  FutureOr<SupaUser> build() async {
     return await fetchUserDetail();
   }
 
@@ -265,8 +260,8 @@ class UserDetailNotifier extends _$UserDetailNotifier {
     state = await AsyncValue.guard(() async => await fetchUserDetail());
   }
 
-  Future<user_model.User> fetchUserDetail() async {
-    return await user_model.User.fetchDetail(supabase.auth.currentUser!.email ?? '');
+  Future<SupaUser> fetchUserDetail() async {
+    return await SupaUser.fetchDetail(supabase.auth.currentUser!.email ?? '');
   }
 }
 

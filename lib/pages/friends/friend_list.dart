@@ -25,13 +25,13 @@ class FriendList extends ConsumerStatefulWidget {
 
 class _FriendListState extends ConsumerState<FriendList> {
   Future<void> updateFriendshipList() async {
-    return ref.read(friendshipListNotifierProvider.notifier).reload();
+    return ref.read(friendshipListProvider.notifier).reload();
   }
 
   @override
   Widget build(BuildContext context) {
     final AsyncValue<List<Friendship>> friendshipProvider =
-        ref.watch(friendshipListNotifierProvider);
+        ref.watch(friendshipListProvider);
 
     ThemeData themeData = Theme.of(context);
     ColorScheme colorScheme = themeData.colorScheme;
@@ -81,7 +81,7 @@ class _FriendListState extends ConsumerState<FriendList> {
                       itemCount: value.length,
                       itemBuilder: (context, index) {
                         Friendship friendship = value[index];
-                        User user = friendship.user;
+                        SupaUser user = friendship.user;
 
                         Color shareAmountColor = Theme.of(context).colorScheme.onSurface;
                         if (friendship.shareAmount < 0) {
@@ -123,7 +123,7 @@ class _FriendListState extends ConsumerState<FriendList> {
     );
   }
 
-  void openFriendshipDialog(BuildContext modalContext, User user, Friendship friendship) {
+  void openFriendshipDialog(BuildContext modalContext, SupaUser user, Friendship friendship) {
     Color activeColor = Theme.of(context).colorScheme.onSurface;
     Color disabledColor = Theme.of(context).colorScheme.outline;
 
@@ -284,7 +284,7 @@ class _FriendListState extends ConsumerState<FriendList> {
     );
   }
 
-  void openRemoveFriendDialog(User user) {
+  void openRemoveFriendDialog(SupaUser user) {
     showDialog<void>(
       context: context,
       builder: (context) => AlertDialog(

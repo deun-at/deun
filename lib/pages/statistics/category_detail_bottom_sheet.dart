@@ -33,7 +33,7 @@ class CategoryDetailBottomSheet extends ConsumerWidget {
       monthStart: monthStart,
       monthEnd: monthEnd,
     );
-    final state = ref.watch(categoryExpenseDetailsNotifierProvider(args));
+    final state = ref.watch(categoryExpenseDetailsProvider(args));
     final localizations = AppLocalizations.of(context)!;
 
     final category = ExpenseCategory.values.firstWhere(

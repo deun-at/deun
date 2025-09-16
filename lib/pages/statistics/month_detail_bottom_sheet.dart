@@ -17,7 +17,7 @@ class StatisticsMonthDetailBottomSheet extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final args = GroupMonthMemberTotalsArgs(groupId: group.id, monthStart: monthStart, monthEnd: monthEnd);
-    final state = ref.watch(groupMonthMemberTotalsNotifierProvider(args));
+    final state = ref.watch(groupMonthMemberTotalsProvider(args));
 
     return SafeArea(
       child: Padding(

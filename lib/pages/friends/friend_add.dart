@@ -12,11 +12,11 @@ import 'package:deun/pages/friends/widgets/pending_request_list.dart';
 import 'package:deun/pages/friends/widgets/contact_suggestion_list.dart';
 import 'package:flutter/foundation.dart';
 
-Future<List<User>> _findContactMatches(Map<String, dynamic> params) async {
+Future<List<SupaUser>> _findContactMatches(Map<String, dynamic> params) async {
   final List<fc.Contact> contacts = params['contacts'];
-  final Map<String, User> availableUserMap = params['availableUserMap'];
+  final Map<String, SupaUser> availableUserMap = params['availableUserMap'];
   final String searchText = params['searchText'].toLowerCase();
-  List<User> matchedUsers = [];
+  List<SupaUser> matchedUsers = [];
 
   for (var contact in contacts) {
     bool nameMatches = contact.displayName.toLowerCase().contains(searchText);
@@ -27,7 +27,7 @@ Future<List<User>> _findContactMatches(Map<String, dynamic> params) async {
       continue;
     }
 
-    User? matchedUser;
+    SupaUser? matchedUser;
     for (var email in contact.emails) {
       final lowerCaseEmail = email.address.toLowerCase();
       if (availableUserMap.containsKey(lowerCaseEmail)) {
@@ -146,7 +146,7 @@ class _FriendAddBottomSheetState extends State<FriendAddBottomSheet> {
     );
   }
 
-  Future<List<User>> _fetchUserSearchResults() async {
+  Future<List<SupaUser>> _fetchUserSearchResults() async {
     if (_searchText.isEmpty) {
       return List.empty(growable: true);
     }
@@ -159,7 +159,7 @@ class _FriendAddBottomSheetState extends State<FriendAddBottomSheet> {
     }
     selectedUsers.add(supabase.auth.currentUser?.email ?? '');
 
-    return await User.fetchData(_searchText, selectedUsers, 5);
+    return await SupaUser.fetchData(_searchText, selectedUsers, 5);
   }
 
   Future<List<Map<String, dynamic>>> _fetchPendingFriendRequests() async {
@@ -172,7 +172,7 @@ class _FriendAddBottomSheetState extends State<FriendAddBottomSheet> {
         .order('display_name', ascending: false, referencedTable: 'requester');
   }
 
-  Future<List<User>> _fetchContactSuggestions() async {
+  Future<List<SupaUser>> _fetchContactSuggestions() async {
     // Check cache first
     if (_cachedContacts == null) {
       if (!await fc.FlutterContacts.requestPermission()) {
@@ -194,7 +194,7 @@ class _FriendAddBottomSheetState extends State<FriendAddBottomSheet> {
     selectedUsers.add(supabase.auth.currentUser?.email ?? '');
 
     // Fetch all available users matching the search text (async)
-    final allAvailableUser = await User.fetchData("%$_searchText%", selectedUsers, null);
+    final allAvailableUser = await SupaUser.fetchData("%$_searchText%", selectedUsers, null);
     final availableUserMap = {
       for (var user in allAvailableUser) user.email.toLowerCase(): user
     };
@@ -211,10 +211,10 @@ class _FriendAddBottomSheetState extends State<FriendAddBottomSheet> {
     return compute(_findContactMatches, params);
   }
 
-  Future<List<User>> _fetchRequestedUsers() async {
+  Future<List<SupaUser>> _fetchRequestedUsers() async {
     final friendship = await _currentFriendshipFuture;
 
-    List<User> requestedUsers = List.empty(growable: true);
+    List<SupaUser> requestedUsers = List.empty(growable: true);
     for (var friendship in friendship) {
       if (friendship.status == 'pending' && friendship.isRequester == false) {
         requestedUsers.add(friendship.user);

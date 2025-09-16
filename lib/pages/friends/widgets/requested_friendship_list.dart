@@ -6,7 +6,7 @@ import 'package:flutter/material.dart';
 import '../../../widgets/card_list_view_builder.dart';
 
 class RequestedFriendshipList extends StatelessWidget {
-  final Future<List<User>> userRequestedFuture;
+  final Future<List<SupaUser>> userRequestedFuture;
   final Function(String userEmail, String displayName) onCancel;
   final GlobalKey<ScaffoldMessengerState> scaffoldMessengerKey;
 
@@ -19,7 +19,7 @@ class RequestedFriendshipList extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return FutureBuilder<List<User>>(
+    return FutureBuilder<List<SupaUser>>(
       future: userRequestedFuture,
       builder: (context, userList) {
         Widget widget;

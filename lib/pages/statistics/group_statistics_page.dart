@@ -37,13 +37,13 @@ class _GroupStatisticsPageState extends ConsumerState<GroupStatisticsPage> {
     _currentChunkIndex = chunkIndex;
     final endOffset = chunkIndex * 6;
     ref
-        .read(groupMonthlyTotalsNotifierProvider(widget.group.id).notifier)
+        .read(groupMonthlyTotalsProvider(widget.group.id).notifier)
         .loadOffset(widget.group.id, endOffset);
   }
 
   @override
   Widget build(BuildContext context) {
-    final state = ref.watch(groupMonthlyTotalsNotifierProvider(widget.group.id));
+    final state = ref.watch(groupMonthlyTotalsProvider(widget.group.id));
 
     return Scaffold(
       appBar: AppBar(
@@ -219,7 +219,7 @@ class _GroupStatisticsPageState extends ConsumerState<GroupStatisticsPage> {
                       monthEnd: selectedBucket.end,
                     );
                     final detailsState =
-                        ref.watch(groupMonthCategoryTotalsNotifierProvider(args));
+                        ref.watch(groupMonthCategoryTotalsProvider(args));
                     final localizations = AppLocalizations.of(context)!;
 
                     return Column(

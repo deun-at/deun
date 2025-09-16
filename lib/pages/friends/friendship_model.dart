@@ -5,13 +5,13 @@ import 'package:deun/pages/users/user_model.dart';
 import '../../main.dart';
 
 class Friendship {
-  late User user;
+  late SupaUser user;
   late String status;
   late bool isRequester;
   late double shareAmount;
 
   void loadDataFromJson(Map<String, dynamic> json) {
-    user = User();
+    user = SupaUser();
 
     if (json["requester"]["email"] == supabase.auth.currentUser?.email) {
       isRequester = false;
@@ -104,7 +104,7 @@ class Friendship {
     return friendship;
   }
 
-  static Future<List<User>> fetchFriends(String searchString, List<String> selectedUsers, int limit) async {
+  static Future<List<SupaUser>> fetchFriends(String searchString, List<String> selectedUsers, int limit) async {
     var userEmail = supabase.auth.currentUser?.email ?? '';
 
     List<Map<String, dynamic>> data = await supabase
@@ -117,10 +117,10 @@ class Friendship {
         .order("email", referencedTable: "addressee")
         .limit(limit);
 
-    List<User> retData = [];
+    List<SupaUser> retData = [];
 
     for (var element in data) {
-      User user = User();
+      SupaUser user = SupaUser();
       user.loadDataFromJson(element);
       retData.add(user);
     }

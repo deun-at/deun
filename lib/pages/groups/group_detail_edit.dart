@@ -156,7 +156,7 @@ class _GroupBottomSheetState extends ConsumerState<GroupBottomSheet> {
 
     selectedUsers.add(supabase.auth.currentUser?.email ?? '');
 
-    List<User> result = await Friendship.fetchFriends(input, selectedUsers, 99);
+    List<SupaUser> result = await Friendship.fetchFriends(input, selectedUsers, 99);
 
     if (result.isEmpty) {
       return [

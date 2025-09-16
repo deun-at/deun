@@ -16,7 +16,6 @@ class FriendAcceptPage extends StatefulWidget {
 
 class _FriendAcceptPageState extends State<FriendAcceptPage> {
   String? _error;
-  bool _done = false;
 
   @override
   void initState() {
@@ -42,8 +41,6 @@ class _FriendAcceptPageState extends State<FriendAcceptPage> {
       GoRouter.of(context).go('/friend');
     } catch (e) {
       setState(() => _error = e.toString());
-    } finally {
-      setState(() => _done = true);
     }
   }
 

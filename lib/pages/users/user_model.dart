@@ -1,6 +1,6 @@
 import '../../main.dart';
 
-class User {
+class SupaUser {
   late String email;
   late String userId;
   late String? firstName;
@@ -23,7 +23,7 @@ class User {
     createdAt = json["created_at"];
   }
 
-  static Future<List<User>> fetchData(String searchString, List<String> selectedUsers, int? limit) async {
+  static Future<List<SupaUser>> fetchData(String searchString, List<String> selectedUsers, int? limit) async {
     var query =
         supabase.from("user").select("*").ilike('email', searchString).not('email', 'in', selectedUsers).order("email");
 
@@ -32,9 +32,9 @@ class User {
     }
 
     List<Map<String, dynamic>> data = await query;
-    List<User> retData = [];
+    List<SupaUser> retData = [];
     for (var element in data) {
-      User user = User();
+      SupaUser user = SupaUser();
       user.loadDataFromJson(element);
       retData.add(user);
     }
@@ -42,10 +42,10 @@ class User {
     return retData;
   }
 
-  static Future<User> fetchDetail(String email) async {
+  static Future<SupaUser> fetchDetail(String email) async {
     Map<String, dynamic> data = await supabase.from("user").select("*").eq("email", email).single();
 
-    User user = User();
+    SupaUser user = SupaUser();
     user.loadDataFromJson(data);
 
     return user;

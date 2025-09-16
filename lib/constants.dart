@@ -30,14 +30,10 @@ const spacer = SizedBox(
 );
 
 enum MobileAdMobs {
-  androidGroupList('ca-app-pub-3679753617535056/9759096631'),
-  iosGroupList('ca-app-pub-3679753617535056/8051241217'),
-  androidExpenseList('ca-app-pub-3679753617535056/4893776594'),
-  iosExpenseList('ca-app-pub-3679753617535056/3732722251');
-  // androidGroupList('ca-app-pub-3940256099942544/2247696110'),
-  // iosGroupList('ca-app-pub-3940256099942544/3986624511'),
-  // androidExpenseList('ca-app-pub-3940256099942544/2247696110'),
-  // iosExpenseList('ca-app-pub-3940256099942544/3986624511');
+  androidGroupList(String.fromEnvironment('MOBILE_AD_MOB_ANDROID_GROUP_LIST')),
+  androidExpenseList(String.fromEnvironment('MOBILE_AD_MOB_ANDROID_EXPENSE_LIST')),
+  iosGroupList(String.fromEnvironment('MOBILE_AD_MOB_IOS_GROUP_LIST')),
+  iosExpenseList(String.fromEnvironment('MOBILE_AD_MOB_IOS_EXPENSE_LIST'));
 
   const MobileAdMobs(this.value);
   final String value;
