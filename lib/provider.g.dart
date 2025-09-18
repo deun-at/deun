@@ -50,7 +50,7 @@ final class GroupListNotifierProvider
   }
 }
 
-String _$groupListNotifierHash() => r'795bc735adef973a8f0ad19bdf28cf439b63831f';
+String _$groupListNotifierHash() => r'7f77bf2ebafe09df021ad0d86c8b7c6e2f7621e6';
 
 final class GroupListNotifierFamily extends $Family
     with
@@ -139,7 +139,7 @@ final class GroupDetailNotifierProvider
 }
 
 String _$groupDetailNotifierHash() =>
-    r'bee431d71ab07a0212aa380032396d4786a3abfa';
+    r'a424d9ac0d0c1293d311be01c1539de1e1d108b4';
 
 final class GroupDetailNotifierFamily extends $Family
     with
@@ -228,7 +228,7 @@ final class ExpenseListNotifierProvider
 }
 
 String _$expenseListNotifierHash() =>
-    r'd1130a78128b77539484f877e96a3ad489c4f40b';
+    r'bf257e11dad9a9297c2c9486a8f30989137e5e5a';
 
 final class ExpenseListNotifierFamily extends $Family
     with
@@ -449,52 +449,6 @@ abstract class _$UserDetailNotifier extends $AsyncNotifier<SupaUser> {
         AsyncValue<SupaUser>,
         Object?,
         Object?>;
-    element.handleValue(ref, created);
-  }
-}
-
-@ProviderFor(ThemeColor)
-const themeColorProvider = ThemeColorProvider._();
-
-final class ThemeColorProvider extends $NotifierProvider<ThemeColor, Color> {
-  const ThemeColorProvider._()
-      : super(
-          from: null,
-          argument: null,
-          retry: null,
-          name: r'themeColorProvider',
-          isAutoDispose: true,
-          dependencies: null,
-          $allTransitiveDependencies: null,
-        );
-
-  @override
-  String debugGetCreateSourceHash() => _$themeColorHash();
-
-  @$internal
-  @override
-  ThemeColor create() => ThemeColor();
-
-  /// {@macro riverpod.override_with_value}
-  Override overrideWithValue(Color value) {
-    return $ProviderOverride(
-      origin: this,
-      providerOverride: $SyncValueProvider<Color>(value),
-    );
-  }
-}
-
-String _$themeColorHash() => r'98cc6f9878defc73ab82ff40763299c45a5086ce';
-
-abstract class _$ThemeColor extends $Notifier<Color> {
-  Color build();
-  @$mustCallSuper
-  @override
-  void runBuild() {
-    final created = build();
-    final ref = this.ref as $Ref<Color, Color>;
-    final element = ref.element as $ClassProviderElement<
-        AnyNotifier<Color, Color>, Color, Object?, Object?>;
     element.handleValue(ref, created);
   }
 }

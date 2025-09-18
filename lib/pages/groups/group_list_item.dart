@@ -29,12 +29,7 @@ class _GroupListItemState extends ConsumerState<GroupListItem> {
     return InkWell(
       borderRadius: BorderRadius.circular(12.0),
       onTap: () {
-        ref.read(themeColorProvider.notifier).setColor(Color(widget.group.colorValue));
-        GoRouter.of(context).push("/group/details", extra: {'group': widget.group}).then(
-          (value) async {
-            ref.read(themeColorProvider.notifier).resetColor();
-          },
-        );
+        GoRouter.of(context).push("/group/details", extra: {'group': widget.group});
       },
       child: Padding(
         padding: const EdgeInsets.fromLTRB(10, 5, 5, 10),

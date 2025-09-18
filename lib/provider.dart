@@ -101,6 +101,16 @@ class GroupListNotifier extends _$GroupListNotifier {
             })
         .subscribe((status, _) {
       debugPrint('---subscribe--- groupList ${status.toString()}');
+      if (status == RealtimeSubscribeStatus.closed ||
+          status == RealtimeSubscribeStatus.channelError ||
+          status == RealtimeSubscribeStatus.timedOut) {
+        // Channel likely dropped while app was in background. Recreate and resubscribe.
+        if (_channel != null) {
+          supabase.removeChannel(_channel!);
+          _channel = null;
+        }
+        _subscribeToRealTimeUpdates(statusFilter);
+      }
     });
   }
 }
@@ -155,6 +165,15 @@ class GroupDetailNotifier extends _$GroupDetailNotifier {
             })
         .subscribe((status, _) {
       debugPrint('---subscribe--- groupDetails ${status.toString()}');
+      if (status == RealtimeSubscribeStatus.closed ||
+          status == RealtimeSubscribeStatus.channelError ||
+          status == RealtimeSubscribeStatus.timedOut) {
+        if (_channel != null) {
+          supabase.removeChannel(_channel!);
+          _channel = null;
+        }
+        _subscribeToRealTimeUpdates(groupId);
+      }
     });
   }
 }
@@ -199,7 +218,6 @@ class ExpenseListNotifier extends _$ExpenseListNotifier {
 
   void _subscribeToRealTimeUpdates(String groupId) {
     if (_channel != null) return; // already subscribed
-
 
     final channelName = 'public:expense_list_checker:$groupId';
 
@@ -253,6 +271,15 @@ class ExpenseListNotifier extends _$ExpenseListNotifier {
             })
         .subscribe((status, _) {
       debugPrint('---subscribe--- expenseList ${status.toString()}');
+      if (status == RealtimeSubscribeStatus.closed ||
+          status == RealtimeSubscribeStatus.channelError ||
+          status == RealtimeSubscribeStatus.timedOut) {
+        if (_channel != null) {
+          supabase.removeChannel(_channel!);
+          _channel = null;
+        }
+        _subscribeToRealTimeUpdates(groupId);
+      }
     });
   }
 
@@ -361,16 +388,6 @@ class UserDetailNotifier extends _$UserDetailNotifier {
   Future<SupaUser> fetchUserDetail() async {
     return await SupaUser.fetchDetail(supabase.auth.currentUser!.email ?? '');
   }
-}
-
-@riverpod
-class ThemeColor extends _$ThemeColor {
-  @override
-  Color build() => ColorSeed.blue.color;
-
-  void setColor(Color color) => state = color;
-
-  void resetColor() => state = ColorSeed.blue.color;
 }
 
 @riverpod
