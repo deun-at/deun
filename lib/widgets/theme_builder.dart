@@ -1,26 +1,20 @@
 import 'package:flutter/material.dart';
 
-class ThemeBuilder extends StatefulWidget {
-  const ThemeBuilder({super.key, required this.child, required this.colorValue});
+class ThemeBuilder extends StatelessWidget {
+  const ThemeBuilder({super.key, required this.colorValue, required this.builder});
 
-  final Widget child;
   final int colorValue;
+  final Widget Function(BuildContext) builder;
 
-  @override
-  State<ThemeBuilder> createState() => _ThemeBuilderState();
-}
-
-class _ThemeBuilderState extends State<ThemeBuilder> {
   @override
   Widget build(BuildContext context) {
-    ThemeData themeData = Theme.of(context);
-    Color colorSeedValue = Color(widget.colorValue);
+    final themeData = Theme.of(context);
+    final colorSeedValue = Color(colorValue);
 
     return Theme(
-        data: getThemeData(context, colorSeedValue, themeData.brightness),
-        child: Builder(builder: (BuildContext context) {
-          return widget.child;
-        }));
+      data: getThemeData(context, colorSeedValue, themeData.brightness),
+      child: Builder(builder: builder),
+    );
   }
 }
 
@@ -58,8 +52,7 @@ ThemeData getThemeData(BuildContext context, Color seedColor, Brightness brightn
   }
 
   return ThemeData(
-    colorScheme:
-        ColorScheme.fromSeed(seedColor: seedColor, brightness: brightness).copyWith(
+    colorScheme: ColorScheme.fromSeed(seedColor: seedColor, brightness: brightness).copyWith(
       surface: surface,
       surfaceBright: surfaceBright,
       surfaceDim: surfaceDim,
@@ -83,11 +76,9 @@ ThemeData getThemeData(BuildContext context, Color seedColor, Brightness brightn
           surfaceTintColor: Colors.transparent,
           backgroundColor: appBarBackgroundColor,
         ),
-    cardTheme:
-        Theme.of(context).cardTheme.copyWith(margin: EdgeInsets.fromLTRB(10, 1, 10, 1)),
-    listTileTheme: Theme.of(context)
-        .listTileTheme
-        .copyWith(contentPadding: EdgeInsetsDirectional.only(start: 16.0, end: 16.0)),
+    cardTheme: Theme.of(context).cardTheme.copyWith(margin: EdgeInsets.fromLTRB(10, 1, 10, 1)),
+    listTileTheme:
+        Theme.of(context).listTileTheme.copyWith(contentPadding: EdgeInsetsDirectional.only(start: 16.0, end: 16.0)),
     searchViewTheme: Theme.of(context).searchViewTheme.copyWith(
           dividerColor: Colors.transparent,
         ),
