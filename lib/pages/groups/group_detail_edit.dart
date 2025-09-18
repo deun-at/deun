@@ -7,6 +7,7 @@ import 'package:deun/widgets/card_list_view_builder.dart';
 import 'package:deun/widgets/form_loading_widget.dart';
 import 'package:deun/widgets/rounded_container.dart';
 import 'package:deun/widgets/sliver_grab_widget.dart';
+import 'package:deun/widgets/theme_builder.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_form_builder/flutter_form_builder.dart';
@@ -153,222 +154,228 @@ class _GroupEditState extends ConsumerState<GroupEdit> {
   Widget build(BuildContext context) {
     const double spacing = 8;
 
-    return Scaffold(
-      appBar: AppBar(
-        actions: [
-          Padding(
-            padding: const EdgeInsets.only(right: 10),
-            child: FilledButton(
-              onPressed: () async {
-                if (_formKey.currentState!.saveAndValidate()) {
-                  Group? newGroup;
-                  try {
-                    String groupInsertId = await Group.saveAll(
-                        context, widget.group?.id, _formKey.currentState!.value);
-                    newGroup = await Group.fetchDetail(groupInsertId);
-                    if (context.mounted) {
-                      showSnackBar(context, groupDetailScaffoldMessengerKey,
-                          AppLocalizations.of(context)!.groupCreateSuccess);
-                    }
-                  } catch (e) {
-                    if (context.mounted) {
-                      showSnackBar(context, groupDetailScaffoldMessengerKey,
-                          AppLocalizations.of(context)!.groupCreateError);
-                    }
-                  } finally {
-                    if (mounted) {
+    return ThemeBuilder(
+      colorValue: widget.group?.colorValue ?? ColorSeed.blue.color.toARGB32(),
+      child: Scaffold(
+        appBar: AppBar(
+          actions: [
+            Padding(
+              padding: const EdgeInsets.only(right: 10),
+              child: FilledButton(
+                onPressed: () async {
+                  if (_formKey.currentState!.saveAndValidate()) {
+                    Group? newGroup;
+                    try {
+                      String groupInsertId = await Group.saveAll(
+                          context, widget.group?.id, _formKey.currentState!.value);
+                      newGroup = await Group.fetchDetail(groupInsertId);
                       if (context.mounted) {
-                        if (newGroup != null) {
-                          GoRouter.of(context).go("/group");
-                          GoRouter.of(context)
-                              .push("/group/details", extra: {'group': newGroup});
+                        showSnackBar(context, rootScaffoldMessengerKey,
+                            AppLocalizations.of(context)!.groupCreateSuccess);
+                      }
+                    } catch (e) {
+                      if (context.mounted) {
+                        showSnackBar(context, rootScaffoldMessengerKey,
+                            AppLocalizations.of(context)!.groupCreateError);
+                      }
+                    } finally {
+                      if (mounted) {
+                        if (context.mounted) {
+                          if (newGroup != null) {
+                            GoRouter.of(context).go("/group");
+                            GoRouter.of(context)
+                                .push("/group/details", extra: {'group': newGroup});
+                          }
                         }
                       }
                     }
                   }
-                }
-              },
-              child: Text(AppLocalizations.of(context)!.save),
-            ),
-          )
-        ],
-      ),
-      body: ListView(
-        children: [
-          Padding(
-            padding: const EdgeInsets.only(top: 10, bottom: 40),
-            child: FormBuilder(
-              key: _formKey,
-              clearValueOnUnregister: true,
-              initialValue: widget.group?.toJson() ?? {},
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: <Widget>[
-                  FormBuilderField(
-                      name: "name",
-                      builder: (FormFieldState<dynamic> field) => TextFormField(
-                            initialValue: field.value,
-                            style: Theme.of(context)
-                                .textTheme
-                                .displaySmall!
-                                .copyWith(color: Theme.of(context).colorScheme.primary),
-                            autovalidateMode: AutovalidateMode.onUserInteraction,
-                            validator: FormBuilderValidators.required(
-                                errorText: AppLocalizations.of(context)!
-                                    .groupNameValidationEmpty),
-                            keyboardType: TextInputType.text,
-                            decoration: InputDecoration(
-                              border: InputBorder.none,
-                              hintText: AppLocalizations.of(context)!.addGroupTitle,
-                              contentPadding: EdgeInsets.only(left: 8, right: 8),
-                            ),
-                            onChanged: (value) => field.didChange(value),
-                          )),
-                  const SizedBox(height: spacing),
-                  FormBuilderField(
-                    name: "color_value",
-                    builder: (FormFieldState<dynamic> field) {
-                      return GridView.builder(
-                          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                              crossAxisCount: 5, crossAxisSpacing: 4, mainAxisSpacing: 4),
-                          padding: const EdgeInsets.all(8),
-                          physics: const NeverScrollableScrollPhysics(),
-                          shrinkWrap: true,
-                          itemCount: ColorSeed.values.length,
-                          itemBuilder: (context, i) {
-                            return IconButton(
-                                icon: const Icon(Icons.radio_button_unchecked),
-                                selectedIcon: const Icon(Icons.radio_button_checked),
-                                color: ColorSeed.values[i].color,
-                                isSelected: (field.value ==
-                                        ColorSeed.values[i].color.toARGB32() ||
-                                    (field.value == null &&
-                                        ColorSeed.values[i].color.toARGB32() ==
-                                            ColorSeed.baseColor.color.toARGB32())),
-                                onPressed: () {
-                                  field.didChange(ColorSeed.values[i].color.toARGB32());
-                                });
-                          });
-                    },
-                  ),
-                  FormBuilderField(
-                    name: "group_members",
-                    builder: (FormFieldState<dynamic> field) {
-                      return SearchAnchor(
-                        searchController: _searchAnchorController,
-                        viewHintText:
-                            AppLocalizations.of(context)!.groupMemberSelectionEmpty,
-                        viewLeading: IconButton(
-                          icon: Icon(Icons.check),
-                          onPressed: () {
-                            Navigator.of(context).pop();
+                },
+                child: Text(AppLocalizations.of(context)!.save),
+              ),
+            )
+          ],
+        ),
+        body: ListView(
+          children: [
+            Padding(
+              padding: const EdgeInsets.only(top: 10, bottom: 40),
+              child: FormBuilder(
+                key: _formKey,
+                clearValueOnUnregister: true,
+                initialValue: widget.group?.toJson() ?? {},
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: <Widget>[
+                    FormBuilderField(
+                        name: "name",
+                        builder: (FormFieldState<dynamic> field) => TextFormField(
+                              initialValue: field.value,
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .displaySmall!
+                                  .copyWith(color: Theme.of(context).colorScheme.primary),
+                              autovalidateMode: AutovalidateMode.onUserInteraction,
+                              validator: FormBuilderValidators.required(
+                                  errorText: AppLocalizations.of(context)!
+                                      .groupNameValidationEmpty),
+                              keyboardType: TextInputType.text,
+                              decoration: InputDecoration(
+                                border: InputBorder.none,
+                                hintText: AppLocalizations.of(context)!.addGroupTitle,
+                                contentPadding: EdgeInsets.only(left: 8, right: 8),
+                              ),
+                              onChanged: (value) => field.didChange(value),
+                            )),
+                    const SizedBox(height: spacing),
+                    FormBuilderField(
+                      name: "color_value",
+                      builder: (FormFieldState<dynamic> field) {
+                        return GridView.builder(
+                            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                                crossAxisCount: 5,
+                                crossAxisSpacing: 4,
+                                mainAxisSpacing: 4),
+                            padding: const EdgeInsets.all(8),
+                            physics: const NeverScrollableScrollPhysics(),
+                            shrinkWrap: true,
+                            itemCount: ColorSeed.values.length,
+                            itemBuilder: (context, i) {
+                              return IconButton(
+                                  icon: const Icon(Icons.radio_button_unchecked),
+                                  selectedIcon: const Icon(Icons.radio_button_checked),
+                                  color: ColorSeed.values[i].color,
+                                  isSelected: (field.value ==
+                                          ColorSeed.values[i].color.toARGB32() ||
+                                      (field.value == null &&
+                                          ColorSeed.values[i].color.toARGB32() ==
+                                              ColorSeed.baseColor.color.toARGB32())),
+                                  onPressed: () {
+                                    field.didChange(ColorSeed.values[i].color.toARGB32());
+                                  });
+                            });
+                      },
+                    ),
+                    FormBuilderField(
+                      name: "group_members",
+                      builder: (FormFieldState<dynamic> field) {
+                        return SearchAnchor(
+                          searchController: _searchAnchorController,
+                          viewHintText:
+                              AppLocalizations.of(context)!.groupMemberSelectionEmpty,
+                          viewLeading: IconButton(
+                            icon: Icon(Icons.check),
+                            onPressed: () {
+                              Navigator.of(context).pop();
+                            },
+                          ),
+                          builder: (context, controller) {
+                            List<Map<String, dynamic>> groupMembers =
+                                Group.decodeGroupMembersString(field.value);
+
+                            List<Widget> listTiles = [];
+
+                            if (groupMembers.isEmpty ||
+                                (groupMembers.length == 1 &&
+                                    groupMembers.first['email'] ==
+                                        supabase.auth.currentUser?.email)) {
+                            } else {
+                              listTiles.addAll(groupMembers.map((groupMember) {
+                                String displayName = groupMember["display_name"];
+                                if (groupMember["email"] ==
+                                    supabase.auth.currentUser?.email) {
+                                  displayName = AppLocalizations.of(context)!.you;
+                                }
+
+                                return ListTile(
+                                  leading: const Icon(Icons.person),
+                                  title: Text(displayName),
+                                  subtitle: Text(groupMember['email']),
+                                  onTap: () {
+                                    controller.openView();
+                                  },
+                                );
+                              }));
+                            }
+
+                            listTiles.add(ListTile(
+                              leading: const Icon(Icons.person_add),
+                              title: Text(
+                                  AppLocalizations.of(context)!.groupMemberAddFriends),
+                            ));
+
+                            return CardColumn(children: listTiles);
                           },
+                          suggestionsBuilder: (context, controller) {
+                            if (controller.text.isEmpty) {
+                              return getUserSelection(controller, field);
+                            }
+                            return getUserSuggestions(controller, field);
+                          },
+                          viewBuilder: (suggestions) {
+                            return Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Padding(
+                                  padding: EdgeInsets.only(top: 10, left: 16),
+                                  child: Text(
+                                    _searchAnchorController.text.isEmpty
+                                        ? AppLocalizations.of(context)!
+                                            .groupMemberSelectionTitle
+                                        : AppLocalizations.of(context)!
+                                            .groupMemberSelectionEmpty,
+                                    style: Theme.of(context).textTheme.bodyMedium,
+                                  ),
+                                ),
+                                Expanded(
+                                  child: SearchView(
+                                    searchQueryNotifier: _searchQueryNotifier,
+                                    suggestions: suggestions,
+                                  ),
+                                ),
+                              ],
+                            );
+                          },
+                        );
+                      },
+                    ),
+                    SizedBox(height: 12),
+                    CardListTile(
+                      isTop: true,
+                      isBottom: true,
+                      child: FormBuilderSwitch(
+                        name: "simplified_expenses",
+                        title: Text(
+                            AppLocalizations.of(context)!.groupSimplifiedExpensesTitle),
+                        contentPadding:
+                            EdgeInsets.only(right: 10, left: 10, top: 5, bottom: 5),
+                        decoration: InputDecoration(
+                          border: InputBorder.none,
+                          contentPadding: EdgeInsets.only(left: 8, right: 8),
                         ),
-                        builder: (context, controller) {
-                          List<Map<String, dynamic>> groupMembers =
-                              Group.decodeGroupMembersString(field.value);
-
-                          List<Widget> listTiles = [];
-
-                          if (groupMembers.isEmpty ||
-                              (groupMembers.length == 1 &&
-                                  groupMembers.first['email'] ==
-                                      supabase.auth.currentUser?.email)) {
-                          } else {
-                            listTiles.addAll(groupMembers.map((groupMember) {
-                              String displayName = groupMember["display_name"];
-                              if (groupMember["email"] ==
-                                  supabase.auth.currentUser?.email) {
-                                displayName = AppLocalizations.of(context)!.you;
-                              }
-
-                              return ListTile(
-                                leading: const Icon(Icons.person),
-                                title: Text(displayName),
-                                subtitle: Text(groupMember['email']),
-                                onTap: () {
-                                  controller.openView();
-                                },
-                              );
-                            }));
-                          }
-
-                          listTiles.add(ListTile(
-                            leading: const Icon(Icons.person_add),
-                            title: Text(AppLocalizations.of(context)!.groupMemberAddFriends),
-                          ));
-
-                          return CardColumn(children: listTiles);
-                        },
-                        suggestionsBuilder: (context, controller) {
-                          if (controller.text.isEmpty) {
-                            return getUserSelection(controller, field);
-                          }
-                          return getUserSuggestions(controller, field);
-                        },
-                        viewBuilder: (suggestions) {
-                          return Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Padding(
-                                padding: EdgeInsets.only(top: 10, left: 16),
-                                child: Text(
-                                  _searchAnchorController.text.isEmpty
-                                      ? AppLocalizations.of(context)!
-                                          .groupMemberSelectionTitle
-                                      : AppLocalizations.of(context)!
-                                          .groupMemberSelectionEmpty,
-                                  style: Theme.of(context).textTheme.bodyMedium,
-                                ),
-                              ),
-                              Expanded(
-                                child: SearchView(
-                                  searchQueryNotifier: _searchQueryNotifier,
-                                  suggestions: suggestions,
-                                ),
-                              ),
-                            ],
-                          );
-                        },
-                      );
-                    },
-                  ),
-                  SizedBox(height: 12),
-                  CardListTile(
-                    isTop: true,
-                    isBottom: true,
-                    child: FormBuilderSwitch(
-                      name: "simplified_expenses",
-                      title: Text(
-                          AppLocalizations.of(context)!.groupSimplifiedExpensesTitle),
-                      contentPadding:
-                          EdgeInsets.only(right: 10, left: 10, top: 5, bottom: 5),
-                      decoration: InputDecoration(
-                        border: InputBorder.none,
-                        contentPadding: EdgeInsets.only(left: 8, right: 8),
                       ),
                     ),
-                  ),
-                  SizedBox(height: 12),
-                  widget.group != null
-                      ? CardListTile(
-                          isTop: true,
-                          isBottom: true,
-                          child: ListTile(
-                            textColor: Theme.of(context).colorScheme.error,
-                            iconColor: Theme.of(context).colorScheme.error,
-                            leading: Icon(Icons.delete),
-                            title:
-                                Text(AppLocalizations.of(context)!.groupDeleteItemTitle),
-                          ),
-                        )
-                      : const SizedBox(),
-                ],
+                    SizedBox(height: 12),
+                    widget.group != null
+                        ? CardListTile(
+                            isTop: true,
+                            isBottom: true,
+                            child: ListTile(
+                              textColor: Theme.of(context).colorScheme.error,
+                              iconColor: Theme.of(context).colorScheme.error,
+                              leading: Icon(Icons.delete),
+                              title: Text(
+                                  AppLocalizations.of(context)!.groupDeleteItemTitle),
+                            ),
+                          )
+                        : const SizedBox(),
+                  ],
+                ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -393,12 +400,12 @@ class _GroupEditState extends ConsumerState<GroupEdit> {
               try {
                 await group.delete();
                 if (context.mounted) {
-                  showSnackBar(context, groupDetailScaffoldMessengerKey,
+                  showSnackBar(context, rootScaffoldMessengerKey,
                       AppLocalizations.of(context)!.groupDeleteSuccess);
                 }
               } catch (e) {
                 if (context.mounted) {
-                  showSnackBar(context, groupDetailScaffoldMessengerKey,
+                  showSnackBar(context, rootScaffoldMessengerKey,
                       AppLocalizations.of(context)!.groupDeleteError);
                 }
               } finally {

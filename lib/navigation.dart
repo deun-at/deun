@@ -14,11 +14,13 @@ import 'package:deun/pages/settings/contact.dart';
 import 'package:deun/pages/settings/privacy_policy.dart';
 import 'package:deun/provider.dart';
 import 'package:deun/widgets/initialization_helper.dart';
+import 'package:deun/widgets/theme_builder.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'constants.dart';
 import 'pages/groups/group_detail.dart';
 import 'pages/groups/group_detail_edit.dart';
 import 'pages/groups/group_list.dart';
@@ -390,87 +392,13 @@ class _NavigationScreenState extends ConsumerState<NavigationScreen> {
   @override
   Widget build(BuildContext context) {
     final locale = ref.watch(localeProvider);
-    Color colorSelected = ref.watch(themeColorProvider);
 
     return MaterialApp.router(
       scaffoldMessengerKey: rootScaffoldMessengerKey,
       routerConfig: _routerConfig,
       title: 'Deun',
-      theme: ThemeData(
-        colorScheme:
-            ColorScheme.fromSeed(seedColor: colorSelected, brightness: Brightness.light)
-                .copyWith(
-          surface: Color(0xffefedee),
-          surfaceBright: Color(0xfffef7ff),
-          surfaceDim: Color(0xffded8e1),
-          onSurface: Color(0xff1d1d1d),
-          onSurfaceVariant: Color(0xff494949),
-          surfaceContainerHighest: Color(0xffe4e4e4),
-          surfaceContainerHigh: Color(0xffebebeb),
-          surfaceContainer: Color(0xfff2f2f2),
-          surfaceContainerLow: Color(0xfff5f5f5),
-          surfaceContainerLowest: Color(0xffffffff),
-          inverseSurface: Color(0xff323232),
-          surfaceTint: Color(0xff7a7a7a),
-        ),
-        pageTransitionsTheme: const PageTransitionsTheme(
-          builders: <TargetPlatform, PageTransitionsBuilder>{
-            // Set the predictive back transitions for Android.
-            TargetPlatform.android: PredictiveBackPageTransitionsBuilder(),
-          },
-        ),
-        appBarTheme: Theme.of(context).appBarTheme.copyWith(
-              surfaceTintColor: Colors.transparent,
-              backgroundColor: Color(0xffefedee),
-            ),
-        cardTheme: Theme.of(context)
-            .cardTheme
-            .copyWith(margin: EdgeInsets.fromLTRB(10, 1, 10, 1)),
-        listTileTheme: Theme.of(context)
-            .listTileTheme
-            .copyWith(contentPadding: EdgeInsetsDirectional.only(start: 16.0, end: 16.0)),
-        searchViewTheme: Theme.of(context).searchViewTheme.copyWith(
-              dividerColor: Colors.transparent,
-            ),
-      ),
-      darkTheme: ThemeData(
-        colorScheme:
-            ColorScheme.fromSeed(seedColor: colorSelected, brightness: Brightness.dark)
-                .copyWith(
-          surface: Color(0xff1f2021),
-          surfaceBright: Color(0xfffef7ff),
-          surfaceDim: Color(0xffded8e1),
-          onSurface: Color(0xffe4e4e4),
-          onSurfaceVariant: Color(0xffcacaca),
-          surfaceContainerHighest: Color(0xff373737),
-          surfaceContainerHigh: Color(0xff2c2c2c),
-          surfaceContainer: Color(0xff222222),
-          surfaceContainerLow: Color(0xff1d1d1d),
-          surfaceContainerLowest: Color(0xff101010),
-          inverseSurface: Color(0xffe4e4e4),
-          onInverseSurface: Color(0xff323232),
-          surfaceTint: Color(0xffdddddd),
-        ),
-        pageTransitionsTheme: const PageTransitionsTheme(
-          builders: <TargetPlatform, PageTransitionsBuilder>{
-            // Set the predictive back transitions for Android.
-            TargetPlatform.android: PredictiveBackPageTransitionsBuilder(),
-          },
-        ),
-        appBarTheme: Theme.of(context).appBarTheme.copyWith(
-              surfaceTintColor: Colors.transparent,
-              backgroundColor: Color(0xff1f2021),
-            ),
-        cardTheme: Theme.of(context)
-            .cardTheme
-            .copyWith(margin: EdgeInsets.fromLTRB(10, 1, 10, 1)),
-        listTileTheme: Theme.of(context)
-            .listTileTheme
-            .copyWith(contentPadding: EdgeInsetsDirectional.only(start: 16.0, end: 16.0)),
-        searchViewTheme: Theme.of(context).searchViewTheme.copyWith(
-              dividerColor: Colors.transparent,
-            ),
-      ),
+      theme: getThemeData(context, ColorSeed.blue.color, Brightness.light),
+      darkTheme: getThemeData(context, ColorSeed.blue.color, Brightness.dark),
       themeMode: ThemeMode.system,
       locale: locale,
       localizationsDelegates: AppLocalizations.localizationsDelegates,
@@ -503,8 +431,6 @@ class ScaffoldWithNestedNavigation extends ConsumerStatefulWidget {
 class _ScaffoldWithNestedNavigationState
     extends ConsumerState<ScaffoldWithNestedNavigation> {
   void _goBranch(int index) {
-    ref.read(themeColorProvider.notifier).resetColor();
-
     widget.navigationShell.goBranch(
       index,
       // A common pattern when using bottom navigation bars is to support

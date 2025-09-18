@@ -17,6 +17,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../provider.dart';
 
 import '../../widgets/card_list_view_builder.dart';
+import '../../widgets/theme_builder.dart';
 import 'group_model.dart';
 import 'group_share_widget.dart';
 
@@ -78,8 +79,8 @@ class _GroupDetailState extends ConsumerState<GroupDetail> {
 
   @override
   Widget build(BuildContext context) {
-    return ScaffoldMessenger(
-      key: groupDetailScaffoldMessengerKey,
+    return ThemeBuilder(
+      colorValue: widget.group.colorValue,
       child: Scaffold(
         body: NotificationListener<ScrollUpdateNotification>(
           child: NestedScrollView(

@@ -51,96 +51,90 @@ class _GroupListState extends ConsumerState<GroupList> {
   Widget build(BuildContext context) {
     final groupList = ref.watch(groupListProvider(groupListFilter));
 
-    return ScaffoldMessenger(
-      key: groupListScaffoldMessengerKey,
-      child: Scaffold(
-        body: NestedScrollView(
-          controller: _scrollController,
-          headerSliverBuilder: (context, innerBoxIsScrolled) => [
-            SliverAppBar.medium(
-              title: Text(AppLocalizations.of(context)!.groups),
-            ),
-            SliverToBoxAdapter(
-              child: SizedBox(
-                height: 60,
-                child: ListView.builder(
-                  scrollDirection: Axis.horizontal,
-                  itemCount: GroupListFilter.values.length,
-                  itemBuilder: (context, index) {
-                    double paddingLeft = 0;
-                    if (index == 0) {
-                      paddingLeft = 10;
-                    }
+    return Scaffold(
+      body: NestedScrollView(
+        controller: _scrollController,
+        headerSliverBuilder: (context, innerBoxIsScrolled) => [
+          SliverAppBar.medium(
+            title: Text(AppLocalizations.of(context)!.groups),
+          ),
+          SliverToBoxAdapter(
+            child: SizedBox(
+              height: 60,
+              child: ListView.builder(
+                scrollDirection: Axis.horizontal,
+                itemCount: GroupListFilter.values.length,
+                itemBuilder: (context, index) {
+                  double paddingLeft = 0;
+                  if (index == 0) {
+                    paddingLeft = 10;
+                  }
 
-                    return Padding(
-                      padding: EdgeInsets.only(left: paddingLeft, right: 10),
-                      child: FilterChip(
-                        label: Text(AppLocalizations.of(context)!
-                            .groupListFilter(GroupListFilter.values[index].value)),
-                        selected: groupListFilter == GroupListFilter.values[index].value,
-                        onSelected: (selected) {
-                          if (selected) {
-                            setState(
-                              () {
-                                groupListFilter = GroupListFilter.values[index].value;
-                              },
-                            );
-                          }
-                        },
-                      ),
-                    );
-                  },
-                ),
+                  return Padding(
+                    padding: EdgeInsets.only(left: paddingLeft, right: 10),
+                    child: FilterChip(
+                      label: Text(AppLocalizations.of(context)!
+                          .groupListFilter(GroupListFilter.values[index].value)),
+                      selected: groupListFilter == GroupListFilter.values[index].value,
+                      onSelected: (selected) {
+                        if (selected) {
+                          setState(
+                            () {
+                              groupListFilter = GroupListFilter.values[index].value;
+                            },
+                          );
+                        }
+                      },
+                    ),
+                  );
+                },
               ),
             ),
-          ],
-          body: Container(
-            color: Theme.of(context).colorScheme.surface,
-            child: switch (groupList) {
-              AsyncData(:final value) => value.isEmpty
-                  ? EmptyListWidget(
-                      label: AppLocalizations.of(context)!.groupNoEntries,
-                      onRefresh: () async {
-                        await updateGroupList();
-                      })
-                  : RefreshIndicator(
-                      onRefresh: () async {
-                        await updateGroupList();
-                      },
-                      child: GroupCardListView(
-                        shrinkWrap: true,
-                        adBlock: _adBlock,
-                        groupList: value,
-                        addSpacer: true,
-                        itemCount: value.length,
-                        itemBuilder: (context, index) {
-                          // Access the Group instance
-                          Group group = value[index];
-                          return GroupListItem(key: ValueKey(group.id), group: group);
-                        },
-                      ),
-                    ),
-              AsyncError() => EmptyListWidget(
-                  label: AppLocalizations.of(context)!.groupNoEntries,
-                  onRefresh: () async {
-                    await updateGroupList();
-                  },
-                ),
-              _ => ShimmerCardList(
-                  height: 100,
-                  listEntryLength: 8,
-                )
-            },
           ),
-        ),
-        floatingActionButton: FloatingActionButton.extended(
-          heroTag: "floating_action_button_main",
-          onPressed: () {
-            GoRouter.of(context).push("/group/edit");
+        ],
+        body: switch (groupList) {
+            AsyncData(:final value) => value.isEmpty
+                ? EmptyListWidget(
+                    label: AppLocalizations.of(context)!.groupNoEntries,
+                    onRefresh: () async {
+                      await updateGroupList();
+                    })
+                : RefreshIndicator(
+                    onRefresh: () async {
+                      await updateGroupList();
+                    },
+                    child: GroupCardListView(
+                      shrinkWrap: true,
+                      adBlock: _adBlock,
+                      groupList: value,
+                      addSpacer: true,
+                      itemCount: value.length,
+                      itemBuilder: (context, index) {
+                        // Access the Group instance
+                        Group group = value[index];
+                        return GroupListItem(key: ValueKey(group.id), group: group);
+                      },
+                    ),
+                  ),
+            AsyncError() => EmptyListWidget(
+                label: AppLocalizations.of(context)!.groupNoEntries,
+                onRefresh: () async {
+                  await updateGroupList();
+                },
+              ),
+            _ => ShimmerCardList(
+                height: 100,
+                listEntryLength: 8,
+              )
           },
-          label: Text(AppLocalizations.of(context)!.addNewGroup),
-          icon: const Icon(Icons.add),
-        ),
+      ),
+      floatingActionButton: FloatingActionButton.extended(
+        heroTag: "floating_action_button_main",
+        onPressed: () {
+          GoRouter.of(context).push("/group/edit");
+        },
+        label: Text(AppLocalizations.of(context)!.addNewGroup),
+        icon: const Icon(Icons.add),
       ),
     );
   }

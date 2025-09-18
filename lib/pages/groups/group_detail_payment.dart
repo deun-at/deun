@@ -181,14 +181,14 @@ class _GroupPaymentBottomSheetState extends ConsumerState<GroupPaymentBottomShee
                 if (context.mounted) {
                   showSnackBar(
                       context,
-                      groupDetailScaffoldMessengerKey,
+                      rootScaffoldMessengerKey,
                       AppLocalizations.of(context)!
                           .payBackSuccess(email, groupShare.shareAmount.abs()));
                 }
               } catch (e) {
                 debugPrint(e.toString());
                 if (context.mounted) {
-                  showSnackBar(context, groupDetailScaffoldMessengerKey,
+                  showSnackBar(context, rootScaffoldMessengerKey,
                       AppLocalizations.of(context)!.payBackError);
                 }
               } finally {

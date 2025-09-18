@@ -409,7 +409,7 @@ class _SettingState extends ConsumerState<Setting> {
                 await supabase.auth.signOut(); // Clean up local session
               } catch (e) {
                 if (context.mounted) {
-                  showSnackBar(context, groupDetailScaffoldMessengerKey,
+                  showSnackBar(context, rootScaffoldMessengerKey,
                       AppLocalizations.of(context)!.deleteAccountError);
                 }
               }
