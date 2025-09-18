@@ -90,6 +90,12 @@ class AppLocalizationsDe extends AppLocalizations {
   String get groupCreateSuccess => 'Gruppe erstellt!';
 
   @override
+  String get groupInviteTitle => 'Freunde einladen';
+
+  @override
+  String get groupInviteLetFriendScan => '';
+
+  @override
   String get expenses => 'Ausgaben';
 
   @override
@@ -791,6 +797,9 @@ class AppLocalizationsDe extends AppLocalizations {
   String get copyLink => 'Link kopieren';
 
   @override
+  String get share => 'Teilen';
+
+  @override
   String get friendQrLetFriendScan =>
       'Lass deinen Freund diesen Code scannen, um dich hinzuzufügen.';
 
@@ -800,7 +809,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String friendQrShareLink(String url) {
-    return 'Let\'s get connected on DEUN! 🤝\n$url';
+    return 'Lass uns auf DEUN vernetzen! 🤝\n$url';
   }
 
   @override

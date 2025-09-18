@@ -22,6 +22,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'constants.dart';
 import 'pages/groups/group_detail.dart';
+import 'pages/groups/group_invite_page.dart';
+import 'pages/groups/group_join_page.dart';
 import 'pages/groups/group_detail_edit.dart';
 import 'pages/groups/group_list.dart';
 import 'pages/statistics/group_statistics_page.dart';
@@ -165,6 +167,23 @@ class _NavigationScreenState extends ConsumerState<NavigationScreen> {
                           var group = extra?['group'] as Group?;
 
                           return GroupEdit(group: group);
+                        }),
+                    GoRoute(
+                        path: 'share',
+                        parentNavigatorKey: _rootNavigatorKey,
+                        pageBuilder: (context, state) {
+                          var extra = state.extra as Map<String, dynamic>;
+                          var group = extra['group'] as Group;
+                          return ModalBottomSheetPage(
+                              key: state.pageKey,
+                              builder: (context) => GroupInvitePage(group: group));
+                        }),
+                    GoRoute(
+                        path: 'join',
+                        parentNavigatorKey: _rootNavigatorKey,
+                        builder: (context, state) {
+                          final groupId = state.uri.queryParameters['groupId'];
+                          return GroupJoinPage(groupId: groupId ?? '');
                         }),
                   ],
                 ),
