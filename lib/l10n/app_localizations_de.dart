@@ -799,6 +799,11 @@ class AppLocalizationsDe extends AppLocalizations {
       'Link kopiert. Wenn deine Systemkamera QR-App-Links unterstützt, zeige diesen Code auf dem anderen Gerät und scanne ihn.';
 
   @override
+  String friendQrShareLink(String url) {
+    return 'Let\'s get connected on DEUN! 🤝\n$url';
+  }
+
+  @override
   String get statisticsTitle => 'Statistiken';
 
   @override

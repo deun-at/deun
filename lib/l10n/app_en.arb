@@ -723,6 +723,13 @@
   "@friendQrLetFriendScan": {},
   "friendQrLinkCopiedInstruction": "Link copied. If your system camera supports QR app links, show this code on the other device and scan.",
   "@friendQrLinkCopiedInstruction": {},
+  "friendQrShareLink": "Let's get connected on DEUN! \uD83E\uDD1D\n{url}",
+  "@friendQrShareLink": {
+    "placeholders": {
+      "url": {
+        "type": "String"
+      }
+    }},
   "statisticsTitle": "Statistics",
   "@statisticsTitle": {},
   "statisticsNoExpenses": "No expenses",

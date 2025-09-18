@@ -186,6 +186,7 @@
   "copyLink": "Link kopieren",
   "friendQrLetFriendScan": "Lass deinen Freund diesen Code scannen, um dich hinzuzufügen.",
   "friendQrLinkCopiedInstruction": "Link kopiert. Wenn deine Systemkamera QR-App-Links unterstützt, zeige diesen Code auf dem anderen Gerät und scanne ihn.",
+  "friendQrShareLink": "Lass uns auf DEUN vernetzen! \uD83E\uDD1D\n{url}",
   "statisticsTitle": "Statistiken",
   "statisticsNoExpenses": "Keine Ausgaben",
   "statisticsNoExpensesFound": "Keine Ausgaben gefunden",
