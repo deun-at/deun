@@ -183,7 +183,8 @@ class _NavigationScreenState extends ConsumerState<NavigationScreen> {
                         parentNavigatorKey: _rootNavigatorKey,
                         builder: (context, state) {
                           final groupId = state.uri.queryParameters['groupId'];
-                          return GroupJoinPage(groupId: groupId ?? '');
+                          final groupName = state.uri.queryParameters['name'];
+                          return GroupJoinPage(groupId: groupId ?? '', groupName: groupName);
                         }),
                   ],
                 ),

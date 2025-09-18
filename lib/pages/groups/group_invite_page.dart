@@ -20,7 +20,8 @@ class GroupInvitePage extends StatelessWidget {
     final uri = Uri(
       scheme: 'https',
       host: 'deun.app',
-      fragment: '/group/join?groupId=${Uri.encodeComponent(group.id)}',
+      fragment:
+          '/group/join?groupId=${Uri.encodeComponent(group.id)}&name=${Uri.encodeComponent(group.name)}',
     );
     return uri;
   }

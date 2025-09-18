@@ -96,6 +96,15 @@ class AppLocalizationsDe extends AppLocalizations {
   String get groupInviteLetFriendScan => '';
 
   @override
+  String get groupInviteJoinTitle => 'Gruppe beitreten';
+
+  @override
+  String get groupInviteJoinSubtitle => 'Tritt dieser Gruppe bei';
+
+  @override
+  String get groupInviteJoinButton => 'Gruppe beitreten';
+
+  @override
   String get expenses => 'Ausgaben';
 
   @override
