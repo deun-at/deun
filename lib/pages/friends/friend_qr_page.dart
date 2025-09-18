@@ -221,8 +221,8 @@ class _FriendQrPageState extends State<FriendQrPage> {
                   final url = link.toString();
                   SharePlus.instance.share(ShareParams(text: AppLocalizations.of(context)!.friendQrShareLink(url)));
                 },
-                icon: const Icon(Icons.share),
-                label: const Text('Share'),
+                icon: const Icon(Icons.ios_share),
+                label: Text(AppLocalizations.of(context)!.share),
               ),
             ],
           ),

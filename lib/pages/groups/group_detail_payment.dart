@@ -40,57 +40,51 @@ class _GroupPaymentBottomSheetState extends ConsumerState<GroupPaymentBottomShee
               title: Text(AppLocalizations.of(context)!.payBack),
               centerTitle: true,
             ),
-            body: Container(
-              color: Theme.of(context).colorScheme.surface,
-              child: Consumer(
-                builder: (context, ref, child) {
-                  final Group? group =
-                      ref.watch(groupDetailProvider(widget.group.id)).value;
+            body: Consumer(
+              builder: (context, ref, child) {
+                final Group? group = ref.watch(groupDetailProvider(widget.group.id)).value;
 
-                  if (group == null) {
-                    return const ShimmerCardList(
-                      height: 50,
-                      listEntryLength: 8,
-                    );
-                  }
-
-                  List<Widget> listViewChildren = [];
-
-                  group.groupSharesSummary.forEach(
-                    (email, groupShare) {
-                      if (groupShare.shareAmount < 0 &&
-                          toNumber(groupShare.shareAmount) != '-0.00') {
-                        listViewChildren.add(
-                          ListTile(
-                            title: Text(groupShare.displayName),
-                            subtitle: Text(AppLocalizations.of(context)!
-                                .toCurrency(groupShare.shareAmount.abs())),
-                            trailing: const Icon(Icons.payment),
-                            onTap: () {
-                              openPayBackDialog(context, widget.group, email, groupShare);
-                            },
-                          ),
-                        );
-                      }
-                    },
+                if (group == null) {
+                  return const ShimmerCardList(
+                    height: 50,
+                    listEntryLength: 8,
                   );
+                }
 
-                  if (listViewChildren.isEmpty) {
-                    listViewChildren.add(ListTile(
-                      titleTextStyle: Theme.of(context).textTheme.bodyLarge,
-                      title: Text(AppLocalizations.of(context)!.payBackNoEntries),
-                    ));
-                  }
+                List<Widget> listViewChildren = [];
 
-                  return CardListView(
-                    controller: scrollController,
-                    itemCount: listViewChildren.length,
-                    itemBuilder: (context, index) {
-                      return listViewChildren[index];
-                    },
-                  );
-                },
-              ),
+                group.groupSharesSummary.forEach(
+                  (email, groupShare) {
+                    if (groupShare.shareAmount < 0 && toNumber(groupShare.shareAmount) != '-0.00') {
+                      listViewChildren.add(
+                        ListTile(
+                          title: Text(groupShare.displayName),
+                          subtitle: Text(AppLocalizations.of(context)!.toCurrency(groupShare.shareAmount.abs())),
+                          trailing: const Icon(Icons.payment),
+                          onTap: () {
+                            openPayBackDialog(context, widget.group, email, groupShare);
+                          },
+                        ),
+                      );
+                    }
+                  },
+                );
+
+                if (listViewChildren.isEmpty) {
+                  listViewChildren.add(ListTile(
+                    titleTextStyle: Theme.of(context).textTheme.bodyLarge,
+                    title: Text(AppLocalizations.of(context)!.payBackNoEntries),
+                  ));
+                }
+
+                return CardListView(
+                  controller: scrollController,
+                  itemCount: listViewChildren.length,
+                  itemBuilder: (context, index) {
+                    return listViewChildren[index];
+                  },
+                );
+              },
             ),
           ),
         );
@@ -98,8 +92,7 @@ class _GroupPaymentBottomSheetState extends ConsumerState<GroupPaymentBottomShee
     );
   }
 
-  void openPayBackDialog(BuildContext modalContext, Group group, String email,
-      GroupSharesSummary groupShare) {
+  void openPayBackDialog(BuildContext modalContext, Group group, String email, GroupSharesSummary groupShare) {
     Color activeColor = Theme.of(context).colorScheme.onSurface;
     Color disabledColor = Theme.of(context).colorScheme.outline;
 
@@ -110,8 +103,7 @@ class _GroupPaymentBottomSheetState extends ConsumerState<GroupPaymentBottomShee
         children: [
           SimpleDialogOption(
             child: Text(
-              AppLocalizations.of(context)!
-                  .payBackDialog(groupShare.displayName, groupShare.shareAmount.abs()),
+              AppLocalizations.of(context)!.payBackDialog(groupShare.displayName, groupShare.shareAmount.abs()),
               style: Theme.of(context).textTheme.bodyLarge!.copyWith(color: activeColor),
             ),
           ),
@@ -121,8 +113,8 @@ class _GroupPaymentBottomSheetState extends ConsumerState<GroupPaymentBottomShee
               if (groupShare.paypalMe == null || groupShare.paypalMe!.isEmpty) {
                 return;
               }
-              if (!await launchUrl(Uri.parse(
-                  "https://www.paypal.me/${groupShare.paypalMe}/${groupShare.shareAmount.abs()}"))) {
+              if (!await launchUrl(
+                  Uri.parse("https://www.paypal.me/${groupShare.paypalMe}/${groupShare.shareAmount.abs()}"))) {
                 throw Exception(
                     'Could not launch https://www.paypal.me/${groupShare.paypalMe}/${groupShare.shareAmount.abs()}');
               }
@@ -132,16 +124,12 @@ class _GroupPaymentBottomSheetState extends ConsumerState<GroupPaymentBottomShee
                 Text(
                   AppLocalizations.of(context)!.payBackDialogPaypal,
                   style: Theme.of(context).textTheme.bodyMedium!.copyWith(
-                      color: groupShare.paypalMe == null || groupShare.paypalMe!.isEmpty
-                          ? disabledColor
-                          : activeColor),
+                      color: groupShare.paypalMe == null || groupShare.paypalMe!.isEmpty ? disabledColor : activeColor),
                 ),
                 const Spacer(),
                 Icon(
                   Icons.payments_outlined,
-                  color: groupShare.paypalMe == null || groupShare.paypalMe!.isEmpty
-                      ? disabledColor
-                      : activeColor,
+                  color: groupShare.paypalMe == null || groupShare.paypalMe!.isEmpty ? disabledColor : activeColor,
                 ),
               ],
             ),
@@ -152,23 +140,18 @@ class _GroupPaymentBottomSheetState extends ConsumerState<GroupPaymentBottomShee
                 return;
               }
 
-              Clipboard.setData(ClipboardData(text: groupShare.iban as String))
-                  .then((_) {});
+              Clipboard.setData(ClipboardData(text: groupShare.iban as String)).then((_) {});
             },
             child: Row(
               children: [
                 Text(
                   AppLocalizations.of(context)!.payBackDialogIban,
                   style: Theme.of(context).textTheme.bodyMedium!.copyWith(
-                      color: groupShare.iban == null || groupShare.iban!.isEmpty
-                          ? disabledColor
-                          : activeColor),
+                      color: groupShare.iban == null || groupShare.iban!.isEmpty ? disabledColor : activeColor),
                 ),
                 const Spacer(),
                 Icon(Icons.credit_card,
-                    color: groupShare.iban == null || groupShare.iban!.isEmpty
-                        ? disabledColor
-                        : activeColor),
+                    color: groupShare.iban == null || groupShare.iban!.isEmpty ? disabledColor : activeColor),
               ],
             ),
           ),
@@ -176,20 +159,15 @@ class _GroupPaymentBottomSheetState extends ConsumerState<GroupPaymentBottomShee
           SimpleDialogOption(
             onPressed: () async {
               try {
-                await Group.payBack(
-                    context, widget.group.id, email, groupShare.shareAmount.abs());
+                await Group.payBack(context, widget.group.id, email, groupShare.shareAmount.abs());
                 if (context.mounted) {
-                  showSnackBar(
-                      context,
-                      rootScaffoldMessengerKey,
-                      AppLocalizations.of(context)!
-                          .payBackSuccess(email, groupShare.shareAmount.abs()));
+                  showSnackBar(context, rootScaffoldMessengerKey,
+                      AppLocalizations.of(context)!.payBackSuccess(email, groupShare.shareAmount.abs()));
                 }
               } catch (e) {
                 debugPrint(e.toString());
                 if (context.mounted) {
-                  showSnackBar(context, rootScaffoldMessengerKey,
-                      AppLocalizations.of(context)!.payBackError);
+                  showSnackBar(context, rootScaffoldMessengerKey, AppLocalizations.of(context)!.payBackError);
                 }
               } finally {
                 //pop both dialog and edit page, because this item is not existing anymore
@@ -203,10 +181,7 @@ class _GroupPaymentBottomSheetState extends ConsumerState<GroupPaymentBottomShee
               children: [
                 Text(
                   AppLocalizations.of(context)!.payBackDialogDone,
-                  style: Theme.of(context)
-                      .textTheme
-                      .bodyMedium!
-                      .copyWith(color: activeColor),
+                  style: Theme.of(context).textTheme.bodyMedium!.copyWith(color: activeColor),
                 ),
                 const Spacer(),
                 Icon(Icons.credit_score, color: activeColor),

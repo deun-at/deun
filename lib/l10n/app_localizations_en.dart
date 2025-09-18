@@ -89,6 +89,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get groupCreateSuccess => 'Group created!';
 
   @override
+  String get groupInviteTitle => 'Invite friends';
+
+  @override
+  String get groupInviteLetFriendScan =>
+      'Scanne diesen QR-Code, um der Gruppe beizutreten.';
+
+  @override
   String get expenses => 'Expenses';
 
   @override
@@ -757,6 +764,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get copyLink => 'Copy link';
+
+  @override
+  String get share => 'Share';
 
   @override
   String get friendQrLetFriendScan =>

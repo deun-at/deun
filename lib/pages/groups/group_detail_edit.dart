@@ -339,15 +339,31 @@ class _GroupEditState extends ConsumerState<GroupEdit> {
                       ),
                       SizedBox(height: 12),
                       widget.group != null
-                          ? CardListTile(
-                              isTop: true,
-                              isBottom: true,
-                              child: ListTile(
-                                textColor: Theme.of(context).colorScheme.error,
-                                iconColor: Theme.of(context).colorScheme.error,
-                                leading: Icon(Icons.delete),
-                                title: Text(AppLocalizations.of(context)!.groupDeleteItemTitle),
-                              ),
+                          ? Column(
+                              children: [
+                                CardListTile(
+                                  isTop: true,
+                                  isBottom: true,
+                                  child: ListTile(
+                                    leading: const Icon(Icons.ios_share),
+                                    title: Text(AppLocalizations.of(context)!.groupInviteTitle),
+                                    onTap: () {
+                                      GoRouter.of(context).push("/group/share", extra: {'group': widget.group});
+                                    },
+                                  ),
+                                ),
+                                SizedBox(height: 12),
+                                CardListTile(
+                                  isTop: true,
+                                  isBottom: true,
+                                  child: ListTile(
+                                    textColor: Theme.of(context).colorScheme.error,
+                                    iconColor: Theme.of(context).colorScheme.error,
+                                    leading: Icon(Icons.delete),
+                                    title: Text(AppLocalizations.of(context)!.groupDeleteItemTitle),
+                                  ),
+                                )
+                              ],
                             )
                           : const SizedBox(),
                     ],

@@ -236,6 +236,18 @@ abstract class AppLocalizations {
   /// **'Group created!'**
   String get groupCreateSuccess;
 
+  /// No description provided for @groupInviteTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Invite friends'**
+  String get groupInviteTitle;
+
+  /// No description provided for @groupInviteLetFriendScan.
+  ///
+  /// In en, this message translates to:
+  /// **'Scanne diesen QR-Code, um der Gruppe beizutreten.'**
+  String get groupInviteLetFriendScan;
+
   /// No description provided for @expenses.
   ///
   /// In en, this message translates to:
@@ -1290,6 +1302,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Copy link'**
   String get copyLink;
+
+  /// No description provided for @share.
+  ///
+  /// In en, this message translates to:
+  /// **'Share'**
+  String get share;
 
   /// No description provided for @friendQrLetFriendScan.
   ///
