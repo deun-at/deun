@@ -1303,6 +1303,12 @@ abstract class AppLocalizations {
   /// **'Link copied. If your system camera supports QR app links, show this code on the other device and scan.'**
   String get friendQrLinkCopiedInstruction;
 
+  /// No description provided for @friendQrShareLink.
+  ///
+  /// In en, this message translates to:
+  /// **'Let\'s get connected on DEUN! 🤝\n{url}'**
+  String friendQrShareLink(String url);
+
   /// No description provided for @statisticsTitle.
   ///
   /// In en, this message translates to:

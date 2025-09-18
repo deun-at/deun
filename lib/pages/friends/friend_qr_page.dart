@@ -7,6 +7,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:deun/l10n/app_localizations.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:qr_flutter/qr_flutter.dart';
+import 'package:share_plus/share_plus.dart';
 
 class FriendQrPage extends StatefulWidget {
   const FriendQrPage({super.key});
@@ -73,12 +74,10 @@ class _FriendQrPageState extends State<FriendQrPage> {
         }
 
         // Also support direct route without fragment
-        if (mounted &&
-            (uri.path == '/friend/accept' || uri.pathSegments.contains('friend'))) {
+        if (mounted && (uri.path == '/friend/accept' || uri.pathSegments.contains('friend'))) {
           final qp = uri.queryParameters;
           if (qp.containsKey('email')) {
-            GoRouter.of(context)
-                .go('/friend/accept?email=${Uri.encodeComponent(qp['email']!)}');
+            GoRouter.of(context).go('/friend/accept?email=${Uri.encodeComponent(qp['email']!)}');
             return;
           }
         }
@@ -91,8 +90,7 @@ class _FriendQrPageState extends State<FriendQrPage> {
       }
 
       if (mounted) {
-        showSnackBar(context, rootScaffoldMessengerKey,
-            AppLocalizations.of(context)!.friendQrNotRecognized);
+        showSnackBar(context, rootScaffoldMessengerKey, AppLocalizations.of(context)!.friendQrNotRecognized);
       }
     } finally {
       // Delay a bit to prevent immediate re-scan
@@ -109,10 +107,7 @@ class _FriendQrPageState extends State<FriendQrPage> {
       appBar: AppBar(
         title: Text(AppLocalizations.of(context)!.friendQrTitle,
             style: GoogleFonts.robotoSerif(
-                textStyle: Theme.of(context)
-                    .textTheme
-                    .titleLarge!
-                    .copyWith(fontWeight: FontWeight.w900)),
+                textStyle: Theme.of(context).textTheme.titleLarge!.copyWith(fontWeight: FontWeight.w900)),
             maxLines: 1,
             overflow: TextOverflow.ellipsis),
       ),
@@ -122,11 +117,8 @@ class _FriendQrPageState extends State<FriendQrPage> {
           Center(
             child: SegmentedButton<int>(
               segments: [
-                ButtonSegment(
-                    value: 0, label: Text(AppLocalizations.of(context)!.friendQrTabScan)),
-                ButtonSegment(
-                    value: 1,
-                    label: Text(AppLocalizations.of(context)!.friendQrTabMyCode)),
+                ButtonSegment(value: 0, label: Text(AppLocalizations.of(context)!.friendQrTabScan)),
+                ButtonSegment(value: 1, label: Text(AppLocalizations.of(context)!.friendQrTabMyCode)),
               ],
               selected: {_tabIndex},
               onSelectionChanged: (s) => setState(() => _tabIndex = s.first),
@@ -175,8 +167,8 @@ class _FriendQrPageState extends State<FriendQrPage> {
                   // Opening system camera is not directly possible; instruct via copying the link
                   await Clipboard.setData(ClipboardData(text: url));
                   if (mounted) {
-                    showSnackBar(context, rootScaffoldMessengerKey,
-                        AppLocalizations.of(context)!.friendQrLinkCopiedInstruction);
+                    showSnackBar(
+                        context, rootScaffoldMessengerKey, AppLocalizations.of(context)!.friendQrLinkCopiedInstruction);
                   }
                 },
                 icon: const Icon(Icons.link),
@@ -223,6 +215,14 @@ class _FriendQrPageState extends State<FriendQrPage> {
                 },
                 icon: const Icon(Icons.copy),
                 label: Text(AppLocalizations.of(context)!.copyLink),
+              ),
+              FilledButton.icon(
+                onPressed: () async {
+                  final url = link.toString();
+                  SharePlus.instance.share(ShareParams(text: AppLocalizations.of(context)!.friendQrShareLink(url)));
+                },
+                icon: const Icon(Icons.share),
+                label: const Text('Share'),
               ),
             ],
           ),

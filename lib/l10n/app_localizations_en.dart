@@ -767,6 +767,11 @@ class AppLocalizationsEn extends AppLocalizations {
       'Link copied. If your system camera supports QR app links, show this code on the other device and scan.';
 
   @override
+  String friendQrShareLink(String url) {
+    return 'Let\'s get connected on DEUN! 🤝\n$url';
+  }
+
+  @override
   String get statisticsTitle => 'Statistics';
 
   @override
