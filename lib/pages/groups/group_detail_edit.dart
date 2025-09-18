@@ -21,74 +21,25 @@ import '../../widgets/search_view.dart';
 import '../users/user_model.dart';
 import 'group_model.dart';
 
-class IsLoadingNotifier extends Notifier<bool> {
-  @override
-  bool build() => false;
-
-  @override
-  set state(bool newState) => super.state = newState;
-
-  bool update(bool Function(bool state) cb) => state = cb(state);
-}
-
-class IsMiniViewNotifier extends Notifier<bool> {
-  @override
-  bool build() => false;
-
-  @override
-  set state(bool newState) => super.state = newState;
-
-  bool update(bool Function(bool state) cb) => state = cb(state);
-}
-
-final _isLoading = NotifierProvider<IsLoadingNotifier, bool>(IsLoadingNotifier.new);
-final _isMiniView = NotifierProvider<IsMiniViewNotifier, bool>(IsMiniViewNotifier.new);
-
-class GroupBottomSheet extends ConsumerStatefulWidget {
-  const GroupBottomSheet({super.key, this.group});
+class GroupEdit extends ConsumerStatefulWidget {
+  const GroupEdit({super.key, this.group});
 
   final Group? group;
 
   @override
-  ConsumerState<GroupBottomSheet> createState() => _GroupBottomSheetState();
+  ConsumerState<GroupEdit> createState() => _GroupEditState();
 }
 
-class _GroupBottomSheetState extends ConsumerState<GroupBottomSheet> {
+class _GroupEditState extends ConsumerState<GroupEdit> {
   final _formKey = GlobalKey<FormBuilderState>();
   final ValueNotifier<String> _searchQueryNotifier = ValueNotifier<String>("");
 
-  final DraggableScrollableController _draggableScrollableController =
-      DraggableScrollableController();
   final SearchController _searchAnchorController = SearchController();
 
   @override
-  void initState() {
-    super.initState();
-    Future.microtask(
-        () => ref.read(_isLoading.notifier).state = false); // Reset loading state
-    Future.microtask(
-        () => ref.read(_isMiniView.notifier).state = false); // Reset loading state
-
-    _draggableScrollableController.addListener(showMiniViewListener);
-  }
-
-  @override
   void dispose() {
-    _draggableScrollableController.removeListener(showMiniViewListener);
-    _draggableScrollableController.dispose();
     _searchAnchorController.dispose();
     super.dispose();
-  }
-
-  void showMiniViewListener() {
-    final pixelToSize = _draggableScrollableController.pixelsToSize(kIsWeb ? 150 : 190);
-    if (_draggableScrollableController.size <= pixelToSize) {
-      FocusScope.of(context).unfocus();
-      ref.read(_isMiniView.notifier).state = true;
-      _draggableScrollableController.jumpTo(pixelToSize);
-    } else {
-      ref.read(_isMiniView.notifier).state = false;
-    }
   }
 
   Iterable<Widget> getUserSelection(
@@ -201,309 +152,225 @@ class _GroupBottomSheetState extends ConsumerState<GroupBottomSheet> {
   @override
   Widget build(BuildContext context) {
     const double spacing = 8;
-    final isLoading = ref.watch(_isLoading);
-    final isMiniView = ref.watch(_isMiniView);
 
-    return DraggableScrollableSheet(
-        controller: _draggableScrollableController,
-        expand: false,
-        initialChildSize: .8,
-        minChildSize: 0,
-        snap: true,
-        builder: (context, scrollController) {
-          return RoundedContainer(
-            child: FormLoading(
-              isLoading: isLoading,
-              child: Scaffold(
-                body: NotificationListener<ScrollUpdateNotification>(
-                  child: CustomScrollView(
-                    controller: scrollController,
-                    slivers: [
-                      const SliverGrabWidget(),
-                      SliverList.list(
-                        children: [
-                          Padding(
-                            padding: const EdgeInsets.fromLTRB(20, 10, 20, 10),
-                            child: Padding(
-                              padding: MediaQuery.of(context).viewInsets,
-                              child: FormBuilder(
-                                key: _formKey,
-                                clearValueOnUnregister: true,
-                                initialValue: widget.group?.toJson() ?? {},
-                                child: Column(
-                                  mainAxisSize: MainAxisSize.min,
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: <Widget>[
-                                    FormBuilderField(
-                                        name: "name",
-                                        builder: (FormFieldState<dynamic> field) =>
-                                            TextFormField(
-                                              readOnly: isMiniView,
-                                              initialValue: field.value,
-                                              style: Theme.of(context)
-                                                  .textTheme
-                                                  .displaySmall!
-                                                  .copyWith(
-                                                      color: Theme.of(context)
-                                                          .colorScheme
-                                                          .primary),
-                                              autovalidateMode:
-                                                  AutovalidateMode.onUserInteraction,
-                                              validator: FormBuilderValidators.required(
-                                                  errorText: AppLocalizations.of(context)!
-                                                      .groupNameValidationEmpty),
-                                              keyboardType: TextInputType.text,
-                                              decoration: InputDecoration(
-                                                border: InputBorder.none,
-                                                hintText: AppLocalizations.of(context)!
-                                                    .addGroupTitle,
-                                              ),
-                                              onChanged: (value) =>
-                                                  field.didChange(value),
-                                            )),
-                                    const SizedBox(height: spacing),
-                                    FormBuilderField(
-                                      name: "color_value",
-                                      builder: (FormFieldState<dynamic> field) {
-                                        return GridView.builder(
-                                            gridDelegate:
-                                                const SliverGridDelegateWithFixedCrossAxisCount(
-                                                    crossAxisCount: 5,
-                                                    crossAxisSpacing: 8,
-                                                    mainAxisSpacing: 4),
-                                            padding: const EdgeInsets.all(8),
-                                            physics: const NeverScrollableScrollPhysics(),
-                                            shrinkWrap: true,
-                                            itemCount: ColorSeed.values.length,
-                                            itemBuilder: (context, i) {
-                                              return IconButton(
-                                                  icon: const Icon(
-                                                      Icons.radio_button_unchecked),
-                                                  selectedIcon: const Icon(
-                                                      Icons.radio_button_checked),
-                                                  color: ColorSeed.values[i].color,
-                                                  isSelected: (field.value ==
-                                                          ColorSeed.values[i].color
-                                                              .toARGB32() ||
-                                                      (field.value == null &&
-                                                          ColorSeed.values[i].color
-                                                                  .toARGB32() ==
-                                                              ColorSeed.baseColor.color
-                                                                  .toARGB32())),
-                                                  onPressed: () {
-                                                    field.didChange(ColorSeed
-                                                        .values[i].color
-                                                        .toARGB32());
-                                                  });
-                                            });
-                                      },
-                                    ),
-                                    const Divider(),
-                                    FormBuilderField(
-                                      name: "group_members",
-                                      builder: (FormFieldState<dynamic> field) {
-                                        return SearchAnchor(
-                                          searchController: _searchAnchorController,
-                                          viewHintText: AppLocalizations.of(context)!
-                                              .groupMemberSelectionEmpty,
-                                          viewLeading: IconButton(
-                                            icon: Icon(Icons.check),
-                                            onPressed: () {
-                                              Navigator.of(context).pop();
-                                            },
-                                          ),
-                                          builder: (context, controller) {
-                                            List<Map<String, dynamic>> groupMembers =
-                                                Group.decodeGroupMembersString(
-                                                    field.value);
-
-                                            if (groupMembers.isEmpty ||
-                                                (groupMembers.length == 1 &&
-                                                    groupMembers.first['email'] ==
-                                                        supabase
-                                                            .auth.currentUser?.email)) {
-                                              return ListTile(
-                                                leading: const Icon(Icons.people),
-                                                title: Text(AppLocalizations.of(context)!
-                                                    .groupMemberAddFriends),
-                                              );
-                                            }
-
-                                            return Padding(
-                                                padding: const EdgeInsets.fromLTRB(
-                                                    10, 5, 5, 10),
-                                                child: Column(
-                                                    crossAxisAlignment:
-                                                        CrossAxisAlignment.center,
-                                                    children: <Widget>[
-                                                      Wrap(
-                                                          spacing: 8,
-                                                          children: groupMembers
-                                                              .map((groupMember) {
-                                                            String displayName =
-                                                                groupMember[
-                                                                    "display_name"];
-                                                            if (groupMember["email"] ==
-                                                                supabase.auth.currentUser
-                                                                    ?.email) {
-                                                              displayName =
-                                                                  AppLocalizations.of(
-                                                                          context)!
-                                                                      .you;
-                                                            }
-                                                            return ActionChip(
-                                                              label: Text(displayName),
-                                                              avatar: const Icon(
-                                                                  Icons.person),
-                                                              onPressed: () {
-                                                                controller.openView();
-                                                              },
-                                                            );
-                                                          }).toList())
-                                                    ]));
-                                          },
-                                          suggestionsBuilder: (context, controller) {
-                                            if (controller.text.isEmpty) {
-                                              return getUserSelection(controller, field);
-                                            }
-                                            return getUserSuggestions(controller, field);
-                                          },
-                                          viewBuilder: (suggestions) {
-                                            return Column(
-                                              crossAxisAlignment:
-                                                  CrossAxisAlignment.start,
-                                              children: [
-                                                Padding(
-                                                  padding:
-                                                      EdgeInsets.only(top: 10, left: 16),
-                                                  child: Text(
-                                                    _searchAnchorController.text.isEmpty
-                                                        ? AppLocalizations.of(context)!
-                                                            .groupMemberSelectionTitle
-                                                        : AppLocalizations.of(context)!
-                                                            .groupMemberSelectionEmpty,
-                                                    style: Theme.of(context)
-                                                        .textTheme
-                                                        .bodyMedium,
-                                                  ),
-                                                ),
-                                                Expanded(
-                                                  child: SearchView(
-                                                    searchQueryNotifier:
-                                                        _searchQueryNotifier,
-                                                    suggestions: suggestions,
-                                                  ),
-                                                ),
-                                              ],
-                                            );
-                                          },
-                                        );
-                                      },
-                                    ),
-                                    FormBuilderSwitch(
-                                      name: "simplified_expenses",
-                                      title: Text(AppLocalizations.of(context)!
-                                          .groupSimplifiedExpensesTitle),
-                                    ),
-                                    widget.group != null
-                                        ? Center(
-                                            child: TextButton.icon(
-                                              style: TextButton.styleFrom(
-                                                foregroundColor:
-                                                    Theme.of(context).colorScheme.error,
-                                                textStyle:
-                                                    Theme.of(context).textTheme.bodyLarge,
-                                              ),
-                                              onPressed: () => openDeleteItemDialog(
-                                                  context, widget.group!),
-                                              icon: Icon(Icons.delete_outline,
-                                                  color: Theme.of(context)
-                                                      .colorScheme
-                                                      .error),
-                                              label: Text(AppLocalizations.of(context)!
-                                                  .groupDeleteItemTitle),
-                                            ),
-                                          )
-                                        : const SizedBox(),
-                                  ],
-                                ),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                  onNotification: (ScrollUpdateNotification notification) {
-                    final FocusScopeNode currentScope = FocusScope.of(context);
-                    if (notification.dragDetails != null &&
-                        !currentScope.hasPrimaryFocus &&
-                        currentScope.hasFocus) {
-                      FocusManager.instance.primaryFocus?.unfocus();
+    return Scaffold(
+      appBar: AppBar(
+        actions: [
+          Padding(
+            padding: const EdgeInsets.only(right: 10),
+            child: FilledButton(
+              onPressed: () async {
+                if (_formKey.currentState!.saveAndValidate()) {
+                  Group? newGroup;
+                  try {
+                    String groupInsertId = await Group.saveAll(
+                        context, widget.group?.id, _formKey.currentState!.value);
+                    newGroup = await Group.fetchDetail(groupInsertId);
+                    if (context.mounted) {
+                      showSnackBar(context, groupDetailScaffoldMessengerKey,
+                          AppLocalizations.of(context)!.groupCreateSuccess);
                     }
-                    return false;
-                  },
-                ),
-                bottomNavigationBar: BottomAppBar(
-                  child: IconTheme(
-                    data: IconThemeData(color: Theme.of(context).colorScheme.surface),
-                    child: Row(
-                      children: <Widget>[
-                        IconButton(
-                          icon: const Icon(Icons.close),
-                          color: Theme.of(context).colorScheme.onSurface,
+                  } catch (e) {
+                    if (context.mounted) {
+                      showSnackBar(context, groupDetailScaffoldMessengerKey,
+                          AppLocalizations.of(context)!.groupCreateError);
+                    }
+                  } finally {
+                    if (mounted) {
+                      if (context.mounted) {
+                        if (newGroup != null) {
+                          GoRouter.of(context).go("/group");
+                          GoRouter.of(context)
+                              .push("/group/details", extra: {'group': newGroup});
+                        }
+                      }
+                    }
+                  }
+                }
+              },
+              child: Text(AppLocalizations.of(context)!.save),
+            ),
+          )
+        ],
+      ),
+      body: ListView(
+        children: [
+          Padding(
+            padding: const EdgeInsets.only(top: 10, bottom: 40),
+            child: FormBuilder(
+              key: _formKey,
+              clearValueOnUnregister: true,
+              initialValue: widget.group?.toJson() ?? {},
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: <Widget>[
+                  FormBuilderField(
+                      name: "name",
+                      builder: (FormFieldState<dynamic> field) => TextFormField(
+                            initialValue: field.value,
+                            style: Theme.of(context)
+                                .textTheme
+                                .displaySmall!
+                                .copyWith(color: Theme.of(context).colorScheme.primary),
+                            autovalidateMode: AutovalidateMode.onUserInteraction,
+                            validator: FormBuilderValidators.required(
+                                errorText: AppLocalizations.of(context)!
+                                    .groupNameValidationEmpty),
+                            keyboardType: TextInputType.text,
+                            decoration: InputDecoration(
+                              border: InputBorder.none,
+                              hintText: AppLocalizations.of(context)!.addGroupTitle,
+                              contentPadding: EdgeInsets.only(left: 8, right: 8),
+                            ),
+                            onChanged: (value) => field.didChange(value),
+                          )),
+                  const SizedBox(height: spacing),
+                  FormBuilderField(
+                    name: "color_value",
+                    builder: (FormFieldState<dynamic> field) {
+                      return GridView.builder(
+                          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                              crossAxisCount: 5, crossAxisSpacing: 4, mainAxisSpacing: 4),
+                          padding: const EdgeInsets.all(8),
+                          physics: const NeverScrollableScrollPhysics(),
+                          shrinkWrap: true,
+                          itemCount: ColorSeed.values.length,
+                          itemBuilder: (context, i) {
+                            return IconButton(
+                                icon: const Icon(Icons.radio_button_unchecked),
+                                selectedIcon: const Icon(Icons.radio_button_checked),
+                                color: ColorSeed.values[i].color,
+                                isSelected: (field.value ==
+                                        ColorSeed.values[i].color.toARGB32() ||
+                                    (field.value == null &&
+                                        ColorSeed.values[i].color.toARGB32() ==
+                                            ColorSeed.baseColor.color.toARGB32())),
+                                onPressed: () {
+                                  field.didChange(ColorSeed.values[i].color.toARGB32());
+                                });
+                          });
+                    },
+                  ),
+                  FormBuilderField(
+                    name: "group_members",
+                    builder: (FormFieldState<dynamic> field) {
+                      return SearchAnchor(
+                        searchController: _searchAnchorController,
+                        viewHintText:
+                            AppLocalizations.of(context)!.groupMemberSelectionEmpty,
+                        viewLeading: IconButton(
+                          icon: Icon(Icons.check),
                           onPressed: () {
-                            Navigator.pop(context);
+                            Navigator.of(context).pop();
                           },
                         ),
-                        const Spacer(),
-                        Padding(
-                          padding: const EdgeInsets.only(right: 10),
-                          child: FilledButton(
-                            onPressed: () async {
-                              if (_formKey.currentState!.saveAndValidate()) {
-                                Group? newGroup;
-                                ref.read(_isLoading.notifier).state =
-                                    true; // Set loading to true
-                                try {
-                                  String groupInsertId = await Group.saveAll(context,
-                                      widget.group?.id, _formKey.currentState!.value);
-                                  newGroup = await Group.fetchDetail(groupInsertId);
-                                  if (context.mounted) {
-                                    showSnackBar(context, groupDetailScaffoldMessengerKey,
-                                        AppLocalizations.of(context)!.groupCreateSuccess);
-                                  }
-                                } catch (e) {
-                                  if (context.mounted) {
-                                    showSnackBar(context, groupDetailScaffoldMessengerKey,
-                                        AppLocalizations.of(context)!.groupCreateError);
-                                  }
-                                } finally {
-                                  if (mounted) {
-                                    ref.read(_isLoading.notifier).state =
-                                        false; // Stop loading
-                                    if (context.mounted) {
-                                      if (newGroup != null) {
-                                        GoRouter.of(context).go("/group");
-                                        GoRouter.of(context).push("/group/details",
-                                            extra: {'group': newGroup});
-                                      }
-                                    }
-                                  }
-                                }
+                        builder: (context, controller) {
+                          List<Map<String, dynamic>> groupMembers =
+                              Group.decodeGroupMembersString(field.value);
+
+                          List<Widget> listTiles = [];
+
+                          if (groupMembers.isEmpty ||
+                              (groupMembers.length == 1 &&
+                                  groupMembers.first['email'] ==
+                                      supabase.auth.currentUser?.email)) {
+                          } else {
+                            listTiles.addAll(groupMembers.map((groupMember) {
+                              String displayName = groupMember["display_name"];
+                              if (groupMember["email"] ==
+                                  supabase.auth.currentUser?.email) {
+                                displayName = AppLocalizations.of(context)!.you;
                               }
-                            },
-                            child: Text(AppLocalizations.of(context)!.save),
-                          ),
-                        )
-                      ],
+
+                              return ListTile(
+                                leading: const Icon(Icons.person),
+                                title: Text(displayName),
+                                subtitle: Text(groupMember['email']),
+                                onTap: () {
+                                  controller.openView();
+                                },
+                              );
+                            }));
+                          }
+
+                          listTiles.add(ListTile(
+                            leading: const Icon(Icons.person_add),
+                            title: Text(AppLocalizations.of(context)!.groupMemberAddFriends),
+                          ));
+
+                          return CardColumn(children: listTiles);
+                        },
+                        suggestionsBuilder: (context, controller) {
+                          if (controller.text.isEmpty) {
+                            return getUserSelection(controller, field);
+                          }
+                          return getUserSuggestions(controller, field);
+                        },
+                        viewBuilder: (suggestions) {
+                          return Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Padding(
+                                padding: EdgeInsets.only(top: 10, left: 16),
+                                child: Text(
+                                  _searchAnchorController.text.isEmpty
+                                      ? AppLocalizations.of(context)!
+                                          .groupMemberSelectionTitle
+                                      : AppLocalizations.of(context)!
+                                          .groupMemberSelectionEmpty,
+                                  style: Theme.of(context).textTheme.bodyMedium,
+                                ),
+                              ),
+                              Expanded(
+                                child: SearchView(
+                                  searchQueryNotifier: _searchQueryNotifier,
+                                  suggestions: suggestions,
+                                ),
+                              ),
+                            ],
+                          );
+                        },
+                      );
+                    },
+                  ),
+                  SizedBox(height: 12),
+                  CardListTile(
+                    isTop: true,
+                    isBottom: true,
+                    child: FormBuilderSwitch(
+                      name: "simplified_expenses",
+                      title: Text(
+                          AppLocalizations.of(context)!.groupSimplifiedExpensesTitle),
+                      contentPadding:
+                          EdgeInsets.only(right: 10, left: 10, top: 5, bottom: 5),
+                      decoration: InputDecoration(
+                        border: InputBorder.none,
+                        contentPadding: EdgeInsets.only(left: 8, right: 8),
+                      ),
                     ),
                   ),
-                ),
+                  SizedBox(height: 12),
+                  widget.group != null
+                      ? CardListTile(
+                          isTop: true,
+                          isBottom: true,
+                          child: ListTile(
+                            textColor: Theme.of(context).colorScheme.error,
+                            iconColor: Theme.of(context).colorScheme.error,
+                            leading: Icon(Icons.delete),
+                            title:
+                                Text(AppLocalizations.of(context)!.groupDeleteItemTitle),
+                          ),
+                        )
+                      : const SizedBox(),
+                ],
               ),
             ),
-          );
-        });
+          ),
+        ],
+      ),
+    );
   }
 
   void openDeleteItemDialog(BuildContext modalContext, Group group) {

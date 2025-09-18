@@ -158,16 +158,11 @@ class _NavigationScreenState extends ConsumerState<NavigationScreen> {
                     GoRoute(
                         path: 'edit',
                         parentNavigatorKey: _rootNavigatorKey,
-                        pageBuilder: (context, state) {
+                        builder: (context, state) {
                           var extra = state.extra as Map<String, dynamic>?;
                           var group = extra?['group'] as Group?;
 
-                          return ModalBottomSheetPage(
-                            key: state.pageKey,
-                            builder: (context) => GroupBottomSheet(
-                              group: group,
-                            ),
-                          );
+                          return GroupEdit(group: group);
                         }),
                   ],
                 ),

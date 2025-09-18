@@ -184,95 +184,95 @@ class _ExpenseDetailState extends ConsumerState<ExpenseDetail> {
     }
 
     return Scaffold(
-        appBar: AppBar(
-          actions: [...expenseActions],
-        ),
-        body: ListView(
-          children: [
-            Padding(
-              padding: const EdgeInsets.only(top: 10, bottom: 40),
-              child: FormBuilder(
-                key: _formKey,
-                clearValueOnUnregister: true,
-                initialValue: widget.expense?.toJson() ?? {},
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: <Widget>[
-                    FormBuilderField(
-                      name: "name",
-                      builder: (FormFieldState<dynamic> field) => TextFormField(
-                        initialValue: field.value,
-                        style: Theme.of(context)
-                            .textTheme
-                            .displaySmall!
-                            .copyWith(color: Theme.of(context).colorScheme.primary),
-                        validator: FormBuilderValidators.required(
-                            errorText:
-                                AppLocalizations.of(context)!.expenseNameValidationEmpty),
-                        decoration: InputDecoration(
-                          border: InputBorder.none,
-                          hintText: AppLocalizations.of(context)!.addExpenseTitle,
-                          contentPadding: EdgeInsets.only(left: 8, right: 8),
-                        ),
-                        onChanged: (value) {
-                          field.didChange(value);
-                          if (value.isNotEmpty) {
-                            detectAndUpdateCategory(value);
-                          }
-                        },
-                      ),
-                    ),
-                    const SizedBox(height: spacing),
-                    FormBuilderChoiceChips(
-                      showCheckmark: false,
-                      name: "paid_by",
-                      decoration: InputDecoration(
-                        labelText: AppLocalizations.of(context)!.expensePaidBy,
-                        labelStyle: Theme.of(context).textTheme.bodyLarge!.copyWith(
-                            color: Theme.of(context).colorScheme.onSurfaceVariant),
-                        border: InputBorder.none,
-                        contentPadding: EdgeInsets.only(left: 8, right: 8),
-                      ),
-                      initialValue:
-                          widget.expense?.paidBy ?? supabase.auth.currentUser?.email,
-                      spacing: 8,
-                      options: widget.group.groupMembers
-                          .map(
-                            (e) => FormBuilderChipOption(
-                              value: e.email,
-                              child: Text(e.email == supabase.auth.currentUser?.email
-                                  ? AppLocalizations.of(context)!.you
-                                  : e.displayName),
-                            ),
-                          )
-                          .toList(),
-                    ),
-                    const SizedBox(height: spacing),
-                    FormBuilderDateTimePicker(
-                      name: "expense_date",
-                      initialValue: widget.expense?.expenseDate != null
-                          ? DateTime.parse(widget.expense!.expenseDate)
-                          : DateTime.now(),
-                      inputType: InputType.date,
+      appBar: AppBar(
+        actions: [...expenseActions],
+      ),
+      body: ListView(
+        children: [
+          Padding(
+            padding: const EdgeInsets.only(top: 10, bottom: 40),
+            child: FormBuilder(
+              key: _formKey,
+              clearValueOnUnregister: true,
+              initialValue: widget.expense?.toJson() ?? {},
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: <Widget>[
+                  FormBuilderField(
+                    name: "name",
+                    builder: (FormFieldState<dynamic> field) => TextFormField(
+                      initialValue: field.value,
+                      style: Theme.of(context)
+                          .textTheme
+                          .displaySmall!
+                          .copyWith(color: Theme.of(context).colorScheme.primary),
+                      validator: FormBuilderValidators.required(
+                          errorText:
+                              AppLocalizations.of(context)!.expenseNameValidationEmpty),
                       decoration: InputDecoration(
                         border: InputBorder.none,
-                        labelText: AppLocalizations.of(context)!.expenseDate,
-                        labelStyle: Theme.of(context).textTheme.bodyLarge!.copyWith(
-                            color: Theme.of(context).colorScheme.onSurfaceVariant),
                         hintText: AppLocalizations.of(context)!.addExpenseTitle,
                         contentPadding: EdgeInsets.only(left: 8, right: 8),
                       ),
+                      onChanged: (value) {
+                        field.didChange(value);
+                        if (value.isNotEmpty) {
+                          detectAndUpdateCategory(value);
+                        }
+                      },
                     ),
-                    const SizedBox(height: spacing),
-                    CategorySelector(
-                      name: "category",
-                      initialValue: _detectedCategory ?? widget.expense?.category,
+                  ),
+                  const SizedBox(height: spacing),
+                  FormBuilderChoiceChips(
+                    showCheckmark: false,
+                    name: "paid_by",
+                    decoration: InputDecoration(
+                      labelText: AppLocalizations.of(context)!.expensePaidBy,
+                      labelStyle: Theme.of(context).textTheme.bodyLarge!.copyWith(
+                          color: Theme.of(context).colorScheme.onSurfaceVariant),
+                      border: InputBorder.none,
+                      contentPadding: EdgeInsets.only(left: 8, right: 8),
                     ),
-                    const SizedBox(height: spacing),
-                    CardColumn(children: expenseEntryFields),
-                    Center(
-                        child: FilledButton.tonalIcon(
+                    initialValue:
+                        widget.expense?.paidBy ?? supabase.auth.currentUser?.email,
+                    spacing: 8,
+                    options: widget.group.groupMembers
+                        .map(
+                          (e) => FormBuilderChipOption(
+                            value: e.email,
+                            child: Text(e.email == supabase.auth.currentUser?.email
+                                ? AppLocalizations.of(context)!.you
+                                : e.displayName),
+                          ),
+                        )
+                        .toList(),
+                  ),
+                  const SizedBox(height: spacing),
+                  FormBuilderDateTimePicker(
+                    name: "expense_date",
+                    initialValue: widget.expense?.expenseDate != null
+                        ? DateTime.parse(widget.expense!.expenseDate)
+                        : DateTime.now(),
+                    inputType: InputType.date,
+                    decoration: InputDecoration(
+                      border: InputBorder.none,
+                      labelText: AppLocalizations.of(context)!.expenseDate,
+                      labelStyle: Theme.of(context).textTheme.bodyLarge!.copyWith(
+                          color: Theme.of(context).colorScheme.onSurfaceVariant),
+                      hintText: AppLocalizations.of(context)!.addExpenseTitle,
+                      contentPadding: EdgeInsets.only(left: 8, right: 8),
+                    ),
+                  ),
+                  const SizedBox(height: spacing),
+                  CategorySelector(
+                    name: "category",
+                    initialValue: _detectedCategory ?? widget.expense?.category,
+                  ),
+                  const SizedBox(height: spacing),
+                  CardColumn(children: expenseEntryFields),
+                  Center(
+                    child: FilledButton.tonalIcon(
                       icon: const Icon(Icons.add),
                       label: Text(AppLocalizations.of(context)!.addNewExpenseEntry),
                       onPressed: () {
@@ -292,12 +292,14 @@ class _ExpenseDetailState extends ConsumerState<ExpenseDetail> {
                           },
                         );
                       },
-                    )),
-                  ],
-                ),
+                    ),
+                  ),
+                ],
               ),
-            )
-          ],
-        ));
+            ),
+          )
+        ],
+      ),
+    );
   }
 }
