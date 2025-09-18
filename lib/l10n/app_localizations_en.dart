@@ -89,11 +89,21 @@ class AppLocalizationsEn extends AppLocalizations {
   String get groupCreateSuccess => 'Group created!';
 
   @override
-  String get groupInviteTitle => 'Invite friends';
+  String get groupInviteTitle => 'Invite Friends';
 
   @override
   String get groupInviteLetFriendScan =>
       'Scanne diesen QR-Code, um der Gruppe beizutreten.';
+
+  @override
+  String get groupInviteJoinTitle => 'Join Group';
+
+  @override
+  String get groupInviteJoinSubtitle =>
+      'Tritt dieser Gruppe bei, um Ausgaben zu sehen und hinzuzufügen.';
+
+  @override
+  String get groupInviteJoinButton => 'Enter Group';
 
   @override
   String get expenses => 'Expenses';

@@ -7,108 +7,80 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:deun/l10n/app_localizations.dart';
 
 class GroupJoinPage extends StatefulWidget {
-  const GroupJoinPage({super.key, required this.groupId});
+  const GroupJoinPage({super.key, required this.groupId, this.groupName});
 
   final String groupId;
+  final String? groupName;
 
   @override
   State<GroupJoinPage> createState() => _GroupJoinPageState();
 }
 
 class _GroupJoinPageState extends State<GroupJoinPage> {
-  Group? _group;
-  bool _loading = true;
-  String? _error;
-
-  @override
-  void initState() {
-    super.initState();
-    _loadGroup();
-  }
-
-  Future<void> _loadGroup() async {
-    try {
-      Group g = await Group.fetchDetail(widget.groupId);
-      setState(() {
-        _group = g;
-        _loading = false;
-      });
-    } catch (e) {
-      setState(() {
-        _error = e.toString();
-        _loading = false;
-      });
-    }
-  }
-
   Future<void> _joinGroup() async {
-    if (_group == null) return;
-    final user = supabase.auth.currentUser;
-    if (user == null) return;
+    String? email = supabase.auth.currentUser?.email;
+    if (email != null) {
+      try {
+        // Check if already member
+        final existing = await supabase
+            .from('group_member')
+            .select('email')
+            .eq('group_id', widget.groupId)
+            .eq('email', email)
+            .maybeSingle();
 
-    try {
-      // Check if already member
-      final existing = await supabase
-          .from('group_member')
-          .select('email')
-          .eq('group_id', _group!.id)
-          .eq('email', user.email ?? '')
-          .maybeSingle();
+        debugPrint(existing.toString());
 
-      if (existing == null) {
-        await supabase.from('group_member').insert({
-          'group_id': _group!.id,
-          'email': user.email,
-        });
+        if (existing == null) {
+          await supabase.from('group_member').insert({
+            'group_id': widget.groupId,
+            'email': email,
+          });
 
-        // Update calculated shares
-        await supabase.rpc('update_group_member_shares', params: {"_group_id": _group!.id, "_expense_id": null});
+          // Update calculated shares
+          await supabase.rpc('update_group_member_shares', params: {"_group_id": widget.groupId, "_expense_id": null});
+        }
+
+        // Now fetch detail (allowed as member) and navigate
+        Group g = await Group.fetchDetail(widget.groupId);
+        if (!mounted) return;
+        GoRouter.of(context).go('/group/details', extra: {'group': g});
+      } catch (e) {
+        if (!mounted) return;
+        showSnackBar(context, rootScaffoldMessengerKey, AppLocalizations.of(context)!.generalError);
       }
-
-      if (!mounted) return;
-      // Navigate to group details
-      GoRouter.of(context).go('/group/details', extra: {'group': _group});
-    } catch (e) {
-      if (!mounted) return;
-      showSnackBar(context, rootScaffoldMessengerKey, AppLocalizations.of(context)!.generalError);
     }
+    return;
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Join group',
+        title: Text(AppLocalizations.of(context)!.groupInviteJoinTitle,
             style: GoogleFonts.robotoSerif(
                 textStyle: Theme.of(context).textTheme.titleLarge!.copyWith(fontWeight: FontWeight.w900))),
       ),
       body: Center(
-        child: _loading
-            ? const CircularProgressIndicator()
-            : _error != null
-                ? Padding(
-                    padding: const EdgeInsets.all(16.0),
-                    child: Text(AppLocalizations.of(context)!.errorLoadingData),
-                  )
-                : Padding(
-                    padding: const EdgeInsets.all(16.0),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(Icons.group, size: 64, color: Theme.of(context).colorScheme.primary),
-                        const SizedBox(height: 12),
-                        Text(_group!.name, style: Theme.of(context).textTheme.headlineSmall),
-                        const SizedBox(height: 8),
-                        const Text('Join this group to view and add expenses.', textAlign: TextAlign.center),
-                        const SizedBox(height: 20),
-                        FilledButton.icon(
-                          onPressed: _joinGroup,
-                          icon: const Icon(Icons.login),
-                          label: const Text('Enter group'),
-                        ),
-                      ],
-                    ),
-                  ),
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(Icons.group, size: 64, color: Theme.of(context).colorScheme.primary),
+              const SizedBox(height: 12),
+              Text(widget.groupName ?? 'Group', style: Theme.of(context).textTheme.headlineSmall),
+              const SizedBox(height: 8),
+              Text(AppLocalizations.of(context)!.groupInviteJoinSubtitle, textAlign: TextAlign.center),
+              const SizedBox(height: 20),
+              FilledButton.icon(
+                onPressed: _joinGroup,
+                icon: const Icon(Icons.login),
+                label: Text(AppLocalizations.of(context)!.groupInviteJoinButton),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
