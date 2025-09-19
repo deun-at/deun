@@ -50,6 +50,7 @@ class _GroupEditState extends ConsumerState<GroupEdit> {
 
     return groupMembers.mapIndexed((index, user) {
       String titleText = "";
+      String subtitleText = user['email'];
       Widget iconButton;
       if (user['email'] == supabase.auth.currentUser?.email) {
         titleText = AppLocalizations.of(context)!.you;
@@ -73,6 +74,10 @@ class _GroupEditState extends ConsumerState<GroupEdit> {
         );
       }
 
+      if (user['is_guest'] ?? false) {
+        subtitleText = AppLocalizations.of(context)!.groupMemberIsGuest;
+      }
+
       bool isTop = false;
       bool isBottom = false;
 
@@ -87,12 +92,12 @@ class _GroupEditState extends ConsumerState<GroupEdit> {
       return CardListTile(
           isTop: isTop,
           isBottom: isBottom,
-          child: ListTile(title: Text(titleText), subtitle: Text(user["email"]), trailing: iconButton));
+          child: ListTile(title: Text(titleText), subtitle: Text(subtitleText), trailing: iconButton));
     });
   }
 
   Future<Iterable<Widget>> getUserSuggestions(SearchController controller, FormFieldState<dynamic> field) async {
-    final String input = controller.value.text;
+    final String input = controller.value.text.trim();
     List<dynamic> nbs = Group.decodeGroupMembersString(field.value);
 
     List<String> selectedUsers = nbs.map(
@@ -105,22 +110,24 @@ class _GroupEditState extends ConsumerState<GroupEdit> {
 
     List<SupaUser> result = await Friendship.fetchFriends(input, selectedUsers, 99);
 
+    final List<Widget> tiles = [];
+
     if (result.isEmpty) {
-      return [
+      tiles.add(
         CardListTile(
             isTop: true,
             isBottom: true,
-            child: ListTile(title: Text(AppLocalizations.of(context)!.groupMemberResultEmpty)))
-      ];
+            child: ListTile(title: Text(AppLocalizations.of(context)!.groupMemberResultEmpty))),
+      );
     }
 
     int resultLength = result.length;
 
-    return result.mapIndexed((index, user) {
+    tiles.addAll(result.mapIndexed((index, user) {
       bool isTop = false;
       bool isBottom = false;
 
-      if (index == 0) {
+      if (index == 0 && result.isNotEmpty) {
         isTop = true;
       }
 
@@ -141,7 +148,32 @@ class _GroupEditState extends ConsumerState<GroupEdit> {
           },
         ),
       );
-    });
+    }));
+
+    // Append option to add typed name as a guest
+    final guestName = input;
+    if (guestName.isNotEmpty) {
+      tiles.add(SizedBox(height: 12));
+      tiles.add(
+        CardListTile(
+          isTop: true,
+          isBottom: true,
+          child: ListTile(
+            leading: const Icon(Icons.person_add),
+            title: Text(AppLocalizations.of(context)!.groupMemberAddGuestOption(guestName)),
+            onTap: () {
+              final ts = DateTime.now().microsecondsSinceEpoch;
+              final tempEmail = 'guest+$ts@pending.invalid';
+              nbs.add({'email': tempEmail, 'display_name': guestName, 'is_guest': true, 'is_guest_pending': true});
+              field.didChange(jsonEncode(nbs));
+              controller.text = "";
+            },
+          ),
+        ),
+      );
+    }
+
+    return tiles;
   }
 
   @override
@@ -270,14 +302,20 @@ class _GroupEditState extends ConsumerState<GroupEdit> {
                               } else {
                                 listTiles.addAll(groupMembers.map((groupMember) {
                                   String displayName = groupMember["display_name"];
+                                  String subtitleText = groupMember["email"];
+
                                   if (groupMember["email"] == supabase.auth.currentUser?.email) {
                                     displayName = AppLocalizations.of(context)!.you;
+                                  }
+
+                                  if(groupMember['is_guest'] ?? false) {
+                                    subtitleText = AppLocalizations.of(context)!.groupMemberIsGuest;
                                   }
 
                                   return ListTile(
                                     leading: const Icon(Icons.person),
                                     title: Text(displayName),
-                                    subtitle: Text(groupMember['email']),
+                                    subtitle: Text(subtitleText),
                                     onTap: () {
                                       controller.openView();
                                     },

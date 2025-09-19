@@ -1,8 +1,10 @@
+import 'dart:math';
+
 import '../../main.dart';
 
 class SupaUser {
   late String email;
-  late String userId;
+  late String? userId;
   late String? firstName;
   late String? lastName;
   late String displayName;
@@ -10,6 +12,7 @@ class SupaUser {
   late String? iban;
   late String? locale;
   late String createdAt;
+  late bool isGuest;
 
   void loadDataFromJson(Map<String, dynamic> json) {
     email = json["email"];
@@ -21,6 +24,7 @@ class SupaUser {
     paypalMe = json["paypal_me"];
     iban = json["iban"];
     createdAt = json["created_at"];
+    isGuest = json["is_guest"];
   }
 
   static Future<List<SupaUser>> fetchData(String searchString, List<String> selectedUsers, int? limit) async {
@@ -66,6 +70,25 @@ class SupaUser {
     } else {
       throw Exception('User email is empty');
     }
+  }
+
+  static Future<SupaUser> createGuest(String displayName) async {
+    // Generate a unique placeholder email for the guest user
+    final ts = DateTime.now().microsecondsSinceEpoch;
+    final rand = Random().nextInt(999999);
+    final email = 'guest+$ts$rand@guest.invalid';
+
+    Map<String, dynamic> insertVals = {
+      'email': email,
+      'display_name': displayName,
+      'is_guest': true
+    };
+
+    Map<String, dynamic> data = await supabase.from('user').insert(insertVals).select('*').single();
+
+    SupaUser user = SupaUser();
+    user.loadDataFromJson(data);
+    return user;
   }
 
   Map<String, dynamic> toJson() => {
