@@ -23,6 +23,8 @@ class Expense {
   late Map<String, double> groupMemberShareStatistic;
   late String? paidByDisplayName;
 
+  static const expenseSelectString = '*, ...paid_by(paid_by_display_name:display_name), expense_entry(*, expense_entry_share(*, ...email(display_name:display_name))), group!expense_group_id_fkey(*, group_shares_summary(*, ...paid_by(paid_by_display_name:display_name), ...paid_for(paid_for_display_name:display_name)), group_member(*, ...user(display_name:display_name, is_guest:is_guest)))';
+
   void loadDataFromJson(Map<String, dynamic> json) {
     id = json["id"];
     groupId = json["group_id"];
@@ -69,8 +71,7 @@ class Expense {
   }
 
   static Future<List<Expense>> fetchData([String? groupId, int rangeFrom = 0, int rangeTo = 0, String? filter]) async {
-    var query = supabase.from('expense').select(
-        '*, ...paid_by(paid_by_display_name:display_name), expense_entry(*, expense_entry_share(*, ...email(display_name:display_name))), group!expense_group_id_fkey(*, group_shares_summary(*, ...paid_by(paid_by_display_name:display_name), ...paid_for(paid_for_display_name:display_name)), group_member(*, ...user(display_name:display_name, is_guest:is_guest)))');
+    var query = supabase.from('expense').select(expenseSelectString);
 
     if (groupId != null) {
       query = query.eq('group_id', groupId);
@@ -97,8 +98,7 @@ class Expense {
   static Future<List<Expense>> fetchRange(String groupId, DateTime start, DateTime end) async {
     var query = supabase
         .from('expense')
-        .select(
-            '*, ...paid_by(paid_by_display_name:display_name), expense_entry(*, expense_entry_share(*, ...email(display_name:display_name))), group!expense_group_id_fkey(*, group_shares_summary(*, ...paid_by(paid_by_display_name:display_name), ...paid_for(paid_for_display_name:display_name)), group_member(*, ...user(display_name:display_name, is_guest:is_guest)))')
+        .select(expenseSelectString)
         .eq('group_id', groupId)
         .eq('is_paid_back_row', false)
         .gte('expense_date', start.toIso8601String())
@@ -120,8 +120,7 @@ class Expense {
   static Future<Expense> fetchDetail(String expenseId) async {
     Map<String, dynamic> data = await supabase
         .from('expense')
-        .select(
-            '*, ...paid_by(paid_by_display_name:display_name), expense_entry(*, expense_entry_share(*, ...email(display_name:display_name))), group!expense_group_id_fkey(*, group_shares_summary(*, ...paid_by(paid_by_display_name:display_name), ...paid_for(paid_for_display_name:display_name)), group_member(*, ...user(display_name:display_name, is_guest:is_guest)))')
+        .select(expenseSelectString)
         .eq('id', expenseId)
         .order('sort_id', ascending: true, referencedTable: 'expense_entry')
         .single();

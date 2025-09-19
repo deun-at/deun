@@ -308,7 +308,7 @@ class _GroupEditState extends ConsumerState<GroupEdit> {
                                     displayName = AppLocalizations.of(context)!.you;
                                   }
 
-                                  if(groupMember['is_guest'] ?? false) {
+                                  if (groupMember['is_guest'] ?? false) {
                                     subtitleText = AppLocalizations.of(context)!.groupMemberIsGuest;
                                   }
 
@@ -399,6 +399,7 @@ class _GroupEditState extends ConsumerState<GroupEdit> {
                                     iconColor: Theme.of(context).colorScheme.error,
                                     leading: Icon(Icons.delete),
                                     title: Text(AppLocalizations.of(context)!.groupDeleteItemTitle),
+                                    onTap: () => openDeleteItemDialog(context, widget.group!),
                                   ),
                                 )
                               ],

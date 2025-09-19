@@ -41,11 +41,7 @@ class _FriendQrPageState extends State<FriendQrPage> {
   Uri _buildFriendLink() {
     final email = supabase.auth.currentUser?.email ?? '';
     // Use hash fragment so in-app deep link handler can GoRouter.go(fragment)
-    final uri = Uri(
-      scheme: 'https',
-      host: 'deun.app',
-      fragment: '/friend/accept?email=$email',
-    );
+    final uri = Uri.parse('https://deun.app/#/friend/accept?email=$email');
     return uri;
   }
 

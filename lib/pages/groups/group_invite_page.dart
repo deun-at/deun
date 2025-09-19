@@ -17,12 +17,8 @@ class GroupInvitePage extends StatelessWidget {
 
   Uri _buildGroupInviteLink() {
     // Use hash fragment for in-app routing just like friends QR
-    final uri = Uri(
-      scheme: 'https',
-      host: 'deun.app',
-      fragment:
-          '/group/join?groupId=${Uri.encodeComponent(group.id)}&name=${Uri.encodeComponent(group.name)}',
-    );
+    final uri = Uri.parse(
+        'https://deun.app/#/group/join?groupId=${Uri.encodeComponent(group.id)}&name=${Uri.encodeComponent(group.name)}');
     return uri;
   }
 

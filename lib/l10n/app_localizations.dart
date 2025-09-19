@@ -269,7 +269,7 @@ abstract class AppLocalizations {
   /// No description provided for @groupInviteJoinSubtitle.
   ///
   /// In en, this message translates to:
-  /// **'Tritt dieser Gruppe bei, um Ausgaben zu sehen und hinzuzufügen.'**
+  /// **'Join this group to view and add expenses.'**
   String get groupInviteJoinSubtitle;
 
   /// No description provided for @groupInviteJoinButton.
@@ -277,6 +277,36 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Enter Group'**
   String get groupInviteJoinButton;
+
+  /// Title for selecting an existing guest profile when joining a group.
+  ///
+  /// In en, this message translates to:
+  /// **'Who are you in this group?'**
+  String get groupInviteGuestSelectTitle;
+
+  /// No description provided for @groupInviteGuestSelectSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'If you were added as a guest before (no account), pick your name to take over all expenses. If you don\'t find yourself, just join as a new member.'**
+  String get groupInviteGuestSelectSubtitle;
+
+  /// No description provided for @groupInviteJoinAsNew.
+  ///
+  /// In en, this message translates to:
+  /// **'Join as new member'**
+  String get groupInviteJoinAsNew;
+
+  /// No description provided for @groupInviteNoGuestsFound.
+  ///
+  /// In en, this message translates to:
+  /// **'No guest profiles found in this group.'**
+  String get groupInviteNoGuestsFound;
+
+  /// No description provided for @groupInviteTransferButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Continue'**
+  String get groupInviteTransferButton;
 
   /// No description provided for @expenses.
   ///
