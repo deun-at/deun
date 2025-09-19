@@ -108,10 +108,27 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get groupInviteJoinSubtitle =>
-      'Tritt dieser Gruppe bei, um Ausgaben zu sehen und hinzuzufügen.';
+      'Join this group to view and add expenses.';
 
   @override
   String get groupInviteJoinButton => 'Enter Group';
+
+  @override
+  String get groupInviteGuestSelectTitle => 'Who are you in this group?';
+
+  @override
+  String get groupInviteGuestSelectSubtitle =>
+      'If you were added as a guest before (no account), pick your name to take over all expenses. If you don\'t find yourself, just join as a new member.';
+
+  @override
+  String get groupInviteJoinAsNew => 'Join as new member';
+
+  @override
+  String get groupInviteNoGuestsFound =>
+      'No guest profiles found in this group.';
+
+  @override
+  String get groupInviteTransferButton => 'Continue';
 
   @override
   String get expenses => 'Expenses';
