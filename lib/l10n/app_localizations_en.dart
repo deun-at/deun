@@ -74,6 +74,14 @@ class AppLocalizationsEn extends AppLocalizations {
   String get groupMemberResultEmpty => 'No friends found!';
 
   @override
+  String groupMemberAddGuestOption(String name) {
+    return 'Add $name as guest';
+  }
+
+  @override
+  String get groupMemberIsGuest => 'Guest';
+
+  @override
   String get groupExpenseNoEntries => 'Add an expense to get started';
 
   @override

@@ -206,6 +206,18 @@ abstract class AppLocalizations {
   /// **'No friends found!'**
   String get groupMemberResultEmpty;
 
+  /// Option in member search to add the typed name as a guest.
+  ///
+  /// In en, this message translates to:
+  /// **'Add {name} as guest'**
+  String groupMemberAddGuestOption(String name);
+
+  /// No description provided for @groupMemberIsGuest.
+  ///
+  /// In en, this message translates to:
+  /// **'Guest'**
+  String get groupMemberIsGuest;
+
   /// No description provided for @groupExpenseNoEntries.
   ///
   /// In en, this message translates to:

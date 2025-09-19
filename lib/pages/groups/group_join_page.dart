@@ -29,8 +29,6 @@ class _GroupJoinPageState extends State<GroupJoinPage> {
             .eq('email', email)
             .maybeSingle();
 
-        debugPrint(existing.toString());
-
         if (existing == null) {
           await supabase.from('group_member').insert({
             'group_id': widget.groupId,

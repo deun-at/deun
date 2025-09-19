@@ -45,6 +45,15 @@
   "@groupMemberSelectionTitle": {},
   "groupMemberResultEmpty": "No friends found!",
   "@groupMemberResultEmpty": {},
+  "groupMemberAddGuestOption": "Add {name} as guest",
+  "@groupMemberAddGuestOption": {
+    "description": "Option in member search to add the typed name as a guest.",
+    "placeholders": {
+      "name": {"type": "String", "example": "Hans Peter"}
+    }
+  },
+  "groupMemberIsGuest": "Guest",
+  "@groupMemberIsGuest": {},
   "groupExpenseNoEntries": "Add an expense to get started",
   "@groupExpenseNoEntries": {},
   "groupDeleteError": "Error while deleting group!",

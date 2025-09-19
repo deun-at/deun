@@ -165,7 +165,6 @@ class _GroupPaymentBottomSheetState extends ConsumerState<GroupPaymentBottomShee
                       AppLocalizations.of(context)!.payBackSuccess(email, groupShare.shareAmount.abs()));
                 }
               } catch (e) {
-                debugPrint(e.toString());
                 if (context.mounted) {
                   showSnackBar(context, rootScaffoldMessengerKey, AppLocalizations.of(context)!.payBackError);
                 }

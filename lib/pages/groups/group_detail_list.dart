@@ -57,7 +57,7 @@ class _GroupDetailListState extends ConsumerState<GroupDetailList> {
           return const ShimmerCardList(height: 80, listEntryLength: 15);
         }
 
-        return expenses!.isEmpty
+        return expenses == null || expenses.isEmpty
             ? EmptyListWidget(
                 label: AppLocalizations.of(context)!.groupExpenseNoEntries,
                 onRefresh: () async {

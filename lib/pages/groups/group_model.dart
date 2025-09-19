@@ -2,10 +2,12 @@ import 'dart:convert';
 
 import 'package:deun/helper/helper.dart';
 import 'package:flutter/material.dart';
+import 'package:universal_html/js_util.dart';
 
 import '../../constants.dart';
 import '../../main.dart';
 import '../expenses/expense_model.dart';
+import '../users/user_model.dart';
 import 'group_member_model.dart';
 
 class GroupSharesSummary {
@@ -31,7 +33,7 @@ class Group {
   late List<Expense>? expenses;
 
   static const groupSelectString =
-      '*, group_shares_summary_helper:group_shares_summary!inner(*), group_shares_summary(*, ...paid_by(paid_by_display_name:display_name, paid_by_paypal_me:paypal_me, paid_by_iban:iban), ...paid_for(paid_for_display_name:display_name, paid_for_paypal_me:paypal_me, paid_for_iban:iban)), group_member(*, ...user(display_name:display_name))';
+      '*, group_shares_summary_helper:group_shares_summary!inner(*), group_shares_summary(*, ...paid_by(paid_by_display_name:display_name, paid_by_paypal_me:paypal_me, paid_by_iban:iban), ...paid_for(paid_for_display_name:display_name, paid_for_paypal_me:paypal_me, paid_for_iban:iban)), group_member(*, ...user(display_name:display_name, is_guest:is_guest))';
 
   void loadDataFromJson(Map<String, dynamic> json) {
     id = json["id"];
@@ -263,12 +265,33 @@ class Group {
     Set<String> notificationReceiver = {};
     List<Map<String, dynamic>> groupMembers = decodeGroupMembersString(formValue['group_members']);
 
+    // Resolve any pending guest members by creating guest user records and replacing entries
+    for (int i = 0; i < groupMembers.length; i++) {
+      final member = groupMembers[i];
+      if ((member['is_guest_pending'] ?? false) == true) {
+        final displayName = (member['display_name'] ?? '').toString();
+        if (displayName.isNotEmpty) {
+          final guestUser = await SupaUser.createGuest(displayName);
+          groupMembers[i] = {
+            'email': guestUser.email,
+            'display_name': guestUser.displayName,
+            'is_guest': guestUser.isGuest,
+          };
+        }
+      }
+    }
+
     await supabase.from('group_member').delete().eq('group_id', groupInsertResponse['id']);
 
     if (groupMembers.isNotEmpty) {
-      notificationReceiver.addAll(groupMembers.map((groupMember) {
-        return groupMember['email'];
-      }));
+      Set<String> notificationReceiver = {};
+
+      for (var groupMember in groupMembers) {
+        if((groupMember['is_guest'] ?? false) == false) {
+          notificationReceiver.add(groupMember['email']);
+        }
+      }
+
       List<Map<String, dynamic>> upsertGroupMembers = [];
       upsertGroupMembers.addAll(groupMembers.map((groupMember) {
         return {'group_id': groupInsertResponse['id'], 'email': groupMember['email']};
