@@ -1,4 +1,5 @@
 analyzer:
   errors:
     no_leading_underscores_for_local_identifiers: ignore
+    invalid_annotation_target: ignore
 include: package:flutter_lints/flutter.yaml

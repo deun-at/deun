@@ -2,6 +2,7 @@ import 'package:deun/helper/helper.dart';
 import 'package:deun/main.dart';
 import 'package:deun/pages/friends/friendship_model.dart';
 import 'package:deun/pages/users/user_model.dart';
+import 'package:deun/pages/users/user_repository.dart';
 import 'package:deun/widgets/rounded_container.dart';
 import 'package:flutter/material.dart';
 import 'package:deun/l10n/app_localizations.dart';
@@ -159,7 +160,7 @@ class _FriendAddBottomSheetState extends State<FriendAddBottomSheet> {
     }
     selectedUsers.add(supabase.auth.currentUser?.email ?? '');
 
-    return await SupaUser.fetchData(_searchText, selectedUsers, 5);
+    return await UserRepository.fetchData(_searchText, selectedUsers, 5);
   }
 
   Future<List<Map<String, dynamic>>> _fetchPendingFriendRequests() async {
@@ -194,7 +195,7 @@ class _FriendAddBottomSheetState extends State<FriendAddBottomSheet> {
     selectedUsers.add(supabase.auth.currentUser?.email ?? '');
 
     // Fetch all available users matching the search text (async)
-    final allAvailableUser = await SupaUser.fetchData("%$_searchText%", selectedUsers, null);
+    final allAvailableUser = await UserRepository.fetchData("%$_searchText%", selectedUsers, null);
     final availableUserMap = {
       for (var user in allAvailableUser) user.email.toLowerCase(): user
     };
