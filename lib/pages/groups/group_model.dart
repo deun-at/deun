@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:deun/helper/helper.dart';
+import 'package:deun/pages/users/user_repository.dart';
 import 'package:flutter/material.dart';
 import 'package:universal_html/js_util.dart';
 
@@ -271,7 +272,7 @@ class Group {
       if ((member['is_guest_pending'] ?? false) == true) {
         final displayName = (member['display_name'] ?? '').toString();
         if (displayName.isNotEmpty) {
-          final guestUser = await SupaUser.createGuest(displayName);
+          final guestUser = await UserRepository.createGuest(displayName);
           groupMembers[i] = {
             'email': guestUser.email,
             'display_name': guestUser.displayName,

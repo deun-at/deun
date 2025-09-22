@@ -63,7 +63,7 @@ import 'app_localizations_en.dart';
 /// property.
 abstract class AppLocalizations {
   AppLocalizations(String locale)
-      : localeName = intl.Intl.canonicalizedLocale(locale.toString());
+    : localeName = intl.Intl.canonicalizedLocale(locale.toString());
 
   final String localeName;
 
@@ -86,16 +86,16 @@ abstract class AppLocalizations {
   /// of delegates is preferred or required.
   static const List<LocalizationsDelegate<dynamic>> localizationsDelegates =
       <LocalizationsDelegate<dynamic>>[
-    delegate,
-    GlobalMaterialLocalizations.delegate,
-    GlobalCupertinoLocalizations.delegate,
-    GlobalWidgetsLocalizations.delegate,
-  ];
+        delegate,
+        GlobalMaterialLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+      ];
 
   /// A list of this localizations delegate's supported locales.
   static const List<Locale> supportedLocales = <Locale>[
     Locale('de'),
-    Locale('en')
+    Locale('en'),
   ];
 
   /// Button to add a new group.
@@ -474,8 +474,12 @@ abstract class AppLocalizations {
   ///
   /// In en, this message translates to:
   /// **'{displayName} {expenseType, select, paid{paid} lent{lent} borrowed{borrowed} other{}} {amount}'**
-  String expenseDisplayAmount(String displayNameYourself, String displayName,
-      String expenseType, double amount);
+  String expenseDisplayAmount(
+    String displayNameYourself,
+    String displayName,
+    String expenseType,
+    double amount,
+  );
 
   /// No description provided for @expenseNoShares.
   ///
@@ -488,7 +492,10 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'{paidByYourself, select, yes{{displayName} owes you} other{You owe {displayName}}} {amount}'**
   String groupDisplayAmount(
-      String displayName, String paidByYourself, double amount);
+    String displayName,
+    String paidByYourself,
+    double amount,
+  );
 
   /// Lable in the group list/group detail of what you are owed/what you owe as a sum.
   ///
@@ -566,8 +573,13 @@ abstract class AppLocalizations {
   ///
   /// In en, this message translates to:
   /// **'{paidBy} paid back {amount} to {paidFor}'**
-  String groupDisplayPaidBack(String paidByYourself, String paidBy,
-      String paidForYourself, String paidFor, double amount);
+  String groupDisplayPaidBack(
+    String paidByYourself,
+    String paidBy,
+    String paidForYourself,
+    String paidFor,
+    double amount,
+  );
 
   /// No description provided for @signInTitle.
   ///
@@ -820,7 +832,9 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'{userDisplayName} paid their debts in \"{groupName}\" back!'**
   String groupPayBackNotificationTitle(
-      String userDisplayName, String groupName);
+    String userDisplayName,
+    String groupName,
+  );
 
   /// Notification body when a new expense was added.
   ///
@@ -839,7 +853,10 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'\"{expenseName}\" has been added to \"{groupName}\" with a total of {amount}.'**
   String expenseNotificationBody(
-      String expenseName, String groupName, double amount);
+    String expenseName,
+    String groupName,
+    double amount,
+  );
 
   /// No description provided for @friendRequestNotificationTitle.
   ///
@@ -1451,8 +1468,9 @@ AppLocalizations lookupAppLocalizations(Locale locale) {
   }
 
   throw FlutterError(
-      'AppLocalizations.delegate failed to load unsupported locale "$locale". This is likely '
-      'an issue with the localizations generation tool. Please file an issue '
-      'on GitHub with a reproducible sample app and the gen-l10n configuration '
-      'that was used.');
+    'AppLocalizations.delegate failed to load unsupported locale "$locale". This is likely '
+    'an issue with the localizations generation tool. Please file an issue '
+    'on GitHub with a reproducible sample app and the gen-l10n configuration '
+    'that was used.',
+  );
 }

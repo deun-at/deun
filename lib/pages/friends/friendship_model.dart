@@ -11,14 +11,13 @@ class Friendship {
   late double shareAmount;
 
   void loadDataFromJson(Map<String, dynamic> json) {
-    user = SupaUser();
 
     if (json["requester"]["email"] == supabase.auth.currentUser?.email) {
       isRequester = false;
-      user.loadDataFromJson(json["addressee"]);
+      user = SupaUser.fromJson(json["addressee"]);
     } else {
       isRequester = true;
-      user.loadDataFromJson(json["requester"]);
+      user = SupaUser.fromJson(json["requester"]);
     }
 
     status = json["status"];
@@ -117,15 +116,7 @@ class Friendship {
         .order("email", referencedTable: "addressee")
         .limit(limit);
 
-    List<SupaUser> retData = [];
-
-    for (var element in data) {
-      SupaUser user = SupaUser();
-      user.loadDataFromJson(element);
-      retData.add(user);
-    }
-
-    return retData;
+    return data.map(SupaUser.fromJson).toList();
   }
 
   static Future<void> request(String email) async {

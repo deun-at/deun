@@ -2,6 +2,7 @@ import 'package:deun/main.dart';
 import 'package:deun/pages/expenses/expense_model.dart';
 import 'package:deun/pages/groups/group_model.dart';
 import 'package:deun/pages/users/user_model.dart';
+import 'package:deun/pages/users/user_repository.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
@@ -134,7 +135,7 @@ void sendExpenseNotification(BuildContext context, String expenseId, Set<String>
 }
 
 void sendFriendRequestNotification(BuildContext context, Set<String> notificationReceiver) {
-  SupaUser.fetchDetail(supabase.auth.currentUser!.email ?? '').then(
+  UserRepository.fetchDetail(supabase.auth.currentUser!.email ?? '').then(
     (value) {
       sendNotification(
         'friendship',
@@ -150,7 +151,7 @@ void sendFriendRequestNotification(BuildContext context, Set<String> notificatio
 }
 
 void sendFriendAcceptNotification(BuildContext context, Set<String> notificationReceiver) {
-  SupaUser.fetchDetail(supabase.auth.currentUser!.email ?? '').then(
+  UserRepository.fetchDetail(supabase.auth.currentUser!.email ?? '').then(
     (value) {
       sendNotification(
         'friendship',
@@ -166,7 +167,7 @@ void sendFriendAcceptNotification(BuildContext context, Set<String> notification
 }
 
 void sendFriendDeclineNotification(BuildContext context, Set<String> notificationReceiver) {
-  SupaUser.fetchDetail(supabase.auth.currentUser!.email ?? '').then(
+  UserRepository.fetchDetail(supabase.auth.currentUser!.email ?? '').then(
     (value) {
       sendNotification(
         'friendship',

@@ -19,15 +19,12 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String groupListFilter(String filter) {
-    String _temp0 = intl.Intl.selectLogic(
-      filter,
-      {
-        'all': 'alle',
-        'active': 'offen',
-        'done': 'abgeschlossen',
-        'other': '',
-      },
-    );
+    String _temp0 = intl.Intl.selectLogic(filter, {
+      'all': 'alle',
+      'active': 'offen',
+      'done': 'abgeschlossen',
+      'other': '',
+    });
     return '$_temp0';
   }
 
@@ -213,28 +210,29 @@ class AppLocalizationsDe extends AppLocalizations {
   String get expenseNoEntries => 'So leer hier :(';
 
   @override
-  String expenseDisplayAmount(String displayNameYourself, String displayName,
-      String expenseType, double amount) {
+  String expenseDisplayAmount(
+    String displayNameYourself,
+    String displayName,
+    String expenseType,
+    double amount,
+  ) {
     final intl.NumberFormat amountNumberFormat = intl.NumberFormat.currency(
-        locale: localeName, decimalDigits: 2, name: '€');
+      locale: localeName,
+      decimalDigits: 2,
+      name: '€',
+    );
     final String amountString = amountNumberFormat.format(amount);
 
-    String _temp0 = intl.Intl.selectLogic(
-      displayNameYourself,
-      {
-        'yes': 'hast',
-        'other': 'hat',
-      },
-    );
-    String _temp1 = intl.Intl.selectLogic(
-      expenseType,
-      {
-        'paid': 'gezahlt',
-        'lent': 'geliehen',
-        'borrowed': 'geborgt',
-        'other': '',
-      },
-    );
+    String _temp0 = intl.Intl.selectLogic(displayNameYourself, {
+      'yes': 'hast',
+      'other': 'hat',
+    });
+    String _temp1 = intl.Intl.selectLogic(expenseType, {
+      'paid': 'gezahlt',
+      'lent': 'geliehen',
+      'borrowed': 'geborgt',
+      'other': '',
+    });
     return '$displayName $_temp0 $amountString $_temp1';
   }
 
@@ -243,41 +241,47 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String groupDisplayAmount(
-      String displayName, String paidByYourself, double amount) {
+    String displayName,
+    String paidByYourself,
+    double amount,
+  ) {
     final intl.NumberFormat amountNumberFormat = intl.NumberFormat.currency(
-        locale: localeName, decimalDigits: 2, name: '€');
+      locale: localeName,
+      decimalDigits: 2,
+      name: '€',
+    );
     final String amountString = amountNumberFormat.format(amount);
 
-    String _temp0 = intl.Intl.selectLogic(
-      paidByYourself,
-      {
-        'yes': '$displayName schuldet dir',
-        'other': 'Du schuldest $displayName',
-      },
-    );
+    String _temp0 = intl.Intl.selectLogic(paidByYourself, {
+      'yes': '$displayName schuldet dir',
+      'other': 'Du schuldest $displayName',
+    });
     return '$_temp0 $amountString';
   }
 
   @override
   String groupDisplaySumAmount(String paidByYourself, double amount) {
     final intl.NumberFormat amountNumberFormat = intl.NumberFormat.currency(
-        locale: localeName, decimalDigits: 2, name: '€');
+      locale: localeName,
+      decimalDigits: 2,
+      name: '€',
+    );
     final String amountString = amountNumberFormat.format(amount);
 
-    String _temp0 = intl.Intl.selectLogic(
-      paidByYourself,
-      {
-        'yes': 'Du hast $amountString gut',
-        'other': 'Du hast $amountString Schulden',
-      },
-    );
+    String _temp0 = intl.Intl.selectLogic(paidByYourself, {
+      'yes': 'Du hast $amountString gut',
+      'other': 'Du hast $amountString Schulden',
+    });
     return '$_temp0';
   }
 
   @override
   String totalExpensesAmount(double amount) {
     final intl.NumberFormat amountNumberFormat = intl.NumberFormat.currency(
-        locale: localeName, decimalDigits: 2, name: '€');
+      locale: localeName,
+      decimalDigits: 2,
+      name: '€',
+    );
     final String amountString = amountNumberFormat.format(amount);
 
     return 'Gesamtausgaben $amountString';
@@ -298,7 +302,10 @@ class AppLocalizationsDe extends AppLocalizations {
   @override
   String payBackDialog(String displayName, double amount) {
     final intl.NumberFormat amountNumberFormat = intl.NumberFormat.currency(
-        locale: localeName, decimalDigits: 2, name: '€');
+      locale: localeName,
+      decimalDigits: 2,
+      name: '€',
+    );
     final String amountString = amountNumberFormat.format(amount);
 
     return 'Du schuldest $displayName $amountString';
@@ -320,33 +327,38 @@ class AppLocalizationsDe extends AppLocalizations {
   @override
   String payBackSuccess(String displayName, double amount) {
     final intl.NumberFormat amountNumberFormat = intl.NumberFormat.currency(
-        locale: localeName, decimalDigits: 2, name: '€');
+      locale: localeName,
+      decimalDigits: 2,
+      name: '€',
+    );
     final String amountString = amountNumberFormat.format(amount);
 
     return 'Du hast $displayName $amountString zurückgezahlt';
   }
 
   @override
-  String groupDisplayPaidBack(String paidByYourself, String paidBy,
-      String paidForYourself, String paidFor, double amount) {
+  String groupDisplayPaidBack(
+    String paidByYourself,
+    String paidBy,
+    String paidForYourself,
+    String paidFor,
+    double amount,
+  ) {
     final intl.NumberFormat amountNumberFormat = intl.NumberFormat.currency(
-        locale: localeName, decimalDigits: 2, name: '€');
+      locale: localeName,
+      decimalDigits: 2,
+      name: '€',
+    );
     final String amountString = amountNumberFormat.format(amount);
 
-    String _temp0 = intl.Intl.selectLogic(
-      paidByYourself,
-      {
-        'yes': 'hast',
-        'other': 'hat',
-      },
-    );
-    String _temp1 = intl.Intl.selectLogic(
-      paidForYourself,
-      {
-        'yes': 'dir',
-        'other': '$paidFor',
-      },
-    );
+    String _temp0 = intl.Intl.selectLogic(paidByYourself, {
+      'yes': 'hast',
+      'other': 'hat',
+    });
+    String _temp1 = intl.Intl.selectLogic(paidForYourself, {
+      'yes': 'dir',
+      'other': '$paidFor',
+    });
     return '$paidBy $_temp0 $_temp1 $amountString zurückgezahlt';
   }
 
@@ -487,7 +499,10 @@ class AppLocalizationsDe extends AppLocalizations {
   @override
   String toCurrency(double amount) {
     final intl.NumberFormat amountNumberFormat = intl.NumberFormat.currency(
-        locale: localeName, decimalDigits: 2, name: '€');
+      locale: localeName,
+      decimalDigits: 2,
+      name: '€',
+    );
     final String amountString = amountNumberFormat.format(amount);
 
     return '$amountString';
@@ -495,8 +510,10 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String toCurrencyNoPrefix(double amount) {
-    final intl.NumberFormat amountNumberFormat =
-        intl.NumberFormat.currency(locale: localeName, decimalDigits: 2);
+    final intl.NumberFormat amountNumberFormat = intl.NumberFormat.currency(
+      locale: localeName,
+      decimalDigits: 2,
+    );
     final String amountString = amountNumberFormat.format(amount);
 
     return '$amountString';
@@ -514,14 +531,19 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String groupPayBackNotificationTitle(
-      String userDisplayName, String groupName) {
+    String userDisplayName,
+    String groupName,
+  ) {
     return '$userDisplayName paid their debts in \"$groupName\" back!';
   }
 
   @override
   String groupPayBackNotificationBody(double amount) {
     final intl.NumberFormat amountNumberFormat = intl.NumberFormat.currency(
-        locale: localeName, decimalDigits: 2, name: '€');
+      locale: localeName,
+      decimalDigits: 2,
+      name: '€',
+    );
     final String amountString = amountNumberFormat.format(amount);
 
     return 'You should receive $amountString in the next days.';
@@ -534,9 +556,15 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String expenseNotificationBody(
-      String expenseName, String groupName, double amount) {
+    String expenseName,
+    String groupName,
+    double amount,
+  ) {
     final intl.NumberFormat amountNumberFormat = intl.NumberFormat.currency(
-        locale: localeName, decimalDigits: 2, name: '€');
+      locale: localeName,
+      decimalDigits: 2,
+      name: '€',
+    );
     final String amountString = amountNumberFormat.format(amount);
 
     return '\"$expenseName\" has been added to \"$groupName\" with a total of $amountString.';
@@ -732,14 +760,11 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String localeSelector(String locale) {
-    String _temp0 = intl.Intl.selectLogic(
-      locale,
-      {
-        'de': 'Deutsch',
-        'en': 'English',
-        'other': '',
-      },
-    );
+    String _temp0 = intl.Intl.selectLogic(locale, {
+      'de': 'Deutsch',
+      'en': 'English',
+      'other': '',
+    });
     return '$_temp0';
   }
 

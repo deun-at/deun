@@ -1,6 +1,7 @@
 import 'package:deun/constants.dart';
 import 'package:deun/main.dart';
 import 'package:deun/pages/friends/friendship_model.dart';
+import 'package:deun/pages/users/user_repository.dart';
 import 'package:flutter/material.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -296,7 +297,7 @@ class UserDetailNotifier extends _$UserDetailNotifier {
   }
 
   Future<SupaUser> fetchUserDetail() async {
-    return await SupaUser.fetchDetail(supabase.auth.currentUser!.email ?? '');
+    return await UserRepository.fetchDetail(supabase.auth.currentUser!.email ?? '');
   }
 }
 

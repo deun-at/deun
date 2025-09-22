@@ -1,6 +1,7 @@
 import 'package:async_preferences/async_preferences.dart';
 import 'package:deun/helper/helper.dart';
 import 'package:deun/pages/users/user_model.dart';
+import 'package:deun/pages/users/user_repository.dart';
 import 'package:deun/provider.dart';
 import 'package:deun/widgets/initialization_helper.dart';
 import 'package:deun/widgets/shimmer_card_list.dart';
@@ -248,7 +249,7 @@ class _SettingState extends ConsumerState<Setting> {
                                 onPressed: () async {
                                   if (_formKey.currentState!.saveAndValidate()) {
                                     try {
-                                      await SupaUser.saveAll(_formKey.currentState!.value);
+                                      await UserRepository.saveAll(_formKey.currentState!.value);
                                       if (context.mounted) {
                                         showSnackBar(
                                             context,
