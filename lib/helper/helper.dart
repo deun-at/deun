@@ -1,7 +1,6 @@
 import 'package:deun/main.dart';
-import 'package:deun/pages/expenses/expense_model.dart';
-import 'package:deun/pages/groups/group_model.dart';
-import 'package:deun/pages/users/user_model.dart';
+import 'package:deun/pages/expenses/data/expense_model.dart';
+import 'package:deun/pages/groups/data/group_model.dart';
 import 'package:deun/pages/users/user_repository.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';

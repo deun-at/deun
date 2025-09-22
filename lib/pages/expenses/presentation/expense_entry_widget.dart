@@ -4,9 +4,9 @@ import 'package:flutter_form_builder/flutter_form_builder.dart';
 import 'package:form_builder_validators/form_builder_validators.dart';
 import 'package:deun/l10n/app_localizations.dart';
 
-import '../../widgets/decimal_text_input_formatter.dart';
-import '../groups/group_member_model.dart';
-import 'expense_entry_model.dart';
+import '../../../widgets/decimal_text_input_formatter.dart';
+import '../../groups/data/group_member_model.dart';
+import '../data/expense_entry_model.dart';
 
 class ExpenseEntryWidget extends StatefulWidget {
   const ExpenseEntryWidget(

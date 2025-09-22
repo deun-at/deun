@@ -2,7 +2,7 @@ import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_form_builder/flutter_form_builder.dart';
 import 'package:deun/l10n/app_localizations.dart';
-import 'package:deun/pages/expenses/expense_category.dart';
+import 'package:deun/pages/expenses/data/expense_category.dart';
 
 import 'card_list_view_builder.dart';
 

@@ -1,8 +1,8 @@
 import 'package:deun/helper/helper.dart';
 import 'package:flutter/material.dart';
 
-import '../../main.dart';
-import '../groups/group_model.dart';
+import '../../../main.dart';
+import '../../groups/data/group_model.dart';
 import 'expense_entry_model.dart';
 import 'expense_category.dart';
 

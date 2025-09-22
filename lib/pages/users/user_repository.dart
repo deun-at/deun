@@ -3,8 +3,6 @@ import 'package:deun/pages/users/user_model.dart';
 
 import '../../main.dart';
 
-/// Data access helpers for SupaUser. Keeping these separate from the model
-/// helps maintain a clean architecture.
 class UserRepository {
   /// Fetch a list of users filtered by [searchString] and excluding [selectedUsers].
   static Future<List<SupaUser>> fetchData(String searchString, List<String> selectedUsers, int? limit) async {
@@ -26,7 +24,7 @@ class UserRepository {
   }
 
   /// Save profile-related fields for the currently authenticated user.
-  static Future<void> saveAll(Map<String, dynamic> formResponse) async {
+  static Future<void> saveProfileData(Map<String, dynamic> formResponse) async {
     final Map<String, dynamic> upsertVals = {
       'first_name': formResponse['first_name'],
       'last_name': formResponse['last_name'],

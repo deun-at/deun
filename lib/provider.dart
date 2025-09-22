@@ -1,4 +1,3 @@
-import 'package:deun/constants.dart';
 import 'package:deun/main.dart';
 import 'package:deun/pages/friends/friendship_model.dart';
 import 'package:deun/pages/users/user_repository.dart';
@@ -6,222 +5,14 @@ import 'package:flutter/material.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-import 'pages/groups/group_model.dart';
-import 'pages/expenses/expense_model.dart';
-import 'pages/expenses/expense_category.dart';
+import 'pages/groups/data/group_model.dart';
+import 'pages/expenses/data/expense_model.dart';
+import 'pages/expenses/data/expense_category.dart';
 import 'pages/users/user_model.dart';
 import 'pages/statistics/statistics_models.dart';
 
 // Necessary for code-generation to work
 part 'provider.g.dart';
-
-@riverpod
-class GroupListNotifier extends _$GroupListNotifier {
-  @override
-  FutureOr<List<Group>> build(String statusFilter) async {
-    _subscribeToRealTimeUpdates(statusFilter);
-
-    return await fetchGroupList(statusFilter);
-  }
-
-  Future<void> reload(String statusFilter) async {
-    state = await AsyncValue.guard(() async => await fetchGroupList(statusFilter));
-  }
-
-  Future<List<Group>> fetchGroupList(String statusFilter) async {
-    return await Group.fetchData(statusFilter);
-  }
-
-  void _subscribeToRealTimeUpdates(String statusFilter) {
-    supabase
-        .channel('public:group_list_checker')
-        .onPostgresChanges(
-            event: PostgresChangeEvent.all,
-            schema: 'public',
-            table: 'group_update_checker',
-            callback: (payload) async {
-              debugPrint(payload.eventType.toString());
-              if (payload.eventType == PostgresChangeEvent.delete) {
-                final groupId = payload.oldRecord['group_id'];
-                state = state.whenData((groups) {
-                  final index = groups.indexWhere((g) => g.id == groupId);
-                  if (index == -1) return groups; // Group not found
-                  final updated = List<Group>.from(groups);
-                  updated.removeAt(index);
-                  return updated;
-                });
-                return;
-              } else if (payload.eventType == PostgresChangeEvent.update ||
-                  payload.eventType == PostgresChangeEvent.insert) {
-                final groupId = payload.newRecord['group_id'];
-                final group = await Group.fetchDetail(groupId);
-
-                bool matchesFilter;
-                final absAmt = group.totalShareAmount.abs();
-                if (statusFilter == GroupListFilter.active.value) {
-                  matchesFilter = absAmt >= 0.01;
-                } else if (statusFilter == GroupListFilter.done.value) {
-                  matchesFilter = absAmt < 0.01;
-                } else {
-                  matchesFilter = true;
-                }
-
-                state = state.whenData((groups) {
-                  final updated = List<Group>.from(groups);
-                  final index = updated.indexWhere((g) => g.id == group.id);
-
-                  if (!matchesFilter) {
-                    if (index != -1) updated.removeAt(index);
-                    return updated;
-                  }
-
-                  if (index != -1) {
-                    updated[index] = group;
-                  } else {
-                    updated.add(group);
-                  }
-                  updated.sort((a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()));
-                  return updated;
-                });
-                return;
-              }
-            })
-        .subscribe((status, _) {
-      debugPrint('---subscribe--- groupList ${status.toString()}');
-    });
-  }
-}
-
-@riverpod
-class GroupDetailNotifier extends _$GroupDetailNotifier {
-  @override
-  FutureOr<Group> build(String groupId) async {
-    _subscribeToRealTimeUpdates(groupId);
-    return await Group.fetchDetail(groupId);
-  }
-
-  Future<void> reload(String groupId) async {
-    state = await AsyncValue.guard(() async => await Group.fetchDetail(groupId));
-  }
-
-  void _subscribeToRealTimeUpdates(String groupId) {
-    supabase
-        .channel('public:group_detail_checker')
-        .onPostgresChanges(
-            event: PostgresChangeEvent.all,
-            schema: 'public',
-            table: 'group_update_checker',
-            filter: PostgresChangeFilter(
-              type: PostgresChangeFilterType.eq,
-              column: 'group_id',
-              value: groupId,
-            ),
-            callback: (payload) async {
-              reload(groupId);
-            })
-        .subscribe((status, _) {
-      debugPrint('---subscribe--- groupDetails ${status.toString()}');
-    });
-  }
-}
-
-@riverpod
-class ExpenseListNotifier extends _$ExpenseListNotifier {
-  static const int pageSize = 20;
-  int _offset = 0;
-  bool _hasMore = true;
-
-  @override
-  FutureOr<List<Expense>> build(String groupId) async {
-    _subscribeToRealTimeUpdates(groupId);
-
-    return await fetchExpenseList(groupId, _offset, _offset + pageSize - 1);
-  }
-
-  Future<void> reload(String groupId) async {
-    _offset = 0;
-    _hasMore = true;
-
-    state = await AsyncValue.guard(() async => await fetchExpenseList(groupId, _offset, _offset + pageSize - 1));
-  }
-
-  int get offset => _offset;
-
-  Future<List<Expense>> fetchExpenseList(String groupId, int rangeFrom, int rangeTo) async {
-    List<Expense> expenses = await Expense.fetchData(groupId, rangeFrom, rangeTo);
-    return expenses;
-  }
-
-  void _subscribeToRealTimeUpdates(String groupId) {
-    supabase
-        .channel('public:expense_list_checker')
-        .onPostgresChanges(
-            event: PostgresChangeEvent.all,
-            schema: 'public',
-            table: 'expense_update_checker',
-            filter: PostgresChangeFilter(
-              type: PostgresChangeFilterType.eq,
-              column: 'group_id',
-              value: groupId,
-            ),
-            callback: (payload) async {
-              if (payload.eventType == PostgresChangeEvent.delete) {
-                final expenseId = payload.oldRecord['expense_id'];
-                state = state.whenData((expenses) {
-                  final index = expenses.indexWhere((e) => e.id == expenseId);
-                  if (index == -1) return expenses; // Group not found
-                  final updated = List<Expense>.from(expenses);
-                  updated.removeAt(index);
-                  return updated;
-                });
-                return;
-              } else if (payload.eventType == PostgresChangeEvent.update ||
-                  payload.eventType == PostgresChangeEvent.insert) {
-                final expenseId = payload.newRecord['expense_id'];
-                final expense = await Expense.fetchDetail(expenseId);
-
-                state = state.whenData((expenses) {
-                  final updated = List<Expense>.from(expenses);
-                  final index = updated.indexWhere((g) => g.id == expense.id);
-
-                  if (index != -1) {
-                    updated[index] = expense;
-                  } else {
-                    updated.add(expense);
-                  }
-                  updated.sort((a, b) {
-                    int dateComparison = -a.expenseDate.compareTo(b.expenseDate);
-                    if (dateComparison == 0) {
-                      return -a.createdAt.compareTo(b.createdAt);
-                    }
-                    return dateComparison;
-                  });
-                  return updated;
-                });
-                return;
-              }
-            })
-        .subscribe((status, _) {
-      debugPrint('---subscribe--- expenseList ${status.toString()}');
-    });
-  }
-
-  Future<void> loadMoreEntries(String groupId) async {
-    if (!_hasMore || state.isLoading) return;
-
-    _offset += pageSize;
-    final newExpenses = await Expense.fetchData(groupId, _offset, _offset + pageSize - 1);
-
-    if (newExpenses.isEmpty) {
-      _hasMore = false;
-      return;
-    }
-
-    state = state.whenData((expenses) {
-      return [...expenses, ...newExpenses];
-    });
-  }
-}
 
 @riverpod
 class FriendshipListNotifier extends _$FriendshipListNotifier {
@@ -251,21 +42,22 @@ class FriendshipListNotifier extends _$FriendshipListNotifier {
           },
         )
         .subscribe((status, _) {
-      debugPrint('---subscribe--- friendshipList ${status.toString()}');
-    });
+          debugPrint('---subscribe--- friendshipList ${status.toString()}');
+        });
 
     supabase
         .channel('public:friendship_list_group_checker')
         .onPostgresChanges(
-            event: PostgresChangeEvent.all,
-            schema: 'public',
-            table: 'group_update_checker',
-            callback: (payload) async {
-              reload();
-            })
+          event: PostgresChangeEvent.all,
+          schema: 'public',
+          table: 'group_update_checker',
+          callback: (payload) async {
+            reload();
+          },
+        )
         .subscribe((status, _) {
-      debugPrint('---subscribe--- friendshipGroupList ${status.toString()}');
-    });
+          debugPrint('---subscribe--- friendshipGroupList ${status.toString()}');
+        });
   }
 }
 
@@ -428,11 +220,7 @@ class GroupMonthCategoryTotalsNotifier extends _$GroupMonthCategoryTotalsNotifie
         (c) => c.name == entry.key,
         orElse: () => ExpenseCategory.other,
       );
-      return CategoryMonthTotal(
-        categoryName: entry.key,
-        categoryDisplayName: category.name,
-        total: entry.value,
-      );
+      return CategoryMonthTotal(categoryName: entry.key, categoryDisplayName: category.name, total: entry.value);
     }).toList();
 
     // Sort by total (descending), but keep 'other' category at the end
@@ -466,14 +254,16 @@ class CategoryExpenseDetailsNotifier extends _$CategoryExpenseDetailsNotifier {
     final List<CategoryExpenseDetail> details = [];
     for (final expense in categoryExpenses) {
       final sum = expense.expenseEntries.values.fold<double>(0, (acc, e) => acc + e.amount);
-      details.add(CategoryExpenseDetail(
-        expenseId: expense.id,
-        expenseName: expense.name,
-        expenseDate: expense.expenseDate,
-        amount: sum,
-        paidBy: expense.paidBy ?? 'unknown',
-        paidByDisplayName: expense.paidByDisplayName ?? 'Unknown',
-      ));
+      details.add(
+        CategoryExpenseDetail(
+          expenseId: expense.id,
+          expenseName: expense.name,
+          expenseDate: expense.expenseDate,
+          amount: sum,
+          paidBy: expense.paidBy ?? 'unknown',
+          paidByDisplayName: expense.paidByDisplayName ?? 'Unknown',
+        ),
+      );
     }
 
     // Sort by date (newest first)

@@ -1,7 +1,6 @@
 import 'dart:io';
 
 import 'package:deun/constants.dart';
-import 'package:deun/main.dart';
 import 'package:deun/widgets/card_list_view_builder.dart';
 import 'package:deun/widgets/empty_list_widget.dart';
 import 'package:deun/widgets/native_ad_block.dart';
@@ -11,10 +10,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:deun/l10n/app_localizations.dart';
 
-import '../../provider.dart';
-import '../../widgets/shimmer_card_list.dart';
+import '../../../widgets/shimmer_card_list.dart';
+import '../provider/group_list.dart';
 import 'group_list_item.dart';
-import 'group_model.dart';
+import '../data/group_model.dart';
 
 class GroupList extends ConsumerStatefulWidget {
   const GroupList({super.key});

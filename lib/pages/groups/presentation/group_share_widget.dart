@@ -2,7 +2,7 @@ import 'package:deun/helper/helper.dart';
 import 'package:flutter/material.dart';
 import 'package:deun/l10n/app_localizations.dart';
 
-import 'group_model.dart';
+import '../data/group_model.dart';
 
 class GroupShareWidget extends StatelessWidget {
   const GroupShareWidget({super.key, required this.group, this.textColor});

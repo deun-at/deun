@@ -3,8 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-import '../../provider.dart';
-import 'group_model.dart';
+import '../data/group_model.dart';
 import 'group_share_widget.dart';
 
 class GroupListItem extends ConsumerStatefulWidget {

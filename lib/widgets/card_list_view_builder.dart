@@ -1,4 +1,4 @@
-import 'package:deun/pages/groups/group_model.dart';
+import 'package:deun/pages/groups/data/group_model.dart';
 import 'package:flutter/material.dart';
 
 class GroupCardListView extends CardListView {

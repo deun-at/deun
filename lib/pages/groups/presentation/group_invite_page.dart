@@ -1,14 +1,12 @@
-import 'package:deun/main.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:deun/l10n/app_localizations.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 import 'package:share_plus/share_plus.dart';
 
-import '../../widgets/rounded_container.dart';
-import 'group_model.dart';
+import '../../../widgets/rounded_container.dart';
+import '../data/group_model.dart';
 
 class GroupInvitePage extends StatelessWidget {
   const GroupInvitePage({super.key, required this.group});

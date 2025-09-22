@@ -1,5 +1,5 @@
 import 'package:deun/helper/helper.dart';
-import 'package:deun/pages/groups/group_model.dart';
+import 'package:deun/pages/groups/data/group_model.dart';
 import 'package:deun/pages/statistics/statistics_models.dart';
 import 'package:deun/provider.dart';
 import 'package:flutter/material.dart';
