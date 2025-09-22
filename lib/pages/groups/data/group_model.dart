@@ -3,13 +3,11 @@ import 'dart:convert';
 import 'package:deun/helper/helper.dart';
 import 'package:deun/pages/users/user_repository.dart';
 import 'package:flutter/material.dart';
-import 'package:universal_html/js_util.dart';
 
-import '../../constants.dart';
-import '../../main.dart';
-import '../expenses/expense_model.dart';
-import '../users/user_model.dart';
-import 'group_member_model.dart';
+import '../../../constants.dart';
+import '../../../main.dart';
+import '../../expenses/data/expense_model.dart';
+import '../data/group_member_model.dart';
 
 class GroupSharesSummary {
   late String displayName;

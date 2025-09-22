@@ -1,7 +1,7 @@
 import 'package:deun/helper/helper.dart';
 import 'package:deun/main.dart';
 import 'package:deun/pages/friends/friendship_model.dart';
-import 'package:deun/pages/groups/group_model.dart';
+import 'package:deun/pages/groups/data/group_model.dart';
 import 'package:deun/pages/users/user_model.dart';
 import 'package:deun/widgets/card_list_view_builder.dart';
 import 'package:deun/widgets/empty_list_widget.dart';

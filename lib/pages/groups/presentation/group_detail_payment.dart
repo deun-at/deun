@@ -2,7 +2,6 @@ import 'package:deun/helper/helper.dart';
 import 'package:deun/widgets/card_list_view_builder.dart';
 import 'package:deun/widgets/rounded_container.dart';
 import 'package:deun/main.dart';
-import 'package:deun/provider.dart';
 import 'package:deun/widgets/shimmer_card_list.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -10,7 +9,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:deun/l10n/app_localizations.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-import 'group_model.dart';
+import '../provider/group_detail.dart';
+import '../data/group_model.dart';
 
 class GroupPaymentBottomSheet extends ConsumerStatefulWidget {
   const GroupPaymentBottomSheet({super.key, required this.group});

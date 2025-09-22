@@ -249,7 +249,7 @@ class _SettingState extends ConsumerState<Setting> {
                                 onPressed: () async {
                                   if (_formKey.currentState!.saveAndValidate()) {
                                     try {
-                                      await UserRepository.saveAll(_formKey.currentState!.value);
+                                      await UserRepository.saveProfileData(_formKey.currentState!.value);
                                       if (context.mounted) {
                                         showSnackBar(
                                             context,

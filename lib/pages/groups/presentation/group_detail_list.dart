@@ -1,8 +1,7 @@
 import 'package:deun/helper/helper.dart';
 import 'package:deun/main.dart';
-import 'package:deun/pages/expenses/expense_entry_model.dart';
-import 'package:deun/pages/groups/group_model.dart';
-import 'package:deun/provider.dart';
+import 'package:deun/pages/expenses/data/expense_entry_model.dart';
+import 'package:deun/pages/groups/data/group_model.dart';
 import 'package:deun/widgets/card_list_view_builder.dart';
 import 'package:deun/widgets/empty_list_widget.dart';
 import 'package:deun/widgets/shimmer_card_list.dart';
@@ -12,7 +11,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-import '../expenses/expense_model.dart';
+import '../../expenses/data/expense_model.dart';
+import '../../expenses/provider/expense_list.dart';
 
 class GroupDetailList extends ConsumerStatefulWidget {
   const GroupDetailList({super.key, required this.group, this.adBlock});

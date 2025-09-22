@@ -2,8 +2,8 @@ import 'dart:io';
 
 import 'package:deun/constants.dart';
 import 'package:deun/helper/helper.dart';
-import 'package:deun/pages/expenses/expense_model.dart';
-import 'package:deun/pages/groups/group_detail_list.dart';
+import 'package:deun/pages/expenses/data/expense_model.dart';
+import 'package:deun/pages/groups/presentation/group_detail_list.dart';
 import 'package:deun/widgets/native_ad_block.dart';
 import 'package:deun/widgets/shimmer_card_list.dart';
 import 'package:flutter/foundation.dart';
@@ -13,11 +13,11 @@ import 'package:deun/l10n/app_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
-import '../../provider.dart';
+import '../provider/group_detail.dart';
 
-import '../../widgets/card_list_view_builder.dart';
-import '../../widgets/theme_builder.dart';
-import 'group_model.dart';
+import '../../../widgets/card_list_view_builder.dart';
+import '../../../widgets/theme_builder.dart';
+import '../data/group_model.dart';
 import 'group_share_widget.dart';
 
 class GroupDetail extends ConsumerStatefulWidget {

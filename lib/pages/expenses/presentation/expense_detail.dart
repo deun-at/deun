@@ -1,5 +1,5 @@
 import 'package:deun/helper/helper.dart';
-import 'package:deun/pages/groups/group_member_model.dart';
+import 'package:deun/pages/groups/data/group_member_model.dart';
 import 'package:deun/widgets/card_list_view_builder.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_form_builder/flutter_form_builder.dart';
@@ -7,15 +7,15 @@ import 'package:deun/l10n/app_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:form_builder_validators/form_builder_validators.dart';
 
-import '../../constants.dart';
-import '../../main.dart';
-import '../../widgets/theme_builder.dart';
-import '../groups/group_model.dart';
+import '../../../constants.dart';
+import '../../../main.dart';
+import '../../../widgets/theme_builder.dart';
+import '../../groups/data/group_model.dart';
 import 'expense_entry_widget.dart';
-import 'expense_entry_model.dart';
-import 'expense_model.dart';
-import 'expense_category.dart';
-import '../../widgets/category_selector.dart';
+import '../data/expense_entry_model.dart';
+import '../data/expense_model.dart';
+import '../data/expense_category.dart';
+import '../../../widgets/category_selector.dart';
 
 class ExpenseDetail extends ConsumerStatefulWidget {
   const ExpenseDetail({super.key, required this.group, this.expense});

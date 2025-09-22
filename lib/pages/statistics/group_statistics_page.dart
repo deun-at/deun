@@ -1,7 +1,7 @@
 import 'package:deun/helper/helper.dart';
 import 'package:deun/provider.dart';
-import 'package:deun/pages/groups/group_model.dart';
-import 'package:deun/pages/expenses/expense_category.dart';
+import 'package:deun/pages/groups/data/group_model.dart';
+import 'package:deun/pages/expenses/data/expense_category.dart';
 import 'package:deun/pages/statistics/category_detail_bottom_sheet.dart';
 import 'package:deun/l10n/app_localizations.dart';
 import 'package:deun/widgets/card_list_view_builder.dart';
