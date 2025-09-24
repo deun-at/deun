@@ -1,16 +1,16 @@
 import 'package:deun/helper/helper.dart';
 import 'package:deun/main.dart';
-import 'package:deun/pages/friends/friendship_model.dart';
+import 'package:deun/pages/friends/data/friendship_model.dart';
 import 'package:deun/pages/users/user_model.dart';
 import 'package:deun/pages/users/user_repository.dart';
 import 'package:deun/widgets/rounded_container.dart';
 import 'package:flutter/material.dart';
 import 'package:deun/l10n/app_localizations.dart';
 import 'package:flutter_contacts/flutter_contacts.dart' as fc;
-import 'package:deun/pages/friends/widgets/requested_friendship_list.dart';
-import 'package:deun/pages/friends/widgets/search_result_list.dart';
-import 'package:deun/pages/friends/widgets/pending_request_list.dart';
-import 'package:deun/pages/friends/widgets/contact_suggestion_list.dart';
+import 'package:deun/pages/friends/presentation/requested_friendship_list.dart';
+import 'package:deun/pages/friends/presentation/search_result_list.dart';
+import 'package:deun/pages/friends/presentation/pending_request_list.dart';
+import 'package:deun/pages/friends/presentation/contact_suggestion_list.dart';
 import 'package:flutter/foundation.dart';
 
 Future<List<SupaUser>> _findContactMatches(Map<String, dynamic> params) async {

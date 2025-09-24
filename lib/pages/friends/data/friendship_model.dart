@@ -2,7 +2,7 @@ import 'package:deun/constants.dart';
 import 'package:deun/pages/groups/data/group_model.dart';
 import 'package:deun/pages/users/user_model.dart';
 
-import '../../main.dart';
+import '../../../main.dart';
 
 class Friendship {
   late SupaUser user;

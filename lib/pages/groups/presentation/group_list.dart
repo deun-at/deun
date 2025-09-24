@@ -35,9 +35,7 @@ class _GroupListState extends ConsumerState<GroupList> {
       _adBlock = SizedBox();
     } else {
       _adBlock = NativeAdBlock(
-        adUnitId: Platform.isAndroid
-            ? MobileAdMobs.androidGroupList.value
-            : MobileAdMobs.iosGroupList.value,
+        adUnitId: Platform.isAndroid ? MobileAdMobs.androidGroupList.value : MobileAdMobs.iosGroupList.value,
       );
     }
   }
@@ -54,9 +52,7 @@ class _GroupListState extends ConsumerState<GroupList> {
       body: NestedScrollView(
         controller: _scrollController,
         headerSliverBuilder: (context, innerBoxIsScrolled) => [
-          SliverAppBar.medium(
-            title: Text(AppLocalizations.of(context)!.groups),
-          ),
+          SliverAppBar.medium(title: Text(AppLocalizations.of(context)!.groups)),
           SliverToBoxAdapter(
             child: SizedBox(
               height: 60,
@@ -72,16 +68,13 @@ class _GroupListState extends ConsumerState<GroupList> {
                   return Padding(
                     padding: EdgeInsets.only(left: paddingLeft, right: 10),
                     child: FilterChip(
-                      label: Text(AppLocalizations.of(context)!
-                          .groupListFilter(GroupListFilter.values[index].value)),
+                      label: Text(AppLocalizations.of(context)!.groupListFilter(GroupListFilter.values[index].value)),
                       selected: groupListFilter == GroupListFilter.values[index].value,
                       onSelected: (selected) {
                         if (selected) {
-                          setState(
-                            () {
-                              groupListFilter = GroupListFilter.values[index].value;
-                            },
-                          );
+                          setState(() {
+                            groupListFilter = GroupListFilter.values[index].value;
+                          });
                         }
                       },
                     ),
@@ -92,16 +85,14 @@ class _GroupListState extends ConsumerState<GroupList> {
           ),
         ],
         body: switch (groupList) {
-            AsyncData(:final value) => value.isEmpty
+          AsyncData(:final value) =>
+            value.isEmpty
                 ? EmptyListWidget(
                     label: AppLocalizations.of(context)!.groupNoEntries,
-                    onRefresh: () async {
-                      await updateGroupList();
-                    })
+                    onRefresh: () => updateGroupList(),
+                  )
                 : RefreshIndicator(
-                    onRefresh: () async {
-                      await updateGroupList();
-                    },
+                    onRefresh: () => updateGroupList(),
                     child: GroupCardListView(
                       shrinkWrap: true,
                       adBlock: _adBlock,
@@ -115,17 +106,14 @@ class _GroupListState extends ConsumerState<GroupList> {
                       },
                     ),
                   ),
-            AsyncError() => EmptyListWidget(
-                label: AppLocalizations.of(context)!.groupNoEntries,
-                onRefresh: () async {
-                  await updateGroupList();
-                },
-              ),
-            _ => ShimmerCardList(
-                height: 100,
-                listEntryLength: 8,
-              )
-          },
+          AsyncError() => EmptyListWidget(
+            label: AppLocalizations.of(context)!.groupNoEntries,
+            onRefresh: () async {
+              await updateGroupList();
+            },
+          ),
+          _ => ShimmerCardList(height: 100, listEntryLength: 8),
+        },
       ),
       floatingActionButton: FloatingActionButton.extended(
         heroTag: "floating_action_button_main",

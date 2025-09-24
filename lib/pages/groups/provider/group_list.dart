@@ -8,7 +8,7 @@ import '../data/group_model.dart';
 
 part 'group_list.g.dart';
 
-@Riverpod(keepAlive: false)
+@riverpod
 class GroupListNotifier extends _$GroupListNotifier {
   RealtimeChannel? _channel;
 
@@ -33,6 +33,10 @@ class GroupListNotifier extends _$GroupListNotifier {
   }
 
   void _subscribeToRealTimeUpdates(String statusFilter) {
+    if(_channel != null) {
+      supabase.removeChannel(_channel!);
+    }
+
     _channel = supabase
         .channel('public:group_list_checker')
         .onPostgresChanges(
@@ -88,6 +92,11 @@ class GroupListNotifier extends _$GroupListNotifier {
         )
         .subscribe((status, _) {
           debugPrint('---subscribe--- groupList ${status.toString()}');
+          if (status == RealtimeSubscribeStatus.channelError || status == RealtimeSubscribeStatus.timedOut) {
+            ref.invalidateSelf();
+          } else if (status == RealtimeSubscribeStatus.subscribed) {
+            reload(statusFilter);
+          }
         });
   }
 }
