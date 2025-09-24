@@ -32,6 +32,10 @@ class GroupDetailNotifier extends _$GroupDetailNotifier {
   }
 
   void _subscribeToRealTimeUpdates(String groupId) {
+    if(_channel != null) {
+      supabase.removeChannel(_channel!);
+    }
+
     _channel = supabase
         .channel('public:group_detail_checker')
         .onPostgresChanges(
@@ -45,6 +49,11 @@ class GroupDetailNotifier extends _$GroupDetailNotifier {
         )
         .subscribe((status, _) {
           debugPrint('---subscribe--- groupDetails ${status.toString()}');
+          if (status == RealtimeSubscribeStatus.channelError || status == RealtimeSubscribeStatus.timedOut) {
+            ref.invalidateSelf();
+          } else if (status == RealtimeSubscribeStatus.subscribed) {
+            reload(groupId);
+          }
         });
   }
 }

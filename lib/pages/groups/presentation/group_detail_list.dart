@@ -28,9 +28,7 @@ class _GroupDetailListState extends ConsumerState<GroupDetailList> {
   int oldOffset = 0;
 
   Future<void> updateExpenseList() async {
-    return ref
-        .read(expenseListProvider(widget.group.id).notifier)
-        .reload(widget.group.id);
+    return ref.read(expenseListProvider(widget.group.id).notifier).reload(widget.group.id);
   }
 
   @override
@@ -38,20 +36,15 @@ class _GroupDetailListState extends ConsumerState<GroupDetailList> {
     ThemeData themeData = Theme.of(context);
     ColorScheme colorScheme = themeData.colorScheme;
 
-    Color cardColor = themeData.brightness == Brightness.light
-        ? colorScheme.primary
-        : colorScheme.primaryContainer;
-    Color textColor = themeData.brightness == Brightness.light
-        ? colorScheme.primaryContainer
-        : colorScheme.primary;
+    Color cardColor = themeData.brightness == Brightness.light ? colorScheme.primary : colorScheme.primaryContainer;
+    Color textColor = themeData.brightness == Brightness.light ? colorScheme.primaryContainer : colorScheme.primary;
 
     return Consumer(
       builder: (context, ref, child) {
         final expenseListState = ref.watch(expenseListProvider(widget.group.id));
         final isLoading = expenseListState.isLoading;
         final expenses = expenseListState.value;
-        oldOffset =
-            ref.read(expenseListProvider(widget.group.id).notifier).offset;
+        oldOffset = ref.read(expenseListProvider(widget.group.id).notifier).offset;
 
         if (isLoading) {
           return const ShimmerCardList(height: 80, listEntryLength: 15);
@@ -60,13 +53,10 @@ class _GroupDetailListState extends ConsumerState<GroupDetailList> {
         return expenses == null || expenses.isEmpty
             ? EmptyListWidget(
                 label: AppLocalizations.of(context)!.groupExpenseNoEntries,
-                onRefresh: () async {
-                  await updateExpenseList();
-                })
+                onRefresh: () => updateExpenseList(),
+              )
             : RefreshIndicator(
-                onRefresh: () async {
-                  await updateExpenseList();
-                },
+                onRefresh: () => updateExpenseList(),
                 child: NotificationListener<ScrollNotification>(
                   child: CardListView(
                     color: cardColor,
@@ -82,20 +72,17 @@ class _GroupDetailListState extends ConsumerState<GroupDetailList> {
 
                       if (expense.isPaidBackRow) {
                         String? currentUserEmail = supabase.auth.currentUser?.email;
-                        ExpenseEntryShare paidBackEntryShare = expense
-                            .expenseEntries.entries.first.value.expenseEntryShares.first;
+                        ExpenseEntryShare paidBackEntryShare =
+                            expense.expenseEntries.entries.first.value.expenseEntryShares.first;
 
-                        String paidByYourself =
-                            expense.paidBy == currentUserEmail ? 'yes' : '';
+                        String paidByYourself = expense.paidBy == currentUserEmail ? 'yes' : '';
                         String paidByDisplayName = expense.paidBy == currentUserEmail
                             ? AppLocalizations.of(context)!.you
                             : (expense.paidByDisplayName ?? "");
-                        String paidToYourself =
-                            paidBackEntryShare.email == currentUserEmail ? 'yes' : '';
-                        String paidToDisplayName =
-                            paidBackEntryShare.email == currentUserEmail
-                                ? AppLocalizations.of(context)!.you
-                                : paidBackEntryShare.displayName;
+                        String paidToYourself = paidBackEntryShare.email == currentUserEmail ? 'yes' : '';
+                        String paidToDisplayName = paidBackEntryShare.email == currentUserEmail
+                            ? AppLocalizations.of(context)!.you
+                            : paidBackEntryShare.displayName;
 
                         expenseListItem = SizedBox(
                           width: double.infinity,
@@ -103,13 +90,13 @@ class _GroupDetailListState extends ConsumerState<GroupDetailList> {
                             padding: const EdgeInsets.fromLTRB(10, 5, 10, 5),
                             child: Text(
                               AppLocalizations.of(context)!.groupDisplayPaidBack(
-                                  paidByYourself,
-                                  paidByDisplayName,
-                                  paidToYourself,
-                                  paidToDisplayName,
-                                  expense.amount),
-                              style: themeData.textTheme.bodyMedium!
-                                  .copyWith(color: textColor),
+                                paidByYourself,
+                                paidByDisplayName,
+                                paidToYourself,
+                                paidToDisplayName,
+                                expense.amount,
+                              ),
+                              style: themeData.textTheme.bodyMedium!.copyWith(color: textColor),
                             ),
                           ),
                         );
@@ -117,10 +104,9 @@ class _GroupDetailListState extends ConsumerState<GroupDetailList> {
                         expenseListItem = InkWell(
                           borderRadius: BorderRadius.circular(12.0),
                           onTap: () {
-                            GoRouter.of(context).push(
-                              "/group/details/expense",
-                              extra: {'group': widget.group, 'expense': expense},
-                            );
+                            GoRouter.of(
+                              context,
+                            ).push("/group/details/expense", extra: {'group': widget.group, 'expense': expense});
                           },
                           child: Padding(
                             padding: const EdgeInsets.fromLTRB(10, 5, 10, 5),
@@ -134,41 +120,32 @@ class _GroupDetailListState extends ConsumerState<GroupDetailList> {
                                       child: Text(
                                         expense.name,
                                         style: GoogleFonts.robotoSerif(
-                                            textStyle: Theme.of(context)
-                                                .textTheme
-                                                .bodyLarge!
-                                                .copyWith(
-                                                    color: textColor,
-                                                    fontWeight: FontWeight.w900)),
+                                          textStyle: Theme.of(context).textTheme.bodyLarge!.copyWith(
+                                            color: textColor,
+                                            fontWeight: FontWeight.w900,
+                                          ),
+                                        ),
                                         overflow: TextOverflow.ellipsis,
                                       ),
                                     ),
-                                    Text(formatDate(expense.expenseDate),
-                                        style: Theme.of(context)
-                                            .textTheme
-                                            .bodySmall!
-                                            .copyWith(color: textColor))
+                                    Text(
+                                      formatDate(expense.expenseDate),
+                                      style: Theme.of(context).textTheme.bodySmall!.copyWith(color: textColor),
+                                    ),
                                   ],
                                 ),
                                 Row(
                                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    ExpenseShareWidget(
-                                      expense: expense,
-                                      textColor: textColor,
-                                    ),
+                                    ExpenseShareWidget(expense: expense, textColor: textColor),
                                     if (expense.category != null)
                                       Padding(
                                         padding: const EdgeInsets.only(left: 8.0),
-                                        child: Icon(
-                                          expense.category!.getIcon(),
-                                          size: 20,
-                                          color: textColor,
-                                        ),
+                                        child: Icon(expense.category!.getIcon(), size: 20, color: textColor),
                                       ),
                                   ],
-                                )
+                                ),
                               ],
                             ),
                           ),
@@ -181,16 +158,10 @@ class _GroupDetailListState extends ConsumerState<GroupDetailList> {
                   ),
                   onNotification: (ScrollNotification scrollInfo) {
                     if (scrollInfo.metrics.pixels >
-                        scrollInfo.metrics.maxScrollExtent -
-                            MediaQuery.of(context).size.height) {
-                      if (oldOffset ==
-                          ref
-                              .read(expenseListProvider(widget.group.id).notifier)
-                              .offset) {
+                        scrollInfo.metrics.maxScrollExtent - MediaQuery.of(context).size.height) {
+                      if (oldOffset == ref.read(expenseListProvider(widget.group.id).notifier).offset) {
                         // make sure ListView has newest data after previous loadMore
-                        ref
-                            .read(expenseListProvider(widget.group.id).notifier)
-                            .loadMoreEntries(widget.group.id);
+                        ref.read(expenseListProvider(widget.group.id).notifier).loadMoreEntries(widget.group.id);
                       }
                     }
                     return false;
@@ -217,17 +188,15 @@ class _ExpenseShareWidgetState extends State<ExpenseShareWidget> {
   Widget build(BuildContext context) {
     String? currentUserEmail = supabase.auth.currentUser?.email;
     bool currentUserPaid = widget.expense.paidBy == currentUserEmail;
-    Map<String, double> groupMemberShareStatistic =
-        widget.expense.groupMemberShareStatistic;
+    Map<String, double> groupMemberShareStatistic = widget.expense.groupMemberShareStatistic;
 
     Widget? sharedWidget;
     String paidWidgetLable = AppLocalizations.of(context)!.expenseDisplayAmount(
-        currentUserPaid ? 'yes' : '',
-        currentUserPaid
-            ? AppLocalizations.of(context)!.you
-            : (widget.expense.paidByDisplayName ?? ""),
-        "paid",
-        widget.expense.amount);
+      currentUserPaid ? 'yes' : '',
+      currentUserPaid ? AppLocalizations.of(context)!.you : (widget.expense.paidByDisplayName ?? ""),
+      "paid",
+      widget.expense.amount,
+    );
     Color paidWidgetTextColor = currentUserPaid ? Colors.green : Colors.red;
     if (groupMemberShareStatistic.containsKey(currentUserEmail)) {
       String textLabel = "";
@@ -235,21 +204,19 @@ class _ExpenseShareWidgetState extends State<ExpenseShareWidget> {
 
       if (currentUserPaid) {
         textLabel = AppLocalizations.of(context)!.expenseDisplayAmount(
-            'yes',
-            AppLocalizations.of(context)!.you,
-            "lent",
-            widget.expense.amount - (currentUserShares ?? 0));
+          'yes',
+          AppLocalizations.of(context)!.you,
+          "lent",
+          widget.expense.amount - (currentUserShares ?? 0),
+        );
       } else {
-        textLabel = AppLocalizations.of(context)!.expenseDisplayAmount('yes',
-            AppLocalizations.of(context)!.you, "borrowed", (currentUserShares ?? 0));
+        textLabel = AppLocalizations.of(
+          context,
+        )!.expenseDisplayAmount('yes', AppLocalizations.of(context)!.you, "borrowed", (currentUserShares ?? 0));
       }
       sharedWidget = Align(
         alignment: Alignment.bottomLeft,
-        child: Text(
-          textLabel,
-          style:
-              Theme.of(context).textTheme.labelMedium!.copyWith(color: widget.textColor),
-        ),
+        child: Text(textLabel, style: Theme.of(context).textTheme.labelMedium!.copyWith(color: widget.textColor)),
       );
     } else {
       if (!currentUserPaid) {
@@ -265,10 +232,7 @@ class _ExpenseShareWidgetState extends State<ExpenseShareWidget> {
           alignment: Alignment.bottomLeft,
           child: Text(
             paidWidgetLable,
-            style: Theme.of(context)
-                .textTheme
-                .labelLarge
-                ?.copyWith(color: paidWidgetTextColor),
+            style: Theme.of(context).textTheme.labelLarge?.copyWith(color: paidWidgetTextColor),
           ),
         ),
         sharedWidget ?? const SizedBox(),

@@ -1,6 +1,6 @@
 import 'package:deun/helper/helper.dart';
 import 'package:deun/main.dart';
-import 'package:deun/pages/friends/friendship_model.dart';
+import 'package:deun/pages/friends/data/friendship_model.dart';
 import 'package:deun/pages/groups/data/group_model.dart';
 import 'package:deun/pages/users/user_model.dart';
 import 'package:deun/widgets/card_list_view_builder.dart';
@@ -13,8 +13,8 @@ import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-import '../../provider.dart';
-import '../../widgets/shimmer_card_list.dart';
+import '../provider/friendship_list.dart';
+import '../../../widgets/shimmer_card_list.dart';
 
 class FriendList extends ConsumerStatefulWidget {
   const FriendList({super.key});
@@ -25,13 +25,12 @@ class FriendList extends ConsumerStatefulWidget {
 
 class _FriendListState extends ConsumerState<FriendList> {
   Future<void> updateFriendshipList() async {
-    return ref.read(friendshipListProvider.notifier).reload();
+    return ref.watch(friendshipListProvider.notifier).reload();
   }
 
   @override
   Widget build(BuildContext context) {
-    final AsyncValue<List<Friendship>> friendshipProvider =
-        ref.watch(friendshipListProvider);
+    final AsyncValue<List<Friendship>> friendshipProvider = ref.watch(friendshipListProvider);
 
     ThemeData themeData = Theme.of(context);
     ColorScheme colorScheme = themeData.colorScheme;
@@ -42,81 +41,75 @@ class _FriendListState extends ConsumerState<FriendList> {
         body: NestedScrollView(
           headerSliverBuilder: (context, innerBoxIsScrolled) => [
             SliverAppBar.medium(
-              title: Text(AppLocalizations.of(context)!.friends,
-                  style: GoogleFonts.robotoSerif(
-                      textStyle: Theme.of(context)
-                          .textTheme
-                          .titleLarge!
-                          .copyWith(fontWeight: FontWeight.w900)),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis),
+              title: Text(
+                AppLocalizations.of(context)!.friends,
+                style: GoogleFonts.robotoSerif(
+                  textStyle: Theme.of(context).textTheme.titleLarge!.copyWith(fontWeight: FontWeight.w900),
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
               actions: [
                 IconButton(
-                    onPressed: () {
-                      GoRouter.of(context).push('/friend/qr');
-                    },
-                    tooltip: AppLocalizations.of(context)!.qr, 
-                    icon: const Icon(Icons.qr_code)),
+                  onPressed: () {
+                    GoRouter.of(context).push('/friend/qr');
+                  },
+                  tooltip: AppLocalizations.of(context)!.qr,
+                  icon: const Icon(Icons.qr_code),
+                ),
                 IconButton(
-                    onPressed: () {
-                      GoRouter.of(context).push("/friend/add");
-                    },
-                    icon: const Icon(Icons.person_add_outlined))
+                  onPressed: () {
+                    GoRouter.of(context).push("/friend/add");
+                  },
+                  icon: const Icon(Icons.person_add_outlined),
+                ),
               ],
             ),
           ],
           body: switch (friendshipProvider) {
-            AsyncData(:final value) => value.isEmpty
-                ? EmptyListWidget(
-                    label: AppLocalizations.of(context)!.friendsNoEntries,
-                    onRefresh: () async {
-                      updateFriendshipList();
-                    })
-                : RefreshIndicator(
-                    onRefresh: () async {
-                      updateFriendshipList();
-                    },
-                    child: CardListView(
-                      color: colorScheme.surfaceContainerLowest,
-                      itemCount: value.length,
-                      itemBuilder: (context, index) {
-                        Friendship friendship = value[index];
-                        SupaUser user = friendship.user;
+            AsyncData(:final value) =>
+              value.isEmpty
+                  ? EmptyListWidget(
+                      label: AppLocalizations.of(context)!.friendsNoEntries,
+                      onRefresh: () => updateFriendshipList(),
+                    )
+                  : RefreshIndicator(
+                      onRefresh: () => updateFriendshipList(),
+                      child: CardListView(
+                        color: colorScheme.surfaceContainerLowest,
+                        itemCount: value.length,
+                        itemBuilder: (context, index) {
+                          Friendship friendship = value[index];
+                          SupaUser user = friendship.user;
 
-                        Color shareAmountColor = Theme.of(context).colorScheme.onSurface;
-                        if (friendship.shareAmount < 0) {
-                          shareAmountColor = Colors.red;
-                        } else if (friendship.shareAmount > 0) {
-                          shareAmountColor = Colors.green;
-                        }
+                          Color shareAmountColor = Theme.of(context).colorScheme.onSurface;
+                          if (friendship.shareAmount < 0) {
+                            shareAmountColor = Colors.red;
+                          } else if (friendship.shareAmount > 0) {
+                            shareAmountColor = Colors.green;
+                          }
 
-                        return ListTile(
-                          title: Text(user.displayName),
-                          subtitle: Text(user.email),
-                          trailing: Text(
-                              style: Theme.of(context)
-                                  .textTheme
-                                  .bodyMedium!
-                                  .copyWith(color: shareAmountColor),
-                              AppLocalizations.of(context)!
-                                  .toCurrency(friendship.shareAmount)),
-                          onTap: () {
-                            openFriendshipDialog(context, user, friendship);
-                          },
-                        );
-                      },
+                          return ListTile(
+                            title: Text(user.displayName),
+                            subtitle: Text(user.email),
+                            trailing: Text(
+                              style: Theme.of(context).textTheme.bodyMedium!.copyWith(color: shareAmountColor),
+                              AppLocalizations.of(context)!.toCurrency(friendship.shareAmount),
+                            ),
+                            onTap: () {
+                              openFriendshipDialog(context, user, friendship);
+                            },
+                          );
+                        },
+                      ),
                     ),
-                  ),
             AsyncError() => EmptyListWidget(
-                label: AppLocalizations.of(context)!.friendsNoEntries,
-                onRefresh: () async {
-                  await updateFriendshipList();
-                },
-              ),
-            _ => const ShimmerCardList(
-                height: 70,
-                listEntryLength: 25,
-              ),
+              label: AppLocalizations.of(context)!.friendsNoEntries,
+              onRefresh: () async {
+                await updateFriendshipList();
+              },
+            ),
+            _ => const ShimmerCardList(height: 70, listEntryLength: 25),
           },
         ),
       ),
@@ -130,26 +123,22 @@ class _FriendListState extends ConsumerState<FriendList> {
     showDialog<void>(
       context: context,
       builder: (context) => SimpleDialog(
-        title:
-            Text(AppLocalizations.of(context)!.friendshipDialogTitle(user.displayName)),
+        title: Text(AppLocalizations.of(context)!.friendshipDialogTitle(user.displayName)),
         children: [
-          SimpleDialogOption(
-            child: Text(
-                "${AppLocalizations.of(context)!.friendshipDialogEmail} ${user.email}"),
-          ),
+          SimpleDialogOption(child: Text("${AppLocalizations.of(context)!.friendshipDialogEmail} ${user.email}")),
           user.firstName == null && user.lastName == null
               ? const SizedBox()
               : SimpleDialogOption(
                   child: Text(
-                      "${AppLocalizations.of(context)!.friendshipDialogFullName} ${user.firstName ?? ''} ${user.lastName ?? ''}"),
+                    "${AppLocalizations.of(context)!.friendshipDialogFullName} ${user.firstName ?? ''} ${user.lastName ?? ''}",
+                  ),
                 ),
           Divider(),
           ...(friendship.shareAmount < -0.01
               ? [
                   SimpleDialogOption(
                     child: Text(
-                      AppLocalizations.of(context)!
-                          .payBackDialog(user.displayName, friendship.shareAmount.abs()),
+                      AppLocalizations.of(context)!.payBackDialog(user.displayName, friendship.shareAmount.abs()),
                     ),
                   ),
                   SimpleDialogOption(
@@ -157,10 +146,12 @@ class _FriendListState extends ConsumerState<FriendList> {
                       if (user.paypalMe == null || user.paypalMe!.isEmpty) {
                         return;
                       }
-                      if (!await launchUrl(Uri.parse(
-                          "https://www.paypal.me/${user.paypalMe}/${friendship.shareAmount.abs()}"))) {
+                      if (!await launchUrl(
+                        Uri.parse("https://www.paypal.me/${user.paypalMe}/${friendship.shareAmount.abs()}"),
+                      )) {
                         throw Exception(
-                            'Could not launch https://www.paypal.me/${user.paypalMe}/${friendship.shareAmount.abs()}');
+                          'Could not launch https://www.paypal.me/${user.paypalMe}/${friendship.shareAmount.abs()}',
+                        );
                       }
                     },
                     child: Row(
@@ -168,16 +159,13 @@ class _FriendListState extends ConsumerState<FriendList> {
                         Text(
                           AppLocalizations.of(context)!.payBackDialogPaypal,
                           style: Theme.of(context).textTheme.bodyMedium!.copyWith(
-                              color: user.paypalMe == null || user.paypalMe!.isEmpty
-                                  ? disabledColor
-                                  : activeColor),
+                            color: user.paypalMe == null || user.paypalMe!.isEmpty ? disabledColor : activeColor,
+                          ),
                         ),
                         const Spacer(),
                         Icon(
                           Icons.payments_outlined,
-                          color: user.paypalMe == null || user.paypalMe!.isEmpty
-                              ? disabledColor
-                              : activeColor,
+                          color: user.paypalMe == null || user.paypalMe!.isEmpty ? disabledColor : activeColor,
                         ),
                       ],
                     ),
@@ -188,43 +176,43 @@ class _FriendListState extends ConsumerState<FriendList> {
                         return;
                       }
 
-                      Clipboard.setData(ClipboardData(text: user.iban as String))
-                          .then((_) {});
+                      Clipboard.setData(ClipboardData(text: user.iban as String)).then((_) {});
                     },
                     child: Row(
                       children: [
                         Text(
                           AppLocalizations.of(context)!.payBackDialogIban,
                           style: Theme.of(context).textTheme.bodyMedium!.copyWith(
-                              color: user.iban == null || user.iban!.isEmpty
-                                  ? disabledColor
-                                  : activeColor),
+                            color: user.iban == null || user.iban!.isEmpty ? disabledColor : activeColor,
+                          ),
                         ),
                         const Spacer(),
-                        Icon(Icons.credit_card,
-                            color: user.iban == null || user.iban!.isEmpty
-                                ? disabledColor
-                                : activeColor),
+                        Icon(
+                          Icons.credit_card,
+                          color: user.iban == null || user.iban!.isEmpty ? disabledColor : activeColor,
+                        ),
                       ],
                     ),
                   ),
                   SimpleDialogOption(
                     onPressed: () async {
                       try {
-                        await Group.payBackAll(
-                            context, user.email, friendship.shareAmount.abs());
+                        await Group.payBackAll(context, user.email, friendship.shareAmount.abs());
                         if (context.mounted) {
                           showSnackBar(
-                              context,
-                              friendListScaffoldMessengerKey,
-                              AppLocalizations.of(context)!.payBackSuccess(
-                                  user.email, friendship.shareAmount.abs()));
+                            context,
+                            friendListScaffoldMessengerKey,
+                            AppLocalizations.of(context)!.payBackSuccess(user.email, friendship.shareAmount.abs()),
+                          );
                         }
                       } catch (e) {
                         debugPrint(e.toString());
                         if (context.mounted) {
-                          showSnackBar(context, friendListScaffoldMessengerKey,
-                              AppLocalizations.of(context)!.payBackError);
+                          showSnackBar(
+                            context,
+                            friendListScaffoldMessengerKey,
+                            AppLocalizations.of(context)!.payBackError,
+                          );
                         }
                       } finally {
                         if (context.mounted) {
@@ -236,10 +224,7 @@ class _FriendListState extends ConsumerState<FriendList> {
                       children: [
                         Text(
                           AppLocalizations.of(context)!.payBackDialogDone,
-                          style: Theme.of(context)
-                              .textTheme
-                              .bodyMedium!
-                              .copyWith(color: activeColor),
+                          style: Theme.of(context).textTheme.bodyMedium!.copyWith(color: activeColor),
                         ),
                         const Spacer(),
                         Icon(Icons.credit_score, color: activeColor),
@@ -257,13 +242,10 @@ class _FriendListState extends ConsumerState<FriendList> {
               children: [
                 Text(
                   AppLocalizations.of(context)!.friendshipDialogRemoveAsFriend,
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: Theme.of(context).colorScheme.error,
-                      ),
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Theme.of(context).colorScheme.error),
                 ),
                 const Spacer(),
-                Icon(Icons.person_remove_outlined,
-                    color: Theme.of(context).colorScheme.error),
+                Icon(Icons.person_remove_outlined, color: Theme.of(context).colorScheme.error),
               ],
             ),
           ),
@@ -290,10 +272,7 @@ class _FriendListState extends ConsumerState<FriendList> {
       builder: (context) => AlertDialog(
         content: Text(AppLocalizations.of(context)!.removeFriend(user.displayName)),
         actions: <Widget>[
-          TextButton(
-            child: Text(AppLocalizations.of(context)!.cancel),
-            onPressed: () => Navigator.pop(context),
-          ),
+          TextButton(child: Text(AppLocalizations.of(context)!.cancel), onPressed: () => Navigator.pop(context)),
           FilledButton(
             style: FilledButton.styleFrom(
               backgroundColor: Theme.of(context).colorScheme.error,
@@ -306,8 +285,11 @@ class _FriendListState extends ConsumerState<FriendList> {
               } finally {
                 Navigator.pop(context); // Close delete dialog
                 Navigator.pop(context); // Close info dialog
-                showSnackBar(context, friendListScaffoldMessengerKey,
-                    AppLocalizations.of(context)!.friendRemoved(user.displayName));
+                showSnackBar(
+                  context,
+                  friendListScaffoldMessengerKey,
+                  AppLocalizations.of(context)!.friendRemoved(user.displayName),
+                );
               }
             },
           ),
