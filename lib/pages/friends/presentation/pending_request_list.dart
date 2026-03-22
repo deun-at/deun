@@ -7,14 +7,12 @@ class PendingRequestList extends StatelessWidget {
   final Future<List<Map<String, dynamic>>> userPendingFuture;
   final Function(String userEmail, String displayName) onAccept;
   final Function(String userEmail, String displayName) onDecline;
-  final GlobalKey<ScaffoldMessengerState> scaffoldMessengerKey;
 
   const PendingRequestList({
     super.key,
     required this.userPendingFuture,
     required this.onAccept,
     required this.onDecline,
-    required this.scaffoldMessengerKey,
   });
 
   @override

@@ -81,9 +81,7 @@ class _FriendAddBottomSheetState extends State<FriendAddBottomSheet> {
         snap: true,
         builder: (context, scrollController) {
           return RoundedContainer(
-            child: ScaffoldMessenger(
-              key: friendAddScaffoldMessengerKey,
-              child: Scaffold(
+            child: Scaffold(
                 appBar: AppBar(
                   title: Text(AppLocalizations.of(context)!.addFriends),
                   centerTitle: true,
@@ -111,7 +109,7 @@ class _FriendAddBottomSheetState extends State<FriendAddBottomSheet> {
                       child: SearchResultList(
                         userSearchFuture: userSearchFuture,
                         onRequest: _requestFriendship,
-                        scaffoldMessengerKey: friendAddScaffoldMessengerKey,
+
                         searchText: _searchText,
                       ),
                     ),
@@ -120,26 +118,25 @@ class _FriendAddBottomSheetState extends State<FriendAddBottomSheet> {
                         userPendingFuture: userPendingFuture,
                         onAccept: _acceptFriendship,
                         onDecline: _declineFriendship,
-                        scaffoldMessengerKey: friendAddScaffoldMessengerKey,
+
                       ),
                     ),
                     SliverToBoxAdapter(
                       child: ContactSuggestionList(
                         userContactFuture: userContactFuture,
                         onRequest: _requestFriendship,
-                        scaffoldMessengerKey: friendAddScaffoldMessengerKey,
+
                       ),
                     ),
                     SliverToBoxAdapter(
                       child: RequestedFriendshipList(
                         userRequestedFuture: userRequestedFuture,
                         onCancel: _cancelFriendRequest,
-                        scaffoldMessengerKey: friendAddScaffoldMessengerKey,
+
                       ),
                     ),
                   ],
                 ),
-              ),
             ),
           );
         },
@@ -227,7 +224,7 @@ class _FriendAddBottomSheetState extends State<FriendAddBottomSheet> {
 
   void _cancelFriendRequest(String userEmail, String displayName) async {
     await Friendship.cancel(userEmail).then((_) {
-      showSnackBar(context, friendAddScaffoldMessengerKey,
+      showSnackBar(context,
           AppLocalizations.of(context)!.friendshipRequestCancel(displayName));
 
       setState(() {
@@ -238,7 +235,7 @@ class _FriendAddBottomSheetState extends State<FriendAddBottomSheet> {
 
   void _requestFriendship(String userEmail, String displayName) async {
     Friendship.request(userEmail).then((_) {
-      showSnackBar(context, friendAddScaffoldMessengerKey,
+      showSnackBar(context,
           AppLocalizations.of(context)!.friendshipRequestSent(displayName));
       sendFriendRequestNotification(context, {userEmail});
       setState(() {
@@ -249,7 +246,7 @@ class _FriendAddBottomSheetState extends State<FriendAddBottomSheet> {
 
   void _acceptFriendship(String userEmail, String displayName) {
     Friendship.accepted(userEmail).then((_) {
-      showSnackBar(context, friendAddScaffoldMessengerKey,
+      showSnackBar(context,
           AppLocalizations.of(context)!.friendshipAccept(displayName));
       sendFriendAcceptNotification(context, {userEmail});
       setState(() {
@@ -260,7 +257,7 @@ class _FriendAddBottomSheetState extends State<FriendAddBottomSheet> {
 
   void _declineFriendship(String userEmail, String displayName) {
     Friendship.decline(userEmail).then((_) {
-      showSnackBar(context, friendAddScaffoldMessengerKey,
+      showSnackBar(context,
           AppLocalizations.of(context)!.friendshipRequestDecline(displayName));
       setState(() {
         _currentFriendshipFuture = _requestedFriendshipFuture();

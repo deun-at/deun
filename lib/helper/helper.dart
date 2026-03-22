@@ -26,7 +26,8 @@ String toNumber(double value) {
 
 String formatDate(String? dateString) {
   if (dateString == null) return '';
-  final date = DateTime.parse(dateString);
+  final parsed = DateTime.parse(dateString);
+  final date = DateTime(parsed.year, parsed.month, parsed.day);
 
   final now = DateTime.now();
   final today = DateTime(now.year, now.month, now.day);
@@ -45,25 +46,19 @@ String formatDate(String? dateString) {
   }
 }
 
-void showSnackBar(BuildContext context, GlobalKey<ScaffoldMessengerState> scaffoldMessengerKey, String message) {
+void showSnackBar(BuildContext context, String message) {
+  final messenger = ScaffoldMessenger.of(context);
   SnackBar snackBar = SnackBar(
     content: Text(message),
-    action: SnackBarAction(
-      label: AppLocalizations.of(context)!.close,
-      onPressed: () {},
-    ),
+    duration: Duration(seconds: 2),
   );
 
-  scaffoldMessengerKey.currentState?.hideCurrentSnackBar();
-  scaffoldMessengerKey.currentState?.showSnackBar(snackBar);
+  messenger.hideCurrentSnackBar();
+  messenger.showSnackBar(snackBar);
 }
 
 void showMaterialBanner(BuildContext context, String message, Function onPressed) {
-  final messengerKey = rootScaffoldMessengerKey.currentState;
-
-  if (messengerKey == null) {
-    return;
-  }
+  final messenger = ScaffoldMessenger.of(context);
 
   final banner = MaterialBanner(
     content: Text(message),
@@ -71,21 +66,21 @@ void showMaterialBanner(BuildContext context, String message, Function onPressed
       TextButton(
         onPressed: () {
           onPressed();
-          messengerKey.hideCurrentMaterialBanner();
+          messenger.hideCurrentMaterialBanner();
         },
         child: Text(AppLocalizations.of(context)!.open),
       ),
       TextButton(
         onPressed: () {
-          messengerKey.hideCurrentMaterialBanner();
+          messenger.hideCurrentMaterialBanner();
         },
         child: Text(AppLocalizations.of(context)!.close),
       ),
     ],
   );
 
-  messengerKey.hideCurrentMaterialBanner();
-  messengerKey.showMaterialBanner(banner);
+  messenger.hideCurrentMaterialBanner();
+  messenger.showMaterialBanner(banner);
 }
 
 void sendGroupNotification(BuildContext context, String groupId, Set<String> notificationReceiver) {

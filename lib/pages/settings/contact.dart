@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_form_builder/flutter_form_builder.dart';
 import 'package:form_builder_validators/form_builder_validators.dart';
 
-import '../../main.dart';
 import 'package:deun/l10n/app_localizations.dart';
 
 class Contact extends StatefulWidget {
@@ -112,12 +111,12 @@ class _ContactState extends State<StatefulWidget> {
                                 try {
                                   sendContactMail(_formKey.currentState!.value);
                                   if (context.mounted) {
-                                    showSnackBar(context, rootScaffoldMessengerKey,
+                                    showSnackBar(context,
                                         AppLocalizations.of(context)!.contactSendSuccess);
                                   }
                                 } catch (e) {
                                   if (context.mounted) {
-                                    showSnackBar(context, rootScaffoldMessengerKey,
+                                    showSnackBar(context,
                                         AppLocalizations.of(context)!.contactSendError);
                                   }
                                 } finally {

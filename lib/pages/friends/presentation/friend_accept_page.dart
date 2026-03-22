@@ -1,5 +1,4 @@
 import 'package:deun/helper/helper.dart';
-import 'package:deun/main.dart';
 import 'package:deun/pages/friends/data/friendship_model.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
@@ -35,7 +34,6 @@ class _FriendAcceptPageState extends State<FriendAcceptPage> {
       if (!mounted) return;
       showSnackBar(
           context,
-          rootScaffoldMessengerKey,
           AppLocalizations.of(context)!.friendshipAccept(email));
       // Go to friends list
       GoRouter.of(context).go('/friend');

@@ -7,13 +7,11 @@ import 'package:flutter/material.dart';
 class ContactSuggestionList extends StatelessWidget {
   final Future<List<SupaUser>> userContactFuture;
   final Function(String userEmail, String displayName) onRequest;
-  final GlobalKey<ScaffoldMessengerState> scaffoldMessengerKey;
 
   const ContactSuggestionList({
     super.key,
     required this.userContactFuture,
     required this.onRequest,
-    required this.scaffoldMessengerKey,
   });
 
   @override

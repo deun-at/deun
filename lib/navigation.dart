@@ -13,6 +13,8 @@ import 'package:deun/pages/groups/presentation/group_detail_payment.dart';
 import 'package:deun/pages/settings/contact.dart';
 import 'package:deun/pages/settings/privacy_policy.dart';
 import 'package:deun/provider.dart';
+import 'pages/groups/provider/group_list.dart';
+import 'pages/friends/provider/friendship_list.dart';
 import 'package:deun/widgets/initialization_helper.dart';
 import 'package:deun/widgets/theme_builder.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
@@ -50,13 +52,14 @@ class NavigationScreen extends ConsumerStatefulWidget {
   ConsumerState<NavigationScreen> createState() => _NavigationScreenState();
 }
 
-class _NavigationScreenState extends ConsumerState<NavigationScreen> {
+class _NavigationScreenState extends ConsumerState<NavigationScreen> with WidgetsBindingObserver {
   late RouterConfig<Object> _routerConfig;
   StreamSubscription<Uri>? _linkSubscription;
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _initUserLocale();
     _initFirebaseMessaging();
     initDeepLinks();
@@ -403,7 +406,22 @@ class _NavigationScreenState extends ConsumerState<NavigationScreen> {
   }
 
   @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.paused || state == AppLifecycleState.inactive) {
+      // Remove all Supabase channels to prevent channelError loops
+      // while the app is backgrounded and the WebSocket is dead.
+      supabase.removeAllChannels();
+    } else if (state == AppLifecycleState.resumed) {
+      // Invalidate real-time providers to reconnect channels and fetch fresh data.
+      // Events may have been lost while the app was backgrounded.
+      ref.invalidate(groupListProvider);
+      ref.invalidate(friendshipListProvider);
+    }
+  }
+
+  @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _linkSubscription?.cancel();
 
     super.dispose();
@@ -414,7 +432,6 @@ class _NavigationScreenState extends ConsumerState<NavigationScreen> {
     final locale = ref.watch(localeProvider);
 
     return MaterialApp.router(
-      scaffoldMessengerKey: rootScaffoldMessengerKey,
       routerConfig: _routerConfig,
       title: 'Deun',
       theme: getThemeData(context, ColorSeed.blue.color, Brightness.light),

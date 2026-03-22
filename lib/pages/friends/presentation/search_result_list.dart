@@ -7,14 +7,12 @@ import 'package:flutter/material.dart';
 class SearchResultList extends StatelessWidget {
   final Future<List<SupaUser>> userSearchFuture;
   final Function(String userEmail, String displayName) onRequest;
-  final GlobalKey<ScaffoldMessengerState> scaffoldMessengerKey;
   final String searchText;
 
   const SearchResultList({
     super.key,
     required this.userSearchFuture,
     required this.onRequest,
-    required this.scaffoldMessengerKey,
     required this.searchText,
   });
 
