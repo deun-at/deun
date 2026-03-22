@@ -1,5 +1,4 @@
 import 'package:deun/helper/helper.dart';
-import 'package:deun/main.dart';
 import 'package:deun/pages/friends/data/friendship_model.dart';
 import 'package:deun/pages/groups/data/group_model.dart';
 import 'package:deun/pages/users/user_model.dart';
@@ -35,9 +34,7 @@ class _FriendListState extends ConsumerState<FriendList> {
     ThemeData themeData = Theme.of(context);
     ColorScheme colorScheme = themeData.colorScheme;
 
-    return ScaffoldMessenger(
-      key: friendListScaffoldMessengerKey,
-      child: Scaffold(
+    return Scaffold(
         body: NestedScrollView(
           headerSliverBuilder: (context, innerBoxIsScrolled) => [
             SliverAppBar.medium(
@@ -112,7 +109,6 @@ class _FriendListState extends ConsumerState<FriendList> {
             _ => const ShimmerCardList(height: 70, listEntryLength: 25),
           },
         ),
-      ),
     );
   }
 
@@ -201,7 +197,6 @@ class _FriendListState extends ConsumerState<FriendList> {
                         if (context.mounted) {
                           showSnackBar(
                             context,
-                            friendListScaffoldMessengerKey,
                             AppLocalizations.of(context)!.payBackSuccess(user.email, friendship.shareAmount.abs()),
                           );
                         }
@@ -210,7 +205,6 @@ class _FriendListState extends ConsumerState<FriendList> {
                         if (context.mounted) {
                           showSnackBar(
                             context,
-                            friendListScaffoldMessengerKey,
                             AppLocalizations.of(context)!.payBackError,
                           );
                         }
@@ -287,7 +281,6 @@ class _FriendListState extends ConsumerState<FriendList> {
                 Navigator.pop(context); // Close info dialog
                 showSnackBar(
                   context,
-                  friendListScaffoldMessengerKey,
                   AppLocalizations.of(context)!.friendRemoved(user.displayName),
                 );
               }

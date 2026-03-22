@@ -194,12 +194,12 @@ class _GroupEditState extends ConsumerState<GroupEdit> {
                         newGroup = await Group.fetchDetail(groupInsertId);
                         if (context.mounted) {
                           showSnackBar(
-                              context, rootScaffoldMessengerKey, AppLocalizations.of(context)!.groupCreateSuccess);
+                              context, AppLocalizations.of(context)!.groupCreateSuccess);
                         }
                       } catch (e) {
                         if (context.mounted) {
                           showSnackBar(
-                              context, rootScaffoldMessengerKey, AppLocalizations.of(context)!.groupCreateError);
+                              context, AppLocalizations.of(context)!.groupCreateError);
                         }
                       } finally {
                         if (mounted) {
@@ -432,11 +432,11 @@ class _GroupEditState extends ConsumerState<GroupEdit> {
               try {
                 await group.delete();
                 if (context.mounted) {
-                  showSnackBar(context, rootScaffoldMessengerKey, AppLocalizations.of(context)!.groupDeleteSuccess);
+                  showSnackBar(context, AppLocalizations.of(context)!.groupDeleteSuccess);
                 }
               } catch (e) {
                 if (context.mounted) {
-                  showSnackBar(context, rootScaffoldMessengerKey, AppLocalizations.of(context)!.groupDeleteError);
+                  showSnackBar(context, AppLocalizations.of(context)!.groupDeleteError);
                 }
               } finally {
                 if (context.mounted) {

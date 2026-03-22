@@ -45,6 +45,12 @@ class _FriendQrPageState extends State<FriendQrPage> {
     return uri;
   }
 
+  void _restartScanner() {
+    if (mounted) {
+      _cameraController.start();
+    }
+  }
+
   Future<void> _handleBarcode(BarcodeCapture capture) async {
     if (_handlingScan) return;
 
@@ -55,6 +61,7 @@ class _FriendQrPageState extends State<FriendQrPage> {
     if (raw == null || raw.isEmpty) return;
 
     _handlingScan = true;
+    _cameraController.stop();
     try {
       // Try to interpret as URI
       Uri? uri;
@@ -65,7 +72,8 @@ class _FriendQrPageState extends State<FriendQrPage> {
       if (uri != null) {
         final fragment = uri.fragment;
         if (fragment.isNotEmpty && mounted) {
-          GoRouter.of(context).go(fragment);
+          await GoRouter.of(context).push(fragment);
+          _restartScanner();
           return;
         }
 
@@ -73,7 +81,8 @@ class _FriendQrPageState extends State<FriendQrPage> {
         if (mounted && (uri.path == '/friend/accept' || uri.pathSegments.contains('friend'))) {
           final qp = uri.queryParameters;
           if (qp.containsKey('email')) {
-            GoRouter.of(context).go('/friend/accept?email=${Uri.encodeComponent(qp['email']!)}');
+            await GoRouter.of(context).push('/friend/accept?email=${Uri.encodeComponent(qp['email']!)}');
+            _restartScanner();
             return;
           }
         }
@@ -81,16 +90,16 @@ class _FriendQrPageState extends State<FriendQrPage> {
 
       // Fallback: if it's just an email in the QR
       if (raw.contains('@') && mounted) {
-        GoRouter.of(context).go('/friend/accept?email=${Uri.encodeComponent(raw)}');
+        await GoRouter.of(context).push('/friend/accept?email=${Uri.encodeComponent(raw)}');
+        _restartScanner();
         return;
       }
 
       if (mounted) {
-        showSnackBar(context, rootScaffoldMessengerKey, AppLocalizations.of(context)!.friendQrNotRecognized);
+        showSnackBar(context, AppLocalizations.of(context)!.friendQrNotRecognized);
+        _restartScanner();
       }
     } finally {
-      // Delay a bit to prevent immediate re-scan
-      await Future.delayed(const Duration(milliseconds: 800));
       _handlingScan = false;
     }
   }
@@ -164,7 +173,7 @@ class _FriendQrPageState extends State<FriendQrPage> {
                   await Clipboard.setData(ClipboardData(text: url));
                   if (mounted) {
                     showSnackBar(
-                        context, rootScaffoldMessengerKey, AppLocalizations.of(context)!.friendQrLinkCopiedInstruction);
+                        context, AppLocalizations.of(context)!.friendQrLinkCopiedInstruction);
                   }
                 },
                 icon: const Icon(Icons.link),

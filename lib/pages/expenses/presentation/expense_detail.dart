@@ -112,11 +112,11 @@ class _ExpenseDetailState extends ConsumerState<ExpenseDetail> {
               try {
                 await widget.expense!.delete();
                 if (context.mounted) {
-                  showSnackBar(context, rootScaffoldMessengerKey, AppLocalizations.of(context)!.expenseDeleteSuccess);
+                  showSnackBar(context, AppLocalizations.of(context)!.expenseDeleteSuccess);
                 }
               } catch (e) {
                 if (context.mounted) {
-                  showSnackBar(context, rootScaffoldMessengerKey, AppLocalizations.of(context)!.expenseDeleteError);
+                  showSnackBar(context, AppLocalizations.of(context)!.expenseDeleteError);
                 }
               } finally {
                 //pop both dialog and edit page, because this item is not existing anymore
@@ -144,11 +144,11 @@ class _ExpenseDetailState extends ConsumerState<ExpenseDetail> {
           try {
             await Expense.saveAll(context, widget.group.id, widget.expense?.id, _formKey.currentState!.value);
             if (context.mounted) {
-              showSnackBar(context, rootScaffoldMessengerKey, AppLocalizations.of(context)!.expenseCreateSuccess);
+              showSnackBar(context, AppLocalizations.of(context)!.expenseCreateSuccess);
             }
           } catch (e) {
             if (context.mounted) {
-              showSnackBar(context, rootScaffoldMessengerKey, AppLocalizations.of(context)!.expenseCreateError);
+              showSnackBar(context, AppLocalizations.of(context)!.expenseCreateError);
             }
           } finally {
             if (mounted) {

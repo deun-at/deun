@@ -253,7 +253,6 @@ class _SettingState extends ConsumerState<Setting> {
                                       if (context.mounted) {
                                         showSnackBar(
                                             context,
-                                            rootScaffoldMessengerKey,
                                             AppLocalizations.of(context)!
                                                 .settingsUserUpdateSuccess);
 
@@ -273,7 +272,6 @@ class _SettingState extends ConsumerState<Setting> {
                                       if (context.mounted) {
                                         showSnackBar(
                                             context,
-                                            rootScaffoldMessengerKey,
                                             AppLocalizations.of(context)!
                                                 .settingsUserUpdateError);
                                       }
@@ -410,7 +408,7 @@ class _SettingState extends ConsumerState<Setting> {
                 await supabase.auth.signOut(); // Clean up local session
               } catch (e) {
                 if (context.mounted) {
-                  showSnackBar(context, rootScaffoldMessengerKey,
+                  showSnackBar(context,
                       AppLocalizations.of(context)!.deleteAccountError);
                 }
               }

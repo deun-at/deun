@@ -8,13 +8,11 @@ import '../../../widgets/card_list_view_builder.dart';
 class RequestedFriendshipList extends StatelessWidget {
   final Future<List<SupaUser>> userRequestedFuture;
   final Function(String userEmail, String displayName) onCancel;
-  final GlobalKey<ScaffoldMessengerState> scaffoldMessengerKey;
 
   const RequestedFriendshipList({
     super.key,
     required this.userRequestedFuture,
     required this.onCancel,
-    required this.scaffoldMessengerKey,
   });
 
   @override

@@ -1,59 +1,34 @@
-import 'package:flutter/material.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-import '../../../main.dart';
+import '../../../helper/realtime_mixin.dart';
 import '../data/group_model.dart';
 
 part 'group_detail.g.dart';
 
 @riverpod
-class GroupDetailNotifier extends _$GroupDetailNotifier {
-  RealtimeChannel? _channel;
-
+class GroupDetailNotifier extends _$GroupDetailNotifier with RealtimeNotifierMixin {
   @override
   FutureOr<Group> build(String groupId) async {
-    _subscribeToRealTimeUpdates(groupId);
+    disposeChannels();
+    ref.onDispose(() => disposeChannels());
 
-    // cleanup when provider is disposed
-    ref.onDispose(() {
-      if (_channel != null) {
-        supabase.removeChannel(_channel!);
-        _channel = null;
-      }
-    });
+    subscribeToChannel(
+      ref: ref,
+      channelName: 'group_detail:$groupId',
+      table: 'group_update_checker',
+      filter: PostgresChangeFilter(type: PostgresChangeFilterType.eq, column: 'group_id', value: groupId),
+      onEvent: (payload) async {
+        reload(groupId);
+      },
+      onSubscribed: () => reload(groupId),
+    );
 
     return await Group.fetchDetail(groupId);
   }
 
   Future<void> reload(String groupId) async {
-    if (!ref.mounted) return; // prevent updates after dispose
+    if (!ref.mounted) return;
     state = await AsyncValue.guard(() async => await Group.fetchDetail(groupId));
-  }
-
-  void _subscribeToRealTimeUpdates(String groupId) {
-    if(_channel != null) {
-      supabase.removeChannel(_channel!);
-    }
-
-    _channel = supabase
-        .channel('public:group_detail_checker')
-        .onPostgresChanges(
-          event: PostgresChangeEvent.all,
-          schema: 'public',
-          table: 'group_update_checker',
-          filter: PostgresChangeFilter(type: PostgresChangeFilterType.eq, column: 'group_id', value: groupId),
-          callback: (payload) async {
-            reload(groupId);
-          },
-        )
-        .subscribe((status, _) {
-          debugPrint('---subscribe--- groupDetails ${status.toString()}');
-          if (status == RealtimeSubscribeStatus.channelError || status == RealtimeSubscribeStatus.timedOut) {
-            ref.invalidateSelf();
-          } else if (status == RealtimeSubscribeStatus.subscribed) {
-            reload(groupId);
-          }
-        });
   }
 }

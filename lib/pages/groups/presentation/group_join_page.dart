@@ -128,7 +128,7 @@ class _GroupJoinPageState extends State<GroupJoinPage> {
       GoRouter.of(context).go('/group/details', extra: {'group': g});
     } catch (e) {
       if (!mounted) return;
-      showSnackBar(context, rootScaffoldMessengerKey, AppLocalizations.of(context)!.generalError);
+      showSnackBar(context, AppLocalizations.of(context)!.generalError);
     } finally {
       if (mounted) setState(() => _joining = false);
     }

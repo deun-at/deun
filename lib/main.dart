@@ -11,11 +11,6 @@ import 'package:supabase_auth_ui/supabase_auth_ui.dart';
 import 'auth_gate.dart';
 import 'package:universal_html/html.dart' as html;
 
-final GlobalKey<ScaffoldMessengerState> rootScaffoldMessengerKey = GlobalKey<ScaffoldMessengerState>();
-final GlobalKey<ScaffoldMessengerState> groupListScaffoldMessengerKey = GlobalKey<ScaffoldMessengerState>();
-final GlobalKey<ScaffoldMessengerState> groupDetailScaffoldMessengerKey = GlobalKey<ScaffoldMessengerState>();
-final GlobalKey<ScaffoldMessengerState> friendListScaffoldMessengerKey = GlobalKey<ScaffoldMessengerState>();
-final GlobalKey<ScaffoldMessengerState> friendAddScaffoldMessengerKey = GlobalKey<ScaffoldMessengerState>();
 
 @pragma('vm:entry-point')
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
