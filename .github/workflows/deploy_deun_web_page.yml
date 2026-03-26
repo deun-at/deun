@@ -29,7 +29,11 @@ jobs:
       - name: Install Flutter Dependencies
         run: flutter pub get
 
-      # Step 4: Add Environment Variables
+      # Step 4: Run Flutter Analyze
+      - name: Run Flutter Analyze
+        run: flutter analyze --no-fatal-infos
+
+      # Step 5: Add Environment Variables
       - name: Add Environment Variables
         run: |
           mkdir .env_flutter
@@ -45,17 +49,17 @@ jobs:
 
           echo "$(<.env_flutter/development.env )"
 
-      # Step 5: Build Flutter Web
+      # Step 6: Build Flutter Web
       - name: Build Flutter Web
         run: flutter build web --base-href / --release --dart-define-from-file .env_flutter/development.env
       
-      # Step 6: Add github run_number
+      # Step 7: Add github run_number
       - name: Add github run_number
         run: |
           touch "build/web/version.txt"
           echo "${{ github.run_number }}" >> build/web/version.txt
       
-      # Step 7: Configure SSH
+      # Step 8: Configure SSH
       - name: Configure SSH
         run: |
           mkdir -p ~/.ssh
@@ -63,7 +67,7 @@ jobs:
           chmod 600 ~/.ssh/id_rsa
           ssh-keyscan github.com >> ~/.ssh/known_hosts
       
-      # Step 8: Deploy to GitHub Pages
+      # Step 9: Deploy to GitHub Pages
       - name: Deploy to GitHub Pages
         uses: JamesIves/github-pages-deploy-action@v4
         with:

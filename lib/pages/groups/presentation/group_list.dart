@@ -9,6 +9,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:deun/l10n/app_localizations.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 import '../../../widgets/shimmer_card_list.dart';
 import '../provider/group_list.dart';
@@ -35,13 +36,17 @@ class _GroupListState extends ConsumerState<GroupList> {
       _adBlock = SizedBox();
     } else {
       _adBlock = NativeAdBlock(
-        adUnitId: Platform.isAndroid ? MobileAdMobs.androidGroupList.value : MobileAdMobs.iosGroupList.value,
+        adUnitId: Platform.isAndroid
+            ? MobileAdMobs.androidGroupList.value
+            : MobileAdMobs.iosGroupList.value,
       );
     }
   }
 
   Future<void> updateGroupList() async {
-    ref.read(groupListProvider(groupListFilter).notifier).reload(groupListFilter);
+    ref
+        .read(groupListProvider(groupListFilter).notifier)
+        .reload(groupListFilter);
   }
 
   @override
@@ -52,7 +57,16 @@ class _GroupListState extends ConsumerState<GroupList> {
       body: NestedScrollView(
         controller: _scrollController,
         headerSliverBuilder: (context, innerBoxIsScrolled) => [
-          SliverAppBar.medium(title: Text(AppLocalizations.of(context)!.groups)),
+          SliverAppBar.medium(
+            title: Text(
+              AppLocalizations.of(context)!.groups,
+              style: GoogleFonts.robotoSerif(
+                textStyle: Theme.of(
+                  context,
+                ).textTheme.titleLarge!.copyWith(fontWeight: FontWeight.w900),
+              ),
+            ),
+          ),
           SliverToBoxAdapter(
             child: SizedBox(
               height: 60,
@@ -68,12 +82,19 @@ class _GroupListState extends ConsumerState<GroupList> {
                   return Padding(
                     padding: EdgeInsets.only(left: paddingLeft, right: 10),
                     child: FilterChip(
-                      label: Text(AppLocalizations.of(context)!.groupListFilter(GroupListFilter.values[index].value)),
-                      selected: groupListFilter == GroupListFilter.values[index].value,
+                      label: Text(
+                        AppLocalizations.of(
+                          context,
+                        )!.groupListFilter(GroupListFilter.values[index].value),
+                      ),
+                      selected:
+                          groupListFilter ==
+                          GroupListFilter.values[index].value,
                       onSelected: (selected) {
                         if (selected) {
                           setState(() {
-                            groupListFilter = GroupListFilter.values[index].value;
+                            groupListFilter =
+                                GroupListFilter.values[index].value;
                           });
                         }
                       },
@@ -102,7 +123,10 @@ class _GroupListState extends ConsumerState<GroupList> {
                       itemBuilder: (context, index) {
                         // Access the Group instance
                         Group group = value[index];
-                        return GroupListItem(key: ValueKey(group.id), group: group);
+                        return GroupListItem(
+                          key: ValueKey(group.id),
+                          group: group,
+                        );
                       },
                     ),
                   ),
