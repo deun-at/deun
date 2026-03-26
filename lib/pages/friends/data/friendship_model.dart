@@ -7,16 +7,16 @@ import '../../../main.dart';
 class Friendship {
   late SupaUser user;
   late String status;
-  late bool isRequester;
+  late bool isIncomingRequest;
   late double shareAmount;
 
   void loadDataFromJson(Map<String, dynamic> json) {
 
     if (json["requester"]["email"] == supabase.auth.currentUser?.email) {
-      isRequester = false;
+      isIncomingRequest = false;
       user = SupaUser.fromJson(json["addressee"]);
     } else {
-      isRequester = true;
+      isIncomingRequest = true;
       user = SupaUser.fromJson(json["requester"]);
     }
 
