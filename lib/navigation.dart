@@ -5,6 +5,7 @@ import 'package:deun/main.dart';
 import 'package:deun/pages/auth/update_password.dart';
 import 'package:deun/pages/expenses/presentation/expense_detail.dart';
 import 'package:deun/pages/expenses/data/expense_model.dart';
+import 'package:deun/pages/expenses/data/expense_repository.dart';
 import 'package:deun/pages/friends/presentation/friend_add.dart';
 import 'package:deun/pages/friends/presentation/friend_list.dart';
 import 'package:deun/pages/friends/presentation/friend_qr_page.dart';
@@ -13,8 +14,7 @@ import 'package:deun/pages/groups/presentation/group_detail_payment.dart';
 import 'package:deun/pages/settings/contact.dart';
 import 'package:deun/pages/settings/privacy_policy.dart';
 import 'package:deun/provider.dart';
-import 'pages/groups/provider/group_list.dart';
-import 'pages/friends/provider/friendship_list.dart';
+import 'helper/realtime_mixin.dart';
 import 'package:deun/widgets/initialization_helper.dart';
 import 'package:deun/widgets/theme_builder.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
@@ -35,6 +35,7 @@ import 'dart:io' show Platform;
 import 'package:app_links/app_links.dart';
 
 import 'pages/groups/data/group_model.dart';
+import 'pages/groups/data/group_repository.dart';
 import 'pages/settings/setting.dart';
 import 'widgets/modal_bottom_sheet_page.dart';
 
@@ -386,11 +387,11 @@ class _NavigationScreenState extends ConsumerState<NavigationScreen> with Widget
   void _handleMessage(RemoteMessage message) async {
     switch (message.data['type']) {
       case 'group':
-        Group group = await Group.fetchDetail(message.data['expense_id']);
+        Group group = await GroupRepository.fetchDetail(message.data['expense_id']);
         navigateToGroup(_rootNavigatorKey.currentContext!, group);
         break;
       case 'expense':
-        Expense expense = await Expense.fetchDetail(message.data['expense_id']);
+        Expense expense = await ExpenseRepository.fetchDetail(message.data['expense_id']);
         navigateToExpense(_rootNavigatorKey.currentContext!, expense);
         break;
       case 'friendship':
@@ -456,10 +457,10 @@ class _NavigationScreenState extends ConsumerState<NavigationScreen> with Widget
       // while the app is backgrounded and the WebSocket is dead.
       supabase.removeAllChannels();
     } else if (state == AppLifecycleState.resumed) {
-      // Invalidate real-time providers to reconnect channels and fetch fresh data.
-      // Events may have been lost while the app was backgrounded.
-      ref.invalidate(groupListProvider);
-      ref.invalidate(friendshipListProvider);
+      // Signal all real-time providers to re-subscribe channels and reload data.
+      // Channels were killed by removeAllChannels() on pause; the mixin's
+      // listenForResume handler re-subscribes them from stored configs.
+      ref.read(appResumeCounterProvider.notifier).increment();
     }
   }
 
@@ -528,7 +529,7 @@ class _ScaffoldWithNestedNavigationState
 
     FirebaseMessaging.onMessage.listen((RemoteMessage message) {
       // if (message.data['type'] == 'expense') {
-      //   Expense.fetchDetail(message.data['expense_id']).then((expense) {
+      //   ExpenseRepository.fetchDetail(message.data['expense_id']).then((expense) {
       //     // ignore: use_build_context_synchronously
       //     showMaterialBanner(context, '${message.notification!.title}\n${message.notification!.body}',
       //         () => navigateToExpense(context, expense));

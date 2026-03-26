@@ -14,24 +14,22 @@ class FriendshipListNotifier extends _$FriendshipListNotifier with RealtimeNotif
     ref.onDispose(() => disposeChannels());
 
     subscribeToChannel(
-      ref: ref,
       channelName: 'friendship_list',
       table: 'friendship',
       onEvent: (payload) {
         reload();
       },
-      onSubscribed: () => reload(),
     );
 
     subscribeToChannel(
-      ref: ref,
       channelName: 'friendship_group_checker',
       table: 'group_update_checker',
       onEvent: (payload) async {
         reload();
       },
-      onSubscribed: () => reload(),
     );
+
+    listenForResume(ref: ref, onResume: () => reload());
 
     return await fetchFriendshipList();
   }

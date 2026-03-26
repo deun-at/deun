@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:deun/constants.dart';
 import 'package:deun/helper/helper.dart';
 import 'package:deun/pages/expenses/data/expense_model.dart';
+import 'package:deun/pages/expenses/data/expense_repository.dart';
 import 'package:deun/pages/groups/presentation/group_detail_list.dart';
 import 'package:deun/widgets/native_ad_block.dart';
 import 'package:deun/widgets/shimmer_card_list.dart';
@@ -227,7 +228,7 @@ class _GroupDetailState extends ConsumerState<GroupDetail> {
       return [];
     }
 
-    List<Expense> result = await Expense.fetchData(group.id, 0, 9, input);
+    List<Expense> result = await ExpenseRepository.fetchData(group.id, 0, 9, input);
     if (result.isEmpty) {
       return [
         CardListTile(

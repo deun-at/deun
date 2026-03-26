@@ -3,6 +3,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../helper/realtime_mixin.dart';
 import '../data/expense_model.dart';
+import '../data/expense_repository.dart';
 
 part 'expense_list.g.dart';
 
@@ -18,7 +19,6 @@ class ExpenseListNotifier extends _$ExpenseListNotifier with RealtimeNotifierMix
     ref.onDispose(() => disposeChannels());
 
     subscribeToChannel(
-      ref: ref,
       channelName: 'expense_list:$groupId',
       table: 'expense_update_checker',
       filter: PostgresChangeFilter(type: PostgresChangeFilterType.eq, column: 'group_id', value: groupId),
@@ -36,7 +36,7 @@ class ExpenseListNotifier extends _$ExpenseListNotifier with RealtimeNotifierMix
         } else if (payload.eventType == PostgresChangeEvent.update ||
             payload.eventType == PostgresChangeEvent.insert) {
           final expenseId = payload.newRecord['expense_id'];
-          final expense = await Expense.fetchDetail(expenseId);
+          final expense = await ExpenseRepository.fetchDetail(expenseId);
 
           state = state.whenData((expenses) {
             final updated = List<Expense>.from(expenses);
@@ -59,17 +59,18 @@ class ExpenseListNotifier extends _$ExpenseListNotifier with RealtimeNotifierMix
           return;
         }
       },
-      onSubscribed: () => reload(groupId),
     );
 
-    return await Expense.fetchData(groupId, _offset, _offset + pageSize - 1);
+    listenForResume(ref: ref, onResume: () => reload(groupId));
+
+    return await ExpenseRepository.fetchData(groupId, _offset, _offset + pageSize - 1);
   }
 
   Future<void> reload(String groupId) async {
     if (!ref.mounted) return;
     _hasMore = true;
 
-    state = await AsyncValue.guard(() async => await Expense.fetchData(groupId, 0, _offset + pageSize - 1));
+    state = await AsyncValue.guard(() async => await ExpenseRepository.fetchData(groupId, 0, _offset + pageSize - 1));
   }
 
   int get offset => _offset;
@@ -78,7 +79,7 @@ class ExpenseListNotifier extends _$ExpenseListNotifier with RealtimeNotifierMix
     if (!_hasMore || state.isLoading) return;
 
     _offset += pageSize;
-    final newExpenses = await Expense.fetchData(groupId, _offset, _offset + pageSize - 1);
+    final newExpenses = await ExpenseRepository.fetchData(groupId, _offset, _offset + pageSize - 1);
 
     if (newExpenses.isEmpty) {
       _hasMore = false;

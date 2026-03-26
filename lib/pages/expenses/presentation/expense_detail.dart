@@ -14,6 +14,7 @@ import '../../groups/data/group_model.dart';
 import 'expense_entry_widget.dart';
 import '../data/expense_entry_model.dart';
 import '../data/expense_model.dart';
+import '../data/expense_repository.dart';
 import '../data/expense_category.dart';
 import '../../../widgets/category_selector.dart';
 
@@ -110,7 +111,7 @@ class _ExpenseDetailState extends ConsumerState<ExpenseDetail> {
             child: Text(AppLocalizations.of(context)!.delete),
             onPressed: () async {
               try {
-                await widget.expense!.delete();
+                await ExpenseRepository.delete(widget.expense!.id, widget.expense!.groupId);
                 if (context.mounted) {
                   showSnackBar(context, AppLocalizations.of(context)!.expenseDeleteSuccess);
                 }
@@ -142,7 +143,7 @@ class _ExpenseDetailState extends ConsumerState<ExpenseDetail> {
       onPressed: () async {
         if (_formKey.currentState!.saveAndValidate()) {
           try {
-            await Expense.saveAll(context, widget.group.id, widget.expense?.id, _formKey.currentState!.value);
+            await ExpenseRepository.saveAll(context, widget.group.id, widget.expense?.id, _formKey.currentState!.value);
             if (context.mounted) {
               showSnackBar(context, AppLocalizations.of(context)!.expenseCreateSuccess);
             }

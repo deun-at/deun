@@ -3,8 +3,8 @@ import 'package:deun/pages/users/user_repository.dart';
 import 'package:flutter/material.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
-import 'pages/groups/data/group_model.dart';
-import 'pages/expenses/data/expense_model.dart';
+import 'pages/groups/data/group_repository.dart';
+import 'pages/expenses/data/expense_repository.dart';
 import 'pages/expenses/data/expense_category.dart';
 import 'pages/users/user_model.dart';
 import 'pages/statistics/statistics_models.dart';
@@ -58,7 +58,7 @@ class GroupMonthlyTotalsNotifier extends _$GroupMonthlyTotalsNotifier {
     final List<DateTime> ends = starts.map((s) => DateTime(s.year, s.month + 1, 1)).toList();
 
     // Fetch expenses for range
-    final expenses = await Expense.fetchRange(groupId, starts.first, ends.last);
+    final expenses = await ExpenseRepository.fetchRange(groupId, starts.first, ends.last);
 
     // Aggregate into months
     final List<double> totals = List<double>.filled(6, 0);
@@ -87,7 +87,7 @@ class GroupMonthMemberTotalsNotifier extends _$GroupMonthMemberTotalsNotifier {
   }
 
   Future<List<MemberMonthTotal>> _load(GroupMonthMemberTotalsArgs args) async {
-    final expenses = await Expense.fetchRange(args.groupId, args.monthStart, args.monthEnd);
+    final expenses = await ExpenseRepository.fetchRange(args.groupId, args.monthStart, args.monthEnd);
 
     final Map<String, MemberMonthTotal> byMember = {};
     for (final expense in expenses) {
@@ -117,7 +117,7 @@ class GroupMonthMemberTotalsNotifier extends _$GroupMonthMemberTotalsNotifier {
     }
 
     // Ensure members with zero are present if group has members
-    final group = await Group.fetchDetail(args.groupId);
+    final group = await GroupRepository.fetchDetail(args.groupId);
     for (final m in group.groupMembers) {
       byMember[m.email] = byMember[m.email] ?? MemberMonthTotal(email: m.email, displayName: m.displayName, total: 0);
     }
@@ -136,7 +136,7 @@ class GroupMonthCategoryTotalsNotifier extends _$GroupMonthCategoryTotalsNotifie
   }
 
   Future<List<CategoryMonthTotal>> _load(GroupMonthCategoryTotalsArgs args) async {
-    final expenses = await Expense.fetchRange(args.groupId, args.monthStart, args.monthEnd);
+    final expenses = await ExpenseRepository.fetchRange(args.groupId, args.monthStart, args.monthEnd);
 
     final Map<String, double> byCategory = {};
     for (final expense in expenses) {
@@ -173,7 +173,7 @@ class CategoryExpenseDetailsNotifier extends _$CategoryExpenseDetailsNotifier {
   }
 
   Future<List<CategoryExpenseDetail>> _load(CategoryExpenseDetailsArgs args) async {
-    final expenses = await Expense.fetchRange(args.groupId, args.monthStart, args.monthEnd);
+    final expenses = await ExpenseRepository.fetchRange(args.groupId, args.monthStart, args.monthEnd);
 
     // Filter expenses by category
     final categoryExpenses = expenses.where((expense) {

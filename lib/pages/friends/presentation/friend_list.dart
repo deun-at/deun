@@ -1,7 +1,7 @@
 import 'package:deun/helper/helper.dart';
 import 'package:deun/pages/friends/data/friendship_model.dart';
 import 'package:deun/pages/friends/data/friendship_repository.dart';
-import 'package:deun/pages/groups/data/group_model.dart';
+import 'package:deun/pages/groups/data/group_repository.dart';
 import 'package:deun/pages/users/user_model.dart';
 import 'package:deun/widgets/card_list_view_builder.dart';
 import 'package:deun/widgets/empty_list_widget.dart';
@@ -194,7 +194,7 @@ class _FriendListState extends ConsumerState<FriendList> {
                   SimpleDialogOption(
                     onPressed: () async {
                       try {
-                        await Group.payBackAll(context, user.email, friendship.shareAmount.abs());
+                        await GroupRepository.payBackAll(context, user.email, friendship.shareAmount.abs());
                         if (context.mounted) {
                           showSnackBar(
                             context,
