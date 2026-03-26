@@ -155,7 +155,7 @@ final class GroupMonthlyTotalsNotifierProvider
 }
 
 String _$groupMonthlyTotalsNotifierHash() =>
-    r'c122b417d05c3cfedb425aff18f3e944086bd18a';
+    r'f8d7a0f44e02ecbaac1527419fdd1f8cbaca380c';
 
 final class GroupMonthlyTotalsNotifierFamily extends $Family
     with
@@ -260,7 +260,7 @@ final class GroupMonthMemberTotalsNotifierProvider
 }
 
 String _$groupMonthMemberTotalsNotifierHash() =>
-    r'ec2a4d5864fd1376cf358db9b7ada2f89104b870';
+    r'd55f3d930341f2ff82972a77b1697c28e43409b2';
 
 final class GroupMonthMemberTotalsNotifierFamily extends $Family
     with
@@ -365,7 +365,7 @@ final class GroupMonthCategoryTotalsNotifierProvider
 }
 
 String _$groupMonthCategoryTotalsNotifierHash() =>
-    r'774d3310017b5e2cfe5efead4a6889b160ad63d1';
+    r'6c06d8ad30004e3c3fe17f06bb4d2296d3f9f775';
 
 final class GroupMonthCategoryTotalsNotifierFamily extends $Family
     with
@@ -471,7 +471,7 @@ final class CategoryExpenseDetailsNotifierProvider
 }
 
 String _$categoryExpenseDetailsNotifierHash() =>
-    r'ffff35936b8d514d5980ed453c57f126aeec19be';
+    r'a8b767dcd6d872aa2e4c06ce33eef8534e6c68ac';
 
 final class CategoryExpenseDetailsNotifierFamily extends $Family
     with

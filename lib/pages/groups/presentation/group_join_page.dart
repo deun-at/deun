@@ -1,6 +1,6 @@
 import 'package:deun/helper/helper.dart';
 import 'package:deun/main.dart';
-import 'package:deun/pages/groups/data/group_model.dart';
+import 'package:deun/pages/groups/data/group_repository.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -34,7 +34,7 @@ class _GroupJoinPageState extends State<GroupJoinPage> {
           .maybeSingle();
 
       if (existing != null) {
-        final g = await Group.fetchDetail(widget.groupId);
+        final g = await GroupRepository.fetchDetail(widget.groupId);
         if (!mounted) return;
         GoRouter.of(context).go('/group/details', extra: {'group': g});
       }
@@ -123,7 +123,7 @@ class _GroupJoinPageState extends State<GroupJoinPage> {
       await supabase.rpc('update_group_member_shares', params: {"_group_id": widget.groupId, "_expense_id": null});
 
       // Navigate to group details
-      final g = await Group.fetchDetail(widget.groupId);
+      final g = await GroupRepository.fetchDetail(widget.groupId);
       if (!mounted) return;
       GoRouter.of(context).go('/group/details', extra: {'group': g});
     } catch (e) {

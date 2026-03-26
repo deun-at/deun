@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:collection/collection.dart';
 import 'package:deun/helper/helper.dart';
 import 'package:deun/pages/friends/data/friendship_repository.dart';
+import 'package:deun/pages/groups/data/group_repository.dart';
 import 'package:deun/widgets/card_list_view_builder.dart';
 import 'package:deun/widgets/theme_builder.dart';
 import 'package:flutter/material.dart';
@@ -40,7 +41,7 @@ class _GroupEditState extends ConsumerState<GroupEdit> {
   }
 
   Iterable<Widget> getUserSelection(SearchController controller, FormFieldState<dynamic> field) {
-    List<Map<String, dynamic>> groupMembers = Group.decodeGroupMembersString(field.value);
+    List<Map<String, dynamic>> groupMembers = GroupRepository.decodeGroupMembersString(field.value);
 
     int groupMembersLength = groupMembers.length;
 
@@ -94,7 +95,7 @@ class _GroupEditState extends ConsumerState<GroupEdit> {
 
   Future<Iterable<Widget>> getUserSuggestions(SearchController controller, FormFieldState<dynamic> field) async {
     final String input = controller.value.text.trim();
-    List<dynamic> nbs = Group.decodeGroupMembersString(field.value);
+    List<dynamic> nbs = GroupRepository.decodeGroupMembersString(field.value);
 
     List<String> selectedUsers = nbs.map(
       (element) {
@@ -190,8 +191,8 @@ class _GroupEditState extends ConsumerState<GroupEdit> {
                       Group? newGroup;
                       try {
                         String groupInsertId =
-                            await Group.saveAll(context, widget.group?.id, _formKey.currentState!.value);
-                        newGroup = await Group.fetchDetail(groupInsertId);
+                            await GroupRepository.saveAll(context, widget.group?.id, _formKey.currentState!.value);
+                        newGroup = await GroupRepository.fetchDetail(groupInsertId);
                         if (context.mounted) {
                           showSnackBar(
                               context, AppLocalizations.of(context)!.groupCreateSuccess);
@@ -288,7 +289,7 @@ class _GroupEditState extends ConsumerState<GroupEdit> {
                               },
                             ),
                             builder: (context, controller) {
-                              List<Map<String, dynamic>> groupMembers = Group.decodeGroupMembersString(field.value);
+                              List<Map<String, dynamic>> groupMembers = GroupRepository.decodeGroupMembersString(field.value);
 
                               List<Widget> listTiles = [];
 
@@ -430,7 +431,7 @@ class _GroupEditState extends ConsumerState<GroupEdit> {
             child: Text(AppLocalizations.of(context)!.delete),
             onPressed: () async {
               try {
-                await group.delete();
+                await GroupRepository.delete(group.id);
                 if (context.mounted) {
                   showSnackBar(context, AppLocalizations.of(context)!.groupDeleteSuccess);
                 }

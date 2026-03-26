@@ -10,6 +10,7 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../provider/group_detail.dart';
 import '../data/group_model.dart';
+import '../data/group_repository.dart';
 
 class GroupPaymentBottomSheet extends ConsumerStatefulWidget {
   const GroupPaymentBottomSheet({super.key, required this.group});
@@ -158,7 +159,7 @@ class _GroupPaymentBottomSheetState extends ConsumerState<GroupPaymentBottomShee
           SimpleDialogOption(
             onPressed: () async {
               try {
-                await Group.payBack(context, widget.group.id, email, groupShare.shareAmount.abs());
+                await GroupRepository.payBack(context, widget.group.id, email, groupShare.shareAmount.abs());
                 if (context.mounted) {
                   showSnackBar(context,
                       AppLocalizations.of(context)!.payBackSuccess(email, groupShare.shareAmount.abs()));

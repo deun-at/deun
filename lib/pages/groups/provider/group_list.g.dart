@@ -50,7 +50,7 @@ final class GroupListNotifierProvider
   }
 }
 
-String _$groupListNotifierHash() => r'e39ad7183ba3f1d25f4556f38c2ffba72212a54d';
+String _$groupListNotifierHash() => r'59e60a364d27cd0f124733eb21211d53486df09f';
 
 final class GroupListNotifierFamily extends $Family
     with

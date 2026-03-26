@@ -19,7 +19,7 @@ dependencies:
   flutter_local_notifications: ^19.0.0
   flutter_localizations:
     sdk: flutter
-  flutter_riverpod: ^3.0.0-dev.17
+  flutter_riverpod: ^3.0.0
   fl_chart: ^1.0.0
   form_builder_extra_fields: ^12.0.0
   form_builder_validators: ^11.1.2
@@ -28,10 +28,10 @@ dependencies:
   google_sign_in: ^6.2.2
   grouped_list: ^6.0.0
   intl: any
-  riverpod_annotation: ^3.0.0-dev.17
+  riverpod_annotation: ^3.0.0
   sign_in_with_apple: ^6.1.4
   supabase_auth_ui: ^0.5.4
-  supabase_flutter: ^2.8.0
+  supabase_flutter: ^2.12.2
   universal_html: ^2.2.4
   url_launcher: ^6.3.1
   webview_flutter: ^4.9.0
@@ -49,7 +49,7 @@ dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^6.0.0
-  riverpod_generator: ^3.0.0-dev.17
+  riverpod_generator: ^3.0.0
   build_runner: ^2.4.13
   build_web_compilers: ^4.0.10
   flutter_launcher_icons: ^0.14.2

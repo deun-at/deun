@@ -4,6 +4,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../constants.dart';
 import '../../../helper/realtime_mixin.dart';
 import '../data/group_model.dart';
+import '../data/group_repository.dart';
 
 part 'group_list.g.dart';
 
@@ -15,7 +16,6 @@ class GroupListNotifier extends _$GroupListNotifier with RealtimeNotifierMixin {
     ref.onDispose(() => disposeChannels());
 
     subscribeToChannel(
-      ref: ref,
       channelName: 'group_list:$statusFilter',
       table: 'group_update_checker',
       onEvent: (payload) async {
@@ -32,7 +32,7 @@ class GroupListNotifier extends _$GroupListNotifier with RealtimeNotifierMixin {
         } else if (payload.eventType == PostgresChangeEvent.update ||
             payload.eventType == PostgresChangeEvent.insert) {
           final groupId = payload.newRecord['group_id'];
-          final group = await Group.fetchDetail(groupId);
+          final group = await GroupRepository.fetchDetail(groupId);
 
           bool matchesFilter;
           final absAmt = group.totalShareAmount.abs();
@@ -64,14 +64,15 @@ class GroupListNotifier extends _$GroupListNotifier with RealtimeNotifierMixin {
           return;
         }
       },
-      onSubscribed: () => reload(statusFilter),
     );
 
-    return await Group.fetchData(statusFilter);
+    listenForResume(ref: ref, onResume: () => reload(statusFilter));
+
+    return await GroupRepository.fetchData(statusFilter);
   }
 
   Future<void> reload(String statusFilter) async {
     if (!ref.mounted) return;
-    state = await AsyncValue.guard(() async => await Group.fetchData(statusFilter));
+    state = await AsyncValue.guard(() async => await GroupRepository.fetchData(statusFilter));
   }
 }

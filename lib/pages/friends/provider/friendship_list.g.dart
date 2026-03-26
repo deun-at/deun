@@ -34,7 +34,7 @@ final class FriendshipListNotifierProvider
 }
 
 String _$friendshipListNotifierHash() =>
-    r'a1a7c89777a4721255f6180ffa999210f44589fd';
+    r'421deaff82ab4caf1a7dd7327cda9632295a9de8';
 
 abstract class _$FriendshipListNotifier
     extends $AsyncNotifier<List<Friendship>> {
