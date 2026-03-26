@@ -214,7 +214,7 @@ class _FriendAddBottomSheetState extends State<FriendAddBottomSheet> {
 
     List<SupaUser> requestedUsers = List.empty(growable: true);
     for (var friendship in friendship) {
-      if (friendship.status == 'pending' && friendship.isRequester == false) {
+      if (friendship.status == 'pending' && friendship.isIncomingRequest == false) {
         requestedUsers.add(friendship.user);
       }
     }
