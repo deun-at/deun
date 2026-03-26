@@ -1,5 +1,6 @@
 import 'package:deun/helper/helper.dart';
 import 'package:deun/pages/friends/data/friendship_model.dart';
+import 'package:deun/pages/friends/data/friendship_repository.dart';
 import 'package:deun/pages/groups/data/group_model.dart';
 import 'package:deun/pages/users/user_model.dart';
 import 'package:deun/widgets/card_list_view_builder.dart';
@@ -275,7 +276,7 @@ class _FriendListState extends ConsumerState<FriendList> {
             child: Text(AppLocalizations.of(context)!.remove),
             onPressed: () async {
               try {
-                Friendship.remove(user.email);
+                FriendshipRepository.remove(user.email);
               } finally {
                 Navigator.pop(context); // Close delete dialog
                 Navigator.pop(context); // Close info dialog
