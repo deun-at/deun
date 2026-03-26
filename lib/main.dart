@@ -5,7 +5,6 @@ import 'package:flutter/foundation.dart' show kIsWeb, LicenseRegistry, LicenseEn
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:supabase_auth_ui/supabase_auth_ui.dart';
 
 import 'auth_gate.dart';
@@ -33,18 +32,18 @@ void main() async {
   });
 
   WidgetsFlutterBinding.ensureInitialized();
-  if (!kIsWeb) {
-    MobileAds.instance.initialize();
-  }
+
+  // Parallelize Firebase + Supabase init to reduce startup delay.
+  // MobileAds init is handled later by InitializationHelper.
+  await Future.wait([
+    Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform),
+    Supabase.initialize(
+      url: const String.fromEnvironment('SUPABASE_URL'),
+      anonKey: const String.fromEnvironment('SUPABASE_ANON_KEY'),
+    ),
+  ]);
 
   FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
-
-  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
-
-  await Supabase.initialize(
-    url: const String.fromEnvironment('SUPABASE_URL'),
-    anonKey: const String.fromEnvironment('SUPABASE_ANON_KEY'),
-  );
 
   if (kIsWeb) {
     final uri = Uri.base; // Use the full browser URL

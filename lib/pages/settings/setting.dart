@@ -10,6 +10,7 @@ import 'package:flutter_form_builder/flutter_form_builder.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:form_builder_validators/form_builder_validators.dart';
 import 'package:go_router/go_router.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 import '../../main.dart';
 import 'package:deun/l10n/app_localizations.dart';
@@ -27,12 +28,13 @@ class _SettingState extends ConsumerState<Setting> {
   final _formKey = GlobalKey<FormBuilderState>();
   final _initializationHelper = InitializationHelper();
 
-// We will use a Future to read the setting that
+  // We will use a Future to read the setting that
   // tells us if the user is under the GDPR
   late final Future<bool> _future;
 
-  List<String> localeOptions =
-      AppLocalizations.supportedLocales.map((l) => l.toLanguageTag()).toList();
+  List<String> localeOptions = AppLocalizations.supportedLocales
+      .map((l) => l.toLanguageTag())
+      .toList();
 
   @override
   void initState() {
@@ -51,37 +53,52 @@ class _SettingState extends ConsumerState<Setting> {
         child: NestedScrollView(
           headerSliverBuilder: (context, innerBoxIsScrolled) => [
             SliverAppBar.medium(
-              title: Text(AppLocalizations.of(context)!.settings),
+              title: Text(
+                AppLocalizations.of(context)!.settings,
+                style: GoogleFonts.robotoSerif(
+                  textStyle: Theme.of(
+                    context,
+                  ).textTheme.titleLarge!.copyWith(fontWeight: FontWeight.w900),
+                ),
+              ),
               actions: [
                 IconButton(
                   onPressed: () async {
                     showDialog(
-                        context: context,
-                        builder: (context) => AlertDialog(
-                              content: Text(AppLocalizations.of(context)!
-                                  .settingsSignOutDialogTitle),
-                              actions: <Widget>[
-                                TextButton(
-                                  child: Text(AppLocalizations.of(context)!.cancel),
-                                  onPressed: () => Navigator.pop(context),
-                                ),
-                                FilledButton(
-                                  style: FilledButton.styleFrom(
-                                    backgroundColor: Theme.of(context).colorScheme.error,
-                                    foregroundColor:
-                                        Theme.of(context).colorScheme.onError,
-                                  ),
-                                  child:
-                                      Text(AppLocalizations.of(context)!.settingsSignOut),
-                                  onPressed: () async {
-                                    await supabase.auth.signOut();
-                                  },
-                                ),
-                              ],
-                            ));
+                      context: context,
+                      builder: (context) => AlertDialog(
+                        content: Text(
+                          AppLocalizations.of(
+                            context,
+                          )!.settingsSignOutDialogTitle,
+                        ),
+                        actions: <Widget>[
+                          TextButton(
+                            child: Text(AppLocalizations.of(context)!.cancel),
+                            onPressed: () => Navigator.pop(context),
+                          ),
+                          FilledButton(
+                            style: FilledButton.styleFrom(
+                              backgroundColor: Theme.of(
+                                context,
+                              ).colorScheme.error,
+                              foregroundColor: Theme.of(
+                                context,
+                              ).colorScheme.onError,
+                            ),
+                            child: Text(
+                              AppLocalizations.of(context)!.settingsSignOut,
+                            ),
+                            onPressed: () async {
+                              await supabase.auth.signOut();
+                            },
+                          ),
+                        ],
+                      ),
+                    );
                   },
                   icon: const Icon(Icons.logout),
-                )
+                ),
               ],
             ),
           ],
@@ -93,7 +110,9 @@ class _SettingState extends ConsumerState<Setting> {
                   padding: const EdgeInsets.all(10),
                   child: Consumer(
                     builder: (context, ref, child) {
-                      final SupaUser? user = ref.watch(userDetailProvider).value;
+                      final SupaUser? user = ref
+                          .watch(userDetailProvider)
+                          .value;
                       final locale = ref.watch(localeProvider);
 
                       if (user == null) {
@@ -112,127 +131,161 @@ class _SettingState extends ConsumerState<Setting> {
                             Row(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                const Icon(
-                                  Icons.person_outline,
-                                ),
+                                const Icon(Icons.person_outline),
                                 const SizedBox(width: spacing),
                                 Flexible(
                                   child: Column(
                                     children: [
                                       FormBuilderField(
                                         name: "first_name",
-                                        builder: (FormFieldState<dynamic> field) =>
-                                            TextFormField(
-                                          initialValue: field.value,
-                                          validator: FormBuilderValidators.required(
-                                              errorText: AppLocalizations.of(context)!
-                                                  .settingsFirstNameValidationEmpty),
-                                          decoration: InputDecoration(
-                                            labelText: AppLocalizations.of(context)!
-                                                .settingsFirstName,
-                                            border: const OutlineInputBorder(),
-                                          ),
-                                          onChanged: (value) => field.didChange(value),
-                                        ),
+                                        builder:
+                                            (
+                                              FormFieldState<dynamic> field,
+                                            ) => TextFormField(
+                                              initialValue: field.value,
+                                              validator: FormBuilderValidators.required(
+                                                errorText: AppLocalizations.of(
+                                                  context,
+                                                )!.settingsFirstNameValidationEmpty,
+                                              ),
+                                              decoration: InputDecoration(
+                                                labelText: AppLocalizations.of(
+                                                  context,
+                                                )!.settingsFirstName,
+                                                border:
+                                                    const OutlineInputBorder(),
+                                              ),
+                                              onChanged: (value) =>
+                                                  field.didChange(value),
+                                            ),
                                       ),
                                       const SizedBox(height: heightSpacing),
                                       FormBuilderField(
                                         name: "last_name",
-                                        builder: (FormFieldState<dynamic> field) =>
-                                            TextFormField(
-                                          initialValue: field.value,
-                                          validator: FormBuilderValidators.required(
-                                              errorText: AppLocalizations.of(context)!
-                                                  .settingsLastNameValidationEmpty),
-                                          decoration: InputDecoration(
-                                            labelText: AppLocalizations.of(context)!
-                                                .settingsLastName,
-                                            border: const OutlineInputBorder(),
-                                          ),
-                                          onChanged: (value) => field.didChange(value),
-                                        ),
+                                        builder:
+                                            (
+                                              FormFieldState<dynamic> field,
+                                            ) => TextFormField(
+                                              initialValue: field.value,
+                                              validator: FormBuilderValidators.required(
+                                                errorText: AppLocalizations.of(
+                                                  context,
+                                                )!.settingsLastNameValidationEmpty,
+                                              ),
+                                              decoration: InputDecoration(
+                                                labelText: AppLocalizations.of(
+                                                  context,
+                                                )!.settingsLastName,
+                                                border:
+                                                    const OutlineInputBorder(),
+                                              ),
+                                              onChanged: (value) =>
+                                                  field.didChange(value),
+                                            ),
                                       ),
                                       const SizedBox(height: heightSpacing),
                                       FormBuilderField(
                                         name: "display_name",
-                                        builder: (FormFieldState<dynamic> field) =>
-                                            TextFormField(
-                                          initialValue: field.value,
-                                          validator: FormBuilderValidators.required(
-                                              errorText: AppLocalizations.of(context)!
-                                                  .settingsDisplayNameValidationEmpty),
-                                          decoration: InputDecoration(
-                                            labelText: AppLocalizations.of(context)!
-                                                .settingsDisplayName,
-                                            border: const OutlineInputBorder(),
-                                          ),
-                                          onChanged: (value) => field.didChange(value),
-                                        ),
+                                        builder:
+                                            (
+                                              FormFieldState<dynamic> field,
+                                            ) => TextFormField(
+                                              initialValue: field.value,
+                                              validator: FormBuilderValidators.required(
+                                                errorText: AppLocalizations.of(
+                                                  context,
+                                                )!.settingsDisplayNameValidationEmpty,
+                                              ),
+                                              decoration: InputDecoration(
+                                                labelText: AppLocalizations.of(
+                                                  context,
+                                                )!.settingsDisplayName,
+                                                border:
+                                                    const OutlineInputBorder(),
+                                              ),
+                                              onChanged: (value) =>
+                                                  field.didChange(value),
+                                            ),
                                       ),
                                     ],
                                   ),
-                                )
+                                ),
                               ],
                             ),
                             const SizedBox(height: heightSpacing),
                             Row(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                const Icon(
-                                  Icons.payment,
-                                ),
+                                const Icon(Icons.payment),
                                 const SizedBox(width: spacing),
                                 Flexible(
                                   child: Column(
                                     children: [
                                       FormBuilderField(
                                         name: "paypal_me",
-                                        builder: (FormFieldState<dynamic> field) =>
-                                            TextFormField(
-                                          initialValue: field.value,
-                                          decoration: InputDecoration(
-                                            labelText: AppLocalizations.of(context)!
-                                                .settingsPaypalMe,
-                                            border: const OutlineInputBorder(),
-                                            prefixText: 'paypal.me/',
-                                          ),
-                                          onChanged: (value) => field.didChange(value),
-                                        ),
+                                        builder:
+                                            (
+                                              FormFieldState<dynamic> field,
+                                            ) => TextFormField(
+                                              initialValue: field.value,
+                                              decoration: InputDecoration(
+                                                labelText: AppLocalizations.of(
+                                                  context,
+                                                )!.settingsPaypalMe,
+                                                border:
+                                                    const OutlineInputBorder(),
+                                                prefixText: 'paypal.me/',
+                                              ),
+                                              onChanged: (value) =>
+                                                  field.didChange(value),
+                                            ),
                                       ),
                                       const SizedBox(height: heightSpacing),
                                       FormBuilderField(
                                         name: "iban",
-                                        builder: (FormFieldState<dynamic> field) =>
-                                            TextFormField(
-                                          initialValue: field.value,
-                                          decoration: InputDecoration(
-                                            labelText: AppLocalizations.of(context)!
-                                                .settingsIban,
-                                            border: const OutlineInputBorder(),
-                                          ),
-                                          onChanged: (value) => field.didChange(value),
-                                        ),
+                                        builder:
+                                            (
+                                              FormFieldState<dynamic> field,
+                                            ) => TextFormField(
+                                              initialValue: field.value,
+                                              decoration: InputDecoration(
+                                                labelText: AppLocalizations.of(
+                                                  context,
+                                                )!.settingsIban,
+                                                border:
+                                                    const OutlineInputBorder(),
+                                              ),
+                                              onChanged: (value) =>
+                                                  field.didChange(value),
+                                            ),
                                       ),
                                       const SizedBox(height: heightSpacing),
                                       FormBuilderDropdown(
                                         name: 'locale',
                                         initialValue: locale?.toLanguageTag(),
                                         decoration: InputDecoration(
-                                          labelText: AppLocalizations.of(context)!
-                                              .settingsLocale,
+                                          labelText: AppLocalizations.of(
+                                            context,
+                                          )!.settingsLocale,
                                           border: const OutlineInputBorder(),
                                         ),
                                         items: [
                                           DropdownMenuItem(
                                             value: null,
-                                            child: Text(AppLocalizations.of(context)!
-                                                .localeSelectorSystem),
+                                            child: Text(
+                                              AppLocalizations.of(
+                                                context,
+                                              )!.localeSelectorSystem,
+                                            ),
                                           ),
                                           ...localeOptions.map(
                                             (locale) => DropdownMenuItem(
                                               value: locale,
-                                              child: Text(AppLocalizations.of(context)!
-                                                  .localeSelector(locale)),
+                                              child: Text(
+                                                AppLocalizations.of(
+                                                  context,
+                                                )!.localeSelector(locale),
+                                              ),
                                             ),
                                           ),
                                         ],
@@ -247,16 +300,23 @@ class _SettingState extends ConsumerState<Setting> {
                               alignment: Alignment.centerRight,
                               child: FilledButton(
                                 onPressed: () async {
-                                  if (_formKey.currentState!.saveAndValidate()) {
+                                  if (_formKey.currentState!
+                                      .saveAndValidate()) {
                                     try {
-                                      await UserRepository.saveProfileData(_formKey.currentState!.value);
+                                      await UserRepository.saveProfileData(
+                                        _formKey.currentState!.value,
+                                      );
                                       if (context.mounted) {
                                         showSnackBar(
+                                          context,
+                                          AppLocalizations.of(
                                             context,
-                                            AppLocalizations.of(context)!
-                                                .settingsUserUpdateSuccess);
+                                          )!.settingsUserUpdateSuccess,
+                                        );
 
-                                        if (_formKey.currentState!.value['locale'] ==
+                                        if (_formKey
+                                                .currentState!
+                                                .value['locale'] ==
                                             null) {
                                           ref
                                               .read(localeProvider.notifier)
@@ -264,16 +324,23 @@ class _SettingState extends ConsumerState<Setting> {
                                         } else {
                                           ref
                                               .read(localeProvider.notifier)
-                                              .setLocale(Locale(_formKey
-                                                  .currentState!.value['locale']));
+                                              .setLocale(
+                                                Locale(
+                                                  _formKey
+                                                      .currentState!
+                                                      .value['locale'],
+                                                ),
+                                              );
                                         }
                                       }
                                     } catch (e) {
                                       if (context.mounted) {
                                         showSnackBar(
+                                          context,
+                                          AppLocalizations.of(
                                             context,
-                                            AppLocalizations.of(context)!
-                                                .settingsUserUpdateError);
+                                          )!.settingsUserUpdateError,
+                                        );
                                       }
                                       debugPrint(e.toString());
                                     } finally {
@@ -285,7 +352,9 @@ class _SettingState extends ConsumerState<Setting> {
                                     }
                                   }
                                 },
-                                child: Text(AppLocalizations.of(context)!.update),
+                                child: Text(
+                                  AppLocalizations.of(context)!.update,
+                                ),
                               ),
                             ),
                           ],
@@ -298,7 +367,9 @@ class _SettingState extends ConsumerState<Setting> {
                 CardListTile(
                   isTop: true,
                   child: ListTile(
-                    title: Text(AppLocalizations.of(context)!.settingsPrivacyPolicy),
+                    title: Text(
+                      AppLocalizations.of(context)!.settingsPrivacyPolicy,
+                    ),
                     onTap: () {
                       GoRouter.of(context).push('/setting/privacy-policy');
                     },
@@ -310,43 +381,54 @@ class _SettingState extends ConsumerState<Setting> {
                     // Show it only if the user is under the GDPR
                     if (snapshot.hasData && snapshot.data == true) {
                       return CardListTile(
-                          child: ListTile(
-                              title: Text(AppLocalizations.of(context)!
-                                  .settingsPrivacyPreferences),
-                              onTap: () async {
-                                final scaffoldMessenger = ScaffoldMessenger.of(context);
+                        child: ListTile(
+                          title: Text(
+                            AppLocalizations.of(
+                              context,
+                            )!.settingsPrivacyPreferences,
+                          ),
+                          onTap: () async {
+                            final scaffoldMessenger = ScaffoldMessenger.of(
+                              context,
+                            );
 
-                                // Show the consent message again
-                                final didChangePreferences = await _initializationHelper
+                            // Show the consent message again
+                            final didChangePreferences =
+                                await _initializationHelper
                                     .changePrivacyPreferences();
 
-                                // Give feedback to the user that their
-                                // preferences have been correctly modified
-                                scaffoldMessenger.showSnackBar(
-                                  SnackBar(
-                                    content: Text(
-                                      didChangePreferences
-                                          ? AppLocalizations.of(context)!
-                                              .settingsPrivacyPreferencesSuccess
-                                          : AppLocalizations.of(context)!
-                                              .settingsPrivacyPreferencesError,
-                                    ),
-                                  ),
-                                );
-                              }));
+                            // Give feedback to the user that their
+                            // preferences have been correctly modified
+                            scaffoldMessenger.showSnackBar(
+                              SnackBar(
+                                content: Text(
+                                  didChangePreferences
+                                      ? AppLocalizations.of(
+                                          context,
+                                        )!.settingsPrivacyPreferencesSuccess
+                                      : AppLocalizations.of(
+                                          context,
+                                        )!.settingsPrivacyPreferencesError,
+                                ),
+                              ),
+                            );
+                          },
+                        ),
+                      );
                     } else {
                       return SizedBox();
                     }
                   },
                 ),
                 CardListTile(
-                    isBottom: true,
-                    child: ListTile(
-                      title: Text(AppLocalizations.of(context)!.contact),
-                      onTap: () {
-                        GoRouter.of(context).push('/setting/contact');
-                      },
-                    )),
+                  isBottom: true,
+                  child: ListTile(
+                    title: Text(AppLocalizations.of(context)!.contact),
+                    onTap: () {
+                      GoRouter.of(context).push('/setting/contact');
+                    },
+                  ),
+                ),
                 SizedBox(height: heightSpacing),
                 CardListTile(
                   isTop: true,
@@ -408,8 +490,10 @@ class _SettingState extends ConsumerState<Setting> {
                 await supabase.auth.signOut(); // Clean up local session
               } catch (e) {
                 if (context.mounted) {
-                  showSnackBar(context,
-                      AppLocalizations.of(context)!.deleteAccountError);
+                  showSnackBar(
+                    context,
+                    AppLocalizations.of(context)!.deleteAccountError,
+                  );
                 }
               }
             },

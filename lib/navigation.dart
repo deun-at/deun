@@ -60,14 +60,17 @@ class _NavigationScreenState extends ConsumerState<NavigationScreen> with Widget
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
-    _initUserLocale();
-    _initFirebaseMessaging();
-    initDeepLinks();
 
-    if (!kIsWeb) {
-      final _initializationHelper = InitializationHelper();
-      _initializationHelper.initialize();
-    }
+    // Defer async init to after the first frame renders to avoid skipping frames.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _initUserLocale();
+      _initFirebaseMessaging();
+      initDeepLinks();
+
+      if (!kIsWeb) {
+        InitializationHelper().initialize();
+      }
+    });
 
     // the one and only GoRouter instance
     _routerConfig = GoRouter(
@@ -399,10 +402,51 @@ class _NavigationScreenState extends ConsumerState<NavigationScreen> with Widget
   }
 
   Future<void> initDeepLinks() async {
-    // Handle links
     _linkSubscription = AppLinks().uriLinkStream.listen((uri) {
-      GoRouter.of(_rootNavigatorKey.currentContext!).go(uri.fragment);
+      final route = _validateDeepLink(uri.fragment);
+      if (route != null) {
+        GoRouter.of(_rootNavigatorKey.currentContext!).go(route);
+      }
     });
+  }
+
+  static final _uuidRegExp = RegExp(
+    r'^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$',
+  );
+  static final _emailRegExp = RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$');
+
+  String? _validateDeepLink(String fragment) {
+    final uri = Uri.tryParse(fragment);
+    if (uri == null) return null;
+
+    final path = uri.path;
+    final params = uri.queryParameters;
+
+    // Allowlisted routes with parameter validation
+    if (path == '/group/join') {
+      final groupId = params['groupId'];
+      if (groupId == null || !_uuidRegExp.hasMatch(groupId)) return null;
+      return fragment;
+    }
+
+    if (path == '/friend/accept') {
+      final email = params['email'];
+      if (email == null || !_emailRegExp.hasMatch(email)) return null;
+      return fragment;
+    }
+
+    // Safe static routes (no user-controlled parameters)
+    const safeRoutes = [
+      '/group',
+      '/friend',
+      '/setting',
+      '/setting/privacy-policy',
+      '/setting/contact',
+    ];
+    if (safeRoutes.contains(path)) return fragment;
+
+    // Reject everything else
+    return null;
   }
 
   @override
