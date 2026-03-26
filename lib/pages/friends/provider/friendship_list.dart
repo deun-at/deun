@@ -2,6 +2,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../../helper/realtime_mixin.dart';
 import '../data/friendship_model.dart';
+import '../data/friendship_repository.dart';
 
 part 'friendship_list.g.dart';
 
@@ -41,6 +42,6 @@ class FriendshipListNotifier extends _$FriendshipListNotifier with RealtimeNotif
   }
 
   Future<List<Friendship>> fetchFriendshipList() async {
-    return await Friendship.fetchData();
+    return await FriendshipRepository.fetchData();
   }
 }

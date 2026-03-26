@@ -1,5 +1,5 @@
 import 'package:deun/helper/helper.dart';
-import 'package:deun/pages/friends/data/friendship_model.dart';
+import 'package:deun/pages/friends/data/friendship_repository.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:deun/l10n/app_localizations.dart';
@@ -30,7 +30,7 @@ class _FriendAcceptPageState extends State<FriendAcceptPage> {
     }
 
     try {
-      await Friendship.accepted(email);
+      await FriendshipRepository.accepted(email);
       if (!mounted) return;
       showSnackBar(
           context,

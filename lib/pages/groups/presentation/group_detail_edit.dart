@@ -2,7 +2,7 @@ import 'dart:convert';
 
 import 'package:collection/collection.dart';
 import 'package:deun/helper/helper.dart';
-import 'package:deun/pages/friends/data/friendship_model.dart';
+import 'package:deun/pages/friends/data/friendship_repository.dart';
 import 'package:deun/widgets/card_list_view_builder.dart';
 import 'package:deun/widgets/theme_builder.dart';
 import 'package:flutter/material.dart';
@@ -104,7 +104,7 @@ class _GroupEditState extends ConsumerState<GroupEdit> {
 
     selectedUsers.add(supabase.auth.currentUser?.email ?? '');
 
-    List<SupaUser> result = await Friendship.fetchFriends(input, selectedUsers, 99);
+    List<SupaUser> result = await FriendshipRepository.fetchFriends(input, selectedUsers, 99);
 
     final List<Widget> tiles = [];
 

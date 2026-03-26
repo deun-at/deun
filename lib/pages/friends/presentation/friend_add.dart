@@ -1,6 +1,7 @@
 import 'package:deun/helper/helper.dart';
 import 'package:deun/main.dart';
 import 'package:deun/pages/friends/data/friendship_model.dart';
+import 'package:deun/pages/friends/data/friendship_repository.dart';
 import 'package:deun/pages/users/user_model.dart';
 import 'package:deun/pages/users/user_repository.dart';
 import 'package:deun/widgets/rounded_container.dart';
@@ -64,7 +65,7 @@ class _FriendAddBottomSheetState extends State<FriendAddBottomSheet> {
   }
 
   Future<List<Friendship>> _requestedFriendshipFuture() async {
-    return Friendship.getRequestedFriendships();
+    return FriendshipRepository.getRequestedFriendships();
   }
 
   @override
@@ -223,7 +224,7 @@ class _FriendAddBottomSheetState extends State<FriendAddBottomSheet> {
   }
 
   void _cancelFriendRequest(String userEmail, String displayName) async {
-    await Friendship.cancel(userEmail).then((_) {
+    await FriendshipRepository.cancel(userEmail).then((_) {
       showSnackBar(context,
           AppLocalizations.of(context)!.friendshipRequestCancel(displayName));
 
@@ -234,7 +235,7 @@ class _FriendAddBottomSheetState extends State<FriendAddBottomSheet> {
   }
 
   void _requestFriendship(String userEmail, String displayName) async {
-    Friendship.request(userEmail).then((_) {
+    FriendshipRepository.request(userEmail).then((_) {
       showSnackBar(context,
           AppLocalizations.of(context)!.friendshipRequestSent(displayName));
       sendFriendRequestNotification(context, {userEmail});
@@ -245,7 +246,7 @@ class _FriendAddBottomSheetState extends State<FriendAddBottomSheet> {
   }
 
   void _acceptFriendship(String userEmail, String displayName) {
-    Friendship.accepted(userEmail).then((_) {
+    FriendshipRepository.accepted(userEmail).then((_) {
       showSnackBar(context,
           AppLocalizations.of(context)!.friendshipAccept(displayName));
       sendFriendAcceptNotification(context, {userEmail});
@@ -256,7 +257,7 @@ class _FriendAddBottomSheetState extends State<FriendAddBottomSheet> {
   }
 
   void _declineFriendship(String userEmail, String displayName) {
-    Friendship.decline(userEmail).then((_) {
+    FriendshipRepository.decline(userEmail).then((_) {
       showSnackBar(context,
           AppLocalizations.of(context)!.friendshipRequestDecline(displayName));
       setState(() {
