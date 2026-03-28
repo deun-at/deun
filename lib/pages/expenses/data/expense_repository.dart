@@ -112,7 +112,7 @@ class ExpenseRepository {
     double amount = 0;
 
     int sortId = 10;
-    await Future.wait(expenseEntryValues.values.map((expenseEntry) async {
+    for (var expenseEntry in expenseEntryValues.values) {
       int qty = int.tryParse(expenseEntry['quantity']?.toString() ?? '1') ?? 1;
       double unitPrice = double.parse(expenseEntry['amount']);
       double entryTotal = unitPrice * qty;
@@ -193,7 +193,7 @@ class ExpenseRepository {
       }
 
       await supabase.from('expense_entry_share').insert(insertExpenseEntryShares);
-    }));
+    }
 
     await supabase
         .rpc('update_group_member_shares', params: {"_group_id": groupId, "_expense_id": expenseInsertResponse['id']});

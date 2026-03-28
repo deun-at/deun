@@ -1523,6 +1523,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Must add up to the total'**
   String get splitAmountError;
+
+  /// No description provided for @splitSharesSummary.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} {count, plural, =1{part} other{parts}}'**
+  String splitSharesSummary(int count);
 }
 
 class _AppLocalizationsDelegate

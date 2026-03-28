@@ -813,5 +813,13 @@
   "splitPercentageError": "Must add up to 100%",
   "@splitPercentageError": {},
   "splitAmountError": "Must add up to the total",
-  "@splitAmountError": {}
+  "@splitAmountError": {},
+  "splitSharesSummary": "{count} {count, plural, =1{part} other{parts}}",
+  "@splitSharesSummary": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  }
 }
