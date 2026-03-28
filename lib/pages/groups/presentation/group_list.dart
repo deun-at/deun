@@ -109,6 +109,7 @@ class _GroupListState extends ConsumerState<GroupList> {
           AsyncData(:final value) =>
             value.isEmpty
                 ? EmptyListWidget(
+                    icon: Icons.group_outlined,
                     label: AppLocalizations.of(context)!.groupNoEntries,
                     onRefresh: () => updateGroupList(),
                   )
@@ -131,6 +132,7 @@ class _GroupListState extends ConsumerState<GroupList> {
                     ),
                   ),
           AsyncError() => EmptyListWidget(
+            icon: Icons.group_outlined,
             label: AppLocalizations.of(context)!.groupNoEntries,
             onRefresh: () async {
               await updateGroupList();

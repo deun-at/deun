@@ -52,6 +52,7 @@ class _GroupDetailListState extends ConsumerState<GroupDetailList> {
 
         return expenses == null || expenses.isEmpty
             ? EmptyListWidget(
+                icon: Icons.receipt_long_outlined,
                 label: AppLocalizations.of(context)!.groupExpenseNoEntries,
                 onRefresh: () => updateExpenseList(),
               )

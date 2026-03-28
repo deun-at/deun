@@ -53,9 +53,10 @@ class GroupShareWidget extends StatelessWidget {
 
     String totalSharedText = AppLocalizations.of(context)!
         .groupDisplaySumAmount(paidByYourselfAll, group.totalShareAmount.abs());
-    if (toNumber(group.totalShareAmount.abs()) == '0.00') {
+    bool isAllDone = toNumber(group.totalShareAmount.abs()) == '0.00';
+    if (isAllDone) {
       totalSharedText = AppLocalizations.of(context)!.allDone;
-      textColorAll = textColor ?? Theme.of(context).colorScheme.onSurface;
+      textColorAll = Colors.green;
     }
 
     sharedWidget.insert(
@@ -72,14 +73,27 @@ class GroupShareWidget extends StatelessWidget {
       ),
     );
 
+    Widget totalShareContent = Text(
+      totalSharedText,
+      style: Theme.of(context).textTheme.titleMedium!.copyWith(color: textColorAll),
+    );
+
+    if (isAllDone) {
+      totalShareContent = Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Icon(Icons.check_circle_outlined, size: 20, color: Colors.green),
+          const SizedBox(width: 8),
+          totalShareContent,
+        ],
+      );
+    }
+
     sharedWidget.insert(
       1,
       Align(
         alignment: Alignment.bottomLeft,
-        child: Text(
-          totalSharedText,
-          style: Theme.of(context).textTheme.titleMedium!.copyWith(color: textColorAll),
-        ),
+        child: totalShareContent,
       ),
     );
 
