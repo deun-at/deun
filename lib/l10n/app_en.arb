@@ -785,5 +785,21 @@
     "placeholders": {
       "monthYear": {"type": "String"}
     }
-  }
+  },
+  "receiptScanButton": "Scan receipt",
+  "@receiptScanButton": {},
+  "receiptScanTitle": "Scan a receipt",
+  "@receiptScanTitle": {},
+  "receiptScanTakePhoto": "Take Photo",
+  "@receiptScanTakePhoto": {},
+  "receiptScanChooseGallery": "Choose from Gallery",
+  "@receiptScanChooseGallery": {},
+  "receiptScanProcessing": "Scanning receipt...",
+  "@receiptScanProcessing": {},
+  "receiptScanSuccess": "Receipt scanned! Review the details below.",
+  "@receiptScanSuccess": {},
+  "receiptScanNoData": "Could not read the receipt. Try again with a clearer photo.",
+  "@receiptScanNoData": {},
+  "receiptScanError": "Something went wrong while scanning.",
+  "@receiptScanError": {}
 }

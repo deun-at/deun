@@ -14,12 +14,16 @@ class ExpenseEntryWidget extends StatefulWidget {
       required this.expenseEntry,
       required this.index,
       required this.onRemove,
-      required this.groupMembers});
+      required this.groupMembers,
+      this.initialName,
+      this.initialAmount});
 
   final int index;
   final ExpenseEntry expenseEntry;
   final Function onRemove;
   final List<GroupMember> groupMembers;
+  final String? initialName;
+  final String? initialAmount;
 
   @override
   State<ExpenseEntryWidget> createState() => _ExpenseEntryWidgetState();
@@ -41,6 +45,7 @@ class _ExpenseEntryWidgetState extends State<ExpenseEntryWidget> {
                   child: FormBuilderField(
                       key: ValueKey("${widget.index}_name"),
                       name: "expense_entry[${widget.index}][name]",
+                      initialValue: widget.initialName,
                       builder: (FormFieldState<dynamic> field) => TextFormField(
                             initialValue: field.value,
                             style: Theme.of(context).textTheme.titleLarge,
@@ -61,6 +66,7 @@ class _ExpenseEntryWidgetState extends State<ExpenseEntryWidget> {
           FormBuilderField(
             key: ValueKey("${widget.index}_amount"),
             name: "expense_entry[${widget.index}][amount]",
+            initialValue: widget.initialAmount,
             autovalidateMode: AutovalidateMode.onUserInteraction,
             validator: FormBuilderValidators.required(
                 errorText:

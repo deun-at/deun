@@ -222,5 +222,13 @@
       "monthYear": {"type": "String"}
     }
   },
-  "errorLoadingData": "Fehler beim Laden der Daten!"
+  "errorLoadingData": "Fehler beim Laden der Daten!",
+  "receiptScanButton": "Beleg scannen",
+  "receiptScanTitle": "Beleg scannen",
+  "receiptScanTakePhoto": "Foto aufnehmen",
+  "receiptScanChooseGallery": "Aus Galerie wählen",
+  "receiptScanProcessing": "Beleg wird gescannt...",
+  "receiptScanSuccess": "Beleg gescannt! Details unten prüfen.",
+  "receiptScanNoData": "Beleg konnte nicht gelesen werden. Versuche es mit einem klareren Foto.",
+  "receiptScanError": "Beim Scannen ist etwas schiefgelaufen."
 }

@@ -74,6 +74,10 @@
 		<false/>
 		<key>GADApplicationIdentifier</key>
 		<string>ca-app-pub-3679753617535056~4418417265</string>
+    <key>NSCameraUsageDescription</key>
+    <string>Camera access is needed to scan receipts for expense tracking.</string>
+    <key>NSPhotoLibraryUsageDescription</key>
+    <string>Photo library access is needed to select receipt images for expense tracking.</string>
     <key>NSContactsUsageDescription</key>
     <string>to invite contacts to use the app and to find contacts and add them as a friend.</string>
 	</dict>
