@@ -122,6 +122,21 @@ class _ExpenseEntryWidgetState extends State<ExpenseEntryWidget> {
     }
   }
 
+  /// Single entry point after any split-affecting mutation.
+  void _updateSplitState({bool controllersInvalid = false}) {
+    _recalculateIfNeeded();
+    if (!controllersInvalid) {
+      _updateUnlockedControllers();
+    }
+    _syncFormFields();
+  }
+
+  /// Call when total (price * quantity) changed — scales locked members first.
+  void _onTotalChanged(double oldTotal) {
+    _scaleLockedMembers(oldTotal, _entryTotal);
+    _updateSplitState();
+  }
+
   void _recalculateAmounts() {
     List<String> enabled = _enabledMembers.toList();
     if (enabled.isEmpty) return;
@@ -307,9 +322,7 @@ class _ExpenseEntryWidgetState extends State<ExpenseEntryWidget> {
                           setState(() {
                             double oldTotal = _entryTotal;
                             _unitPrice = double.tryParse(value) ?? 0;
-                            _scaleLockedMembers(oldTotal, _entryTotal);
-                            _recalculateIfNeeded();
-                            _updateUnlockedControllers();
+                            _onTotalChanged(oldTotal);
                           });
                         },
                         keyboardType:
@@ -336,9 +349,7 @@ class _ExpenseEntryWidgetState extends State<ExpenseEntryWidget> {
                         setState(() {
                           double oldTotal = _entryTotal;
                           _quantity = newQty;
-                          _scaleLockedMembers(oldTotal, _entryTotal);
-                          _recalculateIfNeeded();
-                          _updateUnlockedControllers();
+                          _onTotalChanged(oldTotal);
                         });
                       }
 
@@ -423,7 +434,7 @@ class _ExpenseEntryWidgetState extends State<ExpenseEntryWidget> {
                 _memberParts[email] = 1;
               }
             }
-            _recalculateIfNeeded();
+            _updateSplitState(controllersInvalid: true);
           });
         },
       ),
@@ -562,8 +573,7 @@ class _ExpenseEntryWidgetState extends State<ExpenseEntryWidget> {
                     _enabledMembers.remove(member.email);
                     _lockedMembers.remove(member.email);
                   }
-                  _recalculateIfNeeded();
-                  _syncFormFields();
+                  _updateSplitState();
                 });
               },
             ),
@@ -669,12 +679,10 @@ class _ExpenseEntryWidgetState extends State<ExpenseEntryWidget> {
                   key: ValueKey(ctrlKey),
                   controller: controller,
                   onChanged: (value) {
-                    _memberAmounts[email] = double.tryParse(value) ?? 0;
-                    _lockedMembers.add(email);
-                    _recalculateAmounts();
-                    _updateUnlockedControllers();
                     setState(() {
-                      _syncFormFields();
+                      _memberAmounts[email] = double.tryParse(value) ?? 0;
+                      _lockedMembers.add(email);
+                      _updateSplitState();
                     });
                   },
                   keyboardType: const TextInputType.numberWithOptions(decimal: true),
@@ -707,12 +715,10 @@ class _ExpenseEntryWidgetState extends State<ExpenseEntryWidget> {
                   key: ValueKey(ctrlKey),
                   controller: controller,
                   onChanged: (value) {
-                    _memberPercentages[email] = double.tryParse(value) ?? 0;
-                    _lockedMembers.add(email);
-                    _recalculatePercentages();
-                    _updateUnlockedControllers();
                     setState(() {
-                      _syncFormFields();
+                      _memberPercentages[email] = double.tryParse(value) ?? 0;
+                      _lockedMembers.add(email);
+                      _updateSplitState();
                     });
                   },
                   keyboardType: const TextInputType.numberWithOptions(decimal: true),
@@ -748,7 +754,7 @@ class _ExpenseEntryWidgetState extends State<ExpenseEntryWidget> {
                   onChanged: (value) {
                     setState(() {
                       _memberParts[email] = int.tryParse(value) ?? 1;
-                      _syncFormFields();
+                      _updateSplitState();
                     });
                   },
                   keyboardType: TextInputType.number,

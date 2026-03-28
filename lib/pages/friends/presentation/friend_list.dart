@@ -23,6 +23,15 @@ class FriendList extends ConsumerStatefulWidget {
   ConsumerState<FriendList> createState() => _FriendListState();
 }
 
+Color _avatarColor(String name) {
+  const colors = [
+    Colors.red, Colors.pink, Colors.purple, Colors.deepPurple,
+    Colors.indigo, Colors.blue, Colors.teal, Colors.green,
+    Colors.orange, Colors.brown,
+  ];
+  return colors[name.hashCode.abs() % colors.length];
+}
+
 class _FriendListState extends ConsumerState<FriendList> {
   Future<void> updateFriendshipList() async {
     return ref.watch(friendshipListProvider.notifier).reload();
@@ -68,6 +77,7 @@ class _FriendListState extends ConsumerState<FriendList> {
             AsyncData(:final value) =>
               value.isEmpty
                   ? EmptyListWidget(
+                      icon: Icons.people_outlined,
                       label: AppLocalizations.of(context)!.friendsNoEntries,
                       onRefresh: () => updateFriendshipList(),
                     )
@@ -88,6 +98,13 @@ class _FriendListState extends ConsumerState<FriendList> {
                           }
 
                           return ListTile(
+                            leading: CircleAvatar(
+                              backgroundColor: _avatarColor(user.displayName),
+                              child: Text(
+                                user.displayName.isNotEmpty ? user.displayName[0].toUpperCase() : '?',
+                                style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                              ),
+                            ),
                             title: Text(user.displayName),
                             subtitle: Text(user.email),
                             trailing: Text(
@@ -102,6 +119,7 @@ class _FriendListState extends ConsumerState<FriendList> {
                       ),
                     ),
             AsyncError() => EmptyListWidget(
+              icon: Icons.people_outlined,
               label: AppLocalizations.of(context)!.friendsNoEntries,
               onRefresh: () async {
                 await updateFriendshipList();
@@ -114,150 +132,140 @@ class _FriendListState extends ConsumerState<FriendList> {
   }
 
   void openFriendshipDialog(BuildContext modalContext, SupaUser user, Friendship friendship) {
-    Color activeColor = Theme.of(context).colorScheme.onSurface;
-    Color disabledColor = Theme.of(context).colorScheme.outline;
+    final colorScheme = Theme.of(context).colorScheme;
+    final bool paypalEnabled = user.paypalMe != null && user.paypalMe!.isNotEmpty;
+    final bool ibanEnabled = user.iban != null && user.iban!.isNotEmpty;
 
-    showDialog<void>(
+    Color shareAmountColor = colorScheme.onSurface;
+    if (friendship.shareAmount < 0) {
+      shareAmountColor = Colors.red;
+    } else if (friendship.shareAmount > 0) {
+      shareAmountColor = Colors.green;
+    }
+
+    showModalBottomSheet<void>(
       context: context,
-      builder: (context) => SimpleDialog(
-        title: Text(AppLocalizations.of(context)!.friendshipDialogTitle(user.displayName)),
-        children: [
-          SimpleDialogOption(child: Text("${AppLocalizations.of(context)!.friendshipDialogEmail} ${user.email}")),
-          user.firstName == null && user.lastName == null
-              ? const SizedBox()
-              : SimpleDialogOption(
-                  child: Text(
-                    "${AppLocalizations.of(context)!.friendshipDialogFullName} ${user.firstName ?? ''} ${user.lastName ?? ''}",
-                  ),
+      showDragHandle: true,
+      builder: (context) {
+        return SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // User header
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+                child: Row(
+                  children: [
+                    CircleAvatar(
+                      radius: 24,
+                      backgroundColor: _avatarColor(user.displayName),
+                      child: Text(
+                        user.displayName.isNotEmpty ? user.displayName[0].toUpperCase() : '?',
+                        style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 20),
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(user.displayName, style: Theme.of(context).textTheme.titleMedium),
+                          Text(user.email, style: Theme.of(context).textTheme.bodySmall?.copyWith(color: colorScheme.outline)),
+                          if (user.firstName != null || user.lastName != null)
+                            Text(
+                              '${user.firstName ?? ''} ${user.lastName ?? ''}'.trim(),
+                              style: Theme.of(context).textTheme.bodySmall?.copyWith(color: colorScheme.outline),
+                            ),
+                        ],
+                      ),
+                    ),
+                    Text(
+                      AppLocalizations.of(context)!.toCurrency(friendship.shareAmount),
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(color: shareAmountColor),
+                    ),
+                  ],
                 ),
-          Divider(),
-          ...(friendship.shareAmount < -0.01
-              ? [
-                  SimpleDialogOption(
+              ),
+              const Divider(),
+              // Payment actions
+              if (friendship.shareAmount < -0.01) ...[
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 4),
+                  child: Align(
+                    alignment: Alignment.centerLeft,
                     child: Text(
                       AppLocalizations.of(context)!.payBackDialog(user.displayName, friendship.shareAmount.abs()),
+                      style: Theme.of(context).textTheme.bodyMedium,
                     ),
                   ),
-                  SimpleDialogOption(
-                    onPressed: () async {
-                      if (user.paypalMe == null || user.paypalMe!.isEmpty) {
-                        return;
-                      }
-                      if (!await launchUrl(
-                        Uri.parse("https://www.paypal.me/${user.paypalMe}/${friendship.shareAmount.abs()}"),
-                      )) {
-                        throw Exception(
-                          'Could not launch https://www.paypal.me/${user.paypalMe}/${friendship.shareAmount.abs()}',
+                ),
+                ListTile(
+                  leading: Icon(Icons.payments_outlined, color: paypalEnabled ? colorScheme.onSurface : colorScheme.outline),
+                  title: Text(AppLocalizations.of(context)!.payBackDialogPaypal),
+                  enabled: paypalEnabled,
+                  onTap: () async {
+                    if (!await launchUrl(
+                      Uri.parse("https://www.paypal.me/${user.paypalMe}/${friendship.shareAmount.abs()}"),
+                    )) {
+                      throw Exception(
+                        'Could not launch https://www.paypal.me/${user.paypalMe}/${friendship.shareAmount.abs()}',
+                      );
+                    }
+                  },
+                ),
+                ListTile(
+                  leading: Icon(Icons.credit_card, color: ibanEnabled ? colorScheme.onSurface : colorScheme.outline),
+                  title: Text(AppLocalizations.of(context)!.payBackDialogIban),
+                  enabled: ibanEnabled,
+                  onTap: () {
+                    Clipboard.setData(ClipboardData(text: user.iban as String)).then((_) {});
+                  },
+                ),
+                ListTile(
+                  leading: Icon(Icons.credit_score, color: colorScheme.onSurface),
+                  title: Text(AppLocalizations.of(context)!.payBackDialogDone),
+                  onTap: () async {
+                    try {
+                      await GroupRepository.payBackAll(context, user.email, friendship.shareAmount.abs());
+                      if (context.mounted) {
+                        showSnackBar(
+                          context,
+                          AppLocalizations.of(context)!.payBackSuccess(user.email, friendship.shareAmount.abs()),
                         );
                       }
-                    },
-                    child: Row(
-                      children: [
-                        Text(
-                          AppLocalizations.of(context)!.payBackDialogPaypal,
-                          style: Theme.of(context).textTheme.bodyMedium!.copyWith(
-                            color: user.paypalMe == null || user.paypalMe!.isEmpty ? disabledColor : activeColor,
-                          ),
-                        ),
-                        const Spacer(),
-                        Icon(
-                          Icons.payments_outlined,
-                          color: user.paypalMe == null || user.paypalMe!.isEmpty ? disabledColor : activeColor,
-                        ),
-                      ],
-                    ),
-                  ),
-                  SimpleDialogOption(
-                    onPressed: () {
-                      if (user.iban == null || user.iban!.isEmpty) {
-                        return;
+                    } catch (e) {
+                      debugPrint(e.toString());
+                      if (context.mounted) {
+                        showSnackBar(
+                          context,
+                          AppLocalizations.of(context)!.payBackError,
+                        );
                       }
-
-                      Clipboard.setData(ClipboardData(text: user.iban as String)).then((_) {});
-                    },
-                    child: Row(
-                      children: [
-                        Text(
-                          AppLocalizations.of(context)!.payBackDialogIban,
-                          style: Theme.of(context).textTheme.bodyMedium!.copyWith(
-                            color: user.iban == null || user.iban!.isEmpty ? disabledColor : activeColor,
-                          ),
-                        ),
-                        const Spacer(),
-                        Icon(
-                          Icons.credit_card,
-                          color: user.iban == null || user.iban!.isEmpty ? disabledColor : activeColor,
-                        ),
-                      ],
-                    ),
-                  ),
-                  SimpleDialogOption(
-                    onPressed: () async {
-                      try {
-                        await GroupRepository.payBackAll(context, user.email, friendship.shareAmount.abs());
-                        if (context.mounted) {
-                          showSnackBar(
-                            context,
-                            AppLocalizations.of(context)!.payBackSuccess(user.email, friendship.shareAmount.abs()),
-                          );
-                        }
-                      } catch (e) {
-                        debugPrint(e.toString());
-                        if (context.mounted) {
-                          showSnackBar(
-                            context,
-                            AppLocalizations.of(context)!.payBackError,
-                          );
-                        }
-                      } finally {
-                        if (context.mounted) {
-                          Navigator.pop(context); // Close friendship dialog
-                        }
+                    } finally {
+                      if (context.mounted) {
+                        Navigator.pop(context);
                       }
-                    },
-                    child: Row(
-                      children: [
-                        Text(
-                          AppLocalizations.of(context)!.payBackDialogDone,
-                          style: Theme.of(context).textTheme.bodyMedium!.copyWith(color: activeColor),
-                        ),
-                        const Spacer(),
-                        Icon(Icons.credit_score, color: activeColor),
-                      ],
-                    ),
-                  ),
-                  Divider(),
-                ]
-              : []),
-          SimpleDialogOption(
-            onPressed: () {
-              openRemoveFriendDialog(user);
-            },
-            child: Row(
-              children: [
-                Text(
-                  AppLocalizations.of(context)!.friendshipDialogRemoveAsFriend,
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Theme.of(context).colorScheme.error),
+                    }
+                  },
                 ),
-                const Spacer(),
-                Icon(Icons.person_remove_outlined, color: Theme.of(context).colorScheme.error),
+                const Divider(),
               ],
-            ),
+              // Remove friend
+              ListTile(
+                leading: Icon(Icons.person_remove_outlined, color: colorScheme.error),
+                title: Text(
+                  AppLocalizations.of(context)!.friendshipDialogRemoveAsFriend,
+                  style: TextStyle(color: colorScheme.error),
+                ),
+                onTap: () {
+                  openRemoveFriendDialog(user);
+                },
+              ),
+              const SizedBox(height: 8),
+            ],
           ),
-          Divider(),
-          SizedBox(height: 10),
-          SimpleDialogOption(
-            onPressed: () {
-              Navigator.pop(context); // Close friendship dialog
-            },
-            child: Text(
-              AppLocalizations.of(context)!.close,
-              style: Theme.of(context).textTheme.bodyMedium,
-              textAlign: TextAlign.end,
-            ),
-          ),
-        ],
-      ),
+        );
+      },
     );
   }
 
