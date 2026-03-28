@@ -107,8 +107,7 @@ class _ExpenseEntryWidgetState extends State<ExpenseEntryWidget> {
   }
 
   void _recalculateIfNeeded() {
-    List<String> enabled = _enabledMembers.toList();
-    if (enabled.isEmpty) return;
+    if (_enabledMembers.isEmpty) return;
 
     switch (_splitMode) {
       case SplitMode.amount:
@@ -118,7 +117,7 @@ class _ExpenseEntryWidgetState extends State<ExpenseEntryWidget> {
         _recalculatePercentages();
         break;
       case SplitMode.shares:
-        _recalculatePartsPreview();
+        // Parts are always user-set, no auto-recalculation needed
         break;
     }
   }
@@ -171,9 +170,16 @@ class _ExpenseEntryWidgetState extends State<ExpenseEntryWidget> {
     }
   }
 
-  void _recalculatePartsPreview() {
-    // Parts don't auto-adjust, but we compute the € preview
-    // Nothing to recalculate — preview is computed in build
+  void _scaleLockedMembers(double oldTotal, double newTotal) {
+    if (oldTotal <= 0 || newTotal <= 0 || _lockedMembers.isEmpty) {
+      _lockedMembers.clear();
+      return;
+    }
+    double ratio = newTotal / oldTotal;
+    for (var email in _lockedMembers) {
+      _memberAmounts[email] = (_memberAmounts[email] ?? 0) * ratio;
+    }
+    // Percentages stay the same when total changes — they're relative
   }
 
   Map<String, dynamic> _buildShareData() {
@@ -198,12 +204,11 @@ class _ExpenseEntryWidgetState extends State<ExpenseEntryWidget> {
     if (email == supabase.auth.currentUser?.email) {
       return AppLocalizations.of(context)!.you;
     }
-    return widget.groupMembers
-        .firstWhere(
-          (m) => m.email == email,
-          orElse: () => widget.groupMembers.first,
-        )
-        .displayName;
+    try {
+      return widget.groupMembers.firstWhere((m) => m.email == email).displayName;
+    } catch (_) {
+      return email;
+    }
   }
 
   @override
@@ -300,8 +305,9 @@ class _ExpenseEntryWidgetState extends State<ExpenseEntryWidget> {
                         onChanged: (value) {
                           field.didChange(value);
                           setState(() {
+                            double oldTotal = _entryTotal;
                             _unitPrice = double.tryParse(value) ?? 0;
-                            _lockedMembers.clear();
+                            _scaleLockedMembers(oldTotal, _entryTotal);
                             _recalculateIfNeeded();
                             _updateUnlockedControllers();
                           });
@@ -328,8 +334,9 @@ class _ExpenseEntryWidgetState extends State<ExpenseEntryWidget> {
                         if (newQty < 1) newQty = 1;
                         qtyField.didChange(newQty.toString());
                         setState(() {
+                          double oldTotal = _entryTotal;
                           _quantity = newQty;
-                          _lockedMembers.clear();
+                          _scaleLockedMembers(oldTotal, _entryTotal);
                           _recalculateIfNeeded();
                           _updateUnlockedControllers();
                         });
@@ -423,75 +430,107 @@ class _ExpenseEntryWidgetState extends State<ExpenseEntryWidget> {
     );
   }
 
-  Widget _buildMemberList(double spacing, AppLocalizations l10n) {
-    return FormBuilderField(
-      key: ValueKey("${widget.index}_shares"),
-      name: "expense_entry[${widget.index}][shares]",
-      initialValue: _enabledMembers,
-      autovalidateMode: AutovalidateMode.onUserInteraction,
-      validator: (value) {
-        Set<String>? shares = value;
-        if (shares == null || shares.isEmpty) {
-          return l10n.expenseEntrySharesValidationEmpty;
-        }
-        return null;
-      },
-      builder: (FormFieldState<dynamic> sharesField) {
-        return FormBuilderField(
-          key: ValueKey("${widget.index}_share_data"),
-          name: "expense_entry[${widget.index}][share_data]",
-          initialValue: _buildShareData(),
-          builder: (FormFieldState<dynamic> shareDataField) {
-            return FormBuilderField(
-              key: ValueKey("${widget.index}_split_mode"),
-              name: "expense_entry[${widget.index}][split_mode]",
-              initialValue: _splitMode.toDbValue(),
-              builder: (FormFieldState<dynamic> splitModeField) {
-                return FormBuilderField(
-                  key: ValueKey("${widget.index}_locked_members"),
-                  name: "expense_entry[${widget.index}][locked_members]",
-                  initialValue: _lockedMembers,
-                  builder: (FormFieldState<dynamic> lockedMembersField) {
-                // Sync form fields on every build
-                WidgetsBinding.instance.addPostFrameCallback((_) {
-                  if (mounted) {
-                    sharesField.didChange(_enabledMembers);
-                    shareDataField.didChange(_buildShareData());
-                    splitModeField.didChange(_splitMode.toDbValue());
-                    lockedMembersField.didChange(_lockedMembers);
-                  }
-                });
+  bool _isSplitValid() {
+    if (_enabledMembers.isEmpty) return false;
+    switch (_splitMode) {
+      case SplitMode.amount:
+        double sum = _enabledMembers.fold(
+            0.0, (s, email) => s + (_memberAmounts[email] ?? 0));
+        return (sum - _entryTotal).abs() < 0.01 * _enabledMembers.length.clamp(1, 10);
+      case SplitMode.percentage:
+        double sum = _enabledMembers.fold(
+            0.0, (s, email) => s + (_memberPercentages[email] ?? 0));
+        return (sum - 100).abs() < 0.05;
+      case SplitMode.shares:
+        int totalParts = _enabledMembers.fold(
+            0, (sum, e) => sum + (_memberParts[e] ?? 1));
+        return totalParts > 0;
+    }
+  }
 
-                return InputDecorator(
-                  decoration: InputDecoration(
-                    label: Text(l10n.expenseEntrySharesLable),
-                    errorText: sharesField.errorText,
-                    border: InputBorder.none,
-                    contentPadding: const EdgeInsets.all(0),
-                  ),
-                  child: Column(
-                    children: [
-                      ...widget.groupMembers.map((member) {
-                        bool isEnabled = _enabledMembers.contains(member.email);
-                        return _buildMemberRow(
-                          member,
-                          isEnabled,
-                          sharesField,
-                          shareDataField,
-                        );
-                      }),
-                      const SizedBox(height: 4),
-                      _buildSummaryRow(),
-                    ],
-                  ),
-                );
-                  },
-                );
-              },
+  void _syncFormFields() {
+    final formState = FormBuilder.of(context);
+    if (formState == null) return;
+    final prefix = "expense_entry[${widget.index}]";
+    formState.fields["$prefix[shares]"]?.didChange(_enabledMembers);
+    formState.fields["$prefix[share_data]"]?.didChange(_buildShareData());
+    formState.fields["$prefix[split_mode]"]?.didChange(_splitMode.toDbValue());
+    formState.fields["$prefix[locked_members]"]?.didChange(_lockedMembers);
+  }
+
+  Widget _buildMemberList(double spacing, AppLocalizations l10n) {
+    return Column(
+      children: [
+        // Shares field with validation
+        FormBuilderField(
+          key: ValueKey("${widget.index}_shares"),
+          name: "expense_entry[${widget.index}][shares]",
+          initialValue: _enabledMembers,
+          autovalidateMode: AutovalidateMode.onUserInteraction,
+          validator: (value) {
+            Set<String>? shares = value;
+            if (shares == null || shares.isEmpty) {
+              return l10n.expenseEntrySharesValidationEmpty;
+            }
+            if (!_isSplitValid()) {
+              switch (_splitMode) {
+                case SplitMode.percentage:
+                  return l10n.splitPercentageError;
+                case SplitMode.amount:
+                  return l10n.splitAmountError;
+                case SplitMode.shares:
+                  return l10n.expenseEntrySharesValidationEmpty;
+              }
+            }
+            return null;
+          },
+          builder: (FormFieldState<dynamic> sharesField) {
+            return InputDecorator(
+              decoration: InputDecoration(
+                label: Text(l10n.expenseEntrySharesLable),
+                errorText: sharesField.errorText,
+                border: InputBorder.none,
+                contentPadding: const EdgeInsets.all(0),
+              ),
+              child: Column(
+                children: [
+                  ...widget.groupMembers.map((member) {
+                    bool isEnabled = _enabledMembers.contains(member.email);
+                    return _buildMemberRow(member, isEnabled, sharesField);
+                  }),
+                  const SizedBox(height: 4),
+                  _buildSummaryRow(),
+                ],
+              ),
             );
           },
-        );
-      },
+        ),
+        // Hidden fields for share_data, split_mode, locked_members
+        Offstage(
+          child: Column(
+            children: [
+              FormBuilderField(
+                key: ValueKey("${widget.index}_share_data"),
+                name: "expense_entry[${widget.index}][share_data]",
+                initialValue: _buildShareData(),
+                builder: (field) => const SizedBox.shrink(),
+              ),
+              FormBuilderField(
+                key: ValueKey("${widget.index}_split_mode"),
+                name: "expense_entry[${widget.index}][split_mode]",
+                initialValue: _splitMode.toDbValue(),
+                builder: (field) => const SizedBox.shrink(),
+              ),
+              FormBuilderField(
+                key: ValueKey("${widget.index}_locked_members"),
+                name: "expense_entry[${widget.index}][locked_members]",
+                initialValue: _lockedMembers,
+                builder: (field) => const SizedBox.shrink(),
+              ),
+            ],
+          ),
+        ),
+      ],
     );
   }
 
@@ -499,7 +538,6 @@ class _ExpenseEntryWidgetState extends State<ExpenseEntryWidget> {
     GroupMember member,
     bool isEnabled,
     FormFieldState<dynamic> sharesField,
-    FormFieldState<dynamic> shareDataField,
   ) {
     String displayName = _getDisplayName(member.email);
     bool isLocked = _lockedMembers.contains(member.email);
@@ -517,7 +555,6 @@ class _ExpenseEntryWidgetState extends State<ExpenseEntryWidget> {
                 setState(() {
                   if (value == true) {
                     _enabledMembers.add(member.email);
-                    // Set defaults for newly enabled member
                     if (_splitMode == SplitMode.shares) {
                       _memberParts[member.email] = 1;
                     }
@@ -526,8 +563,7 @@ class _ExpenseEntryWidgetState extends State<ExpenseEntryWidget> {
                     _lockedMembers.remove(member.email);
                   }
                   _recalculateIfNeeded();
-                  sharesField.didChange(_enabledMembers);
-                  shareDataField.didChange(_buildShareData());
+                  _syncFormFields();
                 });
               },
             ),
@@ -549,7 +585,7 @@ class _ExpenseEntryWidgetState extends State<ExpenseEntryWidget> {
                 ? Row(
                     mainAxisAlignment: MainAxisAlignment.end,
                     children: [
-                      _buildMemberInput(member.email, shareDataField),
+                      _buildMemberInput(member.email),
                       if (isLocked && _splitMode != SplitMode.shares)
                         Padding(
                           padding: const EdgeInsets.only(left: 2),
@@ -615,10 +651,7 @@ class _ExpenseEntryWidgetState extends State<ExpenseEntryWidget> {
     }
   }
 
-  Widget _buildMemberInput(
-    String email,
-    FormFieldState<dynamic> shareDataField,
-  ) {
+  Widget _buildMemberInput(String email) {
     switch (_splitMode) {
       case SplitMode.amount:
         double val = _memberAmounts[email] ?? 0;
@@ -641,7 +674,7 @@ class _ExpenseEntryWidgetState extends State<ExpenseEntryWidget> {
                     _recalculateAmounts();
                     _updateUnlockedControllers();
                     setState(() {
-                      shareDataField.didChange(_buildShareData());
+                      _syncFormFields();
                     });
                   },
                   keyboardType: const TextInputType.numberWithOptions(decimal: true),
@@ -679,7 +712,7 @@ class _ExpenseEntryWidgetState extends State<ExpenseEntryWidget> {
                     _recalculatePercentages();
                     _updateUnlockedControllers();
                     setState(() {
-                      shareDataField.didChange(_buildShareData());
+                      _syncFormFields();
                     });
                   },
                   keyboardType: const TextInputType.numberWithOptions(decimal: true),
@@ -715,7 +748,7 @@ class _ExpenseEntryWidgetState extends State<ExpenseEntryWidget> {
                   onChanged: (value) {
                     setState(() {
                       _memberParts[email] = int.tryParse(value) ?? 1;
-                      shareDataField.didChange(_buildShareData());
+                      _syncFormFields();
                     });
                   },
                   keyboardType: TextInputType.number,
@@ -759,28 +792,25 @@ class _ExpenseEntryWidgetState extends State<ExpenseEntryWidget> {
   Widget _buildSummaryRow() {
     final l10n = AppLocalizations.of(context)!;
     String summary;
-    bool isValid;
+    bool isValid = _isSplitValid();
 
     switch (_splitMode) {
       case SplitMode.amount:
         double sum = _enabledMembers.fold(
             0.0, (s, email) => s + (_memberAmounts[email] ?? 0));
-        isValid = (sum - _entryTotal).abs() < 0.02;
         summary =
             "${l10n.totalLabel}: €${sum.toStringAsFixed(2)} / €${_entryTotal.toStringAsFixed(2)}";
         break;
       case SplitMode.percentage:
         double sum = _enabledMembers.fold(
             0.0, (s, email) => s + (_memberPercentages[email] ?? 0));
-        isValid = (sum - 100).abs() < 0.1;
         summary = "${l10n.totalLabel}: ${sum.toStringAsFixed(1)}%";
         break;
       case SplitMode.shares:
         int totalParts = _enabledMembers.fold(
             0, (sum, e) => sum + (_memberParts[e] ?? 1));
-        isValid = totalParts > 0;
         summary =
-            "$totalParts ${totalParts == 1 ? 'part' : 'parts'} · €${_entryTotal.toStringAsFixed(2)}";
+            "${l10n.splitSharesSummary(totalParts)} · €${_entryTotal.toStringAsFixed(2)}";
         break;
     }
 

@@ -937,4 +937,15 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get splitAmountError => 'Muss die Gesamtsumme ergeben';
+
+  @override
+  String splitSharesSummary(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Anteile',
+      one: 'Anteil',
+    );
+    return '$count $_temp0';
+  }
 }
