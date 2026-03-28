@@ -113,12 +113,19 @@ class ExpenseRepository {
 
     int sortId = 10;
     await Future.wait(expenseEntryValues.values.map((expenseEntry) async {
-      amount += double.parse(expenseEntry['amount']);
+      int qty = int.tryParse(expenseEntry['quantity']?.toString() ?? '1') ?? 1;
+      double unitPrice = double.parse(expenseEntry['amount']);
+      double entryTotal = unitPrice * qty;
+      amount += entryTotal;
+
+      String splitMode = expenseEntry['split_mode'] ?? 'equal';
 
       Map<String, dynamic> insertExpenseEntry = {
         "expense_id": expenseEntry["expense_id"],
         "name": expenseEntry["name"],
-        "amount": expenseEntry["amount"],
+        "amount": entryTotal,
+        "quantity": qty,
+        "split_mode": splitMode,
         "sort_id": sortId
       };
 
@@ -130,16 +137,60 @@ class ExpenseRepository {
       await supabase.from('expense_entry_share').delete().eq('expense_entry_id', expenseEntryResult['id']);
 
       Set<String> expenseEntryShares = expenseEntry['shares'];
+      Map<String, dynamic> shareData = expenseEntry['share_data'] ?? {};
+      Set<String> lockedMembers = expenseEntry['locked_members'] is Set<String>
+          ? expenseEntry['locked_members']
+          : <String>{};
 
       notificationReceiver.addAll(expenseEntryShares);
 
-      List<Map<String, dynamic>> insertExpenseEntryShares = expenseEntryShares.map((email) {
-        return {
-          "expense_entry_id": expenseEntryResult['id'],
-          "email": email,
-          "percentage": 100 / expenseEntryShares.length
-        };
-      }).toList();
+      List<Map<String, dynamic>> insertExpenseEntryShares = [];
+
+      if (shareData.isNotEmpty) {
+        int totalParts = splitMode == 'shares'
+            ? shareData.values.fold(0, (sum, v) => sum + (v as int))
+            : 0;
+
+        for (var entry in shareData.entries) {
+          double percentage;
+          double? fixedAmount;
+          int? parts;
+
+          switch (splitMode) {
+            case 'exact':
+              fixedAmount = (entry.value as num).toDouble();
+              percentage = entryTotal > 0 ? (fixedAmount / entryTotal) * 100 : 0;
+              break;
+            case 'percentage':
+              percentage = (entry.value as num).toDouble();
+              break;
+            case 'shares':
+              parts = entry.value as int;
+              percentage = totalParts > 0 ? (parts / totalParts) * 100 : 0;
+              break;
+            default:
+              percentage = 100 / shareData.length;
+          }
+
+          insertExpenseEntryShares.add({
+            "expense_entry_id": expenseEntryResult['id'],
+            "email": entry.key,
+            "percentage": percentage,
+            "fixed_amount": fixedAmount,
+            "parts": parts,
+            "is_locked": lockedMembers.contains(entry.key),
+          });
+        }
+      } else {
+        // Fallback: equal split using shares set (backward compat)
+        insertExpenseEntryShares = expenseEntryShares.map((email) {
+          return {
+            "expense_entry_id": expenseEntryResult['id'],
+            "email": email,
+            "percentage": 100 / expenseEntryShares.length
+          };
+        }).toList();
+      }
 
       await supabase.from('expense_entry_share').insert(insertExpenseEntryShares);
     }));

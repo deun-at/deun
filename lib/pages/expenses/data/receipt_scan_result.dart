@@ -1,8 +1,11 @@
 class ReceiptLineItem {
   final String name;
   final double amount;
+  final int quantity;
 
-  const ReceiptLineItem({required this.name, required this.amount});
+  const ReceiptLineItem({required this.name, required this.amount, this.quantity = 1});
+
+  double get unitPrice => quantity > 0 ? amount / quantity : amount;
 }
 
 class ReceiptScanResult {

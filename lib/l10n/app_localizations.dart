@@ -1487,6 +1487,42 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Something went wrong while scanning.'**
   String get receiptScanError;
+
+  /// No description provided for @splitModeAmount.
+  ///
+  /// In en, this message translates to:
+  /// **'Amount'**
+  String get splitModeAmount;
+
+  /// No description provided for @splitModePercentage.
+  ///
+  /// In en, this message translates to:
+  /// **'%'**
+  String get splitModePercentage;
+
+  /// No description provided for @splitModeShares.
+  ///
+  /// In en, this message translates to:
+  /// **'Parts'**
+  String get splitModeShares;
+
+  /// No description provided for @totalLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Total'**
+  String get totalLabel;
+
+  /// No description provided for @splitPercentageError.
+  ///
+  /// In en, this message translates to:
+  /// **'Must add up to 100%'**
+  String get splitPercentageError;
+
+  /// No description provided for @splitAmountError.
+  ///
+  /// In en, this message translates to:
+  /// **'Must add up to the total'**
+  String get splitAmountError;
 }
 
 class _AppLocalizationsDelegate

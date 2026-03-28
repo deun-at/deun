@@ -4,7 +4,11 @@ class ExpenseEntry {
   late String expenseId;
   late String? name;
   late double amount;
+  late int quantity;
+  late String splitMode;
   late String createdAt;
+
+  double get unitPrice => quantity > 0 ? amount / quantity : amount;
 
   List<ExpenseEntryShare> expenseEntryShares = [];
 
@@ -16,6 +20,8 @@ class ExpenseEntry {
     expenseId = json["expense_id"];
     name = json["name"];
     amount = double.parse((json["amount"] ?? 0).toString());
+    quantity = int.tryParse((json["quantity"] ?? 1).toString()) ?? 1;
+    splitMode = json["split_mode"] ?? 'equal';
     createdAt = json["created_at"];
 
     expenseEntryShares = [];
@@ -34,6 +40,9 @@ class ExpenseEntryShare {
   late String email;
   late String displayName;
   late double percentage;
+  late double? fixedAmount;
+  late int? parts;
+  late bool isLocked;
   late String createdAt;
 
   void loadDataFromJson(Map<String, dynamic> json) {
@@ -41,6 +50,11 @@ class ExpenseEntryShare {
     email = json["email"];
     displayName = json["display_name"];
     percentage = double.parse((json["percentage"] ?? 0).toString());
+    fixedAmount = json["fixed_amount"] != null
+        ? double.parse(json["fixed_amount"].toString())
+        : null;
+    parts = json["parts"] != null ? int.tryParse(json["parts"].toString()) : null;
+    isLocked = json["is_locked"] == true;
     createdAt = json["created_at"];
   }
 }
