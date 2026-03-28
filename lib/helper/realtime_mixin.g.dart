@@ -12,7 +12,7 @@ part of 'realtime_mixin.dart';
 /// without a full rebuild (preserving pagination state, scroll position, etc.).
 
 @ProviderFor(AppResumeCounter)
-const appResumeCounterProvider = AppResumeCounterProvider._();
+final appResumeCounterProvider = AppResumeCounterProvider._();
 
 /// Counter incremented on app resume. Providers listen to this to reload data
 /// without a full rebuild (preserving pagination state, scroll position, etc.).
@@ -20,7 +20,7 @@ final class AppResumeCounterProvider
     extends $NotifierProvider<AppResumeCounter, int> {
   /// Counter incremented on app resume. Providers listen to this to reload data
   /// without a full rebuild (preserving pagination state, scroll position, etc.).
-  const AppResumeCounterProvider._()
+  AppResumeCounterProvider._()
     : super(
         from: null,
         argument: null,
@@ -57,7 +57,6 @@ abstract class _$AppResumeCounter extends $Notifier<int> {
   @$mustCallSuper
   @override
   void runBuild() {
-    final created = build();
     final ref = this.ref as $Ref<int, int>;
     final element =
         ref.element
@@ -67,6 +66,6 @@ abstract class _$AppResumeCounter extends $Notifier<int> {
               Object?,
               Object?
             >;
-    element.handleValue(ref, created);
+    element.handleCreate(ref, build);
   }
 }

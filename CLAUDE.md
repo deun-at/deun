@@ -37,8 +37,11 @@ These are passed via `--dart-define-from-file` at build time.
 
 ### State Management
 - **Riverpod** with code generation (`riverpod_annotation` + `riverpod_generator`)
-- All providers defined in `lib/provider.dart` → generated `lib/provider.g.dart`
-- Key notifiers: `GroupListNotifier`, `GroupDetailNotifier`, `ExpenseListNotifier`, `FriendshipListNotifier`, `UserDetailNotifier`
+- Global providers (user, locale, statistics) in `lib/provider.dart` → `lib/provider.g.dart`
+- Feature-specific notifiers live in their modules: `lib/pages/*/provider/`
+  - `GroupListNotifier`, `GroupDetailNotifier` → `pages/groups/provider/`
+  - `ExpenseListNotifier` → `pages/expenses/provider/`
+  - `FriendshipListNotifier` → `pages/friends/provider/`
 
 ### Routing
 - **GoRouter** with 3 stateful shell branches: `/group`, `/friend`, `/setting`
@@ -46,8 +49,9 @@ These are passed via `--dart-define-from-file` at build time.
 - Nested modals for group/expense creation and editing
 
 ### Real-Time Updates
-- Supabase channels subscribe to PostgresChangeEvents on tables
-- Auto-reload pattern: providers listen to insert/update/delete events and refresh state
+- `RealtimeNotifierMixin` (`lib/helper/realtime_mixin.dart`) centralizes Supabase channel management
+- Notifiers use `with RealtimeNotifierMixin` to auto-subscribe/unsubscribe and handle app resume
+- Listens to PostgresChangeEvents (insert/update/delete) and refreshes state
 
 ### Key Source Layout
 ```
@@ -55,16 +59,25 @@ lib/
 ├── main.dart              # Entry: Firebase + Supabase init
 ├── auth_gate.dart         # Auth state gating via StreamBuilder
 ├── navigation.dart        # GoRouter config
-├── provider.dart          # All Riverpod providers (source of truth)
+├── provider.dart          # Global providers (user, locale, statistics)
 ├── constants.dart         # Enums (ColorSeed, etc.)
-├── pages/                 # Feature screens (auth/, groups/, expenses/, friends/, settings/, users/)
-│   └── */\*_model.dart    # Data models per feature
+├── pages/                 # Feature modules
+│   ├── groups/            # (also: expenses/, friends/, statistics/)
+│   │   ├── data/          # Models + repositories
+│   │   ├── presentation/  # UI screens
+│   │   └── provider/      # Riverpod notifiers
+│   ├── auth/              # Login/signup screens
+│   ├── settings/          # App settings
+│   └── users/             # User model + repository
 ├── widgets/               # Shared UI components
-├── helper/helper.dart     # Utilities (date formatting, currency, snackbars)
+├── helper/
+│   ├── helper.dart        # Utilities (date formatting, currency, snackbars)
+│   └── realtime_mixin.dart # RealtimeNotifierMixin for Supabase channels
 └── l10n/                  # Localization (app_en.arb, app_de.arb)
 ```
 
 ### Data Flow
+- Repositories (`*_repository.dart` in `data/` folders) handle Supabase queries
 - Groups contain GroupMembers and Expenses
 - Expenses have ExpenseEntries with percentage shares
 - Groups have two modes: simplified vs. detailed expense tracking
