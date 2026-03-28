@@ -10,11 +10,11 @@ part of 'group_detail.dart';
 // ignore_for_file: type=lint, type=warning
 
 @ProviderFor(GroupDetailNotifier)
-const groupDetailProvider = GroupDetailNotifierFamily._();
+final groupDetailProvider = GroupDetailNotifierFamily._();
 
 final class GroupDetailNotifierProvider
     extends $AsyncNotifierProvider<GroupDetailNotifier, Group> {
-  const GroupDetailNotifierProvider._({
+  GroupDetailNotifierProvider._({
     required GroupDetailNotifierFamily super.from,
     required String super.argument,
   }) : super(
@@ -62,7 +62,7 @@ final class GroupDetailNotifierFamily extends $Family
           FutureOr<Group>,
           String
         > {
-  const GroupDetailNotifierFamily._()
+  GroupDetailNotifierFamily._()
     : super(
         retry: null,
         name: r'groupDetailProvider',
@@ -86,7 +86,6 @@ abstract class _$GroupDetailNotifier extends $AsyncNotifier<Group> {
   @$mustCallSuper
   @override
   void runBuild() {
-    final created = build(_$args);
     final ref = this.ref as $Ref<AsyncValue<Group>, Group>;
     final element =
         ref.element
@@ -96,6 +95,6 @@ abstract class _$GroupDetailNotifier extends $AsyncNotifier<Group> {
               Object?,
               Object?
             >;
-    element.handleValue(ref, created);
+    element.handleCreate(ref, () => build(_$args));
   }
 }

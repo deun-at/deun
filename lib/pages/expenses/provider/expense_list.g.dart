@@ -10,11 +10,11 @@ part of 'expense_list.dart';
 // ignore_for_file: type=lint, type=warning
 
 @ProviderFor(ExpenseListNotifier)
-const expenseListProvider = ExpenseListNotifierFamily._();
+final expenseListProvider = ExpenseListNotifierFamily._();
 
 final class ExpenseListNotifierProvider
     extends $AsyncNotifierProvider<ExpenseListNotifier, List<Expense>> {
-  const ExpenseListNotifierProvider._({
+  ExpenseListNotifierProvider._({
     required ExpenseListNotifierFamily super.from,
     required String super.argument,
   }) : super(
@@ -62,7 +62,7 @@ final class ExpenseListNotifierFamily extends $Family
           FutureOr<List<Expense>>,
           String
         > {
-  const ExpenseListNotifierFamily._()
+  ExpenseListNotifierFamily._()
     : super(
         retry: null,
         name: r'expenseListProvider',
@@ -86,7 +86,6 @@ abstract class _$ExpenseListNotifier extends $AsyncNotifier<List<Expense>> {
   @$mustCallSuper
   @override
   void runBuild() {
-    final created = build(_$args);
     final ref = this.ref as $Ref<AsyncValue<List<Expense>>, List<Expense>>;
     final element =
         ref.element
@@ -96,6 +95,6 @@ abstract class _$ExpenseListNotifier extends $AsyncNotifier<List<Expense>> {
               Object?,
               Object?
             >;
-    element.handleValue(ref, created);
+    element.handleCreate(ref, () => build(_$args));
   }
 }

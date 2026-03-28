@@ -10,11 +10,11 @@ part of 'provider.dart';
 // ignore_for_file: type=lint, type=warning
 
 @ProviderFor(UserDetailNotifier)
-const userDetailProvider = UserDetailNotifierProvider._();
+final userDetailProvider = UserDetailNotifierProvider._();
 
 final class UserDetailNotifierProvider
     extends $AsyncNotifierProvider<UserDetailNotifier, SupaUser> {
-  const UserDetailNotifierProvider._()
+  UserDetailNotifierProvider._()
     : super(
         from: null,
         argument: null,
@@ -41,7 +41,6 @@ abstract class _$UserDetailNotifier extends $AsyncNotifier<SupaUser> {
   @$mustCallSuper
   @override
   void runBuild() {
-    final created = build();
     final ref = this.ref as $Ref<AsyncValue<SupaUser>, SupaUser>;
     final element =
         ref.element
@@ -51,16 +50,16 @@ abstract class _$UserDetailNotifier extends $AsyncNotifier<SupaUser> {
               Object?,
               Object?
             >;
-    element.handleValue(ref, created);
+    element.handleCreate(ref, build);
   }
 }
 
 @ProviderFor(LocaleNotifier)
-const localeProvider = LocaleNotifierProvider._();
+final localeProvider = LocaleNotifierProvider._();
 
 final class LocaleNotifierProvider
     extends $NotifierProvider<LocaleNotifier, Locale?> {
-  const LocaleNotifierProvider._()
+  LocaleNotifierProvider._()
     : super(
         from: null,
         argument: null,
@@ -94,7 +93,6 @@ abstract class _$LocaleNotifier extends $Notifier<Locale?> {
   @$mustCallSuper
   @override
   void runBuild() {
-    final created = build();
     final ref = this.ref as $Ref<Locale?, Locale?>;
     final element =
         ref.element
@@ -104,12 +102,12 @@ abstract class _$LocaleNotifier extends $Notifier<Locale?> {
               Object?,
               Object?
             >;
-    element.handleValue(ref, created);
+    element.handleCreate(ref, build);
   }
 }
 
 @ProviderFor(GroupMonthlyTotalsNotifier)
-const groupMonthlyTotalsProvider = GroupMonthlyTotalsNotifierFamily._();
+final groupMonthlyTotalsProvider = GroupMonthlyTotalsNotifierFamily._();
 
 final class GroupMonthlyTotalsNotifierProvider
     extends
@@ -117,7 +115,7 @@ final class GroupMonthlyTotalsNotifierProvider
           GroupMonthlyTotalsNotifier,
           GroupMonthlyTotalsState
         > {
-  const GroupMonthlyTotalsNotifierProvider._({
+  GroupMonthlyTotalsNotifierProvider._({
     required GroupMonthlyTotalsNotifierFamily super.from,
     required String super.argument,
   }) : super(
@@ -166,7 +164,7 @@ final class GroupMonthlyTotalsNotifierFamily extends $Family
           FutureOr<GroupMonthlyTotalsState>,
           String
         > {
-  const GroupMonthlyTotalsNotifierFamily._()
+  GroupMonthlyTotalsNotifierFamily._()
     : super(
         retry: null,
         name: r'groupMonthlyTotalsProvider',
@@ -191,7 +189,6 @@ abstract class _$GroupMonthlyTotalsNotifier
   @$mustCallSuper
   @override
   void runBuild() {
-    final created = build(_$args);
     final ref =
         this.ref
             as $Ref<
@@ -209,12 +206,12 @@ abstract class _$GroupMonthlyTotalsNotifier
               Object?,
               Object?
             >;
-    element.handleValue(ref, created);
+    element.handleCreate(ref, () => build(_$args));
   }
 }
 
 @ProviderFor(GroupMonthMemberTotalsNotifier)
-const groupMonthMemberTotalsProvider = GroupMonthMemberTotalsNotifierFamily._();
+final groupMonthMemberTotalsProvider = GroupMonthMemberTotalsNotifierFamily._();
 
 final class GroupMonthMemberTotalsNotifierProvider
     extends
@@ -222,7 +219,7 @@ final class GroupMonthMemberTotalsNotifierProvider
           GroupMonthMemberTotalsNotifier,
           List<MemberMonthTotal>
         > {
-  const GroupMonthMemberTotalsNotifierProvider._({
+  GroupMonthMemberTotalsNotifierProvider._({
     required GroupMonthMemberTotalsNotifierFamily super.from,
     required GroupMonthMemberTotalsArgs super.argument,
   }) : super(
@@ -271,7 +268,7 @@ final class GroupMonthMemberTotalsNotifierFamily extends $Family
           FutureOr<List<MemberMonthTotal>>,
           GroupMonthMemberTotalsArgs
         > {
-  const GroupMonthMemberTotalsNotifierFamily._()
+  GroupMonthMemberTotalsNotifierFamily._()
     : super(
         retry: null,
         name: r'groupMonthMemberTotalsProvider',
@@ -297,7 +294,6 @@ abstract class _$GroupMonthMemberTotalsNotifier
   @$mustCallSuper
   @override
   void runBuild() {
-    final created = build(_$args);
     final ref =
         this.ref
             as $Ref<AsyncValue<List<MemberMonthTotal>>, List<MemberMonthTotal>>;
@@ -312,12 +308,12 @@ abstract class _$GroupMonthMemberTotalsNotifier
               Object?,
               Object?
             >;
-    element.handleValue(ref, created);
+    element.handleCreate(ref, () => build(_$args));
   }
 }
 
 @ProviderFor(GroupMonthCategoryTotalsNotifier)
-const groupMonthCategoryTotalsProvider =
+final groupMonthCategoryTotalsProvider =
     GroupMonthCategoryTotalsNotifierFamily._();
 
 final class GroupMonthCategoryTotalsNotifierProvider
@@ -326,7 +322,7 @@ final class GroupMonthCategoryTotalsNotifierProvider
           GroupMonthCategoryTotalsNotifier,
           List<CategoryMonthTotal>
         > {
-  const GroupMonthCategoryTotalsNotifierProvider._({
+  GroupMonthCategoryTotalsNotifierProvider._({
     required GroupMonthCategoryTotalsNotifierFamily super.from,
     required GroupMonthCategoryTotalsArgs super.argument,
   }) : super(
@@ -376,7 +372,7 @@ final class GroupMonthCategoryTotalsNotifierFamily extends $Family
           FutureOr<List<CategoryMonthTotal>>,
           GroupMonthCategoryTotalsArgs
         > {
-  const GroupMonthCategoryTotalsNotifierFamily._()
+  GroupMonthCategoryTotalsNotifierFamily._()
     : super(
         retry: null,
         name: r'groupMonthCategoryTotalsProvider',
@@ -402,7 +398,6 @@ abstract class _$GroupMonthCategoryTotalsNotifier
   @$mustCallSuper
   @override
   void runBuild() {
-    final created = build(_$args);
     final ref =
         this.ref
             as $Ref<
@@ -420,12 +415,12 @@ abstract class _$GroupMonthCategoryTotalsNotifier
               Object?,
               Object?
             >;
-    element.handleValue(ref, created);
+    element.handleCreate(ref, () => build(_$args));
   }
 }
 
 @ProviderFor(CategoryExpenseDetailsNotifier)
-const categoryExpenseDetailsProvider = CategoryExpenseDetailsNotifierFamily._();
+final categoryExpenseDetailsProvider = CategoryExpenseDetailsNotifierFamily._();
 
 final class CategoryExpenseDetailsNotifierProvider
     extends
@@ -433,7 +428,7 @@ final class CategoryExpenseDetailsNotifierProvider
           CategoryExpenseDetailsNotifier,
           List<CategoryExpenseDetail>
         > {
-  const CategoryExpenseDetailsNotifierProvider._({
+  CategoryExpenseDetailsNotifierProvider._({
     required CategoryExpenseDetailsNotifierFamily super.from,
     required CategoryExpenseDetailsArgs super.argument,
   }) : super(
@@ -482,7 +477,7 @@ final class CategoryExpenseDetailsNotifierFamily extends $Family
           FutureOr<List<CategoryExpenseDetail>>,
           CategoryExpenseDetailsArgs
         > {
-  const CategoryExpenseDetailsNotifierFamily._()
+  CategoryExpenseDetailsNotifierFamily._()
     : super(
         retry: null,
         name: r'categoryExpenseDetailsProvider',
@@ -508,7 +503,6 @@ abstract class _$CategoryExpenseDetailsNotifier
   @$mustCallSuper
   @override
   void runBuild() {
-    final created = build(_$args);
     final ref =
         this.ref
             as $Ref<
@@ -526,6 +520,6 @@ abstract class _$CategoryExpenseDetailsNotifier
               Object?,
               Object?
             >;
-    element.handleValue(ref, created);
+    element.handleCreate(ref, () => build(_$args));
   }
 }

@@ -10,11 +10,11 @@ part of 'friendship_list.dart';
 // ignore_for_file: type=lint, type=warning
 
 @ProviderFor(FriendshipListNotifier)
-const friendshipListProvider = FriendshipListNotifierProvider._();
+final friendshipListProvider = FriendshipListNotifierProvider._();
 
 final class FriendshipListNotifierProvider
     extends $AsyncNotifierProvider<FriendshipListNotifier, List<Friendship>> {
-  const FriendshipListNotifierProvider._()
+  FriendshipListNotifierProvider._()
     : super(
         from: null,
         argument: null,
@@ -42,7 +42,6 @@ abstract class _$FriendshipListNotifier
   @$mustCallSuper
   @override
   void runBuild() {
-    final created = build();
     final ref =
         this.ref as $Ref<AsyncValue<List<Friendship>>, List<Friendship>>;
     final element =
@@ -53,6 +52,6 @@ abstract class _$FriendshipListNotifier
               Object?,
               Object?
             >;
-    element.handleValue(ref, created);
+    element.handleCreate(ref, build);
   }
 }

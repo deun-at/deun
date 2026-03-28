@@ -21,7 +21,7 @@ Future<List<SupaUser>> _findContactMatches(Map<String, dynamic> params) async {
   List<SupaUser> matchedUsers = [];
 
   for (var contact in contacts) {
-    bool nameMatches = contact.displayName.toLowerCase().contains(searchText);
+    bool nameMatches = (contact.displayName ?? '').toLowerCase().contains(searchText);
     bool emailMatches =
         contact.emails.any((email) => email.address.toLowerCase().contains(searchText));
 
@@ -174,12 +174,13 @@ class _FriendAddBottomSheetState extends State<FriendAddBottomSheet> {
   Future<List<SupaUser>> _fetchContactSuggestions() async {
     // Check cache first
     if (_cachedContacts == null) {
-      if (!await fc.FlutterContacts.requestPermission()) {
+      final status = await fc.FlutterContacts.permissions.request(fc.PermissionType.read);
+      if (status != fc.PermissionStatus.granted && status != fc.PermissionStatus.limited) {
         return []; // Return empty list if permission is denied
       }
       // Fetch contacts only if cache is empty and permission granted
       _cachedContacts =
-          await fc.FlutterContacts.getContacts(withProperties: true, withPhoto: false);
+          await fc.FlutterContacts.getAll(properties: {fc.ContactProperty.name, fc.ContactProperty.email});
     }
 
     // If contacts are still null (e.g., error during fetch), return empty
