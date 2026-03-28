@@ -33,9 +33,9 @@ String formatDate(String? dateString) {
   final today = DateTime(now.year, now.month, now.day);
   final yesterday = today.subtract(const Duration(days: 1));
 
-  if (date.isAtSameMomentAs(today)) {
+  if (date.year == today.year && date.month == today.month && date.day == today.day) {
     return 'Today';
-  } else if (date.isAtSameMomentAs(yesterday)) {
+  } else if (date.year == yesterday.year && date.month == yesterday.month && date.day == yesterday.day) {
     return 'Yesterday';
   } else if (date.year == now.year) {
     // Same year, display day and full month

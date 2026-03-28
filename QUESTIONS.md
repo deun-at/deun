@@ -375,6 +375,85 @@ For each question, mark your answer with one of these tags:
 
 ---
 
+### 15. Fresh Review Findings (2026-03-28)
+
+#### Q58. Are guest users cleaned up when group save fails or a group is deleted?
+- **Where:** `lib/pages/groups/data/group_repository.dart` saveAll() and `lib/pages/groups/presentation/group_detail_edit.dart`
+- **Why this matters:** Guest users are created inline during group save. If the save fails partway through, the guest user record is orphaned in the database. Similarly, when a group is deleted, associated guest users are not cleaned up.
+- **Question:** Should guest user creation be wrapped in a transaction with the group save? Should group deletion cascade-delete associated guest accounts?
+
+#### Q59. Is FriendshipRepository.remove() intentionally fire-and-forget?
+- **Where:** `lib/pages/friends/presentation/friend_list.dart` line 287
+- **Why this matters:** `FriendshipRepository.remove(user.email)` is called without `await`. If the delete fails, the error is silently ignored and the UI proceeds as if the friendship was removed.
+- **Question:** Should this be awaited with error handling? Should the user see feedback if removal fails?
+
+#### Q60. Should the contact cache be invalidated when permission changes mid-session?
+- **Where:** `lib/pages/friends/presentation/friend_add.dart` lines 59, 176-187
+- **Why this matters:** Device contacts are cached in `_cachedContacts` on first load. If the user denies permission initially, then grants it via system settings and returns, the cache still holds null/empty and no contacts appear until the app restarts.
+- **Question:** Should the cache be invalidated on widget re-mount or permission change?
+
+#### Q61. Should real-time change events be debounced before triggering rebuilds?
+- **Where:** `lib/helper/realtime_mixin.dart`
+- **Why this matters:** Multiple rapid database changes (e.g., bulk expense import or multiple members editing simultaneously) each trigger a separate state rebuild. This can cause UI flicker and unnecessary network requests.
+- **Question:** Should a short debounce window (e.g., 300ms) be applied to batch rapid change events?
+
+#### Q62. Should the group list support pagination?
+- **Where:** `lib/pages/groups/provider/group_list.dart`
+- **Why this matters:** Unlike expenses (which have pageSize=20), the group list fetches all groups in a single query. For power users with many groups, this could become slow and memory-intensive.
+- **Question:** At what group count does this become a problem? Should cursor-based pagination be added?
+
+#### Q63. Does the receipt parser misinterpret "1,00" as 100.0?
+- **Where:** `lib/pages/expenses/service/receipt_parser.dart` amount parsing logic
+- **Why this matters:** The parser's decimal separator detection uses heuristics (last comma vs last period position). For amounts like "1,00" (common in German receipts meaning 1.00 EUR), the parser may interpret the comma as a thousands separator and return 100.0 instead of 1.00.
+- **Question:** Should the parser use the user's locale to disambiguate, or require a manual confirmation step for ambiguous amounts?
+
+#### Q64. Is the receipt merchant name detection robust enough?
+- **Where:** `lib/pages/expenses/service/receipt_parser.dart` merchant name extraction
+- **Why this matters:** The parser assumes the first non-excluded line of OCR text is the merchant name. Many receipts have logo text, store numbers, or address lines before the actual merchant name.
+- **Question:** Should a scoring heuristic or keyword-based approach be used to identify the merchant name more reliably?
+
+#### Q65. Can a guest user be linked to multiple groups without uniqueness constraints?
+- **Where:** `lib/pages/groups/data/group_repository.dart` guest creation and group join logic
+- **Why this matters:** When a real user joins a group that had a guest placeholder for them, the system transfers guest data (expenses, shares) to the real user. If the same person was added as a guest to multiple groups, there's no constraint ensuring correct linking across groups.
+- **Question:** Should there be a database-level uniqueness constraint on guest-to-user linking? How should multi-group guest consolidation work?
+
+#### Q66. Should expense updates use optimistic locking to prevent stale overwrites?
+- **Where:** `lib/pages/expenses/data/expense_model.dart` saveAll()
+- **Why this matters:** If two users edit the same expense concurrently, the last save wins without warning. The first user's changes are silently overwritten.
+- **Question:** Should a version column or updated_at check be used to detect and prevent concurrent edit conflicts?
+
+#### Q67. Are time zones handled consistently in statistics and receipt parsing?
+- **Where:** `lib/provider.dart` (statistics providers), `lib/pages/expenses/service/receipt_parser.dart`
+- **Why this matters:** Statistics use `DateTime.parse()` which may return UTC timestamps, while receipt dates are parsed as local time without timezone info. Monthly grouping in statistics could assign expenses to the wrong month if UTC/local conversion isn't handled.
+- **Question:** Should all dates be standardized to UTC for storage and converted to local only for display?
+
+#### Q68. Do deleted user references show stale display names in expenses?
+- **Where:** Expense display using `paid_by_display_name` field
+- **Why this matters:** The `paid_by_display_name` field is set at expense creation time. If the paying user later deletes their account or changes their name, the expense still shows the old name. For deleted users, this creates a reference to a non-existent account.
+- **Question:** Should display names be resolved dynamically from the user table, or is the snapshot approach acceptable? Should deleted users show a placeholder like "Deleted User"?
+
+#### Q69. Does the simplified expense calculation loop have a termination guard?
+- **Where:** `lib/pages/groups/data/group_model.dart` ~line 142 (calculateGroupSharesSummarySimplified)
+- **Why this matters:** The while loop that matches debtors with creditors relies on floating-point comparisons to terminate. If rounding errors prevent the balance from reaching exactly zero, the loop could run indefinitely or produce incorrect settlement transactions.
+- **Question:** Should a maximum iteration count be added as a safety guard? Should balances be rounded to 2 decimal places before comparison?
+
+#### Q70. Should payBack() be a single atomic operation?
+- **Where:** `lib/pages/groups/data/group_repository.dart` payBack() and `lib/pages/groups/presentation/group_detail_payment.dart`
+- **Why this matters:** payBack() calls two separate RPCs sequentially: first `pay_back` (creates expense record), then `update_group_member_shares` (recalculates balances). If the first succeeds but the second fails, the database is left in an inconsistent state — a payment is recorded but balances don't reflect it.
+- **Question:** Should this be combined into a single Supabase Edge Function or database transaction to ensure atomicity?
+
+#### Q71. Should the app show real-time connection state to the user?
+- **Where:** `lib/helper/realtime_mixin.dart`
+- **Why this matters:** If the Supabase real-time connection drops (network issues, server restart), users see stale data with no indication that updates have stopped. They may believe their view is current when it isn't.
+- **Question:** Should a connection state provider expose subscription health so the UI can show a "reconnecting" banner or indicator?
+
+#### Q72. Can RealtimeNotifierMixin leak channels on initialization error?
+- **Where:** `lib/helper/realtime_mixin.dart`
+- **Why this matters:** If `subscribeToChannel()` succeeds but a subsequent operation during notifier initialization throws, the channel subscription remains active but `disposeChannels()` may not be called (since `ref.onDispose` triggers on normal dispose, not on build errors). This could create zombie subscriptions consuming server resources.
+- **Question:** Should channel subscription be wrapped in try/finally to ensure cleanup on initialization failure?
+
+---
+
 ## Suggested Answer Tags
 
 Use these tags consistently when answering:

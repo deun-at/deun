@@ -284,14 +284,22 @@ class _FriendListState extends ConsumerState<FriendList> {
             child: Text(AppLocalizations.of(context)!.remove),
             onPressed: () async {
               try {
-                FriendshipRepository.remove(user.email);
+                await FriendshipRepository.remove(user.email);
+                if (context.mounted) {
+                  showSnackBar(
+                    context,
+                    AppLocalizations.of(context)!.friendRemoved(user.displayName),
+                  );
+                }
+              } catch (e) {
+                if (context.mounted) {
+                  showSnackBar(context, AppLocalizations.of(context)!.generalError);
+                }
               } finally {
-                Navigator.pop(context); // Close delete dialog
-                Navigator.pop(context); // Close info dialog
-                showSnackBar(
-                  context,
-                  AppLocalizations.of(context)!.friendRemoved(user.displayName),
-                );
+                if (context.mounted) {
+                  Navigator.pop(context); // Close delete dialog
+                  Navigator.pop(context); // Close info dialog
+                }
               }
             },
           ),
