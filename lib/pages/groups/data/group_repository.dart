@@ -133,7 +133,14 @@ class GroupRepository {
       "_paid_for": email,
       "_amount": amount
     });
-    await supabase.rpc('update_group_member_shares', params: {"_group_id": groupId, "_expense_id": expenseId});
+
+    // Retry share update once on failure to reduce partial-state risk.
+    // This RPC is idempotent (recalculates from scratch), so retrying is safe.
+    try {
+      await supabase.rpc('update_group_member_shares', params: {"_group_id": groupId, "_expense_id": expenseId});
+    } catch (e) {
+      await supabase.rpc('update_group_member_shares', params: {"_group_id": groupId, "_expense_id": expenseId});
+    }
 
     if (context.mounted && sendNotification) {
       sendGroupPayBackNotification(context, groupId, expenseId, {email}, amount);
