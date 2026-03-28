@@ -230,5 +230,11 @@
   "receiptScanProcessing": "Beleg wird gescannt...",
   "receiptScanSuccess": "Beleg gescannt! Details unten prüfen.",
   "receiptScanNoData": "Beleg konnte nicht gelesen werden. Versuche es mit einem klareren Foto.",
-  "receiptScanError": "Beim Scannen ist etwas schiefgelaufen."
+  "receiptScanError": "Beim Scannen ist etwas schiefgelaufen.",
+  "splitModeAmount": "Betrag",
+  "splitModePercentage": "%",
+  "splitModeShares": "Anteile",
+  "totalLabel": "Gesamt",
+  "splitPercentageError": "Muss 100% ergeben",
+  "splitAmountError": "Muss die Gesamtsumme ergeben"
 }

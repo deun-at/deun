@@ -21,6 +21,10 @@ class ReceiptParser {
     r'[\€\$]?\s*(\d{1,3}(?:[.,]\d{3})*[.,]\d{2})\s*[\€\$]?'
   );
 
+  // Matches quantity patterns: "3x", "3 x", "3X", leading or trailing
+  static final _quantityPrefixRegex = RegExp(r'^(\d+)\s*[xX]\s+');
+  static final _quantitySuffixRegex = RegExp(r'\s+[xX]\s*(\d+)$');
+
   static final _datePatterns = [
     // DD.MM.YYYY
     RegExp(r'(\d{2})\.(\d{2})\.(\d{4})'),
@@ -186,6 +190,27 @@ class ReceiptParser {
     return max > 0 ? max : null;
   }
 
+  /// Extract quantity from item name. Returns (cleanedName, quantity).
+  static (String, int) _extractQuantity(String name) {
+    // Check prefix: "3x Beer" or "3 x Beer"
+    final prefixMatch = _quantityPrefixRegex.firstMatch(name);
+    if (prefixMatch != null) {
+      int qty = int.tryParse(prefixMatch.group(1)!) ?? 1;
+      String cleanName = name.substring(prefixMatch.end).trim();
+      if (qty > 0 && cleanName.length >= 2) return (cleanName, qty);
+    }
+
+    // Check suffix: "Beer x3"
+    final suffixMatch = _quantitySuffixRegex.firstMatch(name);
+    if (suffixMatch != null) {
+      int qty = int.tryParse(suffixMatch.group(1)!) ?? 1;
+      String cleanName = name.substring(0, suffixMatch.start).trim();
+      if (qty > 0 && cleanName.length >= 2) return (cleanName, qty);
+    }
+
+    return (name, 1);
+  }
+
   /// Extract line items by pairing text lines with their amounts.
   /// Handles two patterns:
   /// 1. Name and amount on the SAME line: "Milk 3.50"
@@ -212,7 +237,12 @@ class ReceiptParser {
           name = name.replaceAll(RegExp(r'[\s\.\,\-\*]+$'), '').trim();
 
           if (name.length >= 3 && amount != total) {
-            items.add(ReceiptLineItem(name: name, amount: amount));
+            final (cleanName, qty) = _extractQuantity(name);
+            items.add(ReceiptLineItem(
+              name: cleanName,
+              amount: amount,
+              quantity: qty,
+            ));
           }
         }
         // If amount-only line, skip (it belongs to a previous name line,
@@ -229,7 +259,12 @@ class ReceiptParser {
           final nextAmount = _lineAmount(nextText);
           if (nextAmount != null && nextAmount > 0 && _isAmountOnly(nextText)) {
             if (nextAmount != total) {
-              items.add(ReceiptLineItem(name: text, amount: nextAmount));
+              final (cleanName, qty) = _extractQuantity(text);
+              items.add(ReceiptLineItem(
+                name: cleanName,
+                amount: nextAmount,
+                quantity: qty,
+              ));
             }
             break;
           }

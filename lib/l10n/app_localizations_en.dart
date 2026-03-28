@@ -898,4 +898,22 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get receiptScanError => 'Something went wrong while scanning.';
+
+  @override
+  String get splitModeAmount => 'Amount';
+
+  @override
+  String get splitModePercentage => '%';
+
+  @override
+  String get splitModeShares => 'Parts';
+
+  @override
+  String get totalLabel => 'Total';
+
+  @override
+  String get splitPercentageError => 'Must add up to 100%';
+
+  @override
+  String get splitAmountError => 'Must add up to the total';
 }

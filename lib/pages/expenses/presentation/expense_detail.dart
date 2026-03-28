@@ -140,7 +140,8 @@ class _ExpenseDetailState extends ConsumerState<ExpenseDetail> {
             onRemove: () => onRemove(expenseEntry),
             groupMembers: groupMembers,
             initialName: item.name,
-            initialAmount: item.amount.toStringAsFixed(2),
+            initialAmount: item.unitPrice.toStringAsFixed(2),
+            initialQuantity: item.quantity > 1 ? item.quantity.toString() : null,
           ));
         }
       } else if (result.total != null) {

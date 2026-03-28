@@ -919,4 +919,22 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get receiptScanError => 'Beim Scannen ist etwas schiefgelaufen.';
+
+  @override
+  String get splitModeAmount => 'Betrag';
+
+  @override
+  String get splitModePercentage => '%';
+
+  @override
+  String get splitModeShares => 'Anteile';
+
+  @override
+  String get totalLabel => 'Gesamt';
+
+  @override
+  String get splitPercentageError => 'Muss 100% ergeben';
+
+  @override
+  String get splitAmountError => 'Muss die Gesamtsumme ergeben';
 }
