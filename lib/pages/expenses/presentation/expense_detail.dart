@@ -16,7 +16,9 @@ import '../data/expense_entry_model.dart';
 import '../data/expense_model.dart';
 import '../data/expense_repository.dart';
 import '../data/expense_category.dart';
+import '../data/receipt_scan_result.dart';
 import '../../../widgets/category_selector.dart';
+import 'receipt_scanner_sheet.dart';
 
 class ExpenseDetail extends ConsumerStatefulWidget {
   const ExpenseDetail({super.key, required this.group, this.expense});
@@ -30,6 +32,7 @@ class ExpenseDetail extends ConsumerStatefulWidget {
 
 class _ExpenseDetailState extends ConsumerState<ExpenseDetail> {
   final _formKey = GlobalKey<FormBuilderState>();
+  final _nameController = TextEditingController();
   List<GroupMember> groupMembers = [];
   ColorSeed groupColor = ColorSeed.baseColor;
   final List<ExpenseEntryWidget> expenseEntryFields = List.empty(growable: true);
@@ -43,6 +46,7 @@ class _ExpenseDetailState extends ConsumerState<ExpenseDetail> {
 
     groupMembers = widget.group.groupMembers;
     _detectedCategory = widget.expense?.category;
+    _nameController.text = widget.expense?.name ?? '';
     if (widget.expense != null && widget.expense!.expenseEntries.isNotEmpty) {
       _newTextFieldId = widget.expense!.expenseEntries.length;
       widget.expense!.expenseEntries.forEach((key, expenseEntry) {
@@ -66,6 +70,7 @@ class _ExpenseDetailState extends ConsumerState<ExpenseDetail> {
 
   @override
   void dispose() {
+    _nameController.dispose();
     super.dispose();
   }
 
@@ -91,6 +96,67 @@ class _ExpenseDetailState extends ConsumerState<ExpenseDetail> {
         }
       }
     }
+  }
+
+  Future<void> _showReceiptScanner() async {
+    final result = await showModalBottomSheet<ReceiptScanResult>(
+      context: context,
+      builder: (context) => const ReceiptScannerSheet(),
+    );
+    if (result != null && mounted) {
+      _applyReceiptData(result);
+    }
+  }
+
+  void _applyReceiptData(ReceiptScanResult result) {
+    if (result.isEmpty) {
+      showSnackBar(context, AppLocalizations.of(context)!.receiptScanNoData);
+      return;
+    }
+
+    // Set merchant name
+    if (result.merchantName != null) {
+      _nameController.text = result.merchantName!;
+      _formKey.currentState?.fields['name']?.didChange(result.merchantName);
+      detectAndUpdateCategory(result.merchantName!);
+    }
+
+    // Set date
+    if (result.date != null) {
+      _formKey.currentState?.fields['expense_date']?.didChange(result.date);
+    }
+
+    // Rebuild expense entry widgets from line items
+    setState(() {
+      expenseEntryFields.clear();
+
+      if (result.lineItems.isNotEmpty) {
+        for (final item in result.lineItems) {
+          ExpenseEntry expenseEntry = ExpenseEntry(index: _newTextFieldId++);
+          expenseEntryFields.add(ExpenseEntryWidget(
+            key: ValueKey(expenseEntry.index),
+            expenseEntry: expenseEntry,
+            index: expenseEntry.index,
+            onRemove: () => onRemove(expenseEntry),
+            groupMembers: groupMembers,
+            initialName: item.name,
+            initialAmount: item.amount.toStringAsFixed(2),
+          ));
+        }
+      } else if (result.total != null) {
+        ExpenseEntry expenseEntry = ExpenseEntry(index: _newTextFieldId++);
+        expenseEntryFields.add(ExpenseEntryWidget(
+          key: ValueKey(expenseEntry.index),
+          expenseEntry: expenseEntry,
+          index: expenseEntry.index,
+          onRemove: () => onRemove(expenseEntry),
+          groupMembers: groupMembers,
+          initialAmount: result.total!.toStringAsFixed(2),
+        ));
+      }
+    });
+
+    showSnackBar(context, AppLocalizations.of(context)!.receiptScanSuccess);
   }
 
   void openDeleteItemDialog(BuildContext modalContext, Expense expense) {
@@ -174,6 +240,13 @@ class _ExpenseDetailState extends ConsumerState<ExpenseDetail> {
       ));
     } else {
       expenseActions.add(
+        IconButton(
+          onPressed: () => _showReceiptScanner(),
+          icon: const Icon(Icons.document_scanner_outlined),
+          tooltip: AppLocalizations.of(context)!.receiptScanButton,
+        ),
+      );
+      expenseActions.add(
         Padding(padding: EdgeInsetsGeometry.only(right: 8), child: saveExpenseButton),
       );
     }
@@ -200,7 +273,7 @@ class _ExpenseDetailState extends ConsumerState<ExpenseDetail> {
                       FormBuilderField(
                         name: "name",
                         builder: (FormFieldState<dynamic> field) => TextFormField(
-                          initialValue: field.value,
+                          controller: _nameController,
                           style: Theme.of(context)
                               .textTheme
                               .displaySmall!

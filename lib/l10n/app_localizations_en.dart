@@ -873,4 +873,29 @@ class AppLocalizationsEn extends AppLocalizations {
   String statisticsCategories(String monthYear) {
     return 'Categories $monthYear';
   }
+
+  @override
+  String get receiptScanButton => 'Scan receipt';
+
+  @override
+  String get receiptScanTitle => 'Scan a receipt';
+
+  @override
+  String get receiptScanTakePhoto => 'Take Photo';
+
+  @override
+  String get receiptScanChooseGallery => 'Choose from Gallery';
+
+  @override
+  String get receiptScanProcessing => 'Scanning receipt...';
+
+  @override
+  String get receiptScanSuccess => 'Receipt scanned! Review the details below.';
+
+  @override
+  String get receiptScanNoData =>
+      'Could not read the receipt. Try again with a clearer photo.';
+
+  @override
+  String get receiptScanError => 'Something went wrong while scanning.';
 }

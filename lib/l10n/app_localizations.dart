@@ -1439,6 +1439,54 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Categories {monthYear}'**
   String statisticsCategories(String monthYear);
+
+  /// No description provided for @receiptScanButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Scan receipt'**
+  String get receiptScanButton;
+
+  /// No description provided for @receiptScanTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Scan a receipt'**
+  String get receiptScanTitle;
+
+  /// No description provided for @receiptScanTakePhoto.
+  ///
+  /// In en, this message translates to:
+  /// **'Take Photo'**
+  String get receiptScanTakePhoto;
+
+  /// No description provided for @receiptScanChooseGallery.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose from Gallery'**
+  String get receiptScanChooseGallery;
+
+  /// No description provided for @receiptScanProcessing.
+  ///
+  /// In en, this message translates to:
+  /// **'Scanning receipt...'**
+  String get receiptScanProcessing;
+
+  /// No description provided for @receiptScanSuccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Receipt scanned! Review the details below.'**
+  String get receiptScanSuccess;
+
+  /// No description provided for @receiptScanNoData.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not read the receipt. Try again with a clearer photo.'**
+  String get receiptScanNoData;
+
+  /// No description provided for @receiptScanError.
+  ///
+  /// In en, this message translates to:
+  /// **'Something went wrong while scanning.'**
+  String get receiptScanError;
 }
 
 class _AppLocalizationsDelegate
