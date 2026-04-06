@@ -57,8 +57,8 @@ class CardListView extends StatelessWidget {
   final IndexedWidgetBuilder itemBuilder;
 
   final Color? color;
-  final Radius outerRadius = const Radius.circular(20);
-  final Radius innerRadius = const Radius.circular(5);
+  final Radius outerRadius = const Radius.circular(28);
+  final Radius innerRadius = const Radius.circular(8);
   final bool? shrinkWrap;
   final ScrollPhysics? physics;
   final Widget? adBlock;
@@ -133,8 +133,8 @@ class CardListTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final Radius big = Radius.circular(20);
-    final Radius small = Radius.circular(5);
+    final Radius big = Radius.circular(28);
+    final Radius small = Radius.circular(8);
 
     Radius top = small;
     Radius bottom = small;

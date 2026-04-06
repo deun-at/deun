@@ -1,4 +1,3 @@
-import 'package:deun/constants.dart';
 import 'package:deun/pages/friends/data/friendship_model.dart';
 import 'package:deun/pages/groups/data/group_repository.dart';
 import 'package:deun/pages/users/user_model.dart';
@@ -18,7 +17,7 @@ class FriendshipRepository {
 
     List<Friendship> retData = List.empty(growable: true);
 
-    final groupList = await GroupRepository.fetchData(GroupListFilter.active.value);
+    final groupList = await GroupRepository.fetchData("active");
 
     for (var element in data) {
       Friendship friendship = Friendship();

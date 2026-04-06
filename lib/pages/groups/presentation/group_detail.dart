@@ -209,7 +209,8 @@ class _GroupDetailState extends ConsumerState<GroupDetail> {
                   GoRouter.of(context).push("/group/details/expense", extra: {'group': widget.group, 'expense': null});
                 },
                 label: AnimatedSize(
-                  duration: Durations.short4,
+                  duration: const Duration(milliseconds: 300),
+                  curve: Curves.easeOutBack,
                   child: _showText ? Text(AppLocalizations.of(context)!.addNewExpense) : const Text(""),
                 ),
                 icon: const Icon(Icons.add),

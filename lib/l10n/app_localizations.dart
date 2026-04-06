@@ -116,11 +116,17 @@ abstract class AppLocalizations {
   /// **'Groups'**
   String get groups;
 
-  /// Filter for the group list.
+  /// No description provided for @groupSectionFavorites.
   ///
   /// In en, this message translates to:
-  /// **'{filter, select, all{all} active{open} done{done} other{}}'**
-  String groupListFilter(String filter);
+  /// **'Favorites'**
+  String get groupSectionFavorites;
+
+  /// No description provided for @groupSectionSettled.
+  ///
+  /// In en, this message translates to:
+  /// **'Settled'**
+  String get groupSectionSettled;
 
   /// No description provided for @createGroup.
   ///

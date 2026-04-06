@@ -10,78 +10,33 @@ part of 'group_list.dart';
 // ignore_for_file: type=lint, type=warning
 
 @ProviderFor(GroupListNotifier)
-final groupListProvider = GroupListNotifierFamily._();
+final groupListProvider = GroupListNotifierProvider._();
 
 final class GroupListNotifierProvider
     extends $AsyncNotifierProvider<GroupListNotifier, List<Group>> {
-  GroupListNotifierProvider._({
-    required GroupListNotifierFamily super.from,
-    required String super.argument,
-  }) : super(
-         retry: null,
-         name: r'groupListProvider',
-         isAutoDispose: true,
-         dependencies: null,
-         $allTransitiveDependencies: null,
-       );
+  GroupListNotifierProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'groupListProvider',
+        isAutoDispose: true,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
 
   @override
   String debugGetCreateSourceHash() => _$groupListNotifierHash();
 
-  @override
-  String toString() {
-    return r'groupListProvider'
-        ''
-        '($argument)';
-  }
-
   @$internal
   @override
   GroupListNotifier create() => GroupListNotifier();
-
-  @override
-  bool operator ==(Object other) {
-    return other is GroupListNotifierProvider && other.argument == argument;
-  }
-
-  @override
-  int get hashCode {
-    return argument.hashCode;
-  }
 }
 
-String _$groupListNotifierHash() => r'59e60a364d27cd0f124733eb21211d53486df09f';
-
-final class GroupListNotifierFamily extends $Family
-    with
-        $ClassFamilyOverride<
-          GroupListNotifier,
-          AsyncValue<List<Group>>,
-          List<Group>,
-          FutureOr<List<Group>>,
-          String
-        > {
-  GroupListNotifierFamily._()
-    : super(
-        retry: null,
-        name: r'groupListProvider',
-        dependencies: null,
-        $allTransitiveDependencies: null,
-        isAutoDispose: true,
-      );
-
-  GroupListNotifierProvider call(String statusFilter) =>
-      GroupListNotifierProvider._(argument: statusFilter, from: this);
-
-  @override
-  String toString() => r'groupListProvider';
-}
+String _$groupListNotifierHash() => r'bcee1289ab1904a759988be33489a6862d20327e';
 
 abstract class _$GroupListNotifier extends $AsyncNotifier<List<Group>> {
-  late final _$args = ref.$arg as String;
-  String get statusFilter => _$args;
-
-  FutureOr<List<Group>> build(String statusFilter);
+  FutureOr<List<Group>> build();
   @$mustCallSuper
   @override
   void runBuild() {
@@ -94,6 +49,6 @@ abstract class _$GroupListNotifier extends $AsyncNotifier<List<Group>> {
               Object?,
               Object?
             >;
-    element.handleCreate(ref, () => build(_$args));
+    element.handleCreate(ref, build);
   }
 }

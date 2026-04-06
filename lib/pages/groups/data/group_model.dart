@@ -29,6 +29,12 @@ class Group {
 
   late List<Expense>? expenses;
 
+  bool get isFavorite {
+    final email = supabase.auth.currentUser?.email;
+    if (email == null) return false;
+    return groupMembers.any((m) => m.email == email && m.isFavorite);
+  }
+
   static const groupSelectString =
       '*, group_shares_summary_helper:group_shares_summary!inner(*), group_shares_summary(*, ...paid_by(paid_by_display_name:display_name, paid_by_paypal_me:paypal_me, paid_by_iban:iban), ...paid_for(paid_for_display_name:display_name, paid_for_paypal_me:paypal_me, paid_for_iban:iban)), group_member(*, ...user(display_name:display_name, is_guest:is_guest))';
 

@@ -18,15 +18,10 @@ class AppLocalizationsDe extends AppLocalizations {
   String get groups => 'Gruppen';
 
   @override
-  String groupListFilter(String filter) {
-    String _temp0 = intl.Intl.selectLogic(filter, {
-      'all': 'alle',
-      'active': 'offen',
-      'done': 'abgeschlossen',
-      'other': '',
-    });
-    return '$_temp0';
-  }
+  String get groupSectionFavorites => 'Favoriten';
+
+  @override
+  String get groupSectionSettled => 'Abgeschlossen';
 
   @override
   String get createGroup => 'Gruppe erstellen';

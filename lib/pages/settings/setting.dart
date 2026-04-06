@@ -153,7 +153,7 @@ class _SettingState extends ConsumerState<Setting> {
                                                   context,
                                                 )!.settingsFirstName,
                                                 border:
-                                                    const OutlineInputBorder(),
+                                                    OutlineInputBorder(borderRadius: BorderRadius.circular(16)),
                                               ),
                                               onChanged: (value) =>
                                                   field.didChange(value),
@@ -177,7 +177,7 @@ class _SettingState extends ConsumerState<Setting> {
                                                   context,
                                                 )!.settingsLastName,
                                                 border:
-                                                    const OutlineInputBorder(),
+                                                    OutlineInputBorder(borderRadius: BorderRadius.circular(16)),
                                               ),
                                               onChanged: (value) =>
                                                   field.didChange(value),
@@ -201,7 +201,7 @@ class _SettingState extends ConsumerState<Setting> {
                                                   context,
                                                 )!.settingsDisplayName,
                                                 border:
-                                                    const OutlineInputBorder(),
+                                                    OutlineInputBorder(borderRadius: BorderRadius.circular(16)),
                                               ),
                                               onChanged: (value) =>
                                                   field.didChange(value),
@@ -233,7 +233,7 @@ class _SettingState extends ConsumerState<Setting> {
                                                   context,
                                                 )!.settingsPaypalMe,
                                                 border:
-                                                    const OutlineInputBorder(),
+                                                    OutlineInputBorder(borderRadius: BorderRadius.circular(16)),
                                                 prefixText: 'paypal.me/',
                                               ),
                                               onChanged: (value) =>
@@ -253,7 +253,7 @@ class _SettingState extends ConsumerState<Setting> {
                                                   context,
                                                 )!.settingsIban,
                                                 border:
-                                                    const OutlineInputBorder(),
+                                                    OutlineInputBorder(borderRadius: BorderRadius.circular(16)),
                                               ),
                                               onChanged: (value) =>
                                                   field.didChange(value),
@@ -267,7 +267,7 @@ class _SettingState extends ConsumerState<Setting> {
                                           labelText: AppLocalizations.of(
                                             context,
                                           )!.settingsLocale,
-                                          border: const OutlineInputBorder(),
+                                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(16)),
                                         ),
                                         items: [
                                           DropdownMenuItem(

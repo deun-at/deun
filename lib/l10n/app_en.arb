@@ -8,15 +8,10 @@
   "@addNewExpense": {},
   "groups": "Groups",
   "@groups": {},
-  "groupListFilter": "{filter, select, all{all} active{open} done{done} other{}}",
-  "@groupListFilter": {
-    "description": "Filter for the group list.",
-    "placeholders": {
-      "filter": {
-        "type": "String"
-      }
-    }
-  },
+  "groupSectionFavorites": "Favorites",
+  "@groupSectionFavorites": {},
+  "groupSectionSettled": "Settled",
+  "@groupSectionSettled": {},
   "createGroup": "Create group",
   "@createGroup": {},
   "editGroup": "Edit group",

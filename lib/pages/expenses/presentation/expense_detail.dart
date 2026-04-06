@@ -345,6 +345,7 @@ class _ExpenseDetailState extends ConsumerState<ExpenseDetail> {
                       ),
                       const SizedBox(height: spacing),
                       CardColumn(children: expenseEntryFields),
+                      const SizedBox(height: spacing),
                       Center(
                         child: FilledButton.tonalIcon(
                           icon: const Icon(Icons.add),

@@ -13,10 +13,10 @@ class GroupRepository {
     var currentUserEmail = supabase.auth.currentUser?.email ?? '';
     var query = supabase.from('group').select(Group.groupSelectString);
 
-    if (statusFilter == GroupListFilter.active.value) {
+    if (statusFilter == 'active') {
       query = query.or('total_share_amount.gte.0.01,total_share_amount.lte.-0.01',
           referencedTable: 'group_shares_summary_helper');
-    } else if (statusFilter == GroupListFilter.done.value) {
+    } else if (statusFilter == 'done') {
       query = query.lt("group_shares_summary_helper.total_share_amount", 0.01);
       query = query.gt("group_shares_summary_helper.total_share_amount", -0.01);
     }
@@ -148,7 +148,7 @@ class GroupRepository {
   }
 
   static Future<void> payBackAll(BuildContext context, String email, double amount) async {
-    final groupList = await GroupRepository.fetchData(GroupListFilter.active.value, paidTo: email);
+    final groupList = await GroupRepository.fetchData("active", paidTo: email);
 
     await Future.wait(groupList.map((groupData) async {
       double groupAmount = 0;
@@ -162,6 +162,15 @@ class GroupRepository {
         await GroupRepository.payBack(context, groupData.id, email, amount, sendNotification: false);
       }
     }));
+  }
+
+  static Future<void> toggleFavorite(String groupId, bool isFavorite) async {
+    final email = supabase.auth.currentUser?.email ?? '';
+    await supabase
+        .from('group_member')
+        .update({'is_favorite': isFavorite})
+        .eq('group_id', groupId)
+        .eq('email', email);
   }
 
   static Future<void> delete(String groupId) async {
