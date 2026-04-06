@@ -99,6 +99,7 @@ class _FriendListState extends ConsumerState<FriendList> {
 
                           return ListTile(
                             leading: CircleAvatar(
+                              radius: 22,
                               backgroundColor: _avatarColor(user.displayName),
                               child: Text(
                                 user.displayName.isNotEmpty ? user.displayName[0].toUpperCase() : '?',

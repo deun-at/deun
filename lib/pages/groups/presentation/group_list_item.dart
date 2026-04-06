@@ -7,9 +7,18 @@ import '../data/group_model.dart';
 import 'group_share_widget.dart';
 
 class GroupListItem extends ConsumerStatefulWidget {
-  const GroupListItem({super.key, required this.group});
+  const GroupListItem({
+    super.key,
+    required this.group,
+    this.isFavorite = false,
+    this.isMuted = false,
+    this.onFavoriteToggle,
+  });
 
   final Group group;
+  final bool isFavorite;
+  final bool isMuted;
+  final VoidCallback? onFavoriteToggle;
 
   @override
   ConsumerState<ConsumerStatefulWidget> createState() => _GroupListItemState();
@@ -21,12 +30,14 @@ class _GroupListItemState extends ConsumerState<GroupListItem> {
     ThemeData themeData = Theme.of(context);
     ColorScheme colorScheme = themeData.colorScheme;
 
-    Color textColor = themeData.brightness == Brightness.light
-        ? colorScheme.primaryContainer
-        : colorScheme.primary;
+    Color textColor = widget.isMuted
+        ? colorScheme.outline
+        : themeData.brightness == Brightness.light
+            ? colorScheme.primaryContainer
+            : colorScheme.primary;
 
     return InkWell(
-      borderRadius: BorderRadius.circular(12.0),
+      borderRadius: BorderRadius.circular(28.0),
       onTap: () {
         GoRouter.of(context).push("/group/details", extra: {'group': widget.group});
       },
@@ -48,6 +59,17 @@ class _GroupListItemState extends ConsumerState<GroupListItem> {
                     overflow: TextOverflow.ellipsis,
                   ),
                 ),
+                if (widget.onFavoriteToggle != null)
+                  IconButton(
+                    icon: Icon(
+                      widget.isFavorite ? Icons.star : Icons.star_border,
+                      color: widget.isFavorite ? Colors.amber : colorScheme.outline,
+                    ),
+                    onPressed: widget.onFavoriteToggle,
+                    visualDensity: VisualDensity.compact,
+                    padding: EdgeInsets.zero,
+                    constraints: const BoxConstraints(),
+                  ),
               ],
             ),
             GroupShareWidget(group: widget.group, textColor: textColor),

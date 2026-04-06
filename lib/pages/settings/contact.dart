@@ -55,7 +55,7 @@ class _ContactState extends State<StatefulWidget> {
                                 errorText: AppLocalizations.of(context)!.contactNameValidationEmpty),
                             decoration: InputDecoration(
                               labelText: AppLocalizations.of(context)!.contactName,
-                              border: const OutlineInputBorder(),
+                              border: OutlineInputBorder(borderRadius: BorderRadius.circular(16)),
                             ),
                             onChanged: (value) => field.didChange(value),
                           ),
@@ -67,7 +67,7 @@ class _ContactState extends State<StatefulWidget> {
                             initialValue: field.value,
                             decoration: InputDecoration(
                               labelText: AppLocalizations.of(context)!.contactCompany,
-                              border: const OutlineInputBorder(),
+                              border: OutlineInputBorder(borderRadius: BorderRadius.circular(16)),
                             ),
                             onChanged: (value) => field.didChange(value),
                           ),
@@ -81,7 +81,7 @@ class _ContactState extends State<StatefulWidget> {
                                 errorText: AppLocalizations.of(context)!.contactEmailValidationEmpty),
                             decoration: InputDecoration(
                               labelText: AppLocalizations.of(context)!.contactEmail,
-                              border: const OutlineInputBorder(),
+                              border: OutlineInputBorder(borderRadius: BorderRadius.circular(16)),
                             ),
                             onChanged: (value) => field.didChange(value),
                           ),
@@ -97,7 +97,7 @@ class _ContactState extends State<StatefulWidget> {
                                 errorText: AppLocalizations.of(context)!.contactDescriptionValidationEmpty),
                             decoration: InputDecoration(
                               labelText: AppLocalizations.of(context)!.contactDescription,
-                              border: const OutlineInputBorder(),
+                              border: OutlineInputBorder(borderRadius: BorderRadius.circular(16)),
                             ),
                             onChanged: (value) => field.didChange(value),
                           ),
