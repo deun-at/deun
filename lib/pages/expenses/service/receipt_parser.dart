@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart' show visibleForTesting;
 import 'package:google_mlkit_text_recognition/google_mlkit_text_recognition.dart';
 
 import '../data/receipt_scan_result.dart';
@@ -39,10 +40,10 @@ class ReceiptParser {
   static ReceiptScanResult parse(List<TextBlock> blocks) {
     final lines = _extractSortedLines(blocks);
 
-    final date = _extractDate(lines);
-    final total = _extractTotal(lines);
+    final date = extractDate(lines);
+    final total = extractTotal(lines);
     final lineItems = _extractLineItems(lines, total);
-    final merchantName = _extractMerchantName(lines);
+    final merchantName = extractMerchantName(lines);
 
     return ReceiptScanResult(
       merchantName: merchantName,
@@ -64,7 +65,8 @@ class ReceiptParser {
     return lines;
   }
 
-  static DateTime? _extractDate(List<(String, double)> lines) {
+  @visibleForTesting
+  static DateTime? extractDate(List<(String, double)> lines) {
     final now = DateTime.now();
 
     for (final (text, _) in lines) {
@@ -118,7 +120,8 @@ class ReceiptParser {
     return null;
   }
 
-  static double? _parseAmount(String amountStr) {
+  @visibleForTesting
+  static double? parseAmount(String amountStr) {
     // Determine decimal separator
     // If last separator is comma with 2 digits after → comma is decimal (German)
     // If last separator is period with 2 digits after → period is decimal (English)
@@ -145,17 +148,19 @@ class ReceiptParser {
   static double? _lineAmount(String text) {
     final matches = _amountRegex.allMatches(text);
     if (matches.isEmpty) return null;
-    return _parseAmount(matches.last.group(1)!);
+    return parseAmount(matches.last.group(1)!);
   }
 
   /// Check if a line is "amount-only" (just a number, no meaningful text).
-  static bool _isAmountOnly(String text) {
+  @visibleForTesting
+  static bool isAmountOnly(String text) {
     final stripped = text.replaceAll(_amountRegex, '').replaceAll(RegExp(r'[\s\€\$\dx]'), '').trim();
     return stripped.isEmpty || stripped.length <= 2;
   }
 
   /// Check if a line should be skipped entirely.
-  static bool _isSkippable(String text) {
+  @visibleForTesting
+  static bool isSkippable(String text) {
     final lower = text.toLowerCase();
     if (_exclusionKeywords.any((kw) => lower.contains(kw))) return true;
     if (_totalKeywords.any((kw) => lower.contains(kw))) return true;
@@ -165,7 +170,8 @@ class ReceiptParser {
 
   /// Extract total by looking for total keywords, then finding the amount
   /// on the same line or the next line with an amount.
-  static double? _extractTotal(List<(String, double)> lines) {
+  @visibleForTesting
+  static double? extractTotal(List<(String, double)> lines) {
     for (int i = 0; i < lines.length; i++) {
       final lower = lines[i].$1.toLowerCase();
       if (!_totalKeywords.any((kw) => lower.contains(kw))) continue;
@@ -191,7 +197,8 @@ class ReceiptParser {
   }
 
   /// Extract quantity from item name. Returns (cleanedName, quantity).
-  static (String, int) _extractQuantity(String name) {
+  @visibleForTesting
+  static (String, int) extractQuantity(String name) {
     // Check prefix: "3x Beer" or "3 x Beer"
     final prefixMatch = _quantityPrefixRegex.firstMatch(name);
     if (prefixMatch != null) {
@@ -221,13 +228,13 @@ class ReceiptParser {
 
     for (int i = 0; i < lines.length; i++) {
       final text = lines[i].$1;
-      if (_isSkippable(text)) continue;
+      if (isSkippable(text)) continue;
 
       final amount = _lineAmount(text);
 
       if (amount != null && amount > 0) {
         // Pattern 1: amount is on this line
-        if (!_isAmountOnly(text)) {
+        if (!isAmountOnly(text)) {
           // Has both name and amount on the same line
           final amountMatch = _amountRegex.firstMatch(text);
           String name = text;
@@ -237,7 +244,7 @@ class ReceiptParser {
           name = name.replaceAll(RegExp(r'[\s\.\,\-\*]+$'), '').trim();
 
           if (name.length >= 3 && amount != total) {
-            final (cleanName, qty) = _extractQuantity(name);
+            final (cleanName, qty) = extractQuantity(name);
             items.add(ReceiptLineItem(
               name: cleanName,
               amount: amount,
@@ -257,9 +264,9 @@ class ReceiptParser {
         for (int j = i + 1; j < lines.length && j <= i + 3; j++) {
           final nextText = lines[j].$1;
           final nextAmount = _lineAmount(nextText);
-          if (nextAmount != null && nextAmount > 0 && _isAmountOnly(nextText)) {
+          if (nextAmount != null && nextAmount > 0 && isAmountOnly(nextText)) {
             if (nextAmount != total) {
-              final (cleanName, qty) = _extractQuantity(text);
+              final (cleanName, qty) = extractQuantity(text);
               items.add(ReceiptLineItem(
                 name: cleanName,
                 amount: nextAmount,
@@ -269,14 +276,15 @@ class ReceiptParser {
             break;
           }
           // Stop looking if we hit another text line (not amount-only)
-          if (!_isAmountOnly(nextText) && nextText.length >= 3) break;
+          if (!isAmountOnly(nextText) && nextText.length >= 3) break;
         }
       }
     }
     return items;
   }
 
-  static String? _extractMerchantName(List<(String, double)> lines) {
+  @visibleForTesting
+  static String? extractMerchantName(List<(String, double)> lines) {
     for (final (text, _) in lines) {
       if (text.isEmpty || text.length < 3) continue;
 

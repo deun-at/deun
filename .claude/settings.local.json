@@ -1,0 +1,40 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(find:*)",
+      "Bash(ls:*)",
+      "Read(//mnt/c/work/**)",
+      "Bash(flutter pub:*)",
+      "Bash(flutter run:*)",
+      "Bash(where sdkmanager:*)",
+      "Bash(echo \"ANDROID_HOME=$ANDROID_HOME\")",
+      "Bash(echo \"ANDROID_SDK_ROOT=$ANDROID_SDK_ROOT\")",
+      "Bash(flutter logs:*)",
+      "Bash(keytool -list -v -keystore ~/.android/debug.keystore -alias androiddebugkey -storepass android)",
+      "Bash(cat /c/work/deun/.run/*.xml)",
+      "Bash(xargs -I {} find {} -name \"*_model.dart\")",
+      "Bash(grep -r import.*dart:io /c/work/deun/lib)",
+      "Bash(grep -r \"secret\\\\|password\\\\|token\\\\|api.key\" /c/work/deun/lib --include=*.dart)",
+      "mcp__notion__notion-search",
+      "mcp__notion__notion-fetch",
+      "mcp__notion__notion-create-pages",
+      "mcp__notion__notion-update-page",
+      "Bash(grep -r \"groupListProvider\\\\|watch.*groupList\" C:/work/deun/lib --include=*.dart)",
+      "Bash(grep -r \"AppLifecycle\\\\|resumed\\\\|paused\\\\|detached\\\\|invalidate\" C:/work/deun/lib --include=*.dart)",
+      "Bash(grep -r \"removeChannel\\\\|subscribe\\\\|channel\" C:/work/deun/lib --include=*.dart)",
+      "Bash(dart run:*)",
+      "Bash(flutter analyze:*)",
+      "Read(//c/Users/ASUS/AppData/Local/Android/Sdk/platform-tools/**)",
+      "Bash(/c/Users/ASUS/AppData/Local/Android/Sdk/platform-tools/adb.exe shell:*)",
+      "WebSearch",
+      "Bash(flutter --version)",
+      "WebFetch(domain:pub.dev)",
+      "Bash(flutter gen-l10n:*)",
+      "mcp__notion__notion-update-data-source",
+      "mcp__notion__notion-create-database",
+      "mcp__notion__notion-create-view",
+      "mcp__notion__notion-update-view",
+      "Bash(flutter test:*)"
+    ]
+  }
+}
