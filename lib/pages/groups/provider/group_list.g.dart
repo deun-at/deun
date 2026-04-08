@@ -20,7 +20,7 @@ final class GroupListNotifierProvider
         argument: null,
         retry: null,
         name: r'groupListProvider',
-        isAutoDispose: true,
+        isAutoDispose: false,
         dependencies: null,
         $allTransitiveDependencies: null,
       );
@@ -33,7 +33,7 @@ final class GroupListNotifierProvider
   GroupListNotifier create() => GroupListNotifier();
 }
 
-String _$groupListNotifierHash() => r'bcee1289ab1904a759988be33489a6862d20327e';
+String _$groupListNotifierHash() => r'8a6f317eaefdc11f5112b9c509d0af026696ad1b';
 
 abstract class _$GroupListNotifier extends $AsyncNotifier<List<Group>> {
   FutureOr<List<Group>> build();

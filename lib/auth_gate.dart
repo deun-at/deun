@@ -1,12 +1,25 @@
+import 'package:deun/pages/users/user_model.dart';
+import 'package:deun/pages/users/user_repository.dart';
 import 'package:flutter/material.dart';
 import 'package:supabase_auth_ui/supabase_auth_ui.dart';
 
 import 'main.dart';
 import 'navigation.dart';
 import 'pages/auth/login_screen.dart';
+import 'pages/auth/onboarding_screen.dart';
 
-class AuthGate extends StatelessWidget {
+class AuthGate extends StatefulWidget {
   const AuthGate({super.key});
+
+  @override
+  State<AuthGate> createState() => _AuthGateState();
+}
+
+class _AuthGateState extends State<AuthGate> {
+  bool _needsOnboarding = false;
+  bool _onboardingChecked = false;
+  String? _initialDisplayName;
+  Future<SupaUser>? _onboardingFuture;
 
   @override
   Widget build(BuildContext context) {
@@ -20,10 +33,19 @@ class AuthGate extends StatelessWidget {
         bool isPasswordRecovery = false;
 
         if (session == null) {
+          // Reset onboarding state on sign out
+          _needsOnboarding = false;
+          _onboardingChecked = false;
+          _onboardingFuture = null;
           return const LoginScreen();
         }
 
         if (event == AuthChangeEvent.signedIn) {
+          // Reset check so we re-evaluate on each sign-in
+          _onboardingChecked = false;
+          _needsOnboarding = false;
+          _onboardingFuture = null;
+
           try {
             String? firstName;
             String? lastName;
@@ -66,7 +88,67 @@ class AuthGate extends StatelessWidget {
           isPasswordRecovery = true;
         }
 
-        return NavigationScreen(isPasswordRecovery: isPasswordRecovery);
+        if (isPasswordRecovery) {
+          return NavigationScreen(isPasswordRecovery: true);
+        }
+
+        // Check if user needs onboarding (no username set)
+        if (!_onboardingChecked) {
+          _onboardingFuture ??= UserRepository.fetchDetail(supabase.auth.currentUser?.email ?? '');
+          return FutureBuilder<SupaUser>(
+            future: _onboardingFuture,
+            builder: (context, userSnapshot) {
+              if (userSnapshot.connectionState == ConnectionState.waiting) {
+                final brightness = MediaQuery.platformBrightnessOf(context);
+                final bgColor = brightness == Brightness.dark
+                    ? const Color(0xFF1f2021)
+                    : const Color(0xFFefedee);
+                return Directionality(
+                  textDirection: TextDirection.ltr,
+                  child: ColoredBox(
+                    color: bgColor,
+                    child: Center(
+                      child: Image.asset('assets/icon/icon-512.png', height: 128),
+                    ),
+                  ),
+                );
+              }
+
+              if (userSnapshot.hasData) {
+                final user = userSnapshot.data!;
+                _onboardingChecked = true;
+                _needsOnboarding = user.needsOnboarding;
+                _initialDisplayName = user.displayName;
+
+                if (_needsOnboarding) {
+                  return OnboardingScreen(
+                    initialDisplayName: _initialDisplayName,
+                    onComplete: () {
+                      setState(() {
+                        _needsOnboarding = false;
+                      });
+                    },
+                  );
+                }
+              }
+
+              return NavigationScreen(isPasswordRecovery: false);
+            },
+          );
+        }
+
+        if (_needsOnboarding) {
+          return OnboardingScreen(
+            initialDisplayName: _initialDisplayName,
+            onComplete: () {
+              setState(() {
+                _needsOnboarding = false;
+              });
+            },
+          );
+        }
+
+        return NavigationScreen(isPasswordRecovery: false);
       },
     );
   }

@@ -1,19 +1,45 @@
 import 'dart:math';
 import 'package:deun/pages/users/user_model.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../main.dart';
 
 class UserRepository {
-  /// Fetch a list of users filtered by [searchString] and excluding [selectedUsers].
+  /// Fetch users whose email or username exactly matches [searchString].
+  /// Excludes [selectedUsers] (already friends / self).
   static Future<List<SupaUser>> fetchData(String searchString, List<String> selectedUsers, int? limit) async {
-    var query =
-    supabase.from('user').select('*').ilike('email', searchString).not('email', 'in', selectedUsers).order('email');
+    final trimmed = searchString.trim().toLowerCase();
+    if (trimmed.isEmpty) return [];
+
+    var query = supabase
+        .from('user')
+        .select('*')
+        .or('email.eq.$trimmed,username.eq.$trimmed')
+        .not('email', 'in', selectedUsers)
+        .eq('is_guest', false)
+        .order('email');
 
     if (limit != null) {
       query = query.limit(limit);
     }
 
-    final List<dynamic> data = await query; // Supabase returns List<dynamic>
+    final List<dynamic> data = await query;
+    return data.cast<Map<String, dynamic>>().map(SupaUser.fromJson).toList();
+  }
+
+  /// Fetch users whose email is in [emails], excluding [excludeEmails].
+  /// Used for contact suggestion matching.
+  static Future<List<SupaUser>> fetchByEmails(List<String> emails, List<String> excludeEmails) async {
+    if (emails.isEmpty) return [];
+
+    final List<dynamic> data = await supabase
+        .from('user')
+        .select('*')
+        .inFilter('email', emails)
+        .not('email', 'in', excludeEmails)
+        .eq('is_guest', false)
+        .order('email');
+
     return data.cast<Map<String, dynamic>>().map(SupaUser.fromJson).toList();
   }
 
@@ -40,6 +66,47 @@ class UserRepository {
     } else {
       throw Exception('User email is empty');
     }
+  }
+
+  /// Save username and display name during onboarding or settings update.
+  /// Generates a random 4-digit code and retries on collision.
+  static Future<String> saveUsername(String username, String displayName) async {
+    final email = supabase.auth.currentUser?.email;
+    if (email == null || email.isEmpty) {
+      throw Exception('User email is empty');
+    }
+
+    final sanitized = username.toLowerCase().trim();
+
+    for (int attempt = 0; attempt < 5; attempt++) {
+      final code = (Random().nextInt(9000) + 1000).toString(); // 1000–9999
+
+      try {
+        await supabase.from('user').update({
+          'username': sanitized,
+          'username_code': code,
+          'display_name': displayName,
+        }).eq('email', email);
+
+        return code;
+      } on PostgrestException catch (e) {
+        // Only retry on unique constraint violation (23505)
+        if (e.code != '23505' || attempt == 4) rethrow;
+      }
+    }
+
+    throw Exception('Could not generate unique username after 5 attempts');
+  }
+
+  /// Fetch a single user by username and code (e.g. "john" + "1234").
+  static Future<SupaUser> fetchByUsername(String username, String code) async {
+    final Map<String, dynamic> data = await supabase
+        .from('user')
+        .select('*')
+        .eq('username', username)
+        .eq('username_code', code)
+        .single();
+    return SupaUser.fromJson(data);
   }
 
   /// Create a guest user with a generated placeholder email.

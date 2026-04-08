@@ -9,6 +9,8 @@ void main() {
         'group_id': 'g1',
         'email': 'test@example.com',
         'display_name': 'Test User',
+        'username': 'testuser',
+        'username_code': '1234',
         'is_guest': false,
         'is_favorite': true,
       });
@@ -16,6 +18,8 @@ void main() {
       expect(member.groupId, 'g1');
       expect(member.email, 'test@example.com');
       expect(member.displayName, 'Test User');
+      expect(member.username, 'testuser');
+      expect(member.usernameCode, '1234');
       expect(member.isGuest, false);
       expect(member.isFavorite, true);
     });
@@ -59,6 +63,36 @@ void main() {
     });
   });
 
+  group('GroupMember.fullUsername', () {
+    test('returns username#code when both set', () {
+      final member = GroupMember();
+      member.loadDataFromJson({
+        'group_id': 'g1',
+        'email': 'test@example.com',
+        'display_name': 'Test User',
+        'username': 'testuser',
+        'username_code': '1234',
+        'is_guest': false,
+        'is_favorite': false,
+      });
+
+      expect(member.fullUsername, 'testuser#1234');
+    });
+
+    test('returns displayName when username is null', () {
+      final member = GroupMember();
+      member.loadDataFromJson({
+        'group_id': 'g1',
+        'email': 'test@example.com',
+        'display_name': 'Test User',
+        'is_guest': false,
+        'is_favorite': false,
+      });
+
+      expect(member.fullUsername, 'Test User');
+    });
+  });
+
   group('GroupMember.toJson', () {
     test('round-trip preserves all fields', () {
       final member = GroupMember();
@@ -66,6 +100,8 @@ void main() {
         'group_id': 'g1',
         'email': 'test@example.com',
         'display_name': 'Test User',
+        'username': 'testuser',
+        'username_code': '1234',
         'is_guest': false,
         'is_favorite': true,
       });
@@ -74,6 +110,8 @@ void main() {
       expect(json['group_id'], 'g1');
       expect(json['email'], 'test@example.com');
       expect(json['display_name'], 'Test User');
+      expect(json['username'], 'testuser');
+      expect(json['username_code'], '1234');
       expect(json['is_guest'], false);
       expect(json['is_favorite'], true);
     });

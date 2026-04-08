@@ -6,7 +6,7 @@ import 'package:deun/pages/auth/update_password.dart';
 import 'package:deun/pages/expenses/presentation/expense_detail.dart';
 import 'package:deun/pages/expenses/data/expense_model.dart';
 import 'package:deun/pages/expenses/data/expense_repository.dart';
-import 'package:deun/pages/friends/presentation/friend_add.dart';
+import 'package:deun/pages/friends/presentation/friend_add_page.dart';
 import 'package:deun/pages/friends/presentation/friend_list.dart';
 import 'package:deun/pages/friends/presentation/friend_qr_page.dart';
 import 'package:deun/pages/friends/presentation/friend_accept_page.dart';
@@ -210,12 +210,8 @@ class _NavigationScreenState extends ConsumerState<NavigationScreen> with Widget
                       GoRoute(
                           path: 'add',
                           parentNavigatorKey: _rootNavigatorKey,
-                          pageBuilder: (context, state) {
-                            return ModalBottomSheetPage(
-                              key: state.pageKey,
-                              builder: (context) => FriendAddBottomSheet(),
-                            );
-                          }),
+                          builder: (context, state) => const FriendAddPage(),
+                      ),
                       GoRoute(
                         path: 'qr',
                         parentNavigatorKey: _rootNavigatorKey,
@@ -226,7 +222,13 @@ class _NavigationScreenState extends ConsumerState<NavigationScreen> with Widget
                         parentNavigatorKey: _rootNavigatorKey,
                         builder: (context, state) {
                           final email = state.uri.queryParameters['email'];
-                          return FriendAcceptPage(email: email);
+                          final username = state.uri.queryParameters['u'];
+                          final code = state.uri.queryParameters['c'];
+                          return FriendAcceptPage(
+                            email: email,
+                            username: username,
+                            usernameCode: code,
+                          );
                         },
                       ),
                     ]),
@@ -432,7 +434,12 @@ class _NavigationScreenState extends ConsumerState<NavigationScreen> with Widget
 
     if (path == '/friend/accept') {
       final email = params['email'];
-      if (email == null || !_emailRegExp.hasMatch(email)) return null;
+      final username = params['u'];
+      final code = params['c'];
+      // Accept either email or username+code
+      final hasEmail = email != null && _emailRegExp.hasMatch(email);
+      final hasUsername = username != null && username.isNotEmpty && code != null && code.isNotEmpty;
+      if (!hasEmail && !hasUsername) return null;
       return fragment;
     }
 
@@ -450,16 +457,19 @@ class _NavigationScreenState extends ConsumerState<NavigationScreen> with Widget
     return null;
   }
 
+  bool _wasPaused = false;
+
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (state == AppLifecycleState.paused || state == AppLifecycleState.inactive) {
+    if (state == AppLifecycleState.paused) {
+      _wasPaused = true;
       // Remove all Supabase channels to prevent channelError loops
       // while the app is backgrounded and the WebSocket is dead.
       supabase.removeAllChannels();
-    } else if (state == AppLifecycleState.resumed) {
-      // Signal all real-time providers to re-subscribe channels and reload data.
-      // Channels were killed by removeAllChannels() on pause; the mixin's
-      // listenForResume handler re-subscribes them from stored configs.
+    } else if (state == AppLifecycleState.resumed && _wasPaused) {
+      _wasPaused = false;
+      // Only re-subscribe if we actually paused (channels were killed).
+      // Skip for transient inactive→resumed cycles (keyboard, dialogs).
       ref.read(appResumeCounterProvider.notifier).increment();
     }
   }

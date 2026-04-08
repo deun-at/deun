@@ -20,7 +20,7 @@ final class FriendshipListNotifierProvider
         argument: null,
         retry: null,
         name: r'friendshipListProvider',
-        isAutoDispose: true,
+        isAutoDispose: false,
         dependencies: null,
         $allTransitiveDependencies: null,
       );
@@ -34,7 +34,7 @@ final class FriendshipListNotifierProvider
 }
 
 String _$friendshipListNotifierHash() =>
-    r'421deaff82ab4caf1a7dd7327cda9632295a9de8';
+    r'60aadb56222cd560a96e33f959b40ce21b323c2f';
 
 abstract class _$FriendshipListNotifier
     extends $AsyncNotifier<List<Friendship>> {

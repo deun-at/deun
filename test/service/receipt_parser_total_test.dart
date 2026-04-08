@@ -2,8 +2,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:deun/pages/expenses/service/receipt_parser.dart';
 
 void main() {
-  List<(String, double)> lines(List<String> texts) {
-    return texts.asMap().entries.map((e) => (e.value, e.key * 10.0)).toList();
+  List<ReceiptLine> lines(List<String> texts) {
+    return texts.asMap().entries.map((e) => ReceiptLine.simple(e.value, e.key * 10.0)).toList();
   }
 
   group('ReceiptParser.extractTotal', () {

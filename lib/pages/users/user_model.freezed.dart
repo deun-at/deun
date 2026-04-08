@@ -15,7 +15,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$SupaUser {
 
- String get email; String? get userId; String? get firstName; String? get lastName; String get displayName; String? get paypalMe; String? get iban; String? get locale; String? get createdAt; bool get isGuest;
+ String get email; String? get userId; String? get firstName; String? get lastName; String get displayName; String? get username; String? get usernameCode; String? get paypalMe; String? get iban; String? get locale; String? get createdAt; bool get isGuest;
 /// Create a copy of SupaUser
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -28,16 +28,16 @@ $SupaUserCopyWith<SupaUser> get copyWith => _$SupaUserCopyWithImpl<SupaUser>(thi
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is SupaUser&&(identical(other.email, email) || other.email == email)&&(identical(other.userId, userId) || other.userId == userId)&&(identical(other.firstName, firstName) || other.firstName == firstName)&&(identical(other.lastName, lastName) || other.lastName == lastName)&&(identical(other.displayName, displayName) || other.displayName == displayName)&&(identical(other.paypalMe, paypalMe) || other.paypalMe == paypalMe)&&(identical(other.iban, iban) || other.iban == iban)&&(identical(other.locale, locale) || other.locale == locale)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.isGuest, isGuest) || other.isGuest == isGuest));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is SupaUser&&(identical(other.email, email) || other.email == email)&&(identical(other.userId, userId) || other.userId == userId)&&(identical(other.firstName, firstName) || other.firstName == firstName)&&(identical(other.lastName, lastName) || other.lastName == lastName)&&(identical(other.displayName, displayName) || other.displayName == displayName)&&(identical(other.username, username) || other.username == username)&&(identical(other.usernameCode, usernameCode) || other.usernameCode == usernameCode)&&(identical(other.paypalMe, paypalMe) || other.paypalMe == paypalMe)&&(identical(other.iban, iban) || other.iban == iban)&&(identical(other.locale, locale) || other.locale == locale)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.isGuest, isGuest) || other.isGuest == isGuest));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,email,userId,firstName,lastName,displayName,paypalMe,iban,locale,createdAt,isGuest);
+int get hashCode => Object.hash(runtimeType,email,userId,firstName,lastName,displayName,username,usernameCode,paypalMe,iban,locale,createdAt,isGuest);
 
 @override
 String toString() {
-  return 'SupaUser(email: $email, userId: $userId, firstName: $firstName, lastName: $lastName, displayName: $displayName, paypalMe: $paypalMe, iban: $iban, locale: $locale, createdAt: $createdAt, isGuest: $isGuest)';
+  return 'SupaUser(email: $email, userId: $userId, firstName: $firstName, lastName: $lastName, displayName: $displayName, username: $username, usernameCode: $usernameCode, paypalMe: $paypalMe, iban: $iban, locale: $locale, createdAt: $createdAt, isGuest: $isGuest)';
 }
 
 
@@ -48,7 +48,7 @@ abstract mixin class $SupaUserCopyWith<$Res>  {
   factory $SupaUserCopyWith(SupaUser value, $Res Function(SupaUser) _then) = _$SupaUserCopyWithImpl;
 @useResult
 $Res call({
- String email, String? userId, String? firstName, String? lastName, String displayName, String? paypalMe, String? iban, String? locale, String? createdAt, bool isGuest
+ String email, String? userId, String? firstName, String? lastName, String displayName, String? username, String? usernameCode, String? paypalMe, String? iban, String? locale, String? createdAt, bool isGuest
 });
 
 
@@ -65,14 +65,16 @@ class _$SupaUserCopyWithImpl<$Res>
 
 /// Create a copy of SupaUser
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? email = null,Object? userId = freezed,Object? firstName = freezed,Object? lastName = freezed,Object? displayName = null,Object? paypalMe = freezed,Object? iban = freezed,Object? locale = freezed,Object? createdAt = freezed,Object? isGuest = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? email = null,Object? userId = freezed,Object? firstName = freezed,Object? lastName = freezed,Object? displayName = null,Object? username = freezed,Object? usernameCode = freezed,Object? paypalMe = freezed,Object? iban = freezed,Object? locale = freezed,Object? createdAt = freezed,Object? isGuest = null,}) {
   return _then(_self.copyWith(
 email: null == email ? _self.email : email // ignore: cast_nullable_to_non_nullable
 as String,userId: freezed == userId ? _self.userId : userId // ignore: cast_nullable_to_non_nullable
 as String?,firstName: freezed == firstName ? _self.firstName : firstName // ignore: cast_nullable_to_non_nullable
 as String?,lastName: freezed == lastName ? _self.lastName : lastName // ignore: cast_nullable_to_non_nullable
 as String?,displayName: null == displayName ? _self.displayName : displayName // ignore: cast_nullable_to_non_nullable
-as String,paypalMe: freezed == paypalMe ? _self.paypalMe : paypalMe // ignore: cast_nullable_to_non_nullable
+as String,username: freezed == username ? _self.username : username // ignore: cast_nullable_to_non_nullable
+as String?,usernameCode: freezed == usernameCode ? _self.usernameCode : usernameCode // ignore: cast_nullable_to_non_nullable
+as String?,paypalMe: freezed == paypalMe ? _self.paypalMe : paypalMe // ignore: cast_nullable_to_non_nullable
 as String?,iban: freezed == iban ? _self.iban : iban // ignore: cast_nullable_to_non_nullable
 as String?,locale: freezed == locale ? _self.locale : locale // ignore: cast_nullable_to_non_nullable
 as String?,createdAt: freezed == createdAt ? _self.createdAt : createdAt // ignore: cast_nullable_to_non_nullable
@@ -162,10 +164,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String email,  String? userId,  String? firstName,  String? lastName,  String displayName,  String? paypalMe,  String? iban,  String? locale,  String? createdAt,  bool isGuest)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String email,  String? userId,  String? firstName,  String? lastName,  String displayName,  String? username,  String? usernameCode,  String? paypalMe,  String? iban,  String? locale,  String? createdAt,  bool isGuest)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _SupaUser() when $default != null:
-return $default(_that.email,_that.userId,_that.firstName,_that.lastName,_that.displayName,_that.paypalMe,_that.iban,_that.locale,_that.createdAt,_that.isGuest);case _:
+return $default(_that.email,_that.userId,_that.firstName,_that.lastName,_that.displayName,_that.username,_that.usernameCode,_that.paypalMe,_that.iban,_that.locale,_that.createdAt,_that.isGuest);case _:
   return orElse();
 
 }
@@ -183,10 +185,10 @@ return $default(_that.email,_that.userId,_that.firstName,_that.lastName,_that.di
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String email,  String? userId,  String? firstName,  String? lastName,  String displayName,  String? paypalMe,  String? iban,  String? locale,  String? createdAt,  bool isGuest)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String email,  String? userId,  String? firstName,  String? lastName,  String displayName,  String? username,  String? usernameCode,  String? paypalMe,  String? iban,  String? locale,  String? createdAt,  bool isGuest)  $default,) {final _that = this;
 switch (_that) {
 case _SupaUser():
-return $default(_that.email,_that.userId,_that.firstName,_that.lastName,_that.displayName,_that.paypalMe,_that.iban,_that.locale,_that.createdAt,_that.isGuest);case _:
+return $default(_that.email,_that.userId,_that.firstName,_that.lastName,_that.displayName,_that.username,_that.usernameCode,_that.paypalMe,_that.iban,_that.locale,_that.createdAt,_that.isGuest);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -203,10 +205,10 @@ return $default(_that.email,_that.userId,_that.firstName,_that.lastName,_that.di
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String email,  String? userId,  String? firstName,  String? lastName,  String displayName,  String? paypalMe,  String? iban,  String? locale,  String? createdAt,  bool isGuest)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String email,  String? userId,  String? firstName,  String? lastName,  String displayName,  String? username,  String? usernameCode,  String? paypalMe,  String? iban,  String? locale,  String? createdAt,  bool isGuest)?  $default,) {final _that = this;
 switch (_that) {
 case _SupaUser() when $default != null:
-return $default(_that.email,_that.userId,_that.firstName,_that.lastName,_that.displayName,_that.paypalMe,_that.iban,_that.locale,_that.createdAt,_that.isGuest);case _:
+return $default(_that.email,_that.userId,_that.firstName,_that.lastName,_that.displayName,_that.username,_that.usernameCode,_that.paypalMe,_that.iban,_that.locale,_that.createdAt,_that.isGuest);case _:
   return null;
 
 }
@@ -218,14 +220,16 @@ return $default(_that.email,_that.userId,_that.firstName,_that.lastName,_that.di
 @JsonSerializable()
 
 class _SupaUser implements SupaUser {
-  const _SupaUser({required this.email, this.userId, this.firstName, this.lastName, required this.displayName, this.paypalMe, this.iban, this.locale, this.createdAt, this.isGuest = false});
+  const _SupaUser({required this.email, this.userId, this.firstName, this.lastName, this.displayName = '', this.username, this.usernameCode, this.paypalMe, this.iban, this.locale, this.createdAt, this.isGuest = false});
   factory _SupaUser.fromJson(Map<String, dynamic> json) => _$SupaUserFromJson(json);
 
 @override final  String email;
 @override final  String? userId;
 @override final  String? firstName;
 @override final  String? lastName;
-@override final  String displayName;
+@override@JsonKey() final  String displayName;
+@override final  String? username;
+@override final  String? usernameCode;
 @override final  String? paypalMe;
 @override final  String? iban;
 @override final  String? locale;
@@ -245,16 +249,16 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _SupaUser&&(identical(other.email, email) || other.email == email)&&(identical(other.userId, userId) || other.userId == userId)&&(identical(other.firstName, firstName) || other.firstName == firstName)&&(identical(other.lastName, lastName) || other.lastName == lastName)&&(identical(other.displayName, displayName) || other.displayName == displayName)&&(identical(other.paypalMe, paypalMe) || other.paypalMe == paypalMe)&&(identical(other.iban, iban) || other.iban == iban)&&(identical(other.locale, locale) || other.locale == locale)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.isGuest, isGuest) || other.isGuest == isGuest));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _SupaUser&&(identical(other.email, email) || other.email == email)&&(identical(other.userId, userId) || other.userId == userId)&&(identical(other.firstName, firstName) || other.firstName == firstName)&&(identical(other.lastName, lastName) || other.lastName == lastName)&&(identical(other.displayName, displayName) || other.displayName == displayName)&&(identical(other.username, username) || other.username == username)&&(identical(other.usernameCode, usernameCode) || other.usernameCode == usernameCode)&&(identical(other.paypalMe, paypalMe) || other.paypalMe == paypalMe)&&(identical(other.iban, iban) || other.iban == iban)&&(identical(other.locale, locale) || other.locale == locale)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.isGuest, isGuest) || other.isGuest == isGuest));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,email,userId,firstName,lastName,displayName,paypalMe,iban,locale,createdAt,isGuest);
+int get hashCode => Object.hash(runtimeType,email,userId,firstName,lastName,displayName,username,usernameCode,paypalMe,iban,locale,createdAt,isGuest);
 
 @override
 String toString() {
-  return 'SupaUser(email: $email, userId: $userId, firstName: $firstName, lastName: $lastName, displayName: $displayName, paypalMe: $paypalMe, iban: $iban, locale: $locale, createdAt: $createdAt, isGuest: $isGuest)';
+  return 'SupaUser(email: $email, userId: $userId, firstName: $firstName, lastName: $lastName, displayName: $displayName, username: $username, usernameCode: $usernameCode, paypalMe: $paypalMe, iban: $iban, locale: $locale, createdAt: $createdAt, isGuest: $isGuest)';
 }
 
 
@@ -265,7 +269,7 @@ abstract mixin class _$SupaUserCopyWith<$Res> implements $SupaUserCopyWith<$Res>
   factory _$SupaUserCopyWith(_SupaUser value, $Res Function(_SupaUser) _then) = __$SupaUserCopyWithImpl;
 @override @useResult
 $Res call({
- String email, String? userId, String? firstName, String? lastName, String displayName, String? paypalMe, String? iban, String? locale, String? createdAt, bool isGuest
+ String email, String? userId, String? firstName, String? lastName, String displayName, String? username, String? usernameCode, String? paypalMe, String? iban, String? locale, String? createdAt, bool isGuest
 });
 
 
@@ -282,14 +286,16 @@ class __$SupaUserCopyWithImpl<$Res>
 
 /// Create a copy of SupaUser
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? email = null,Object? userId = freezed,Object? firstName = freezed,Object? lastName = freezed,Object? displayName = null,Object? paypalMe = freezed,Object? iban = freezed,Object? locale = freezed,Object? createdAt = freezed,Object? isGuest = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? email = null,Object? userId = freezed,Object? firstName = freezed,Object? lastName = freezed,Object? displayName = null,Object? username = freezed,Object? usernameCode = freezed,Object? paypalMe = freezed,Object? iban = freezed,Object? locale = freezed,Object? createdAt = freezed,Object? isGuest = null,}) {
   return _then(_SupaUser(
 email: null == email ? _self.email : email // ignore: cast_nullable_to_non_nullable
 as String,userId: freezed == userId ? _self.userId : userId // ignore: cast_nullable_to_non_nullable
 as String?,firstName: freezed == firstName ? _self.firstName : firstName // ignore: cast_nullable_to_non_nullable
 as String?,lastName: freezed == lastName ? _self.lastName : lastName // ignore: cast_nullable_to_non_nullable
 as String?,displayName: null == displayName ? _self.displayName : displayName // ignore: cast_nullable_to_non_nullable
-as String,paypalMe: freezed == paypalMe ? _self.paypalMe : paypalMe // ignore: cast_nullable_to_non_nullable
+as String,username: freezed == username ? _self.username : username // ignore: cast_nullable_to_non_nullable
+as String?,usernameCode: freezed == usernameCode ? _self.usernameCode : usernameCode // ignore: cast_nullable_to_non_nullable
+as String?,paypalMe: freezed == paypalMe ? _self.paypalMe : paypalMe // ignore: cast_nullable_to_non_nullable
 as String?,iban: freezed == iban ? _self.iban : iban // ignore: cast_nullable_to_non_nullable
 as String?,locale: freezed == locale ? _self.locale : locale // ignore: cast_nullable_to_non_nullable
 as String?,createdAt: freezed == createdAt ? _self.createdAt : createdAt // ignore: cast_nullable_to_non_nullable

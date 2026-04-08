@@ -47,7 +47,7 @@ class _GroupEditState extends ConsumerState<GroupEdit> {
 
     return groupMembers.mapIndexed((index, user) {
       String titleText = "";
-      String subtitleText = user['email'];
+      String subtitleText = fullUsernameFromJson(user);
       Widget iconButton;
       if (user['email'] == supabase.auth.currentUser?.email) {
         titleText = AppLocalizations.of(context)!.you;
@@ -137,7 +137,7 @@ class _GroupEditState extends ConsumerState<GroupEdit> {
         isBottom: isBottom,
         child: ListTile(
           title: Text(user.displayName),
-          subtitle: Text(user.email),
+          subtitle: Text(user.fullUsername),
           onTap: () {
             nbs.add(user.toJson());
             field.didChange(jsonEncode(nbs));
@@ -299,7 +299,7 @@ class _GroupEditState extends ConsumerState<GroupEdit> {
                               } else {
                                 listTiles.addAll(groupMembers.map((groupMember) {
                                   String displayName = groupMember["display_name"];
-                                  String subtitleText = groupMember["email"];
+                                  String subtitleText = fullUsernameFromJson(groupMember);
 
                                   if (groupMember["email"] == supabase.auth.currentUser?.email) {
                                     displayName = AppLocalizations.of(context)!.you;

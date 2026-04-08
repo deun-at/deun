@@ -674,7 +674,7 @@ abstract class AppLocalizations {
   /// No description provided for @addFriendshipSelectionEmpty.
   ///
   /// In en, this message translates to:
-  /// **'Search for Name or E-Mail'**
+  /// **'Enter exact username or e-mail'**
   String get addFriendshipSelectionEmpty;
 
   /// No description provided for @addFriendshipSearchResult.
@@ -1410,6 +1410,24 @@ abstract class AppLocalizations {
   /// **'Let\'s get connected on DEUN! 🤝\n{url}'**
   String friendQrShareLink(String url);
 
+  /// No description provided for @friendAcceptConfirmTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Add as Friend?'**
+  String get friendAcceptConfirmTitle;
+
+  /// No description provided for @friendAcceptConfirmBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Do you want to add {displayName} as a friend?'**
+  String friendAcceptConfirmBody(String displayName);
+
+  /// No description provided for @friendAcceptSelfError.
+  ///
+  /// In en, this message translates to:
+  /// **'You cannot add yourself as a friend.'**
+  String get friendAcceptSelfError;
+
   /// No description provided for @statisticsTitle.
   ///
   /// In en, this message translates to:
@@ -1535,6 +1553,72 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'{count} {count, plural, =1{part} other{parts}}'**
   String splitSharesSummary(int count);
+
+  /// No description provided for @onboardingTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Welcome to Deun!'**
+  String get onboardingTitle;
+
+  /// No description provided for @onboardingSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose a username to get started'**
+  String get onboardingSubtitle;
+
+  /// No description provided for @onboardingUsernameLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Username'**
+  String get onboardingUsernameLabel;
+
+  /// No description provided for @onboardingDisplayNameLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Display Name'**
+  String get onboardingDisplayNameLabel;
+
+  /// No description provided for @onboardingButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Get Started'**
+  String get onboardingButton;
+
+  /// No description provided for @onboardingUsernameHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Letters, numbers, underscores (3–20 chars)'**
+  String get onboardingUsernameHint;
+
+  /// No description provided for @onboardingUsernameTaken.
+  ///
+  /// In en, this message translates to:
+  /// **'Username not available, please try another'**
+  String get onboardingUsernameTaken;
+
+  /// No description provided for @onboardingUsernameInvalid.
+  ///
+  /// In en, this message translates to:
+  /// **'3–20 characters: letters, numbers, underscores only'**
+  String get onboardingUsernameInvalid;
+
+  /// No description provided for @onboardingDisplayNameRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Display name is required'**
+  String get onboardingDisplayNameRequired;
+
+  /// No description provided for @settingsUsername.
+  ///
+  /// In en, this message translates to:
+  /// **'Username'**
+  String get settingsUsername;
+
+  /// No description provided for @settingsUsernameCode.
+  ///
+  /// In en, this message translates to:
+  /// **'Your username'**
+  String get settingsUsernameCode;
 }
 
 class _AppLocalizationsDelegate

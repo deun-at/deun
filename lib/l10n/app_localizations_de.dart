@@ -405,7 +405,7 @@ class AppLocalizationsDe extends AppLocalizations {
   String get friendsNoEntries => 'Keine Freunde gefunden.';
 
   @override
-  String get addFriendshipSelectionEmpty => 'Suche nach Namen oder E-Mail';
+  String get addFriendshipSelectionEmpty => 'Benutzername oder E-Mail eingeben';
 
   @override
   String get addFriendshipSearchResult => 'Suchergebnis';
@@ -867,6 +867,18 @@ class AppLocalizationsDe extends AppLocalizations {
   }
 
   @override
+  String get friendAcceptConfirmTitle => 'Als Freund hinzufügen?';
+
+  @override
+  String friendAcceptConfirmBody(String displayName) {
+    return 'Möchtest du $displayName als Freund hinzufügen?';
+  }
+
+  @override
+  String get friendAcceptSelfError =>
+      'Du kannst dich nicht selbst als Freund hinzufügen.';
+
+  @override
   String get statisticsTitle => 'Statistiken';
 
   @override
@@ -943,4 +955,40 @@ class AppLocalizationsDe extends AppLocalizations {
     );
     return '$count $_temp0';
   }
+
+  @override
+  String get onboardingTitle => 'Willkommen bei Deun!';
+
+  @override
+  String get onboardingSubtitle => 'Wähle einen Benutzernamen';
+
+  @override
+  String get onboardingUsernameLabel => 'Benutzername';
+
+  @override
+  String get onboardingDisplayNameLabel => 'Anzeigename';
+
+  @override
+  String get onboardingButton => 'Los geht\'s';
+
+  @override
+  String get onboardingUsernameHint =>
+      'Buchstaben, Zahlen, Unterstriche (3–20 Zeichen)';
+
+  @override
+  String get onboardingUsernameTaken =>
+      'Benutzername nicht verfügbar, bitte wähle einen anderen';
+
+  @override
+  String get onboardingUsernameInvalid =>
+      '3–20 Zeichen: Buchstaben, Zahlen, Unterstriche';
+
+  @override
+  String get onboardingDisplayNameRequired => 'Anzeigename ist erforderlich';
+
+  @override
+  String get settingsUsername => 'Benutzername';
+
+  @override
+  String get settingsUsernameCode => 'Dein Benutzername';
 }

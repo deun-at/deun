@@ -197,7 +197,11 @@ class _GroupJoinPageState extends State<GroupJoinPage> {
                               final gm = _guestMembers[index];
                               return RadioListTile<String>(
                                 title: Text(gm['display_name'] ?? gm['email']),
-                                subtitle: Text(gm['email']),
+                                subtitle: Text(
+                                  (gm['is_guest'] ?? false)
+                                      ? AppLocalizations.of(context)!.groupMemberIsGuest
+                                      : fullUsernameFromJson(gm),
+                                ),
                                 value: gm['email'],
                               );
                             },

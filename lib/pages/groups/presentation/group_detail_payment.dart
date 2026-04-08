@@ -162,7 +162,7 @@ class _GroupPaymentBottomSheetState extends ConsumerState<GroupPaymentBottomShee
                 await GroupRepository.payBack(context, widget.group.id, email, groupShare.shareAmount.abs());
                 if (context.mounted) {
                   showSnackBar(context,
-                      AppLocalizations.of(context)!.payBackSuccess(email, groupShare.shareAmount.abs()));
+                      AppLocalizations.of(context)!.payBackSuccess(groupShare.displayName, groupShare.shareAmount.abs()));
                 }
               } catch (e) {
                 if (context.mounted) {

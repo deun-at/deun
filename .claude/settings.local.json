@@ -34,7 +34,8 @@
       "mcp__notion__notion-create-database",
       "mcp__notion__notion-create-view",
       "mcp__notion__notion-update-view",
-      "Bash(flutter test:*)"
+      "Bash(flutter test:*)",
+      "Bash(git mv:*)"
     ]
   }
 }
