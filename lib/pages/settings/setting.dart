@@ -2,6 +2,7 @@ import 'package:async_preferences/async_preferences.dart';
 import 'package:deun/helper/helper.dart';
 import 'package:deun/pages/users/user_model.dart';
 import 'package:deun/pages/users/user_repository.dart';
+import 'package:flutter/services.dart';
 import 'package:deun/provider.dart';
 import 'package:deun/widgets/initialization_helper.dart';
 import 'package:deun/widgets/shimmer_card_list.dart';
@@ -207,6 +208,35 @@ class _SettingState extends ConsumerState<Setting> {
                                                   field.didChange(value),
                                             ),
                                       ),
+                                      const SizedBox(height: heightSpacing),
+                                      FormBuilderField(
+                                        name: "username",
+                                        builder:
+                                            (
+                                              FormFieldState<dynamic> field,
+                                            ) => TextFormField(
+                                              initialValue: field.value,
+                                              decoration: InputDecoration(
+                                                labelText: AppLocalizations.of(
+                                                  context,
+                                                )!.settingsUsername,
+                                                border:
+                                                    OutlineInputBorder(borderRadius: BorderRadius.circular(16)),
+                                                suffixText: user.usernameCode != null
+                                                    ? '#${user.usernameCode}'
+                                                    : null,
+                                                suffixIcon: IconButton(
+                                                  icon: const Icon(Icons.copy),
+                                                  onPressed: () {
+                                                    Clipboard.setData(ClipboardData(text: user.fullUsername));
+                                                    showSnackBar(context, '${user.fullUsername} copied');
+                                                  },
+                                                ),
+                                              ),
+                                              onChanged: (value) =>
+                                                  field.didChange(value),
+                                            ),
+                                      ),
                                     ],
                                   ),
                                 ),
@@ -303,9 +333,24 @@ class _SettingState extends ConsumerState<Setting> {
                                   if (_formKey.currentState!
                                       .saveAndValidate()) {
                                     try {
+                                      final formValue = _formKey.currentState!.value;
+                                      final newUsername = formValue['username'] as String?;
+                                      final usernameChanged = newUsername != null &&
+                                          newUsername.isNotEmpty &&
+                                          newUsername != user.username;
+
+                                      if (usernameChanged) {
+                                        // Username changed → generate new code
+                                        await UserRepository.saveUsername(
+                                          newUsername,
+                                          formValue['display_name'] ?? user.displayName,
+                                        );
+                                      }
+
                                       await UserRepository.saveProfileData(
-                                        _formKey.currentState!.value,
+                                        formValue,
                                       );
+                                      ref.invalidate(userDetailProvider);
                                       if (context.mounted) {
                                         showSnackBar(
                                           context,

@@ -1,5 +1,6 @@
 import 'package:deun/helper/helper.dart';
 import 'package:deun/main.dart';
+import 'package:deun/pages/users/user_repository.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
@@ -30,6 +31,7 @@ class _FriendQrPageState extends State<FriendQrPage> {
       torchEnabled: false,
       formats: const [BarcodeFormat.qrCode],
     );
+    _buildUsernameLink();
   }
 
   @override
@@ -39,10 +41,29 @@ class _FriendQrPageState extends State<FriendQrPage> {
   }
 
   Uri _buildFriendLink() {
-    final email = supabase.auth.currentUser?.email ?? '';
-    // Use hash fragment so in-app deep link handler can GoRouter.go(fragment)
-    final uri = Uri.parse('https://deun.app/#/friend/accept?email=$email');
-    return uri;
+    // Use username+code instead of email for privacy
+    final currentUser = supabase.auth.currentUser;
+    // Try to build username-based link first (set after onboarding)
+    // We need to fetch user data since auth metadata doesn't have username
+    return _cachedLink ?? Uri.parse('https://deun.app/#/friend/accept?email=${currentUser?.email ?? ''}');
+  }
+
+  Uri? _cachedLink;
+
+  Future<void> _buildUsernameLink() async {
+    try {
+      final email = supabase.auth.currentUser?.email ?? '';
+      final user = await UserRepository.fetchDetail(email);
+      if (user.username != null && user.usernameCode != null && mounted) {
+        setState(() {
+          _cachedLink = Uri.parse(
+            'https://deun.app/#/friend/accept?u=${Uri.encodeComponent(user.username!)}&c=${Uri.encodeComponent(user.usernameCode!)}',
+          );
+        });
+      }
+    } catch (_) {
+      // Fallback to email-based link (already set as default)
+    }
   }
 
   void _restartScanner() {

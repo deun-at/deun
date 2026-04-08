@@ -36,7 +36,9 @@ class _NativeAdBlockState extends State<NativeAdBlock> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    // Create the ad objects and load ads.
+    // Only create the ad once to avoid GlobalObjectKey collisions
+    // from multiple AdWidget instances coexisting during rebuilds.
+    if (_nativeAd != null) return;
     _nativeAd = NativeAd(
       adUnitId: widget.adUnitId,
       request: AdRequest(),

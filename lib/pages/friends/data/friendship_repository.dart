@@ -12,16 +12,21 @@ class FriendshipRepository {
         .from('friendship')
         .select('*, requester(*), addressee(*)')
         .eq('status', 'accepted')
-        .eq('requester', currentEmail)
-        .order('display_name', referencedTable: 'addressee', ascending: false);
+        .or('requester.eq.$currentEmail,addressee.eq.$currentEmail');
 
     List<Friendship> retData = List.empty(growable: true);
+    Set<String> seenEmails = {};
 
     final groupList = await GroupRepository.fetchData("active");
 
     for (var element in data) {
       Friendship friendship = Friendship();
       friendship.loadDataFromJson(element);
+
+      // Deduplicate: with bidirectional query, the same friend may appear twice
+      if (seenEmails.contains(friendship.user.email)) continue;
+      seenEmails.add(friendship.user.email);
+
       friendship.shareAmount = 0;
 
       for (var group in groupList) {
@@ -90,7 +95,7 @@ class FriendshipRepository {
         .select("...addressee!inner(*)")
         .or("requester.eq.$userEmail")
         .eq("status", "accepted")
-        .or("email.ilike.%$searchString%,display_name.ilike.%$searchString%", referencedTable: "addressee")
+        .or("email.ilike.%$searchString%,display_name.ilike.%$searchString%,username.ilike.%$searchString%", referencedTable: "addressee")
         .not("addressee.email", "in", "(${selectedUsers.join(",")})")
         .order("email", referencedTable: "addressee")
         .limit(limit);
@@ -99,6 +104,7 @@ class FriendshipRepository {
   }
 
   static Future<void> request(String email) async {
+    if (email == supabase.auth.currentUser?.email) return;
     await supabase.from("friendship").upsert({
       "requester": supabase.auth.currentUser?.email,
       "addressee": email,

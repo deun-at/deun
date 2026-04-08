@@ -326,7 +326,7 @@
   "@addFriends": {},
   "friendsNoEntries": "No friends yet",
   "@friendsNoEntries": {},
-  "addFriendshipSelectionEmpty": "Search for Name or E-Mail",
+  "addFriendshipSelectionEmpty": "Enter exact username or e-mail",
   "@addFriendshipSelectionEmpty": {},
   "addFriendshipSearchResult": "Search Result",
   "@addFriendshipSearchResult": {},
@@ -756,6 +756,16 @@
         "type": "String"
       }
     }},
+  "friendAcceptConfirmTitle": "Add as Friend?",
+  "@friendAcceptConfirmTitle": {},
+  "friendAcceptConfirmBody": "Do you want to add {displayName} as a friend?",
+  "@friendAcceptConfirmBody": {
+    "placeholders": {
+      "displayName": {"type": "String"}
+    }
+  },
+  "friendAcceptSelfError": "You cannot add yourself as a friend.",
+  "@friendAcceptSelfError": {},
   "statisticsTitle": "Statistics",
   "@statisticsTitle": {},
   "statisticsNoExpenses": "No expenses",
@@ -816,5 +826,27 @@
         "type": "int"
       }
     }
-  }
+  },
+  "onboardingTitle": "Welcome to Deun!",
+  "@onboardingTitle": {},
+  "onboardingSubtitle": "Choose a username to get started",
+  "@onboardingSubtitle": {},
+  "onboardingUsernameLabel": "Username",
+  "@onboardingUsernameLabel": {},
+  "onboardingDisplayNameLabel": "Display Name",
+  "@onboardingDisplayNameLabel": {},
+  "onboardingButton": "Get Started",
+  "@onboardingButton": {},
+  "onboardingUsernameHint": "Letters, numbers, underscores (3–20 chars)",
+  "@onboardingUsernameHint": {},
+  "onboardingUsernameTaken": "Username not available, please try another",
+  "@onboardingUsernameTaken": {},
+  "onboardingUsernameInvalid": "3–20 characters: letters, numbers, underscores only",
+  "@onboardingUsernameInvalid": {},
+  "onboardingDisplayNameRequired": "Display name is required",
+  "@onboardingDisplayNameRequired": {},
+  "settingsUsername": "Username",
+  "@settingsUsername": {},
+  "settingsUsernameCode": "Your username",
+  "@settingsUsernameCode": {}
 }

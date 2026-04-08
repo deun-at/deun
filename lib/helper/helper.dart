@@ -7,6 +7,14 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:deun/l10n/app_localizations.dart';
 
+/// Build a "username#code" string from a raw JSON map, falling back to display_name.
+String fullUsernameFromJson(Map<String, dynamic> json) {
+  final username = json['username'];
+  final code = json['username_code'];
+  if (username != null && code != null) return '$username#$code';
+  return json['display_name'] ?? '';
+}
+
 String toHumanDateString(String? dateTimeIn) {
   if (dateTimeIn == null) return '';
 

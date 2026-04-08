@@ -3,8 +3,8 @@ import 'package:deun/pages/expenses/service/receipt_parser.dart';
 
 void main() {
   group('ReceiptParser.extractDate', () {
-    List<(String, double)> lines(List<String> texts) {
-      return texts.asMap().entries.map((e) => (e.value, e.key * 10.0)).toList();
+    List<ReceiptLine> lines(List<String> texts) {
+      return texts.asMap().entries.map((e) => ReceiptLine.simple(e.value, e.key * 10.0)).toList();
     }
 
     group('DD.MM.YYYY format', () {

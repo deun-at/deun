@@ -34,7 +34,7 @@ Color _avatarColor(String name) {
 
 class _FriendListState extends ConsumerState<FriendList> {
   Future<void> updateFriendshipList() async {
-    return ref.watch(friendshipListProvider.notifier).reload();
+    return ref.read(friendshipListProvider.notifier).reload();
   }
 
   @override
@@ -107,7 +107,7 @@ class _FriendListState extends ConsumerState<FriendList> {
                               ),
                             ),
                             title: Text(user.displayName),
-                            subtitle: Text(user.email),
+                            subtitle: Text(user.fullUsername),
                             trailing: Text(
                               style: Theme.of(context).textTheme.bodyMedium!.copyWith(color: shareAmountColor),
                               AppLocalizations.of(context)!.toCurrency(friendship.shareAmount),
@@ -171,7 +171,7 @@ class _FriendListState extends ConsumerState<FriendList> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(user.displayName, style: Theme.of(context).textTheme.titleMedium),
-                          Text(user.email, style: Theme.of(context).textTheme.bodySmall?.copyWith(color: colorScheme.outline)),
+                          Text(user.fullUsername, style: Theme.of(context).textTheme.bodySmall?.copyWith(color: colorScheme.outline)),
                           if (user.firstName != null || user.lastName != null)
                             Text(
                               '${user.firstName ?? ''} ${user.lastName ?? ''}'.trim(),
@@ -231,7 +231,7 @@ class _FriendListState extends ConsumerState<FriendList> {
                       if (context.mounted) {
                         showSnackBar(
                           context,
-                          AppLocalizations.of(context)!.payBackSuccess(user.email, friendship.shareAmount.abs()),
+                          AppLocalizations.of(context)!.payBackSuccess(user.fullUsername, friendship.shareAmount.abs()),
                         );
                       }
                     } catch (e) {
@@ -259,7 +259,7 @@ class _FriendListState extends ConsumerState<FriendList> {
                   style: TextStyle(color: colorScheme.error),
                 ),
                 onTap: () {
-                  openRemoveFriendDialog(user);
+                  openRemoveFriendDialog(context, user);
                 },
               ),
               const SizedBox(height: 8),
@@ -270,36 +270,38 @@ class _FriendListState extends ConsumerState<FriendList> {
     );
   }
 
-  void openRemoveFriendDialog(SupaUser user) {
+  void openRemoveFriendDialog(BuildContext sheetContext, SupaUser user) {
     showDialog<void>(
       context: context,
-      builder: (context) => AlertDialog(
-        content: Text(AppLocalizations.of(context)!.removeFriend(user.displayName)),
+      builder: (dialogContext) => AlertDialog(
+        content: Text(AppLocalizations.of(dialogContext)!.removeFriend(user.displayName)),
         actions: <Widget>[
-          TextButton(child: Text(AppLocalizations.of(context)!.cancel), onPressed: () => Navigator.pop(context)),
+          TextButton(child: Text(AppLocalizations.of(dialogContext)!.cancel), onPressed: () => Navigator.pop(dialogContext)),
           FilledButton(
             style: FilledButton.styleFrom(
-              backgroundColor: Theme.of(context).colorScheme.error,
-              foregroundColor: Theme.of(context).colorScheme.onError,
+              backgroundColor: Theme.of(dialogContext).colorScheme.error,
+              foregroundColor: Theme.of(dialogContext).colorScheme.onError,
             ),
-            child: Text(AppLocalizations.of(context)!.remove),
+            child: Text(AppLocalizations.of(dialogContext)!.remove),
             onPressed: () async {
               try {
                 await FriendshipRepository.remove(user.email);
-                if (context.mounted) {
+                if (dialogContext.mounted) {
                   showSnackBar(
-                    context,
-                    AppLocalizations.of(context)!.friendRemoved(user.displayName),
+                    dialogContext,
+                    AppLocalizations.of(dialogContext)!.friendRemoved(user.displayName),
                   );
                 }
               } catch (e) {
-                if (context.mounted) {
-                  showSnackBar(context, AppLocalizations.of(context)!.generalError);
+                if (dialogContext.mounted) {
+                  showSnackBar(dialogContext, AppLocalizations.of(dialogContext)!.generalError);
                 }
               } finally {
-                if (context.mounted) {
-                  Navigator.pop(context); // Close delete dialog
-                  Navigator.pop(context); // Close info dialog
+                if (dialogContext.mounted) {
+                  Navigator.pop(dialogContext); // Close delete dialog
+                }
+                if (sheetContext.mounted) {
+                  Navigator.pop(sheetContext); // Close info sheet
                 }
               }
             },

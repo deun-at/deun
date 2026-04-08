@@ -8,7 +8,7 @@ import '../data/group_repository.dart';
 
 part 'group_list.g.dart';
 
-@riverpod
+@Riverpod(keepAlive: true)
 class GroupListNotifier extends _$GroupListNotifier with RealtimeNotifierMixin {
   @override
   FutureOr<List<Group>> build() async {

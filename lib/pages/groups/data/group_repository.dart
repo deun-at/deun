@@ -81,26 +81,32 @@ class GroupRepository {
     List<Map<String, dynamic>> groupMembers = decodeGroupMembersString(formValue['group_members']);
 
     // Resolve any pending guest members by creating guest user records and replacing entries
+    final failedGuests = <String>[];
     for (int i = 0; i < groupMembers.length; i++) {
       final member = groupMembers[i];
       if ((member['is_guest_pending'] ?? false) == true) {
         final displayName = (member['display_name'] ?? '').toString();
         if (displayName.isNotEmpty) {
-          final guestUser = await UserRepository.createGuest(displayName);
-          groupMembers[i] = {
-            'email': guestUser.email,
-            'display_name': guestUser.displayName,
-            'is_guest': guestUser.isGuest,
-          };
+          try {
+            final guestUser = await UserRepository.createGuest(displayName);
+            groupMembers[i] = {
+              'email': guestUser.email,
+              'display_name': guestUser.displayName,
+              'is_guest': guestUser.isGuest,
+            };
+          } catch (e) {
+            debugPrint('Failed to create guest "$displayName": $e');
+            failedGuests.add(displayName);
+          }
         }
       }
     }
+    // Remove entries that failed guest creation (still have is_guest_pending)
+    groupMembers.removeWhere((m) => (m['is_guest_pending'] ?? false) == true);
 
     await supabase.from('group_member').delete().eq('group_id', groupInsertResponse['id']);
 
     if (groupMembers.isNotEmpty) {
-      Set<String> notificationReceiver = {};
-
       for (var groupMember in groupMembers) {
         if ((groupMember['is_guest'] ?? false) == false) {
           notificationReceiver.add(groupMember['email']);
