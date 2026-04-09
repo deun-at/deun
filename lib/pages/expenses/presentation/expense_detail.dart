@@ -16,9 +16,9 @@ import '../data/expense_entry_model.dart';
 import '../data/expense_model.dart';
 import '../data/expense_repository.dart';
 import '../data/expense_category.dart';
-import '../data/receipt_scan_result.dart';
+// import '../data/receipt_scan_result.dart'; // Hidden until parser is production-ready
 import '../../../widgets/category_selector.dart';
-import 'receipt_scanner_sheet.dart';
+// import 'receipt_scanner_sheet.dart'; // Hidden until parser is production-ready
 
 class ExpenseDetail extends ConsumerStatefulWidget {
   const ExpenseDetail({super.key, required this.group, this.expense});
@@ -98,67 +98,9 @@ class _ExpenseDetailState extends ConsumerState<ExpenseDetail> {
     }
   }
 
-  Future<void> _showReceiptScanner() async {
-    final result = await showModalBottomSheet<ReceiptScanResult>(
-      context: context,
-      builder: (context) => const ReceiptScannerSheet(),
-    );
-    if (result != null && mounted) {
-      _applyReceiptData(result);
-    }
-  }
-
-  void _applyReceiptData(ReceiptScanResult result) {
-    if (result.isEmpty) {
-      showSnackBar(context, AppLocalizations.of(context)!.receiptScanNoData);
-      return;
-    }
-
-    // Set merchant name
-    if (result.merchantName != null) {
-      _nameController.text = result.merchantName!;
-      _formKey.currentState?.fields['name']?.didChange(result.merchantName);
-      detectAndUpdateCategory(result.merchantName!);
-    }
-
-    // Set date
-    if (result.date != null) {
-      _formKey.currentState?.fields['expense_date']?.didChange(result.date);
-    }
-
-    // Rebuild expense entry widgets from line items
-    setState(() {
-      expenseEntryFields.clear();
-
-      if (result.lineItems.isNotEmpty) {
-        for (final item in result.lineItems) {
-          ExpenseEntry expenseEntry = ExpenseEntry(index: _newTextFieldId++);
-          expenseEntryFields.add(ExpenseEntryWidget(
-            key: ValueKey(expenseEntry.index),
-            expenseEntry: expenseEntry,
-            index: expenseEntry.index,
-            onRemove: () => onRemove(expenseEntry),
-            groupMembers: groupMembers,
-            initialName: item.name,
-            initialAmount: item.unitPrice.toStringAsFixed(2),
-            initialQuantity: item.quantity > 1 ? item.quantity.toString() : null,
-          ));
-        }
-      } else if (result.total != null) {
-        ExpenseEntry expenseEntry = ExpenseEntry(index: _newTextFieldId++);
-        expenseEntryFields.add(ExpenseEntryWidget(
-          key: ValueKey(expenseEntry.index),
-          expenseEntry: expenseEntry,
-          index: expenseEntry.index,
-          onRemove: () => onRemove(expenseEntry),
-          groupMembers: groupMembers,
-          initialAmount: result.total!.toStringAsFixed(2),
-        ));
-      }
-    });
-
-    showSnackBar(context, AppLocalizations.of(context)!.receiptScanSuccess);
-  }
+  // Receipt scanner methods hidden until parser is production-ready.
+  // Future<void> _showReceiptScanner() async { ... }
+  // void _applyReceiptData(ReceiptScanResult result) { ... }
 
   void openDeleteItemDialog(BuildContext modalContext, Expense expense) {
     showDialog<void>(
@@ -240,13 +182,14 @@ class _ExpenseDetailState extends ConsumerState<ExpenseDetail> {
         icon: Icon(Icons.delete_outline, color: Theme.of(context).colorScheme.onSurface),
       ));
     } else {
-      expenseActions.add(
-        IconButton(
-          onPressed: () => _showReceiptScanner(),
-          icon: const Icon(Icons.document_scanner_outlined),
-          tooltip: AppLocalizations.of(context)!.receiptScanButton,
-        ),
-      );
+      // Receipt scanner hidden until parser is production-ready.
+      // expenseActions.add(
+      //   IconButton(
+      //     onPressed: () => _showReceiptScanner(),
+      //     icon: const Icon(Icons.document_scanner_outlined),
+      //     tooltip: AppLocalizations.of(context)!.receiptScanButton,
+      //   ),
+      // );
       expenseActions.add(
         Padding(padding: EdgeInsetsGeometry.only(right: 8), child: saveExpenseButton),
       );
