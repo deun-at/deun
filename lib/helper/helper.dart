@@ -133,6 +133,9 @@ void sendPaymentReminderNotification(
 
       sendNotification('reminder', groupId, notificationReceiver, title, body);
     },
+    onError: (e) {
+      debugPrint('Failed to send reminder notification for group $groupId: $e');
+    },
   );
 }
 
