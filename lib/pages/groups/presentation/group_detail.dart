@@ -4,6 +4,7 @@ import 'package:deun/constants.dart';
 import 'package:deun/helper/helper.dart';
 import 'package:deun/pages/expenses/data/expense_model.dart';
 import 'package:deun/pages/expenses/data/expense_repository.dart';
+import 'package:deun/pages/groups/data/reminder_repository.dart';
 import 'package:deun/pages/groups/presentation/group_detail_list.dart';
 import 'package:deun/widgets/native_ad_block.dart';
 import 'package:deun/widgets/shimmer_card_list.dart';
@@ -167,7 +168,36 @@ class _GroupDetailState extends ConsumerState<GroupDetail> {
 
                           return Padding(
                               padding: const EdgeInsets.fromLTRB(10.0, 5.0, 10.0, 5.0),
-                              child: GroupShareWidget(group: groupDetail));
+                              child: GroupShareWidget(
+                                group: groupDetail,
+                                onRemind: (email) async {
+                                  final lastReminder = await ReminderRepository.getLastReminder(groupDetail.id, email);
+                                  if (lastReminder != null && DateTime.now().difference(lastReminder).inHours < 24) {
+                                    if (context.mounted) {
+                                      ScaffoldMessenger.of(context).showSnackBar(
+                                        SnackBar(content: Text(AppLocalizations.of(context)!.reminderCooldown)),
+                                      );
+                                    }
+                                    return;
+                                  }
+
+                                  await ReminderRepository.sendReminder(groupDetail.id, email);
+
+                                  if (context.mounted) {
+                                    sendPaymentReminderNotification(
+                                      context,
+                                      groupDetail.id,
+                                      {email},
+                                      groupDetail.groupSharesSummary[email]?.shareAmount.abs() ?? 0,
+                                    );
+
+                                    final displayName = groupDetail.groupSharesSummary[email]?.displayName ?? email;
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(content: Text(AppLocalizations.of(context)!.reminderSent(displayName))),
+                                    );
+                                  }
+                                },
+                              ));
                         },
                       ),
                     ],

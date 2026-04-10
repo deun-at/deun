@@ -991,4 +991,41 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get settingsUsernameCode => 'Dein Benutzername';
+
+  @override
+  String get groupMemberSectionFriends => 'Freunde';
+
+  @override
+  String get groupMemberSectionOtherUsers => 'Andere Nutzer';
+
+  @override
+  String get groupMemberAddGuestSubtitle => 'Jemanden ohne Account hinzufügen';
+
+  @override
+  String get reminderSend => 'Erinnerung senden';
+
+  @override
+  String reminderSent(String displayName) {
+    return 'Erinnerung an $displayName gesendet';
+  }
+
+  @override
+  String get reminderCooldown => 'Bereits kürzlich erinnert';
+
+  @override
+  String reminderNotificationTitle(String displayName) {
+    return '$displayName erinnert dich';
+  }
+
+  @override
+  String reminderNotificationBody(double amount, String groupName) {
+    final intl.NumberFormat amountNumberFormat = intl.NumberFormat.currency(
+      locale: localeName,
+      symbol: '€',
+      decimalDigits: 2,
+    );
+    final String amountString = amountNumberFormat.format(amount);
+
+    return 'Du schuldest $amountString in $groupName';
+  }
 }

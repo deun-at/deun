@@ -5,10 +5,11 @@ import 'package:deun/l10n/app_localizations.dart';
 import '../data/group_model.dart';
 
 class GroupShareWidget extends StatelessWidget {
-  const GroupShareWidget({super.key, required this.group, this.textColor});
+  const GroupShareWidget({super.key, required this.group, this.textColor, this.onRemind});
 
   final Group group;
   final Color? textColor;
+  final void Function(String email)? onRemind;
 
   @override
   Widget build(BuildContext context) {
@@ -26,16 +27,37 @@ class GroupShareWidget extends StatelessWidget {
               textColor = Colors.green;
             }
 
+            final textWidget = Text(
+              AppLocalizations.of(context)!.groupDisplayAmount(
+                  e.displayName, paidByYourself, e.shareAmount.abs()),
+              style:
+                  Theme.of(context).textTheme.labelLarge!.copyWith(color: textColor),
+            );
+
             return MapEntry(
               key,
               Align(
                 alignment: Alignment.bottomLeft,
-                child: Text(
-                  AppLocalizations.of(context)!.groupDisplayAmount(
-                      e.displayName, paidByYourself, e.shareAmount.abs()),
-                  style:
-                      Theme.of(context).textTheme.labelLarge!.copyWith(color: textColor),
-                ),
+                child: (onRemind != null && e.shareAmount > 0)
+                    ? Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Flexible(child: textWidget),
+                          const SizedBox(width: 4),
+                          SizedBox(
+                            height: 28,
+                            width: 28,
+                            child: IconButton(
+                              padding: EdgeInsets.zero,
+                              iconSize: 18,
+                              icon: const Icon(Icons.notification_add_outlined),
+                              tooltip: AppLocalizations.of(context)!.reminderSend,
+                              onPressed: () => onRemind!(key),
+                            ),
+                          ),
+                        ],
+                      )
+                    : textWidget,
               ),
             );
           },

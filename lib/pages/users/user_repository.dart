@@ -5,25 +5,61 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../main.dart';
 
 class UserRepository {
-  /// Fetch users whose email or username exactly matches [searchString].
+  /// Fetch users by exact email, username#code, or unique username.
+  /// Supports formats: "user@email.com", "john#1234", or "john" (only if unique).
   /// Excludes [selectedUsers] (already friends / self).
   static Future<List<SupaUser>> fetchData(String searchString, List<String> selectedUsers, int? limit) async {
     final trimmed = searchString.trim().toLowerCase();
     if (trimmed.isEmpty) return [];
 
-    var query = supabase
-        .from('user')
-        .select('*')
-        .or('email.eq.$trimmed,username.eq.$trimmed')
-        .not('email', 'in', selectedUsers)
-        .eq('is_guest', false)
-        .order('email');
+    List<dynamic> data;
 
-    if (limit != null) {
-      query = query.limit(limit);
+    if (trimmed.contains('#')) {
+      // username#code format — exact match on both columns
+      final parts = trimmed.split('#');
+      final username = parts[0];
+      final code = parts.length > 1 ? parts[1] : '';
+
+      var query = supabase
+          .from('user')
+          .select('*')
+          .eq('username', username)
+          .eq('username_code', code)
+          .not('email', 'in', selectedUsers)
+          .eq('is_guest', false)
+          .order('email');
+
+      if (limit != null) query = query.limit(limit);
+      data = await query;
+    } else if (trimmed.contains('@')) {
+      // Email format — exact match on email
+      var query = supabase
+          .from('user')
+          .select('*')
+          .eq('email', trimmed)
+          .not('email', 'in', selectedUsers)
+          .eq('is_guest', false)
+          .order('email');
+
+      if (limit != null) query = query.limit(limit);
+      data = await query;
+    } else {
+      // Plain username — only return if exactly one user has this username
+      var query = supabase
+          .from('user')
+          .select('*')
+          .eq('username', trimmed)
+          .not('email', 'in', selectedUsers)
+          .eq('is_guest', false)
+          .order('email');
+
+      if (limit != null) query = query.limit(limit);
+      data = await query;
+
+      // If username is not unique, require the #code to disambiguate
+      if (data.length > 1) return [];
     }
 
-    final List<dynamic> data = await query;
     return data.cast<Map<String, dynamic>>().map(SupaUser.fromJson).toList();
   }
 
@@ -42,6 +78,7 @@ class UserRepository {
 
     return data.cast<Map<String, dynamic>>().map(SupaUser.fromJson).toList();
   }
+
 
   /// Fetch a single user by email.
   static Future<SupaUser> fetchDetail(String email) async {

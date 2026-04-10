@@ -252,5 +252,15 @@
   "onboardingUsernameInvalid": "3–20 Zeichen: Buchstaben, Zahlen, Unterstriche",
   "onboardingDisplayNameRequired": "Anzeigename ist erforderlich",
   "settingsUsername": "Benutzername",
-  "settingsUsernameCode": "Dein Benutzername"
+  "settingsUsernameCode": "Dein Benutzername",
+
+  "groupMemberSectionFriends": "Freunde",
+  "groupMemberSectionOtherUsers": "Andere Nutzer",
+  "groupMemberAddGuestSubtitle": "Jemanden ohne Account hinzufügen",
+
+  "reminderSend": "Erinnerung senden",
+  "reminderSent": "Erinnerung an {displayName} gesendet",
+  "reminderCooldown": "Bereits kürzlich erinnert",
+  "reminderNotificationTitle": "{displayName} erinnert dich",
+  "reminderNotificationBody": "Du schuldest {amount} in {groupName}"
 }
