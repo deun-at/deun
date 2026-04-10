@@ -160,48 +160,45 @@ void sendExpenseNotification(BuildContext context, String expenseId, Set<String>
 }
 
 void sendFriendRequestNotification(BuildContext context, Set<String> notificationReceiver) {
+  final l10n = AppLocalizations.of(context)!;
   UserRepository.fetchDetail(supabase.auth.currentUser!.email ?? '').then(
     (value) {
       sendNotification(
         'friendship',
         '',
         notificationReceiver,
-        // ignore: use_build_context_synchronously
-        AppLocalizations.of(context)!.friendRequestNotificationTitle,
-        // ignore: use_build_context_synchronously
-        AppLocalizations.of(context)!.friendRequestNotificationBody(value.displayName),
+        l10n.friendRequestNotificationTitle,
+        l10n.friendRequestNotificationBody(value.displayName),
       );
     },
   );
 }
 
 void sendFriendAcceptNotification(BuildContext context, Set<String> notificationReceiver) {
+  final l10n = AppLocalizations.of(context)!;
   UserRepository.fetchDetail(supabase.auth.currentUser!.email ?? '').then(
     (value) {
       sendNotification(
         'friendship',
         '',
         notificationReceiver,
-        // ignore: use_build_context_synchronously
-        AppLocalizations.of(context)!.friendAcceptNotificationTitle,
-        // ignore: use_build_context_synchronously
-        AppLocalizations.of(context)!.friendAcceptNotificationBody(value.displayName),
+        l10n.friendAcceptNotificationTitle,
+        l10n.friendAcceptNotificationBody(value.displayName),
       );
     },
   );
 }
 
 void sendFriendDeclineNotification(BuildContext context, Set<String> notificationReceiver) {
+  final l10n = AppLocalizations.of(context)!;
   UserRepository.fetchDetail(supabase.auth.currentUser!.email ?? '').then(
     (value) {
       sendNotification(
         'friendship',
         '',
         notificationReceiver,
-        // ignore: use_build_context_synchronously
-        AppLocalizations.of(context)!.friendDeclineNotificationTitle,
-        // ignore: use_build_context_synchronously
-        AppLocalizations.of(context)!.friendDeclineNotificationBody(value.displayName),
+        l10n.friendDeclineNotificationTitle,
+        l10n.friendDeclineNotificationBody(value.displayName),
       );
     },
   );
@@ -248,12 +245,12 @@ void navigateToGroup(BuildContext context, Group group) {
 }
 
 void navigateToExpense(BuildContext context, Expense expense) {
+  final router = GoRouter.of(context);
   navigateToGroup(context, expense.group);
 
   // Delay opening the BottomSheet
   Future.delayed(Durations.medium1, () {
-    // ignore: use_build_context_synchronously
-    GoRouter.of(context).push("/group/details/expense", extra: {'group': expense.group, 'expense': expense});
+    router.push("/group/details/expense", extra: {'group': expense.group, 'expense': expense});
   });
 }
 

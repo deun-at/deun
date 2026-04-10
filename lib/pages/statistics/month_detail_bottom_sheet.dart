@@ -43,7 +43,7 @@ class StatisticsMonthDetailBottomSheet extends ConsumerWidget {
                   child: ListView.separated(
                     shrinkWrap: true,
                     itemCount: list.length,
-                    separatorBuilder: (_, __) => const Divider(height: 1),
+                    separatorBuilder: (_, _) => const Divider(height: 1),
                     itemBuilder: (ctx, i) {
                       final item = list[i];
                       return ListTile(

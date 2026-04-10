@@ -101,13 +101,14 @@ class _SettingState extends ConsumerState<Setting> {
                   title: Text(AppLocalizations.of(context)!.settingsPrivacyPreferences),
                   onTap: () async {
                     final scaffoldMessenger = ScaffoldMessenger.of(context);
+                    final l10n = AppLocalizations.of(context)!;
                     final didChangePreferences = await _initializationHelper.changePrivacyPreferences();
                     scaffoldMessenger.showSnackBar(
                       SnackBar(
                         content: Text(
                           didChangePreferences
-                              ? AppLocalizations.of(context)!.settingsPrivacyPreferencesSuccess
-                              : AppLocalizations.of(context)!.settingsPrivacyPreferencesError,
+                              ? l10n.settingsPrivacyPreferencesSuccess
+                              : l10n.settingsPrivacyPreferencesError,
                         ),
                       ),
                     );
