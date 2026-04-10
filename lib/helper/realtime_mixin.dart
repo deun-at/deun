@@ -121,7 +121,9 @@ mixin RealtimeNotifierMixin {
       _createChannel(config);
     }
 
-    _isResubscribing = false;
+    // Reset on next microtask so rapid resume events within the same
+    // event-loop turn are coalesced rather than triggering duplicate work.
+    Future.microtask(() => _isResubscribing = false);
   }
 
   /// Listen for app resume events. Automatically re-subscribes channels,

@@ -171,30 +171,37 @@ class _GroupDetailState extends ConsumerState<GroupDetail> {
                               child: GroupShareWidget(
                                 group: groupDetail,
                                 onRemind: (email) async {
-                                  final lastReminder = await ReminderRepository.getLastReminder(groupDetail.id, email);
-                                  if (lastReminder != null && DateTime.now().difference(lastReminder).inHours < 24) {
+                                  try {
+                                    final lastReminder = await ReminderRepository.getLastReminder(groupDetail.id, email);
+                                    if (lastReminder != null && DateTime.now().difference(lastReminder).inHours < 24) {
+                                      if (context.mounted) {
+                                        ScaffoldMessenger.of(context).showSnackBar(
+                                          SnackBar(content: Text(AppLocalizations.of(context)!.reminderCooldown)),
+                                        );
+                                      }
+                                      return;
+                                    }
+
+                                    await ReminderRepository.sendReminder(groupDetail.id, email);
+
                                     if (context.mounted) {
+                                      sendPaymentReminderNotification(
+                                        context,
+                                        groupDetail.id,
+                                        {email},
+                                        groupDetail.groupSharesSummary[email]?.shareAmount.abs() ?? 0,
+                                      );
+
+                                      final displayName = groupDetail.groupSharesSummary[email]?.displayName ?? email;
                                       ScaffoldMessenger.of(context).showSnackBar(
-                                        SnackBar(content: Text(AppLocalizations.of(context)!.reminderCooldown)),
+                                        SnackBar(content: Text(AppLocalizations.of(context)!.reminderSent(displayName))),
                                       );
                                     }
-                                    return;
-                                  }
-
-                                  await ReminderRepository.sendReminder(groupDetail.id, email);
-
-                                  if (context.mounted) {
-                                    sendPaymentReminderNotification(
-                                      context,
-                                      groupDetail.id,
-                                      {email},
-                                      groupDetail.groupSharesSummary[email]?.shareAmount.abs() ?? 0,
-                                    );
-
-                                    final displayName = groupDetail.groupSharesSummary[email]?.displayName ?? email;
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      SnackBar(content: Text(AppLocalizations.of(context)!.reminderSent(displayName))),
-                                    );
+                                  } catch (e) {
+                                    debugPrint('Reminder failed for $email: $e');
+                                    if (context.mounted) {
+                                      showSnackBar(context, AppLocalizations.of(context)!.generalError);
+                                    }
                                   }
                                 },
                               ));
