@@ -15,6 +15,7 @@ class GroupDetailNotifier extends _$GroupDetailNotifier with RealtimeNotifierMix
     ref.onDispose(() => disposeChannels());
 
     subscribeToChannel(
+      ref: ref,
       channelName: 'group_detail:$groupId',
       table: 'group_update_checker',
       filter: PostgresChangeFilter(type: PostgresChangeFilterType.eq, column: 'group_id', value: groupId),

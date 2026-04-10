@@ -16,6 +16,7 @@ class GroupListNotifier extends _$GroupListNotifier with RealtimeNotifierMixin {
     ref.onDispose(() => disposeChannels());
 
     subscribeToChannel(
+      ref: ref,
       channelName: 'group_list',
       table: 'group_update_checker',
       onEvent: (payload) async {

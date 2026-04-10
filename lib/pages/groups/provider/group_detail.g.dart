@@ -51,7 +51,7 @@ final class GroupDetailNotifierProvider
 }
 
 String _$groupDetailNotifierHash() =>
-    r'52ccb545f8816cbef40feaee3e43f9982bbef606';
+    r'91b5763de83c65af70fb5bd11914487006285595';
 
 final class GroupDetailNotifierFamily extends $Family
     with

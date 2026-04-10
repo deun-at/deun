@@ -19,6 +19,7 @@ class ExpenseListNotifier extends _$ExpenseListNotifier with RealtimeNotifierMix
     ref.onDispose(() => disposeChannels());
 
     subscribeToChannel(
+      ref: ref,
       channelName: 'expense_list:$groupId',
       table: 'expense_update_checker',
       filter: PostgresChangeFilter(type: PostgresChangeFilterType.eq, column: 'group_id', value: groupId),

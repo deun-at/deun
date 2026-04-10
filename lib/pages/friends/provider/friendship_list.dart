@@ -33,6 +33,7 @@ class FriendshipListNotifier extends _$FriendshipListNotifier with RealtimeNotif
     });
 
     subscribeToChannel(
+      ref: ref,
       channelName: 'friendship_list',
       table: 'friendship',
       onEvent: (payload) {
@@ -41,6 +42,7 @@ class FriendshipListNotifier extends _$FriendshipListNotifier with RealtimeNotif
     );
 
     subscribeToChannel(
+      ref: ref,
       channelName: 'friendship_group_checker',
       table: 'group_update_checker',
       onEvent: (payload) {

@@ -33,7 +33,7 @@ final class GroupListNotifierProvider
   GroupListNotifier create() => GroupListNotifier();
 }
 
-String _$groupListNotifierHash() => r'8a6f317eaefdc11f5112b9c509d0af026696ad1b';
+String _$groupListNotifierHash() => r'1df9e8f9bae5f7be4ca12b72faf1788a847f9369';
 
 abstract class _$GroupListNotifier extends $AsyncNotifier<List<Group>> {
   FutureOr<List<Group>> build();
