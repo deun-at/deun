@@ -36,6 +36,7 @@ class _GroupMemberSearchState extends State<GroupMemberSearch> {
   @override
   void dispose() {
     _searchAnchorController.dispose();
+    _searchQueryNotifier.dispose();
     super.dispose();
   }
 
