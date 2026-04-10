@@ -245,13 +245,8 @@ void navigateToGroup(BuildContext context, Group group) {
 }
 
 void navigateToExpense(BuildContext context, Expense expense) {
-  final router = GoRouter.of(context);
   navigateToGroup(context, expense.group);
-
-  // Delay opening the BottomSheet
-  Future.delayed(Durations.medium1, () {
-    router.push("/group/details/expense", extra: {'group': expense.group, 'expense': expense});
-  });
+  GoRouter.of(context).push("/group/details/expense", extra: {'group': expense.group, 'expense': expense});
 }
 
 void navigateToFriends(BuildContext context) {
