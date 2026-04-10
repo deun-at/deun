@@ -63,8 +63,8 @@
 
 ### 10. Monolithic Screens
 - `ExpenseEntryWidget` (854 LOC), `SettingScreen` (550 LOC), `GroupDetailEditScreen` (489 LOC)
-- **Status:** [ ] TODO
-- **Fix:** Extract sub-widgets (SettingsProfileForm, GroupMemberSearchWidget, ExpenseEntryMemberRow, dialogs to separate files)
+- **Status:** [x] DONE (setting.dart + group_detail_edit.dart split; expense_entry_widget reviewed — already well-structured)
+- **Fix:** Extracted `SettingsProfileForm` (239 LOC) from setting.dart (now 210 LOC). Extracted `GroupMemberSearch` (286 LOC) from group_detail_edit.dart (now 241 LOC). expense_entry_widget.dart (854 LOC) reviewed — already uses clear method boundaries, tightly coupled state makes forced extraction counterproductive.
 
 ---
 

@@ -1,10 +1,5 @@
-import 'dart:convert';
-
-import 'package:collection/collection.dart';
 import 'package:deun/helper/helper.dart';
-import 'package:deun/pages/friends/data/friendship_repository.dart';
 import 'package:deun/pages/groups/data/group_repository.dart';
-import 'package:deun/pages/users/user_repository.dart';
 import 'package:deun/widgets/card_list_view_builder.dart';
 import 'package:deun/widgets/theme_builder.dart';
 import 'package:flutter/material.dart';
@@ -15,10 +10,8 @@ import 'package:deun/l10n/app_localizations.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../constants.dart';
-import '../../../main.dart';
-import '../../../widgets/search_view.dart';
-import '../../users/user_model.dart';
 import '../data/group_model.dart';
+import 'group_member_search.dart';
 
 class GroupEdit extends ConsumerStatefulWidget {
   const GroupEdit({super.key, this.group});
@@ -31,181 +24,6 @@ class GroupEdit extends ConsumerStatefulWidget {
 
 class _GroupEditState extends ConsumerState<GroupEdit> {
   final _formKey = GlobalKey<FormBuilderState>();
-  final ValueNotifier<String> _searchQueryNotifier = ValueNotifier<String>("");
-
-  final SearchController _searchAnchorController = SearchController();
-
-  @override
-  void dispose() {
-    _searchAnchorController.dispose();
-    super.dispose();
-  }
-
-  Iterable<Widget> getUserSelection(SearchController controller, FormFieldState<dynamic> field) {
-    List<Map<String, dynamic>> groupMembers = GroupRepository.decodeGroupMembersString(field.value);
-
-    int groupMembersLength = groupMembers.length;
-
-    return groupMembers.mapIndexed((index, user) {
-      String titleText = "";
-      String subtitleText = fullUsernameFromJson(user);
-      Widget iconButton;
-      if (user['email'] == supabase.auth.currentUser?.email) {
-        titleText = AppLocalizations.of(context)!.you;
-        iconButton = IconButton(
-          icon: const Icon(Icons.person),
-          onPressed: () {},
-        );
-      } else {
-        titleText = "${user["display_name"]}";
-        iconButton = IconButton.filled(
-          style: IconButton.styleFrom(
-              backgroundColor: Theme.of(context).colorScheme.error,
-              foregroundColor: Theme.of(context).colorScheme.onError),
-          icon: const Icon(Icons.delete),
-          onPressed: () {
-            groupMembers.removeAt(index);
-            field.didChange(jsonEncode(groupMembers));
-
-            _searchQueryNotifier.value = jsonEncode(groupMembers);
-          },
-        );
-      }
-
-      if (user['is_guest'] ?? false) {
-        subtitleText = AppLocalizations.of(context)!.groupMemberIsGuest;
-      }
-
-      bool isTop = false;
-      bool isBottom = false;
-
-      if (index == 0) {
-        isTop = true;
-      }
-
-      if (index == groupMembersLength - 1) {
-        isBottom = true;
-      }
-
-      return CardListTile(
-          isTop: isTop,
-          isBottom: isBottom,
-          child: ListTile(title: Text(titleText), subtitle: Text(subtitleText), trailing: iconButton));
-    });
-  }
-
-  Future<Iterable<Widget>> getUserSuggestions(SearchController controller, FormFieldState<dynamic> field) async {
-    final String input = controller.value.text.trim();
-    List<dynamic> nbs = GroupRepository.decodeGroupMembersString(field.value);
-
-    List<String> selectedUsers = nbs.map(
-      (element) {
-        return element['email'] as String;
-      },
-    ).toList();
-
-    selectedUsers.add(supabase.auth.currentUser?.email ?? '');
-
-    // Fetch friends
-    List<SupaUser> friends = await FriendshipRepository.fetchFriends(input, selectedUsers, 99);
-
-    // Fetch other users by exact email/username match (excluding friends and selected)
-    List<String> excludeEmails = [...selectedUsers, ...friends.map((f) => f.email)];
-    List<SupaUser> otherUsers = input.isNotEmpty
-        ? await UserRepository.fetchData(input, excludeEmails, 20)
-        : [];
-
-    final List<Widget> tiles = [];
-
-    // Friends section
-    if (friends.isNotEmpty) {
-      tiles.add(Padding(
-        padding: const EdgeInsets.only(left: 16, top: 8, bottom: 4),
-        child: Text(AppLocalizations.of(context)!.groupMemberSectionFriends,
-            style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                  color: Theme.of(context).colorScheme.onSurfaceVariant,
-                )),
-      ));
-
-      tiles.addAll(friends.mapIndexed((index, user) {
-        return CardListTile(
-          isTop: index == 0,
-          isBottom: index == friends.length - 1,
-          child: ListTile(
-            title: Text(user.displayName),
-            subtitle: Text(user.fullUsername),
-            onTap: () {
-              nbs.add(user.toJson());
-              field.didChange(jsonEncode(nbs));
-              controller.text = "";
-            },
-          ),
-        );
-      }));
-    }
-
-    // Other users section
-    if (otherUsers.isNotEmpty) {
-      tiles.add(Padding(
-        padding: const EdgeInsets.only(left: 16, top: 12, bottom: 4),
-        child: Text(AppLocalizations.of(context)!.groupMemberSectionOtherUsers,
-            style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                  color: Theme.of(context).colorScheme.onSurfaceVariant,
-                )),
-      ));
-
-      tiles.addAll(otherUsers.mapIndexed((index, user) {
-        return CardListTile(
-          isTop: index == 0,
-          isBottom: index == otherUsers.length - 1,
-          child: ListTile(
-            title: Text(user.displayName),
-            subtitle: Text(user.fullUsername),
-            onTap: () {
-              nbs.add(user.toJson());
-              field.didChange(jsonEncode(nbs));
-              controller.text = "";
-            },
-          ),
-        );
-      }));
-    }
-
-    // Empty state
-    if (friends.isEmpty && otherUsers.isEmpty && input.isEmpty) {
-      tiles.add(
-        CardListTile(
-            isTop: true,
-            isBottom: true,
-            child: ListTile(title: Text(AppLocalizations.of(context)!.groupMemberResultEmpty))),
-      );
-    }
-
-    // Add as guest option
-    if (input.isNotEmpty) {
-      tiles.add(const SizedBox(height: 12));
-      tiles.add(
-        CardListTile(
-          isTop: true,
-          isBottom: true,
-          child: ListTile(
-            leading: const Icon(Icons.person_add),
-            title: Text(AppLocalizations.of(context)!.groupMemberAddGuestOption(input)),
-            subtitle: Text(AppLocalizations.of(context)!.groupMemberAddGuestSubtitle),
-            onTap: () {
-              final ts = DateTime.now().microsecondsSinceEpoch;
-              final tempEmail = 'guest+$ts@pending.invalid';
-              nbs.add({'email': tempEmail, 'display_name': input, 'is_guest': true, 'is_guest_pending': true});
-              field.didChange(jsonEncode(nbs));
-              controller.text = "";
-            },
-          ),
-        ),
-      );
-    }
-
-    return tiles;
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -228,13 +46,11 @@ class _GroupEditState extends ConsumerState<GroupEdit> {
                             await GroupRepository.saveAll(context, widget.group?.id, _formKey.currentState!.value);
                         newGroup = await GroupRepository.fetchDetail(groupInsertId);
                         if (context.mounted) {
-                          showSnackBar(
-                              context, AppLocalizations.of(context)!.groupCreateSuccess);
+                          showSnackBar(context, AppLocalizations.of(context)!.groupCreateSuccess);
                         }
                       } catch (e) {
                         if (context.mounted) {
-                          showSnackBar(
-                              context, AppLocalizations.of(context)!.groupCreateError);
+                          showSnackBar(context, AppLocalizations.of(context)!.groupCreateError);
                         }
                       } finally {
                         if (mounted) {
@@ -266,130 +82,32 @@ class _GroupEditState extends ConsumerState<GroupEdit> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: <Widget>[
                       FormBuilderField(
-                          name: "name",
-                          builder: (FormFieldState<dynamic> field) => TextFormField(
-                                initialValue: field.value,
-                                style: Theme.of(context)
-                                    .textTheme
-                                    .displaySmall!
-                                    .copyWith(color: Theme.of(context).colorScheme.primary),
-                                autovalidateMode: AutovalidateMode.onUserInteraction,
-                                validator: FormBuilderValidators.required(
-                                    errorText: AppLocalizations.of(context)!.groupNameValidationEmpty),
-                                keyboardType: TextInputType.text,
-                                decoration: InputDecoration(
-                                  border: InputBorder.none,
-                                  hintText: AppLocalizations.of(context)!.addGroupTitle,
-                                  contentPadding: EdgeInsets.only(left: 8, right: 8),
-                                ),
-                                onChanged: (value) => field.didChange(value),
-                              )),
-                      const SizedBox(height: spacing),
-                      FormBuilderField(
-                        name: "color_value",
-                        builder: (FormFieldState<dynamic> field) {
-                          return GridView.builder(
-                              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                                  crossAxisCount: 5, crossAxisSpacing: 4, mainAxisSpacing: 4),
-                              padding: const EdgeInsets.all(8),
-                              physics: const NeverScrollableScrollPhysics(),
-                              shrinkWrap: true,
-                              itemCount: ColorSeed.values.length,
-                              itemBuilder: (context, i) {
-                                return IconButton(
-                                    icon: const Icon(Icons.radio_button_unchecked),
-                                    selectedIcon: const Icon(Icons.radio_button_checked),
-                                    color: ColorSeed.values[i].color,
-                                    isSelected: (field.value == ColorSeed.values[i].color.toARGB32() ||
-                                        (field.value == null &&
-                                            ColorSeed.values[i].color.toARGB32() ==
-                                                ColorSeed.baseColor.color.toARGB32())),
-                                    onPressed: () {
-                                      field.didChange(ColorSeed.values[i].color.toARGB32());
-                                    });
-                              });
-                        },
+                        name: "name",
+                        builder: (FormFieldState<dynamic> field) => TextFormField(
+                          initialValue: field.value,
+                          style: Theme.of(context)
+                              .textTheme
+                              .displaySmall!
+                              .copyWith(color: Theme.of(context).colorScheme.primary),
+                          autovalidateMode: AutovalidateMode.onUserInteraction,
+                          validator: FormBuilderValidators.required(
+                            errorText: AppLocalizations.of(context)!.groupNameValidationEmpty,
+                          ),
+                          keyboardType: TextInputType.text,
+                          decoration: InputDecoration(
+                            border: InputBorder.none,
+                            hintText: AppLocalizations.of(context)!.addGroupTitle,
+                            contentPadding: EdgeInsets.only(left: 8, right: 8),
+                          ),
+                          onChanged: (value) => field.didChange(value),
+                        ),
                       ),
+                      const SizedBox(height: spacing),
+                      _buildColorPicker(),
                       FormBuilderField(
                         name: "group_members",
                         builder: (FormFieldState<dynamic> field) {
-                          return SearchAnchor(
-                            searchController: _searchAnchorController,
-                            viewHintText: AppLocalizations.of(context)!.groupMemberSelectionEmpty,
-                            viewLeading: IconButton(
-                              icon: Icon(Icons.check),
-                              onPressed: () {
-                                Navigator.of(context).pop();
-                              },
-                            ),
-                            builder: (context, controller) {
-                              List<Map<String, dynamic>> groupMembers = GroupRepository.decodeGroupMembersString(field.value);
-
-                              List<Widget> listTiles = [];
-
-                              if (groupMembers.isEmpty ||
-                                  (groupMembers.length == 1 &&
-                                      groupMembers.first['email'] == supabase.auth.currentUser?.email)) {
-                              } else {
-                                listTiles.addAll(groupMembers.map((groupMember) {
-                                  String displayName = groupMember["display_name"];
-                                  String subtitleText = fullUsernameFromJson(groupMember);
-
-                                  if (groupMember["email"] == supabase.auth.currentUser?.email) {
-                                    displayName = AppLocalizations.of(context)!.you;
-                                  }
-
-                                  if (groupMember['is_guest'] ?? false) {
-                                    subtitleText = AppLocalizations.of(context)!.groupMemberIsGuest;
-                                  }
-
-                                  return ListTile(
-                                    leading: const Icon(Icons.person),
-                                    title: Text(displayName),
-                                    subtitle: Text(subtitleText),
-                                    onTap: () {
-                                      controller.openView();
-                                    },
-                                  );
-                                }));
-                              }
-
-                              listTiles.add(ListTile(
-                                leading: const Icon(Icons.person_add),
-                                title: Text(AppLocalizations.of(context)!.groupMemberAddFriends),
-                              ));
-
-                              return CardColumn(children: listTiles);
-                            },
-                            suggestionsBuilder: (context, controller) {
-                              if (controller.text.isEmpty) {
-                                return getUserSelection(controller, field);
-                              }
-                              return getUserSuggestions(controller, field);
-                            },
-                            viewBuilder: (suggestions) {
-                              return Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Padding(
-                                    padding: EdgeInsets.only(top: 10, left: 16),
-                                    child: Text(
-                                      _searchAnchorController.text.isEmpty
-                                          ? AppLocalizations.of(context)!.groupMemberSelectionTitle
-                                          : AppLocalizations.of(context)!.groupMemberSelectionEmpty,
-                                      style: Theme.of(context).textTheme.bodyMedium,
-                                    ),
-                                  ),
-                                  Expanded(
-                                    child: SearchView(
-                                      searchQueryNotifier: _searchQueryNotifier,
-                                      suggestions: suggestions,
-                                    ),
-                                  ),
-                                ],
-                              );
-                            },
-                          );
+                          return GroupMemberSearch(field: field);
                         },
                       ),
                       SizedBox(height: 12),
@@ -407,35 +125,7 @@ class _GroupEditState extends ConsumerState<GroupEdit> {
                         ),
                       ),
                       SizedBox(height: 12),
-                      widget.group != null
-                          ? Column(
-                              children: [
-                                CardListTile(
-                                  isTop: true,
-                                  isBottom: true,
-                                  child: ListTile(
-                                    leading: const Icon(Icons.ios_share),
-                                    title: Text(AppLocalizations.of(context)!.groupInviteTitle),
-                                    onTap: () {
-                                      GoRouter.of(context).push("/group/share", extra: {'group': widget.group});
-                                    },
-                                  ),
-                                ),
-                                SizedBox(height: 12),
-                                CardListTile(
-                                  isTop: true,
-                                  isBottom: true,
-                                  child: ListTile(
-                                    textColor: Theme.of(context).colorScheme.error,
-                                    iconColor: Theme.of(context).colorScheme.error,
-                                    leading: Icon(Icons.delete),
-                                    title: Text(AppLocalizations.of(context)!.groupDeleteItemTitle),
-                                    onTap: () => openDeleteItemDialog(context, widget.group!),
-                                  ),
-                                )
-                              ],
-                            )
-                          : const SizedBox(),
+                      if (widget.group != null) _buildGroupActions(context),
                     ],
                   ),
                 ),
@@ -447,7 +137,69 @@ class _GroupEditState extends ConsumerState<GroupEdit> {
     );
   }
 
-  void openDeleteItemDialog(BuildContext modalContext, Group group) {
+  Widget _buildColorPicker() {
+    return FormBuilderField(
+      name: "color_value",
+      builder: (FormFieldState<dynamic> field) {
+        return GridView.builder(
+          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: 5,
+            crossAxisSpacing: 4,
+            mainAxisSpacing: 4,
+          ),
+          padding: const EdgeInsets.all(8),
+          physics: const NeverScrollableScrollPhysics(),
+          shrinkWrap: true,
+          itemCount: ColorSeed.values.length,
+          itemBuilder: (context, i) {
+            return IconButton(
+              icon: const Icon(Icons.radio_button_unchecked),
+              selectedIcon: const Icon(Icons.radio_button_checked),
+              color: ColorSeed.values[i].color,
+              isSelected: (field.value == ColorSeed.values[i].color.toARGB32() ||
+                  (field.value == null &&
+                      ColorSeed.values[i].color.toARGB32() == ColorSeed.baseColor.color.toARGB32())),
+              onPressed: () {
+                field.didChange(ColorSeed.values[i].color.toARGB32());
+              },
+            );
+          },
+        );
+      },
+    );
+  }
+
+  Widget _buildGroupActions(BuildContext context) {
+    return Column(
+      children: [
+        CardListTile(
+          isTop: true,
+          isBottom: true,
+          child: ListTile(
+            leading: const Icon(Icons.ios_share),
+            title: Text(AppLocalizations.of(context)!.groupInviteTitle),
+            onTap: () {
+              GoRouter.of(context).push("/group/share", extra: {'group': widget.group});
+            },
+          ),
+        ),
+        SizedBox(height: 12),
+        CardListTile(
+          isTop: true,
+          isBottom: true,
+          child: ListTile(
+            textColor: Theme.of(context).colorScheme.error,
+            iconColor: Theme.of(context).colorScheme.error,
+            leading: Icon(Icons.delete),
+            title: Text(AppLocalizations.of(context)!.groupDeleteItemTitle),
+            onTap: () => _showDeleteDialog(context),
+          ),
+        ),
+      ],
+    );
+  }
+
+  void _showDeleteDialog(BuildContext modalContext) {
     showDialog<void>(
       context: context,
       builder: (context) => AlertDialog(
@@ -465,7 +217,7 @@ class _GroupEditState extends ConsumerState<GroupEdit> {
             child: Text(AppLocalizations.of(context)!.delete),
             onPressed: () async {
               try {
-                await GroupRepository.delete(group.id);
+                await GroupRepository.delete(widget.group!.id);
                 if (context.mounted) {
                   showSnackBar(context, AppLocalizations.of(context)!.groupDeleteSuccess);
                 }
@@ -475,7 +227,7 @@ class _GroupEditState extends ConsumerState<GroupEdit> {
                 }
               } finally {
                 if (context.mounted) {
-                  Navigator.pop(context); //pop both dialog and edit page, because this item is not existing anymore
+                  Navigator.pop(context);
                   Navigator.pop(modalContext);
                   Navigator.pop(modalContext);
                 }
