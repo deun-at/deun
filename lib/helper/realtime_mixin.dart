@@ -43,6 +43,8 @@ class _ChannelConfig {
 mixin RealtimeNotifierMixin {
   final List<RealtimeChannel> _channels = [];
   final List<_ChannelConfig> _configs = [];
+  bool _isResubscribing = false;
+  static const int _maxRetries = 3;
 
   /// Subscribe to a Supabase Postgres changes channel.
   ///
@@ -56,6 +58,9 @@ mixin RealtimeNotifierMixin {
     PostgresChangeFilter? filter,
     required void Function(PostgresChangePayload payload) onEvent,
   }) {
+    // Prevent duplicate configs for the same channel
+    if (_configs.any((c) => c.channelName == channelName)) return;
+
     final config = _ChannelConfig(
       channelName: channelName,
       table: table,
@@ -66,8 +71,9 @@ mixin RealtimeNotifierMixin {
     _createChannel(config);
   }
 
-  void _createChannel(_ChannelConfig config) {
-    final channel = supabase
+  void _createChannel(_ChannelConfig config, {int retryAttempt = 0}) {
+    late final RealtimeChannel channel;
+    channel = supabase
         .channel(config.channelName)
         .onPostgresChanges(
           event: PostgresChangeEvent.all,
@@ -78,8 +84,24 @@ mixin RealtimeNotifierMixin {
             config.onEvent(payload);
           },
         )
-        .subscribe((status, _) {
-          debugPrint('---subscribe--- ${config.channelName} ${status.toString()}');
+        .subscribe((status, error) {
+          debugPrint('---subscribe--- ${config.channelName} $status');
+          if (status == RealtimeSubscribeStatus.channelError ||
+              status == RealtimeSubscribeStatus.timedOut) {
+            debugPrint('---subscribe error--- ${config.channelName}: $error');
+            if (retryAttempt < _maxRetries) {
+              final delay = Duration(seconds: 1 << retryAttempt); // exponential backoff
+              Future.delayed(delay, () {
+                _channels.remove(channel);
+                supabase.removeChannel(channel);
+                _createChannel(config, retryAttempt: retryAttempt + 1);
+              });
+            } else {
+              debugPrint('---subscribe give up--- ${config.channelName} after $_maxRetries retries');
+            }
+          } else if (status == RealtimeSubscribeStatus.closed) {
+            debugPrint('---subscribe closed--- ${config.channelName}');
+          }
         });
 
     _channels.add(channel);
@@ -88,6 +110,9 @@ mixin RealtimeNotifierMixin {
   /// Re-subscribe all channels from stored configs.
   /// Called automatically on app resume to restore channels killed by removeAllChannels().
   void resubscribeChannels() {
+    if (_isResubscribing) return;
+    _isResubscribing = true;
+
     for (final channel in _channels) {
       supabase.removeChannel(channel);
     }
@@ -95,6 +120,8 @@ mixin RealtimeNotifierMixin {
     for (final config in _configs) {
       _createChannel(config);
     }
+
+    _isResubscribing = false;
   }
 
   /// Listen for app resume events. Automatically re-subscribes channels,

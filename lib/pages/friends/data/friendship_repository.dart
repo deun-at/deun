@@ -1,3 +1,4 @@
+import 'package:deun/helper/helper.dart';
 import 'package:deun/pages/friends/data/friendship_model.dart';
 import 'package:deun/pages/groups/data/group_repository.dart';
 import 'package:deun/pages/users/user_model.dart';
@@ -32,7 +33,7 @@ class FriendshipRepository {
       for (var group in groupList) {
         group.groupSharesSummary.forEach((key, groupShare) {
           if (key == friendship.user.email) {
-            friendship.shareAmount += groupShare.shareAmount;
+            friendship.shareAmount = roundCurrency(friendship.shareAmount + groupShare.shareAmount);
           }
         });
       }

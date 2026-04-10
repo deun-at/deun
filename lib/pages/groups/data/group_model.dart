@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 
 import '../../../constants.dart';
+import '../../../helper/helper.dart';
 import '../../../main.dart';
 import '../../expenses/data/expense_model.dart';
 import '../data/group_member_model.dart';
@@ -87,8 +88,9 @@ class Group {
             groupSharesSummary[element['paid_for']]!.shareAmount = 0;
           }
 
-          groupSharesSummary[element['paid_for']]!.shareAmount = groupSharesSummary[element['paid_for']]!.shareAmount +
-              double.parse((element['share_amount'] ?? 0).toString());
+          groupSharesSummary[element['paid_for']]!.shareAmount = roundCurrency(
+              groupSharesSummary[element['paid_for']]!.shareAmount +
+              double.parse((element['share_amount'] ?? 0).toString()));
         } else if (element['paid_for'] == currentUserEmail && element['paid_by'] != currentUserEmail) {
           if (groupSharesSummary[element['paid_by']] == null) {
             groupSharesSummary[element['paid_by']] = GroupSharesSummary();
@@ -98,8 +100,9 @@ class Group {
             groupSharesSummary[element['paid_by']]!.shareAmount = 0;
           }
 
-          groupSharesSummary[element['paid_by']]!.shareAmount = groupSharesSummary[element['paid_by']]!.shareAmount -
-              double.parse((element['share_amount'] ?? 0).toString());
+          groupSharesSummary[element['paid_by']]!.shareAmount = roundCurrency(
+              groupSharesSummary[element['paid_by']]!.shareAmount -
+              double.parse((element['share_amount'] ?? 0).toString()));
         }
       }
     }
@@ -158,7 +161,7 @@ class Group {
             }
 
             simplifiedExpenseArray[firstEntry.key] = 0;
-            simplifiedExpenseArray[lastEntry.key] = lastEntry.value.abs() - firstEntry.value.abs();
+            simplifiedExpenseArray[lastEntry.key] = roundCurrency(lastEntry.value.abs() - firstEntry.value.abs());
           } else {
             if (firstEntry.key == currentUserEmail) {
               finalSimplifiedExpenseArray[lastEntry.key] = lastEntry.value * -1;
@@ -166,7 +169,7 @@ class Group {
               finalSimplifiedExpenseArray[firstEntry.key] = lastEntry.value;
             }
 
-            simplifiedExpenseArray[firstEntry.key] = lastEntry.value.abs() - firstEntry.value.abs();
+            simplifiedExpenseArray[firstEntry.key] = roundCurrency(lastEntry.value.abs() - firstEntry.value.abs());
             simplifiedExpenseArray[lastEntry.key] = 0;
           }
 
