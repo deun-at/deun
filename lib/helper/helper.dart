@@ -15,6 +15,10 @@ String fullUsernameFromJson(Map<String, dynamic> json) {
   return json['display_name'] ?? '';
 }
 
+/// Round a currency value to 2 decimal places to prevent floating-point drift.
+/// Use at every arithmetic boundary where money is computed.
+double roundCurrency(double value) => (value * 100).roundToDouble() / 100;
+
 String toHumanDateString(String? dateTimeIn) {
   if (dateTimeIn == null) return '';
 
