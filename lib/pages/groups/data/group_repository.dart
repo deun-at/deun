@@ -25,8 +25,10 @@ class GroupRepository {
     query = query.eq('group_shares_summary_helper.paid_for', currentUserEmail);
 
     if (paidTo != null) {
+      final safePaidTo = sanitizeFilterValue(paidTo);
+      final safeCurrentEmail = sanitizeFilterValue(currentUserEmail);
       query = query.or(
-          'and(paid_by.eq.$currentUserEmail,paid_for.eq.$paidTo),and(paid_by.eq.$paidTo,paid_for.eq.$currentUserEmail)',
+          'and(paid_by.eq.$safeCurrentEmail,paid_for.eq.$safePaidTo),and(paid_by.eq.$safePaidTo,paid_for.eq.$safeCurrentEmail)',
           referencedTable: 'group_shares_summary_helper');
     }
 

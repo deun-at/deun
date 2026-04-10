@@ -15,6 +15,10 @@ String fullUsernameFromJson(Map<String, dynamic> json) {
   return json['display_name'] ?? '';
 }
 
+/// Sanitize a value before interpolating it into a Supabase PostgREST filter string.
+/// Strips characters that could break the filter DSL (commas, parentheses, etc.).
+String sanitizeFilterValue(String value) => value.replaceAll(RegExp(r'[,()\\]'), '');
+
 /// Round a currency value to 2 decimal places to prevent floating-point drift.
 /// Use at every arithmetic boundary where money is computed.
 double roundCurrency(double value) => (value * 100).roundToDouble() / 100;

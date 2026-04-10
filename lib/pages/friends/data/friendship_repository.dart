@@ -131,12 +131,14 @@ class FriendshipRepository {
   static Future<List<SupaUser>> fetchFriends(String searchString, List<String> selectedUsers, int limit) async {
     var userEmail = supabase.auth.currentUser?.email ?? '';
 
+    final escaped = searchString.replaceAll(RegExp(r'[%_,()\\]'), '');
+
     List<Map<String, dynamic>> data = await supabase
         .from("friendship")
         .select("...addressee!inner(*)")
         .or("requester.eq.$userEmail")
         .eq("status", "accepted")
-        .or("email.ilike.%$searchString%,display_name.ilike.%$searchString%,username.ilike.%$searchString%", referencedTable: "addressee")
+        .or("email.ilike.%$escaped%,display_name.ilike.%$escaped%,username.ilike.%$escaped%", referencedTable: "addressee")
         .not("addressee.email", "in", "(${selectedUsers.join(",")})")
         .order("email", referencedTable: "addressee")
         .limit(limit);
@@ -186,8 +188,10 @@ class FriendshipRepository {
   }
 
   static Future<void> remove(String email) async {
+    final safeEmail = sanitizeFilterValue(email);
+    final currentEmail = sanitizeFilterValue(supabase.auth.currentUser?.email ?? '');
     await supabase.from("friendship").delete().or(
-        'and(requester.eq.$email,addressee.eq.${supabase.auth.currentUser?.email ?? ''}),and(requester.eq.${supabase.auth.currentUser?.email ?? ''},addressee.eq.$email)');
+        'and(requester.eq.$safeEmail,addressee.eq.$currentEmail),and(requester.eq.$currentEmail,addressee.eq.$safeEmail)');
   }
 
   static Future<List<Map<String, dynamic>>> fetchPendingRequestsRaw(String searchText) async {
