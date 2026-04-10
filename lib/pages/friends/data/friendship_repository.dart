@@ -189,4 +189,15 @@ class FriendshipRepository {
     await supabase.from("friendship").delete().or(
         'and(requester.eq.$email,addressee.eq.${supabase.auth.currentUser?.email ?? ''}),and(requester.eq.${supabase.auth.currentUser?.email ?? ''},addressee.eq.$email)');
   }
+
+  static Future<List<Map<String, dynamic>>> fetchPendingRequestsRaw(String searchText) async {
+    final escaped = searchText.replaceAll(RegExp(r'[%,()\\]'), '');
+    return supabase
+        .from('friendship')
+        .select('...requester(*)')
+        .eq('addressee', supabase.auth.currentUser?.email ?? '')
+        .eq('status', 'pending')
+        .ilike('requester.display_name', '%$escaped%')
+        .order('display_name', ascending: false, referencedTable: 'requester');
+  }
 }

@@ -1,7 +1,7 @@
 import 'package:deun/helper/helper.dart';
 import 'package:deun/pages/groups/data/group_model.dart';
 import 'package:deun/pages/statistics/statistics_models.dart';
-import 'package:deun/provider.dart';
+import 'package:deun/pages/statistics/provider/statistics_notifiers.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:deun/l10n/app_localizations.dart';

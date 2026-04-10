@@ -136,14 +136,7 @@ class FriendAddNotifier extends _$FriendAddNotifier {
   }
 
   Future<List<Map<String, dynamic>>> _fetchPendingRequests(String searchText) async {
-    final escaped = searchText.replaceAll(RegExp(r'[%,()\\]'), '');
-    return supabase
-        .from('friendship')
-        .select('...requester(*)')
-        .eq('addressee', supabase.auth.currentUser?.email ?? '')
-        .eq('status', 'pending')
-        .ilike('requester.display_name', '%$escaped%')
-        .order('display_name', ascending: false, referencedTable: 'requester');
+    return FriendshipRepository.fetchPendingRequestsRaw(searchText);
   }
 
   Future<List<SupaUser>> _fetchContactSuggestions(

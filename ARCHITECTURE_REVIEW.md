@@ -64,7 +64,31 @@
 ### 10. Monolithic Screens
 - `ExpenseEntryWidget` (854 LOC), `SettingScreen` (550 LOC), `GroupDetailEditScreen` (489 LOC)
 - **Status:** [ ] TODO
-- **Fix:** Extract sub-widgets
+- **Fix:** Extract sub-widgets (SettingsProfileForm, GroupMemberSearchWidget, ExpenseEntryMemberRow, dialogs to separate files)
+
+---
+
+## Riverpod State Management (from ADR 2026-04-10)
+
+### 16. UserDetailNotifier was auto-dispose
+- **File:** `lib/provider.dart:15`
+- **Status:** [x] DONE
+- **Fix:** Changed `@riverpod` → `@Riverpod(keepAlive: true)` — eliminates unnecessary re-fetches
+
+### 17. Statistics providers in global provider.dart
+- **File:** `lib/provider.dart:37-205`
+- **Status:** [x] DONE
+- **Fix:** Moved 4 statistics notifiers to `lib/pages/statistics/provider/statistics_notifiers.dart`, provider.dart now only has UserDetailNotifier + LocaleNotifier
+
+### 18. FriendAddNotifier bypasses repository
+- **File:** `lib/pages/friends/provider/friend_add_notifier.dart:138-147`
+- **Status:** [x] DONE
+- **Fix:** Added `FriendshipRepository.fetchPendingRequestsRaw()`, notifier now delegates to repository
+
+### 19. No user-facing indicator for real-time failures
+- **File:** `lib/helper/realtime_mixin.dart`
+- **Status:** [x] DONE
+- **Fix:** Added `RealtimeConnectionStatus` provider (keepAlive). Mixin marks disconnected after retry exhaustion, marks connected on successful subscribe. UI can watch `realtimeConnectionStatusProvider` to show banner.
 
 ---
 

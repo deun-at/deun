@@ -16,6 +16,18 @@ class AppResumeCounter extends _$AppResumeCounter {
   void increment() => state++;
 }
 
+/// Tracks whether any real-time channel has failed after exhausting retries.
+/// UI can watch this to show a "live updates paused" banner.
+@Riverpod(keepAlive: true)
+class RealtimeConnectionStatus extends _$RealtimeConnectionStatus {
+  @override
+  bool build() => true; // true = connected/healthy
+
+  void markDisconnected() => state = false;
+
+  void markConnected() => state = true;
+}
+
 /// Stored channel configuration for replay after app resume.
 class _ChannelConfig {
   final String channelName;
@@ -46,6 +58,10 @@ mixin RealtimeNotifierMixin {
   bool _isResubscribing = false;
   static const int _maxRetries = 3;
 
+  /// Must be set in build() before subscribeToChannel() calls.
+  /// Used to update the global connection status on failure/recovery.
+  late Ref _ref;
+
   /// Subscribe to a Supabase Postgres changes channel.
   ///
   /// - [channelName]: Unique channel name (use parameters to avoid collisions)
@@ -53,11 +69,13 @@ mixin RealtimeNotifierMixin {
   /// - [filter]: Optional column filter for scoped listening
   /// - [onEvent]: Callback for Postgres change events (insert/update/delete)
   void subscribeToChannel({
+    required Ref ref,
     required String channelName,
     required String table,
     PostgresChangeFilter? filter,
     required void Function(PostgresChangePayload payload) onEvent,
   }) {
+    _ref = ref;
     // Prevent duplicate configs for the same channel
     if (_configs.any((c) => c.channelName == channelName)) return;
 
@@ -98,7 +116,10 @@ mixin RealtimeNotifierMixin {
               });
             } else {
               debugPrint('---subscribe give up--- ${config.channelName} after $_maxRetries retries');
+              _ref.read(realtimeConnectionStatusProvider.notifier).markDisconnected();
             }
+          } else if (status == RealtimeSubscribeStatus.subscribed) {
+            _ref.read(realtimeConnectionStatusProvider.notifier).markConnected();
           } else if (status == RealtimeSubscribeStatus.closed) {
             debugPrint('---subscribe closed--- ${config.channelName}');
           }

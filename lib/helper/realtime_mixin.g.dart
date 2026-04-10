@@ -69,3 +69,66 @@ abstract class _$AppResumeCounter extends $Notifier<int> {
     element.handleCreate(ref, build);
   }
 }
+
+/// Tracks whether any real-time channel has failed after exhausting retries.
+/// UI can watch this to show a "live updates paused" banner.
+
+@ProviderFor(RealtimeConnectionStatus)
+final realtimeConnectionStatusProvider = RealtimeConnectionStatusProvider._();
+
+/// Tracks whether any real-time channel has failed after exhausting retries.
+/// UI can watch this to show a "live updates paused" banner.
+final class RealtimeConnectionStatusProvider
+    extends $NotifierProvider<RealtimeConnectionStatus, bool> {
+  /// Tracks whether any real-time channel has failed after exhausting retries.
+  /// UI can watch this to show a "live updates paused" banner.
+  RealtimeConnectionStatusProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'realtimeConnectionStatusProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$realtimeConnectionStatusHash();
+
+  @$internal
+  @override
+  RealtimeConnectionStatus create() => RealtimeConnectionStatus();
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(bool value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<bool>(value),
+    );
+  }
+}
+
+String _$realtimeConnectionStatusHash() =>
+    r'20c65d4107ad3d5ab6fafeaad8512f634d6816d0';
+
+/// Tracks whether any real-time channel has failed after exhausting retries.
+/// UI can watch this to show a "live updates paused" banner.
+
+abstract class _$RealtimeConnectionStatus extends $Notifier<bool> {
+  bool build();
+  @$mustCallSuper
+  @override
+  void runBuild() {
+    final ref = this.ref as $Ref<bool, bool>;
+    final element =
+        ref.element
+            as $ClassProviderElement<
+              AnyNotifier<bool, bool>,
+              bool,
+              Object?,
+              Object?
+            >;
+    element.handleCreate(ref, build);
+  }
+}
