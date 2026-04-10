@@ -266,6 +266,8 @@ class _GroupDetailState extends ConsumerState<GroupDetail> {
       return [];
     }
 
+    final l10n = AppLocalizations.of(context)!;
+
     List<Expense> result = await ExpenseRepository.fetchData(group.id, 0, 9, input);
     if (result.isEmpty) {
       return [
@@ -273,7 +275,7 @@ class _GroupDetailState extends ConsumerState<GroupDetail> {
           isTop: true,
           isBottom: true,
           child: ListTile(
-            title: Text(AppLocalizations.of(context)!.expensesSearchEmpty),
+            title: Text(l10n.expensesSearchEmpty),
           ),
         ),
       ];

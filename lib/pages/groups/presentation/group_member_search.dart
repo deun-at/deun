@@ -95,6 +95,12 @@ class _GroupMemberSearchState extends State<GroupMemberSearch> {
     List<String> selectedUsers = nbs.map((element) => element['email'] as String).toList();
     selectedUsers.add(supabase.auth.currentUser?.email ?? '');
 
+    final l10n = AppLocalizations.of(context)!;
+    final theme = Theme.of(context);
+    final labelStyle = theme.textTheme.labelMedium?.copyWith(
+      color: theme.colorScheme.onSurfaceVariant,
+    );
+
     // Fetch friends
     List<SupaUser> friends = await FriendshipRepository.fetchFriends(input, selectedUsers, 99);
 
@@ -110,10 +116,8 @@ class _GroupMemberSearchState extends State<GroupMemberSearch> {
       tiles.add(Padding(
         padding: const EdgeInsets.only(left: 16, top: 8, bottom: 4),
         child: Text(
-          AppLocalizations.of(context)!.groupMemberSectionFriends,
-          style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                color: Theme.of(context).colorScheme.onSurfaceVariant,
-              ),
+          l10n.groupMemberSectionFriends,
+          style: labelStyle,
         ),
       ));
 
@@ -139,10 +143,8 @@ class _GroupMemberSearchState extends State<GroupMemberSearch> {
       tiles.add(Padding(
         padding: const EdgeInsets.only(left: 16, top: 12, bottom: 4),
         child: Text(
-          AppLocalizations.of(context)!.groupMemberSectionOtherUsers,
-          style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                color: Theme.of(context).colorScheme.onSurfaceVariant,
-              ),
+          l10n.groupMemberSectionOtherUsers,
+          style: labelStyle,
         ),
       ));
 
@@ -169,7 +171,7 @@ class _GroupMemberSearchState extends State<GroupMemberSearch> {
         CardListTile(
           isTop: true,
           isBottom: true,
-          child: ListTile(title: Text(AppLocalizations.of(context)!.groupMemberResultEmpty)),
+          child: ListTile(title: Text(l10n.groupMemberResultEmpty)),
         ),
       );
     }
@@ -183,8 +185,8 @@ class _GroupMemberSearchState extends State<GroupMemberSearch> {
           isBottom: true,
           child: ListTile(
             leading: const Icon(Icons.person_add),
-            title: Text(AppLocalizations.of(context)!.groupMemberAddGuestOption(input)),
-            subtitle: Text(AppLocalizations.of(context)!.groupMemberAddGuestSubtitle),
+            title: Text(l10n.groupMemberAddGuestOption(input)),
+            subtitle: Text(l10n.groupMemberAddGuestSubtitle),
             onTap: () {
               final ts = DateTime.now().microsecondsSinceEpoch;
               final tempEmail = 'guest+$ts@pending.invalid';

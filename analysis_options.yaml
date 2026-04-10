@@ -13,4 +13,3 @@ linter:
     - avoid_empty_else
     - prefer_final_fields
     - unnecessary_statements
-    - avoid_returning_null_for_future
