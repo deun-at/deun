@@ -37,9 +37,43 @@ class _FriendListState extends ConsumerState<FriendList> {
     return ref.read(friendshipListProvider.notifier).reload();
   }
 
+  Future<void> _acceptFriendRequest(String email, String displayName) async {
+    try {
+      await FriendshipRepository.accepted(email);
+      if (!mounted) return;
+      showSnackBar(context, AppLocalizations.of(context)!.friendshipAccept(displayName));
+      sendFriendAcceptNotification(context, {email});
+    } catch (e) {
+      if (!mounted) return;
+      showSnackBar(context, AppLocalizations.of(context)!.generalError);
+    }
+  }
+
+  Future<void> _declineFriendRequest(String email, String displayName) async {
+    try {
+      await FriendshipRepository.decline(email);
+      if (!mounted) return;
+      showSnackBar(context, AppLocalizations.of(context)!.friendshipRequestDecline(displayName));
+    } catch (e) {
+      if (!mounted) return;
+      showSnackBar(context, AppLocalizations.of(context)!.generalError);
+    }
+  }
+
+  Future<void> _cancelFriendRequest(String email, String displayName) async {
+    try {
+      await FriendshipRepository.cancel(email);
+      if (!mounted) return;
+      showSnackBar(context, AppLocalizations.of(context)!.friendshipRequestCancel(displayName));
+    } catch (e) {
+      if (!mounted) return;
+      showSnackBar(context, AppLocalizations.of(context)!.generalError);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    final AsyncValue<List<Friendship>> friendshipProvider = ref.watch(friendshipListProvider);
+    final AsyncValue<FriendshipListState> friendshipProvider = ref.watch(friendshipListProvider);
 
     ThemeData themeData = Theme.of(context);
     ColorScheme colorScheme = themeData.colorScheme;
@@ -75,7 +109,7 @@ class _FriendListState extends ConsumerState<FriendList> {
           ],
           body: switch (friendshipProvider) {
             AsyncData(:final value) =>
-              value.isEmpty
+              value.acceptedFriends.isEmpty && value.pendingIncomingRequests.isEmpty && value.pendingOutgoingRequests.isEmpty
                   ? EmptyListWidget(
                       icon: Icons.people_outlined,
                       label: AppLocalizations.of(context)!.friendsNoEntries,
@@ -83,40 +117,67 @@ class _FriendListState extends ConsumerState<FriendList> {
                     )
                   : RefreshIndicator(
                       onRefresh: () => updateFriendshipList(),
-                      child: CardListView(
-                        color: colorScheme.surfaceContainerLowest,
-                        itemCount: value.length,
-                        itemBuilder: (context, index) {
-                          Friendship friendship = value[index];
-                          SupaUser user = friendship.user;
-
-                          Color shareAmountColor = Theme.of(context).colorScheme.onSurface;
-                          if (friendship.shareAmount < 0) {
-                            shareAmountColor = Colors.red;
-                          } else if (friendship.shareAmount > 0) {
-                            shareAmountColor = Colors.green;
-                          }
-
-                          return ListTile(
-                            leading: CircleAvatar(
-                              radius: 22,
-                              backgroundColor: _avatarColor(user.displayName),
-                              child: Text(
-                                user.displayName.isNotEmpty ? user.displayName[0].toUpperCase() : '?',
-                                style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                      child: ListView(
+                        padding: EdgeInsets.zero,
+                        children: [
+                          if (value.pendingIncomingRequests.isNotEmpty) ...[
+                            _buildPendingRequestsSection(value.pendingIncomingRequests, colorScheme),
+                          ],
+                          if (value.pendingOutgoingRequests.isNotEmpty) ...[
+                            _buildOutgoingRequestsSection(value.pendingOutgoingRequests, colorScheme),
+                          ],
+                          if (value.acceptedFriends.isNotEmpty) ...[
+                            ListTile(
+                              enabled: false,
+                              minTileHeight: 1,
+                              title: Padding(
+                                padding: EdgeInsetsGeometry.only(top: 10),
+                                child: Text(
+                                  AppLocalizations.of(context)!.friends,
+                                  style: Theme.of(context).textTheme.bodyMedium,
+                                ),
                               ),
                             ),
-                            title: Text(user.displayName),
-                            subtitle: Text(user.fullUsername),
-                            trailing: Text(
-                              style: Theme.of(context).textTheme.bodyMedium!.copyWith(color: shareAmountColor),
-                              AppLocalizations.of(context)!.toCurrency(friendship.shareAmount),
+                            CardListView(
+                              color: colorScheme.surfaceContainerLowest,
+                              shrinkWrap: true,
+                              physics: const NeverScrollableScrollPhysics(),
+                              itemCount: value.acceptedFriends.length,
+                              itemBuilder: (context, index) {
+                                Friendship friendship = value.acceptedFriends[index];
+                                SupaUser user = friendship.user;
+
+                                Color shareAmountColor = Theme.of(context).colorScheme.onSurface;
+                                if (friendship.shareAmount < 0) {
+                                  shareAmountColor = Colors.red;
+                                } else if (friendship.shareAmount > 0) {
+                                  shareAmountColor = Colors.green;
+                                }
+
+                                return ListTile(
+                                  leading: CircleAvatar(
+                                    radius: 22,
+                                    backgroundColor: _avatarColor(user.displayName),
+                                    child: Text(
+                                      user.displayName.isNotEmpty ? user.displayName[0].toUpperCase() : '?',
+                                      style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                                    ),
+                                  ),
+                                  title: Text(user.displayName),
+                                  subtitle: Text(user.fullUsername),
+                                  trailing: Text(
+                                    style: Theme.of(context).textTheme.bodyMedium!.copyWith(color: shareAmountColor),
+                                    AppLocalizations.of(context)!.toCurrency(friendship.shareAmount),
+                                  ),
+                                  onTap: () {
+                                    openFriendshipDialog(context, user, friendship);
+                                  },
+                                );
+                              },
                             ),
-                            onTap: () {
-                              openFriendshipDialog(context, user, friendship);
-                            },
-                          );
-                        },
+                          ],
+                          const SizedBox(height: 16),
+                        ],
                       ),
                     ),
             AsyncError() => EmptyListWidget(
@@ -129,6 +190,112 @@ class _FriendListState extends ConsumerState<FriendList> {
             _ => const ShimmerCardList(height: 70, listEntryLength: 25),
           },
         ),
+    );
+  }
+
+  Widget _buildPendingRequestsSection(List<Friendship> pendingRequests, ColorScheme colorScheme) {
+    return Column(
+      children: [
+        ListTile(
+          enabled: false,
+          minTileHeight: 1,
+          title: Padding(
+            padding: EdgeInsetsGeometry.only(top: 10),
+            child: Text(
+              AppLocalizations.of(context)!.friendRequests(pendingRequests.length),
+              style: Theme.of(context).textTheme.bodyMedium,
+            ),
+          ),
+        ),
+        CardColumn(
+          children: pendingRequests.map((friendship) {
+            SupaUser user = friendship.user;
+            return ListTile(
+              leading: CircleAvatar(
+                radius: 22,
+                backgroundColor: _avatarColor(user.displayName),
+                child: Text(
+                  user.displayName.isNotEmpty ? user.displayName[0].toUpperCase() : '?',
+                  style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                ),
+              ),
+              title: Text(user.displayName),
+              subtitle: Text(user.fullUsername),
+              trailing: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  FilledButton(
+                    onPressed: () => _acceptFriendRequest(user.email, user.displayName),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(Icons.person_add_outlined, size: 18),
+                        const SizedBox(width: 5),
+                        Text(AppLocalizations.of(context)!.accept),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 4),
+                  IconButton.filledTonal(
+                    onPressed: () => _declineFriendRequest(user.email, user.displayName),
+                    icon: const Icon(Icons.close),
+                  ),
+                ],
+              ),
+            );
+          }).toList(),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildOutgoingRequestsSection(List<Friendship> outgoingRequests, ColorScheme colorScheme) {
+    return Column(
+      children: [
+        ListTile(
+          enabled: false,
+          minTileHeight: 1,
+          title: Padding(
+            padding: EdgeInsetsGeometry.only(top: 10),
+            child: Text(
+              AppLocalizations.of(context)!.pendingRequests(outgoingRequests.length),
+              style: Theme.of(context).textTheme.bodyMedium,
+            ),
+          ),
+        ),
+        CardColumn(
+          children: outgoingRequests.map((friendship) {
+            SupaUser user = friendship.user;
+            return ListTile(
+              leading: CircleAvatar(
+                radius: 22,
+                backgroundColor: _avatarColor(user.displayName),
+                child: Text(
+                  user.displayName.isNotEmpty ? user.displayName[0].toUpperCase() : '?',
+                  style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                ),
+              ),
+              title: Text(user.displayName),
+              subtitle: Text(user.fullUsername),
+              trailing: FilledButton(
+                style: FilledButton.styleFrom(
+                  backgroundColor: colorScheme.error,
+                  foregroundColor: colorScheme.onError,
+                ),
+                onPressed: () => _cancelFriendRequest(user.email, user.displayName),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.person_add_disabled, size: 18, color: colorScheme.onError),
+                    const SizedBox(width: 5),
+                    Text(AppLocalizations.of(context)!.cancel),
+                  ],
+                ),
+              ),
+            );
+          }).toList(),
+        ),
+      ],
     );
   }
 

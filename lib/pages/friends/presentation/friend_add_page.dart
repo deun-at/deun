@@ -6,9 +6,7 @@ import 'package:deun/pages/friends/provider/friend_add_notifier.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:deun/l10n/app_localizations.dart';
-import 'package:deun/pages/friends/presentation/requested_friendship_list.dart';
 import 'package:deun/pages/friends/presentation/search_result_list.dart';
-import 'package:deun/pages/friends/presentation/pending_request_list.dart';
 import 'package:deun/pages/friends/presentation/contact_suggestion_list.dart';
 
 class FriendAddPage extends ConsumerStatefulWidget {
@@ -71,27 +69,11 @@ class _FriendAddPageState extends ConsumerState<FriendAddPage> {
           Expanded(
             child: _FriendAddResults(
               onRequest: _requestFriendship,
-              onAccept: _acceptFriendship,
-              onDecline: _declineFriendship,
-              onCancel: _cancelFriendRequest,
             ),
           ),
         ],
       ),
     );
-  }
-
-  Future<void> _cancelFriendRequest(String userEmail, String displayName) async {
-    try {
-      await FriendshipRepository.cancel(userEmail);
-      if (!mounted) return;
-      showSnackBar(context,
-          AppLocalizations.of(context)!.friendshipRequestCancel(displayName));
-      ref.read(friendAddProvider.notifier).refresh();
-    } catch (e) {
-      if (!mounted) return;
-      showSnackBar(context, AppLocalizations.of(context)!.generalError);
-    }
   }
 
   Future<void> _requestFriendship(String userEmail, String displayName) async {
@@ -108,32 +90,6 @@ class _FriendAddPageState extends ConsumerState<FriendAddPage> {
     }
   }
 
-  Future<void> _acceptFriendship(String userEmail, String displayName) async {
-    try {
-      await FriendshipRepository.accepted(userEmail);
-      if (!mounted) return;
-      showSnackBar(context,
-          AppLocalizations.of(context)!.friendshipAccept(displayName));
-      sendFriendAcceptNotification(context, {userEmail});
-      ref.read(friendAddProvider.notifier).refresh();
-    } catch (e) {
-      if (!mounted) return;
-      showSnackBar(context, AppLocalizations.of(context)!.generalError);
-    }
-  }
-
-  Future<void> _declineFriendship(String userEmail, String displayName) async {
-    try {
-      await FriendshipRepository.decline(userEmail);
-      if (!mounted) return;
-      showSnackBar(context,
-          AppLocalizations.of(context)!.friendshipRequestDecline(displayName));
-      ref.read(friendAddProvider.notifier).refresh();
-    } catch (e) {
-      if (!mounted) return;
-      showSnackBar(context, AppLocalizations.of(context)!.generalError);
-    }
-  }
 }
 
 /// Isolates the provider watch so that rebuilds from data loading
@@ -142,15 +98,9 @@ class _FriendAddPageState extends ConsumerState<FriendAddPage> {
 class _FriendAddResults extends StatelessWidget {
   const _FriendAddResults({
     required this.onRequest,
-    required this.onAccept,
-    required this.onDecline,
-    required this.onCancel,
   });
 
   final Future<void> Function(String, String) onRequest;
-  final Future<void> Function(String, String) onAccept;
-  final Future<void> Function(String, String) onDecline;
-  final Future<void> Function(String, String) onCancel;
 
   @override
   Widget build(BuildContext context) {
@@ -171,34 +121,11 @@ class _FriendAddResults extends StatelessWidget {
         ),
         SliverToBoxAdapter(
           child: Consumer(builder: (context, ref, _) {
-            final pendingRequests = ref.watch(friendAddProvider.select((s) => s.pendingRequests));
-            final isLoading = ref.watch(friendAddProvider.select((s) => s.isLoading));
-            return PendingRequestList(
-              pendingRequests: pendingRequests,
-              onAccept: onAccept,
-              onDecline: onDecline,
-              isLoading: isLoading,
-            );
-          }),
-        ),
-        SliverToBoxAdapter(
-          child: Consumer(builder: (context, ref, _) {
             final contactSuggestions = ref.watch(friendAddProvider.select((s) => s.contactSuggestions));
             final isLoading = ref.watch(friendAddProvider.select((s) => s.isLoading));
             return ContactSuggestionList(
               contactSuggestions: contactSuggestions,
               onRequest: onRequest,
-              isLoading: isLoading,
-            );
-          }),
-        ),
-        SliverToBoxAdapter(
-          child: Consumer(builder: (context, ref, _) {
-            final requestedFriendships = ref.watch(friendAddProvider.select((s) => s.requestedFriendships));
-            final isLoading = ref.watch(friendAddProvider.select((s) => s.isLoading));
-            return RequestedFriendshipList(
-              requestedFriendships: requestedFriendships,
-              onCancel: onCancel,
               isLoading: isLoading,
             );
           }),

@@ -8,12 +8,24 @@ import '../data/friendship_repository.dart';
 
 part 'friendship_list.g.dart';
 
+class FriendshipListState {
+  final List<Friendship> acceptedFriends;
+  final List<Friendship> pendingIncomingRequests;
+  final List<Friendship> pendingOutgoingRequests;
+
+  const FriendshipListState({
+    this.acceptedFriends = const [],
+    this.pendingIncomingRequests = const [],
+    this.pendingOutgoingRequests = const [],
+  });
+}
+
 @Riverpod(keepAlive: true)
 class FriendshipListNotifier extends _$FriendshipListNotifier with RealtimeNotifierMixin {
   Timer? _debounceTimer;
 
   @override
-  FutureOr<List<Friendship>> build() async {
+  FutureOr<FriendshipListState> build() async {
     disposeChannels();
     ref.onDispose(() {
       disposeChannels();
@@ -55,7 +67,23 @@ class FriendshipListNotifier extends _$FriendshipListNotifier with RealtimeNotif
     state = await AsyncValue.guard(() async => await fetchFriendshipList());
   }
 
-  Future<List<Friendship>> fetchFriendshipList() async {
-    return await FriendshipRepository.fetchData();
+  Future<FriendshipListState> fetchFriendshipList() async {
+    final results = await Future.wait([
+      FriendshipRepository.fetchData(),
+      FriendshipRepository.fetchPendingIncoming(),
+      FriendshipRepository.fetchPendingOutgoing(),
+    ]);
+
+    return FriendshipListState(
+      acceptedFriends: results[0],
+      pendingIncomingRequests: results[1],
+      pendingOutgoingRequests: results[2],
+    );
   }
+}
+
+@riverpod
+int pendingFriendRequestCount(Ref ref) {
+  final state = ref.watch(friendshipListProvider);
+  return state.value?.pendingIncomingRequests.length ?? 0;
 }

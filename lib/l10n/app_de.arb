@@ -92,6 +92,8 @@
   "updatePasswordUpdatePassword": "Passwort aktualisieren",
   "friends": "Freunde",
   "friendsNoEntries": "Keine Freunde gefunden.",
+  "friendRequests": "Freundschaftsanfragen ({count})",
+  "pendingRequests": "Ausstehende Anfragen ({count})",
   "addFriends": "Freunde hinzufügen",
   "addFriendshipSearchResult": "Suchergebnis",
   "addFriendshipPendingRequests": "Mich hinzugefügt",

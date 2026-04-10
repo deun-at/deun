@@ -8,6 +8,7 @@ import 'package:deun/pages/expenses/data/expense_model.dart';
 import 'package:deun/pages/expenses/data/expense_repository.dart';
 import 'package:deun/pages/friends/presentation/friend_add_page.dart';
 import 'package:deun/pages/friends/presentation/friend_list.dart';
+import 'package:deun/pages/friends/provider/friendship_list.dart';
 import 'package:deun/pages/friends/presentation/friend_qr_page.dart';
 import 'package:deun/pages/friends/presentation/friend_accept_page.dart';
 import 'package:deun/pages/groups/presentation/group_detail_payment.dart';
@@ -556,6 +557,8 @@ class _ScaffoldWithNestedNavigationState
 
   @override
   Widget build(BuildContext context) {
+    final pendingCount = ref.watch(pendingFriendRequestCountProvider);
+
     return Scaffold(
       body: widget.navigationShell,
       bottomNavigationBar: NavigationBar(
@@ -568,8 +571,16 @@ class _ScaffoldWithNestedNavigationState
             label: AppLocalizations.of(context)!.groups,
           ),
           NavigationDestination(
-            selectedIcon: const Icon(Icons.group),
-            icon: const Icon(Icons.group_outlined),
+            selectedIcon: Badge(
+              isLabelVisible: pendingCount > 0,
+              label: Text('$pendingCount'),
+              child: const Icon(Icons.group),
+            ),
+            icon: Badge(
+              isLabelVisible: pendingCount > 0,
+              label: Text('$pendingCount'),
+              child: const Icon(Icons.group_outlined),
+            ),
             label: AppLocalizations.of(context)!.friends,
           ),
           NavigationDestination(
