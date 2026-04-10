@@ -1619,6 +1619,54 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Your username'**
   String get settingsUsernameCode;
+
+  /// No description provided for @groupMemberSectionFriends.
+  ///
+  /// In en, this message translates to:
+  /// **'Friends'**
+  String get groupMemberSectionFriends;
+
+  /// No description provided for @groupMemberSectionOtherUsers.
+  ///
+  /// In en, this message translates to:
+  /// **'Other users'**
+  String get groupMemberSectionOtherUsers;
+
+  /// No description provided for @groupMemberAddGuestSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Add someone without an account'**
+  String get groupMemberAddGuestSubtitle;
+
+  /// No description provided for @reminderSend.
+  ///
+  /// In en, this message translates to:
+  /// **'Send reminder'**
+  String get reminderSend;
+
+  /// No description provided for @reminderSent.
+  ///
+  /// In en, this message translates to:
+  /// **'Reminder sent to {displayName}'**
+  String reminderSent(String displayName);
+
+  /// No description provided for @reminderCooldown.
+  ///
+  /// In en, this message translates to:
+  /// **'Already reminded recently'**
+  String get reminderCooldown;
+
+  /// No description provided for @reminderNotificationTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'{displayName} reminds you'**
+  String reminderNotificationTitle(String displayName);
+
+  /// No description provided for @reminderNotificationBody.
+  ///
+  /// In en, this message translates to:
+  /// **'You owe {amount} in {groupName}'**
+  String reminderNotificationBody(double amount, String groupName);
 }
 
 class _AppLocalizationsDelegate

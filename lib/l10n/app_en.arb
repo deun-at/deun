@@ -848,5 +848,36 @@
   "settingsUsername": "Username",
   "@settingsUsername": {},
   "settingsUsernameCode": "Your username",
-  "@settingsUsernameCode": {}
+  "@settingsUsernameCode": {},
+
+  "groupMemberSectionFriends": "Friends",
+  "@groupMemberSectionFriends": {},
+  "groupMemberSectionOtherUsers": "Other users",
+  "@groupMemberSectionOtherUsers": {},
+  "groupMemberAddGuestSubtitle": "Add someone without an account",
+  "@groupMemberAddGuestSubtitle": {},
+
+  "reminderSend": "Send reminder",
+  "@reminderSend": {},
+  "reminderSent": "Reminder sent to {displayName}",
+  "@reminderSent": {
+    "placeholders": {
+      "displayName": { "type": "String" }
+    }
+  },
+  "reminderCooldown": "Already reminded recently",
+  "@reminderCooldown": {},
+  "reminderNotificationTitle": "{displayName} reminds you",
+  "@reminderNotificationTitle": {
+    "placeholders": {
+      "displayName": { "type": "String" }
+    }
+  },
+  "reminderNotificationBody": "You owe {amount} in {groupName}",
+  "@reminderNotificationBody": {
+    "placeholders": {
+      "amount": { "type": "double", "format": "currency", "optionalParameters": { "symbol": "€", "decimalDigits": 2 } },
+      "groupName": { "type": "String" }
+    }
+  }
 }

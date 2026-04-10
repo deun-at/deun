@@ -4,6 +4,7 @@ import 'package:collection/collection.dart';
 import 'package:deun/helper/helper.dart';
 import 'package:deun/pages/friends/data/friendship_repository.dart';
 import 'package:deun/pages/groups/data/group_repository.dart';
+import 'package:deun/pages/users/user_repository.dart';
 import 'package:deun/widgets/card_list_view_builder.dart';
 import 'package:deun/widgets/theme_builder.dart';
 import 'package:flutter/material.dart';
@@ -105,11 +106,73 @@ class _GroupEditState extends ConsumerState<GroupEdit> {
 
     selectedUsers.add(supabase.auth.currentUser?.email ?? '');
 
-    List<SupaUser> result = await FriendshipRepository.fetchFriends(input, selectedUsers, 99);
+    // Fetch friends
+    List<SupaUser> friends = await FriendshipRepository.fetchFriends(input, selectedUsers, 99);
+
+    // Fetch other users by exact email/username match (excluding friends and selected)
+    List<String> excludeEmails = [...selectedUsers, ...friends.map((f) => f.email)];
+    List<SupaUser> otherUsers = input.isNotEmpty
+        ? await UserRepository.fetchData(input, excludeEmails, 20)
+        : [];
 
     final List<Widget> tiles = [];
 
-    if (result.isEmpty) {
+    // Friends section
+    if (friends.isNotEmpty) {
+      tiles.add(Padding(
+        padding: const EdgeInsets.only(left: 16, top: 8, bottom: 4),
+        child: Text(AppLocalizations.of(context)!.groupMemberSectionFriends,
+            style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                )),
+      ));
+
+      tiles.addAll(friends.mapIndexed((index, user) {
+        return CardListTile(
+          isTop: index == 0,
+          isBottom: index == friends.length - 1,
+          child: ListTile(
+            title: Text(user.displayName),
+            subtitle: Text(user.fullUsername),
+            onTap: () {
+              nbs.add(user.toJson());
+              field.didChange(jsonEncode(nbs));
+              controller.text = "";
+            },
+          ),
+        );
+      }));
+    }
+
+    // Other users section
+    if (otherUsers.isNotEmpty) {
+      tiles.add(Padding(
+        padding: const EdgeInsets.only(left: 16, top: 12, bottom: 4),
+        child: Text(AppLocalizations.of(context)!.groupMemberSectionOtherUsers,
+            style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                )),
+      ));
+
+      tiles.addAll(otherUsers.mapIndexed((index, user) {
+        return CardListTile(
+          isTop: index == 0,
+          isBottom: index == otherUsers.length - 1,
+          child: ListTile(
+            title: Text(user.displayName),
+            subtitle: Text(user.fullUsername),
+            onTap: () {
+              nbs.add(user.toJson());
+              field.didChange(jsonEncode(nbs));
+              controller.text = "";
+            },
+          ),
+        );
+      }));
+    }
+
+    // Empty state
+    if (friends.isEmpty && otherUsers.isEmpty && input.isEmpty) {
       tiles.add(
         CardListTile(
             isTop: true,
@@ -118,50 +181,21 @@ class _GroupEditState extends ConsumerState<GroupEdit> {
       );
     }
 
-    int resultLength = result.length;
-
-    tiles.addAll(result.mapIndexed((index, user) {
-      bool isTop = false;
-      bool isBottom = false;
-
-      if (index == 0 && result.isNotEmpty) {
-        isTop = true;
-      }
-
-      if (index == resultLength - 1) {
-        isBottom = true;
-      }
-
-      return CardListTile(
-        isTop: isTop,
-        isBottom: isBottom,
-        child: ListTile(
-          title: Text(user.displayName),
-          subtitle: Text(user.fullUsername),
-          onTap: () {
-            nbs.add(user.toJson());
-            field.didChange(jsonEncode(nbs));
-            controller.text = "";
-          },
-        ),
-      );
-    }));
-
-    // Append option to add typed name as a guest
-    final guestName = input;
-    if (guestName.isNotEmpty) {
-      tiles.add(SizedBox(height: 12));
+    // Add as guest option
+    if (input.isNotEmpty) {
+      tiles.add(const SizedBox(height: 12));
       tiles.add(
         CardListTile(
           isTop: true,
           isBottom: true,
           child: ListTile(
             leading: const Icon(Icons.person_add),
-            title: Text(AppLocalizations.of(context)!.groupMemberAddGuestOption(guestName)),
+            title: Text(AppLocalizations.of(context)!.groupMemberAddGuestOption(input)),
+            subtitle: Text(AppLocalizations.of(context)!.groupMemberAddGuestSubtitle),
             onTap: () {
               final ts = DateTime.now().microsecondsSinceEpoch;
               final tempEmail = 'guest+$ts@pending.invalid';
-              nbs.add({'email': tempEmail, 'display_name': guestName, 'is_guest': true, 'is_guest_pending': true});
+              nbs.add({'email': tempEmail, 'display_name': input, 'is_guest': true, 'is_guest_pending': true});
               field.didChange(jsonEncode(nbs));
               controller.text = "";
             },

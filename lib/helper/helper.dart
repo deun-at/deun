@@ -120,6 +120,18 @@ void sendGroupPayBackNotification(
   );
 }
 
+void sendPaymentReminderNotification(
+    BuildContext context, String groupId, Set<String> notificationReceiver, double amount) {
+  supabase.from('group').select('name, ...user_id(user_display_name:display_name)').eq('id', groupId).single().then(
+    (value) {
+      String title = AppLocalizations.of(context)!.reminderNotificationTitle(value['user_display_name']);
+      String body = AppLocalizations.of(context)!.reminderNotificationBody(amount, value['name']);
+
+      sendNotification('reminder', groupId, notificationReceiver, title, body);
+    },
+  );
+}
+
 void sendExpenseNotification(BuildContext context, String expenseId, Set<String> notificationReceiver, double amount) {
   supabase
       .from('expense')
