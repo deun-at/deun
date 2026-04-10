@@ -12,7 +12,7 @@ import 'pages/statistics/statistics_models.dart';
 // Necessary for code-generation to work
 part 'provider.g.dart';
 
-@riverpod
+@Riverpod(keepAlive: true)
 class UserDetailNotifier extends _$UserDetailNotifier {
   @override
   FutureOr<SupaUser> build() async {
