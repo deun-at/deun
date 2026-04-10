@@ -671,6 +671,18 @@ abstract class AppLocalizations {
   /// **'No friends yet'**
   String get friendsNoEntries;
 
+  /// No description provided for @friendRequests.
+  ///
+  /// In en, this message translates to:
+  /// **'Friend Requests ({count})'**
+  String friendRequests(int count);
+
+  /// No description provided for @pendingRequests.
+  ///
+  /// In en, this message translates to:
+  /// **'Pending Requests ({count})'**
+  String pendingRequests(int count);
+
   /// No description provided for @addFriendshipSelectionEmpty.
   ///
   /// In en, this message translates to:

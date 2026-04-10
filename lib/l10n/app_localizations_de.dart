@@ -405,6 +405,16 @@ class AppLocalizationsDe extends AppLocalizations {
   String get friendsNoEntries => 'Keine Freunde gefunden.';
 
   @override
+  String friendRequests(int count) {
+    return 'Freundschaftsanfragen ($count)';
+  }
+
+  @override
+  String pendingRequests(int count) {
+    return 'Ausstehende Anfragen ($count)';
+  }
+
+  @override
   String get addFriendshipSelectionEmpty => 'Benutzername oder E-Mail eingeben';
 
   @override

@@ -326,6 +326,22 @@
   "@addFriends": {},
   "friendsNoEntries": "No friends yet",
   "@friendsNoEntries": {},
+  "friendRequests": "Friend Requests ({count})",
+  "@friendRequests": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "pendingRequests": "Pending Requests ({count})",
+  "@pendingRequests": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "addFriendshipSelectionEmpty": "Enter exact username or e-mail",
   "@addFriendshipSelectionEmpty": {},
   "addFriendshipSearchResult": "Search Result",
