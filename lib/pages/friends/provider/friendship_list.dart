@@ -36,14 +36,14 @@ class FriendshipListNotifier extends _$FriendshipListNotifier with RealtimeNotif
       channelName: 'friendship_list',
       table: 'friendship',
       onEvent: (payload) {
-        reload();
+        _debouncedReload();
       },
     );
 
     subscribeToChannel(
       channelName: 'friendship_group_checker',
       table: 'group_update_checker',
-      onEvent: (payload) async {
+      onEvent: (payload) {
         _debouncedReload();
       },
     );

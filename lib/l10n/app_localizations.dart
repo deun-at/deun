@@ -1679,6 +1679,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'You owe {amount} in {groupName}'**
   String reminderNotificationBody(double amount, String groupName);
+
+  /// No description provided for @dateToday.
+  ///
+  /// In en, this message translates to:
+  /// **'Today'**
+  String get dateToday;
+
+  /// No description provided for @dateYesterday.
+  ///
+  /// In en, this message translates to:
+  /// **'Yesterday'**
+  String get dateYesterday;
 }
 
 class _AppLocalizationsDelegate

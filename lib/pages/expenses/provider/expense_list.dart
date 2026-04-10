@@ -68,9 +68,10 @@ class ExpenseListNotifier extends _$ExpenseListNotifier with RealtimeNotifierMix
 
   Future<void> reload(String groupId) async {
     if (!ref.mounted) return;
-    _hasMore = true;
-
-    state = await AsyncValue.guard(() async => await ExpenseRepository.fetchData(groupId, 0, _offset + pageSize - 1));
+    final expectedCount = _offset + pageSize;
+    state = await AsyncValue.guard(() async => await ExpenseRepository.fetchData(groupId, 0, expectedCount - 1));
+    // Derive _hasMore from actual results instead of blindly resetting to true
+    _hasMore = (state.value?.length ?? 0) >= expectedCount;
   }
 
   int get offset => _offset;

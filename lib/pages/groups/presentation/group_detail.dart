@@ -297,7 +297,7 @@ class _GroupDetailState extends ConsumerState<GroupDetail> {
           child: ListTile(
             title: Text(expense.name),
             subtitle: Text(AppLocalizations.of(context)!.toCurrency(expenseSum)),
-            trailing: Text(formatDate(expense.expenseDate)),
+            trailing: Text(formatDate(expense.expenseDate, context)),
             onTap: () async {
               controller.closeView("");
               GoRouter.of(context).push("/group/details/expense", extra: {'group': group, 'expense': expense});

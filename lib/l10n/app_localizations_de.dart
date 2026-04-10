@@ -1038,4 +1038,10 @@ class AppLocalizationsDe extends AppLocalizations {
 
     return 'Du schuldest $amountString in $groupName';
   }
+
+  @override
+  String get dateToday => 'Heute';
+
+  @override
+  String get dateYesterday => 'Gestern';
 }

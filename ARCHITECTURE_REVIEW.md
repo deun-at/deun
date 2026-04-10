@@ -43,13 +43,13 @@
 
 ### 6. Pagination Breaks on Real-time Reload
 - **File:** `lib/pages/expenses/provider/expense_list.dart:69-74`
-- **Status:** [ ] TODO
-- **Fix:** Move pagination state into AsyncValue state object
+- **Status:** [x] DONE
+- **Fix:** Derive `_hasMore` from actual result count instead of blindly resetting to true
 
 ### 7. Friendship List Over-fetching
 - **File:** `lib/pages/friends/provider/friendship_list.dart:43-48`
-- **Status:** [ ] TODO
-- **Fix:** Filter subscription or debounce all reload triggers
+- **Status:** [x] DONE
+- **Fix:** Both channels now use `_debouncedReload()` instead of immediate reload
 
 ### 8. Duplicate Config Accumulation
 - **File:** `lib/helper/realtime_mixin.dart:59-66`
@@ -58,8 +58,8 @@
 
 ### 9. SQL Injection Risk
 - **Files:** `group_repository.dart:27-30`, `friendship_repository.dart:189`
-- **Status:** [ ] TODO
-- **Fix:** Use Supabase parameterized `or()` filter
+- **Status:** [x] LOW RISK — values come from auth system/DB, not user input. PostgREST filters, not raw SQL.
+- **Fix:** No change needed
 
 ### 10. Monolithic Screens
 - `ExpenseEntryWidget` (854 LOC), `SettingScreen` (550 LOC), `GroupDetailEditScreen` (489 LOC)
@@ -72,8 +72,8 @@
 
 ### 11. Hardcoded Strings in Helper
 - **File:** `lib/helper/helper.dart`
-- **Status:** [ ] TODO
-- 'Today'/'Yesterday' not localized, '€' hardcoded, fixed date format
+- **Status:** [x] DONE (Today/Yesterday localized; € and date format remain — tied to currency/locale system)
+- Added `dateToday`/`dateYesterday` keys to en/de ARB files, updated `formatDate()` + call sites
 
 ### 12. Missing Channel Disposal on Failure
 - **File:** `lib/helper/realtime_mixin.dart:69-86`
@@ -81,15 +81,16 @@
 
 ### 13. Timer Lifecycle in FriendshipListNotifier
 - **File:** `lib/pages/friends/provider/friendship_list.dart:58-62`
-- **Status:** [ ] TODO
+- **Status:** [x] ALREADY SAFE — timer cancelled in `ref.onDispose`, reload checks `ref.mounted`
 
 ### 14. Permissive Linting
 - **File:** `analysis_options.yaml`
-- **Status:** [ ] TODO
+- **Status:** [x] DONE
+- Added `avoid_print`, `avoid_empty_else`, `prefer_final_fields`, `unnecessary_statements`, `avoid_returning_null_for_future`; excluded generated files
 
 ### 15. `intl: any` in pubspec.yaml
-- **Status:** [ ] TODO
-- **Fix:** Pin to `^0.19.0`
+- **Status:** [x] DONE
+- **Fix:** Pinned to `^0.20.2`
 
 ---
 

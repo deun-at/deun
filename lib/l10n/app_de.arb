@@ -264,5 +264,7 @@
   "reminderSent": "Erinnerung an {displayName} gesendet",
   "reminderCooldown": "Bereits kürzlich erinnert",
   "reminderNotificationTitle": "{displayName} erinnert dich",
-  "reminderNotificationBody": "Du schuldest {amount} in {groupName}"
+  "reminderNotificationBody": "Du schuldest {amount} in {groupName}",
+  "dateToday": "Heute",
+  "dateYesterday": "Gestern"
 }
