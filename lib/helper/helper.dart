@@ -36,7 +36,7 @@ String toNumber(double value) {
   return numFormat.format(value);
 }
 
-String formatDate(String? dateString) {
+String formatDate(String? dateString, [BuildContext? context]) {
   if (dateString == null) return '';
   final parsed = DateTime.parse(dateString);
   final date = DateTime(parsed.year, parsed.month, parsed.day);
@@ -46,9 +46,9 @@ String formatDate(String? dateString) {
   final yesterday = today.subtract(const Duration(days: 1));
 
   if (date.year == today.year && date.month == today.month && date.day == today.day) {
-    return 'Today';
+    return context != null ? AppLocalizations.of(context)!.dateToday : 'Today';
   } else if (date.year == yesterday.year && date.month == yesterday.month && date.day == yesterday.day) {
-    return 'Yesterday';
+    return context != null ? AppLocalizations.of(context)!.dateYesterday : 'Yesterday';
   } else if (date.year == now.year) {
     // Same year, display day and full month
     return DateFormat('d MMM').format(date);

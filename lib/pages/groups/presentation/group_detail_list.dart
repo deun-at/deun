@@ -130,7 +130,7 @@ class _GroupDetailListState extends ConsumerState<GroupDetailList> {
                                       ),
                                     ),
                                     Text(
-                                      formatDate(expense.expenseDate),
+                                      formatDate(expense.expenseDate, context),
                                       style: Theme.of(context).textTheme.bodySmall!.copyWith(color: textColor),
                                     ),
                                   ],

@@ -1016,4 +1016,10 @@ class AppLocalizationsEn extends AppLocalizations {
 
     return 'You owe $amountString in $groupName';
   }
+
+  @override
+  String get dateToday => 'Today';
+
+  @override
+  String get dateYesterday => 'Yesterday';
 }

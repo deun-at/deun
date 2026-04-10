@@ -895,5 +895,9 @@
       "amount": { "type": "double", "format": "currency", "optionalParameters": { "symbol": "€", "decimalDigits": 2 } },
       "groupName": { "type": "String" }
     }
-  }
+  },
+  "dateToday": "Today",
+  "@dateToday": {},
+  "dateYesterday": "Yesterday",
+  "@dateYesterday": {}
 }
