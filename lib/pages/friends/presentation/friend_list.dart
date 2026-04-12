@@ -194,62 +194,60 @@ class _FriendListState extends ConsumerState<FriendList> {
   }
 
   Widget _buildPendingRequestsSection(List<Friendship> pendingRequests, ColorScheme colorScheme) {
-    return Column(
-      children: [
-        ListTile(
-          enabled: false,
-          minTileHeight: 1,
-          title: Padding(
-            padding: EdgeInsetsGeometry.only(top: 10),
-            child: Text(
-              AppLocalizations.of(context)!.friendRequests(pendingRequests.length),
-              style: Theme.of(context).textTheme.bodyMedium,
+    return _buildRequestSection(
+      title: AppLocalizations.of(context)!.friendRequests(pendingRequests.length),
+      requests: pendingRequests,
+      trailingBuilder: (user) => Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          FilledButton(
+            onPressed: () => _acceptFriendRequest(user.email, user.displayName),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(Icons.person_add_outlined, size: 18),
+                const SizedBox(width: 5),
+                Text(AppLocalizations.of(context)!.accept),
+              ],
             ),
           ),
-        ),
-        CardColumn(
-          children: pendingRequests.map((friendship) {
-            SupaUser user = friendship.user;
-            return ListTile(
-              leading: CircleAvatar(
-                radius: 22,
-                backgroundColor: _avatarColor(user.displayName),
-                child: Text(
-                  user.displayName.isNotEmpty ? user.displayName[0].toUpperCase() : '?',
-                  style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-                ),
-              ),
-              title: Text(user.displayName),
-              subtitle: Text(user.fullUsername),
-              trailing: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  FilledButton(
-                    onPressed: () => _acceptFriendRequest(user.email, user.displayName),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        const Icon(Icons.person_add_outlined, size: 18),
-                        const SizedBox(width: 5),
-                        Text(AppLocalizations.of(context)!.accept),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(width: 4),
-                  IconButton.filledTonal(
-                    onPressed: () => _declineFriendRequest(user.email, user.displayName),
-                    icon: const Icon(Icons.close),
-                  ),
-                ],
-              ),
-            );
-          }).toList(),
-        ),
-      ],
+          const SizedBox(width: 4),
+          IconButton.filledTonal(
+            onPressed: () => _declineFriendRequest(user.email, user.displayName),
+            icon: const Icon(Icons.close),
+          ),
+        ],
+      ),
     );
   }
 
   Widget _buildOutgoingRequestsSection(List<Friendship> outgoingRequests, ColorScheme colorScheme) {
+    return _buildRequestSection(
+      title: AppLocalizations.of(context)!.pendingRequests(outgoingRequests.length),
+      requests: outgoingRequests,
+      trailingBuilder: (user) => FilledButton(
+        style: FilledButton.styleFrom(
+          backgroundColor: colorScheme.error,
+          foregroundColor: colorScheme.onError,
+        ),
+        onPressed: () => _cancelFriendRequest(user.email, user.displayName),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.person_add_disabled, size: 18, color: colorScheme.onError),
+            const SizedBox(width: 5),
+            Text(AppLocalizations.of(context)!.cancel),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildRequestSection({
+    required String title,
+    required List<Friendship> requests,
+    required Widget Function(SupaUser user) trailingBuilder,
+  }) {
     return Column(
       children: [
         ListTile(
@@ -258,13 +256,13 @@ class _FriendListState extends ConsumerState<FriendList> {
           title: Padding(
             padding: EdgeInsetsGeometry.only(top: 10),
             child: Text(
-              AppLocalizations.of(context)!.pendingRequests(outgoingRequests.length),
+              title,
               style: Theme.of(context).textTheme.bodyMedium,
             ),
           ),
         ),
         CardColumn(
-          children: outgoingRequests.map((friendship) {
+          children: requests.map((friendship) {
             SupaUser user = friendship.user;
             return ListTile(
               leading: CircleAvatar(
@@ -277,21 +275,7 @@ class _FriendListState extends ConsumerState<FriendList> {
               ),
               title: Text(user.displayName),
               subtitle: Text(user.fullUsername),
-              trailing: FilledButton(
-                style: FilledButton.styleFrom(
-                  backgroundColor: colorScheme.error,
-                  foregroundColor: colorScheme.onError,
-                ),
-                onPressed: () => _cancelFriendRequest(user.email, user.displayName),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(Icons.person_add_disabled, size: 18, color: colorScheme.onError),
-                    const SizedBox(width: 5),
-                    Text(AppLocalizations.of(context)!.cancel),
-                  ],
-                ),
-              ),
+              trailing: trailingBuilder(user),
             );
           }).toList(),
         ),

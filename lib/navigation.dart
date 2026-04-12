@@ -560,7 +560,9 @@ class _ScaffoldWithNestedNavigationState
 
   @override
   Widget build(BuildContext context) {
+    final friendshipState = ref.watch(friendshipListProvider);
     final pendingCount = ref.watch(pendingFriendRequestCountProvider);
+    final showBadge = pendingCount > 0 && friendshipState.hasValue;
 
     return Scaffold(
       body: widget.navigationShell,
@@ -575,12 +577,12 @@ class _ScaffoldWithNestedNavigationState
           ),
           NavigationDestination(
             selectedIcon: Badge(
-              isLabelVisible: pendingCount > 0,
+              isLabelVisible: showBadge,
               label: Text('$pendingCount'),
               child: const Icon(Icons.group),
             ),
             icon: Badge(
-              isLabelVisible: pendingCount > 0,
+              isLabelVisible: showBadge,
               label: Text('$pendingCount'),
               child: const Icon(Icons.group_outlined),
             ),
