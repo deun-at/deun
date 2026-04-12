@@ -58,9 +58,9 @@ mixin RealtimeNotifierMixin {
   bool _isResubscribing = false;
   static const int _maxRetries = 3;
 
-  /// Must be set in build() before subscribeToChannel() calls.
+  /// Set in subscribeToChannel() via the required `ref` parameter.
   /// Used to update the global connection status on failure/recovery.
-  late Ref _ref;
+  Ref? _ref;
 
   /// Subscribe to a Supabase Postgres changes channel.
   ///
@@ -116,10 +116,10 @@ mixin RealtimeNotifierMixin {
               });
             } else {
               debugPrint('---subscribe give up--- ${config.channelName} after $_maxRetries retries');
-              _ref.read(realtimeConnectionStatusProvider.notifier).markDisconnected();
+              _ref?.read(realtimeConnectionStatusProvider.notifier).markDisconnected();
             }
           } else if (status == RealtimeSubscribeStatus.subscribed) {
-            _ref.read(realtimeConnectionStatusProvider.notifier).markConnected();
+            _ref?.read(realtimeConnectionStatusProvider.notifier).markConnected();
           } else if (status == RealtimeSubscribeStatus.closed) {
             debugPrint('---subscribe closed--- ${config.channelName}');
           }

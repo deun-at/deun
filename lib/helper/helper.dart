@@ -17,7 +17,7 @@ String fullUsernameFromJson(Map<String, dynamic> json) {
 
 /// Sanitize a value before interpolating it into a Supabase PostgREST filter string.
 /// Strips characters that could break the filter DSL (commas, parentheses, etc.).
-String sanitizeFilterValue(String value) => value.replaceAll(RegExp(r'[,()\\]'), '');
+String sanitizeFilterValue(String value) => value.replaceAll(RegExp(r'[%,()\\]'), '');
 
 /// Round a currency value to 2 decimal places to prevent floating-point drift.
 /// Use at every arithmetic boundary where money is computed.
@@ -107,6 +107,9 @@ void sendGroupNotification(BuildContext context, String groupId, Set<String> not
 
       sendNotification('group', groupId, notificationReceiver, title, body);
     },
+    onError: (e) {
+      debugPrint('Failed to send group notification for group $groupId: $e');
+    },
   );
 }
 
@@ -124,6 +127,9 @@ void sendGroupPayBackNotification(
       String body = AppLocalizations.of(context)!.groupPayBackNotificationBody(amount);
 
       sendNotification('group', groupId, notificationReceiver, title, body);
+    },
+    onError: (e) {
+      debugPrint('Failed to send pay back notification for expense $expenseId: $e');
     },
   );
 }
@@ -156,6 +162,9 @@ void sendExpenseNotification(BuildContext context, String expenseId, Set<String>
 
       sendNotification('expense', expenseId, notificationReceiver, title, body);
     },
+    onError: (e) {
+      debugPrint('Failed to send expense notification for expense $expenseId: $e');
+    },
   );
 }
 
@@ -170,6 +179,9 @@ void sendFriendRequestNotification(BuildContext context, Set<String> notificatio
         l10n.friendRequestNotificationTitle,
         l10n.friendRequestNotificationBody(value.displayName),
       );
+    },
+    onError: (e) {
+      debugPrint('Failed to send friend request notification: $e');
     },
   );
 }
@@ -186,6 +198,9 @@ void sendFriendAcceptNotification(BuildContext context, Set<String> notification
         l10n.friendAcceptNotificationBody(value.displayName),
       );
     },
+    onError: (e) {
+      debugPrint('Failed to send friend accept notification: $e');
+    },
   );
 }
 
@@ -200,6 +215,9 @@ void sendFriendDeclineNotification(BuildContext context, Set<String> notificatio
         l10n.friendDeclineNotificationTitle,
         l10n.friendDeclineNotificationBody(value.displayName),
       );
+    },
+    onError: (e) {
+      debugPrint('Failed to send friend decline notification: $e');
     },
   );
 }

@@ -135,7 +135,9 @@ class _AuthGateState extends State<AuthGate> {
         'first_name': firstName,
         'last_name': lastName,
         'display_name': displayName ?? '-',
-      }, ignoreDuplicates: true).whenComplete(() {});
+      }, ignoreDuplicates: true).catchError((e) {
+        debugPrint('User upsert failed: $e');
+      });
     } catch (e) {
       debugPrint(e.toString());
     }

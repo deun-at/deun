@@ -84,32 +84,20 @@ class FriendshipRepository {
   }
 
   static Future<List<Friendship>> fetchPendingIncoming() async {
-    String currentEmail = supabase.auth.currentUser?.email ?? '';
-
-    List<Map<String, dynamic>> data = await supabase
-        .from('friendship')
-        .select('*, requester(*), addressee(*)')
-        .eq('addressee', currentEmail)
-        .eq('status', 'pending');
-
-    List<Friendship> retData = List.empty(growable: true);
-
-    for (var element in data) {
-      Friendship friendship = Friendship();
-      friendship.loadDataFromJson(element);
-      retData.add(friendship);
-    }
-
-    return retData;
+    return _fetchPendingByRole('addressee');
   }
 
   static Future<List<Friendship>> fetchPendingOutgoing() async {
+    return _fetchPendingByRole('requester');
+  }
+
+  static Future<List<Friendship>> _fetchPendingByRole(String roleColumn) async {
     String currentEmail = supabase.auth.currentUser?.email ?? '';
 
     List<Map<String, dynamic>> data = await supabase
         .from('friendship')
         .select('*, requester(*), addressee(*)')
-        .eq('requester', currentEmail)
+        .eq(roleColumn, currentEmail)
         .eq('status', 'pending');
 
     List<Friendship> retData = List.empty(growable: true);
