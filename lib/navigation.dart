@@ -5,6 +5,7 @@ import 'package:deun/main.dart';
 import 'package:deun/pages/auth/update_password.dart';
 import 'package:deun/pages/expenses/presentation/expense_detail.dart';
 import 'package:deun/pages/expenses/data/expense_model.dart';
+import 'package:deun/pages/expenses/data/receipt_scan_result.dart';
 import 'package:deun/pages/expenses/data/expense_repository.dart';
 import 'package:deun/pages/friends/presentation/friend_add_page.dart';
 import 'package:deun/pages/friends/presentation/friend_list.dart';
@@ -116,10 +117,12 @@ class _NavigationScreenState extends ConsumerState<NavigationScreen> with Widget
                                 var extra = state.extra as Map<String, dynamic>;
                                 var group = extra['group'] as Group;
                                 var expense = extra['expense'] as Expense?;
+                                var receiptResult = extra['receiptResult'] as ReceiptScanResult?;
 
                                 return ExpenseDetail(
                                   group: group,
                                   expense: expense,
+                                  receiptResult: receiptResult,
                                 );
                               }),
                           GoRoute(

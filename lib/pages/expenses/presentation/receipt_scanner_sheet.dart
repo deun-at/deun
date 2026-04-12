@@ -3,7 +3,7 @@ import 'package:google_mlkit_text_recognition/google_mlkit_text_recognition.dart
 import 'package:image_picker/image_picker.dart';
 import 'package:deun/l10n/app_localizations.dart';
 
-import '../service/receipt_parser.dart';
+import '../service/gemini_receipt_parser.dart';
 
 class ReceiptScannerSheet extends StatefulWidget {
   const ReceiptScannerSheet({super.key});
@@ -35,8 +35,24 @@ class _ReceiptScannerSheetState extends State<ReceiptScannerSheet> {
     try {
       final inputImage = InputImage.fromFilePath(pickedFile.path);
       final recognizedText = await textRecognizer.processImage(inputImage);
-      final result = ReceiptParser.parse(recognizedText.blocks);
-      if (mounted) Navigator.pop(context, result);
+
+      // Extract OCR lines for Gemini
+      final ocrLines = <String>[];
+      for (final block in recognizedText.blocks) {
+        for (final line in block.lines) {
+          ocrLines.add(line.text);
+        }
+      }
+
+      final result = await GeminiReceiptParser.parse(ocrLines);
+      if (result != null && mounted) {
+        Navigator.pop(context, result);
+      } else if (mounted) {
+        setState(() {
+          _isProcessing = false;
+          _hasError = true;
+        });
+      }
     } catch (_) {
       if (mounted) {
         setState(() {

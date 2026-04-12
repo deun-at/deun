@@ -16,15 +16,15 @@ import '../data/expense_entry_model.dart';
 import '../data/expense_model.dart';
 import '../data/expense_repository.dart';
 import '../data/expense_category.dart';
-// import '../data/receipt_scan_result.dart'; // Hidden until parser is production-ready
+import '../data/receipt_scan_result.dart';
 import '../../../widgets/category_selector.dart';
-// import 'receipt_scanner_sheet.dart'; // Hidden until parser is production-ready
 
 class ExpenseDetail extends ConsumerStatefulWidget {
-  const ExpenseDetail({super.key, required this.group, this.expense});
+  const ExpenseDetail({super.key, required this.group, this.expense, this.receiptResult});
 
   final Group group;
   final Expense? expense;
+  final ReceiptScanResult? receiptResult;
 
   @override
   ConsumerState<ExpenseDetail> createState() => _ExpenseDetailState();
@@ -57,6 +57,31 @@ class _ExpenseDetailState extends ConsumerState<ExpenseDetail> {
             onRemove: () => onRemove(expenseEntry),
             groupMembers: groupMembers));
       });
+    } else if (widget.receiptResult != null && widget.receiptResult!.lineItems.isNotEmpty) {
+      // Pre-fill from receipt scan result
+      for (final item in widget.receiptResult!.lineItems) {
+        ExpenseEntry expenseEntry = ExpenseEntry(index: _newTextFieldId++);
+        expenseEntryFields.add(ExpenseEntryWidget(
+          key: ValueKey(expenseEntry.index),
+          expenseEntry: expenseEntry,
+          index: expenseEntry.index,
+          onRemove: () => onRemove(expenseEntry),
+          groupMembers: groupMembers,
+          initialName: item.name,
+          initialAmount: item.amount.toStringAsFixed(2),
+        ));
+      }
+    } else if (widget.receiptResult != null && widget.receiptResult!.total != null) {
+      // Only total, no line items
+      ExpenseEntry expenseEntry = ExpenseEntry(index: _newTextFieldId++);
+      expenseEntryFields.add(ExpenseEntryWidget(
+        key: ValueKey(expenseEntry.index),
+        expenseEntry: expenseEntry,
+        index: expenseEntry.index,
+        onRemove: () => onRemove(expenseEntry),
+        groupMembers: groupMembers,
+        initialAmount: widget.receiptResult!.total!.toStringAsFixed(2),
+      ));
     } else {
       ExpenseEntry _expenseEntry = ExpenseEntry(index: _newTextFieldId++);
       expenseEntryFields.add(ExpenseEntryWidget(
@@ -65,6 +90,24 @@ class _ExpenseDetailState extends ConsumerState<ExpenseDetail> {
           index: _expenseEntry.index,
           onRemove: () => onRemove(_expenseEntry),
           groupMembers: groupMembers));
+    }
+
+    // Apply receipt merchant name and date after first frame (form needs to be built)
+    if (widget.receiptResult != null) {
+      final receipt = widget.receiptResult!;
+      if (receipt.merchantName != null) {
+        _nameController.text = receipt.merchantName!;
+      }
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        if (receipt.merchantName != null) {
+          _formKey.currentState?.fields['name']?.didChange(receipt.merchantName);
+          detectAndUpdateCategory(receipt.merchantName!);
+        }
+        if (receipt.date != null) {
+          _formKey.currentState?.fields['expense_date']?.didChange(receipt.date);
+        }
+      });
     }
   }
 
@@ -97,10 +140,6 @@ class _ExpenseDetailState extends ConsumerState<ExpenseDetail> {
       }
     }
   }
-
-  // Receipt scanner methods hidden until parser is production-ready.
-  // Future<void> _showReceiptScanner() async { ... }
-  // void _applyReceiptData(ReceiptScanResult result) { ... }
 
   void openDeleteItemDialog(BuildContext modalContext, Expense expense) {
     showDialog<void>(
@@ -182,14 +221,6 @@ class _ExpenseDetailState extends ConsumerState<ExpenseDetail> {
         icon: Icon(Icons.delete_outline, color: Theme.of(context).colorScheme.onSurface),
       ));
     } else {
-      // Receipt scanner hidden until parser is production-ready.
-      // expenseActions.add(
-      //   IconButton(
-      //     onPressed: () => _showReceiptScanner(),
-      //     icon: const Icon(Icons.document_scanner_outlined),
-      //     tooltip: AppLocalizations.of(context)!.receiptScanButton,
-      //   ),
-      // );
       expenseActions.add(
         Padding(padding: EdgeInsetsGeometry.only(right: 8), child: saveExpenseButton),
       );

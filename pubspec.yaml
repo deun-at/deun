@@ -44,6 +44,7 @@ dependencies:
   share_plus: ^12.0.0
   image_picker: ^1.1.2
   google_mlkit_text_recognition: ^0.14.0
+  google_generative_ai: ^0.4.6
 
 dev_dependencies:
   flutter_test:
@@ -53,15 +54,20 @@ dev_dependencies:
   build_runner: ^2.4.13
   build_web_compilers: ^4.0.10
   flutter_launcher_icons: ^0.14.2
-  flutter_native_splash: ^2.4.5
   freezed: ^3.0.6
   json_serializable: ^6.9.0
   mockito: ^5.4.5
+  flutter_native_splash: ^2.4.5
 
 flutter_native_splash:
   color: "#efedee"
   color_dark: "#1f2021"
-  image: assets/icon/icon-512.png
+  image: assets/icon/splash.png
+
+  android_12:
+    color: "#efedee"
+    color_dark: "#1f2021"
+    image: assets/icon/splash_android12.png
 
 flutter:
   generate: true
