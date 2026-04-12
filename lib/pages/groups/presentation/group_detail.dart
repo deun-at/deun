@@ -1,12 +1,8 @@
-import 'dart:io';
-
-import 'package:deun/constants.dart';
 import 'package:deun/helper/helper.dart';
 import 'package:deun/pages/expenses/data/expense_model.dart';
 import 'package:deun/pages/expenses/data/expense_repository.dart';
 import 'package:deun/pages/groups/data/reminder_repository.dart';
 import 'package:deun/pages/groups/presentation/group_detail_list.dart';
-import 'package:deun/widgets/native_ad_block.dart';
 import 'package:deun/widgets/shimmer_card_list.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';

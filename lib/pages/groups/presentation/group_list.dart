@@ -1,8 +1,5 @@
-import 'dart:io';
-
 import 'package:deun/widgets/card_list_view_builder.dart';
 import 'package:deun/widgets/empty_list_widget.dart';
-import 'package:deun/widgets/native_ad_block.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -10,7 +7,6 @@ import 'package:go_router/go_router.dart';
 import 'package:deun/l10n/app_localizations.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-import '../../../constants.dart';
 import '../../../widgets/shimmer_card_list.dart';
 import '../provider/group_list.dart';
 import 'group_list_item.dart';
