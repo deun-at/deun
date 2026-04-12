@@ -9,6 +9,8 @@ import 'navigation.dart';
 import 'pages/auth/login_screen.dart';
 import 'pages/auth/onboarding_screen.dart';
 
+enum _AuthScreen { loading, onboarding, ready }
+
 class AuthGate extends StatefulWidget {
   const AuthGate({super.key});
 
@@ -17,10 +19,9 @@ class AuthGate extends StatefulWidget {
 }
 
 class _AuthGateState extends State<AuthGate> {
-  bool _needsOnboarding = false;
-  bool _onboardingChecked = false;
+  _AuthScreen _screenState = _AuthScreen.loading;
+  bool _onboardingCheckStarted = false;
   String? _initialDisplayName;
-  Future<SupaUser>? _onboardingFuture;
 
   @override
   Widget build(BuildContext context) {
@@ -31,12 +32,12 @@ class _AuthGateState extends State<AuthGate> {
         final event = snapshot.data?.event;
 
         if (session == null) {
-          _resetOnboardingState();
+          _resetState();
           return const LoginScreen();
         }
 
         if (event == AuthChangeEvent.signedIn) {
-          _resetOnboardingState();
+          _resetState();
           _upsertUserFromSession(session);
         }
 
@@ -44,47 +45,20 @@ class _AuthGateState extends State<AuthGate> {
           return NavigationScreen(isPasswordRecovery: true);
         }
 
-        if (!_onboardingChecked) {
-          _onboardingFuture ??= UserRepository.fetchDetail(
-            supabase.auth.currentUser?.email ?? '',
-          );
-          return FutureBuilder<SupaUser>(
-            future: _onboardingFuture,
-            builder: (context, userSnapshot) {
-              if (userSnapshot.connectionState == ConnectionState.waiting) {
-                return const SplashScreen();
-              }
-
-    
-              if (userSnapshot.hasData) {
-                final user = userSnapshot.data!;
-                _onboardingChecked = true;
-                _needsOnboarding = user.needsOnboarding;
-                _initialDisplayName = user.displayName;
-
-                if (user.needsOnboarding) {
-                  return OnboardingScreen(
-                    initialDisplayName: user.displayName,
-                    onComplete: () {
-                      setState(() {
-                        _needsOnboarding = false;
-                      });
-                    },
-                  );
-                }
-              }
-
-              return NavigationScreen(isPasswordRecovery: false);
-            },
-          );
+        if (_screenState == _AuthScreen.loading) {
+          if (!_onboardingCheckStarted) {
+            _onboardingCheckStarted = true;
+            _checkOnboarding();
+          }
+          return const SplashScreen();
         }
 
-        if (_needsOnboarding) {
+        if (_screenState == _AuthScreen.onboarding) {
           return OnboardingScreen(
             initialDisplayName: _initialDisplayName,
             onComplete: () {
               setState(() {
-                _needsOnboarding = false;
+                _screenState = _AuthScreen.ready;
               });
             },
           );
@@ -95,10 +69,30 @@ class _AuthGateState extends State<AuthGate> {
     );
   }
 
-  void _resetOnboardingState() {
-    _needsOnboarding = false;
-    _onboardingChecked = false;
-    _onboardingFuture = null;
+  void _checkOnboarding() {
+    final email = supabase.auth.currentUser?.email ?? '';
+    UserRepository.fetchDetail(email).then((user) {
+      if (!mounted) return;
+      setState(() {
+        if (user.needsOnboarding) {
+          _screenState = _AuthScreen.onboarding;
+          _initialDisplayName = user.displayName;
+        } else {
+          _screenState = _AuthScreen.ready;
+        }
+      });
+    }).catchError((e) {
+      if (!mounted) return;
+      setState(() {
+        _screenState = _AuthScreen.ready;
+      });
+    });
+  }
+
+  void _resetState() {
+    _screenState = _AuthScreen.loading;
+    _onboardingCheckStarted = false;
+    _initialDisplayName = null;
   }
 
   void _upsertUserFromSession(Session session) {
