@@ -15,6 +15,8 @@ import 'package:deun/l10n/app_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '../../expenses/data/receipt_scan_result.dart';
+import '../../expenses/presentation/receipt_scanner_sheet.dart';
 import '../provider/group_detail.dart';
 
 import '../../../widgets/card_list_view_builder.dart';
@@ -46,9 +48,7 @@ class _GroupDetailState extends ConsumerState<GroupDetail> {
     if (kIsWeb) {
       _adBlock = SizedBox();
     } else {
-      _adBlock = NativeAdBlock(
-        adUnitId: Platform.isAndroid ? MobileAdMobs.androidExpenseList.value : MobileAdMobs.iosExpenseList.value,
-      );
+      _adBlock = SizedBox();
     }
   }
 
@@ -236,6 +236,24 @@ class _GroupDetailState extends ConsumerState<GroupDetail> {
                   GoRouter.of(context).push("/group/details/payment", extra: {'group': widget.group});
                 },
                 child: const Icon(Icons.credit_card),
+              ),
+              const SizedBox(height: 8),
+              FloatingActionButton.small(
+                heroTag: "floating_action_button_scan",
+                onPressed: () async {
+                  final result = await showModalBottomSheet<ReceiptScanResult>(
+                    context: context,
+                    builder: (context) => const ReceiptScannerSheet(),
+                  );
+                  if (result != null && context.mounted) {
+                    GoRouter.of(context).push("/group/details/expense", extra: {
+                      'group': widget.group,
+                      'expense': null,
+                      'receiptResult': result,
+                    });
+                  }
+                },
+                child: const Icon(Icons.document_scanner_outlined),
               ),
               const SizedBox(height: 8),
               FloatingActionButton.extended(

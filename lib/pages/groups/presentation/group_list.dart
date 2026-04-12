@@ -34,11 +34,7 @@ class _GroupListState extends ConsumerState<GroupList> {
     if (kIsWeb) {
       _adBlock = SizedBox();
     } else {
-      _adBlock = NativeAdBlock(
-        adUnitId: Platform.isAndroid
-            ? MobileAdMobs.androidGroupList.value
-            : MobileAdMobs.iosGroupList.value,
-      );
+      _adBlock = SizedBox();
     }
   }
 
