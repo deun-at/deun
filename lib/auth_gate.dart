@@ -22,6 +22,7 @@ class _AuthGateState extends State<AuthGate> {
   _AuthScreen _screenState = _AuthScreen.loading;
   bool _onboardingCheckStarted = false;
   String? _initialDisplayName;
+  AuthChangeEvent? _handledEvent;
 
   @override
   Widget build(BuildContext context) {
@@ -36,8 +37,11 @@ class _AuthGateState extends State<AuthGate> {
           return const LoginScreen();
         }
 
-        if (event == AuthChangeEvent.signedIn) {
-          _resetState();
+        if (event == AuthChangeEvent.signedIn && _handledEvent != event) {
+          _handledEvent = event;
+          _screenState = _AuthScreen.loading;
+          _onboardingCheckStarted = false;
+          _initialDisplayName = null;
           _upsertUserFromSession(session);
         }
 
@@ -69,23 +73,23 @@ class _AuthGateState extends State<AuthGate> {
     );
   }
 
-  void _checkOnboarding() {
+  void _checkOnboarding() async {
     final email = supabase.auth.currentUser?.email ?? '';
-    UserRepository.fetchDetail(email).then((user) {
-      if (!mounted) return;
-      setState(() {
-        if (user.needsOnboarding) {
-          _screenState = _AuthScreen.onboarding;
-          _initialDisplayName = user.displayName;
-        } else {
-          _screenState = _AuthScreen.ready;
-        }
-      });
-    }).catchError((e) {
-      if (!mounted) return;
-      setState(() {
+    final results = await Future.wait([
+      UserRepository.fetchDetail(email),
+      Future.delayed(const Duration(milliseconds: 1200)),
+    ]).catchError((_) => [null, null]);
+
+    if (!mounted) return;
+
+    final user = results[0] as SupaUser?;
+    setState(() {
+      if (user != null && user.needsOnboarding) {
+        _screenState = _AuthScreen.onboarding;
+        _initialDisplayName = user.displayName;
+      } else {
         _screenState = _AuthScreen.ready;
-      });
+      }
     });
   }
 
@@ -93,6 +97,7 @@ class _AuthGateState extends State<AuthGate> {
     _screenState = _AuthScreen.loading;
     _onboardingCheckStarted = false;
     _initialDisplayName = null;
+    _handledEvent = null;
   }
 
   void _upsertUserFromSession(Session session) {
