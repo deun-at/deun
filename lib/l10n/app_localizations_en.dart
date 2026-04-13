@@ -156,10 +156,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get expenseAmountValidationEmpty => 'Please enter an amount!';
 
   @override
-  String get expenseDate => 'When did it happen?';
+  String get expenseDate => 'Date';
 
   @override
-  String get expensePaidBy => 'Who paid?';
+  String get expensePaidBy => 'Paid by';
 
   @override
   String get expenseEntryTitle => 'Add item title';
@@ -180,7 +180,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get expenseEntryAmountValidationEmpty => 'Please enter an amount!';
 
   @override
-  String get expenseEntrySharesLable => 'Who used it?';
+  String get expenseEntrySharesLable => 'Split between';
 
   @override
   String get expenseEntrySharesValidationEmpty =>
@@ -427,6 +427,13 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get addFriendshipNoResult => 'No User found with this E-Mail!';
+
+  @override
+  String get addFriendshipAmbiguousUsername =>
+      'Multiple users share this username. Try searching with the full username#code.';
+
+  @override
+  String get addFriendshipContactOpenSettings => 'Allow';
 
   @override
   String get addFriendshipRequestNoResult => 'No friend request found!';

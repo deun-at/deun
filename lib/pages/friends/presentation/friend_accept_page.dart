@@ -7,6 +7,7 @@ import 'package:go_router/go_router.dart';
 import 'package:deun/l10n/app_localizations.dart';
 
 import '../../../main.dart';
+import '../../../widgets/user_avatar.dart';
 
 class FriendAcceptPage extends StatefulWidget {
   const FriendAcceptPage({
@@ -136,19 +137,7 @@ class _FriendAcceptPageState extends State<FriendAcceptPage> {
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        CircleAvatar(
-                          radius: 40,
-                          backgroundColor: _avatarColor(_targetUser!.displayName),
-                          child: Text(
-                            _targetUser!.displayName.isNotEmpty
-                                ? _targetUser!.displayName[0].toUpperCase()
-                                : '?',
-                            style: const TextStyle(
-                                color: Colors.white,
-                                fontWeight: FontWeight.bold,
-                                fontSize: 28),
-                          ),
-                        ),
+                        UserAvatar(displayName: _targetUser!.displayName, radius: 40),
                         const SizedBox(height: 16),
                         Text(
                           AppLocalizations.of(context)!.friendAcceptConfirmTitle,
@@ -199,11 +188,3 @@ class _FriendAcceptPageState extends State<FriendAcceptPage> {
   }
 }
 
-Color _avatarColor(String name) {
-  const colors = [
-    Colors.red, Colors.pink, Colors.purple, Colors.deepPurple,
-    Colors.indigo, Colors.blue, Colors.teal, Colors.green,
-    Colors.orange, Colors.brown,
-  ];
-  return colors[name.hashCode.abs() % colors.length];
-}

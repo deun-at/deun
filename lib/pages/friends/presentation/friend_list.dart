@@ -15,6 +15,7 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../provider/friendship_list.dart';
 import '../../../widgets/shimmer_card_list.dart';
+import '../../../widgets/user_avatar.dart';
 
 class FriendList extends ConsumerStatefulWidget {
   const FriendList({super.key});
@@ -23,14 +24,6 @@ class FriendList extends ConsumerStatefulWidget {
   ConsumerState<FriendList> createState() => _FriendListState();
 }
 
-Color _avatarColor(String name) {
-  const colors = [
-    Colors.red, Colors.pink, Colors.purple, Colors.deepPurple,
-    Colors.indigo, Colors.blue, Colors.teal, Colors.green,
-    Colors.orange, Colors.brown,
-  ];
-  return colors[name.hashCode.abs() % colors.length];
-}
 
 class _FriendListState extends ConsumerState<FriendList> {
   Future<void> updateFriendshipList() async {
@@ -155,14 +148,7 @@ class _FriendListState extends ConsumerState<FriendList> {
                                 }
 
                                 return ListTile(
-                                  leading: CircleAvatar(
-                                    radius: 22,
-                                    backgroundColor: _avatarColor(user.displayName),
-                                    child: Text(
-                                      user.displayName.isNotEmpty ? user.displayName[0].toUpperCase() : '?',
-                                      style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-                                    ),
-                                  ),
+                                  leading: UserAvatar(displayName: user.displayName),
                                   title: Text(user.displayName),
                                   subtitle: Text(user.fullUsername),
                                   trailing: Text(
@@ -265,14 +251,7 @@ class _FriendListState extends ConsumerState<FriendList> {
           children: requests.map((friendship) {
             SupaUser user = friendship.user;
             return ListTile(
-              leading: CircleAvatar(
-                radius: 22,
-                backgroundColor: _avatarColor(user.displayName),
-                child: Text(
-                  user.displayName.isNotEmpty ? user.displayName[0].toUpperCase() : '?',
-                  style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-                ),
-              ),
+              leading: UserAvatar(displayName: user.displayName),
               title: Text(user.displayName),
               subtitle: Text(user.fullUsername),
               trailing: trailingBuilder(user),
@@ -308,14 +287,7 @@ class _FriendListState extends ConsumerState<FriendList> {
                 padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
                 child: Row(
                   children: [
-                    CircleAvatar(
-                      radius: 24,
-                      backgroundColor: _avatarColor(user.displayName),
-                      child: Text(
-                        user.displayName.isNotEmpty ? user.displayName[0].toUpperCase() : '?',
-                        style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 20),
-                      ),
-                    ),
+                    UserAvatar(displayName: user.displayName, radius: 24),
                     const SizedBox(width: 16),
                     Expanded(
                       child: Column(

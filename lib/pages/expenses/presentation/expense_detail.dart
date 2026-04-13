@@ -7,6 +7,7 @@ import 'package:deun/l10n/app_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:form_builder_validators/form_builder_validators.dart';
 
+import '../../../widgets/decimal_text_input_formatter.dart';
 import '../../../constants.dart';
 import '../../../main.dart';
 import '../../../widgets/theme_builder.dart';
@@ -18,6 +19,27 @@ import '../data/expense_repository.dart';
 import '../data/expense_category.dart';
 import '../data/receipt_scan_result.dart';
 import '../../../widgets/category_selector.dart';
+import '../../../widgets/user_avatar.dart';
+
+class ExpenseEntryData {
+  final int index;
+  final ExpenseEntry expenseEntry;
+  final VoidCallback onRemove;
+  final List<GroupMember> groupMembers;
+  String? initialName;
+  String? initialAmount;
+  String? initialQuantity;
+
+  ExpenseEntryData({
+    required this.index,
+    required this.expenseEntry,
+    required this.onRemove,
+    required this.groupMembers,
+    this.initialName,
+    this.initialAmount,
+    this.initialQuantity,
+  });
+}
 
 class ExpenseDetail extends ConsumerStatefulWidget {
   const ExpenseDetail({super.key, required this.group, this.expense, this.receiptResult});
@@ -33,10 +55,14 @@ class ExpenseDetail extends ConsumerStatefulWidget {
 class _ExpenseDetailState extends ConsumerState<ExpenseDetail> {
   final _formKey = GlobalKey<FormBuilderState>();
   final _nameController = TextEditingController();
+  final _amountController = TextEditingController(text: "0");
+  final _paidBySearchController = SearchController();
   List<GroupMember> groupMembers = [];
   ColorSeed groupColor = ColorSeed.baseColor;
-  final List<ExpenseEntryWidget> expenseEntryFields = List.empty(growable: true);
+  final List<ExpenseEntryData> _entries = [];
   int _newTextFieldId = 0;
+
+  bool get _isSingleEntry => _entries.length == 1;
 
   ExpenseCategory? _detectedCategory;
 
@@ -50,46 +76,50 @@ class _ExpenseDetailState extends ConsumerState<ExpenseDetail> {
     if (widget.expense != null && widget.expense!.expenseEntries.isNotEmpty) {
       _newTextFieldId = widget.expense!.expenseEntries.length;
       widget.expense!.expenseEntries.forEach((key, expenseEntry) {
-        expenseEntryFields.add(ExpenseEntryWidget(
-            key: ValueKey(expenseEntry.index),
-            expenseEntry: expenseEntry,
-            index: expenseEntry.index,
-            onRemove: () => onRemove(expenseEntry),
-            groupMembers: groupMembers));
+        _entries.add(ExpenseEntryData(
+          index: expenseEntry.index,
+          expenseEntry: expenseEntry,
+          onRemove: () => _removeEntry(expenseEntry),
+          groupMembers: groupMembers,
+        ));
       });
     } else if (widget.receiptResult != null && widget.receiptResult!.lineItems.isNotEmpty) {
-      // Pre-fill from receipt scan result
       for (final item in widget.receiptResult!.lineItems) {
-        ExpenseEntry expenseEntry = ExpenseEntry(index: _newTextFieldId++);
-        expenseEntryFields.add(ExpenseEntryWidget(
-          key: ValueKey(expenseEntry.index),
-          expenseEntry: expenseEntry,
+        final expenseEntry = ExpenseEntry(index: _newTextFieldId++);
+        _entries.add(ExpenseEntryData(
           index: expenseEntry.index,
-          onRemove: () => onRemove(expenseEntry),
+          expenseEntry: expenseEntry,
+          onRemove: () => _removeEntry(expenseEntry),
           groupMembers: groupMembers,
           initialName: item.name,
           initialAmount: item.amount.toStringAsFixed(2),
         ));
       }
     } else if (widget.receiptResult != null && widget.receiptResult!.total != null) {
-      // Only total, no line items
-      ExpenseEntry expenseEntry = ExpenseEntry(index: _newTextFieldId++);
-      expenseEntryFields.add(ExpenseEntryWidget(
-        key: ValueKey(expenseEntry.index),
-        expenseEntry: expenseEntry,
+      final expenseEntry = ExpenseEntry(index: _newTextFieldId++);
+      _entries.add(ExpenseEntryData(
         index: expenseEntry.index,
-        onRemove: () => onRemove(expenseEntry),
+        expenseEntry: expenseEntry,
+        onRemove: () => _removeEntry(expenseEntry),
         groupMembers: groupMembers,
         initialAmount: widget.receiptResult!.total!.toStringAsFixed(2),
       ));
     } else {
-      ExpenseEntry _expenseEntry = ExpenseEntry(index: _newTextFieldId++);
-      expenseEntryFields.add(ExpenseEntryWidget(
-          key: ValueKey(_expenseEntry.index),
-          expenseEntry: _expenseEntry,
-          index: _expenseEntry.index,
-          onRemove: () => onRemove(_expenseEntry),
-          groupMembers: groupMembers));
+      final expenseEntry = ExpenseEntry(index: _newTextFieldId++);
+      _entries.add(ExpenseEntryData(
+        index: expenseEntry.index,
+        expenseEntry: expenseEntry,
+        onRemove: () => _removeEntry(expenseEntry),
+        groupMembers: groupMembers,
+      ));
+    }
+
+    // Initialize amount controller from first entry data
+    if (widget.expense != null && widget.expense!.expenseEntries.isNotEmpty) {
+      final firstEntry = widget.expense!.expenseEntries.values.first;
+      _amountController.text = firstEntry.unitPrice.toStringAsFixed(2);
+    } else if (widget.receiptResult != null && widget.receiptResult!.total != null && widget.receiptResult!.lineItems.isEmpty) {
+      _amountController.text = widget.receiptResult!.total!.toStringAsFixed(2);
     }
 
     // Apply receipt merchant name and date after first frame (form needs to be built)
@@ -114,13 +144,14 @@ class _ExpenseDetailState extends ConsumerState<ExpenseDetail> {
   @override
   void dispose() {
     _nameController.dispose();
+    _amountController.dispose();
+    _paidBySearchController.dispose();
     super.dispose();
   }
 
-  void onRemove(ExpenseEntry expenseEntry) {
+  void _removeEntry(ExpenseEntry expenseEntry) {
     setState(() {
-      int index = expenseEntryFields.indexWhere((element) => element.expenseEntry.index == expenseEntry.index);
-      expenseEntryFields.removeAt(index);
+      _entries.removeWhere((e) => e.index == expenseEntry.index);
     });
   }
 
@@ -179,6 +210,154 @@ class _ExpenseDetailState extends ConsumerState<ExpenseDetail> {
         ],
       ),
     );
+  }
+
+  List<GroupMember> get _sortedMembers {
+    final currentEmail = supabase.auth.currentUser?.email;
+    return [...widget.group.groupMembers]
+      ..sort((a, b) {
+        if (a.email == currentEmail) return -1;
+        if (b.email == currentEmail) return 1;
+        return a.fullUsername.compareTo(b.fullUsername);
+      });
+  }
+
+  GroupMember? _findMember(String? email) {
+    if (email == null) return null;
+    try {
+      return widget.group.groupMembers.firstWhere((m) => m.email == email);
+    } catch (_) {
+      return null;
+    }
+  }
+
+  String _memberDisplayName(GroupMember member) {
+    return member.email == supabase.auth.currentUser?.email
+        ? AppLocalizations.of(context)!.you
+        : member.displayName;
+  }
+
+  Widget _buildPaidBySelector() {
+    final initialEmail = widget.expense?.paidBy ?? supabase.auth.currentUser?.email;
+
+    return FormBuilderField<String>(
+      name: "paid_by",
+      initialValue: initialEmail,
+      builder: (FormFieldState<String?> field) {
+        final selectedMember = _findMember(field.value);
+
+        return SearchAnchor(
+          searchController: _paidBySearchController,
+          builder: (BuildContext context, SearchController controller) {
+            return CardListTile(
+              isTop: true,
+              isBottom: true,
+              child: ListTile(
+                leading: selectedMember != null
+                    ? UserAvatar(displayName: selectedMember.displayName, radius: 18)
+                    : null,
+                title: Text(selectedMember != null
+                    ? _memberDisplayName(selectedMember)
+                    : AppLocalizations.of(context)!.expensePaidBy),
+                subtitle: selectedMember != null
+                    ? Text(selectedMember.fullUsername)
+                    : null,
+                onTap: () {
+                  controller.text = '';
+                  controller.openView();
+                },
+              ),
+            );
+          },
+          suggestionsBuilder: (BuildContext context, SearchController controller) {
+            final members = _sortedMembers;
+            return members.asMap().entries.map((entry) {
+              final index = entry.key;
+              final member = entry.value;
+              return CardListTile(
+                isTop: index == 0,
+                isBottom: index == members.length - 1,
+                child: ListTile(
+                  leading: UserAvatar(displayName: member.displayName, radius: 18),
+                  title: Text(_memberDisplayName(member)),
+                  subtitle: Text(member.fullUsername),
+                  onTap: () {
+                    field.didChange(member.email);
+                    controller.closeView(_memberDisplayName(member));
+                  },
+                ),
+              );
+            }).toList();
+          },
+        );
+      },
+    );
+  }
+
+  Widget _buildExpenseLevelAmount() {
+    final firstIndex = _entries.first.index;
+    return FormBuilderField(
+      key: ValueKey("expense_level_amount_$firstIndex"),
+      name: "expense_entry[$firstIndex][amount]",
+      initialValue: _amountController.text != "0" ? _amountController.text : null,
+      autovalidateMode: AutovalidateMode.onUserInteraction,
+      validator: FormBuilderValidators.required(
+        errorText: AppLocalizations.of(context)!.expenseEntryAmountValidationEmpty,
+      ),
+      builder: (FormFieldState<dynamic> field) {
+        return InputDecorator(
+          decoration: InputDecoration(
+            errorText: field.errorText,
+            border: InputBorder.none,
+            contentPadding: const EdgeInsets.all(0),
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text("€", style: Theme.of(context).textTheme.headlineMedium),
+              IntrinsicWidth(
+                child: ConstrainedBox(
+                  constraints: BoxConstraints(
+                    minWidth: 0,
+                    maxWidth: MediaQuery.of(context).size.width * 0.35,
+                  ),
+                  child: TextFormField(
+                    controller: _amountController,
+                    onChanged: (value) {
+                      field.didChange(value);
+                    },
+                    keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                    inputFormatters: [DecimalTextInputFormatter(decimalRange: 2)],
+                    style: Theme.of(context).textTheme.headlineMedium,
+                    decoration: const InputDecoration(
+                      contentPadding: EdgeInsets.only(right: 10, left: 10),
+                      border: InputBorder.none,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  void _addNewEntry() {
+    setState(() {
+      // When transitioning from single to multi, transfer expense-level amount to first entry
+      if (_isSingleEntry && _amountController.text.isNotEmpty && _amountController.text != "0") {
+        _entries.first.initialAmount = _amountController.text;
+      }
+
+      final expenseEntry = ExpenseEntry(index: _newTextFieldId++);
+      _entries.add(ExpenseEntryData(
+        index: expenseEntry.index,
+        expenseEntry: expenseEntry,
+        onRemove: () => _removeEntry(expenseEntry),
+        groupMembers: groupMembers,
+      ));
+    });
   }
 
   @override
@@ -268,32 +447,13 @@ class _ExpenseDetailState extends ConsumerState<ExpenseDetail> {
                           },
                         ),
                       ),
+                      // Expense-level amount (single entry mode only)
+                      if (_isSingleEntry) ...[
+                        const SizedBox(height: spacing),
+                        _buildExpenseLevelAmount(),
+                      ],
                       const SizedBox(height: spacing),
-                      FormBuilderChoiceChips(
-                        showCheckmark: false,
-                        name: "paid_by",
-                        decoration: InputDecoration(
-                          labelText: AppLocalizations.of(context)!.expensePaidBy,
-                          labelStyle: Theme.of(context)
-                              .textTheme
-                              .bodyLarge!
-                              .copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
-                          border: InputBorder.none,
-                          contentPadding: EdgeInsets.only(left: 8, right: 8),
-                        ),
-                        initialValue: widget.expense?.paidBy ?? supabase.auth.currentUser?.email,
-                        spacing: 8,
-                        options: widget.group.groupMembers
-                            .map(
-                              (e) => FormBuilderChipOption(
-                            value: e.email,
-                            child: Text(e.email == supabase.auth.currentUser?.email
-                                ? AppLocalizations.of(context)!.you
-                                : e.displayName),
-                          ),
-                        )
-                            .toList(),
-                      ),
+                      _buildPaidBySelector(),
                       const SizedBox(height: spacing),
                       FormBuilderDateTimePicker(
                         name: "expense_date",
@@ -318,28 +478,25 @@ class _ExpenseDetailState extends ConsumerState<ExpenseDetail> {
                         initialValue: _detectedCategory ?? widget.expense?.category,
                       ),
                       const SizedBox(height: spacing),
-                      CardColumn(children: expenseEntryFields),
+                      CardColumn(children: _entries.map((data) =>
+                        ExpenseEntryWidget(
+                          key: ValueKey(data.index),
+                          expenseEntry: data.expenseEntry,
+                          index: data.index,
+                          onRemove: data.onRemove,
+                          groupMembers: data.groupMembers,
+                          initialName: data.initialName,
+                          initialAmount: _isSingleEntry ? null : data.initialAmount,
+                          initialQuantity: data.initialQuantity,
+                          isSingleEntry: _isSingleEntry,
+                        ),
+                      ).toList()),
                       const SizedBox(height: spacing),
                       Center(
                         child: FilledButton.tonalIcon(
                           icon: const Icon(Icons.add),
                           label: Text(AppLocalizations.of(context)!.addNewExpenseEntry),
-                          onPressed: () {
-                            setState(
-                                  () {
-                                ExpenseEntry _expenseEntry = ExpenseEntry(index: _newTextFieldId++);
-                                expenseEntryFields.add(
-                                  ExpenseEntryWidget(
-                                    key: ValueKey(_expenseEntry.index),
-                                    expenseEntry: _expenseEntry,
-                                    index: _expenseEntry.index,
-                                    onRemove: () => onRemove(_expenseEntry),
-                                    groupMembers: groupMembers,
-                                  ),
-                                );
-                              },
-                            );
-                          },
+                          onPressed: () => _addNewEntry(),
                         ),
                       ),
                     ],

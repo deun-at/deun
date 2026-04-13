@@ -69,6 +69,9 @@ class _FriendAddPageState extends ConsumerState<FriendAddPage> {
           Expanded(
             child: _FriendAddResults(
               onRequest: _requestFriendship,
+              onRequestContactPermission: () {
+                ref.read(friendAddProvider.notifier).retryContactPermission();
+              },
             ),
           ),
         ],
@@ -98,9 +101,11 @@ class _FriendAddPageState extends ConsumerState<FriendAddPage> {
 class _FriendAddResults extends StatelessWidget {
   const _FriendAddResults({
     required this.onRequest,
+    this.onRequestContactPermission,
   });
 
   final Future<void> Function(String, String) onRequest;
+  final VoidCallback? onRequestContactPermission;
 
   @override
   Widget build(BuildContext context) {
@@ -111,11 +116,13 @@ class _FriendAddResults extends StatelessWidget {
             final searchResults = ref.watch(friendAddProvider.select((s) => s.searchResults));
             final searchText = ref.watch(friendAddProvider.select((s) => s.searchText));
             final isLoading = ref.watch(friendAddProvider.select((s) => s.isLoading));
+            final isAmbiguous = ref.watch(friendAddProvider.select((s) => s.isAmbiguousUsername));
             return SearchResultList(
               searchResults: searchResults,
               onRequest: onRequest,
               searchText: searchText,
               isLoading: isLoading,
+              isAmbiguousUsername: isAmbiguous,
             );
           }),
         ),
@@ -123,10 +130,13 @@ class _FriendAddResults extends StatelessWidget {
           child: Consumer(builder: (context, ref, _) {
             final contactSuggestions = ref.watch(friendAddProvider.select((s) => s.contactSuggestions));
             final isLoading = ref.watch(friendAddProvider.select((s) => s.isLoading));
+            final permissionDenied = ref.watch(friendAddProvider.select((s) => s.contactPermissionDenied));
             return ContactSuggestionList(
               contactSuggestions: contactSuggestions,
               onRequest: onRequest,
               isLoading: isLoading,
+              contactPermissionDenied: permissionDenied,
+              onRequestPermission: onRequestContactPermission,
             );
           }),
         ),

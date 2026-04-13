@@ -3,6 +3,8 @@ import 'package:deun/pages/users/user_model.dart';
 import 'package:deun/widgets/shimmer_card_list.dart';
 import 'package:flutter/material.dart';
 
+import '../../../widgets/user_avatar.dart';
+
 import '../../../widgets/card_list_view_builder.dart';
 
 class RequestedFriendshipList extends StatelessWidget {
@@ -49,6 +51,7 @@ class RequestedFriendshipList extends StatelessWidget {
         requestedFriendships.map(
           (user) {
             return ListTile(
+              leading: UserAvatar(displayName: user.displayName, radius: 18),
               title: Text(user.displayName),
               subtitle: Text(user.fullUsername),
               trailing: FilledButton(

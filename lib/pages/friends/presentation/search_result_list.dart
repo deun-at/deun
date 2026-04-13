@@ -4,11 +4,14 @@ import 'package:deun/widgets/card_list_view_builder.dart';
 import 'package:deun/widgets/shimmer_card_list.dart';
 import 'package:flutter/material.dart';
 
+import '../../../widgets/user_avatar.dart';
+
 class SearchResultList extends StatelessWidget {
   final List<SupaUser> searchResults;
   final Function(String userEmail, String displayName) onRequest;
   final String searchText;
   final bool isLoading;
+  final bool isAmbiguousUsername;
 
   const SearchResultList({
     super.key,
@@ -16,6 +19,7 @@ class SearchResultList extends StatelessWidget {
     required this.onRequest,
     required this.searchText,
     required this.isLoading,
+    this.isAmbiguousUsername = false,
   });
 
   @override
@@ -45,7 +49,10 @@ class SearchResultList extends StatelessWidget {
 
     List<Widget> widgets = List.empty(growable: true);
 
-    if (searchResults.isEmpty) {
+    if (isAmbiguousUsername) {
+      widgets.add(ListTile(
+          title: Text(AppLocalizations.of(context)!.addFriendshipAmbiguousUsername)));
+    } else if (searchResults.isEmpty) {
       widgets.add(ListTile(
           title: Text(AppLocalizations.of(context)!.addFriendshipNoResult)));
     } else {
@@ -53,6 +60,7 @@ class SearchResultList extends StatelessWidget {
         searchResults.map(
           (user) {
             return ListTile(
+              leading: UserAvatar(displayName: user.displayName, radius: 18),
               title: Text(user.displayName),
               subtitle: Text(user.fullUsername),
               trailing: FilledButton(

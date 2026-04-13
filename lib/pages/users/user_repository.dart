@@ -4,6 +4,10 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../main.dart';
 
+class AmbiguousUsernameException implements Exception {
+  const AmbiguousUsernameException();
+}
+
 class UserRepository {
   /// Fetch users by exact email, username#code, or unique username.
   /// Supports formats: "user@email.com", "john#1234", or "john" (only if unique).
@@ -12,10 +16,10 @@ class UserRepository {
     final trimmed = searchString.trim().toLowerCase();
     if (trimmed.isEmpty) return [];
 
+    final excludeSet = selectedUsers.toSet();
     List<dynamic> data;
 
     if (trimmed.contains('#')) {
-      // username#code format — exact match on both columns
       final parts = trimmed.split('#');
       final username = parts[0];
       final code = parts.length > 1 ? parts[1] : '';
@@ -25,58 +29,57 @@ class UserRepository {
           .select('*')
           .eq('username', username)
           .eq('username_code', code)
-          .not('email', 'in', selectedUsers)
-          .eq('is_guest', false)
+          .neq('is_guest', true)
           .order('email');
 
       if (limit != null) query = query.limit(limit);
       data = await query;
     } else if (trimmed.contains('@')) {
-      // Email format — exact match on email
       var query = supabase
           .from('user')
           .select('*')
           .eq('email', trimmed)
-          .not('email', 'in', selectedUsers)
-          .eq('is_guest', false)
+          .neq('is_guest', true)
           .order('email');
 
       if (limit != null) query = query.limit(limit);
       data = await query;
     } else {
-      // Plain username — only return if exactly one user has this username
       var query = supabase
           .from('user')
           .select('*')
           .eq('username', trimmed)
-          .not('email', 'in', selectedUsers)
-          .eq('is_guest', false)
+          .neq('is_guest', true)
           .order('email');
 
       if (limit != null) query = query.limit(limit);
       data = await query;
 
       // If username is not unique, require the #code to disambiguate
-      if (data.length > 1) return [];
+      if (data.length > 1) throw const AmbiguousUsernameException();
     }
 
-    return data.cast<Map<String, dynamic>>().map(SupaUser.fromJson).toList();
+    return data
+        .cast<Map<String, dynamic>>()
+        .map(SupaUser.fromJson)
+        .where((u) => !excludeSet.contains(u.email))
+        .toList();
   }
 
   /// Fetch users whose email is in [emails], excluding [excludeEmails].
-  /// Used for contact suggestion matching.
+  /// Uses a Supabase RPC function to handle large email lists in a single call.
   static Future<List<SupaUser>> fetchByEmails(List<String> emails, List<String> excludeEmails) async {
     if (emails.isEmpty) return [];
 
-    final List<dynamic> data = await supabase
-        .from('user')
-        .select('*')
-        .inFilter('email', emails)
-        .not('email', 'in', excludeEmails)
-        .eq('is_guest', false)
-        .order('email');
+    final data = await supabase.rpc('match_contacts_by_email', params: {
+      '_emails': emails,
+      '_exclude_emails': excludeEmails,
+    });
 
-    return data.cast<Map<String, dynamic>>().map(SupaUser.fromJson).toList();
+    return (data as List)
+        .cast<Map<String, dynamic>>()
+        .map(SupaUser.fromJson)
+        .toList();
   }
 
 

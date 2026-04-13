@@ -4,6 +4,8 @@ import 'package:deun/widgets/card_list_view_builder.dart';
 import 'package:deun/widgets/shimmer_card_list.dart';
 import 'package:flutter/material.dart';
 
+import '../../../widgets/user_avatar.dart';
+
 class PendingRequestList extends StatelessWidget {
   final List<Map<String, dynamic>> pendingRequests;
   final Function(String userEmail, String displayName) onAccept;
@@ -49,6 +51,7 @@ class PendingRequestList extends StatelessWidget {
         pendingRequests.map(
           (user) {
             return ListTile(
+              leading: UserAvatar(displayName: user['display_name'] ?? '', radius: 18),
               title: Text(user['display_name']),
               subtitle: Text(fullUsernameFromJson(user)),
               trailing: Row(

@@ -20,6 +20,7 @@ class ExpenseEntryWidget extends StatefulWidget {
     this.initialName,
     this.initialAmount,
     this.initialQuantity,
+    this.isSingleEntry = false,
   });
 
   final int index;
@@ -29,6 +30,7 @@ class ExpenseEntryWidget extends StatefulWidget {
   final String? initialName;
   final String? initialAmount;
   final String? initialQuantity;
+  final bool isSingleEntry;
 
   @override
   State<ExpenseEntryWidget> createState() => _ExpenseEntryWidgetState();
@@ -236,15 +238,17 @@ class _ExpenseEntryWidgetState extends State<ExpenseEntryWidget> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Row 1: Name + delete button
-          _buildNameRow(spacing, l10n),
-          const SizedBox(height: spacing),
-          // Row 2: Amount + quantity
-          _buildAmountQuantityRow(l10n),
-          const SizedBox(height: spacing * 2),
-          // Row 3: Split mode selector
-          _buildSplitModeSelector(l10n),
-          const SizedBox(height: spacing),
+          if (!widget.isSingleEntry) ...[
+            // Row 1: Name + delete button
+            _buildNameRow(spacing, l10n),
+            const SizedBox(height: spacing),
+            // Row 2: Amount + quantity
+            _buildAmountQuantityRow(l10n),
+            const SizedBox(height: spacing * 2),
+            // Row 3: Split mode selector
+            _buildSplitModeSelector(l10n),
+            const SizedBox(height: spacing),
+          ],
           // Row 4: Member list with inputs
           _buildMemberList(spacing, l10n),
           // Hidden form fields for data submission
@@ -509,8 +513,10 @@ class _ExpenseEntryWidgetState extends State<ExpenseEntryWidget> {
                     bool isEnabled = _enabledMembers.contains(member.email);
                     return _buildMemberRow(member, isEnabled, sharesField);
                   }),
-                  const SizedBox(height: 4),
-                  _buildSummaryRow(),
+                  if (!widget.isSingleEntry) ...[
+                    const SizedBox(height: 4),
+                    _buildSummaryRow(),
+                  ],
                 ],
               ),
             );
@@ -589,41 +595,42 @@ class _ExpenseEntryWidgetState extends State<ExpenseEntryWidget> {
             ),
           ),
           // Input area — fixed width to prevent layout shifts
-          SizedBox(
-            width: 160,
-            child: isEnabled
-                ? Row(
-                    mainAxisAlignment: MainAxisAlignment.end,
-                    children: [
-                      _buildMemberInput(member.email),
-                      if (isLocked && _splitMode != SplitMode.shares)
-                        Padding(
-                          padding: const EdgeInsets.only(left: 2),
-                          child: Icon(Icons.lock_outline,
-                              size: 14,
-                              color: Theme.of(context).colorScheme.outline),
-                        ),
-                      // € preview for percentage and parts mode
-                      if (_splitMode == SplitMode.percentage ||
-                          _splitMode == SplitMode.shares) ...[
-                        const SizedBox(width: 4),
-                        SizedBox(
-                          width: 60,
-                          child: Text(
-                            "€${_getAmountPreview(member.email)}",
-                            style:
-                                Theme.of(context).textTheme.bodySmall?.copyWith(
-                                      color:
-                                          Theme.of(context).colorScheme.outline,
-                                    ),
-                            textAlign: TextAlign.end,
+          if (!widget.isSingleEntry)
+            SizedBox(
+              width: 160,
+              child: isEnabled
+                  ? Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        _buildMemberInput(member.email),
+                        if (isLocked && _splitMode != SplitMode.shares)
+                          Padding(
+                            padding: const EdgeInsets.only(left: 2),
+                            child: Icon(Icons.lock_outline,
+                                size: 14,
+                                color: Theme.of(context).colorScheme.outline),
                           ),
-                        ),
+                        // € preview for percentage and parts mode
+                        if (_splitMode == SplitMode.percentage ||
+                            _splitMode == SplitMode.shares) ...[
+                          const SizedBox(width: 4),
+                          SizedBox(
+                            width: 60,
+                            child: Text(
+                              "€${_getAmountPreview(member.email)}",
+                              style:
+                                  Theme.of(context).textTheme.bodySmall?.copyWith(
+                                        color:
+                                            Theme.of(context).colorScheme.outline,
+                                      ),
+                              textAlign: TextAlign.end,
+                            ),
+                          ),
+                        ],
                       ],
-                    ],
-                  )
-                : const SizedBox.shrink(),
-          ),
+                    )
+                  : const SizedBox.shrink(),
+            ),
         ],
       ),
     );

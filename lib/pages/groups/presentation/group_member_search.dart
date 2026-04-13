@@ -10,6 +10,7 @@ import 'package:flutter/material.dart';
 import 'package:deun/l10n/app_localizations.dart';
 
 import '../../../main.dart';
+import '../../../widgets/user_avatar.dart';
 import '../../../widgets/search_view.dart';
 import '../../users/user_model.dart';
 
@@ -80,6 +81,7 @@ class _GroupMemberSearchState extends State<GroupMemberSearch> {
         isTop: index == 0,
         isBottom: index == groupMembersLength - 1,
         child: ListTile(
+          leading: UserAvatar(displayName: user["display_name"] ?? "", radius: 18),
           title: Text(titleText),
           subtitle: Text(subtitleText),
           trailing: iconButton,
@@ -126,6 +128,7 @@ class _GroupMemberSearchState extends State<GroupMemberSearch> {
           isTop: index == 0,
           isBottom: index == friends.length - 1,
           child: ListTile(
+            leading: UserAvatar(displayName: user.displayName, radius: 18),
             title: Text(user.displayName),
             subtitle: Text(user.fullUsername),
             onTap: () {
@@ -153,6 +156,7 @@ class _GroupMemberSearchState extends State<GroupMemberSearch> {
           isTop: index == 0,
           isBottom: index == otherUsers.length - 1,
           child: ListTile(
+            leading: UserAvatar(displayName: user.displayName, radius: 18),
             title: Text(user.displayName),
             subtitle: Text(user.fullUsername),
             onTap: () {
@@ -239,7 +243,7 @@ class _GroupMemberSearchState extends State<GroupMemberSearch> {
             }
 
             return ListTile(
-              leading: const Icon(Icons.person),
+              leading: UserAvatar(displayName: groupMember["display_name"] ?? "", radius: 18),
               title: Text(displayName),
               subtitle: Text(subtitleText),
               onTap: () {

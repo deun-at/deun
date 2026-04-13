@@ -383,13 +383,13 @@ abstract class AppLocalizations {
   /// No description provided for @expenseDate.
   ///
   /// In en, this message translates to:
-  /// **'When did it happen?'**
+  /// **'Date'**
   String get expenseDate;
 
   /// No description provided for @expensePaidBy.
   ///
   /// In en, this message translates to:
-  /// **'Who paid?'**
+  /// **'Paid by'**
   String get expensePaidBy;
 
   /// No description provided for @expenseEntryTitle.
@@ -431,7 +431,7 @@ abstract class AppLocalizations {
   /// No description provided for @expenseEntrySharesLable.
   ///
   /// In en, this message translates to:
-  /// **'Who used it?'**
+  /// **'Split between'**
   String get expenseEntrySharesLable;
 
   /// No description provided for @expenseEntrySharesValidationEmpty.
@@ -736,6 +736,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'No User found with this E-Mail!'**
   String get addFriendshipNoResult;
+
+  /// No description provided for @addFriendshipAmbiguousUsername.
+  ///
+  /// In en, this message translates to:
+  /// **'Multiple users share this username. Try searching with the full username#code.'**
+  String get addFriendshipAmbiguousUsername;
+
+  /// No description provided for @addFriendshipContactOpenSettings.
+  ///
+  /// In en, this message translates to:
+  /// **'Allow'**
+  String get addFriendshipContactOpenSettings;
 
   /// No description provided for @addFriendshipRequestNoResult.
   ///
