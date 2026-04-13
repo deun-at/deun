@@ -1,3 +1,4 @@
+import 'package:deun/constants.dart';
 import 'package:deun/helper/helper.dart';
 import 'package:deun/main.dart';
 import 'package:deun/pages/users/user_repository.dart';
@@ -45,7 +46,7 @@ class _FriendQrPageState extends State<FriendQrPage> {
     final currentUser = supabase.auth.currentUser;
     // Try to build username-based link first (set after onboarding)
     // We need to fetch user data since auth metadata doesn't have username
-    return _cachedLink ?? Uri.parse('https://deun.app/#/friend/accept?email=${currentUser?.email ?? ''}');
+    return _cachedLink ?? Uri.parse('$kWebAppBaseUrl/#/friend/accept?email=${currentUser?.email ?? ''}');
   }
 
   Uri? _cachedLink;
@@ -57,7 +58,7 @@ class _FriendQrPageState extends State<FriendQrPage> {
       if (user.username != null && user.usernameCode != null && mounted) {
         setState(() {
           _cachedLink = Uri.parse(
-            'https://deun.app/#/friend/accept?u=${Uri.encodeComponent(user.username!)}&c=${Uri.encodeComponent(user.usernameCode!)}',
+            '$kWebAppBaseUrl/#/friend/accept?u=${Uri.encodeComponent(user.username!)}&c=${Uri.encodeComponent(user.usernameCode!)}',
           );
         });
       }

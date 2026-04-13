@@ -54,13 +54,17 @@ jobs:
       - name: Build Flutter Web
         run: flutter build web --base-href / --release --dart-define-from-file .env_flutter/development.env
       
-      # Step 7: Add github run_number
+      # Step 7: Add CNAME for custom domain
+      - name: Add CNAME for custom domain
+        run: echo "app.deun.app" > build/web/CNAME
+
+      # Step 8: Add github run_number
       - name: Add github run_number
         run: |
           touch "build/web/version.txt"
           echo "${{ github.run_number }}" >> build/web/version.txt
       
-      # Step 8: Configure SSH
+      # Step 9: Configure SSH
       - name: Configure SSH
         run: |
           mkdir -p ~/.ssh
@@ -68,7 +72,7 @@ jobs:
           chmod 600 ~/.ssh/id_rsa
           ssh-keyscan github.com >> ~/.ssh/known_hosts
       
-      # Step 9: Deploy to GitHub Pages
+      # Step 10: Deploy to GitHub Pages
       - name: Deploy to GitHub Pages
         uses: JamesIves/github-pages-deploy-action@v4
         with:

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+const String kWebAppBaseUrl = 'https://app.deun.app';
+
 enum ColorSeed {
   baseColor('Teal', Colors.teal),
   indigo('Indigo', Colors.indigo),

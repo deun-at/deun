@@ -1,3 +1,4 @@
+import 'package:deun/constants.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -16,7 +17,7 @@ class GroupInvitePage extends StatelessWidget {
   Uri _buildGroupInviteLink() {
     // Use hash fragment for in-app routing just like friends QR
     final uri = Uri.parse(
-        'https://deun.app/#/group/join?groupId=${Uri.encodeComponent(group.id)}&name=${Uri.encodeComponent(group.name)}');
+        '$kWebAppBaseUrl/#/group/join?groupId=${Uri.encodeComponent(group.id)}&name=${Uri.encodeComponent(group.name)}');
     return uri;
   }
 
