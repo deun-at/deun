@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:deun/helper/helper.dart';
 import 'package:deun/pages/expenses/data/expense_model.dart';
 import 'package:deun/pages/expenses/data/expense_repository.dart';
@@ -11,6 +13,8 @@ import 'package:deun/l10n/app_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '../../../constants.dart';
+import '../../../widgets/native_ad_block.dart';
 import '../../expenses/data/receipt_scan_result.dart';
 import '../../expenses/presentation/receipt_scanner_sheet.dart';
 import '../provider/group_detail.dart';
@@ -44,7 +48,9 @@ class _GroupDetailState extends ConsumerState<GroupDetail> {
     if (kIsWeb) {
       _adBlock = SizedBox();
     } else {
-      _adBlock = SizedBox();
+      _adBlock = NativeAdBlock(
+        adUnitId: Platform.isAndroid ? MobileAdMobs.androidExpenseList.value : MobileAdMobs.iosExpenseList.value,
+      );
     }
   }
 

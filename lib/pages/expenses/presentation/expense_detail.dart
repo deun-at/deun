@@ -489,6 +489,7 @@ class _ExpenseDetailState extends ConsumerState<ExpenseDetail> {
                           initialAmount: _isSingleEntry ? null : data.initialAmount,
                           initialQuantity: data.initialQuantity,
                           isSingleEntry: _isSingleEntry,
+                          expenseLevelAmountController: _isSingleEntry ? _amountController : null,
                         ),
                       ).toList()),
                       const SizedBox(height: spacing),

@@ -36,22 +36,35 @@ class _NativeAdBlockState extends State<NativeAdBlock> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    // Only create the ad once to avoid GlobalObjectKey collisions
-    // from multiple AdWidget instances coexisting during rebuilds.
     if (_nativeAd != null) return;
+    _loadAd();
+  }
+
+  void _loadAd() {
     _nativeAd = NativeAd(
       adUnitId: widget.adUnitId,
       request: AdRequest(),
       listener: NativeAdListener(
         onAdLoaded: (Ad ad) {
           debugPrint('$NativeAd loaded.');
-          setState(() {
-            _nativeAdIsLoaded = true;
-          });
+          if (mounted) {
+            setState(() {
+              _nativeAdIsLoaded = true;
+            });
+          }
         },
         onAdFailedToLoad: (Ad ad, LoadAdError error) {
           debugPrint('$NativeAd failedToLoad: $error');
           ad.dispose();
+          _nativeAd = null;
+          _nativeAdIsLoaded = false;
+          if (mounted) {
+            Future.delayed(const Duration(seconds: 30), () {
+              if (mounted && _nativeAd == null) {
+                _loadAd();
+              }
+            });
+          }
         },
         onAdOpened: (Ad ad) => debugPrint('$NativeAd onAdOpened.'),
         onAdClosed: (Ad ad) => debugPrint('$NativeAd onAdClosed.'),
@@ -78,6 +91,7 @@ class _NativeAdBlockState extends State<NativeAdBlock> {
   @override
   void dispose() {
     _nativeAd?.dispose();
+    _nativeAd = null;
     super.dispose();
   }
 }

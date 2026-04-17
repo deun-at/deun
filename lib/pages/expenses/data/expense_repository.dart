@@ -151,6 +151,15 @@ class ExpenseRepository {
 
         List<Map<String, dynamic>> insertExpenseEntryShares = [];
 
+        // Safety net: if split mode is 'exact' but all amounts are zero,
+        // the widget didn't know the real total — fall back to equal split.
+        bool allZeroExact = splitMode == 'exact' &&
+            shareData.isNotEmpty &&
+            shareData.values.every((v) => (v as num).toDouble() == 0.0);
+        if (allZeroExact) {
+          shareData = {};
+        }
+
         if (shareData.isNotEmpty) {
           int totalParts = splitMode == 'shares'
               ? shareData.values.fold(0, (sum, v) => sum + (v as int))

@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:deun/widgets/card_list_view_builder.dart';
 import 'package:deun/widgets/empty_list_widget.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
@@ -7,6 +9,8 @@ import 'package:go_router/go_router.dart';
 import 'package:deun/l10n/app_localizations.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+import '../../../constants.dart';
+import '../../../widgets/native_ad_block.dart';
 import '../../../widgets/shimmer_card_list.dart';
 import '../provider/group_list.dart';
 import 'group_list_item.dart';
@@ -30,7 +34,9 @@ class _GroupListState extends ConsumerState<GroupList> {
     if (kIsWeb) {
       _adBlock = SizedBox();
     } else {
-      _adBlock = SizedBox();
+      _adBlock = NativeAdBlock(
+        adUnitId: Platform.isAndroid ? MobileAdMobs.androidGroupList.value : MobileAdMobs.iosGroupList.value,
+      );
     }
   }
 
@@ -110,6 +116,7 @@ class _GroupListState extends ConsumerState<GroupList> {
               Colors.amber,
             ),
             GroupCardListView(
+              key: const ValueKey('favorites_section'),
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
               groupList: favoriteGroups,
@@ -128,9 +135,9 @@ class _GroupListState extends ConsumerState<GroupList> {
           ],
           if (activeGroups.isNotEmpty) ...[
             GroupCardListView(
+              key: const ValueKey('active_section'),
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
-              adBlock: _adBlock,
               groupList: activeGroups,
               itemCount: activeGroups.length,
               itemBuilder: (context, index) {
@@ -144,6 +151,11 @@ class _GroupListState extends ConsumerState<GroupList> {
               },
             ),
           ],
+          if (_adBlock != null)
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 4.0),
+              child: _adBlock!,
+            ),
           if (settledGroups.isNotEmpty) ...[
             _buildSectionHeader(
               AppLocalizations.of(context)!.groupSectionSettled,
@@ -151,6 +163,7 @@ class _GroupListState extends ConsumerState<GroupList> {
               colorScheme.outline,
             ),
             CardListView(
+              key: const ValueKey('settled_section'),
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
               color: colorScheme.surfaceContainerLowest,

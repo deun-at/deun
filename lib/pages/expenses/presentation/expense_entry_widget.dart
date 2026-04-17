@@ -21,6 +21,7 @@ class ExpenseEntryWidget extends StatefulWidget {
     this.initialAmount,
     this.initialQuantity,
     this.isSingleEntry = false,
+    this.expenseLevelAmountController,
   });
 
   final int index;
@@ -31,6 +32,9 @@ class ExpenseEntryWidget extends StatefulWidget {
   final String? initialAmount;
   final String? initialQuantity;
   final bool isSingleEntry;
+  /// In single-entry mode, the amount is entered at the expense level.
+  /// This controller lets the entry widget stay in sync with that amount.
+  final TextEditingController? expenseLevelAmountController;
 
   @override
   State<ExpenseEntryWidget> createState() => _ExpenseEntryWidgetState();
@@ -51,6 +55,7 @@ class _ExpenseEntryWidgetState extends State<ExpenseEntryWidget> {
 
   @override
   void dispose() {
+    widget.expenseLevelAmountController?.removeListener(_onExpenseLevelAmountChanged);
     for (var controller in _memberControllers.values) {
       controller.dispose();
     }
@@ -105,6 +110,23 @@ class _ExpenseEntryWidgetState extends State<ExpenseEntryWidget> {
     } else {
       // Only recalculate for new entries (no existing data to preserve)
       _recalculateIfNeeded();
+    }
+
+    // In single-entry mode, listen to the expense-level amount controller
+    // so splits stay in sync when the user types the amount.
+    widget.expenseLevelAmountController?.addListener(_onExpenseLevelAmountChanged);
+  }
+
+  void _onExpenseLevelAmountChanged() {
+    final newPrice = double.tryParse(
+      widget.expenseLevelAmountController?.text ?? '',
+    ) ?? 0;
+    if (newPrice != _unitPrice) {
+      setState(() {
+        double oldTotal = _entryTotal;
+        _unitPrice = newPrice;
+        _onTotalChanged(oldTotal);
+      });
     }
   }
 
