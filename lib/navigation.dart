@@ -30,8 +30,10 @@ import 'pages/groups/presentation/group_invite_page.dart';
 import 'pages/groups/presentation/group_join_page.dart';
 import 'pages/groups/presentation/group_detail_edit.dart';
 import 'pages/groups/presentation/group_list.dart';
+import 'pages/statistics/category_detail_bottom_sheet.dart';
 import 'pages/statistics/group_statistics_page.dart';
 import 'pages/statistics/month_detail_bottom_sheet.dart';
+import 'pages/statistics/personal_statistics_page.dart';
 import 'package:deun/l10n/app_localizations.dart';
 import 'dart:io' show Platform;
 import 'package:app_links/app_links.dart';
@@ -154,6 +156,21 @@ class _NavigationScreenState extends ConsumerState<NavigationScreen> with Widget
                                         ),
                                       );
                                     }),
+                                GoRoute(
+                                    path: 'category',
+                                    parentNavigatorKey: _rootNavigatorKey,
+                                    pageBuilder: (context, state) {
+                                      var extra = state.extra as Map<String, dynamic>;
+                                      return ModalBottomSheetPage(
+                                        key: state.pageKey,
+                                        builder: (context) => CategoryDetailBottomSheet(
+                                          groupId: extra['groupId'] as String,
+                                          categoryName: extra['categoryName'] as String,
+                                          monthStart: extra['monthStart'] as DateTime,
+                                          monthEnd: extra['monthEnd'] as DateTime,
+                                        ),
+                                      );
+                                    }),
                               ]),
                           GoRoute(
                               path: 'payment',
@@ -256,6 +273,11 @@ class _NavigationScreenState extends ConsumerState<NavigationScreen> with Widget
                         builder: (context, state) {
                           return PrivacyPolicy();
                         },
+                      ),
+                      GoRoute(
+                        path: 'statistics',
+                        parentNavigatorKey: _rootNavigatorKey,
+                        builder: (context, state) => const PersonalStatisticsPage(),
                       ),
                       // child route
                       GoRoute(

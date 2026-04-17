@@ -264,7 +264,7 @@ final class GroupMonthCategoryTotalsNotifierProvider
 }
 
 String _$groupMonthCategoryTotalsNotifierHash() =>
-    r'6c06d8ad30004e3c3fe17f06bb4d2296d3f9f775';
+    r'b023471cd4cda1891b5e2d1c6262021adc886bca';
 
 final class GroupMonthCategoryTotalsNotifierFamily extends $Family
     with
@@ -425,4 +425,414 @@ abstract class _$CategoryExpenseDetailsNotifier
             >;
     element.handleCreate(ref, () => build(_$args));
   }
+}
+
+@ProviderFor(GroupRangeDataNotifier)
+final groupRangeDataProvider = GroupRangeDataNotifierFamily._();
+
+final class GroupRangeDataNotifierProvider
+    extends $AsyncNotifierProvider<GroupRangeDataNotifier, GroupRangeData> {
+  GroupRangeDataNotifierProvider._({
+    required GroupRangeDataNotifierFamily super.from,
+    required StatsRangeArgs super.argument,
+  }) : super(
+         retry: null,
+         name: r'groupRangeDataProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
+
+  @override
+  String debugGetCreateSourceHash() => _$groupRangeDataNotifierHash();
+
+  @override
+  String toString() {
+    return r'groupRangeDataProvider'
+        ''
+        '($argument)';
+  }
+
+  @$internal
+  @override
+  GroupRangeDataNotifier create() => GroupRangeDataNotifier();
+
+  @override
+  bool operator ==(Object other) {
+    return other is GroupRangeDataNotifierProvider &&
+        other.argument == argument;
+  }
+
+  @override
+  int get hashCode {
+    return argument.hashCode;
+  }
+}
+
+String _$groupRangeDataNotifierHash() =>
+    r'7a13e6ffd91bbb0a649b7069b76e9789585c72f4';
+
+final class GroupRangeDataNotifierFamily extends $Family
+    with
+        $ClassFamilyOverride<
+          GroupRangeDataNotifier,
+          AsyncValue<GroupRangeData>,
+          GroupRangeData,
+          FutureOr<GroupRangeData>,
+          StatsRangeArgs
+        > {
+  GroupRangeDataNotifierFamily._()
+    : super(
+        retry: null,
+        name: r'groupRangeDataProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: true,
+      );
+
+  GroupRangeDataNotifierProvider call(StatsRangeArgs args) =>
+      GroupRangeDataNotifierProvider._(argument: args, from: this);
+
+  @override
+  String toString() => r'groupRangeDataProvider';
+}
+
+abstract class _$GroupRangeDataNotifier extends $AsyncNotifier<GroupRangeData> {
+  late final _$args = ref.$arg as StatsRangeArgs;
+  StatsRangeArgs get args => _$args;
+
+  FutureOr<GroupRangeData> build(StatsRangeArgs args);
+  @$mustCallSuper
+  @override
+  void runBuild() {
+    final ref = this.ref as $Ref<AsyncValue<GroupRangeData>, GroupRangeData>;
+    final element =
+        ref.element
+            as $ClassProviderElement<
+              AnyNotifier<AsyncValue<GroupRangeData>, GroupRangeData>,
+              AsyncValue<GroupRangeData>,
+              Object?,
+              Object?
+            >;
+    element.handleCreate(ref, () => build(_$args));
+  }
+}
+
+@ProviderFor(groupSpendingSummary)
+final groupSpendingSummaryProvider = GroupSpendingSummaryFamily._();
+
+final class GroupSpendingSummaryProvider
+    extends
+        $FunctionalProvider<
+          AsyncValue<SpendingSummary>,
+          SpendingSummary,
+          FutureOr<SpendingSummary>
+        >
+    with $FutureModifier<SpendingSummary>, $FutureProvider<SpendingSummary> {
+  GroupSpendingSummaryProvider._({
+    required GroupSpendingSummaryFamily super.from,
+    required StatsRangeArgs super.argument,
+  }) : super(
+         retry: null,
+         name: r'groupSpendingSummaryProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
+
+  @override
+  String debugGetCreateSourceHash() => _$groupSpendingSummaryHash();
+
+  @override
+  String toString() {
+    return r'groupSpendingSummaryProvider'
+        ''
+        '($argument)';
+  }
+
+  @$internal
+  @override
+  $FutureProviderElement<SpendingSummary> $createElement(
+    $ProviderPointer pointer,
+  ) => $FutureProviderElement(pointer);
+
+  @override
+  FutureOr<SpendingSummary> create(Ref ref) {
+    final argument = this.argument as StatsRangeArgs;
+    return groupSpendingSummary(ref, argument);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is GroupSpendingSummaryProvider && other.argument == argument;
+  }
+
+  @override
+  int get hashCode {
+    return argument.hashCode;
+  }
+}
+
+String _$groupSpendingSummaryHash() =>
+    r'2a9ac1276696921b9b61556192900d38b6060af1';
+
+final class GroupSpendingSummaryFamily extends $Family
+    with $FunctionalFamilyOverride<FutureOr<SpendingSummary>, StatsRangeArgs> {
+  GroupSpendingSummaryFamily._()
+    : super(
+        retry: null,
+        name: r'groupSpendingSummaryProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: true,
+      );
+
+  GroupSpendingSummaryProvider call(StatsRangeArgs args) =>
+      GroupSpendingSummaryProvider._(argument: args, from: this);
+
+  @override
+  String toString() => r'groupSpendingSummaryProvider';
+}
+
+@ProviderFor(groupTrend)
+final groupTrendProvider = GroupTrendFamily._();
+
+final class GroupTrendProvider
+    extends
+        $FunctionalProvider<
+          AsyncValue<List<MonthBucket>>,
+          List<MonthBucket>,
+          FutureOr<List<MonthBucket>>
+        >
+    with
+        $FutureModifier<List<MonthBucket>>,
+        $FutureProvider<List<MonthBucket>> {
+  GroupTrendProvider._({
+    required GroupTrendFamily super.from,
+    required StatsRangeArgs super.argument,
+  }) : super(
+         retry: null,
+         name: r'groupTrendProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
+
+  @override
+  String debugGetCreateSourceHash() => _$groupTrendHash();
+
+  @override
+  String toString() {
+    return r'groupTrendProvider'
+        ''
+        '($argument)';
+  }
+
+  @$internal
+  @override
+  $FutureProviderElement<List<MonthBucket>> $createElement(
+    $ProviderPointer pointer,
+  ) => $FutureProviderElement(pointer);
+
+  @override
+  FutureOr<List<MonthBucket>> create(Ref ref) {
+    final argument = this.argument as StatsRangeArgs;
+    return groupTrend(ref, argument);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is GroupTrendProvider && other.argument == argument;
+  }
+
+  @override
+  int get hashCode {
+    return argument.hashCode;
+  }
+}
+
+String _$groupTrendHash() => r'ddd15b6ce19c3e51f4bf44f3589a603dd2572516';
+
+final class GroupTrendFamily extends $Family
+    with
+        $FunctionalFamilyOverride<FutureOr<List<MonthBucket>>, StatsRangeArgs> {
+  GroupTrendFamily._()
+    : super(
+        retry: null,
+        name: r'groupTrendProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: true,
+      );
+
+  GroupTrendProvider call(StatsRangeArgs args) =>
+      GroupTrendProvider._(argument: args, from: this);
+
+  @override
+  String toString() => r'groupTrendProvider';
+}
+
+@ProviderFor(groupMemberBreakdown)
+final groupMemberBreakdownProvider = GroupMemberBreakdownFamily._();
+
+final class GroupMemberBreakdownProvider
+    extends
+        $FunctionalProvider<
+          AsyncValue<List<MemberSpendingBreakdown>>,
+          List<MemberSpendingBreakdown>,
+          FutureOr<List<MemberSpendingBreakdown>>
+        >
+    with
+        $FutureModifier<List<MemberSpendingBreakdown>>,
+        $FutureProvider<List<MemberSpendingBreakdown>> {
+  GroupMemberBreakdownProvider._({
+    required GroupMemberBreakdownFamily super.from,
+    required StatsRangeArgs super.argument,
+  }) : super(
+         retry: null,
+         name: r'groupMemberBreakdownProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
+
+  @override
+  String debugGetCreateSourceHash() => _$groupMemberBreakdownHash();
+
+  @override
+  String toString() {
+    return r'groupMemberBreakdownProvider'
+        ''
+        '($argument)';
+  }
+
+  @$internal
+  @override
+  $FutureProviderElement<List<MemberSpendingBreakdown>> $createElement(
+    $ProviderPointer pointer,
+  ) => $FutureProviderElement(pointer);
+
+  @override
+  FutureOr<List<MemberSpendingBreakdown>> create(Ref ref) {
+    final argument = this.argument as StatsRangeArgs;
+    return groupMemberBreakdown(ref, argument);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is GroupMemberBreakdownProvider && other.argument == argument;
+  }
+
+  @override
+  int get hashCode {
+    return argument.hashCode;
+  }
+}
+
+String _$groupMemberBreakdownHash() =>
+    r'a0c470ec8a1c7127e153c096c9ae3fcae96aed6e';
+
+final class GroupMemberBreakdownFamily extends $Family
+    with
+        $FunctionalFamilyOverride<
+          FutureOr<List<MemberSpendingBreakdown>>,
+          StatsRangeArgs
+        > {
+  GroupMemberBreakdownFamily._()
+    : super(
+        retry: null,
+        name: r'groupMemberBreakdownProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: true,
+      );
+
+  GroupMemberBreakdownProvider call(StatsRangeArgs args) =>
+      GroupMemberBreakdownProvider._(argument: args, from: this);
+
+  @override
+  String toString() => r'groupMemberBreakdownProvider';
+}
+
+@ProviderFor(groupCategoryBreakdown)
+final groupCategoryBreakdownProvider = GroupCategoryBreakdownFamily._();
+
+final class GroupCategoryBreakdownProvider
+    extends
+        $FunctionalProvider<
+          AsyncValue<List<CategoryMonthTotal>>,
+          List<CategoryMonthTotal>,
+          FutureOr<List<CategoryMonthTotal>>
+        >
+    with
+        $FutureModifier<List<CategoryMonthTotal>>,
+        $FutureProvider<List<CategoryMonthTotal>> {
+  GroupCategoryBreakdownProvider._({
+    required GroupCategoryBreakdownFamily super.from,
+    required StatsRangeArgs super.argument,
+  }) : super(
+         retry: null,
+         name: r'groupCategoryBreakdownProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
+
+  @override
+  String debugGetCreateSourceHash() => _$groupCategoryBreakdownHash();
+
+  @override
+  String toString() {
+    return r'groupCategoryBreakdownProvider'
+        ''
+        '($argument)';
+  }
+
+  @$internal
+  @override
+  $FutureProviderElement<List<CategoryMonthTotal>> $createElement(
+    $ProviderPointer pointer,
+  ) => $FutureProviderElement(pointer);
+
+  @override
+  FutureOr<List<CategoryMonthTotal>> create(Ref ref) {
+    final argument = this.argument as StatsRangeArgs;
+    return groupCategoryBreakdown(ref, argument);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is GroupCategoryBreakdownProvider &&
+        other.argument == argument;
+  }
+
+  @override
+  int get hashCode {
+    return argument.hashCode;
+  }
+}
+
+String _$groupCategoryBreakdownHash() =>
+    r'53b6961c1bfc4470cfaf77a56351f526c311ecb9';
+
+final class GroupCategoryBreakdownFamily extends $Family
+    with
+        $FunctionalFamilyOverride<
+          FutureOr<List<CategoryMonthTotal>>,
+          StatsRangeArgs
+        > {
+  GroupCategoryBreakdownFamily._()
+    : super(
+        retry: null,
+        name: r'groupCategoryBreakdownProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: true,
+      );
+
+  GroupCategoryBreakdownProvider call(StatsRangeArgs args) =>
+      GroupCategoryBreakdownProvider._(argument: args, from: this);
+
+  @override
+  String toString() => r'groupCategoryBreakdownProvider';
 }

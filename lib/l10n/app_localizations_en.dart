@@ -877,6 +877,66 @@ class AppLocalizationsEn extends AppLocalizations {
   String get statisticsTitle => 'Statistics';
 
   @override
+  String get statisticsRangeThreeMonths => '3M';
+
+  @override
+  String get statisticsRangeSixMonths => '6M';
+
+  @override
+  String get statisticsRangeTwelveMonths => '12M';
+
+  @override
+  String get statisticsRangeAllTime => 'All';
+
+  @override
+  String get statisticsTotalSpend => 'Total spend';
+
+  @override
+  String get statisticsAvgPerMonth => 'Avg / month';
+
+  @override
+  String get statisticsExpenseCount => 'Expenses';
+
+  @override
+  String get statisticsBiggestExpense => 'Biggest';
+
+  @override
+  String get statisticsVsPreviousPeriod => 'vs previous period';
+
+  @override
+  String get statisticsTrend => 'Trend';
+
+  @override
+  String get statisticsMembers => 'Members';
+
+  @override
+  String get statisticsMemberPaid => 'Paid';
+
+  @override
+  String get statisticsMemberFairShare => 'Fair share';
+
+  @override
+  String get statisticsMemberDelta => 'Balance';
+
+  @override
+  String get statisticsCategoryBreakdown => 'Categories';
+
+  @override
+  String get statisticsPersonalOverviewTitle => 'Your Spending';
+
+  @override
+  String get statisticsPersonalOverviewEntry => 'Personal overview';
+
+  @override
+  String get statisticsTopGroup => 'Top group';
+
+  @override
+  String get statisticsTopCategory => 'Top category';
+
+  @override
+  String get statisticsGroupsRanked => 'Groups';
+
+  @override
   String get statisticsNoExpenses => 'No expenses';
 
   @override

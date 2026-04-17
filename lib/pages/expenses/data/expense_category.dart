@@ -126,6 +126,27 @@ enum ExpenseCategory {
       return ExpenseCategory.other;
     }
   }
+
+  /// Stable tint color per category — cycled from a fixed palette so each
+  /// category keeps the same accent color across the app.
+  Color getColor(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final palette = <Color>[
+      scheme.primary,
+      scheme.tertiary,
+      scheme.secondary,
+      Colors.amber.shade600,
+      Colors.teal.shade400,
+      Colors.deepPurple.shade300,
+      Colors.redAccent.shade100,
+      Colors.blueGrey.shade400,
+      Colors.pink.shade300,
+      Colors.indigo.shade300,
+      Colors.lightGreen.shade600,
+      Colors.orange.shade600,
+    ];
+    return palette[index % palette.length];
+  }
 }
 
 class CategoryDetector {

@@ -237,6 +237,37 @@ class _ExpenseDetailState extends ConsumerState<ExpenseDetail> {
         : member.displayName;
   }
 
+  Widget _buildDateSelector() {
+    final initial = widget.expense?.expenseDate != null
+        ? DateTime.parse(widget.expense!.expenseDate)
+        : DateTime.now();
+    return FormBuilderField<DateTime>(
+      name: "expense_date",
+      initialValue: initial,
+      builder: (FormFieldState<DateTime?> field) {
+        final value = field.value ?? initial;
+        return CardListTile(
+          isTop: true,
+          isBottom: true,
+          child: ListTile(
+            leading: const Icon(Icons.calendar_month_outlined),
+            title: Text(AppLocalizations.of(context)!.expenseDate),
+            subtitle: Text(formatDate(value.toIso8601String(), context)),
+            onTap: () async {
+              final picked = await showDatePicker(
+                context: context,
+                initialDate: value,
+                firstDate: DateTime(2000),
+                lastDate: DateTime.now().add(const Duration(days: 365 * 5)),
+              );
+              if (picked != null) field.didChange(picked);
+            },
+          ),
+        );
+      },
+    );
+  }
+
   Widget _buildPaidBySelector() {
     final initialEmail = widget.expense?.paidBy ?? supabase.auth.currentUser?.email;
 
@@ -455,23 +486,7 @@ class _ExpenseDetailState extends ConsumerState<ExpenseDetail> {
                       const SizedBox(height: spacing),
                       _buildPaidBySelector(),
                       const SizedBox(height: spacing),
-                      FormBuilderDateTimePicker(
-                        name: "expense_date",
-                        initialValue: widget.expense?.expenseDate != null
-                            ? DateTime.parse(widget.expense!.expenseDate)
-                            : DateTime.now(),
-                        inputType: InputType.date,
-                        decoration: InputDecoration(
-                          border: InputBorder.none,
-                          labelText: AppLocalizations.of(context)!.expenseDate,
-                          labelStyle: Theme.of(context)
-                              .textTheme
-                              .bodyLarge!
-                              .copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
-                          hintText: AppLocalizations.of(context)!.addExpenseTitle,
-                          contentPadding: EdgeInsets.only(left: 8, right: 8),
-                        ),
-                      ),
+                      _buildDateSelector(),
                       const SizedBox(height: spacing),
                       CategorySelector(
                         name: "category",

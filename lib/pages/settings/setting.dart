@@ -86,6 +86,15 @@ class _SettingState extends ConsumerState<Setting> {
         CardListTile(
           isTop: true,
           child: ListTile(
+            leading: const Icon(Icons.insights_outlined),
+            title: Text(AppLocalizations.of(context)!.statisticsPersonalOverviewEntry),
+            onTap: () {
+              GoRouter.of(context).push('/setting/statistics');
+            },
+          ),
+        ),
+        CardListTile(
+          child: ListTile(
             title: Text(AppLocalizations.of(context)!.settingsPrivacyPolicy),
             onTap: () {
               GoRouter.of(context).push('/setting/privacy-policy');

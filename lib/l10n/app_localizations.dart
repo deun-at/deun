@@ -1458,6 +1458,126 @@ abstract class AppLocalizations {
   /// **'Statistics'**
   String get statisticsTitle;
 
+  /// No description provided for @statisticsRangeThreeMonths.
+  ///
+  /// In en, this message translates to:
+  /// **'3M'**
+  String get statisticsRangeThreeMonths;
+
+  /// No description provided for @statisticsRangeSixMonths.
+  ///
+  /// In en, this message translates to:
+  /// **'6M'**
+  String get statisticsRangeSixMonths;
+
+  /// No description provided for @statisticsRangeTwelveMonths.
+  ///
+  /// In en, this message translates to:
+  /// **'12M'**
+  String get statisticsRangeTwelveMonths;
+
+  /// No description provided for @statisticsRangeAllTime.
+  ///
+  /// In en, this message translates to:
+  /// **'All'**
+  String get statisticsRangeAllTime;
+
+  /// No description provided for @statisticsTotalSpend.
+  ///
+  /// In en, this message translates to:
+  /// **'Total spend'**
+  String get statisticsTotalSpend;
+
+  /// No description provided for @statisticsAvgPerMonth.
+  ///
+  /// In en, this message translates to:
+  /// **'Avg / month'**
+  String get statisticsAvgPerMonth;
+
+  /// No description provided for @statisticsExpenseCount.
+  ///
+  /// In en, this message translates to:
+  /// **'Expenses'**
+  String get statisticsExpenseCount;
+
+  /// No description provided for @statisticsBiggestExpense.
+  ///
+  /// In en, this message translates to:
+  /// **'Biggest'**
+  String get statisticsBiggestExpense;
+
+  /// No description provided for @statisticsVsPreviousPeriod.
+  ///
+  /// In en, this message translates to:
+  /// **'vs previous period'**
+  String get statisticsVsPreviousPeriod;
+
+  /// No description provided for @statisticsTrend.
+  ///
+  /// In en, this message translates to:
+  /// **'Trend'**
+  String get statisticsTrend;
+
+  /// No description provided for @statisticsMembers.
+  ///
+  /// In en, this message translates to:
+  /// **'Members'**
+  String get statisticsMembers;
+
+  /// No description provided for @statisticsMemberPaid.
+  ///
+  /// In en, this message translates to:
+  /// **'Paid'**
+  String get statisticsMemberPaid;
+
+  /// No description provided for @statisticsMemberFairShare.
+  ///
+  /// In en, this message translates to:
+  /// **'Fair share'**
+  String get statisticsMemberFairShare;
+
+  /// No description provided for @statisticsMemberDelta.
+  ///
+  /// In en, this message translates to:
+  /// **'Balance'**
+  String get statisticsMemberDelta;
+
+  /// No description provided for @statisticsCategoryBreakdown.
+  ///
+  /// In en, this message translates to:
+  /// **'Categories'**
+  String get statisticsCategoryBreakdown;
+
+  /// No description provided for @statisticsPersonalOverviewTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Your Spending'**
+  String get statisticsPersonalOverviewTitle;
+
+  /// No description provided for @statisticsPersonalOverviewEntry.
+  ///
+  /// In en, this message translates to:
+  /// **'Personal overview'**
+  String get statisticsPersonalOverviewEntry;
+
+  /// No description provided for @statisticsTopGroup.
+  ///
+  /// In en, this message translates to:
+  /// **'Top group'**
+  String get statisticsTopGroup;
+
+  /// No description provided for @statisticsTopCategory.
+  ///
+  /// In en, this message translates to:
+  /// **'Top category'**
+  String get statisticsTopCategory;
+
+  /// No description provided for @statisticsGroupsRanked.
+  ///
+  /// In en, this message translates to:
+  /// **'Groups'**
+  String get statisticsGroupsRanked;
+
   /// No description provided for @statisticsNoExpenses.
   ///
   /// In en, this message translates to:

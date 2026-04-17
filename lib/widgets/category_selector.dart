@@ -87,9 +87,7 @@ class _CategorySelectorState extends State<CategorySelector> {
               isTop: true,
               isBottom: true,
               child: ListTile(
-                leading: Icon(
-                  _selectedCategory!.getIcon(),
-                ),
+                leading: _CategoryIcon(category: _selectedCategory!),
                 title: Text(
                   _selectedCategory!.getDisplayName(localizations),
                 ),
@@ -130,9 +128,7 @@ class _CategorySelectorState extends State<CategorySelector> {
                   isTop: isTop,
                   isBottom: isBottom,
                   child: ListTile(
-                    leading: Icon(
-                      category.getIcon(),
-                    ),
+                    leading: _CategoryIcon(category: category),
                     title: Text(category.getDisplayName(localizations)),
                     onTap: () {
                       _selectCategory(category);
@@ -144,6 +140,25 @@ class _CategorySelectorState extends State<CategorySelector> {
           },
         );
       },
+    );
+  }
+}
+
+class _CategoryIcon extends StatelessWidget {
+  const _CategoryIcon({required this.category});
+  final ExpenseCategory category;
+
+  @override
+  Widget build(BuildContext context) {
+    final color = category.getColor(context);
+    return Container(
+      width: 36,
+      height: 36,
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.18),
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: Icon(category.getIcon(), color: color, size: 20),
     );
   }
 }
