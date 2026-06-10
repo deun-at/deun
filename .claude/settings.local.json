@@ -35,7 +35,8 @@
       "mcp__notion__notion-create-view",
       "mcp__notion__notion-update-view",
       "Bash(flutter test:*)",
-      "Bash(git mv:*)"
+      "Bash(git mv:*)",
+      "mcp__Supabase__list_projects"
     ]
   }
 }

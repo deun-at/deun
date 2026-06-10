@@ -5,7 +5,13 @@ import 'package:deun/pages/users/user_repository.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:deun/l10n/app_localizations.dart';
+
+/// True when an RPC failed because the function doesn't exist on the server
+/// yet (older database without the atomic save migrations applied).
+/// PGRST202 = PostgREST schema cache miss, 42883 = Postgres undefined function.
+bool isMissingFunctionError(PostgrestException e) => e.code == 'PGRST202' || e.code == '42883';
 
 /// Build a "username#code" string from a raw JSON map, falling back to display_name.
 String fullUsernameFromJson(Map<String, dynamic> json) {

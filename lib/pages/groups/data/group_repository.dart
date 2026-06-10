@@ -67,8 +67,10 @@ class GroupRepository {
     return selectedGroupMembers;
   }
 
-  /// Saves a group with members and share recalculation.
-  /// Multi-step operation — exceptions are rethrown for callers to handle.
+  /// Saves a group with members and share recalculation atomically via the
+  /// save_group_all RPC (one transaction server-side, including guest user
+  /// creation). Falls back to the legacy multi-step write path when the
+  /// database doesn't have the RPC yet.
   static Future<String> saveAll(BuildContext context, String? groupId, Map<String, dynamic> formValue) async {
     try {
       Map<String, dynamic> upsertVals = {
@@ -81,64 +83,79 @@ class GroupRepository {
       if (groupId != null) {
         upsertVals.addAll({'id': groupId});
       }
-      Map<String, dynamic> groupInsertResponse = await supabase.from('group').upsert(upsertVals).select('id').single();
 
-      Set<String> notificationReceiver = {};
       List<Map<String, dynamic>> groupMembers = decodeGroupMembersString(formValue['group_members']);
 
-      // Resolve any pending guest members by creating guest user records and replacing entries
-      final failedGuests = <String>[];
-      for (int i = 0; i < groupMembers.length; i++) {
-        final member = groupMembers[i];
-        if ((member['is_guest_pending'] ?? false) == true) {
-          final displayName = (member['display_name'] ?? '').toString();
-          if (displayName.isNotEmpty) {
-            try {
-              final guestUser = await UserRepository.createGuest(displayName);
-              groupMembers[i] = {
-                'email': guestUser.email,
-                'display_name': guestUser.displayName,
-                'is_guest': guestUser.isGuest,
-              };
-            } catch (e) {
-              debugPrint('Failed to create guest "$displayName": $e');
-              failedGuests.add(displayName);
-            }
-          }
+      Set<String> notificationReceiver = {};
+      for (var groupMember in groupMembers) {
+        if ((groupMember['is_guest'] ?? false) == false && (groupMember['is_guest_pending'] ?? false) == false) {
+          notificationReceiver.add(groupMember['email']);
         }
       }
-      // Remove entries that failed guest creation (still have is_guest_pending)
-      groupMembers.removeWhere((m) => (m['is_guest_pending'] ?? false) == true);
 
-      await supabase.from('group_member').delete().eq('group_id', groupInsertResponse['id']);
-
-      if (groupMembers.isNotEmpty) {
-        for (var groupMember in groupMembers) {
-          if ((groupMember['is_guest'] ?? false) == false) {
-            notificationReceiver.add(groupMember['email']);
-          }
-        }
-
-        List<Map<String, dynamic>> upsertGroupMembers = [];
-        upsertGroupMembers.addAll(groupMembers.map((groupMember) {
-          return {'group_id': groupInsertResponse['id'], 'email': groupMember['email']};
-        }));
-
-        await supabase.from('group_member').insert(upsertGroupMembers);
+      String savedGroupId;
+      try {
+        savedGroupId = await supabase.rpc('save_group_all', params: {
+          '_group': upsertVals,
+          '_members': groupMembers,
+        }) as String;
+      } on PostgrestException catch (e) {
+        if (!isMissingFunctionError(e)) rethrow;
+        savedGroupId = await _saveAllLegacy(upsertVals, groupMembers);
       }
-
-      await supabase
-          .rpc('update_group_member_shares', params: {"_group_id": groupInsertResponse['id'], "_expense_id": null});
 
       if (groupId == null && context.mounted) {
-        sendGroupNotification(context, groupInsertResponse['id'], notificationReceiver);
+        sendGroupNotification(context, savedGroupId, notificationReceiver);
       }
 
-      return groupInsertResponse['id'] as String;
+      return savedGroupId;
     } on PostgrestException catch (e) {
       debugPrint('Failed to save group ${groupId ?? 'new'}: ${e.message}');
       rethrow;
     }
+  }
+
+  /// Legacy non-atomic write path for servers without the save_group_all
+  /// RPC. Performs the same writes as the RPC, one statement at a time.
+  static Future<String> _saveAllLegacy(
+      Map<String, dynamic> upsertVals, List<Map<String, dynamic>> groupMembers) async {
+    Map<String, dynamic> groupInsertResponse = await supabase.from('group').upsert(upsertVals).select('id').single();
+    final savedGroupId = groupInsertResponse['id'] as String;
+
+    // Resolve any pending guest members by creating guest user records and replacing entries
+    final members = List<Map<String, dynamic>>.from(groupMembers);
+    for (int i = 0; i < members.length; i++) {
+      final member = members[i];
+      if ((member['is_guest_pending'] ?? false) == true) {
+        final displayName = (member['display_name'] ?? '').toString();
+        if (displayName.isNotEmpty) {
+          try {
+            final guestUser = await UserRepository.createGuest(displayName);
+            members[i] = {
+              'email': guestUser.email,
+              'display_name': guestUser.displayName,
+              'is_guest': guestUser.isGuest,
+            };
+          } catch (e) {
+            debugPrint('Failed to create guest "$displayName": $e');
+          }
+        }
+      }
+    }
+    // Remove entries that failed guest creation (still have is_guest_pending)
+    members.removeWhere((m) => (m['is_guest_pending'] ?? false) == true);
+
+    await supabase.from('group_member').delete().eq('group_id', savedGroupId);
+
+    if (members.isNotEmpty) {
+      await supabase.from('group_member').insert(members.map((groupMember) {
+        return {'group_id': savedGroupId, 'email': groupMember['email']};
+      }).toList());
+    }
+
+    await supabase.rpc('update_group_member_shares', params: {"_group_id": savedGroupId, "_expense_id": null});
+
+    return savedGroupId;
   }
 
   static Future<void> payBack(BuildContext context, String groupId, String email, double amount,
