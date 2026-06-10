@@ -1218,6 +1218,12 @@ abstract class AppLocalizations {
   /// **'Something went wrong'**
   String get generalError;
 
+  /// No description provided for @retry.
+  ///
+  /// In en, this message translates to:
+  /// **'Retry'**
+  String get retry;
+
   /// No description provided for @loading.
   ///
   /// In en, this message translates to:

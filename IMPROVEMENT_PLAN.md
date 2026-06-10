@@ -41,23 +41,21 @@ These can produce **wrong balances or corrupted data** in a money-splitting app.
 ## Phase 1 — Security & Privacy
 
 ### 1.1 QR/share fallback exposes raw email addresses
-- **Where:** `lib/pages/friends/presentation/friend_qr_page.dart:49`
-- The username+code link (lines 60-63) is good, but the fallback encodes the user's email into the QR/shared URL. Remove the email fallback; require username completion before QR is available.
+- ✅ DONE — email fallback removed entirely. The "My Code" tab now shows a loading/retry state until the username+code link resolves; the scanner's copy-link button guards against a missing link. Accept-side still honors old email links for backward compatibility.
 
 ### 1.2 HTML injection in contact form
-- **Where:** `lib/helper/helper.dart:246-250`
-- User input is interpolated directly into an HTML email body. HTML-escape all fields.
+- ✅ DONE — all contact-form fields HTML-escaped before being embedded in the email body. `sendContactMail` also now rethrows failures so the contact form's error snackbar actually fires (previously errors were swallowed and success was always shown).
 
 ### 1.3 Secrets & config hygiene
-- VAPID key hardcoded in `lib/navigation.dart:351-352`; OAuth client IDs in `lib/pages/auth/sign_in.dart:54-55` → move to `--dart-define` env config.
-- CI echoes `SUPABASE_URL`/`SUPABASE_ANON_KEY` via shell `echo` in `.github/workflows/deploy_deun_web_page.yml:45-46` → write via masked mechanism.
-- Access token passed into UI in `lib/pages/auth/update_password.dart:18` → let the SDK manage the session internally.
+- ✅ DONE — VAPID key and Google OAuth client IDs moved to `constants.dart` as `String.fromEnvironment` with defaults (rotatable via `FCM_VAPID_KEY`, `GOOGLE_WEB_CLIENT_ID`, `GOOGLE_IOS_CLIENT_ID` defines).
+- ✅ DONE — CI now writes the env file from masked env vars instead of inline `echo` interpolation.
+- OPEN — access token passed into UI in `lib/pages/auth/update_password.dart:18` → let the SDK manage the session internally.
 
 ### 1.4 Web & Android hardening
-- No CSP / `X-Frame-Options` in `web/index.html` → add security headers.
-- No Android obfuscation → add `--obfuscate --split-debug-info` to release builds.
-- Stale `com.example.deun` client entry in `android/app/google-services.json` → remove.
-- Deep-link fragment validation (`lib/navigation.dart:420-462`) validates groups/friends but not other IDs and doesn't sanitize query params → whitelist routes.
+- ~~CSP/X-Frame-Options meta tags~~ — **not feasible as described**: browsers ignore `frame-ancestors` and `X-Frame-Options` in `<meta>` tags, and GitHub Pages cannot send custom response headers. Real fix requires fronting the site with a CDN (e.g. Cloudflare) that injects headers.
+- OPEN — No Android obfuscation → add `--obfuscate --split-debug-info` to release builds.
+- ✅ DONE — stale `com.example.deun` client entry removed from `android/app/google-services.json`.
+- OPEN — deep-link fragment validation (`lib/navigation.dart`) could be extended to more parameter types (groups/friends/static routes are already allowlisted).
 
 ### 1.5 RLS policies not version-controlled
 - `supabase/` contains only `config.toml`. Export schema, RLS policies, RPCs, and indexes into `supabase/migrations/` so they can be code-reviewed. Check FK cascades for account deletion, and verify the `delete-user-account` edge function.
@@ -193,7 +191,7 @@ Also: expand `README.md` (currently 3 lines) with setup/architecture; keep `QUES
 |---|---|---|
 | 1 | ✅ DONE — Quick wins: SearchView dispose, mounted checks + async-gap guards in navigation.dart, lint rules (`unawaited_futures`, `use_build_context_synchronously`, const lints + 104 auto-fixes), PayPal launch try/catch, onboarding error differentiation, VAPID key to constants (env-overridable), CI test gate + PR workflow + pinned Flutter 3.41.9 | ~1 day |
 | 2 | ✅ DONE — Phase 0 money math: rounding at boundaries, settlement iteration guard + 17 tests, cent-exact split validation, amount>0 validators, payBackAll per-group amount bug fix | 2–4 days |
-| 3 | Phase 1 security items (QR email, HTML escape, env config, headers) | 1–2 days |
+| 3 | ✅ DONE — Phase 1 security: QR email fallback removed, contact-form HTML escaping + error propagation, OAuth IDs/VAPID env-overridable, stale Firebase client removed (headers infeasible on GitHub Pages — needs CDN) | 1–2 days |
 | 4 | Phase 0.2 transactional RPCs + migrations in repo | 2–3 days |
 | 5 | Phase 3 performance (realtime filtering, pagination state, stats dedup) | 2–3 days |
 | 6 | Phase 4 UX polish + de translations + locale-aware currency | 2–3 days |

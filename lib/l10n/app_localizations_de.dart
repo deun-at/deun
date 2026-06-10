@@ -766,6 +766,9 @@ class AppLocalizationsDe extends AppLocalizations {
   String get generalError => 'Ein Fehler ist aufgetreten.';
 
   @override
+  String get retry => 'Erneut versuchen';
+
+  @override
   String get loading => 'Lädt...';
 
   @override

@@ -243,17 +243,24 @@ Future<void> sendNotification(String type, String objectId, Set<String> notifica
   }
 }
 
+/// Escapes user input before it is embedded in the HTML email body.
+String escapeHtml(String? value) => (value ?? '')
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;')
+    .replaceAll("'", '&#39;');
+
+/// Throws on failure so callers can show an error to the user.
 Future<void> sendContactMail(Map<String, dynamic> contactInfo) async {
-  try {
-    final res = await supabase.functions.invoke('send-contact-email', body: {
-      'message':
-          "Name: ${contactInfo['name']} <br>Company: ${contactInfo['company'] ?? '-'}<br>E-Mail: ${contactInfo['email']}<br><br>Description: ${contactInfo['description']}"
-    });
-    final data = res.data;
-    debugPrint(data.toString());
-  } catch (e) {
-    debugPrint(e.toString());
-  }
+  final name = escapeHtml(contactInfo['name']?.toString());
+  final company = escapeHtml(contactInfo['company']?.toString() ?? '-');
+  final email = escapeHtml(contactInfo['email']?.toString());
+  final description = escapeHtml(contactInfo['description']?.toString());
+
+  await supabase.functions.invoke('send-contact-email', body: {
+    'message': "Name: $name <br>Company: $company<br>E-Mail: $email<br><br>Description: $description",
+  });
 }
 
 void navigateToGroup(BuildContext context, Group group) {

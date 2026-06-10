@@ -745,6 +745,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get generalError => 'Something went wrong';
 
   @override
+  String get retry => 'Retry';
+
+  @override
   String get loading => 'Loading';
 
   @override

@@ -693,6 +693,8 @@
   "@send": {},
   "generalError": "Something went wrong",
   "@generalError": {},
+  "retry": "Retry",
+  "@retry": {},
   "loading": "Loading",
   "@loading": {},
   "you": "You",
