@@ -721,6 +721,14 @@ class AppLocalizationsDe extends AppLocalizations {
   String get deleteAccountError => 'Fehler beim Löschen des Kontos.';
 
   @override
+  String get deleteAccountConfirmKeyword => 'DELETE';
+
+  @override
+  String deleteAccountConfirmHint(String keyword) {
+    return 'Type $keyword to confirm';
+  }
+
+  @override
   String get errorLoadingData => 'Fehler beim Laden der Daten!';
 
   @override

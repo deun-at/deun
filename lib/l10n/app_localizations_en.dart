@@ -700,6 +700,14 @@ class AppLocalizationsEn extends AppLocalizations {
       'Error while trying to delete the user account. Please contact app.deun@gmail.com for support.';
 
   @override
+  String get deleteAccountConfirmKeyword => 'DELETE';
+
+  @override
+  String deleteAccountConfirmHint(String keyword) {
+    return 'Type $keyword to confirm';
+  }
+
+  @override
   String get errorLoadingData => 'Error while loading data!';
 
   @override
