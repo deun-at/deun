@@ -301,9 +301,18 @@ class _ExpenseDetailState extends ConsumerState<ExpenseDetail> {
       name: "expense_entry[$firstIndex][amount]",
       initialValue: _amountController.text != "0" ? _amountController.text : null,
       autovalidateMode: AutovalidateMode.onUserInteraction,
-      validator: FormBuilderValidators.required(
-        errorText: AppLocalizations.of(context)!.expenseEntryAmountValidationEmpty,
-      ),
+      validator: FormBuilderValidators.compose([
+        FormBuilderValidators.required(
+          errorText: AppLocalizations.of(context)!.expenseEntryAmountValidationEmpty,
+        ),
+        (value) {
+          final amount = double.tryParse(value?.toString() ?? '');
+          if (amount != null && amount <= 0) {
+            return AppLocalizations.of(context)!.expenseEntryAmountValidationZero;
+          }
+          return null;
+        },
+      ]),
       builder: (FormFieldState<dynamic> field) {
         return InputDecorator(
           decoration: InputDecoration(

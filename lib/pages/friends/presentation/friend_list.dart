@@ -353,7 +353,7 @@ class _FriendListState extends ConsumerState<FriendList> {
                   title: Text(AppLocalizations.of(context)!.payBackDialogDone),
                   onTap: () async {
                     try {
-                      await GroupRepository.payBackAll(context, user.email, friendship.shareAmount.abs());
+                      await GroupRepository.payBackAll(context, user.email);
                       if (context.mounted) {
                         showSnackBar(
                           context,

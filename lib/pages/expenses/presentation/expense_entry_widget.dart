@@ -1,3 +1,4 @@
+import 'package:deun/helper/helper.dart';
 import 'package:deun/main.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -318,9 +319,18 @@ class _ExpenseEntryWidgetState extends State<ExpenseEntryWidget> {
               ? widget.expenseEntry.unitPrice.toStringAsFixed(2)
               : null),
       autovalidateMode: AutovalidateMode.onUserInteraction,
-      validator: FormBuilderValidators.required(
-        errorText: l10n.expenseEntryAmountValidationEmpty,
-      ),
+      validator: FormBuilderValidators.compose([
+        FormBuilderValidators.required(
+          errorText: l10n.expenseEntryAmountValidationEmpty,
+        ),
+        (value) {
+          final amount = double.tryParse(value?.toString() ?? '');
+          if (amount != null && amount <= 0) {
+            return l10n.expenseEntryAmountValidationZero;
+          }
+          return null;
+        },
+      ]),
       builder: (FormFieldState<dynamic> field) {
         return InputDecorator(
           decoration: InputDecoration(
@@ -473,11 +483,13 @@ class _ExpenseEntryWidgetState extends State<ExpenseEntryWidget> {
       case SplitMode.amount:
         double sum = _enabledMembers.fold(
             0.0, (s, email) => s + (_memberAmounts[email] ?? 0));
-        return (sum - _entryTotal).abs() < 0.01 * _enabledMembers.length.clamp(1, 10);
+        // Member amounts must add up to the entry total exactly at cent
+        // level — anything looser silently creates or destroys money.
+        return (roundCurrency(sum) - roundCurrency(_entryTotal)).abs() < 0.005;
       case SplitMode.percentage:
         double sum = _enabledMembers.fold(
             0.0, (s, email) => s + (_memberPercentages[email] ?? 0));
-        return (sum - 100).abs() < 0.05;
+        return (sum - 100).abs() < 0.01;
       case SplitMode.shares:
         int totalParts = _enabledMembers.fold(
             0, (sum, e) => sum + (_memberParts[e] ?? 1));

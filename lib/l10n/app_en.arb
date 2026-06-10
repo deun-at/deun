@@ -117,6 +117,8 @@
   "@expenseEntryAmount": {},
   "expenseEntryAmountValidationEmpty": "Please enter an amount!",
   "@expenseEntryAmountValidationEmpty": {},
+  "expenseEntryAmountValidationZero": "Amount must be greater than zero!",
+  "@expenseEntryAmountValidationZero": {},
   "expenseEntrySharesLable": "Split between",
   "@expenseEntrySharesLable": {},
   "expenseEntrySharesValidationEmpty": "Please select at least one person!",

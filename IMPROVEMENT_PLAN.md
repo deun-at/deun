@@ -12,10 +12,10 @@ These can produce **wrong balances or corrupted data** in a money-splitting app.
 - **Where:** `lib/pages/groups/data/group_model.dart:70-196`, `lib/pages/expenses/data/expense_model.dart:40-60`, `lib/pages/expenses/data/expense_repository.dart:113-217`
 - **Problem:** All monetary values are `double`. Accumulation happens without consistent rounding (e.g. `group_model.dart:78` adds totals unrounded), and the "settled" check compares against a `0.01` threshold that floating-point drift can break. The simplified-settlement algorithm (`group_model.dart:111-196`) is a greedy while-loop whose termination depends on values reaching ~zero — rounding drift can cause wrong settlement suggestions.
 - **Plan:**
-  1. Short term: apply `roundCurrency()` at *every* arithmetic boundary, and compare with an explicit epsilon.
-  2. Medium term: migrate to integer cents (or the `decimal` package) in models + `NUMERIC` columns in Postgres.
-  3. Add an iteration guard to the settlement while-loop.
-  4. Add exhaustive unit tests: 3-way split of €0.01, 7-way of €1.00, 40/30/30 splits, circular debt, amounts differing by €0.01.
+  1. ✅ DONE — `roundCurrency()` applied at arithmetic boundaries in `group_model.dart` (balances rounded on load, totals accumulate rounded).
+  2. Medium term (open): migrate to integer cents (or the `decimal` package) in models + `NUMERIC` columns in Postgres.
+  3. ✅ DONE — defensive iteration guard added to the settlement while-loop (analysis showed each iteration removes ≥1 entry, so it already terminated; guard protects against future regressions). Closes QUESTIONS.md Q69.
+  4. ✅ DONE — 17 unit tests in `test/model/group_settlement_test.dart` covering both calculation modes: equal/unequal splits, creditor/debtor perspectives, unrounded DB thirds, one-cent differences, drift-free accumulation. The methods were refactored to take `currentUserEmail` as a parameter so the real code is testable (previously they read the supabase global directly).
 
 ### 0.2 Multi-step DB writes are not atomic
 - **Where:** `lib/pages/expenses/data/expense_repository.dart:74-222` (`saveAll` = upsert expense → delete entries → insert entries → delete shares → insert shares → RPC → notify), `lib/pages/groups/data/group_repository.dart:72-142` (upsert group → create guests → delete members → insert members → RPC)
@@ -25,17 +25,16 @@ These can produce **wrong balances or corrupted data** in a money-splitting app.
 ### 0.3 Split validation tolerance is too loose
 - **Where:** `lib/pages/expenses/presentation/expense_entry_widget.dart:470-486`
 - **Problem:** `(sum - _entryTotal).abs() < 0.01 * _enabledMembers.length.clamp(1, 10)` lets a 10-member split be off by up to €0.10 and still pass. Zero-amount entries are also accepted (`expense_repository.dart:122-124`), creating meaningless shares.
-- **Plan:** Exact validation per split mode (amount mode: rounded sum must equal total; percentage mode: sum == 100.0 within tiny epsilon), plus an `amount > 0` validator.
+- **Plan:** ✅ DONE — amount mode now requires cent-exact equality (`< 0.005`), percentage mode epsilon tightened to 0.01. Auto-distribution keeps full precision so this only flags genuinely inconsistent user-typed splits. `amount > 0` validators added to both amount fields with a new localized message (`expenseEntryAmountValidationZero` in en + de).
 
-### 0.4 PayBack RPC failure is invisible to the user
-- **Where:** `lib/pages/groups/data/group_repository.dart:146-163`
-- **Problem:** `update_group_member_shares` RPC retries once, but the "paid back" notification is sent regardless of outcome — balances can silently stay wrong while the user is told it succeeded.
-- **Plan:** Surface RPC failure to the UI (snackbar + retain dialog), only notify after success.
+### 0.4 PayBack correctness
+- ~~"paid back notification sent regardless of RPC outcome"~~ — **finding was wrong**: a failed retry throws out of `payBack()` before the notification line, and callers already show `payBackError`. The remaining gap is server-side atomicity (`pay_back` succeeding but `update_group_member_shares` failing leaves stale balances) — that's QUESTIONS.md Q70 and belongs to the Phase 0.2 RPC work.
+- ✅ FIXED (new bug found during this work) — `payBackAll()` passed the **cross-group total** to every group's `pay_back` RPC instead of the per-group amount (the computed `groupAmount` was only used in a threshold check), and also recorded pay-backs in groups where the *friend* owed the *user*. Now settles only groups where the user owes, with the exact per-group amount.
+- ✅ FIXED — unhandled PayPal `launchUrl` throw in `group_detail_payment.dart` (same pattern as the friend-list one).
 
-### 0.5 Email comparisons are case-sensitive
+### 0.5 Email comparisons are case-sensitive (deprioritized)
 - **Where:** `lib/pages/friends/data/friendship_model.dart`, `lib/pages/groups/data/group_model.dart`
-- **Problem:** `User@Email.com` won't match `user@email.com` in friendship/membership checks.
-- **Plan:** Normalize to lowercase at model boundaries (and add a DB constraint/normalization).
+- **Assessment:** Supabase Auth normalizes emails to lowercase and all user rows are created from `session.user.email`, so in practice all stored emails are already lowercase. A client-side normalization sweep would touch every email-keyed map with little real-world payoff. Better fix: enforce `lower(email)` via a DB constraint/trigger when doing the Phase 0.2 migration work.
 
 ---
 
@@ -193,7 +192,7 @@ Also: expand `README.md` (currently 3 lines) with setup/architecture; keep `QUES
 | Order | Work | Effort |
 |---|---|---|
 | 1 | ✅ DONE — Quick wins: SearchView dispose, mounted checks + async-gap guards in navigation.dart, lint rules (`unawaited_futures`, `use_build_context_synchronously`, const lints + 104 auto-fixes), PayPal launch try/catch, onboarding error differentiation, VAPID key to constants (env-overridable), CI test gate + PR workflow + pinned Flutter 3.41.9 | ~1 day |
-| 2 | Phase 0 money math + validation + settlement tests | 2–4 days |
+| 2 | ✅ DONE — Phase 0 money math: rounding at boundaries, settlement iteration guard + 17 tests, cent-exact split validation, amount>0 validators, payBackAll per-group amount bug fix | 2–4 days |
 | 3 | Phase 1 security items (QR email, HTML escape, env config, headers) | 1–2 days |
 | 4 | Phase 0.2 transactional RPCs + migrations in repo | 2–3 days |
 | 5 | Phase 3 performance (realtime filtering, pagination state, stats dedup) | 2–3 days |

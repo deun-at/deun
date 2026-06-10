@@ -163,19 +163,21 @@ class GroupRepository {
     }
   }
 
-  static Future<void> payBackAll(BuildContext context, String email, double amount) async {
+  static Future<void> payBackAll(BuildContext context, String email) async {
     final groupList = await GroupRepository.fetchData("active", paidTo: email);
 
     await Future.wait(groupList.map((groupData) async {
       double groupAmount = 0;
       groupData.groupSharesSummary.forEach((key, groupShare) {
         if (key == email) {
-          groupAmount += groupShare.shareAmount;
+          groupAmount = roundCurrency(groupAmount + groupShare.shareAmount);
         }
       });
 
-      if (groupAmount.abs() >= 0.01) {
-        await GroupRepository.payBack(context, groupData.id, email, amount, sendNotification: false);
+      // Only settle groups where the current user owes this friend, and pay
+      // back exactly the per-group amount — not the cross-group total.
+      if (groupAmount <= -0.01) {
+        await GroupRepository.payBack(context, groupData.id, email, groupAmount.abs(), sendNotification: false);
       }
     }));
   }

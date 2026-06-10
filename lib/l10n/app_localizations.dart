@@ -428,6 +428,12 @@ abstract class AppLocalizations {
   /// **'Please enter an amount!'**
   String get expenseEntryAmountValidationEmpty;
 
+  /// No description provided for @expenseEntryAmountValidationZero.
+  ///
+  /// In en, this message translates to:
+  /// **'Amount must be greater than zero!'**
+  String get expenseEntryAmountValidationZero;
+
   /// No description provided for @expenseEntrySharesLable.
   ///
   /// In en, this message translates to:

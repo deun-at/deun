@@ -113,10 +113,15 @@ class _GroupPaymentBottomSheetState extends ConsumerState<GroupPaymentBottomShee
               if (groupShare.paypalMe == null || groupShare.paypalMe!.isEmpty) {
                 return;
               }
-              if (!await launchUrl(
-                  Uri.parse("https://www.paypal.me/${groupShare.paypalMe}/${groupShare.shareAmount.abs()}"))) {
-                throw Exception(
-                    'Could not launch https://www.paypal.me/${groupShare.paypalMe}/${groupShare.shareAmount.abs()}');
+              final paypalUri = Uri.parse("https://www.paypal.me/${groupShare.paypalMe}/${groupShare.shareAmount.abs()}");
+              bool launched = false;
+              try {
+                launched = await launchUrl(paypalUri);
+              } catch (e) {
+                debugPrint('Could not launch PayPal link: $e');
+              }
+              if (!launched && context.mounted) {
+                showSnackBar(context, AppLocalizations.of(context)!.generalError);
               }
             },
             child: Row(

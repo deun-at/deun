@@ -180,6 +180,10 @@ class AppLocalizationsDe extends AppLocalizations {
   String get expenseEntryAmountValidationEmpty => 'Bitte gib einen Betrag ein!';
 
   @override
+  String get expenseEntryAmountValidationZero =>
+      'Der Betrag muss größer als 0 sein!';
+
+  @override
   String get expenseEntrySharesLable => 'Aufgeteilt zwischen';
 
   @override
