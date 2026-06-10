@@ -1,4 +1,3 @@
-import 'package:deun/helper/helper.dart';
 import 'package:flutter/material.dart';
 import 'package:deun/l10n/app_localizations.dart';
 
@@ -16,7 +15,7 @@ class GroupShareWidget extends StatelessWidget {
     List<Widget> sharedWidget = group.groupSharesSummary
         .map(
           (String key, GroupSharesSummary e) {
-            if (toNumber(e.shareAmount.abs()) == '0.00') {
+            if (e.shareAmount.abs() < 0.005) {
               return MapEntry(key, const SizedBox());
             }
 
@@ -75,7 +74,7 @@ class GroupShareWidget extends StatelessWidget {
 
     String totalSharedText = AppLocalizations.of(context)!
         .groupDisplaySumAmount(paidByYourselfAll, group.totalShareAmount.abs());
-    bool isAllDone = toNumber(group.totalShareAmount.abs()) == '0.00';
+    bool isAllDone = group.totalShareAmount.abs() < 0.005;
     if (isAllDone) {
       totalSharedText = AppLocalizations.of(context)!.allDone;
       textColorAll = Colors.green;

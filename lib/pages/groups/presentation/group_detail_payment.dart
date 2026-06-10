@@ -55,7 +55,7 @@ class _GroupPaymentBottomSheetState extends ConsumerState<GroupPaymentBottomShee
 
                 group.groupSharesSummary.forEach(
                   (email, groupShare) {
-                    if (groupShare.shareAmount < 0 && toNumber(groupShare.shareAmount) != '-0.00') {
+                    if (groupShare.shareAmount <= -0.005) {
                       listViewChildren.add(
                         ListTile(
                           title: Text(groupShare.displayName),

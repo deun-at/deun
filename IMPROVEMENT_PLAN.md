@@ -139,7 +139,7 @@ These can produce **wrong balances or corrupted data** in a money-splitting app.
 - Ambiguous-username search result (`friend_add_notifier.dart:183-192`) should hint the `username#code` format.
 
 ### 4.5 Localization & formatting
-- **Currency format hardcoded to `en_US`** (`lib/helper/helper.dart:33-41`): German users see `€1,234.56` instead of `1.234,56 €`. Use the active locale. This is the single most visible i18n bug.
+- ✅ DONE — the en_US-hardcoded `toCurrency`/`toNumber` helpers are removed. All currency display now goes through the locale-aware l10n `toCurrency`; the zero-checks that abused string formatting (`toNumber(x) == '0.00'`) are numeric comparisons now.
 - `app_de.arb` (255 keys) covers only ~half of `app_en.arb` (529 keys) → complete German translations.
 - Hardcoded strings: "Page not found" (`navigation.dart:295-297`), literal `€`/`%` symbols in expense widgets.
 

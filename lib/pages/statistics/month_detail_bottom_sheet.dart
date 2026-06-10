@@ -1,4 +1,3 @@
-import 'package:deun/helper/helper.dart';
 import 'package:deun/pages/groups/data/group_model.dart';
 import 'package:deun/pages/statistics/statistics_models.dart';
 import 'package:deun/pages/statistics/provider/statistics_notifiers.dart';
@@ -48,7 +47,7 @@ class StatisticsMonthDetailBottomSheet extends ConsumerWidget {
                       final item = list[i];
                       return ListTile(
                         title: Text(item.displayName),
-                        trailing: Text(toCurrency(item.total)),
+                        trailing: Text(AppLocalizations.of(context)!.toCurrency(item.total)),
                       );
                     },
                   ),

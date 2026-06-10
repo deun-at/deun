@@ -1,4 +1,3 @@
-import 'package:deun/helper/helper.dart';
 import 'package:deun/pages/statistics/provider/statistics_notifiers.dart';
 import 'package:deun/pages/groups/data/group_model.dart';
 import 'package:deun/pages/expenses/data/expense_category.dart';
@@ -82,7 +81,7 @@ class _GroupStatisticsPageState extends ConsumerState<GroupStatisticsPage> {
                             crossAxisAlignment: CrossAxisAlignment.stretch,
                             children: [
                               Text(
-                                  "${DateFormat("MMMM yyyy").format(_selectedMonth?.start ?? data.months.last.start)}: ${toCurrency(_selectedMonth?.total ?? data.months.last.total)}",
+                                  "${DateFormat("MMMM yyyy").format(_selectedMonth?.start ?? data.months.last.start)}: ${AppLocalizations.of(context)!.toCurrency(_selectedMonth?.total ?? data.months.last.total)}",
                                   style: Theme.of(context).textTheme.titleMedium),
                               SizedBox(
                                 height: 260,
@@ -264,7 +263,7 @@ class _GroupStatisticsPageState extends ConsumerState<GroupStatisticsPage> {
                                         category.getIcon(),
                                       ),
                                       title: Text(category.getDisplayName(localizations)),
-                                      trailing: Text(toCurrency(item.total)),
+                                      trailing: Text(AppLocalizations.of(context)!.toCurrency(item.total)),
                                       onTap: () {
                                         showModalBottomSheet(
                                           context: context,

@@ -30,16 +30,6 @@ String toHumanDateString(String? dateTimeIn) {
   return format.format(DateTime.parse(dateTimeIn));
 }
 
-String toCurrency(double value) {
-  final NumberFormat numFormat = NumberFormat('###,##0.00', 'en_US');
-  return "€${numFormat.format(value)}";
-}
-
-String toNumber(double value) {
-  final NumberFormat numFormat = NumberFormat('###,##0.00', 'en_US');
-  return numFormat.format(value);
-}
-
 String formatDate(String? dateString, [BuildContext? context]) {
   if (dateString == null) return '';
   final parsed = DateTime.parse(dateString);

@@ -24,43 +24,37 @@ void main() {
     });
   });
 
-  group('toCurrency', () {
-    test('formats simple amount', () {
-      expect(toCurrency(12.5), '€12.50');
+  group('roundCurrency', () {
+    test('rounds drift from addition to exact cents', () {
+      expect(roundCurrency(0.1 + 0.2), 0.3);
     });
 
-    test('formats with thousands separator', () {
-      expect(toCurrency(1234.56), '€1,234.56');
+    test('rounds repeating thirds to cents', () {
+      expect(roundCurrency(100 / 3), 33.33);
+      expect(roundCurrency(200 / 3), 66.67);
     });
 
-    test('formats zero', () {
-      expect(toCurrency(0), '€0.00');
+    test('keeps exact values unchanged', () {
+      expect(roundCurrency(12.34), 12.34);
     });
 
-    test('formats negative', () {
-      expect(toCurrency(-12.5), '€-12.50');
-    });
-
-    test('formats large amount', () {
-      expect(toCurrency(123456.78), '€123,456.78');
+    test('rounds negative values', () {
+      expect(roundCurrency(-200 / 3), -66.67);
     });
   });
 
-  group('toNumber', () {
-    test('formats simple number', () {
-      expect(toNumber(12.5), '12.50');
+  group('escapeHtml', () {
+    test('escapes html-relevant characters', () {
+      expect(escapeHtml('<script>alert("x&y")</script>'),
+          '&lt;script&gt;alert(&quot;x&amp;y&quot;)&lt;/script&gt;');
     });
 
-    test('formats with thousands separator', () {
-      expect(toNumber(1234.56), '1,234.56');
+    test('null becomes empty string', () {
+      expect(escapeHtml(null), '');
     });
 
-    test('formats zero', () {
-      expect(toNumber(0), '0.00');
-    });
-
-    test('formats negative', () {
-      expect(toNumber(-12.5), '-12.50');
+    test('plain text passes through', () {
+      expect(escapeHtml('Hello World'), 'Hello World');
     });
   });
 

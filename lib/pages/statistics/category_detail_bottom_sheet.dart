@@ -1,4 +1,3 @@
-import 'package:deun/helper/helper.dart';
 import 'package:deun/pages/expenses/data/expense_category.dart';
 import 'package:deun/pages/statistics/statistics_models.dart';
 import 'package:deun/pages/statistics/provider/statistics_notifiers.dart';
@@ -153,7 +152,7 @@ class CategoryDetailBottomSheet extends ConsumerWidget {
                               ],
                             ),
                             trailing: Text(
-                              toCurrency(expense.amount),
+                              AppLocalizations.of(context)!.toCurrency(expense.amount),
                               style: Theme.of(context).textTheme.titleMedium?.copyWith(
                                     fontWeight: FontWeight.w600,
                                   ),
