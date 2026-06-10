@@ -34,7 +34,7 @@ class StatisticsMonthDetailBottomSheet extends ConsumerWidget {
             const SizedBox(height: 12),
             state.when(
               loading: () => const Center(child: CircularProgressIndicator()),
-              error: (e, st) => Text(e.toString()),
+              error: (e, st) => Text(AppLocalizations.of(context)!.errorLoadingData),
               data: (list) {
                 if (list.isEmpty) {
                   return Text(AppLocalizations.of(context)!.statisticsNoExpenses);

@@ -80,8 +80,12 @@ class ExpenseListNotifier extends _$ExpenseListNotifier with RealtimeNotifierMix
   Future<void> loadMoreEntries(String groupId) async {
     if (!_hasMore || state.isLoading) return;
 
-    _offset += pageSize;
-    final newExpenses = await ExpenseRepository.fetchData(groupId, _offset, _offset + pageSize - 1);
+    // Advance the offset only after a successful fetch so a failed request
+    // doesn't silently skip a page on the next attempt.
+    final nextOffset = _offset + pageSize;
+    final newExpenses = await ExpenseRepository.fetchData(groupId, nextOffset, nextOffset + pageSize - 1);
+    if (!ref.mounted) return;
+    _offset = nextOffset;
 
     if (newExpenses.isEmpty) {
       _hasMore = false;
@@ -89,7 +93,9 @@ class ExpenseListNotifier extends _$ExpenseListNotifier with RealtimeNotifierMix
     }
 
     state = state.whenData((expenses) {
-      return [...expenses, ...newExpenses];
+      // Realtime inserts can shift pages — drop anything already in the list.
+      final existingIds = expenses.map((e) => e.id).toSet();
+      return [...expenses, ...newExpenses.where((e) => !existingIds.contains(e.id))];
     });
   }
 }

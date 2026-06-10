@@ -95,17 +95,17 @@ These can produce **wrong balances or corrupted data** in a money-splitting app.
 ## Phase 3 — Performance
 
 ### 3.1 Realtime events trigger full refetches
-- `lib/pages/expenses/provider/expense_list.dart:26-61`: each realtime event refetches the expense via `fetchDetail` — N+1 under bulk updates. Build the model from `payload.newRecord` where possible.
-- `lib/pages/groups/provider/group_detail.dart:22-23`: reloads the whole group detail on *any* change without checking `payload.newRecord['group_id'] == groupId`.
-- `lib/pages/friends/provider/friendship_list.dart`: reloads all friendships and recalculates shared amounts across all groups on any group change.
-- **Plan:** filter events by ID, prefer payload-based patches, debounce bursts. Also: unify the three different realtime-update strategies (refetch vs. optimistic vs. hybrid) into one documented pattern.
+- OPEN — `lib/pages/expenses/provider/expense_list.dart`: each realtime event refetches the expense via `fetchDetail` (the `expense_update_checker` payload doesn't carry full expense data, so a payload-based patch needs schema work).
+- ~~group_detail reloads on any change without group filtering~~ — **finding was wrong**: the channel already uses `PostgresChangeFilter(eq, 'group_id', groupId)`.
+- ~~friendship_list over-fetches on every group change~~ — **mostly mitigated already**: reloads are debounced (2s) and the three fetches run in parallel with `keepAlive`. Remaining improvement is server-side aggregation of shared amounts.
+- OPEN — unify the realtime-update strategies (refetch vs. optimistic) into one documented pattern.
 
 ### 3.2 Pagination state bugs
-- `lib/pages/expenses/provider/expense_list.dart:70-76`: `_offset`/`_hasMore` are mutable fields outside Riverpod state; `reload()` doesn't reset them → after refresh, pagination can be stuck. Move pagination into the notifier state and reset on reload.
+- ✅ DONE (corrected scope) — `reload()` already derived `_hasMore` correctly; the real bugs were `loadMoreEntries` advancing `_offset` even when the fetch failed (skipping a page on retry) and appending without dedup when realtime inserts shift pages. Both fixed.
 
 ### 3.3 Statistics queries duplicated
-- `lib/pages/statistics/provider/statistics_notifiers.dart:64,113,150`: three notifiers each call `ExpenseRepository.fetchRange` for the same month → 3 identical queries when opening details. Introduce one shared month-expenses provider the others derive from.
-- `lib/pages/statistics/group_statistics_page.dart:146-163`: bar groups rebuilt in `build()`; memoize or wrap chart in `RepaintBoundary`.
+- ✅ DONE — new shared `monthExpensesProvider(groupId, monthStart, monthEnd)`; member-totals, category-totals and category-details all derive from it, so opening a month detail fires one query instead of three.
+- OPEN — `group_statistics_page.dart`: bar groups rebuilt in `build()`; memoize or wrap chart in `RepaintBoundary`.
 
 ### 3.4 Client-side computation that belongs server-side
 - `lib/pages/groups/data/group_model.dart:59-68`: shares summary recomputed on every fetch; `lib/pages/expenses/data/expense_model.dart:43-60`: per-member share statistic recomputed for every expense in the list (O(entries×members)). Compute in SQL views/RPCs or cache.
@@ -121,7 +121,8 @@ These can produce **wrong balances or corrupted data** in a money-splitting app.
 ## Phase 4 — Usability / UX
 
 ### 4.1 Error & empty states
-- Raw exceptions shown to users: `group_statistics_page.dart:57-58` (`Text(e.toString())`), `friend_accept_page.dart:74-80` (raw PG errors). Map to localized, actionable messages with a retry button.
+- ✅ DONE (statistics) — raw `e.toString()` displays in `group_statistics_page.dart` and `month_detail_bottom_sheet.dart` replaced with localized message + retry button on the main page.
+- OPEN — `friend_accept_page.dart:74-80` still surfaces raw PG errors.
 - Receipt scanner (`receipt_scanner_sheet.dart:47-66`): on parse failure the photo and OCR result are discarded with a generic error — add retry and a "continue manually with OCR text pre-filled" fallback, plus a timeout on the parser call.
 
 ### 4.2 Destructive-action confirmations
@@ -193,6 +194,6 @@ Also: expand `README.md` (currently 3 lines) with setup/architecture; keep `QUES
 | 2 | ✅ DONE — Phase 0 money math: rounding at boundaries, settlement iteration guard + 17 tests, cent-exact split validation, amount>0 validators, payBackAll per-group amount bug fix | 2–4 days |
 | 3 | ✅ DONE — Phase 1 security: QR email fallback removed, contact-form HTML escaping + error propagation, OAuth IDs/VAPID env-overridable, stale Firebase client removed (headers infeasible on GitHub Pages — needs CDN) | 1–2 days |
 | 4 | Phase 0.2 transactional RPCs + migrations in repo | 2–3 days |
-| 5 | Phase 3 performance (realtime filtering, pagination state, stats dedup) | 2–3 days |
+| 5 | ✅ MOSTLY DONE — Phase 3 performance: stats query dedup via shared provider, pagination offset/dedup fixes, statistics error states localized with retry (group_detail filtering + friendship debounce were already in place) | 2–3 days |
 | 6 | Phase 4 UX polish + de translations + locale-aware currency | 2–3 days |
 | 7 | Phase 5 test buildout to ~60% on critical paths | ongoing |

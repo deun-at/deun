@@ -1,12 +1,21 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../groups/data/group_repository.dart';
+import '../../expenses/data/expense_model.dart';
 import '../../expenses/data/expense_repository.dart';
 import '../../expenses/data/expense_category.dart';
 import '../statistics_models.dart';
 
 // Necessary for code-generation to work
 part 'statistics_notifiers.g.dart';
+
+/// Single shared fetch per (group, month range). The member-totals,
+/// category-totals and category-details providers all derive from this so
+/// opening a month detail fires one database query instead of three.
+@riverpod
+Future<List<Expense>> monthExpenses(Ref ref, String groupId, DateTime monthStart, DateTime monthEnd) async {
+  return await ExpenseRepository.fetchRange(groupId, monthStart, monthEnd);
+}
 
 @riverpod
 class GroupMonthlyTotalsNotifier extends _$GroupMonthlyTotalsNotifier {
@@ -61,7 +70,7 @@ class GroupMonthMemberTotalsNotifier extends _$GroupMonthMemberTotalsNotifier {
   }
 
   Future<List<MemberMonthTotal>> _load(GroupMonthMemberTotalsArgs args) async {
-    final expenses = await ExpenseRepository.fetchRange(args.groupId, args.monthStart, args.monthEnd);
+    final expenses = await ref.watch(monthExpensesProvider(args.groupId, args.monthStart, args.monthEnd).future);
 
     final Map<String, MemberMonthTotal> byMember = {};
     for (final expense in expenses) {
@@ -110,7 +119,7 @@ class GroupMonthCategoryTotalsNotifier extends _$GroupMonthCategoryTotalsNotifie
   }
 
   Future<List<CategoryMonthTotal>> _load(GroupMonthCategoryTotalsArgs args) async {
-    final expenses = await ExpenseRepository.fetchRange(args.groupId, args.monthStart, args.monthEnd);
+    final expenses = await ref.watch(monthExpensesProvider(args.groupId, args.monthStart, args.monthEnd).future);
 
     final Map<String, double> byCategory = {};
     for (final expense in expenses) {
@@ -147,7 +156,7 @@ class CategoryExpenseDetailsNotifier extends _$CategoryExpenseDetailsNotifier {
   }
 
   Future<List<CategoryExpenseDetail>> _load(CategoryExpenseDetailsArgs args) async {
-    final expenses = await ExpenseRepository.fetchRange(args.groupId, args.monthStart, args.monthEnd);
+    final expenses = await ref.watch(monthExpensesProvider(args.groupId, args.monthStart, args.monthEnd).future);
 
     // Filter expenses by category
     final categoryExpenses = expenses.where((expense) {

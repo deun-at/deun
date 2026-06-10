@@ -55,7 +55,19 @@ class _GroupStatisticsPageState extends ConsumerState<GroupStatisticsPage> {
           body: SafeArea(
             child: state.when(
               loading: () => const Center(child: CircularProgressIndicator()),
-              error: (e, st) => Center(child: Text(e.toString())),
+              error: (e, st) => Center(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(AppLocalizations.of(context)!.errorLoadingData),
+                    const SizedBox(height: 12),
+                    FilledButton.tonal(
+                      onPressed: () => ref.invalidate(groupMonthlyTotalsProvider(widget.group.id)),
+                      child: Text(AppLocalizations.of(context)!.retry),
+                    ),
+                  ],
+                ),
+              ),
               data: (data) {
                 return SingleChildScrollView(
                   child: Column(
@@ -231,7 +243,7 @@ class _GroupStatisticsPageState extends ConsumerState<GroupStatisticsPage> {
                             const SizedBox(height: 12),
                             detailsState.when(
                               loading: () => const Center(child: ShimmerCardList(height: 56, listEntryLength: 3)),
-                              error: (e, st) => Text(e.toString()),
+                              error: (e, st) => Text(AppLocalizations.of(context)!.errorLoadingData),
                               data: (list) {
                                 if (list.isEmpty) {
                                   return CardListTile(
