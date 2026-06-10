@@ -26,8 +26,8 @@ class _NativeAdBlockState extends State<NativeAdBlock> {
           maxHeight: 100,
         ),
         child: Padding(
-          padding: EdgeInsets.only(left: 5, right: 5),
-          child: (_nativeAdIsLoaded && _nativeAd != null) ? AdWidget(ad: _nativeAd!) : SizedBox(),
+          padding: const EdgeInsets.only(left: 5, right: 5),
+          child: (_nativeAdIsLoaded && _nativeAd != null) ? AdWidget(ad: _nativeAd!) : const SizedBox(),
         ),
       ),
     );
@@ -43,7 +43,7 @@ class _NativeAdBlockState extends State<NativeAdBlock> {
   void _loadAd() {
     _nativeAd = NativeAd(
       adUnitId: widget.adUnitId,
-      request: AdRequest(),
+      request: const AdRequest(),
       listener: NativeAdListener(
         onAdLoaded: (Ad ad) {
           debugPrint('$NativeAd loaded.');

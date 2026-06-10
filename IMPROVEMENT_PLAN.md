@@ -68,10 +68,10 @@ These can produce **wrong balances or corrupted data** in a money-splitting app.
 ## Phase 2 — Stability & Error Handling
 
 ### 2.1 Auth flows swallow errors
-- `lib/auth_gate.dart:78-81`: `.catchError((_) => [null, null])` turns *any* network/server error into "no user found" → user is wrongly routed to onboarding. Log + show retry UI.
-- `lib/pages/auth/sign_in.dart:50-61`: `SupaSocialsAuth`/`SupaEmailAuth` have no error callbacks → OAuth failures are silent. Add error handlers with snackbars.
-- `lib/pages/auth/onboarding_screen.dart:55-66`: every exception maps to "username taken". Differentiate `PostgrestException` from network errors.
-- `lib/pages/auth/onboarding_screen.dart:70`: remove the nested `MaterialApp` (breaks theme inheritance).
+- ✅ DONE — `lib/auth_gate.dart:78-81`: `.catchError((_) => [null, null])` hid *any* network/server error. Now logged; full retry UI still open.
+- ~~`lib/pages/auth/sign_in.dart`: SupaSocialsAuth/SupaEmailAuth no error callbacks~~ — **finding was wrong**: the supabase_auth_ui widgets show a default error snackbar when `onError` is null. No action needed.
+- ✅ DONE — `lib/pages/auth/onboarding_screen.dart:55-66`: every exception mapped to "username taken". Now differentiates `PostgrestException` from other errors.
+- `lib/pages/auth/onboarding_screen.dart:70`: nested `MaterialApp` — **cannot simply be removed**: AuthGate is the app root and every top-level screen (login, splash, onboarding, navigation) builds its own `MaterialApp`. Proper fix is hoisting a single shared `MaterialApp` above AuthGate (structural refactor).
 
 ### 2.2 BuildContext / ref used across async gaps
 - `lib/navigation.dart:393-408` (`_handleMessage`): context used after `await` with no mounted check.
@@ -192,7 +192,7 @@ Also: expand `README.md` (currently 3 lines) with setup/architecture; keep `QUES
 
 | Order | Work | Effort |
 |---|---|---|
-| 1 | Quick wins: SearchView dispose, mounted checks, lint rules, OAuth error callbacks, PayPal launch try/catch, remove nested MaterialApp, CI test gate | ~1 day |
+| 1 | ✅ DONE — Quick wins: SearchView dispose, mounted checks + async-gap guards in navigation.dart, lint rules (`unawaited_futures`, `use_build_context_synchronously`, const lints + 104 auto-fixes), PayPal launch try/catch, onboarding error differentiation, VAPID key to constants (env-overridable), CI test gate + PR workflow + pinned Flutter 3.41.9 | ~1 day |
 | 2 | Phase 0 money math + validation + settlement tests | 2–4 days |
 | 3 | Phase 1 security items (QR email, HTML escape, env config, headers) | 1–2 days |
 | 4 | Phase 0.2 transactional RPCs + migrations in repo | 2–3 days |

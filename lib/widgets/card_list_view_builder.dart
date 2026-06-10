@@ -82,7 +82,7 @@ class CardListView extends StatelessWidget {
       itemCount: spacerItemCount,
       itemBuilder: (context, index) {
         if (addSpacer == true && index == spacerItemCount - 1) {
-          return SizedBox(height: 80);
+          return const SizedBox(height: 80);
         }
 
         return _itemBuilder(context, index, finalItemCount, color);
@@ -133,8 +133,8 @@ class CardListTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final Radius big = Radius.circular(28);
-    final Radius small = Radius.circular(8);
+    const Radius big = Radius.circular(28);
+    const Radius small = Radius.circular(8);
 
     Radius top = small;
     Radius bottom = small;

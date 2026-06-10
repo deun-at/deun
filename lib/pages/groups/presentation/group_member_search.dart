@@ -217,7 +217,7 @@ class _GroupMemberSearchState extends State<GroupMemberSearch> {
       searchController: _searchAnchorController,
       viewHintText: AppLocalizations.of(context)!.groupMemberSelectionEmpty,
       viewLeading: IconButton(
-        icon: Icon(Icons.check),
+        icon: const Icon(Icons.check),
         onPressed: () {
           Navigator.of(context).pop();
         },
@@ -271,7 +271,7 @@ class _GroupMemberSearchState extends State<GroupMemberSearch> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Padding(
-              padding: EdgeInsets.only(top: 10, left: 16),
+              padding: const EdgeInsets.only(top: 10, left: 16),
               child: Text(
                 _searchAnchorController.text.isEmpty
                     ? AppLocalizations.of(context)!.groupMemberSelectionTitle

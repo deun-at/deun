@@ -66,7 +66,7 @@ void showSnackBar(BuildContext context, String message) {
   final messenger = ScaffoldMessenger.of(context);
   SnackBar snackBar = SnackBar(
     content: Text(message),
-    duration: Duration(seconds: 2),
+    duration: const Duration(seconds: 2),
   );
 
   messenger.hideCurrentSnackBar();

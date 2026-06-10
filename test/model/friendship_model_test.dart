@@ -32,19 +32,19 @@ void main() {
     });
 
     test('shareAmount below 0.01 is treated as zero', () {
-      final amount = 0.005;
+      const amount = 0.005;
       final normalized = amount.abs() < 0.01 ? 0.0 : amount;
       expect(normalized, 0.0);
     });
 
     test('shareAmount at 0.01 is kept', () {
-      final amount = 0.01;
+      const amount = 0.01;
       final normalized = amount.abs() < 0.01 ? 0.0 : amount;
       expect(normalized, 0.01);
     });
 
     test('negative shareAmount below -0.01 threshold is normalized', () {
-      final amount = -0.009;
+      const amount = -0.009;
       final normalized = amount.abs() < 0.01 ? 0.0 : amount;
       expect(normalized, 0.0);
     });

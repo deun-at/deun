@@ -254,7 +254,7 @@ class _NavigationScreenState extends ConsumerState<NavigationScreen> with Widget
                         path: 'privacy-policy',
                         parentNavigatorKey: _rootNavigatorKey,
                         builder: (context, state) {
-                          return PrivacyPolicy();
+                          return const PrivacyPolicy();
                         },
                       ),
                       // child route
@@ -262,7 +262,7 @@ class _NavigationScreenState extends ConsumerState<NavigationScreen> with Widget
                         path: 'contact',
                         parentNavigatorKey: _rootNavigatorKey,
                         builder: (context, state) {
-                          return Contact();
+                          return const Contact();
                         },
                       ),
                     ]),
@@ -292,23 +292,24 @@ class _NavigationScreenState extends ConsumerState<NavigationScreen> with Widget
       errorBuilder: (context, state) {
         return Scaffold(
             appBar: AppBar(
-              title: Text('Page not found'),
+              title: const Text('Page not found'),
             ),
-            body: Center(child: Text('Page not found')));
+            body: const Center(child: Text('Page not found')));
       },
     );
   }
 
   Future<void> _initUserLocale() async {
     //initialize Prefered Language
-    final user = await supabase
-        .from("user")
-        .select("*")
-        .eq("email", supabase.auth.currentUser!.email ?? '')
-        .single();
+    final email = supabase.auth.currentUser?.email;
+    if (email == null) return;
 
-    if (user["locale"] != null) {
-      ref.read(localeProvider.notifier).setLocale(Locale(user["locale"]));
+    final user = await supabase.from("user").select("locale").eq("email", email).maybeSingle();
+
+    if (!mounted) return;
+
+    if (user?["locale"] != null) {
+      ref.read(localeProvider.notifier).setLocale(Locale(user!["locale"]));
     }
   }
 
@@ -338,27 +339,26 @@ class _NavigationScreenState extends ConsumerState<NavigationScreen> with Widget
         final apnsToken = await FirebaseMessaging.instance.getAPNSToken();
         if (apnsToken != null) {
           // APNS token is available, make FCM plugin API requests...
-          _handlePush();
+          await _handlePush();
         }
       } else {
-        _handlePush();
+        await _handlePush();
       }
     }
   }
 
-  void _handlePush() async {
-    final fcmToken = await FirebaseMessaging.instance.getToken(
-        vapidKey:
-            "BL4YZRDAw8gBPt37GNhz6ub5UxTtDUdjERYzFOgOI2ZdCqwwBToztXtL9Wj0QwqDfKe4CoBQjcjSP54OG3fjFvE");
+  Future<void> _handlePush() async {
+    final fcmToken = await FirebaseMessaging.instance.getToken(vapidKey: kFcmVapidKey);
 
-    if (fcmToken != null) {
+    final userId = supabase.auth.currentUser?.id;
+    if (fcmToken != null && userId != null) {
       try {
         await supabase.from('device_tokens').upsert({
-          'user_id': supabase.auth.currentUser!.id, // Replace with your user ID field
+          'user_id': userId,
           'token': fcmToken,
         });
       } catch (e) {
-        debugPrint('error: $e');
+        debugPrint('Device token upsert failed: $e');
       }
     }
 
@@ -371,7 +371,7 @@ class _NavigationScreenState extends ConsumerState<NavigationScreen> with Widget
     // If the message also contains a data property with a "type" of "chat",
     // navigate to a chat screen
     if (initialMessage != null) {
-      _handleMessage(initialMessage);
+      unawaited(_handleMessage(initialMessage));
     }
 
     // Also handle any interaction when the app is in the background via a
@@ -379,32 +379,46 @@ class _NavigationScreenState extends ConsumerState<NavigationScreen> with Widget
     FirebaseMessaging.onMessageOpenedApp.listen(_handleMessage);
 
     FirebaseMessaging.instance.onTokenRefresh.listen((fcmToken) {
+      final userId = supabase.auth.currentUser?.id;
+      if (userId == null) return;
       supabase.from('device_tokens').upsert({
-        'user_id': supabase.auth.currentUser!.id, // Replace with your user ID field
+        'user_id': userId,
         'token': fcmToken,
+      }).catchError((e) {
+        debugPrint('Device token refresh upsert failed: $e');
       });
       // Note: This callback is fired at each app startup and whenever a new
       // token is generated.
     }).onError((err) {
-      // Error getting token.
+      debugPrint('FCM token refresh failed: $err');
     });
   }
 
-  void _handleMessage(RemoteMessage message) async {
-    switch (message.data['type']) {
-      case 'group':
-        Group group = await GroupRepository.fetchDetail(message.data['expense_id']);
-        navigateToGroup(_rootNavigatorKey.currentContext!, group);
-        break;
-      case 'expense':
-        Expense expense = await ExpenseRepository.fetchDetail(message.data['expense_id']);
-        navigateToExpense(_rootNavigatorKey.currentContext!, expense);
-        break;
-      case 'friendship':
-        navigateToFriends(_rootNavigatorKey.currentContext!);
-        break;
-      default:
-        break;
+  Future<void> _handleMessage(RemoteMessage message) async {
+    try {
+      switch (message.data['type']) {
+        case 'group':
+          Group group = await GroupRepository.fetchDetail(message.data['expense_id']);
+          final context = _rootNavigatorKey.currentContext;
+          if (context == null || !context.mounted) return;
+          navigateToGroup(context, group);
+          break;
+        case 'expense':
+          Expense expense = await ExpenseRepository.fetchDetail(message.data['expense_id']);
+          final context = _rootNavigatorKey.currentContext;
+          if (context == null || !context.mounted) return;
+          navigateToExpense(context, expense);
+          break;
+        case 'friendship':
+          final context = _rootNavigatorKey.currentContext;
+          if (context == null || !context.mounted) return;
+          navigateToFriends(context);
+          break;
+        default:
+          break;
+      }
+    } catch (e) {
+      debugPrint('Failed to handle push notification navigation: $e');
     }
   }
 
@@ -501,10 +515,10 @@ class _NavigationScreenState extends ConsumerState<NavigationScreen> with Widget
       supportedLocales: AppLocalizations.supportedLocales,
       localeResolutionCallback: (locale, supportedLocales) {
         if (locale == null) {
-          return Locale('en');
+          return const Locale('en');
         }
 
-        return supportedLocales.contains(locale) ? locale : Locale('en');
+        return supportedLocales.contains(locale) ? locale : const Locale('en');
       },
     );
   }
@@ -535,27 +549,6 @@ class _ScaffoldWithNestedNavigationState
       // using the initialLocation parameter of goBranch.
       initialLocation: index == widget.navigationShell.currentIndex,
     );
-  }
-
-  @override
-  void initState() {
-    super.initState();
-
-    FirebaseMessaging.onMessage.listen((RemoteMessage message) {
-      // if (message.data['type'] == 'expense') {
-      //   ExpenseRepository.fetchDetail(message.data['expense_id']).then((expense) {
-      //     // ignore: use_build_context_synchronously
-      //     showMaterialBanner(context, '${message.notification!.title}\n${message.notification!.body}',
-      //         () => navigateToExpense(context, expense));
-      //   });
-      // } else if (message.data['type'] == 'friendship') {
-      //   showMaterialBanner(
-      //       // ignore: use_build_context_synchronously
-      //       context,
-      //       '${message.notification!.title}\n${message.notification!.body}',
-      //       () => navigateToFriends(context));
-      // }
-    });
   }
 
   @override

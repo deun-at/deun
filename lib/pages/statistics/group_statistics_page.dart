@@ -65,7 +65,7 @@ class _GroupStatisticsPageState extends ConsumerState<GroupStatisticsPage> {
                         isTop: true,
                         isBottom: true,
                         child: Padding(
-                          padding: EdgeInsetsGeometry.fromLTRB(16, 8, 8, 8),
+                          padding: const EdgeInsetsGeometry.fromLTRB(16, 8, 8, 8),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.stretch,
                             children: [
@@ -93,7 +93,7 @@ class _GroupStatisticsPageState extends ConsumerState<GroupStatisticsPage> {
 
                                     return BarChart(
                                       BarChartData(
-                                        gridData: FlGridData(show: false),
+                                        gridData: const FlGridData(show: false),
                                         borderData: FlBorderData(show: false),
                                         titlesData: FlTitlesData(
                                           bottomTitles: AxisTitles(
@@ -102,7 +102,7 @@ class _GroupStatisticsPageState extends ConsumerState<GroupStatisticsPage> {
                                               getTitlesWidget: (value, meta) {
                                                 final idx = value.toInt();
                                                 if (idx < 0 || idx >= pageMonths.length) {
-                                                  return SizedBox.shrink();
+                                                  return const SizedBox.shrink();
                                                 }
                                                 final d = pageMonths[idx].start;
                                                 return SideTitleWidget(
@@ -124,7 +124,7 @@ class _GroupStatisticsPageState extends ConsumerState<GroupStatisticsPage> {
                                                     child: Text(meta.formattedValue),
                                                   );
                                                 } else {
-                                                  return SizedBox.shrink();
+                                                  return const SizedBox.shrink();
                                                 }
                                               },
                                             ),
@@ -136,7 +136,7 @@ class _GroupStatisticsPageState extends ConsumerState<GroupStatisticsPage> {
                                               getTitlesWidget: (value, meta) {
                                                 return SideTitleWidget(
                                                   meta: meta,
-                                                  child: Text(""),
+                                                  child: const Text(""),
                                                 );
                                               },
                                               reservedSize: 10,
@@ -170,7 +170,7 @@ class _GroupStatisticsPageState extends ConsumerState<GroupStatisticsPage> {
                                             getTooltipItem: (group, groupIndex, rod, rodIndex) {
                                               return BarTooltipItem(
                                                 "",
-                                                TextStyle(color: Colors.transparent),
+                                                const TextStyle(color: Colors.transparent),
                                               );
                                             },
                                           ),
@@ -219,7 +219,7 @@ class _GroupStatisticsPageState extends ConsumerState<GroupStatisticsPage> {
                               enabled: false,
                               minTileHeight: 1,
                               title: Padding(
-                                padding: EdgeInsetsGeometry.only(top: 10),
+                                padding: const EdgeInsetsGeometry.only(top: 10),
                                 child: Text(
                                   AppLocalizations.of(context)!.statisticsCategories(
                                     DateFormat("MMMM yyyy").format(selectedBucket.start),

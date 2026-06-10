@@ -2,6 +2,13 @@ import 'package:flutter/material.dart';
 
 const String kWebAppBaseUrl = 'https://app.deun.app';
 
+/// Public VAPID key for web push. Overridable at build time so it can be
+/// rotated without a code change.
+const String kFcmVapidKey = String.fromEnvironment(
+  'FCM_VAPID_KEY',
+  defaultValue: 'BL4YZRDAw8gBPt37GNhz6ub5UxTtDUdjERYzFOgOI2ZdCqwwBToztXtL9Wj0QwqDfKe4CoBQjcjSP54OG3fjFvE',
+);
+
 enum ColorSeed {
   baseColor('Teal', Colors.teal),
   indigo('Indigo', Colors.indigo),

@@ -79,7 +79,7 @@ class CategoryDetailBottomSheet extends ConsumerWidget {
                   ),
                 ),
                 state.when(
-                  loading: () => SliverToBoxAdapter(
+                  loading: () => const SliverToBoxAdapter(
                     child: ShimmerCardList(
                       height: 60,
                       listEntryLength: 8,

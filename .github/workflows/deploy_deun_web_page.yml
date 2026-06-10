@@ -20,10 +20,14 @@ jobs:
         uses: actions/checkout@v4
 
       # Step 2: Set up Flutter
+      # Pinned version: keeps builds reproducible and avoids breakage when a
+      # new stable release is incompatible with locked dependencies.
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
         with:
           channel: stable
+          flutter-version: 3.41.9
+          cache: true
 
       # Step 3: Install dependencies
       - name: Install Flutter Dependencies
@@ -33,33 +37,34 @@ jobs:
       - name: Run Flutter Analyze
         run: flutter analyze --no-fatal-infos
 
-      # Step 5: Add Environment Variables
+      # Step 5: Run Flutter Tests
+      - name: Run Flutter Tests
+        run: flutter test
+
+      # Step 6: Add Environment Variables
       - name: Add Environment Variables
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
         run: |
           mkdir .env_flutter
+          printf 'SUPABASE_URL=%s\nSUPABASE_ANON_KEY=%s\n' "$SUPABASE_URL" "$SUPABASE_ANON_KEY" > .env_flutter/development.env
 
-          # Create the development.env file within the folder
-          touch ".env_flutter/development.env"
-
-          # Add content to the Env file
-          echo "SUPABASE_URL=${{ secrets.SUPABASE_URL }}" >> .env_flutter/development.env
-          echo "SUPABASE_ANON_KEY=${{ secrets.SUPABASE_ANON_KEY }}" >> .env_flutter/development.env
-
-      # Step 6: Build Flutter Web
+      # Step 7: Build Flutter Web
       - name: Build Flutter Web
         run: flutter build web --base-href / --release --dart-define-from-file .env_flutter/development.env
-      
-      # Step 7: Add CNAME for custom domain
+
+      # Step 8: Add CNAME for custom domain
       - name: Add CNAME for custom domain
         run: echo "app.deun.app" > build/web/CNAME
 
-      # Step 8: Add github run_number
+      # Step 9: Add github run_number
       - name: Add github run_number
         run: |
           touch "build/web/version.txt"
           echo "${{ github.run_number }}" >> build/web/version.txt
-      
-      # Step 9: Configure SSH
+
+      # Step 10: Configure SSH
       - name: Configure SSH
         run: |
           mkdir -p ~/.ssh
@@ -67,7 +72,7 @@ jobs:
           chmod 600 ~/.ssh/id_rsa
           ssh-keyscan github.com >> ~/.ssh/known_hosts
       
-      # Step 10: Deploy to GitHub Pages
+      # Step 11: Deploy to GitHub Pages
       - name: Deploy to GitHub Pages
         uses: JamesIves/github-pages-deploy-action@v4
         with:

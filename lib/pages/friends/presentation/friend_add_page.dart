@@ -86,7 +86,7 @@ class _FriendAddPageState extends ConsumerState<FriendAddPage> {
       showSnackBar(context,
           AppLocalizations.of(context)!.friendshipRequestSent(displayName));
       sendFriendRequestNotification(context, {userEmail});
-      ref.read(friendAddProvider.notifier).refresh();
+      unawaited(ref.read(friendAddProvider.notifier).refresh());
     } catch (e) {
       if (!mounted) return;
       showSnackBar(context, AppLocalizations.of(context)!.generalError);

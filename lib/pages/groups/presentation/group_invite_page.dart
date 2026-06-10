@@ -80,7 +80,7 @@ class GroupInvitePage extends StatelessWidget {
                               FilledButton.icon(
                                 onPressed: () async {
                                   final url = link.toString();
-                                  SharePlus.instance
+                                  await SharePlus.instance
                                       .share(ShareParams(text: AppLocalizations.of(context)!.friendQrShareLink(url)));
                                 },
                                 icon: const Icon(Icons.ios_share),

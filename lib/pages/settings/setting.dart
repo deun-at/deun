@@ -63,7 +63,7 @@ class _SettingState extends ConsumerState<Setting> {
                   padding: EdgeInsets.all(10),
                   child: SettingsProfileForm(),
                 ),
-                SizedBox(height: heightSpacing),
+                const SizedBox(height: heightSpacing),
                 _buildNavigationSection(context, heightSpacing),
               ],
             ),
@@ -116,7 +116,7 @@ class _SettingState extends ConsumerState<Setting> {
                 ),
               );
             } else {
-              return SizedBox();
+              return const SizedBox();
             }
           },
         ),
@@ -137,7 +137,7 @@ class _SettingState extends ConsumerState<Setting> {
             title: Text(AppLocalizations.of(context)!.deleteAccount),
             textColor: Theme.of(context).colorScheme.error,
             iconColor: Theme.of(context).colorScheme.error,
-            leading: Icon(Icons.delete),
+            leading: const Icon(Icons.delete),
             onTap: () async {
               _showDeleteUserDialog(context);
             },

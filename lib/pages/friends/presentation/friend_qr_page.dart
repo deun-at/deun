@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:deun/constants.dart';
 import 'package:deun/helper/helper.dart';
 import 'package:deun/main.dart';
@@ -83,7 +85,7 @@ class _FriendQrPageState extends State<FriendQrPage> {
     if (raw == null || raw.isEmpty) return;
 
     _handlingScan = true;
-    _cameraController.stop();
+    unawaited(_cameraController.stop());
     try {
       // Try to interpret as URI
       Uri? uri;
@@ -246,7 +248,7 @@ class _FriendQrPageState extends State<FriendQrPage> {
               FilledButton.icon(
                 onPressed: () async {
                   final url = link.toString();
-                  SharePlus.instance.share(ShareParams(text: AppLocalizations.of(context)!.friendQrShareLink(url)));
+                  await SharePlus.instance.share(ShareParams(text: AppLocalizations.of(context)!.friendQrShareLink(url)));
                 },
                 icon: const Icon(Icons.ios_share),
                 label: Text(AppLocalizations.of(context)!.share),

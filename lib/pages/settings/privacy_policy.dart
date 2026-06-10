@@ -14,7 +14,7 @@ class PrivacyPolicy extends StatelessWidget {
         title: Text(AppLocalizations.of(context)!.settingsPrivacyPolicy),
       ),
       body: Padding(
-        padding: EdgeInsets.only(bottom: 30),
+        padding: const EdgeInsets.only(bottom: 30),
         child: WebViewWidget(controller: controller),
       ),
     );

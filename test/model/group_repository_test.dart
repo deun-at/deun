@@ -4,7 +4,7 @@ import 'package:deun/pages/groups/data/group_repository.dart';
 void main() {
   group('GroupRepository.decodeGroupMembersString', () {
     test('parses valid JSON with multiple members', () {
-      final json =
+      const json =
           '[{"email":"a@b.com","display_name":"Alice"},{"email":"c@d.com","display_name":"Bob"}]';
 
       final result = GroupRepository.decodeGroupMembersString(json);
@@ -17,7 +17,7 @@ void main() {
     });
 
     test('parses single member', () {
-      final json = '[{"email":"solo@test.com","display_name":"Solo"}]';
+      const json = '[{"email":"solo@test.com","display_name":"Solo"}]';
 
       final result = GroupRepository.decodeGroupMembersString(json);
 
@@ -26,7 +26,7 @@ void main() {
     });
 
     test('preserves is_guest and is_guest_pending flags', () {
-      final json =
+      const json =
           '[{"email":"guest+1@guest.invalid","display_name":"Guest","is_guest":true,"is_guest_pending":false}]';
 
       final result = GroupRepository.decodeGroupMembersString(json);
@@ -36,7 +36,7 @@ void main() {
     });
 
     test('preserves pending guest entries', () {
-      final json =
+      const json =
           '[{"email":"","display_name":"New Guest","is_guest_pending":true}]';
 
       final result = GroupRepository.decodeGroupMembersString(json);
@@ -47,7 +47,7 @@ void main() {
     });
 
     test('handles members with extra fields gracefully', () {
-      final json =
+      const json =
           '[{"email":"a@b.com","display_name":"Alice","some_future_field":"value"}]';
 
       final result = GroupRepository.decodeGroupMembersString(json);
@@ -58,7 +58,7 @@ void main() {
     });
 
     test('handles members with missing optional fields', () {
-      final json = '[{"email":"a@b.com","display_name":"Alice"}]';
+      const json = '[{"email":"a@b.com","display_name":"Alice"}]';
 
       final result = GroupRepository.decodeGroupMembersString(json);
 

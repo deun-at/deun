@@ -107,7 +107,7 @@ class _GroupPaymentBottomSheetState extends ConsumerState<GroupPaymentBottomShee
               style: Theme.of(context).textTheme.bodyLarge!.copyWith(color: activeColor),
             ),
           ),
-          Divider(),
+          const Divider(),
           SimpleDialogOption(
             onPressed: () async {
               if (groupShare.paypalMe == null || groupShare.paypalMe!.isEmpty) {
@@ -155,7 +155,7 @@ class _GroupPaymentBottomSheetState extends ConsumerState<GroupPaymentBottomShee
               ],
             ),
           ),
-          Divider(),
+          const Divider(),
           SimpleDialogOption(
             onPressed: () async {
               try {
@@ -187,7 +187,7 @@ class _GroupPaymentBottomSheetState extends ConsumerState<GroupPaymentBottomShee
               ],
             ),
           ),
-          SizedBox(height: 10),
+          const SizedBox(height: 10),
           SimpleDialogOption(
             onPressed: () {
               Navigator.pop(context); // Close delete dialog

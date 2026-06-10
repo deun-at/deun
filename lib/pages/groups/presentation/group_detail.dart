@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:deun/helper/helper.dart';
@@ -46,7 +47,7 @@ class _GroupDetailState extends ConsumerState<GroupDetail> {
     _scrollController.addListener(_handleScroll);
 
     if (kIsWeb) {
-      _adBlock = SizedBox();
+      _adBlock = const SizedBox();
     } else {
       _adBlock = NativeAdBlock(
         adUnitId: Platform.isAndroid ? MobileAdMobs.androidExpenseList.value : MobileAdMobs.iosExpenseList.value,
@@ -248,11 +249,11 @@ class _GroupDetailState extends ConsumerState<GroupDetail> {
                     builder: (context) => const ReceiptScannerSheet(),
                   );
                   if (result != null && context.mounted) {
-                    GoRouter.of(context).push("/group/details/expense", extra: {
+                    unawaited(GoRouter.of(context).push("/group/details/expense", extra: {
                       'group': widget.group,
                       'expense': null,
                       'receiptResult': result,
-                    });
+                    }));
                   }
                 },
                 child: const Icon(Icons.document_scanner_outlined),
@@ -329,7 +330,7 @@ class _GroupDetailState extends ConsumerState<GroupDetail> {
             trailing: Text(formatDate(expense.expenseDate, context)),
             onTap: () async {
               controller.closeView("");
-              GoRouter.of(context).push("/group/details/expense", extra: {'group': group, 'expense': expense});
+              unawaited(GoRouter.of(context).push("/group/details/expense", extra: {'group': group, 'expense': expense}));
             },
           ),
         );

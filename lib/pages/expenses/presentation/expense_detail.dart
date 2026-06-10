@@ -401,7 +401,7 @@ class _ExpenseDetailState extends ConsumerState<ExpenseDetail> {
       ));
     } else {
       expenseActions.add(
-        Padding(padding: EdgeInsetsGeometry.only(right: 8), child: saveExpenseButton),
+        Padding(padding: const EdgeInsetsGeometry.only(right: 8), child: saveExpenseButton),
       );
     }
 
@@ -437,7 +437,7 @@ class _ExpenseDetailState extends ConsumerState<ExpenseDetail> {
                           decoration: InputDecoration(
                             border: InputBorder.none,
                             hintText: AppLocalizations.of(context)!.addExpenseTitle,
-                            contentPadding: EdgeInsets.only(left: 8, right: 8),
+                            contentPadding: const EdgeInsets.only(left: 8, right: 8),
                           ),
                           onChanged: (value) {
                             field.didChange(value);
@@ -469,7 +469,7 @@ class _ExpenseDetailState extends ConsumerState<ExpenseDetail> {
                               .bodyLarge!
                               .copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
                           hintText: AppLocalizations.of(context)!.addExpenseTitle,
-                          contentPadding: EdgeInsets.only(left: 8, right: 8),
+                          contentPadding: const EdgeInsets.only(left: 8, right: 8),
                         ),
                       ),
                       const SizedBox(height: spacing),
