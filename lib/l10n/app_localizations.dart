@@ -263,7 +263,7 @@ abstract class AppLocalizations {
   /// No description provided for @groupInviteLetFriendScan.
   ///
   /// In en, this message translates to:
-  /// **'Scanne diesen QR-Code, um der Gruppe beizutreten.'**
+  /// **'Scan this QR code to join the group.'**
   String get groupInviteLetFriendScan;
 
   /// No description provided for @groupInviteJoinTitle.

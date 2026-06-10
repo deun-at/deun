@@ -93,7 +93,8 @@ class AppLocalizationsDe extends AppLocalizations {
   String get groupInviteTitle => 'Freunde einladen';
 
   @override
-  String get groupInviteLetFriendScan => '';
+  String get groupInviteLetFriendScan =>
+      'Scanne diesen QR-Code, um der Gruppe beizutreten.';
 
   @override
   String get groupInviteJoinTitle => 'Gruppe beitreten';
@@ -721,11 +722,11 @@ class AppLocalizationsDe extends AppLocalizations {
   String get deleteAccountError => 'Fehler beim Löschen des Kontos.';
 
   @override
-  String get deleteAccountConfirmKeyword => 'DELETE';
+  String get deleteAccountConfirmKeyword => 'LÖSCHEN';
 
   @override
   String deleteAccountConfirmHint(String keyword) {
-    return 'Type $keyword to confirm';
+    return 'Gib $keyword ein, um zu bestätigen';
   }
 
   @override
