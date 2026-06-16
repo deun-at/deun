@@ -57,6 +57,11 @@ Build the reused pieces so screens compose them: `MemberAvatar` (+ ring/border),
 (tabular, semantic color), `BalancePill`, `AppSegmentedControl`, `SectionLabel`, `SoftCard`, `Stepper`,
 `SheetScaffold` (drag handle + warm surface), `ProgressBar`. Match `DESIGN_SPEC.md` radii/shadows/type.
 *Done:* a throwaway gallery route renders each in light+dark.
+✅ **done · 39b66ae** — 10 widgets under `lib/widgets/restyle/` (MemberAvatar, AvatarStack, MoneyText,
+BalancePill, AppSegmentedControl, SectionLabel, SoftCard, StepperControl, SheetScaffold, ProgressBar) +
+`lib/widgets/dev/widget_gallery_page.dart` at route `/dev/gallery`; 22 tests; analyze clean, 252 tests green.
+*v0:* SoftCard drops light shadow in dark; rings 2px; StepperControl uses GestureDetector (test-env shader);
+BalancePill tint α=0.14. *QA:* eyeball `/dev/gallery` in light+dark.
 
 ---
 
