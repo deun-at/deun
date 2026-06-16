@@ -24,6 +24,41 @@ class AppLocalizationsEn extends AppLocalizations {
   String get groupSectionSettled => 'Settled';
 
   @override
+  String homeGreeting(String name) {
+    return 'Hi, $name';
+  }
+
+  @override
+  String get homeOverallOwed => 'You\'re owed';
+
+  @override
+  String get homeOverallOwe => 'You owe';
+
+  @override
+  String get homeOverallSettled => 'You\'re all settled up';
+
+  @override
+  String get homeStatOwed => 'Owed';
+
+  @override
+  String get homeStatOwe => 'Owe';
+
+  @override
+  String get homeYourGroups => 'Your groups';
+
+  @override
+  String get commonNew => 'New';
+
+  @override
+  String get balanceOwed => 'You\'re owed';
+
+  @override
+  String get balanceOwe => 'You owe';
+
+  @override
+  String get balanceSettled => 'Settled up';
+
+  @override
   String get createGroup => 'Create group';
 
   @override

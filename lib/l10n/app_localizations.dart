@@ -128,6 +128,72 @@ abstract class AppLocalizations {
   /// **'Settled'**
   String get groupSectionSettled;
 
+  /// Greeting in the groups home header.
+  ///
+  /// In en, this message translates to:
+  /// **'Hi, {name}'**
+  String homeGreeting(String name);
+
+  /// Lead label on the overall-balance hero when the user has a net positive balance.
+  ///
+  /// In en, this message translates to:
+  /// **'You\'re owed'**
+  String get homeOverallOwed;
+
+  /// Lead label on the overall-balance hero when the user has a net negative balance.
+  ///
+  /// In en, this message translates to:
+  /// **'You owe'**
+  String get homeOverallOwe;
+
+  /// Lead label on the overall-balance hero when nothing is owed in either direction.
+  ///
+  /// In en, this message translates to:
+  /// **'You\'re all settled up'**
+  String get homeOverallSettled;
+
+  /// Stat-chip label on the hero for the total the user is owed.
+  ///
+  /// In en, this message translates to:
+  /// **'Owed'**
+  String get homeStatOwed;
+
+  /// Stat-chip label on the hero for the total the user owes.
+  ///
+  /// In en, this message translates to:
+  /// **'Owe'**
+  String get homeStatOwe;
+
+  /// Section header above the group cards.
+  ///
+  /// In en, this message translates to:
+  /// **'Your groups'**
+  String get homeYourGroups;
+
+  /// Short action label, e.g. create a new group.
+  ///
+  /// In en, this message translates to:
+  /// **'New'**
+  String get commonNew;
+
+  /// Balance lead label on a group card when the user is owed money.
+  ///
+  /// In en, this message translates to:
+  /// **'You\'re owed'**
+  String get balanceOwed;
+
+  /// Balance lead label on a group card when the user owes money.
+  ///
+  /// In en, this message translates to:
+  /// **'You owe'**
+  String get balanceOwe;
+
+  /// Balance lead label on a group card when the group is settled.
+  ///
+  /// In en, this message translates to:
+  /// **'Settled up'**
+  String get balanceSettled;
+
   /// No description provided for @createGroup.
   ///
   /// In en, this message translates to:

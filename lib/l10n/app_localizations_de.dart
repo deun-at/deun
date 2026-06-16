@@ -24,6 +24,41 @@ class AppLocalizationsDe extends AppLocalizations {
   String get groupSectionSettled => 'Abgeschlossen';
 
   @override
+  String homeGreeting(String name) {
+    return 'Hallo, $name';
+  }
+
+  @override
+  String get homeOverallOwed => 'Dir wird geschuldet';
+
+  @override
+  String get homeOverallOwe => 'Du schuldest';
+
+  @override
+  String get homeOverallSettled => 'Alles ausgeglichen';
+
+  @override
+  String get homeStatOwed => 'Geschuldet';
+
+  @override
+  String get homeStatOwe => 'Schuldest';
+
+  @override
+  String get homeYourGroups => 'Deine Gruppen';
+
+  @override
+  String get commonNew => 'Neu';
+
+  @override
+  String get balanceOwed => 'Dir wird geschuldet';
+
+  @override
+  String get balanceOwe => 'Du schuldest';
+
+  @override
+  String get balanceSettled => 'Ausgeglichen';
+
+  @override
   String get createGroup => 'Gruppe erstellen';
 
   @override

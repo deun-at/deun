@@ -12,6 +12,53 @@
   "@groupSectionFavorites": {},
   "groupSectionSettled": "Settled",
   "@groupSectionSettled": {},
+  "homeGreeting": "Hi, {name}",
+  "@homeGreeting": {
+    "description": "Greeting in the groups home header.",
+    "placeholders": {
+      "name": { "type": "String" }
+    }
+  },
+  "homeOverallOwed": "You're owed",
+  "@homeOverallOwed": {
+    "description": "Lead label on the overall-balance hero when the user has a net positive balance."
+  },
+  "homeOverallOwe": "You owe",
+  "@homeOverallOwe": {
+    "description": "Lead label on the overall-balance hero when the user has a net negative balance."
+  },
+  "homeOverallSettled": "You're all settled up",
+  "@homeOverallSettled": {
+    "description": "Lead label on the overall-balance hero when nothing is owed in either direction."
+  },
+  "homeStatOwed": "Owed",
+  "@homeStatOwed": {
+    "description": "Stat-chip label on the hero for the total the user is owed."
+  },
+  "homeStatOwe": "Owe",
+  "@homeStatOwe": {
+    "description": "Stat-chip label on the hero for the total the user owes."
+  },
+  "homeYourGroups": "Your groups",
+  "@homeYourGroups": {
+    "description": "Section header above the group cards."
+  },
+  "commonNew": "New",
+  "@commonNew": {
+    "description": "Short action label, e.g. create a new group."
+  },
+  "balanceOwed": "You're owed",
+  "@balanceOwed": {
+    "description": "Balance lead label on a group card when the user is owed money."
+  },
+  "balanceOwe": "You owe",
+  "@balanceOwe": {
+    "description": "Balance lead label on a group card when the user owes money."
+  },
+  "balanceSettled": "Settled up",
+  "@balanceSettled": {
+    "description": "Balance lead label on a group card when the group is settled."
+  },
   "createGroup": "Create group",
   "@createGroup": {},
   "editGroup": "Edit group",

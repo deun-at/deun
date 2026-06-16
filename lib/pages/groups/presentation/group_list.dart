@@ -1,19 +1,23 @@
 import 'dart:io';
 
-import 'package:deun/widgets/card_list_view_builder.dart';
 import 'package:deun/widgets/empty_list_widget.dart';
+import 'package:deun/widgets/restyle/member_avatar.dart';
+import 'package:deun/widgets/restyle/money_text.dart';
+import 'package:deun/widgets/restyle/section_label.dart';
+import 'package:deun/widgets/theme_builder.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:deun/l10n/app_localizations.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 import '../../../constants.dart';
+import '../../../provider.dart';
 import '../../../widgets/native_ad_block.dart';
 import '../../../widgets/shimmer_card_list.dart';
 import '../provider/group_list.dart';
 import 'group_list_item.dart';
+import 'group_list_view_model.dart';
 import '../data/group_model.dart';
 
 class GroupList extends ConsumerStatefulWidget {
@@ -44,42 +48,58 @@ class _GroupListState extends ConsumerState<GroupList> {
     await ref.read(groupListProvider.notifier).reload();
   }
 
+  void _toggleFavorite(String groupId) {
+    ref.read(groupListProvider.notifier).toggleFavorite(groupId);
+  }
+
   @override
   Widget build(BuildContext context) {
     final groupList = ref.watch(groupListProvider);
+    final l10n = AppLocalizations.of(context)!;
 
     return Scaffold(
-      body: NestedScrollView(
-        controller: _scrollController,
-        headerSliverBuilder: (context, innerBoxIsScrolled) => [
-          SliverAppBar.medium(
-            title: Text(
-              AppLocalizations.of(context)!.groups,
-              style: GoogleFonts.robotoSerif(
-                textStyle: Theme.of(context)
-                    .textTheme
-                    .titleLarge!
-                    .copyWith(fontWeight: FontWeight.w900),
+      body: SafeArea(
+        bottom: false,
+        child: switch (groupList) {
+          AsyncData(:final value) => value.isEmpty
+              ? RefreshIndicator(
+                  onRefresh: updateGroupList,
+                  child: ListView(
+                    children: [
+                      _GreetingHeader(),
+                      const SizedBox(height: 8),
+                      EmptyListWidget(
+                        icon: Icons.group_outlined,
+                        label: l10n.groupNoEntries,
+                        onRefresh: updateGroupList,
+                      ),
+                    ],
+                  ),
+                )
+              : _buildList(value),
+          AsyncError() => RefreshIndicator(
+              onRefresh: updateGroupList,
+              child: ListView(
+                children: [
+                  _GreetingHeader(),
+                  const SizedBox(height: 8),
+                  EmptyListWidget(
+                    icon: Icons.group_outlined,
+                    label: l10n.groupEntriesError,
+                    onRefresh: updateGroupList,
+                  ),
+                ],
               ),
             ),
-          ),
-        ],
-        body: switch (groupList) {
-          AsyncData(:final value) => value.isEmpty
-              ? EmptyListWidget(
-                  icon: Icons.group_outlined,
-                  label: AppLocalizations.of(context)!.groupNoEntries,
-                  onRefresh: () => updateGroupList(),
-                )
-              : _buildSectionedList(value),
-          AsyncError() => EmptyListWidget(
-              icon: Icons.group_outlined,
-              label: AppLocalizations.of(context)!.groupNoEntries,
-              onRefresh: () async {
-                await updateGroupList();
-              },
+          _ => Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                _GreetingHeader(),
+                const Expanded(
+                  child: ShimmerCardList(height: 100, listEntryLength: 8),
+                ),
+              ],
             ),
-          _ => const ShimmerCardList(height: 100, listEntryLength: 8),
         },
       ),
       floatingActionButton: FloatingActionButton.extended(
@@ -87,125 +107,237 @@ class _GroupListState extends ConsumerState<GroupList> {
         onPressed: () {
           GoRouter.of(context).push("/group/edit");
         },
-        label: Text(AppLocalizations.of(context)!.addNewGroup),
+        label: Text(l10n.addNewGroup),
         icon: const Icon(Icons.add),
       ),
     );
   }
 
-  Widget _buildSectionedList(List<Group> allGroups) {
-    final favoriteGroups = allGroups.where((g) => g.isFavorite).toList();
-    final activeGroups = allGroups
-        .where((g) => !g.isFavorite && g.totalShareAmount.abs() >= 0.01)
-        .toList();
-    final settledGroups = allGroups
-        .where((g) => !g.isFavorite && g.totalShareAmount.abs() < 0.01)
-        .toList();
-
-    final colorScheme = Theme.of(context).colorScheme;
+  Widget _buildList(List<Group> allGroups) {
+    final l10n = AppLocalizations.of(context)!;
+    final sorted = sortGroups(allGroups, isFavorite: (g) => g.isFavorite);
+    final overall = aggregateOverallBalance(allGroups);
 
     return RefreshIndicator(
-      onRefresh: () => updateGroupList(),
+      onRefresh: updateGroupList,
       child: ListView(
-        padding: EdgeInsets.zero,
+        controller: _scrollController,
+        padding: const EdgeInsets.fromLTRB(16, 0, 16, 110),
         children: [
-          if (favoriteGroups.isNotEmpty) ...[
-            _buildSectionHeader(
-              AppLocalizations.of(context)!.groupSectionFavorites,
-              Icons.star,
-              Colors.amber,
+          _GreetingHeader(),
+          const SizedBox(height: 12),
+          _OverallBalanceHero(overall: overall),
+          const SizedBox(height: 24),
+          SectionLabel(
+            l10n.homeYourGroups,
+            trailing: TextButton.icon(
+              onPressed: () => GoRouter.of(context).push("/group/edit"),
+              icon: const Icon(Icons.add, size: 18),
+              label: Text(l10n.commonNew),
+              style: TextButton.styleFrom(
+                visualDensity: VisualDensity.compact,
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              ),
             ),
-            GroupCardListView(
-              key: const ValueKey('favorites_section'),
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              groupList: favoriteGroups,
-              itemCount: favoriteGroups.length,
-              itemBuilder: (context, index) {
-                Group group = favoriteGroups[index];
-                return GroupListItem(
-                  key: ValueKey(group.id),
-                  group: group,
-                  isFavorite: true,
-                  onFavoriteToggle: () => _toggleFavorite(group.id),
-                );
-              },
+          ),
+          const SizedBox(height: 4),
+          for (final group in sorted)
+            GroupListItem(
+              key: ValueKey(group.id),
+              group: group,
+              isFavorite: group.isFavorite,
+              onFavoriteToggle: () => _toggleFavorite(group.id),
             ),
-            const SizedBox(height: 12),
+          if (_adBlock != null) ...[
+            const SizedBox(height: 8),
+            _adBlock!,
           ],
-          if (activeGroups.isNotEmpty) ...[
-            GroupCardListView(
-              key: const ValueKey('active_section'),
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              groupList: activeGroups,
-              itemCount: activeGroups.length,
-              itemBuilder: (context, index) {
-                Group group = activeGroups[index];
-                return GroupListItem(
-                  key: ValueKey(group.id),
-                  group: group,
-                  isFavorite: false,
-                  onFavoriteToggle: () => _toggleFavorite(group.id),
-                );
-              },
-            ),
-          ],
-          if (_adBlock != null)
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 4.0),
-              child: _adBlock!,
-            ),
-          if (settledGroups.isNotEmpty) ...[
-            _buildSectionHeader(
-              AppLocalizations.of(context)!.groupSectionSettled,
-              Icons.check_circle_outlined,
-              colorScheme.outline,
-            ),
-            CardListView(
-              key: const ValueKey('settled_section'),
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              color: colorScheme.surfaceContainerLowest,
-              itemCount: settledGroups.length,
-              itemBuilder: (context, index) {
-                Group group = settledGroups[index];
-                return GroupListItem(
-                  key: ValueKey(group.id),
-                  group: group,
-                  isFavorite: false,
-                  isMuted: true,
-                  onFavoriteToggle: () => _toggleFavorite(group.id),
-                );
-              },
-            ),
-          ],
-          const SizedBox(height: 80),
         ],
       ),
     );
   }
+}
 
-  Widget _buildSectionHeader(String title, IconData icon, Color iconColor) {
+/// Greeting line ("Hi, {name}") with the current user's avatar on the right.
+class _GreetingHeader extends ConsumerWidget {
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final textTheme = Theme.of(context).textTheme;
+    final l10n = AppLocalizations.of(context)!;
+    final userAsync = ref.watch(userDetailProvider);
+
+    final user = userAsync.value;
+    final name = (user?.displayName.isNotEmpty ?? false)
+        ? user!.displayName
+        : (user?.firstName ?? '');
+
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 16, 16, 4),
+      padding: const EdgeInsets.fromLTRB(16, 14, 16, 0),
       child: Row(
         children: [
-          Icon(icon, size: 18, color: iconColor),
-          const SizedBox(width: 8),
-          Text(
-            title,
-            style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                  color: Theme.of(context).colorScheme.outline,
-                  fontWeight: FontWeight.w600,
+          Expanded(
+            child: Text(
+              name.isEmpty ? l10n.groups : l10n.homeGreeting(name),
+              style: textTheme.headlineMedium,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+          if (user != null)
+            MemberAvatar(
+              name: name.isEmpty ? user.email : name,
+              colorKey: user.email,
+              isYou: true,
+              radius: 20,
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Dark "ink" hero summarizing the user's overall balance across groups:
+/// a big "you're owed / you owe €X" plus owed/owe stat chips.
+class _OverallBalanceHero extends StatelessWidget {
+  const _OverallBalanceHero({required this.overall});
+
+  final OverallBalance overall;
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final colorScheme = Theme.of(context).colorScheme;
+    final semantic = Theme.of(context).extension<SemanticColors>()!;
+    final l10n = AppLocalizations.of(context)!;
+
+    // Dark hero surface: ink card in light, a lighter raised card in dark
+    // (DESIGN_SPEC "Dark hero card": #16181A light / #262824 dark).
+    final Color heroSurface = isDark ? colorScheme.surfaceBright : colorScheme.onSurface;
+    final Color onHero = isDark ? colorScheme.onSurface : colorScheme.surface;
+    final Color onHeroMuted = onHero.withValues(alpha: 0.7);
+
+    final net = overall.net;
+    final bool settled = net.abs() < 0.01;
+
+    final String leadLabel;
+    final MoneySemantic semanticMode;
+    if (settled) {
+      leadLabel = l10n.homeOverallSettled;
+      semanticMode = MoneySemantic.neutral;
+    } else if (net > 0) {
+      leadLabel = l10n.homeOverallOwed;
+      semanticMode = MoneySemantic.positive;
+    } else {
+      leadLabel = l10n.homeOverallOwe;
+      semanticMode = MoneySemantic.negative;
+    }
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: heroSurface,
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: isDark
+            ? null
+            : const [
+                BoxShadow(
+                  color: Color(0x80141812),
+                  blurRadius: 30,
+                  offset: Offset(0, 18),
+                  spreadRadius: -18,
                 ),
+              ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            leadLabel,
+            style: Theme.of(context).textTheme.labelLarge?.copyWith(color: onHeroMuted),
+          ),
+          const SizedBox(height: 6),
+          if (settled)
+            Text(
+              l10n.toCurrency(0),
+              style: Theme.of(context).textTheme.displaySmall?.copyWith(color: onHero),
+            )
+          else
+            MoneyText(
+              net.abs(),
+              semantic: semanticMode,
+              style: Theme.of(context).textTheme.displaySmall,
+            ),
+          const SizedBox(height: 18),
+          Row(
+            children: [
+              Expanded(
+                child: _HeroStat(
+                  label: l10n.homeStatOwed,
+                  amount: overall.owed,
+                  semantic: MoneySemantic.positive,
+                  onHero: onHero,
+                  onHeroMuted: onHeroMuted,
+                  background: semantic.success.withValues(alpha: isDark ? 0.18 : 0.16),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: _HeroStat(
+                  label: l10n.homeStatOwe,
+                  amount: overall.owe,
+                  semantic: MoneySemantic.negative,
+                  onHero: onHero,
+                  onHeroMuted: onHeroMuted,
+                  background: semantic.danger.withValues(alpha: isDark ? 0.18 : 0.16),
+                ),
+              ),
+            ],
           ),
         ],
       ),
     );
   }
+}
 
-  void _toggleFavorite(String groupId) {
-    ref.read(groupListProvider.notifier).toggleFavorite(groupId);
+/// One owed/owe stat chip inside the hero.
+class _HeroStat extends StatelessWidget {
+  const _HeroStat({
+    required this.label,
+    required this.amount,
+    required this.semantic,
+    required this.onHero,
+    required this.onHeroMuted,
+    required this.background,
+  });
+
+  final String label;
+  final double amount;
+  final MoneySemantic semantic;
+  final Color onHero;
+  final Color onHeroMuted;
+  final Color background;
+
+  @override
+  Widget build(BuildContext context) {
+    final textTheme = Theme.of(context).textTheme;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      decoration: BoxDecoration(
+        color: background,
+        borderRadius: BorderRadius.circular(14),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(label, style: textTheme.labelMedium?.copyWith(color: onHeroMuted)),
+          const SizedBox(height: 4),
+          MoneyText(
+            amount,
+            semantic: semantic,
+            style: textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
+          ),
+        ],
+      ),
+    );
   }
 }
