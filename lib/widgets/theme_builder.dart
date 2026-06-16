@@ -1,5 +1,85 @@
 import 'package:flutter/material.dart';
 
+/// Semantic colors that M3's [ColorScheme] does not model (success / danger /
+/// warning, plus the ledger payback-chip pair). Provided via a
+/// [ThemeExtension] so they resolve through `Theme.of(context)` and flip with
+/// brightness, keeping widgets free of hard-coded hex.
+@immutable
+class SemanticColors extends ThemeExtension<SemanticColors> {
+  const SemanticColors({
+    required this.success,
+    required this.danger,
+    required this.warning,
+    required this.paybackBackground,
+    required this.paybackText,
+  });
+
+  /// Owed / positive (e.g. "you're owed", lent, settled).
+  final Color success;
+
+  /// Owe / negative (e.g. "you owe", delete, over-allocated).
+  final Color danger;
+
+  /// Unclaimed / amber callouts (e.g. favorite star).
+  final Color warning;
+
+  /// Background for the ledger payback / payment chip.
+  final Color paybackBackground;
+
+  /// Text/foreground for the ledger payback / payment chip.
+  final Color paybackText;
+
+  /// Light-mode values (DESIGN_SPEC "Color tokens").
+  static const SemanticColors light = SemanticColors(
+    success: Color(0xFF1A8F5E),
+    danger: Color(0xFFD85A47),
+    warning: Color(0xFFC98A2E),
+    paybackBackground: Color(0xFFEAF6EF),
+    paybackText: Color(0xFF2F7A55),
+  );
+
+  /// Dark-mode values: the lighter on-dark semantic variants so they stay
+  /// legible on dark surfaces (DESIGN_SPEC "Dark mode palette"). The payback
+  /// pair has no spec dark value; bg/text are a v0 derivation toward the
+  /// dark surface family.
+  static const SemanticColors dark = SemanticColors(
+    success: Color(0xFF4ED99B),
+    danger: Color(0xFFF2937F),
+    warning: Color(0xFFF2C97F),
+    paybackBackground: Color(0xFF1E3A2C),
+    paybackText: Color(0xFF5FA882),
+  );
+
+  @override
+  SemanticColors copyWith({
+    Color? success,
+    Color? danger,
+    Color? warning,
+    Color? paybackBackground,
+    Color? paybackText,
+  }) {
+    return SemanticColors(
+      success: success ?? this.success,
+      danger: danger ?? this.danger,
+      warning: warning ?? this.warning,
+      paybackBackground: paybackBackground ?? this.paybackBackground,
+      paybackText: paybackText ?? this.paybackText,
+    );
+  }
+
+  @override
+  SemanticColors lerp(ThemeExtension<SemanticColors>? other, double t) {
+    if (other is! SemanticColors) return this;
+    return SemanticColors(
+      success: Color.lerp(success, other.success, t)!,
+      danger: Color.lerp(danger, other.danger, t)!,
+      warning: Color.lerp(warning, other.warning, t)!,
+      paybackBackground: Color.lerp(paybackBackground, other.paybackBackground, t)!,
+      paybackText: Color.lerp(paybackText, other.paybackText, t)!,
+    );
+  }
+}
+
 class ThemeBuilder extends StatelessWidget {
   const ThemeBuilder({super.key, required this.colorValue, required this.builder});
 
@@ -54,6 +134,9 @@ ThemeData getThemeData(BuildContext context, Color seedColor, Brightness brightn
   }
 
   return ThemeData(
+    extensions: <ThemeExtension<dynamic>>[
+      brightness == Brightness.dark ? SemanticColors.dark : SemanticColors.light,
+    ],
     colorScheme: ColorScheme.fromSeed(seedColor: seedColor, brightness: brightness).copyWith(
       surface: surface,
       surfaceBright: surfaceBright,
