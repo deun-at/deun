@@ -304,5 +304,11 @@
   "reminderNotificationTitle": "{displayName} erinnert dich",
   "reminderNotificationBody": "Du schuldest {amount} in {groupName}",
   "dateToday": "Heute",
-  "dateYesterday": "Gestern"
+  "dateYesterday": "Gestern",
+  "groupDetailSettleUp": "Begleichen",
+  "groupDetailTapToClaim": "Zum Beanspruchen tippen",
+  "groupDetailYouClaimed": "Du hast {amount} beansprucht",
+  "groupDetailUnclaimed": "{amount} offen",
+  "groupDetailAllClaimed": "alles beansprucht",
+  "groupDetailPaymentTag": "ZAHLUNG"
 }

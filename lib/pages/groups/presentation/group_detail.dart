@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:deun/helper/helper.dart';
+import 'package:deun/main.dart';
 import 'package:deun/pages/expenses/data/expense_model.dart';
 import 'package:deun/pages/expenses/data/expense_repository.dart';
 import 'package:deun/pages/groups/data/reminder_repository.dart';
@@ -21,7 +22,10 @@ import '../../expenses/presentation/receipt_scanner_sheet.dart';
 import '../provider/group_detail.dart';
 
 import '../../../widgets/card_list_view_builder.dart';
+import '../../../widgets/restyle/avatar_stack.dart';
+import '../../../widgets/restyle/money_text.dart';
 import '../../../widgets/theme_builder.dart';
+import '../../groups/data/group_member_model.dart';
 import '../data/group_model.dart';
 import 'group_share_widget.dart';
 
@@ -170,10 +174,17 @@ class _GroupDetailState extends ConsumerState<GroupDetail> {
                           }
 
                           return Padding(
-                              padding: const EdgeInsets.fromLTRB(10.0, 5.0, 10.0, 5.0),
-                              child: GroupShareWidget(
-                                group: groupDetail,
-                                onRemind: (email) async {
+                            padding: const EdgeInsets.fromLTRB(16.0, 6.0, 16.0, 6.0),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                _GroupBalanceHero(group: groupDetail),
+                                const SizedBox(height: 14),
+                                _GroupQuickActions(group: groupDetail),
+                                const SizedBox(height: 14),
+                                GroupShareWidget(
+                                  group: groupDetail,
+                                  onRemind: (email) async {
                                   try {
                                     final lastReminder = await ReminderRepository.getLastReminder(groupDetail.id, email);
                                     if (lastReminder != null && DateTime.now().difference(lastReminder).inHours < 24) {
@@ -200,14 +211,17 @@ class _GroupDetailState extends ConsumerState<GroupDetail> {
                                         SnackBar(content: Text(AppLocalizations.of(context)!.reminderSent(displayName))),
                                       );
                                     }
-                                  } catch (e) {
-                                    debugPrint('Reminder failed for $email: $e');
-                                    if (context.mounted) {
-                                      showSnackBar(context, AppLocalizations.of(context)!.generalError);
+                                    } catch (e) {
+                                      debugPrint('Reminder failed for $email: $e');
+                                      if (context.mounted) {
+                                        showSnackBar(context, AppLocalizations.of(context)!.generalError);
+                                      }
                                     }
-                                  }
-                                },
-                              ));
+                                  },
+                                ),
+                              ],
+                            ),
+                          );
                         },
                       ),
                     ],
@@ -335,6 +349,135 @@ class _GroupDetailState extends ConsumerState<GroupDetail> {
           ),
         );
       },
+    );
+  }
+}
+
+/// Color hero summarizing the group balance: lead label + amount, the member
+/// avatar stack, and a "Settle up" button into the payment screen.
+///
+/// The surrounding [ThemeBuilder] has already re-tinted the theme by
+/// `Group.colorValue`, so the hero's tint comes from `colorScheme.primary*`.
+class _GroupBalanceHero extends StatelessWidget {
+  const _GroupBalanceHero({required this.group});
+
+  final Group group;
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final l10n = AppLocalizations.of(context)!;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    // Group-tinted hero surface from the (already re-themed) color scheme.
+    final Color heroSurface = isDark ? colorScheme.primaryContainer : colorScheme.primary;
+    final Color onHero = isDark ? colorScheme.onPrimaryContainer : colorScheme.onPrimary;
+    final Color onHeroMuted = onHero.withValues(alpha: 0.7);
+
+    final net = group.totalShareAmount;
+    final bool settled = net.abs() < 0.005;
+
+    final String leadLabel;
+    final MoneySemantic semanticMode;
+    if (settled) {
+      leadLabel = l10n.balanceSettled;
+      semanticMode = MoneySemantic.neutral;
+    } else if (net > 0) {
+      leadLabel = l10n.balanceOwed;
+      semanticMode = MoneySemantic.neutral;
+    } else {
+      leadLabel = l10n.balanceOwe;
+      semanticMode = MoneySemantic.neutral;
+    }
+
+    final members = group.groupMembers
+        .map((GroupMember m) => AvatarStackMember(
+              name: m.displayName,
+              colorKey: m.email,
+              isYou: m.email == supabase.auth.currentUser?.email,
+            ))
+        .toList();
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: heroSurface,
+        borderRadius: BorderRadius.circular(24),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            leadLabel,
+            style: Theme.of(context).textTheme.labelLarge?.copyWith(color: onHeroMuted),
+          ),
+          const SizedBox(height: 6),
+          MoneyText(
+            settled ? 0 : net.abs(),
+            semantic: semanticMode,
+            style: Theme.of(context).textTheme.displaySmall?.copyWith(color: onHero),
+          ),
+          const SizedBox(height: 18),
+          Row(
+            children: [
+              if (members.isNotEmpty)
+                AvatarStack(
+                  members: members,
+                  ringColor: heroSurface,
+                ),
+              const Spacer(),
+              FilledButton.icon(
+                onPressed: () {
+                  GoRouter.of(context).push("/group/details/payment", extra: {'group': group});
+                },
+                icon: const Icon(Icons.credit_card, size: 18),
+                label: Text(l10n.groupDetailSettleUp),
+                style: FilledButton.styleFrom(
+                  backgroundColor: onHero,
+                  foregroundColor: heroSurface,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// The Statistics + Invite quick-action row beneath the hero.
+class _GroupQuickActions extends StatelessWidget {
+  const _GroupQuickActions({required this.group});
+
+  final Group group;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
+    return Row(
+      children: [
+        Expanded(
+          child: OutlinedButton.icon(
+            onPressed: () {
+              GoRouter.of(context).push("/group/details/statistics", extra: {'group': group});
+            },
+            icon: const Icon(Icons.bar_chart, size: 18),
+            label: Text(l10n.statisticsTitle),
+          ),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: OutlinedButton.icon(
+            onPressed: () {
+              GoRouter.of(context).push("/group/share", extra: {'group': group});
+            },
+            icon: const Icon(Icons.person_add_alt_1, size: 18),
+            label: Text(l10n.invite),
+          ),
+        ),
+      ],
     );
   }
 }

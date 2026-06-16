@@ -1138,4 +1138,40 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get dateYesterday => 'Yesterday';
+
+  @override
+  String get groupDetailSettleUp => 'Settle up';
+
+  @override
+  String get groupDetailTapToClaim => 'Tap to claim';
+
+  @override
+  String groupDetailYouClaimed(double amount) {
+    final intl.NumberFormat amountNumberFormat = intl.NumberFormat.currency(
+      locale: localeName,
+      decimalDigits: 2,
+      name: '€',
+    );
+    final String amountString = amountNumberFormat.format(amount);
+
+    return 'You claimed $amountString';
+  }
+
+  @override
+  String groupDetailUnclaimed(double amount) {
+    final intl.NumberFormat amountNumberFormat = intl.NumberFormat.currency(
+      locale: localeName,
+      decimalDigits: 2,
+      name: '€',
+    );
+    final String amountString = amountNumberFormat.format(amount);
+
+    return '$amountString unclaimed';
+  }
+
+  @override
+  String get groupDetailAllClaimed => 'all claimed';
+
+  @override
+  String get groupDetailPaymentTag => 'PAYMENT';
 }

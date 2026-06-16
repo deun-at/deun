@@ -1004,5 +1004,45 @@
   "dateToday": "Today",
   "@dateToday": {},
   "dateYesterday": "Yesterday",
-  "@dateYesterday": {}
+  "@dateYesterday": {},
+  "groupDetailSettleUp": "Settle up",
+  "@groupDetailSettleUp": {
+    "description": "Button in the group-detail hero that opens the settle-up / payment screen."
+  },
+  "groupDetailTapToClaim": "Tap to claim",
+  "@groupDetailTapToClaim": {
+    "description": "Pill on an itemized ledger row prompting the user to claim their items."
+  },
+  "groupDetailYouClaimed": "You claimed {amount}",
+  "@groupDetailYouClaimed": {
+    "description": "Shown on an itemized ledger row after the current user has claimed.",
+    "placeholders": {
+      "amount": {
+        "type": "double",
+        "format": "currency",
+        "optionalParameters": { "decimalDigits": 2, "name": "€" },
+        "example": "12.00"
+      }
+    }
+  },
+  "groupDetailUnclaimed": "{amount} unclaimed",
+  "@groupDetailUnclaimed": {
+    "description": "Meta line on an itemized ledger row showing the still-unclaimed amount.",
+    "placeholders": {
+      "amount": {
+        "type": "double",
+        "format": "currency",
+        "optionalParameters": { "decimalDigits": 2, "name": "€" },
+        "example": "8.00"
+      }
+    }
+  },
+  "groupDetailAllClaimed": "all claimed",
+  "@groupDetailAllClaimed": {
+    "description": "Meta line on an itemized ledger row when nothing is left unclaimed."
+  },
+  "groupDetailPaymentTag": "PAYMENT",
+  "@groupDetailPaymentTag": {
+    "description": "Trailing tag on a payback / settlement ledger row."
+  }
 }
