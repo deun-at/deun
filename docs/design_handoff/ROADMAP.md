@@ -38,6 +38,10 @@ Add a `ThemeExtension` for semantic colors (success `#1A8F5E`/`#4ED99B`, danger 
 `#C98A2E`, on-dark variants) and a deterministic member-avatar-color helper. Add the 6-swatch group palette as
 the group color-picker options.
 *Done:* helpers importable; a sample owed/owe label uses them and flips correctly in dark.
+✅ **done · 223fe2f** — `SemanticColors` ThemeExtension (success/danger/warning + payback pair, light+dark) in
+`theme_builder.dart`; `memberAvatarColor()` (stable FNV-1a hash) + `kMemberAvatarPalette` + `kGroupColorPalette`
+(6 swatches) in `constants.dart`; 12 tests incl. dark-flip; analyze clean, 225 tests green.
+*v0:* payback-dark pair `#1E3A2C`/`#5FA882` (no spec dark value); group tints omitted (hero tints via surface).
 
 **E0-T3 · Typography** · `lib/widgets/theme_builder.dart` + `pubspec.yaml`
 Add Bricolage Grotesque + Hanken Grotesk (`google_fonts` or bundled), set `textTheme` (Hanken body, Bricolage
