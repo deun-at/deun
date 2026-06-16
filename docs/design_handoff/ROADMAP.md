@@ -102,6 +102,10 @@ Create/Save); pure `selectedGroupSwatchIndex` helper; 8 tests; 9 en+de keys; ana
 **E1-T4 · Invite sheet** · `group_invite_page.dart`
 Group link + QR + Share, in the restyled `SheetScaffold`.
 *Deps:* E0-T4. *Route `/group/share`.*
+✅ **done · 871546a** — restyled `group_invite_page.dart` into `SheetScaffold` (drag handle, warm surface, title +
+close, QR on white card, copyable link row, sticky Share footer); link/QR/Share logic + `/group/share` route
+unchanged; 4 tests; 3 en+de keys; analyze clean, 292 green. *v0:* QR kept dark-on-white in dark mode (scannability).
+*QA:* sheet rise, QR scan, copy-link snackbar, Share in light+dark.
 
 ---
 
