@@ -1,4 +1,3 @@
-import 'package:deun/helper/helper.dart';
 import 'package:deun/l10n/app_localizations.dart';
 import 'package:deun/pages/statistics/provider/personal_statistics_notifiers.dart';
 import 'package:deun/pages/statistics/statistics_models.dart';
@@ -109,7 +108,7 @@ class _HeroCard extends StatelessWidget {
               Text(l10n.statisticsTotalSpend, style: theme.textTheme.labelMedium),
               const SizedBox(height: 2),
               Text(
-                toCurrency(state.totalShare),
+                l10n.toCurrency(state.totalShare),
                 style: theme.textTheme.displaySmall?.copyWith(
                   fontWeight: FontWeight.w700,
                   color: theme.colorScheme.onPrimaryContainer,
@@ -124,7 +123,7 @@ class _HeroCard extends StatelessWidget {
                       children: [
                         Text(l10n.statisticsMemberPaid, style: theme.textTheme.labelSmall),
                         const SizedBox(height: 2),
-                        Text(toCurrency(state.totalPaid),
+                        Text(l10n.toCurrency(state.totalPaid),
                             style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600)),
                       ],
                     ),
@@ -293,7 +292,7 @@ class _GroupsRanked extends StatelessWidget {
                               overflow: TextOverflow.ellipsis,
                             ),
                           ),
-                          Text(toCurrency(g.totalShare),
+                          Text(l10n.toCurrency(g.totalShare),
                               style: theme.textTheme.labelMedium?.copyWith(fontWeight: FontWeight.w600)),
                         ],
                       ),

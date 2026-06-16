@@ -1,4 +1,3 @@
-import 'package:deun/helper/helper.dart';
 import 'package:deun/l10n/app_localizations.dart';
 import 'package:deun/pages/statistics/provider/statistics_notifiers.dart';
 import 'package:deun/pages/statistics/statistics_models.dart';
@@ -40,7 +39,7 @@ class StatsSummarySection extends ConsumerWidget {
                           Text(l10n.statisticsTotalSpend, style: theme.textTheme.labelMedium),
                           const SizedBox(height: 2),
                           Text(
-                            toCurrency(s.total),
+                            l10n.toCurrency(s.total),
                             style: theme.textTheme.displaySmall?.copyWith(
                               fontWeight: FontWeight.w700,
                               color: theme.colorScheme.onPrimaryContainer,
@@ -65,9 +64,9 @@ class StatsSummarySection extends ConsumerWidget {
                 const SizedBox(height: 16),
                 Row(
                   children: [
-                    Expanded(child: _MiniStat(label: l10n.statisticsAvgPerMonth, value: toCurrency(s.avgPerMonth))),
+                    Expanded(child: _MiniStat(label: l10n.statisticsAvgPerMonth, value: l10n.toCurrency(s.avgPerMonth))),
                     Expanded(child: _MiniStat(label: l10n.statisticsExpenseCount, value: s.expenseCount.toString())),
-                    Expanded(child: _MiniStat(label: l10n.statisticsBiggestExpense, value: toCurrency(s.biggestExpense))),
+                    Expanded(child: _MiniStat(label: l10n.statisticsBiggestExpense, value: l10n.toCurrency(s.biggestExpense))),
                   ],
                 ),
               ],

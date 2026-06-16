@@ -1,4 +1,3 @@
-import 'package:deun/helper/helper.dart';
 import 'package:deun/l10n/app_localizations.dart';
 import 'package:deun/pages/statistics/provider/statistics_notifiers.dart';
 import 'package:deun/pages/statistics/statistics_models.dart';
@@ -90,7 +89,7 @@ class _TrendLine extends StatelessWidget {
             getTooltipItems: (touchedSpots) => touchedSpots.map((s) {
               final bucket = months[s.x.toInt()];
               return LineTooltipItem(
-                '${DateFormat('MMM yyyy').format(bucket.start)}\n${toCurrency(bucket.total)}',
+                '${DateFormat('MMM yyyy').format(bucket.start)}\n${AppLocalizations.of(context)!.toCurrency(bucket.total)}',
                 theme.textTheme.labelMedium!.copyWith(color: theme.colorScheme.onInverseSurface),
               );
             }).toList(),
