@@ -17,6 +17,7 @@ import 'package:deun/pages/settings/contact.dart';
 import 'package:deun/pages/settings/privacy_policy.dart';
 import 'package:deun/provider.dart';
 import 'helper/realtime_mixin.dart';
+import 'package:deun/widgets/dev/widget_gallery_page.dart';
 import 'package:deun/widgets/initialization_helper.dart';
 import 'package:deun/widgets/theme_builder.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
@@ -308,6 +309,13 @@ class _NavigationScreenState extends ConsumerState<NavigationScreen> with Widget
           path: '/update-password',
           pageBuilder: (context, state) => const NoTransitionPage(
             child: UpdatePassword(),
+          ),
+        ),
+        // Throwaway dev/QA route for the E0-T4 shared restyle widgets.
+        GoRoute(
+          path: '/dev/gallery',
+          pageBuilder: (context, state) => const NoTransitionPage(
+            child: WidgetGalleryPage(),
           ),
         ),
       ],
