@@ -83,6 +83,11 @@ Color hero (balance, member stack, Settle-up → `/group/details/payment`), Stat
 day-grouped ledger with the 3 row types (quick → read detail; itemized → Tap-to-Claim w/ accent bar + claim
 pill + claimer avatars + unclaimed meta; payback green row), empty state, Scan + Add-expense FABs.
 *Deps:* E1-T1. *Screen 7. (Claim row taps can stub until E3.)*
+✅ **done · b20f81f** — restyled `group_detail.dart` (color hero, Statistics/Invite actions) + `group_detail_list.dart`
+(day-grouped ledger, 3 row types) + new `group_ledger.dart` (pure `classifyLedgerRow`/`groupExpensesByDay`,
+unit-tested); pagination/realtime/routes preserved; 15 tests; 6 en+de keys; analyze clean, 280 green.
+*Row types:* payback=`isPaidBackRow`, itemized=`entries>1`, else quick. *Claim tap STUB→read-detail* (`TODO(E3)`).
+*QA:* hero tint, itemized claim pill/avatars, payback green row in light+dark.
 
 **E1-T3 · New / Edit group** · `group_detail_edit.dart`
 Name, color swatch row (retints icon, writes `colorValue`), member toggles + add-guest, Simplified/Detailed
