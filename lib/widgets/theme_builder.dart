@@ -19,36 +19,38 @@ class ThemeBuilder extends StatelessWidget {
 }
 
 ThemeData getThemeData(BuildContext context, Color seedColor, Brightness brightness) {
-  Color surface = const Color(0xffefedee);
-  Color surfaceBright = const Color(0xfffef7ff);
-  Color surfaceDim = const Color(0xffded8e1);
-  Color onSurface = const Color(0xff1d1d1d);
-  Color onSurfaceVariant = const Color(0xff494949);
-  Color surfaceContainerHighest = const Color(0xffe4e4e4);
-  Color surfaceContainerHigh = const Color(0xffebebeb);
-  Color surfaceContainer = const Color(0xfff2f2f2);
-  Color surfaceContainerLow = const Color(0xfff5f5f5);
-  Color surfaceContainerLowest = const Color(0xffffffff);
-  Color inverseSurface = const Color(0xff323232);
-  Color surfaceTint = const Color(0xff7a7a7a);
+  // Light: warm-neutral surfaces from the prototype palette.
+  Color surface = const Color(0xFFF4F3EF);
+  Color surfaceBright = const Color(0xFFFBFAF7);
+  Color surfaceDim = const Color(0xFFEAE8E1);
+  Color onSurface = const Color(0xFF16181A);
+  Color onSurfaceVariant = const Color(0xFF56524A);
+  Color surfaceContainerHighest = const Color(0xFFF0EEE8);
+  Color surfaceContainerHigh = const Color(0xFFEAE8E1);
+  Color surfaceContainer = const Color(0xFFF1EFE9);
+  Color surfaceContainerLow = const Color(0xFFFBFAF7);
+  Color surfaceContainerLowest = const Color(0xFFFFFFFF);
+  Color inverseSurface = const Color(0xFF2A2C28);
+  Color surfaceTint = const Color(0xFF7A7A7A);
 
-  Color appBarBackgroundColor = const Color(0xffefedee);
+  Color appBarBackgroundColor = const Color(0xFFFBFAF7);
 
   if (brightness == Brightness.dark) {
-    surface = const Color(0xff1f2021);
-    surfaceBright = const Color(0xfffef7ff);
-    surfaceDim = const Color(0xffded8e1);
-    onSurface = const Color(0xffe4e4e4);
-    onSurfaceVariant = const Color(0xffcacaca);
-    surfaceContainerHighest = const Color(0xff373737);
-    surfaceContainerHigh = const Color(0xff2c2c2c);
-    surfaceContainer = const Color(0xff222222);
-    surfaceContainerLow = const Color(0xff1d1d1d);
-    surfaceContainerLowest = const Color(0xff101010);
-    inverseSurface = const Color(0xffe4e4e4);
-    surfaceTint = const Color(0xffdddddd);
+    // Dark: warm near-black surfaces derived from the prototype palette.
+    surface = const Color(0xFF121311);
+    surfaceBright = const Color(0xFF262824);
+    surfaceDim = const Color(0xFF121311);
+    onSurface = const Color(0xFFECEBE6);
+    onSurfaceVariant = const Color(0xFF9A968C);
+    surfaceContainerHighest = const Color(0xFF373B35);
+    surfaceContainerHigh = const Color(0xFF2E302B);
+    surfaceContainer = const Color(0xFF262824);
+    surfaceContainerLow = const Color(0xFF1A1B19);
+    surfaceContainerLowest = const Color(0xFF1F211E);
+    inverseSurface = const Color(0xFFECEBE6);
+    surfaceTint = const Color(0xFFDDDDDD);
 
-    appBarBackgroundColor = const Color(0xff1f2021);
+    appBarBackgroundColor = const Color(0xFF1A1B19);
   }
 
   return ThemeData(
