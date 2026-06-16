@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:deun/helper/helper.dart';
 import 'package:deun/pages/groups/data/group_repository.dart';
 import 'package:deun/widgets/card_list_view_builder.dart';
@@ -57,7 +59,7 @@ class _GroupEditState extends ConsumerState<GroupEdit> {
                           if (context.mounted) {
                             if (newGroup != null) {
                               GoRouter.of(context).go("/group");
-                              GoRouter.of(context).push("/group/details", extra: {'group': newGroup});
+                              unawaited(GoRouter.of(context).push("/group/details", extra: {'group': newGroup}));
                             }
                           }
                         }
@@ -97,7 +99,7 @@ class _GroupEditState extends ConsumerState<GroupEdit> {
                           decoration: InputDecoration(
                             border: InputBorder.none,
                             hintText: AppLocalizations.of(context)!.addGroupTitle,
-                            contentPadding: EdgeInsets.only(left: 8, right: 8),
+                            contentPadding: const EdgeInsets.only(left: 8, right: 8),
                           ),
                           onChanged: (value) => field.didChange(value),
                         ),
@@ -110,21 +112,21 @@ class _GroupEditState extends ConsumerState<GroupEdit> {
                           return GroupMemberSearch(field: field);
                         },
                       ),
-                      SizedBox(height: 12),
+                      const SizedBox(height: 12),
                       CardListTile(
                         isTop: true,
                         isBottom: true,
                         child: FormBuilderSwitch(
                           name: "simplified_expenses",
                           title: Text(AppLocalizations.of(context)!.groupSimplifiedExpensesTitle),
-                          contentPadding: EdgeInsets.only(right: 10, left: 10, top: 5, bottom: 5),
-                          decoration: InputDecoration(
+                          contentPadding: const EdgeInsets.only(right: 10, left: 10, top: 5, bottom: 5),
+                          decoration: const InputDecoration(
                             border: InputBorder.none,
                             contentPadding: EdgeInsets.only(left: 8, right: 8),
                           ),
                         ),
                       ),
-                      SizedBox(height: 12),
+                      const SizedBox(height: 12),
                       if (widget.group != null) _buildGroupActions(context),
                     ],
                   ),
@@ -183,14 +185,14 @@ class _GroupEditState extends ConsumerState<GroupEdit> {
             },
           ),
         ),
-        SizedBox(height: 12),
+        const SizedBox(height: 12),
         CardListTile(
           isTop: true,
           isBottom: true,
           child: ListTile(
             textColor: Theme.of(context).colorScheme.error,
             iconColor: Theme.of(context).colorScheme.error,
-            leading: Icon(Icons.delete),
+            leading: const Icon(Icons.delete),
             title: Text(AppLocalizations.of(context)!.groupDeleteItemTitle),
             onTap: () => _showDeleteDialog(context),
           ),

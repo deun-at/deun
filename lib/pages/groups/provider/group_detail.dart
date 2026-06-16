@@ -20,7 +20,7 @@ class GroupDetailNotifier extends _$GroupDetailNotifier with RealtimeNotifierMix
       table: 'group_update_checker',
       filter: PostgresChangeFilter(type: PostgresChangeFilterType.eq, column: 'group_id', value: groupId),
       onEvent: (payload) async {
-        reload(groupId);
+        await reload(groupId);
       },
     );
 

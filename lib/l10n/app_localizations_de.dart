@@ -93,7 +93,8 @@ class AppLocalizationsDe extends AppLocalizations {
   String get groupInviteTitle => 'Freunde einladen';
 
   @override
-  String get groupInviteLetFriendScan => '';
+  String get groupInviteLetFriendScan =>
+      'Scanne diesen QR-Code, um der Gruppe beizutreten.';
 
   @override
   String get groupInviteJoinTitle => 'Gruppe beitreten';
@@ -178,6 +179,10 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get expenseEntryAmountValidationEmpty => 'Bitte gib einen Betrag ein!';
+
+  @override
+  String get expenseEntryAmountValidationZero =>
+      'Der Betrag muss größer als 0 sein!';
 
   @override
   String get expenseEntrySharesLable => 'Aufgeteilt zwischen';
@@ -717,6 +722,14 @@ class AppLocalizationsDe extends AppLocalizations {
   String get deleteAccountError => 'Fehler beim Löschen des Kontos.';
 
   @override
+  String get deleteAccountConfirmKeyword => 'LÖSCHEN';
+
+  @override
+  String deleteAccountConfirmHint(String keyword) {
+    return 'Gib $keyword ein, um zu bestätigen';
+  }
+
+  @override
   String get errorLoadingData => 'Fehler beim Laden der Daten!';
 
   @override
@@ -760,6 +773,9 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get generalError => 'Ein Fehler ist aufgetreten.';
+
+  @override
+  String get retry => 'Erneut versuchen';
 
   @override
   String get loading => 'Lädt...';

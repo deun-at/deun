@@ -109,7 +109,7 @@ class _ContactState extends State<StatefulWidget> {
                             onPressed: () async {
                               if (_formKey.currentState!.saveAndValidate()) {
                                 try {
-                                  sendContactMail(_formKey.currentState!.value);
+                                  await sendContactMail(_formKey.currentState!.value);
                                   if (context.mounted) {
                                     showSnackBar(context,
                                         AppLocalizations.of(context)!.contactSendSuccess);

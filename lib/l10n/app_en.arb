@@ -61,7 +61,7 @@
   "@groupCreateSuccess": {},
   "groupInviteTitle": "Invite Friends",
   "@groupInviteTitle": {},
-  "groupInviteLetFriendScan": "Scanne diesen QR-Code, um der Gruppe beizutreten.",
+  "groupInviteLetFriendScan": "Scan this QR code to join the group.",
   "@groupInviteLetFriendScan": {},
   "groupInviteJoinTitle": "Join Group",
   "@groupInviteJoinTitle": {},
@@ -117,6 +117,8 @@
   "@expenseEntryAmount": {},
   "expenseEntryAmountValidationEmpty": "Please enter an amount!",
   "@expenseEntryAmountValidationEmpty": {},
+  "expenseEntryAmountValidationZero": "Amount must be greater than zero!",
+  "@expenseEntryAmountValidationZero": {},
   "expenseEntrySharesLable": "Split between",
   "@expenseEntrySharesLable": {},
   "expenseEntrySharesValidationEmpty": "Please select at least one person!",
@@ -661,6 +663,16 @@
   "@deleteAccount": {},
   "deleteAccountError": "Error while trying to delete the user account. Please contact app.deun@gmail.com for support.",
   "@deleteAccountError": {},
+  "deleteAccountConfirmKeyword": "DELETE",
+  "@deleteAccountConfirmKeyword": {},
+  "deleteAccountConfirmHint": "Type {keyword} to confirm",
+  "@deleteAccountConfirmHint": {
+    "placeholders": {
+      "keyword": {
+        "type": "String"
+      }
+    }
+  },
   "errorLoadingData": "Error while loading data!",
   "@errorLoadingData": {},
   "create": "Create",
@@ -691,6 +703,8 @@
   "@send": {},
   "generalError": "Something went wrong",
   "@generalError": {},
+  "retry": "Retry",
+  "@retry": {},
   "loading": "Loading",
   "@loading": {},
   "you": "You",

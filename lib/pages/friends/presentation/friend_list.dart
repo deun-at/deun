@@ -124,7 +124,7 @@ class _FriendListState extends ConsumerState<FriendList> {
                               enabled: false,
                               minTileHeight: 1,
                               title: Padding(
-                                padding: EdgeInsetsGeometry.only(top: 10),
+                                padding: const EdgeInsetsGeometry.only(top: 10),
                                 child: Text(
                                   AppLocalizations.of(context)!.friends,
                                   style: Theme.of(context).textTheme.bodyMedium,
@@ -240,7 +240,7 @@ class _FriendListState extends ConsumerState<FriendList> {
           enabled: false,
           minTileHeight: 1,
           title: Padding(
-            padding: EdgeInsetsGeometry.only(top: 10),
+            padding: const EdgeInsetsGeometry.only(top: 10),
             child: Text(
               title,
               style: Theme.of(context).textTheme.bodyMedium,
@@ -328,12 +328,15 @@ class _FriendListState extends ConsumerState<FriendList> {
                   title: Text(AppLocalizations.of(context)!.payBackDialogPaypal),
                   enabled: paypalEnabled,
                   onTap: () async {
-                    if (!await launchUrl(
-                      Uri.parse("https://www.paypal.me/${user.paypalMe}/${friendship.shareAmount.abs()}"),
-                    )) {
-                      throw Exception(
-                        'Could not launch https://www.paypal.me/${user.paypalMe}/${friendship.shareAmount.abs()}',
-                      );
+                    final paypalUri = Uri.parse("https://www.paypal.me/${user.paypalMe}/${friendship.shareAmount.abs()}");
+                    bool launched = false;
+                    try {
+                      launched = await launchUrl(paypalUri);
+                    } catch (e) {
+                      debugPrint('Could not launch PayPal link: $e');
+                    }
+                    if (!launched && context.mounted) {
+                      showSnackBar(context, AppLocalizations.of(context)!.generalError);
                     }
                   },
                 ),
@@ -350,7 +353,7 @@ class _FriendListState extends ConsumerState<FriendList> {
                   title: Text(AppLocalizations.of(context)!.payBackDialogDone),
                   onTap: () async {
                     try {
-                      await GroupRepository.payBackAll(context, user.email, friendship.shareAmount.abs());
+                      await GroupRepository.payBackAll(context, user.email);
                       if (context.mounted) {
                         showSnackBar(
                           context,

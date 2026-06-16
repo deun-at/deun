@@ -96,6 +96,14 @@ double _sumExpenses(List<Expense> expenses) {
 
 // --- Existing providers (unchanged behaviour) ----------------------------
 
+/// Single shared fetch per (group, month range). The member-totals,
+/// category-totals and category-details providers all derive from this so
+/// opening a month detail fires one database query instead of three.
+@riverpod
+Future<List<Expense>> monthExpenses(Ref ref, String groupId, DateTime monthStart, DateTime monthEnd) async {
+  return await ExpenseRepository.fetchRange(groupId, monthStart, monthEnd);
+}
+
 @riverpod
 class GroupMonthlyTotalsNotifier extends _$GroupMonthlyTotalsNotifier {
   @override
@@ -145,7 +153,7 @@ class GroupMonthMemberTotalsNotifier extends _$GroupMonthMemberTotalsNotifier {
   }
 
   Future<List<MemberMonthTotal>> _load(GroupMonthMemberTotalsArgs args) async {
-    final expenses = await ExpenseRepository.fetchRange(args.groupId, args.monthStart, args.monthEnd);
+    final expenses = await ref.watch(monthExpensesProvider(args.groupId, args.monthStart, args.monthEnd).future);
 
     final Map<String, MemberMonthTotal> byMember = {};
     for (final expense in expenses) {
@@ -192,7 +200,7 @@ class GroupMonthCategoryTotalsNotifier extends _$GroupMonthCategoryTotalsNotifie
   }
 
   Future<List<CategoryMonthTotal>> _load(GroupMonthCategoryTotalsArgs args) async {
-    final expenses = await ExpenseRepository.fetchRange(args.groupId, args.monthStart, args.monthEnd);
+    final expenses = await ref.watch(monthExpensesProvider(args.groupId, args.monthStart, args.monthEnd).future);
     return _aggregateCategories(expenses);
   }
 }
@@ -230,7 +238,7 @@ class CategoryExpenseDetailsNotifier extends _$CategoryExpenseDetailsNotifier {
   }
 
   Future<List<CategoryExpenseDetail>> _load(CategoryExpenseDetailsArgs args) async {
-    final expenses = await ExpenseRepository.fetchRange(args.groupId, args.monthStart, args.monthEnd);
+    final expenses = await ref.watch(monthExpensesProvider(args.groupId, args.monthStart, args.monthEnd).future);
 
     final categoryExpenses = expenses.where((expense) {
       final categoryName = expense.category?.name ?? 'other';

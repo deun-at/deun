@@ -92,8 +92,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get groupInviteTitle => 'Invite Friends';
 
   @override
-  String get groupInviteLetFriendScan =>
-      'Scanne diesen QR-Code, um der Gruppe beizutreten.';
+  String get groupInviteLetFriendScan => 'Scan this QR code to join the group.';
 
   @override
   String get groupInviteJoinTitle => 'Join Group';
@@ -178,6 +177,10 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get expenseEntryAmountValidationEmpty => 'Please enter an amount!';
+
+  @override
+  String get expenseEntryAmountValidationZero =>
+      'Amount must be greater than zero!';
 
   @override
   String get expenseEntrySharesLable => 'Split between';
@@ -696,6 +699,14 @@ class AppLocalizationsEn extends AppLocalizations {
       'Error while trying to delete the user account. Please contact app.deun@gmail.com for support.';
 
   @override
+  String get deleteAccountConfirmKeyword => 'DELETE';
+
+  @override
+  String deleteAccountConfirmHint(String keyword) {
+    return 'Type $keyword to confirm';
+  }
+
+  @override
   String get errorLoadingData => 'Error while loading data!';
 
   @override
@@ -739,6 +750,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get generalError => 'Something went wrong';
+
+  @override
+  String get retry => 'Retry';
 
   @override
   String get loading => 'Loading';

@@ -1,8 +1,8 @@
-import 'package:deun/constants.dart';
 import 'package:deun/pages/users/user_repository.dart';
-import 'package:deun/widgets/theme_builder.dart';
+import 'package:deun/widgets/deun_app.dart';
 import 'package:flutter/material.dart';
 import 'package:deun/l10n/app_localizations.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 class OnboardingScreen extends StatefulWidget {
   const OnboardingScreen({
@@ -58,9 +58,16 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
         _displayNameController.text.trim(),
       );
       widget.onComplete();
-    } catch (e) {
+    } on PostgrestException catch (_) {
+      if (!mounted) return;
       setState(() {
         _errorMessage = AppLocalizations.of(ctx)!.onboardingUsernameTaken;
+        _isLoading = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _errorMessage = AppLocalizations.of(ctx)!.generalError;
         _isLoading = false;
       });
     }
@@ -68,13 +75,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Deun',
-      theme: getThemeData(context, ColorSeed.blue.color, Brightness.light),
-      darkTheme: getThemeData(context, ColorSeed.blue.color, Brightness.dark),
-      themeMode: ThemeMode.system,
-      localizationsDelegates: AppLocalizations.localizationsDelegates,
-      supportedLocales: AppLocalizations.supportedLocales,
+    return DeunApp(
       home: Builder(
         builder: (ctx) => Scaffold(
           body: SafeArea(

@@ -332,9 +332,18 @@ class _ExpenseDetailState extends ConsumerState<ExpenseDetail> {
       name: "expense_entry[$firstIndex][amount]",
       initialValue: _amountController.text != "0" ? _amountController.text : null,
       autovalidateMode: AutovalidateMode.onUserInteraction,
-      validator: FormBuilderValidators.required(
-        errorText: AppLocalizations.of(context)!.expenseEntryAmountValidationEmpty,
-      ),
+      validator: FormBuilderValidators.compose([
+        FormBuilderValidators.required(
+          errorText: AppLocalizations.of(context)!.expenseEntryAmountValidationEmpty,
+        ),
+        (value) {
+          final amount = double.tryParse(value?.toString() ?? '');
+          if (amount != null && amount <= 0) {
+            return AppLocalizations.of(context)!.expenseEntryAmountValidationZero;
+          }
+          return null;
+        },
+      ]),
       builder: (FormFieldState<dynamic> field) {
         return InputDecorator(
           decoration: InputDecoration(
@@ -432,7 +441,7 @@ class _ExpenseDetailState extends ConsumerState<ExpenseDetail> {
       ));
     } else {
       expenseActions.add(
-        Padding(padding: EdgeInsetsGeometry.only(right: 8), child: saveExpenseButton),
+        Padding(padding: const EdgeInsetsGeometry.only(right: 8), child: saveExpenseButton),
       );
     }
 
@@ -468,7 +477,7 @@ class _ExpenseDetailState extends ConsumerState<ExpenseDetail> {
                           decoration: InputDecoration(
                             border: InputBorder.none,
                             hintText: AppLocalizations.of(context)!.addExpenseTitle,
-                            contentPadding: EdgeInsets.only(left: 8, right: 8),
+                            contentPadding: const EdgeInsets.only(left: 8, right: 8),
                           ),
                           onChanged: (value) {
                             field.didChange(value);

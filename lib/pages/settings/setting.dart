@@ -63,7 +63,7 @@ class _SettingState extends ConsumerState<Setting> {
                   padding: EdgeInsets.all(10),
                   child: SettingsProfileForm(),
                 ),
-                SizedBox(height: heightSpacing),
+                const SizedBox(height: heightSpacing),
                 _buildNavigationSection(context, heightSpacing),
               ],
             ),
@@ -125,7 +125,7 @@ class _SettingState extends ConsumerState<Setting> {
                 ),
               );
             } else {
-              return SizedBox();
+              return const SizedBox();
             }
           },
         ),
@@ -146,7 +146,7 @@ class _SettingState extends ConsumerState<Setting> {
             title: Text(AppLocalizations.of(context)!.deleteAccount),
             textColor: Theme.of(context).colorScheme.error,
             iconColor: Theme.of(context).colorScheme.error,
-            leading: Icon(Icons.delete),
+            leading: const Icon(Icons.delete),
             onTap: () async {
               _showDeleteUserDialog(context);
             },
@@ -182,35 +182,62 @@ class _SettingState extends ConsumerState<Setting> {
   }
 
   void _showDeleteUserDialog(BuildContext context) {
+    final confirmController = TextEditingController();
+    final keyword = AppLocalizations.of(context)!.deleteAccountConfirmKeyword;
+
     showDialog<void>(
       context: context,
-      builder: (context) => AlertDialog(
-        content: Text(AppLocalizations.of(context)!.deleteAccount),
-        actions: <Widget>[
-          TextButton(
-            child: Text(AppLocalizations.of(context)!.cancel),
-            onPressed: () => Navigator.pop(context),
-          ),
-          FilledButton(
-            style: FilledButton.styleFrom(
-              backgroundColor: Theme.of(context).colorScheme.error,
-              foregroundColor: Theme.of(context).colorScheme.onError,
+      builder: (dialogContext) => StatefulBuilder(
+        builder: (dialogContext, setState) {
+          final isConfirmed = confirmController.text.trim().toUpperCase() == keyword.toUpperCase();
+          return AlertDialog(
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(AppLocalizations.of(dialogContext)!.deleteAccount),
+                const SizedBox(height: 16),
+                TextField(
+                  controller: confirmController,
+                  autofocus: true,
+                  decoration: InputDecoration(
+                    hintText: keyword,
+                    helperText: AppLocalizations.of(dialogContext)!.deleteAccountConfirmHint(keyword),
+                    border: const OutlineInputBorder(),
+                  ),
+                  onChanged: (_) => setState(() {}),
+                ),
+              ],
             ),
-            child: Text(AppLocalizations.of(context)!.delete),
-            onPressed: () async {
-              try {
-                await supabase.functions.invoke('delete-user-account');
-                await supabase.auth.signOut();
-              } catch (e) {
-                if (context.mounted) {
-                  showSnackBar(context, AppLocalizations.of(context)!.deleteAccountError);
-                }
-              }
-            },
-          ),
-        ],
+            actions: <Widget>[
+              TextButton(
+                child: Text(AppLocalizations.of(dialogContext)!.cancel),
+                onPressed: () => Navigator.pop(dialogContext),
+              ),
+              FilledButton(
+                style: FilledButton.styleFrom(
+                  backgroundColor: Theme.of(dialogContext).colorScheme.error,
+                  foregroundColor: Theme.of(dialogContext).colorScheme.onError,
+                ),
+                onPressed: !isConfirmed
+                    ? null
+                    : () async {
+                        try {
+                          await supabase.functions.invoke('delete-user-account');
+                          await supabase.auth.signOut();
+                        } catch (e) {
+                          if (context.mounted) {
+                            showSnackBar(context, AppLocalizations.of(context)!.deleteAccountError);
+                          }
+                        }
+                      },
+                child: Text(AppLocalizations.of(dialogContext)!.delete),
+              ),
+            ],
+          );
+        },
       ),
-    );
+    ).then((_) => confirmController.dispose());
   }
 
   Future<bool> _isUnderGdpr() async {

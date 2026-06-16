@@ -27,6 +27,12 @@ class _SearchViewState extends State<SearchView> {
   }
 
   @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return ValueListenableBuilder<String>(
         valueListenable: widget.searchQueryNotifier,

@@ -32,7 +32,7 @@ class _GroupListState extends ConsumerState<GroupList> {
     super.initState();
 
     if (kIsWeb) {
-      _adBlock = SizedBox();
+      _adBlock = const SizedBox();
     } else {
       _adBlock = NativeAdBlock(
         adUnitId: Platform.isAndroid ? MobileAdMobs.androidGroupList.value : MobileAdMobs.iosGroupList.value,
@@ -41,7 +41,7 @@ class _GroupListState extends ConsumerState<GroupList> {
   }
 
   Future<void> updateGroupList() async {
-    ref.read(groupListProvider.notifier).reload();
+    await ref.read(groupListProvider.notifier).reload();
   }
 
   @override
@@ -79,7 +79,7 @@ class _GroupListState extends ConsumerState<GroupList> {
                 await updateGroupList();
               },
             ),
-          _ => ShimmerCardList(height: 100, listEntryLength: 8),
+          _ => const ShimmerCardList(height: 100, listEntryLength: 8),
         },
       ),
       floatingActionButton: FloatingActionButton.extended(

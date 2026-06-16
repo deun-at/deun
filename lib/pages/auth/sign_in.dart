@@ -1,3 +1,4 @@
+import 'package:deun/constants.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:supabase_auth_ui/supabase_auth_ui.dart';
@@ -51,8 +52,8 @@ class SignUp extends StatelessWidget {
             colored: true,
             enableNativeAppleAuth: true,
             nativeGoogleAuthConfig: const NativeGoogleAuthConfig(
-              webClientId: '820724879316-jauhp8t8g5r3pmir1r5gsghbn2qchav5.apps.googleusercontent.com',
-              iosClientId: '820724879316-8sacuk8sjju1rvr878gl9lqin0or5h9d.apps.googleusercontent.com',
+              webClientId: kGoogleWebClientId,
+              iosClientId: kGoogleIosClientId,
             ),
             authScreenLaunchMode: kIsWeb ? LaunchMode.platformDefault : LaunchMode.externalApplication,
             socialProviders: oAuthProvider,

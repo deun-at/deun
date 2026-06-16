@@ -57,26 +57,26 @@ class Group {
     }
 
     try {
+      final currentUserEmail = supabase.auth.currentUser?.email;
       if (simplifiedExpenses) {
-        calculateGroupSharesSummarySimplified(json);
+        calculateGroupSharesSummarySimplified(json, currentUserEmail);
       } else {
-        calculateGroupSharesSummaryDefault(json);
+        calculateGroupSharesSummaryDefault(json, currentUserEmail);
       }
     } catch (e) {
       debugPrint(e.toString());
     }
   }
 
-  void calculateGroupSharesSummaryDefault(Map<String, dynamic> json) {
-    String? currentUserEmail = supabase.auth.currentUser?.email;
+  void calculateGroupSharesSummaryDefault(Map<String, dynamic> json, String? currentUserEmail) {
     totalExpenses = 0;
     totalShareAmount = 0;
     groupSharesSummary = {};
     if (json["group_shares_summary"] != null) {
       for (var element in json["group_shares_summary"]) {
         if (element['paid_for'] == currentUserEmail) {
-          totalExpenses += double.parse((element['total_expenses'] ?? 0).toString());
-          totalShareAmount = double.parse((element['total_share_amount'] ?? 0).toString());
+          totalExpenses = roundCurrency(totalExpenses + double.parse((element['total_expenses'] ?? 0).toString()));
+          totalShareAmount = roundCurrency(double.parse((element['total_share_amount'] ?? 0).toString()));
         }
 
         if (element['paid_by'] == currentUserEmail && element['paid_for'] != currentUserEmail) {
@@ -108,8 +108,7 @@ class Group {
     }
   }
 
-  void calculateGroupSharesSummarySimplified(Map<String, dynamic> json) {
-    String? currentUserEmail = supabase.auth.currentUser?.email;
+  void calculateGroupSharesSummarySimplified(Map<String, dynamic> json, String? currentUserEmail) {
     totalExpenses = 0;
     totalShareAmount = 0;
     groupSharesSummary = {};
@@ -119,12 +118,15 @@ class Group {
       Map<String, double> simplifiedExpenseArray = {};
       for (var element in json["group_shares_summary"]) {
         if (element['paid_for'] == currentUserEmail) {
-          totalExpenses += double.parse((element['total_expenses'] ?? 0).toString());
-          totalShareAmount = double.parse((element['total_share_amount'] ?? 0).toString());
+          totalExpenses = roundCurrency(totalExpenses + double.parse((element['total_expenses'] ?? 0).toString()));
+          totalShareAmount = roundCurrency(double.parse((element['total_share_amount'] ?? 0).toString()));
         }
 
         if (simplifiedExpenseArray[element["paid_for"]] == null) {
-          simplifiedExpenseArray[element["paid_for"]] = double.parse((element['total_share_amount'] ?? 0).toString());
+          // Round on load so the settlement loop below works on exact cent
+          // values and its == 0 termination checks are reliable.
+          simplifiedExpenseArray[element["paid_for"]] =
+              roundCurrency(double.parse((element['total_share_amount'] ?? 0).toString()));
         }
 
         if (helperArray[element["paid_by"]] == null) {
@@ -148,7 +150,11 @@ class Group {
           Map.fromEntries(simplifiedExpenseArray.entries.toList()..sort((e1, e2) => e1.value.compareTo(e2.value)));
 
       Map<String, double> finalSimplifiedExpenseArray = {};
-      while (simplifiedExpenseArray.length > 1) {
+      // Each iteration settles at least one member (set to 0 and removed), so
+      // the loop is bounded by the member count. The guard is defensive: if a
+      // future change breaks that invariant we bail out instead of hanging.
+      int remainingIterations = simplifiedExpenseArray.length + 1;
+      while (simplifiedExpenseArray.length > 1 && remainingIterations-- > 0) {
         var firstEntry = simplifiedExpenseArray.entries.first;
         var lastEntry = simplifiedExpenseArray.entries.last;
 

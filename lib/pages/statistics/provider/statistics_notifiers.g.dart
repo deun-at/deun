@@ -8,6 +8,109 @@ part of 'statistics_notifiers.dart';
 
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // ignore_for_file: type=lint, type=warning
+/// Single shared fetch per (group, month range). The member-totals,
+/// category-totals and category-details providers all derive from this so
+/// opening a month detail fires one database query instead of three.
+
+@ProviderFor(monthExpenses)
+final monthExpensesProvider = MonthExpensesFamily._();
+
+/// Single shared fetch per (group, month range). The member-totals,
+/// category-totals and category-details providers all derive from this so
+/// opening a month detail fires one database query instead of three.
+
+final class MonthExpensesProvider
+    extends
+        $FunctionalProvider<
+          AsyncValue<List<Expense>>,
+          List<Expense>,
+          FutureOr<List<Expense>>
+        >
+    with $FutureModifier<List<Expense>>, $FutureProvider<List<Expense>> {
+  /// Single shared fetch per (group, month range). The member-totals,
+  /// category-totals and category-details providers all derive from this so
+  /// opening a month detail fires one database query instead of three.
+  MonthExpensesProvider._({
+    required MonthExpensesFamily super.from,
+    required (String, DateTime, DateTime) super.argument,
+  }) : super(
+         retry: null,
+         name: r'monthExpensesProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
+
+  @override
+  String debugGetCreateSourceHash() => _$monthExpensesHash();
+
+  @override
+  String toString() {
+    return r'monthExpensesProvider'
+        ''
+        '$argument';
+  }
+
+  @$internal
+  @override
+  $FutureProviderElement<List<Expense>> $createElement(
+    $ProviderPointer pointer,
+  ) => $FutureProviderElement(pointer);
+
+  @override
+  FutureOr<List<Expense>> create(Ref ref) {
+    final argument = this.argument as (String, DateTime, DateTime);
+    return monthExpenses(ref, argument.$1, argument.$2, argument.$3);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is MonthExpensesProvider && other.argument == argument;
+  }
+
+  @override
+  int get hashCode {
+    return argument.hashCode;
+  }
+}
+
+String _$monthExpensesHash() => r'a4bdfb6ee152037f0a45862540b999e8d2cd8c5b';
+
+/// Single shared fetch per (group, month range). The member-totals,
+/// category-totals and category-details providers all derive from this so
+/// opening a month detail fires one database query instead of three.
+
+final class MonthExpensesFamily extends $Family
+    with
+        $FunctionalFamilyOverride<
+          FutureOr<List<Expense>>,
+          (String, DateTime, DateTime)
+        > {
+  MonthExpensesFamily._()
+    : super(
+        retry: null,
+        name: r'monthExpensesProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: true,
+      );
+
+  /// Single shared fetch per (group, month range). The member-totals,
+  /// category-totals and category-details providers all derive from this so
+  /// opening a month detail fires one database query instead of three.
+
+  MonthExpensesProvider call(
+    String groupId,
+    DateTime monthStart,
+    DateTime monthEnd,
+  ) => MonthExpensesProvider._(
+    argument: (groupId, monthStart, monthEnd),
+    from: this,
+  );
+
+  @override
+  String toString() => r'monthExpensesProvider';
+}
 
 @ProviderFor(GroupMonthlyTotalsNotifier)
 final groupMonthlyTotalsProvider = GroupMonthlyTotalsNotifierFamily._();
@@ -160,7 +263,7 @@ final class GroupMonthMemberTotalsNotifierProvider
 }
 
 String _$groupMonthMemberTotalsNotifierHash() =>
-    r'd55f3d930341f2ff82972a77b1697c28e43409b2';
+    r'341c58b8e72e6e73d256c813560e49e26caa99e2';
 
 final class GroupMonthMemberTotalsNotifierFamily extends $Family
     with
@@ -264,7 +367,7 @@ final class GroupMonthCategoryTotalsNotifierProvider
 }
 
 String _$groupMonthCategoryTotalsNotifierHash() =>
-    r'b023471cd4cda1891b5e2d1c6262021adc886bca';
+    r'0451cebbaf6bc57435d2d373b4c19cbd3b4ec8b1';
 
 final class GroupMonthCategoryTotalsNotifierFamily extends $Family
     with
@@ -369,7 +472,7 @@ final class CategoryExpenseDetailsNotifierProvider
 }
 
 String _$categoryExpenseDetailsNotifierHash() =>
-    r'a8b767dcd6d872aa2e4c06ce33eef8534e6c68ac';
+    r'a37fe8d56f344563239197492a21646f8514f7f0';
 
 final class CategoryExpenseDetailsNotifierFamily extends $Family
     with

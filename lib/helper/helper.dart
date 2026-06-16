@@ -5,7 +5,13 @@ import 'package:deun/pages/users/user_repository.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:deun/l10n/app_localizations.dart';
+
+/// True when an RPC failed because the function doesn't exist on the server
+/// yet (older database without the atomic save migrations applied).
+/// PGRST202 = PostgREST schema cache miss, 42883 = Postgres undefined function.
+bool isMissingFunctionError(PostgrestException e) => e.code == 'PGRST202' || e.code == '42883';
 
 /// Build a "username#code" string from a raw JSON map, falling back to display_name.
 String fullUsernameFromJson(Map<String, dynamic> json) {
@@ -28,16 +34,6 @@ String toHumanDateString(String? dateTimeIn) {
 
   DateFormat format = DateFormat("dd.MM.yyyy");
   return format.format(DateTime.parse(dateTimeIn));
-}
-
-String toCurrency(double value) {
-  final NumberFormat numFormat = NumberFormat('###,##0.00', 'en_US');
-  return "€${numFormat.format(value)}";
-}
-
-String toNumber(double value) {
-  final NumberFormat numFormat = NumberFormat('###,##0.00', 'en_US');
-  return numFormat.format(value);
 }
 
 String formatDate(String? dateString, [BuildContext? context]) {
@@ -66,7 +62,7 @@ void showSnackBar(BuildContext context, String message) {
   final messenger = ScaffoldMessenger.of(context);
   SnackBar snackBar = SnackBar(
     content: Text(message),
-    duration: Duration(seconds: 2),
+    duration: const Duration(seconds: 2),
   );
 
   messenger.hideCurrentSnackBar();
@@ -243,17 +239,24 @@ Future<void> sendNotification(String type, String objectId, Set<String> notifica
   }
 }
 
+/// Escapes user input before it is embedded in the HTML email body.
+String escapeHtml(String? value) => (value ?? '')
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;')
+    .replaceAll("'", '&#39;');
+
+/// Throws on failure so callers can show an error to the user.
 Future<void> sendContactMail(Map<String, dynamic> contactInfo) async {
-  try {
-    final res = await supabase.functions.invoke('send-contact-email', body: {
-      'message':
-          "Name: ${contactInfo['name']} <br>Company: ${contactInfo['company'] ?? '-'}<br>E-Mail: ${contactInfo['email']}<br><br>Description: ${contactInfo['description']}"
-    });
-    final data = res.data;
-    debugPrint(data.toString());
-  } catch (e) {
-    debugPrint(e.toString());
-  }
+  final name = escapeHtml(contactInfo['name']?.toString());
+  final company = escapeHtml(contactInfo['company']?.toString() ?? '-');
+  final email = escapeHtml(contactInfo['email']?.toString());
+  final description = escapeHtml(contactInfo['description']?.toString());
+
+  await supabase.functions.invoke('send-contact-email', body: {
+    'message': "Name: $name <br>Company: $company<br>E-Mail: $email<br><br>Description: $description",
+  });
 }
 
 void navigateToGroup(BuildContext context, Group group) {

@@ -263,7 +263,7 @@ abstract class AppLocalizations {
   /// No description provided for @groupInviteLetFriendScan.
   ///
   /// In en, this message translates to:
-  /// **'Scanne diesen QR-Code, um der Gruppe beizutreten.'**
+  /// **'Scan this QR code to join the group.'**
   String get groupInviteLetFriendScan;
 
   /// No description provided for @groupInviteJoinTitle.
@@ -427,6 +427,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Please enter an amount!'**
   String get expenseEntryAmountValidationEmpty;
+
+  /// No description provided for @expenseEntryAmountValidationZero.
+  ///
+  /// In en, this message translates to:
+  /// **'Amount must be greater than zero!'**
+  String get expenseEntryAmountValidationZero;
 
   /// No description provided for @expenseEntrySharesLable.
   ///
@@ -1122,6 +1128,18 @@ abstract class AppLocalizations {
   /// **'Error while trying to delete the user account. Please contact app.deun@gmail.com for support.'**
   String get deleteAccountError;
 
+  /// No description provided for @deleteAccountConfirmKeyword.
+  ///
+  /// In en, this message translates to:
+  /// **'DELETE'**
+  String get deleteAccountConfirmKeyword;
+
+  /// No description provided for @deleteAccountConfirmHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Type {keyword} to confirm'**
+  String deleteAccountConfirmHint(String keyword);
+
   /// No description provided for @errorLoadingData.
   ///
   /// In en, this message translates to:
@@ -1211,6 +1229,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Something went wrong'**
   String get generalError;
+
+  /// No description provided for @retry.
+  ///
+  /// In en, this message translates to:
+  /// **'Retry'**
+  String get retry;
 
   /// No description provided for @loading.
   ///

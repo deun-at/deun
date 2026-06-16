@@ -197,21 +197,21 @@ void main() {
 
   group('SupaUser equality', () {
     test('two users with same fields are equal', () {
-      final a = SupaUser(email: 'a@b.com', displayName: 'A');
-      final b = SupaUser(email: 'a@b.com', displayName: 'A');
+      const a = SupaUser(email: 'a@b.com', displayName: 'A');
+      const b = SupaUser(email: 'a@b.com', displayName: 'A');
 
       expect(a, equals(b));
     });
 
     test('different email means not equal', () {
-      final a = SupaUser(email: 'a@b.com', displayName: 'A');
-      final b = SupaUser(email: 'x@b.com', displayName: 'A');
+      const a = SupaUser(email: 'a@b.com', displayName: 'A');
+      const b = SupaUser(email: 'x@b.com', displayName: 'A');
 
       expect(a, isNot(equals(b)));
     });
 
     test('copyWith preserves other fields', () {
-      final user = SupaUser(
+      const user = SupaUser(
         email: 'test@example.com',
         displayName: 'Test',
         locale: 'de',
@@ -229,7 +229,7 @@ void main() {
 
   group('SupaUser.toJson', () {
     test('round-trip preserves all fields', () {
-      final original = SupaUser(
+      const original = SupaUser(
         email: 'test@example.com',
         displayName: 'Test User',
         userId: 'uid123',
@@ -248,7 +248,7 @@ void main() {
     });
 
     test('round-trip with default displayName', () {
-      final original = SupaUser(email: 'test@example.com');
+      const original = SupaUser(email: 'test@example.com');
 
       final json = original.toJson();
       final restored = SupaUser.fromJson(json);

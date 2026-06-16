@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:deun/constants.dart';
 import 'package:deun/helper/helper.dart';
 import 'package:deun/main.dart';
@@ -41,29 +43,28 @@ class _FriendQrPageState extends State<FriendQrPage> {
     super.dispose();
   }
 
-  Uri _buildFriendLink() {
-    // Use username+code instead of email for privacy
-    final currentUser = supabase.auth.currentUser;
-    // Try to build username-based link first (set after onboarding)
-    // We need to fetch user data since auth metadata doesn't have username
-    return _cachedLink ?? Uri.parse('$kWebAppBaseUrl/#/friend/accept?email=${currentUser?.email ?? ''}');
-  }
-
+  // The link is always username+code based — never email, which would leak
+  // the address through QR codes, share sheets, and clipboard history.
   Uri? _cachedLink;
+  bool _linkLoadFailed = false;
 
   Future<void> _buildUsernameLink() async {
+    setState(() => _linkLoadFailed = false);
     try {
       final email = supabase.auth.currentUser?.email ?? '';
       final user = await UserRepository.fetchDetail(email);
-      if (user.username != null && user.usernameCode != null && mounted) {
+      if (!mounted) return;
+      if (user.username != null && user.usernameCode != null) {
         setState(() {
           _cachedLink = Uri.parse(
             '$kWebAppBaseUrl/#/friend/accept?u=${Uri.encodeComponent(user.username!)}&c=${Uri.encodeComponent(user.usernameCode!)}',
           );
         });
+      } else {
+        setState(() => _linkLoadFailed = true);
       }
     } catch (_) {
-      // Fallback to email-based link (already set as default)
+      if (mounted) setState(() => _linkLoadFailed = true);
     }
   }
 
@@ -83,7 +84,7 @@ class _FriendQrPageState extends State<FriendQrPage> {
     if (raw == null || raw.isEmpty) return;
 
     _handlingScan = true;
-    _cameraController.stop();
+    unawaited(_cameraController.stop());
     try {
       // Try to interpret as URI
       Uri? uri;
@@ -128,7 +129,7 @@ class _FriendQrPageState extends State<FriendQrPage> {
 
   @override
   Widget build(BuildContext context) {
-    final link = _buildFriendLink();
+    final link = _cachedLink;
 
     return Scaffold(
       appBar: AppBar(
@@ -190,7 +191,11 @@ class _FriendQrPageState extends State<FriendQrPage> {
               // Open system camera app as alternative
               IconButton.filled(
                 onPressed: () async {
-                  final url = _buildFriendLink().toString();
+                  final url = _cachedLink?.toString();
+                  if (url == null) {
+                    showSnackBar(context, AppLocalizations.of(context)!.generalError);
+                    return;
+                  }
                   // Opening system camera is not directly possible; instruct via copying the link
                   await Clipboard.setData(ClipboardData(text: url));
                   if (mounted) {
@@ -208,7 +213,27 @@ class _FriendQrPageState extends State<FriendQrPage> {
     );
   }
 
-  Widget _buildMyCode(BuildContext context, Uri link) {
+  Widget _buildMyCode(BuildContext context, Uri? link) {
+    if (link == null) {
+      return Center(
+        child: _linkLoadFailed
+            ? Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    AppLocalizations.of(context)!.generalError,
+                    style: Theme.of(context).textTheme.bodyMedium,
+                  ),
+                  const SizedBox(height: 12),
+                  FilledButton.tonal(
+                    onPressed: _buildUsernameLink,
+                    child: Text(AppLocalizations.of(context)!.retry),
+                  ),
+                ],
+              )
+            : const CircularProgressIndicator(),
+      );
+    }
     return SingleChildScrollView(
         child: Center(
       child: Column(
@@ -246,7 +271,7 @@ class _FriendQrPageState extends State<FriendQrPage> {
               FilledButton.icon(
                 onPressed: () async {
                   final url = link.toString();
-                  SharePlus.instance.share(ShareParams(text: AppLocalizations.of(context)!.friendQrShareLink(url)));
+                  await SharePlus.instance.share(ShareParams(text: AppLocalizations.of(context)!.friendQrShareLink(url)));
                 },
                 icon: const Icon(Icons.ios_share),
                 label: Text(AppLocalizations.of(context)!.share),

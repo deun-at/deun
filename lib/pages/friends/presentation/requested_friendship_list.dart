@@ -25,7 +25,7 @@ class RequestedFriendshipList extends StatelessWidget {
       enabled: false,
       minTileHeight: 1,
       title: Padding(
-        padding: EdgeInsetsGeometry.only(top: 10),
+        padding: const EdgeInsetsGeometry.only(top: 10),
         child: Text(
           AppLocalizations.of(context)!.addFriendshipRequested,
           style: Theme.of(context).textTheme.bodyMedium,
@@ -36,7 +36,7 @@ class RequestedFriendshipList extends StatelessWidget {
     if (isLoading) {
       return Column(children: [
         title,
-        ShimmerCardList(height: 50, listEntryLength: 3),
+        const ShimmerCardList(height: 50, listEntryLength: 3),
       ]);
     }
 

@@ -13,3 +13,10 @@ linter:
     - avoid_empty_else
     - prefer_final_fields
     - unnecessary_statements
+    - unawaited_futures
+    - close_sinks
+    - cancel_subscriptions
+    - always_declare_return_types
+    - prefer_const_constructors
+    - prefer_const_declarations
+    - use_build_context_synchronously

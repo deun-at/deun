@@ -46,7 +46,7 @@ class _AuthGateState extends State<AuthGate> {
         }
 
         if (event == AuthChangeEvent.passwordRecovery) {
-          return NavigationScreen(isPasswordRecovery: true);
+          return const NavigationScreen(isPasswordRecovery: true);
         }
 
         if (_screenState == _AuthScreen.loading) {
@@ -68,7 +68,7 @@ class _AuthGateState extends State<AuthGate> {
           );
         }
 
-        return NavigationScreen(isPasswordRecovery: false);
+        return const NavigationScreen(isPasswordRecovery: false);
       },
     );
   }
@@ -78,7 +78,10 @@ class _AuthGateState extends State<AuthGate> {
     final results = await Future.wait([
       UserRepository.fetchDetail(email),
       Future.delayed(const Duration(milliseconds: 1200)),
-    ]).catchError((_) => [null, null]);
+    ]).catchError((e) {
+      debugPrint('Onboarding check failed, continuing without profile: $e');
+      return <Object?>[null, null];
+    });
 
     if (!mounted) return;
 
