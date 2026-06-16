@@ -77,6 +77,35 @@ class AppLocalizationsDe extends AppLocalizations {
   String get groupSimplifiedExpensesTitle => 'Vereinfachte Ausgaben aktivieren';
 
   @override
+  String get groupCreateTitle => 'Neue Gruppe';
+
+  @override
+  String get groupEditTitle => 'Gruppe bearbeiten';
+
+  @override
+  String get groupColorLabel => 'Farbe';
+
+  @override
+  String get groupMemberSectionTitle => 'Mitglieder';
+
+  @override
+  String get groupTrackingModeTitle => 'Ausgabenverfolgung';
+
+  @override
+  String get groupTrackingModeSimplifiedTitle => 'Vereinfacht';
+
+  @override
+  String get groupTrackingModeSimplifiedSubtitle =>
+      'Weniger Zahlungen, um den Gruppensaldo auszugleichen.';
+
+  @override
+  String get groupTrackingModeDetailedTitle => 'Detailliert';
+
+  @override
+  String get groupTrackingModeDetailedSubtitle =>
+      'Genau nachverfolgen, wer wem für jede Ausgabe etwas schuldet.';
+
+  @override
   String get expenseDateValidationEmpty => 'Bitte gib ein Datum ein!';
 
   @override

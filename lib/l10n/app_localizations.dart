@@ -230,6 +230,60 @@ abstract class AppLocalizations {
   /// **'Activate simplified expenses'**
   String get groupSimplifiedExpensesTitle;
 
+  /// No description provided for @groupCreateTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'New group'**
+  String get groupCreateTitle;
+
+  /// No description provided for @groupEditTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit group'**
+  String get groupEditTitle;
+
+  /// No description provided for @groupColorLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Color'**
+  String get groupColorLabel;
+
+  /// No description provided for @groupMemberSectionTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Members'**
+  String get groupMemberSectionTitle;
+
+  /// No description provided for @groupTrackingModeTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Expense tracking'**
+  String get groupTrackingModeTitle;
+
+  /// No description provided for @groupTrackingModeSimplifiedTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Simplified'**
+  String get groupTrackingModeSimplifiedTitle;
+
+  /// No description provided for @groupTrackingModeSimplifiedSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Fewer payments to settle the group balance.'**
+  String get groupTrackingModeSimplifiedSubtitle;
+
+  /// No description provided for @groupTrackingModeDetailedTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Detailed'**
+  String get groupTrackingModeDetailedTitle;
+
+  /// No description provided for @groupTrackingModeDetailedSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Track exactly who owes whom for each expense.'**
+  String get groupTrackingModeDetailedSubtitle;
+
   /// No description provided for @expenseDateValidationEmpty.
   ///
   /// In en, this message translates to:
