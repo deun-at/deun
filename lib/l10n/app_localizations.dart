@@ -1913,6 +1913,42 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Yesterday'**
   String get dateYesterday;
+
+  /// Button in the group-detail hero that opens the settle-up / payment screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Settle up'**
+  String get groupDetailSettleUp;
+
+  /// Pill on an itemized ledger row prompting the user to claim their items.
+  ///
+  /// In en, this message translates to:
+  /// **'Tap to claim'**
+  String get groupDetailTapToClaim;
+
+  /// Shown on an itemized ledger row after the current user has claimed.
+  ///
+  /// In en, this message translates to:
+  /// **'You claimed {amount}'**
+  String groupDetailYouClaimed(double amount);
+
+  /// Meta line on an itemized ledger row showing the still-unclaimed amount.
+  ///
+  /// In en, this message translates to:
+  /// **'{amount} unclaimed'**
+  String groupDetailUnclaimed(double amount);
+
+  /// Meta line on an itemized ledger row when nothing is left unclaimed.
+  ///
+  /// In en, this message translates to:
+  /// **'all claimed'**
+  String get groupDetailAllClaimed;
+
+  /// Trailing tag on a payback / settlement ledger row.
+  ///
+  /// In en, this message translates to:
+  /// **'PAYMENT'**
+  String get groupDetailPaymentTag;
 }
 
 class _AppLocalizationsDelegate
