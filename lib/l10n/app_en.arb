@@ -126,8 +126,20 @@
   "@groupCreateSuccess": {},
   "groupInviteTitle": "Invite Friends",
   "@groupInviteTitle": {},
+  "groupInviteTitleNamed": "Invite to {group}",
+  "@groupInviteTitleNamed": {
+    "placeholders": {
+      "group": {
+        "type": "String"
+      }
+    }
+  },
   "groupInviteLetFriendScan": "Scan this QR code to join the group.",
   "@groupInviteLetFriendScan": {},
+  "groupInviteLinkLabel": "Group link",
+  "@groupInviteLinkLabel": {},
+  "groupInviteLinkCopied": "Link copied",
+  "@groupInviteLinkCopied": {},
   "groupInviteJoinTitle": "Join Group",
   "@groupInviteJoinTitle": {},
   "groupInviteJoinSubtitle": "Join this group to view and add expenses.",

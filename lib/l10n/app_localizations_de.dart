@@ -157,8 +157,19 @@ class AppLocalizationsDe extends AppLocalizations {
   String get groupInviteTitle => 'Freunde einladen';
 
   @override
+  String groupInviteTitleNamed(String group) {
+    return 'Zu $group einladen';
+  }
+
+  @override
   String get groupInviteLetFriendScan =>
       'Scanne diesen QR-Code, um der Gruppe beizutreten.';
+
+  @override
+  String get groupInviteLinkLabel => 'Gruppenlink';
+
+  @override
+  String get groupInviteLinkCopied => 'Link kopiert';
 
   @override
   String get groupInviteJoinTitle => 'Gruppe beitreten';
