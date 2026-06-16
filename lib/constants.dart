@@ -2,6 +2,11 @@ import 'package:flutter/material.dart';
 
 const String kWebAppBaseUrl = 'https://app.deun.app';
 
+/// Brand seed color (indigo) used to derive the M3 [ColorScheme]. Kept as a
+/// top-level constant rather than a [ColorSeed] enum value so it does not leak
+/// into color-picker iterations over [ColorSeed].
+const kBrandSeed = Color(0xFF5750E6);
+
 /// Public VAPID key for web push. Overridable at build time so it can be
 /// rotated without a code change.
 const String kFcmVapidKey = String.fromEnvironment(

@@ -529,8 +529,8 @@ class _NavigationScreenState extends ConsumerState<NavigationScreen> with Widget
     return MaterialApp.router(
       routerConfig: _routerConfig,
       title: 'Deun',
-      theme: getThemeData(context, ColorSeed.blue.color, Brightness.light),
-      darkTheme: getThemeData(context, ColorSeed.blue.color, Brightness.dark),
+      theme: getThemeData(context, kBrandSeed, Brightness.light),
+      darkTheme: getThemeData(context, kBrandSeed, Brightness.dark),
       themeMode: ThemeMode.system,
       locale: locale,
       localizationsDelegates: AppLocalizations.localizationsDelegates,
