@@ -72,6 +72,11 @@ Greeting header + avatar; dark overall-balance hero (aggregate from `Group` summ
 icon by `colorValue`, name, favorite star toggle → existing `isFavorite`, member `AvatarStack`, balance
 lead/amount via `MoneyText`); favorite sort order. Star tap must not open the card.
 *Deps:* E0-T4. *Screen 4.*
+✅ **done · 67a894f** — restyled `group_list.dart` + new `group_list_item.dart` (greeting header, dark balance
+hero, tinted-icon cards w/ star toggle, AvatarStack footer, MoneyText balance); pure `sortGroups` +
+`aggregateOverallBalance` in `group_list_view_model.dart` (unit-tested); 13 tests; 12 en+de l10n keys; analyze
+clean, 265 green. *v0:* hero = ink `onSurface` (light)/`surfaceBright` (dark); amount=net, chips=gross owed/owe.
+*QA:* greeting/hero/star-resort in light+dark.
 
 **E1-T2 · Group detail + ledger** · `group_detail.dart`, `group_detail_list.dart`
 Color hero (balance, member stack, Settle-up → `/group/details/payment`), Statistics + Invite quick actions,
