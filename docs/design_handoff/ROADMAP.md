@@ -47,6 +47,10 @@ the group color-picker options.
 Add Bricolage Grotesque + Hanken Grotesk (`google_fonts` or bundled), set `textTheme` (Hanken body, Bricolage
 for `displayLarge/headline*`/amount styles, `-0.02em`), tabular figures for amounts.
 *Done:* headings render in Bricolage, body in Hanken, across light/dark.
+✅ **done · cabede5** — `textTheme` in `theme_builder.dart` (both brightnesses): Hanken base via
+`GoogleFonts.hankenGroteskTextTheme`, Bricolage on display*/headline*/titleLarge with `letterSpacing = size×-0.02`
++ `FontFeature.tabularFigures()` on display+headline; 5 tests; analyze clean, 230 tests green.
+*v0 sizes:* display 57/45/40, headline 30/28/24, titleLarge 19.
 
 **E0-T4 · Shared restyle widgets** · new under `lib/widgets/`
 Build the reused pieces so screens compose them: `MemberAvatar` (+ ring/border), `AvatarStack`, `MoneyText`
