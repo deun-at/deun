@@ -380,11 +380,29 @@ abstract class AppLocalizations {
   /// **'Invite Friends'**
   String get groupInviteTitle;
 
+  /// No description provided for @groupInviteTitleNamed.
+  ///
+  /// In en, this message translates to:
+  /// **'Invite to {group}'**
+  String groupInviteTitleNamed(String group);
+
   /// No description provided for @groupInviteLetFriendScan.
   ///
   /// In en, this message translates to:
   /// **'Scan this QR code to join the group.'**
   String get groupInviteLetFriendScan;
+
+  /// No description provided for @groupInviteLinkLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Group link'**
+  String get groupInviteLinkLabel;
+
+  /// No description provided for @groupInviteLinkCopied.
+  ///
+  /// In en, this message translates to:
+  /// **'Link copied'**
+  String get groupInviteLinkCopied;
 
   /// No description provided for @groupInviteJoinTitle.
   ///
