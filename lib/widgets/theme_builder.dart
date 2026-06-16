@@ -179,6 +179,10 @@ ThemeData getThemeData(BuildContext context, Color seedColor, Brightness brightn
 
   return ThemeData(
     textTheme: _buildTextTheme(),
+    // Inherit the ambient splash factory so a parent can suppress ink ripples
+    // (e.g. NoSplash in widget tests, which avoids loading the ink fragment
+    // shader the test engine can't decode).
+    splashFactory: Theme.of(context).splashFactory,
     extensions: <ThemeExtension<dynamic>>[
       brightness == Brightness.dark ? SemanticColors.dark : SemanticColors.light,
     ],

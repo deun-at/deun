@@ -19,6 +19,18 @@ const List<Color> kGroupColorPalette = <Color>[
   Color(0xFFB85C9E),
 ];
 
+/// Index of the [kGroupColorPalette] swatch matching [colorValue] (an ARGB int
+/// as stored in `Group.colorValue`). Returns 0 (the first swatch) when
+/// [colorValue] is null or not one of the palette colors, so the swatch row
+/// always shows a sensible default selection.
+int selectedGroupSwatchIndex(int? colorValue) {
+  if (colorValue == null) return 0;
+  for (var i = 0; i < kGroupColorPalette.length; i++) {
+    if (kGroupColorPalette[i].toARGB32() == colorValue) return i;
+  }
+  return 0;
+}
+
 /// Fixed palette of member-avatar background colors (DESIGN_SPEC "Member avatar
 /// colors"). White initials are drawn on top by the avatar widget; this only
 /// supplies the background. Pick via [memberAvatarColor] for a stable mapping.

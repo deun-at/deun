@@ -77,6 +77,35 @@ class AppLocalizationsEn extends AppLocalizations {
   String get groupSimplifiedExpensesTitle => 'Activate simplified expenses';
 
   @override
+  String get groupCreateTitle => 'New group';
+
+  @override
+  String get groupEditTitle => 'Edit group';
+
+  @override
+  String get groupColorLabel => 'Color';
+
+  @override
+  String get groupMemberSectionTitle => 'Members';
+
+  @override
+  String get groupTrackingModeTitle => 'Expense tracking';
+
+  @override
+  String get groupTrackingModeSimplifiedTitle => 'Simplified';
+
+  @override
+  String get groupTrackingModeSimplifiedSubtitle =>
+      'Fewer payments to settle the group balance.';
+
+  @override
+  String get groupTrackingModeDetailedTitle => 'Detailed';
+
+  @override
+  String get groupTrackingModeDetailedSubtitle =>
+      'Track exactly who owes whom for each expense.';
+
+  @override
   String get expenseDateValidationEmpty => 'Please enter a date!';
 
   @override
