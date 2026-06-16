@@ -93,6 +93,11 @@ unit-tested); pagination/realtime/routes preserved; 15 tests; 6 en+de keys; anal
 Name, color swatch row (retints icon, writes `colorValue`), member toggles + add-guest, Simplified/Detailed
 radio (`simplifiedExpenses`), sticky Create/Save.
 *Deps:* E0-T4. *Screen 12.*
+✅ **done · ec3573a** — restyled `group_detail_edit.dart` (name + retinted icon preview, 6-swatch `kGroupColorPalette`
+row → `colorValue`, reused member search/add-guest, Simplified/Detailed cards → `simplifiedExpenses`, sticky
+Create/Save); pure `selectedGroupSwatchIndex` helper; 8 tests; 9 en+de keys; analyze clean, 288 green.
+*v0:* new groups default Detailed; footer uses `surface` (spec bar tone `surfaceContainerLow` — device-tweakable).
+*QA:* swatch select retints preview, mode toggle, create vs save in light+dark.
 
 **E1-T4 · Invite sheet** · `group_invite_page.dart`
 Group link + QR + Share, in the restyled `SheetScaffold`.
