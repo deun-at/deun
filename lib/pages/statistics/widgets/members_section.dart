@@ -1,4 +1,3 @@
-import 'package:deun/helper/helper.dart';
 import 'package:deun/l10n/app_localizations.dart';
 import 'package:deun/pages/statistics/provider/statistics_notifiers.dart';
 import 'package:deun/pages/statistics/statistics_models.dart';
@@ -96,7 +95,7 @@ class _MemberRow extends StatelessWidget {
               ),
             ),
             Text(
-              '${(delta >= 0 ? '+' : '')}${toCurrency(delta)}',
+              '${(delta >= 0 ? '+' : '')}${l10n.toCurrency(delta)}',
               style: theme.textTheme.labelMedium?.copyWith(color: deltaColor, fontWeight: FontWeight.w700),
             ),
           ],
@@ -163,7 +162,7 @@ class _MemberBar extends StatelessWidget {
         const SizedBox(width: 8),
         SizedBox(
           width: 70,
-          child: Text(toCurrency(value), style: theme.textTheme.labelMedium, textAlign: TextAlign.right),
+          child: Text(AppLocalizations.of(context)!.toCurrency(value), style: theme.textTheme.labelMedium, textAlign: TextAlign.right),
         ),
       ],
     );

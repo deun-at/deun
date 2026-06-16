@@ -1,4 +1,3 @@
-import 'package:deun/helper/helper.dart';
 import 'package:deun/l10n/app_localizations.dart';
 import 'package:deun/pages/expenses/data/expense_category.dart';
 import 'package:deun/pages/statistics/provider/statistics_notifiers.dart';
@@ -102,7 +101,7 @@ class _StatsCategoriesSectionState
                             mainAxisSize: MainAxisSize.min,
                             children: [
                               Text(
-                                toCurrency(total),
+                                l10n.toCurrency(total),
                                 style: theme.textTheme.titleMedium?.copyWith(
                                   fontWeight: FontWeight.w700,
                                 ),
@@ -149,7 +148,7 @@ class _StatsCategoriesSectionState
                           title: Text(category.getDisplayName(l10n)),
                           subtitle: Text('${pct.toStringAsFixed(1)}%'),
                           trailing: Text(
-                            toCurrency(item.total),
+                            l10n.toCurrency(item.total),
                             style: theme.textTheme.titleSmall?.copyWith(
                               fontWeight: FontWeight.w600,
                             ),
@@ -158,7 +157,7 @@ class _StatsCategoriesSectionState
                         );
                       },
                     ),
-                    SizedBox(height: 10),
+                    const SizedBox(height: 10),
                   ],
                 );
               },

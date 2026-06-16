@@ -1,4 +1,3 @@
-import 'package:deun/helper/helper.dart';
 import 'package:deun/l10n/app_localizations.dart';
 import 'package:deun/pages/groups/data/group_model.dart';
 import 'package:deun/pages/statistics/provider/statistics_notifiers.dart';
@@ -121,7 +120,7 @@ class StatisticsMonthDetailBottomSheet extends ConsumerWidget {
                             ),
                             subtitle: Text('${pct.toStringAsFixed(1)}%'),
                             trailing: Text(
-                              toCurrency(item.total),
+                              localizations.toCurrency(item.total),
                               style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
                             ),
                           ),
