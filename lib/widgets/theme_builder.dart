@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 /// Semantic colors that M3's [ColorScheme] does not model (success / danger /
 /// warning, plus the ledger payback-chip pair). Provided via a
@@ -98,6 +99,49 @@ class ThemeBuilder extends StatelessWidget {
   }
 }
 
+/// App-wide text theme (DESIGN_SPEC "Typography").
+///
+/// Body / UI / labels default to **Hanken Grotesk**; display, headline and
+/// `titleLarge` slots (screen titles, big amounts, group/card names) use
+/// **Bricolage Grotesque** with a `-0.02em` tracking and tabular figures so
+/// amounts align in columns. Text colour is left to [ThemeData] / [ColorScheme]
+/// so a single shared instance works for both brightnesses.
+TextTheme _buildTextTheme() {
+  // Hanken everywhere first; Material default sizes per slot are preserved.
+  final base = GoogleFonts.hankenGroteskTextTheme(const TextTheme());
+
+  // Bricolage display/heading slot. letterSpacing is absolute logical px in
+  // Flutter, so -0.02em == fontSize * -0.02. Display/headline slots also get
+  // tabular figures for column-aligned amounts.
+  TextStyle bricolage(
+    TextStyle? slot, {
+    required double fontSize,
+    required FontWeight fontWeight,
+    bool tabular = true,
+  }) {
+    return GoogleFonts.bricolageGrotesque(
+      textStyle: slot,
+      fontSize: fontSize,
+      fontWeight: fontWeight,
+      letterSpacing: fontSize * -0.02,
+      fontFeatures: tabular ? const [FontFeature.tabularFigures()] : null,
+    );
+  }
+
+  return base.copyWith(
+    // Hero amounts / display (spec: 57 / 45 / 40).
+    displayLarge: bricolage(base.displayLarge, fontSize: 57, fontWeight: FontWeight.w700),
+    displayMedium: bricolage(base.displayMedium, fontSize: 45, fontWeight: FontWeight.w700),
+    displaySmall: bricolage(base.displaySmall, fontSize: 40, fontWeight: FontWeight.w600),
+    // Screen titles / headlines (spec: 30 / 28 / 24).
+    headlineLarge: bricolage(base.headlineLarge, fontSize: 30, fontWeight: FontWeight.w600),
+    headlineMedium: bricolage(base.headlineMedium, fontSize: 28, fontWeight: FontWeight.w600),
+    headlineSmall: bricolage(base.headlineSmall, fontSize: 24, fontWeight: FontWeight.w600),
+    // titleLarge: app-bar/screen titles, card/group names (spec: ~19).
+    titleLarge: bricolage(base.titleLarge, fontSize: 19, fontWeight: FontWeight.w600),
+  );
+}
+
 ThemeData getThemeData(BuildContext context, Color seedColor, Brightness brightness) {
   // Light: warm-neutral surfaces from the prototype palette.
   Color surface = const Color(0xFFF4F3EF);
@@ -134,6 +178,7 @@ ThemeData getThemeData(BuildContext context, Color seedColor, Brightness brightn
   }
 
   return ThemeData(
+    textTheme: _buildTextTheme(),
     extensions: <ThemeExtension<dynamic>>[
       brightness == Brightness.dark ? SemanticColors.dark : SemanticColors.light,
     ],
