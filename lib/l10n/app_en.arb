@@ -1124,5 +1124,25 @@
   "groupDetailPaymentTag": "PAYMENT",
   "@groupDetailPaymentTag": {
     "description": "Trailing tag on a payback / settlement ledger row."
+  },
+  "categorySheetTitle": "Category",
+  "@categorySheetTitle": {
+    "description": "Title of the category picker bottom sheet (icon grid)."
+  },
+  "paidBySheetTitle": "Paid by",
+  "@paidBySheetTitle": {
+    "description": "Title of the paid-by picker bottom sheet (member list)."
+  },
+  "dateSheetTitle": "Date",
+  "@dateSheetTitle": {
+    "description": "Title of the date picker bottom sheet."
+  },
+  "datePickCustom": "Pick a date…",
+  "@datePickCustom": {
+    "description": "Option in the date sheet that opens the platform calendar."
+  },
+  "amountSheetTitle": "Amount",
+  "@amountSheetTitle": {
+    "description": "Title of the amount keypad bottom sheet."
   }
 }

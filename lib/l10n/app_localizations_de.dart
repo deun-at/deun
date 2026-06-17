@@ -1305,4 +1305,19 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get groupDetailPaymentTag => 'ZAHLUNG';
+
+  @override
+  String get categorySheetTitle => 'Kategorie';
+
+  @override
+  String get paidBySheetTitle => 'Bezahlt von';
+
+  @override
+  String get dateSheetTitle => 'Datum';
+
+  @override
+  String get datePickCustom => 'Datum wählen…';
+
+  @override
+  String get amountSheetTitle => 'Betrag';
 }

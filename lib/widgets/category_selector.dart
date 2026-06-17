@@ -1,12 +1,17 @@
-import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_form_builder/flutter_form_builder.dart';
 import 'package:deun/l10n/app_localizations.dart';
 import 'package:deun/pages/expenses/data/expense_category.dart';
 
-import 'card_list_view_builder.dart';
+import 'restyle/expense_picker_sheets.dart';
 import 'restyle/soft_card.dart';
 
+/// The category trigger tile for the expense editor. Renders the currently
+/// selected [ExpenseCategory] (icon tint + name) inside a [SoftCard]; tapping
+/// opens the restyled category grid sheet ([showCategoryGridSheet]).
+///
+/// Selection logic is unchanged: it writes the same [ExpenseCategory] to the
+/// `FormBuilderField` and calls [onChanged].
 class CategorySelector extends StatefulWidget {
   const CategorySelector({
     super.key,
@@ -26,50 +31,27 @@ class CategorySelector extends StatefulWidget {
 }
 
 class _CategorySelectorState extends State<CategorySelector> {
-  late final SearchController _searchController;
   ExpenseCategory? _selectedCategory;
 
   @override
   void initState() {
     super.initState();
-    _searchController = SearchController();
-    _selectedCategory = widget.initialValue;
-
-    _selectedCategory ??= ExpenseCategory.other;
-  }
-
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    _updateSearchText();
+    _selectedCategory = widget.initialValue ?? ExpenseCategory.other;
   }
 
   @override
   void didUpdateWidget(CategorySelector oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.initialValue != widget.initialValue) {
-      _selectedCategory = widget.initialValue;
-      _updateSearchText();
+      _selectedCategory = widget.initialValue ?? ExpenseCategory.other;
     }
   }
 
-  void _updateSearchText() {
-    // Always keep search field empty for better search experience
-    _searchController.text = '';
-  }
-
-  void _selectCategory(ExpenseCategory? category) {
+  void _selectCategory(ExpenseCategory category) {
     setState(() {
       _selectedCategory = category;
     });
-    _updateSearchText();
     widget.onChanged?.call(category);
-  }
-
-  @override
-  void dispose() {
-    _searchController.dispose();
-    super.dispose();
   }
 
   @override
@@ -81,89 +63,56 @@ class _CategorySelectorState extends State<CategorySelector> {
       initialValue: widget.initialValue,
       enabled: widget.enabled,
       builder: (FormFieldState<ExpenseCategory> field) {
-        return SearchAnchor(
-          searchController: _searchController,
-          builder: (BuildContext context, SearchController controller) {
-            final colorScheme = Theme.of(context).colorScheme;
-            final textTheme = Theme.of(context).textTheme;
-            return SoftCard(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              onTap: widget.enabled
-                  ? () {
-                      controller.text = ''; // Clear search field when opening
-                      controller.openView();
-                    }
-                  : null,
-              child: Row(
-                children: [
-                  _CategoryIcon(category: _selectedCategory!),
-                  const SizedBox(width: 14),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(
-                          localizations.categoryLabel,
-                          style: textTheme.bodySmall?.copyWith(
-                            color: colorScheme.onSurfaceVariant,
-                          ),
-                        ),
-                        const SizedBox(height: 2),
-                        Text(
-                          _selectedCategory!.getDisplayName(localizations),
-                          style: textTheme.titleMedium?.copyWith(
-                            color: colorScheme.onSurface,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ],
+        final colorScheme = Theme.of(context).colorScheme;
+        final textTheme = Theme.of(context).textTheme;
+        // Keep the visible selection in sync with the form value (e.g. when the
+        // category is auto-detected from the title).
+        final current = field.value ?? _selectedCategory!;
+
+        return SoftCard(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          onTap: widget.enabled
+              ? () async {
+                  final picked = await showCategoryGridSheet(
+                    context,
+                    selected: current,
+                  );
+                  if (picked != null) {
+                    _selectCategory(picked);
+                    field.didChange(picked);
+                  }
+                }
+              : null,
+          child: Row(
+            children: [
+              _CategoryIcon(category: current),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      localizations.categoryLabel,
+                      style: textTheme.bodySmall?.copyWith(
+                        color: colorScheme.onSurfaceVariant,
+                      ),
                     ),
-                  ),
-                  if (widget.enabled)
-                    Icon(Icons.chevron_right, color: colorScheme.onSurfaceVariant),
-                ],
+                    const SizedBox(height: 2),
+                    Text(
+                      current.getDisplayName(localizations),
+                      style: textTheme.titleMedium?.copyWith(
+                        color: colorScheme.onSurface,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                ),
               ),
-            );
-          },
-          suggestionsBuilder: (BuildContext context, SearchController controller) {
-            final query = controller.text.toLowerCase();
-            final filteredCategories = query.isEmpty
-                ? ExpenseCategory.values.toList()
-                : ExpenseCategory.values.where((category) {
-                    final categoryName =
-                        category.getDisplayName(localizations).toLowerCase();
-                    return categoryName.contains(query);
-                  }).toList();
-
-            int categoriesLength = filteredCategories.length;
-
-            return filteredCategories.mapIndexed((index, category) {
-              bool isTop = false;
-              bool isBottom = false;
-
-              if (index == 0) {
-                isTop = true;
-              }
-
-              if (index == categoriesLength - 1) {
-                isBottom = true;
-              }
-
-              return CardListTile(
-                  isTop: isTop,
-                  isBottom: isBottom,
-                  child: ListTile(
-                    leading: _CategoryIcon(category: category),
-                    title: Text(category.getDisplayName(localizations)),
-                    onTap: () {
-                      _selectCategory(category);
-                      field.didChange(category);
-                      controller.closeView(category.getDisplayName(localizations));
-                    },
-                  ));
-            }).toList();
-          },
+              if (widget.enabled)
+                Icon(Icons.chevron_right, color: colorScheme.onSurfaceVariant),
+            ],
+          ),
         );
       },
     );
