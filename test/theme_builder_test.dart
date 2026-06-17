@@ -56,7 +56,8 @@ void main() {
       expect(scheme.surfaceBright, const Color(0xFF262824));
       expect(scheme.surfaceDim, const Color(0xFF121311));
       expect(scheme.onSurface, const Color(0xFFECEBE6));
-      expect(scheme.onSurfaceVariant, const Color(0xFF9A968C));
+      // Lifted from #9A968C for WCAG AA on the warm dark surfaces (E8-T5).
+      expect(scheme.onSurfaceVariant, const Color(0xFFADA99F));
     });
 
     testWidgets('primary is non-trivially seeded from the brand indigo', (tester) async {

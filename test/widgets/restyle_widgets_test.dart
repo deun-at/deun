@@ -24,7 +24,7 @@ Future<void> _pump(
 }) async {
   await tester.pumpWidget(
     MaterialApp(
-      theme: ThemeData(brightness: Brightness.light),
+      theme: ThemeData(brightness: Brightness.light, splashFactory: NoSplash.splashFactory),
       localizationsDelegates: const [
         AppLocalizations.delegate,
         GlobalMaterialLocalizations.delegate,
@@ -235,6 +235,44 @@ void main() {
       await tester.pumpAndSettle();
       expect(inc, 0);
       expect(dec, 0);
+    });
+
+    testWidgets('each step button has a >=48dp hit target', (tester) async {
+      await _pump(
+        tester,
+        StepperControl(
+          value: '1',
+          onIncrement: () {},
+          onDecrement: () {},
+        ),
+      );
+      for (final icon in [Icons.add, Icons.remove]) {
+        final tapTarget = find.ancestor(
+          of: find.byIcon(icon),
+          matching: find.byType(InkResponse),
+        );
+        expect(tapTarget, findsOneWidget);
+        final size = tester.getSize(tapTarget);
+        expect(size.width, greaterThanOrEqualTo(48.0));
+        expect(size.height, greaterThanOrEqualTo(48.0));
+      }
+    });
+
+    testWidgets('step buttons expose localized increase/decrease labels',
+        (tester) async {
+      await _pump(
+        tester,
+        StepperControl(
+          value: '1',
+          onIncrement: () {},
+          onDecrement: () {},
+        ),
+      );
+      final l10n = AppLocalizations.of(
+        tester.element(find.byType(StepperControl)),
+      )!;
+      expect(find.bySemanticsLabel(l10n.stepperIncrease), findsOneWidget);
+      expect(find.bySemanticsLabel(l10n.stepperDecrease), findsOneWidget);
     });
   });
 
