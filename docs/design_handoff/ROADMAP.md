@@ -151,6 +151,13 @@ analyze clean, 362 green. *v0:* "Pick a date…" defers to platform `showDatePic
 Summary card (icon/title/cat·date/total/payer/your net), itemized "Review & claim" banner (→ E3), per-member
 breakdown + tags.
 *Deps:* E1-T2. *Screen 11.*
+✅ **done · 9e2e64f** — NEW read screen `expense_detail_read.dart` + route `/group/details/expense-detail` (the
+app had NO read view — taps went straight to the editor). Summary `SoftCard` (icon/title/cat·date/total/payer/your-net
+via `MoneyText`), itemized "Review & claim" banner, per-member breakdown bound to `groupMemberShareStatistic`, tags
+chip; pure `expense_detail_view_model.dart`; Delete/Edit reuse existing logic. 12 tests; 12 en+de keys; analyze clean,
+374 green. *Flow change (spec-correct):* ledger **quick row → read view**; itemized row still → editor pending E3.
+*STUB:* "Review & claim" banner + itemized tap `TODO(E3)→claim_page`. *Note:* group_detail search-result tile still
+opens editor (left as-is). *QA:* summary, your-net pill, claim banner, breakdown in light+dark.
 
 **E2-T5 · Receipt scan sheet** · `receipt_scanner_sheet.dart`
 Restyle the scanner UI (corner brackets + scan line + detected-items preview) feeding the existing Gemini
