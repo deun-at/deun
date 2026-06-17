@@ -58,6 +58,28 @@ class ClaimNotifier extends _$ClaimNotifier with RealtimeNotifierMixin {
         .toList();
   }
 
+  /// Claim units paired with their DB identity + name, in stable order. The
+  /// read-only item area on the claim screen (E3-T2) binds to this; the
+  /// interactive chips (E3-T3) reuse the [ClaimUnitRow.entryId] to mutate.
+  List<ClaimUnitRow> get unitRows {
+    final expense = state.value;
+    if (expense == null) return const [];
+    return expense.expenseEntries.values
+        .where((e) => e.isClaimUnit)
+        .map((e) => ClaimUnitRow(
+              entryId: e.id,
+              name: e.name,
+              unit: ClaimUnit(
+                unitCost: e.amount,
+                claimers: e.expenseEntryShares.map((s) => s.email).toList(),
+              ),
+              claimerNames: {
+                for (final s in e.expenseEntryShares) s.email: s.displayName,
+              },
+            ))
+        .toList();
+  }
+
   Map<String, double> get memberTotals => memberShareTotals(units);
   double get claimed => claimedTotal(units);
   double get unclaimed => unclaimedTotal(units);

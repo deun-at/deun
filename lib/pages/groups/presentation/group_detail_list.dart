@@ -36,13 +36,12 @@ class _GroupDetailListState extends ConsumerState<GroupDetailList> {
   }
 
   void _openExpense(Expense expense) {
-    // Quick expenses open the read detail (Screen 11). Itemized expenses keep
-    // opening the editor until the Tap-to-Claim screen exists.
-    // TODO(E3): route itemized expenses to claim_page once it exists.
+    // Quick expenses open the read detail (Screen 11); itemized expenses open
+    // the Tap-to-Claim screen (Screen 9).
     final isItemized =
         classifyLedgerRow(expense) == LedgerRowType.itemized;
     GoRouter.of(context).push(
-      isItemized ? "/group/details/expense" : "/group/details/expense-detail",
+      isItemized ? "/group/details/claim" : "/group/details/expense-detail",
       extra: {'group': widget.group, 'expense': expense},
     );
   }
@@ -328,7 +327,7 @@ class _ItemizedRow extends StatelessWidget {
     final claimers = _claimerMembers(expense, currentUserEmail);
 
     return SoftCard(
-      onTap: onTap, // TODO(E3): route to claim_page once the Tap-to-Claim screen exists.
+      onTap: onTap, // → /group/details/claim (Screen 9), via _openExpense.
       padding: EdgeInsets.zero,
       child: IntrinsicHeight(
         child: Row(

@@ -151,9 +151,11 @@ class ExpenseDetailRead extends ConsumerWidget {
                 const SizedBox(height: 16),
                 _ReviewClaimBanner(
                   onTap: () {
-                    // TODO(E3): route to claim_page once the Tap-to-Claim
-                    // screen exists. Until then, fall back to the editor.
-                    _openEditor(context);
+                    // → Tap-to-Claim screen (Screen 9).
+                    GoRouter.of(context).push(
+                      '/group/details/claim',
+                      extra: {'group': group, 'expense': expense},
+                    );
                   },
                 ),
               ],

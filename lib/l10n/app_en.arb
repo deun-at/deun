@@ -244,6 +244,62 @@
   "@expenseReviewClaimAction": {
     "description": "Call-to-action on the Review & claim banner on the expense detail screen."
   },
+  "claimTitle": "Tap to claim",
+  "@claimTitle": {
+    "description": "App-bar / header title for the itemized claim screen (Screen 9)."
+  },
+  "claimPresenceLive": "Live",
+  "@claimPresenceLive": {
+    "description": "Label next to the live-presence pulse dot in the claim screen header."
+  },
+  "claimEditItems": "Edit items",
+  "@claimEditItems": {
+    "description": "Tooltip / label for the edit-items action that opens the itemized editor from the claim screen."
+  },
+  "claimPreviewAs": "Preview as",
+  "@claimPreviewAs": {
+    "description": "Label above the persona switcher that previews the claim view as a chosen member."
+  },
+  "claimYourShare": "Your share",
+  "@claimYourShare": {
+    "description": "Label above the selected persona's claimed total on the dark summary card."
+  },
+  "claimProgressLabel": "{claimed} of {total} claimed",
+  "@claimProgressLabel": {
+    "description": "Progress caption under the claimed/total progress bar on the summary card.",
+    "placeholders": {
+      "claimed": { "type": "String" },
+      "total": { "type": "String" }
+    }
+  },
+  "claimUnclaimedLabel": "Unclaimed",
+  "@claimUnclaimedLabel": {
+    "description": "Label for the amount on the receipt nobody has claimed yet."
+  },
+  "claimAllClaimed": "All claimed",
+  "@claimAllClaimed": {
+    "description": "Status shown on the summary card when nothing is left unclaimed."
+  },
+  "claimPerMemberLabel": "Per person",
+  "@claimPerMemberLabel": {
+    "description": "Section label above the per-member totals on the summary card."
+  },
+  "claimItemsLabel": "Items",
+  "@claimItemsLabel": {
+    "description": "Section label above the list of claimable items."
+  },
+  "claimItemUnclaimed": "Unclaimed",
+  "@claimItemUnclaimed": {
+    "description": "Chip text on an item that nobody has claimed yet."
+  },
+  "claimNoItems": "This expense has no claimable items.",
+  "@claimNoItems": {
+    "description": "Empty state shown when an expense has no per-unit claim items."
+  },
+  "claimLoadError": "Couldn't load this expense.",
+  "@claimLoadError": {
+    "description": "Error state shown when the claim screen fails to load the expense."
+  },
   "expenseMemberLent": "lent",
   "@expenseMemberLent": {
     "description": "Trailing label for a member who is owed in the per-member breakdown."
