@@ -309,6 +309,12 @@ range (personal provider has no period-offset param); headline = fair share. *QA
 **E7-T1 · Login / Sign-up** · `pages/auth/login_screen.dart`, `sign_in.dart`, `auth_gate.dart`
 Social buttons, email/password, mode switch, forgot-password. Keep existing auth logic.
 *Deps:* E0-T4. *Screen 1.*
+✅ **done · 72c50e3** — restyled `sign_in.dart` (call_split icon, mode-aware title, custom email/password/name form,
+forgot-password, social buttons, mode switch); pure `auth_mode.dart`. Replaced opaque `SupaEmailAuth` with a custom
+form replicating its EXACT Supabase calls (signInWithPassword/signUp+anon-updateUser/resetPasswordForEmail, same
+validators/redirects/metadata); OAuth kept via `SupaSocialsAuth`; `auth_gate.dart` untouched. 10 tests; 22 en+de keys;
+analyze clean, 511 green. *v0:* custom form (package widget unstyleable); name→`user_metadata['name']`.
+*QA (needs live device):* login, signup, forgot-password, Google/Apple/GitHub OAuth flows + light/dark.
 
 **E7-T2 · Recovery + Onboarding** · `update_password.dart`, `onboarding_screen.dart`
 Recovery email screen; onboarding username (sanitized, `#code` suffix, live handle) + display name.
