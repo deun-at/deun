@@ -615,6 +615,75 @@ class AppLocalizationsDe extends AppLocalizations {
   String get signInEmailTitle => 'E-Mail';
 
   @override
+  String get authLoginTitle => 'Willkommen zurück';
+
+  @override
+  String get authSignupTitle => 'Konto erstellen';
+
+  @override
+  String get authSubtitle => 'Teile fair mit deiner Gruppe.';
+
+  @override
+  String get authContinueWithApple => 'Weiter mit Apple';
+
+  @override
+  String get authContinueWithGoogle => 'Weiter mit Google';
+
+  @override
+  String get authContinueWithGithub => 'Weiter mit GitHub';
+
+  @override
+  String get authDividerOr => 'oder';
+
+  @override
+  String get authEmailLabel => 'E-Mail';
+
+  @override
+  String get authPasswordLabel => 'Passwort';
+
+  @override
+  String get authNameLabel => 'Name';
+
+  @override
+  String get authEmailInvalid => 'Bitte gib eine gültige E-Mail-Adresse ein.';
+
+  @override
+  String get authPasswordTooShort =>
+      'Bitte gib ein Passwort mit mindestens 6 Zeichen ein.';
+
+  @override
+  String get authNameRequired => 'Bitte gib deinen Namen ein.';
+
+  @override
+  String get authForgotPassword => 'Passwort vergessen?';
+
+  @override
+  String get authLoginCta => 'Anmelden';
+
+  @override
+  String get authSignupCta => 'Konto erstellen';
+
+  @override
+  String get authSwitchToSignupPrompt => 'Noch kein Konto?';
+
+  @override
+  String get authSwitchToSignupAction => 'Registrieren';
+
+  @override
+  String get authSwitchToLoginPrompt => 'Schon ein Konto?';
+
+  @override
+  String get authSwitchToLoginAction => 'Anmelden';
+
+  @override
+  String get authPasswordResetSent =>
+      'Sieh in deinem Postfach nach dem Link zum Zurücksetzen.';
+
+  @override
+  String get authUnexpectedError =>
+      'Ein unerwarteter Fehler ist aufgetreten. Bitte versuche es erneut.';
+
+  @override
   String get updatePasswordTitle => 'Passwort aktualisieren';
 
   @override

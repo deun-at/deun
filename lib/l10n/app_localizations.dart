@@ -1031,6 +1031,138 @@ abstract class AppLocalizations {
   /// **'Can\'t use social login?\nUse email instead!'**
   String get signInEmailTitle;
 
+  /// Screen 1 title in login mode.
+  ///
+  /// In en, this message translates to:
+  /// **'Welcome back'**
+  String get authLoginTitle;
+
+  /// Screen 1 title in sign-up mode.
+  ///
+  /// In en, this message translates to:
+  /// **'Create your account'**
+  String get authSignupTitle;
+
+  /// Subtitle shown under the title on the login / sign-up screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Simply split fairly with your group.'**
+  String get authSubtitle;
+
+  /// Apple social sign-in button label.
+  ///
+  /// In en, this message translates to:
+  /// **'Continue with Apple'**
+  String get authContinueWithApple;
+
+  /// Google social sign-in button label.
+  ///
+  /// In en, this message translates to:
+  /// **'Continue with Google'**
+  String get authContinueWithGoogle;
+
+  /// GitHub social sign-in button label.
+  ///
+  /// In en, this message translates to:
+  /// **'Continue with GitHub'**
+  String get authContinueWithGithub;
+
+  /// Label centered on the divider between social and email sign-in.
+  ///
+  /// In en, this message translates to:
+  /// **'or'**
+  String get authDividerOr;
+
+  /// Label for the email field on the login / sign-up screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Email'**
+  String get authEmailLabel;
+
+  /// Label for the password field on the login / sign-up screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Password'**
+  String get authPasswordLabel;
+
+  /// Label for the display-name field shown on sign-up.
+  ///
+  /// In en, this message translates to:
+  /// **'Name'**
+  String get authNameLabel;
+
+  /// Validation error for an invalid email on the login / sign-up screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Please enter a valid email address.'**
+  String get authEmailInvalid;
+
+  /// Validation error when the password is shorter than 6 characters.
+  ///
+  /// In en, this message translates to:
+  /// **'Please enter a password that is at least 6 characters long.'**
+  String get authPasswordTooShort;
+
+  /// Validation error when the display name is empty on sign-up.
+  ///
+  /// In en, this message translates to:
+  /// **'Please enter your name.'**
+  String get authNameRequired;
+
+  /// Forgot-password link shown in login mode.
+  ///
+  /// In en, this message translates to:
+  /// **'Forgot password?'**
+  String get authForgotPassword;
+
+  /// Primary submit button label in login mode.
+  ///
+  /// In en, this message translates to:
+  /// **'Log in'**
+  String get authLoginCta;
+
+  /// Primary submit button label in sign-up mode.
+  ///
+  /// In en, this message translates to:
+  /// **'Create account'**
+  String get authSignupCta;
+
+  /// Prompt before the link to switch to sign-up mode.
+  ///
+  /// In en, this message translates to:
+  /// **'Don\'t have an account?'**
+  String get authSwitchToSignupPrompt;
+
+  /// Action link to switch to sign-up mode.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign up'**
+  String get authSwitchToSignupAction;
+
+  /// Prompt before the link to switch to login mode.
+  ///
+  /// In en, this message translates to:
+  /// **'Already have an account?'**
+  String get authSwitchToLoginPrompt;
+
+  /// Action link to switch to login mode.
+  ///
+  /// In en, this message translates to:
+  /// **'Log in'**
+  String get authSwitchToLoginAction;
+
+  /// Snackbar confirmation after a password reset email is sent.
+  ///
+  /// In en, this message translates to:
+  /// **'Check your inbox for a reset link.'**
+  String get authPasswordResetSent;
+
+  /// Fallback error for non-auth failures on the login / sign-up screen.
+  ///
+  /// In en, this message translates to:
+  /// **'An unexpected error occurred. Please try again.'**
+  String get authUnexpectedError;
+
   /// No description provided for @updatePasswordTitle.
   ///
   /// In en, this message translates to:
