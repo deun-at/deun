@@ -243,6 +243,38 @@ class AppLocalizationsDe extends AppLocalizations {
   String get addNewExpenseEntry => 'Eintrag hinzufügen';
 
   @override
+  String get editorModeQuick => 'Schnell teilen';
+
+  @override
+  String get editorModeItemized => 'Nach Artikeln';
+
+  @override
+  String get itemizedItemsLabel => 'Artikel';
+
+  @override
+  String itemizedTotalFromItems(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Summe aus $count Artikeln',
+      one: 'Summe aus 1 Artikel',
+      zero: 'Noch keine Artikel',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get addItemByHand => 'Artikel manuell hinzufügen';
+
+  @override
+  String get itemizedInfoCallout =>
+      'Aufgeschlüsselte Ausgaben können geteilt werden, damit jede Person die Artikel beansprucht, die sie hatte. Der Anteil jeder Person ergibt sich aus dem, was sie beansprucht.';
+
+  @override
+  String get expenseSaveAndShareForClaiming =>
+      'Hinzufügen & zum Beanspruchen teilen';
+
+  @override
   String get expenseEntryName => 'Name';
 
   @override

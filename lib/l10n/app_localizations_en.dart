@@ -242,6 +242,37 @@ class AppLocalizationsEn extends AppLocalizations {
   String get addNewExpenseEntry => 'Add item';
 
   @override
+  String get editorModeQuick => 'Quick split';
+
+  @override
+  String get editorModeItemized => 'Itemized';
+
+  @override
+  String get itemizedItemsLabel => 'Items';
+
+  @override
+  String itemizedTotalFromItems(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Total from $count items',
+      one: 'Total from 1 item',
+      zero: 'No items yet',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get addItemByHand => 'Add item by hand';
+
+  @override
+  String get itemizedInfoCallout =>
+      'Itemized expenses can be shared so each person claims the items they had. Everyone\'s share is worked out from what they claim.';
+
+  @override
+  String get expenseSaveAndShareForClaiming => 'Add & share for claiming';
+
+  @override
   String get expenseEntryName => 'Name';
 
   @override

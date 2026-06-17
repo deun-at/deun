@@ -542,6 +542,48 @@ abstract class AppLocalizations {
   /// **'Add item'**
   String get addNewExpenseEntry;
 
+  /// No description provided for @editorModeQuick.
+  ///
+  /// In en, this message translates to:
+  /// **'Quick split'**
+  String get editorModeQuick;
+
+  /// No description provided for @editorModeItemized.
+  ///
+  /// In en, this message translates to:
+  /// **'Itemized'**
+  String get editorModeItemized;
+
+  /// No description provided for @itemizedItemsLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Items'**
+  String get itemizedItemsLabel;
+
+  /// No description provided for @itemizedTotalFromItems.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =0{No items yet} =1{Total from 1 item} other{Total from {count} items}}'**
+  String itemizedTotalFromItems(int count);
+
+  /// No description provided for @addItemByHand.
+  ///
+  /// In en, this message translates to:
+  /// **'Add item by hand'**
+  String get addItemByHand;
+
+  /// No description provided for @itemizedInfoCallout.
+  ///
+  /// In en, this message translates to:
+  /// **'Itemized expenses can be shared so each person claims the items they had. Everyone\'s share is worked out from what they claim.'**
+  String get itemizedInfoCallout;
+
+  /// No description provided for @expenseSaveAndShareForClaiming.
+  ///
+  /// In en, this message translates to:
+  /// **'Add & share for claiming'**
+  String get expenseSaveAndShareForClaiming;
+
   /// No description provided for @expenseEntryName.
   ///
   /// In en, this message translates to:

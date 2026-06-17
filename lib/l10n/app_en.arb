@@ -186,6 +186,24 @@
   "@expenseEntryTitle": {},
   "addNewExpenseEntry": "Add item",
   "@addNewExpenseEntry": {},
+  "editorModeQuick": "Quick split",
+  "@editorModeQuick": {},
+  "editorModeItemized": "Itemized",
+  "@editorModeItemized": {},
+  "itemizedItemsLabel": "Items",
+  "@itemizedItemsLabel": {},
+  "itemizedTotalFromItems": "{count, plural, =0{No items yet} =1{Total from 1 item} other{Total from {count} items}}",
+  "@itemizedTotalFromItems": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "addItemByHand": "Add item by hand",
+  "@addItemByHand": {},
+  "itemizedInfoCallout": "Itemized expenses can be shared so each person claims the items they had. Everyone's share is worked out from what they claim.",
+  "@itemizedInfoCallout": {},
+  "expenseSaveAndShareForClaiming": "Add & share for claiming",
+  "@expenseSaveAndShareForClaiming": {},
   "expenseEntryName": "Name",
   "@expenseEntryName": {},
   "expenseEntryNameValidationEmpty": "Please enter an item title!",
