@@ -296,6 +296,11 @@ category charts + detail sheets in light+dark.
 **E6-T2 · Personal statistics** · `personal_statistics_page.dart`
 Dark paid/share card, monthly bars, by-group list.
 *Deps:* E0-T4. *Screen 14, route `/setting/statistics`.*
+✅ **done · 0733e3c** — restyled `personal_statistics_page.dart` + new `personal_summary_section.dart` (dark hero,
+paid/share via `MoneyText`), `personal_trend_section.dart` (themed fl_chart monthly bars), `personal_groups_section.dart`
+(by-group list, group-tinted icon + `ProgressBar` + share). Reuses E6-T1 `stats_chart_math`/chart styling + dark-hero
+treatment; providers/queries untouched. 3 tests; reused l10n; analyze clean, 501 green. *v0:* `AppSegmentedControl`
+range (personal provider has no period-offset param); headline = fair share. *QA:* hero, monthly bars, by-group in light+dark.
 
 ---
 
