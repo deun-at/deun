@@ -273,6 +273,43 @@ class AppLocalizationsEn extends AppLocalizations {
   String get expenseSaveAndShareForClaiming => 'Add & share for claiming';
 
   @override
+  String get expenseDetailTitle => 'Expense';
+
+  @override
+  String get expenseYourNetLabel => 'Your net';
+
+  @override
+  String get expenseYouLent => 'You lent';
+
+  @override
+  String get expenseYouOwe => 'You owe';
+
+  @override
+  String get expenseNetSettled => 'Settled';
+
+  @override
+  String get expenseBreakdownLabel => 'Who owes what';
+
+  @override
+  String get expenseTagsLabel => 'Tags';
+
+  @override
+  String get expenseReviewClaimTitle => 'Itemized expense';
+
+  @override
+  String get expenseReviewClaimSubtitle =>
+      'Review the items and claim what you had.';
+
+  @override
+  String get expenseReviewClaimAction => 'Review & claim';
+
+  @override
+  String get expenseMemberLent => 'lent';
+
+  @override
+  String get expenseMemberOwes => 'owes';
+
+  @override
   String get expenseEntryName => 'Name';
 
   @override

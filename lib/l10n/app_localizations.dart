@@ -584,6 +584,78 @@ abstract class AppLocalizations {
   /// **'Add & share for claiming'**
   String get expenseSaveAndShareForClaiming;
 
+  /// App-bar title for the expense detail (read) screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Expense'**
+  String get expenseDetailTitle;
+
+  /// Label above the current user's net amount on the expense detail summary card.
+  ///
+  /// In en, this message translates to:
+  /// **'Your net'**
+  String get expenseYourNetLabel;
+
+  /// Pill label on the expense detail summary card when the user is owed for this expense.
+  ///
+  /// In en, this message translates to:
+  /// **'You lent'**
+  String get expenseYouLent;
+
+  /// Pill label on the expense detail summary card when the user owes for this expense.
+  ///
+  /// In en, this message translates to:
+  /// **'You owe'**
+  String get expenseYouOwe;
+
+  /// Pill label on the expense detail summary card when the user's net for this expense is zero.
+  ///
+  /// In en, this message translates to:
+  /// **'Settled'**
+  String get expenseNetSettled;
+
+  /// Section label above the per-member breakdown on the expense detail screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Who owes what'**
+  String get expenseBreakdownLabel;
+
+  /// Section label above the category tags on the expense detail screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Tags'**
+  String get expenseTagsLabel;
+
+  /// Title of the Review & claim banner on the expense detail screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Itemized expense'**
+  String get expenseReviewClaimTitle;
+
+  /// Subtitle of the Review & claim banner on the expense detail screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Review the items and claim what you had.'**
+  String get expenseReviewClaimSubtitle;
+
+  /// Call-to-action on the Review & claim banner on the expense detail screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Review & claim'**
+  String get expenseReviewClaimAction;
+
+  /// Trailing label for a member who is owed in the per-member breakdown.
+  ///
+  /// In en, this message translates to:
+  /// **'lent'**
+  String get expenseMemberLent;
+
+  /// Trailing label for a member who owes in the per-member breakdown.
+  ///
+  /// In en, this message translates to:
+  /// **'owes'**
+  String get expenseMemberOwes;
+
   /// No description provided for @expenseEntryName.
   ///
   /// In en, this message translates to:

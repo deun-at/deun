@@ -275,6 +275,43 @@ class AppLocalizationsDe extends AppLocalizations {
       'Hinzufügen & zum Beanspruchen teilen';
 
   @override
+  String get expenseDetailTitle => 'Ausgabe';
+
+  @override
+  String get expenseYourNetLabel => 'Dein Saldo';
+
+  @override
+  String get expenseYouLent => 'Du hast ausgelegt';
+
+  @override
+  String get expenseYouOwe => 'Du schuldest';
+
+  @override
+  String get expenseNetSettled => 'Ausgeglichen';
+
+  @override
+  String get expenseBreakdownLabel => 'Wer schuldet was';
+
+  @override
+  String get expenseTagsLabel => 'Tags';
+
+  @override
+  String get expenseReviewClaimTitle => 'Aufgeschlüsselte Ausgabe';
+
+  @override
+  String get expenseReviewClaimSubtitle =>
+      'Sieh dir die Artikel an und beanspruche, was du hattest.';
+
+  @override
+  String get expenseReviewClaimAction => 'Prüfen & beanspruchen';
+
+  @override
+  String get expenseMemberLent => 'ausgelegt';
+
+  @override
+  String get expenseMemberOwes => 'schuldet';
+
+  @override
   String get expenseEntryName => 'Name';
 
   @override

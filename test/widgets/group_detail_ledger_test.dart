@@ -211,7 +211,7 @@ void main() {
     expect(find.text(l10n.groupDetailPaymentTag), findsOneWidget);
   });
 
-  testWidgets('tapping a quick row navigates to the expense detail', (tester) async {
+  testWidgets('tapping a quick row navigates to the read expense detail', (tester) async {
     final group = _group();
     String? visited;
 
@@ -225,10 +225,11 @@ void main() {
             child: Scaffold(body: GroupDetailList(group: group)),
           ),
         ),
+        // Quick expenses open the read detail (Screen 11), not the editor.
         GoRoute(
-          path: '/group/details/expense',
+          path: '/group/details/expense-detail',
           builder: (context, state) {
-            visited = '/group/details/expense';
+            visited = '/group/details/expense-detail';
             return const Scaffold(body: Text('detail'));
           },
         ),
@@ -258,7 +259,7 @@ void main() {
     await tester.tap(find.text('Quick 1'));
     await tester.pumpAndSettle();
 
-    expect(visited, '/group/details/expense');
+    expect(visited, '/group/details/expense-detail');
     expect(find.text('detail'), findsOneWidget);
   });
 
