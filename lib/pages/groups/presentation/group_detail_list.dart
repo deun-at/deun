@@ -36,8 +36,13 @@ class _GroupDetailListState extends ConsumerState<GroupDetailList> {
   }
 
   void _openExpense(Expense expense) {
+    // Quick expenses open the read detail (Screen 11). Itemized expenses keep
+    // opening the editor until the Tap-to-Claim screen exists.
+    // TODO(E3): route itemized expenses to claim_page once it exists.
+    final isItemized =
+        classifyLedgerRow(expense) == LedgerRowType.itemized;
     GoRouter.of(context).push(
-      "/group/details/expense",
+      isItemized ? "/group/details/expense" : "/group/details/expense-detail",
       extra: {'group': widget.group, 'expense': expense},
     );
   }

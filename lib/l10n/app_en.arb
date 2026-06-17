@@ -204,6 +204,54 @@
   "@itemizedInfoCallout": {},
   "expenseSaveAndShareForClaiming": "Add & share for claiming",
   "@expenseSaveAndShareForClaiming": {},
+  "expenseDetailTitle": "Expense",
+  "@expenseDetailTitle": {
+    "description": "App-bar title for the expense detail (read) screen."
+  },
+  "expenseYourNetLabel": "Your net",
+  "@expenseYourNetLabel": {
+    "description": "Label above the current user's net amount on the expense detail summary card."
+  },
+  "expenseYouLent": "You lent",
+  "@expenseYouLent": {
+    "description": "Pill label on the expense detail summary card when the user is owed for this expense."
+  },
+  "expenseYouOwe": "You owe",
+  "@expenseYouOwe": {
+    "description": "Pill label on the expense detail summary card when the user owes for this expense."
+  },
+  "expenseNetSettled": "Settled",
+  "@expenseNetSettled": {
+    "description": "Pill label on the expense detail summary card when the user's net for this expense is zero."
+  },
+  "expenseBreakdownLabel": "Who owes what",
+  "@expenseBreakdownLabel": {
+    "description": "Section label above the per-member breakdown on the expense detail screen."
+  },
+  "expenseTagsLabel": "Tags",
+  "@expenseTagsLabel": {
+    "description": "Section label above the category tags on the expense detail screen."
+  },
+  "expenseReviewClaimTitle": "Itemized expense",
+  "@expenseReviewClaimTitle": {
+    "description": "Title of the Review & claim banner on the expense detail screen."
+  },
+  "expenseReviewClaimSubtitle": "Review the items and claim what you had.",
+  "@expenseReviewClaimSubtitle": {
+    "description": "Subtitle of the Review & claim banner on the expense detail screen."
+  },
+  "expenseReviewClaimAction": "Review & claim",
+  "@expenseReviewClaimAction": {
+    "description": "Call-to-action on the Review & claim banner on the expense detail screen."
+  },
+  "expenseMemberLent": "lent",
+  "@expenseMemberLent": {
+    "description": "Trailing label for a member who is owed in the per-member breakdown."
+  },
+  "expenseMemberOwes": "owes",
+  "@expenseMemberOwes": {
+    "description": "Trailing label for a member who owes in the per-member breakdown."
+  },
   "expenseEntryName": "Name",
   "@expenseEntryName": {},
   "expenseEntryNameValidationEmpty": "Please enter an item title!",
