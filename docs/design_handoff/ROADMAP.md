@@ -352,6 +352,15 @@ mechanism); version footer = static tagline (`package_info_plus` not a dep). *Ca
 
 ## E8 — Polish (trails the screens it covers)
 - **E8-T1 Dark-mode audit:** every redesigned screen in dark — no hard-coded light hex leaked through.
+  ✅ **done · 9954383** — factored the repeated prototype shadow literals into named tokens in `constants.dart`
+  (`kDarkHeroShadow` `0 18px 30px -18px rgba(20,18,12,.5)` ×3 heroes; `kSoftCardShadow`/`kSoftShadowColor`
+  `0 2px 4px rgba(20,18,12,.04)` ×3 soft cards; `kAppBackgroundLight/Dark`), preserving each site's light-only
+  gating; `group_share_widget.dart` raw `Colors.red/green` → `SemanticColors` (pure `shareBalanceColor`, TDD);
+  `shimmer_card_list.dart` shimmer base → `colorScheme.surfaceContainerHighest` (dark-safe); `splash_screen.dart`
+  cool grays → warm `kAppBackground*` (splash renders pre-MaterialApp). 3 tests; analyze clean, 534 green.
+  *Left intentional (documented v0):* QR/scanner whites + frame (scannability), avatar white initials, swatch check,
+  loading scrim, category data palette, old `UserAvatar` (separate consistency follow-up). *QA:* hero shadows,
+  group_detail balance hues, shimmer, splash in light+dark.
 - **E8-T2 l10n audit:** no literal strings; en+de keys exist for all new copy; regenerated.
 - **E8-T3 Motion:** sheet rise, scrim fade, scan sweep, presence pulse; Android predictive-back still works.
 - **E8-T4 Empty/edge states:** empty ledger, settled groups, fully-claimed vs unclaimed, over/under split,
