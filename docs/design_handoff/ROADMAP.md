@@ -247,6 +247,11 @@ Friend balance + pay-back options (PayPal / Copy IBAN / Mark paid) + remove frie
 Header QR + add buttons; incoming (accept/decline), outgoing (cancel), all-friends with balance labels; tab
 badge already wired in `navigation.dart`.
 *Deps:* E0-T4. *Screen 5.*
+✅ **done · c4b8903** — restyled `friend_list.dart` (header QR/add, incoming accept/decline `SoftCard` rows,
+outgoing cancel, all-friends with semantic `BalancePill`); pure `friend_balance.dart` (`friendBalanceState`);
+providers/badge/queries untouched. Fixed a real unbounded-height crash in empty/error branches (found via tests).
+9 tests; 1 en+de key; analyze clean, 457 green. *v0:* friend tap keeps existing sheet (`TODO(E4-T2)`).
+*QA:* incoming/outgoing/all-friends rows + balance pills in light+dark.
 
 **E5-T2 · Add friend** · `friend_add_page.dart` (+ `search_result_list.dart`, `contact_suggestion_list.dart`)
 Search by `username#code`, live results, contacts, Add/Requested buttons.
