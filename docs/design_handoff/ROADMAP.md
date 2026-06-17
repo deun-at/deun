@@ -185,6 +185,14 @@ unit rows (`quantity:1`, `split_mode:'claim'`) grouped by new `item_group_id`; *
 rows. Migration `supabase/migrations/20260618000000_per_unit_claim_entries.sql` (manual-apply): `item_group_id` +
 index, `save_expense_all` v2, atomic `claim_set_unit_shares` RPC, opt-in `explode_itemized_entries` backfill.
 8 bite-size TDD steps → implement next (steps 1-3/5 gate E3-T2; step 4 gates E3-T3).
+✅ **done · 4141e21 + ba406d1** — `ExpenseEntry` gains `itemGroupId`/`isClaimUnit`; pure `claim_math.dart`
+(per-member totals, claimed/unclaimed, split-one) + `explodeItemizedEntry` (qty N → N unit rows, server-assigned
+`item_group_seq`); `expense_repository` `saveAll` auto-explodes plain itemized lines + `claimSetUnitShares`
+(atomic RPC + client fallback); `ClaimNotifier` (Riverpod codegen + realtime on `expense_update_checker`/expense_id);
+migration **file** `supabase/migrations/20260618000000_per_unit_claim_entries.sql` (NOT applied — user applies).
+17 tests; `percentage=100/claimers` keeps `groupMemberShareStatistic`/spending-summary unchanged; analyze clean,
+401 green. **Carry to E3-T2/T3:** wire the "Add & share for claiming" CTA to set `claimable:true` (NOT blanket on
+all itemized — that would discard the existing manual-split feature; the flag path is wired & ready).
 
 **E3-T2 · Claim screen — layout & summary** · new page `lib/pages/expenses/presentation/claim_page.dart` + new
 go_router child route under `/group/details`
