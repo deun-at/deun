@@ -142,6 +142,7 @@ class ExpenseRepository {
       List<Map<String, dynamic>> entries = [];
 
       int sortId = 10;
+      int itemGroupSeq = 0;
       for (var expenseEntry in expenseEntryValues.values) {
         int qty = int.tryParse(expenseEntry['quantity']?.toString() ?? '1') ?? 1;
         double unitPrice = double.parse(expenseEntry['amount']);
@@ -157,6 +158,26 @@ class ExpenseRepository {
             : <String>{};
 
         notificationReceiver.addAll(expenseEntryShares);
+
+        // Claimable itemized lines are exploded into per-unit claim entries
+        // (quantity 1, split_mode 'claim'), grouped server-side by a shared
+        // item_group_seq. Detection: an explicit claimable flag, or a plain
+        // multi-quantity itemized line with no manual custom split.
+        final bool isClaimable = (expenseEntry['claimable'] == true) ||
+            (qty > 1 && shareData.isEmpty && expenseEntryShares.isEmpty);
+
+        if (isClaimable) {
+          itemGroupSeq++;
+          entries.addAll(ExpenseRepository.explodeItemizedEntry(
+            name: expenseEntry['name'] as String?,
+            unitPrice: unitPrice,
+            quantity: qty,
+            itemGroupSeq: itemGroupSeq,
+            sortIdStart: sortId,
+          ));
+          sortId += qty * 10; // leave room between groups
+          continue;
+        }
 
         List<Map<String, dynamic>> shareRows = [];
 
@@ -275,6 +296,49 @@ class ExpenseRepository {
 
     await supabase.rpc('update_group_member_shares', params: {"_group_id": groupId, "_expense_id": savedExpenseId});
     return savedExpenseId;
+  }
+
+  /// Sets the exact claimer set for a single claim unit (one expense_entry).
+  /// [claimerEmails] empty => the unit becomes unclaimed. Each claimer gets
+  /// percentage = 100 / claimers so existing percentage-based aggregations
+  /// (groupMemberShareStatistic, get_user_spending_summary) stay correct.
+  /// Atomic via claim_set_unit_shares RPC; falls back to a multi-step write
+  /// against servers that don't have the RPC yet.
+  static Future<void> claimSetUnitShares({
+    required String groupId,
+    required String expenseId,
+    required String unitEntryId,
+    required List<String> claimerEmails,
+  }) async {
+    final double pct = claimerEmails.isEmpty ? 0 : 100 / claimerEmails.length;
+    final shareRows =
+        claimerEmails.map((email) => {'email': email, 'percentage': pct}).toList();
+    try {
+      await supabase.rpc('claim_set_unit_shares', params: {
+        '_group_id': groupId,
+        '_expense_id': expenseId,
+        '_entry_id': unitEntryId,
+        '_shares': shareRows,
+      });
+    } on PostgrestException catch (e) {
+      if (!isMissingFunctionError(e)) rethrow;
+      await _claimSetUnitSharesLegacy(groupId, expenseId, unitEntryId, shareRows);
+    }
+  }
+
+  /// Legacy non-atomic claim mutation for servers without the
+  /// claim_set_unit_shares RPC. Mirrors the RPC's statements one at a time.
+  static Future<void> _claimSetUnitSharesLegacy(String groupId, String expenseId,
+      String unitEntryId, List<Map<String, dynamic>> shareRows) async {
+    await supabase.from('expense_entry_share').delete().eq('expense_entry_id', unitEntryId);
+    if (shareRows.isNotEmpty) {
+      await supabase.from('expense_entry_share').insert(
+            shareRows.map((s) => {...s, 'expense_entry_id': unitEntryId}).toList(),
+          );
+    }
+    // Recompute member shares (also bumps expense_update_checker for realtime).
+    await supabase.rpc('update_group_member_shares',
+        params: {"_group_id": groupId, "_expense_id": expenseId});
   }
 
   static Future<void> delete(String expenseId, String groupId) async {
