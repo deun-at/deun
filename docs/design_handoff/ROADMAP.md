@@ -286,6 +286,12 @@ scan viewfinder in light+dark.
 Range control + period stepper, color summary, monthly trend bars (→ month sheet), members paid-vs-fair bars,
 category bars (→ category sheet, using `ExpenseCategory` colors).
 *Deps:* E1-T2. *Screen 13.*
+✅ **done · 17149fa** — restyled stats `widgets/` (group-tinted summary hero, `AppSegmentedControl` range +
+period stepper pill, fl_chart trend themed to primary, members paid-vs-fair `ProgressBar` + signed `MoneyText`,
+category donut+bars via `ExpenseCategory.getColor`) + `month_detail`/`category_detail` sheets on `SheetScaffold`;
+pure `stats_chart_math.dart`; providers/queries/math untouched. 17 tests; reused existing l10n; analyze clean,
+498 green. *v0:* Δ chip translucent on-hero pill; kept themed donut. *QA:* range switch, summary, trend/member/
+category charts + detail sheets in light+dark.
 
 **E6-T2 · Personal statistics** · `personal_statistics_page.dart`
 Dark paid/share card, monthly bars, by-group list.
