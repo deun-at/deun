@@ -6,7 +6,8 @@ import 'package:deun/main.dart';
 import 'package:deun/pages/auth/auth_mode.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:supabase_auth_ui/supabase_auth_ui.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:deun/pages/auth/social_auth_buttons.dart';
 
 /// Pragmatic email shape check (same intent as the package's email validator):
 /// a non-empty local part, an `@`, a domain with at least one dot.
@@ -221,27 +222,21 @@ class _SignUpState extends State<SignUp> {
 
                 // Social buttons (Apple dark / Google / GitHub) — existing
                 // OAuth logic via SupaSocialsAuth, restyled labels.
-                SupaSocialsAuth(
-                  colored: true,
-                  enableNativeAppleAuth: true,
-                  nativeGoogleAuthConfig: const NativeGoogleAuthConfig(
-                    webClientId: kGoogleWebClientId,
-                    iosClientId: kGoogleIosClientId,
-                  ),
-                  authScreenLaunchMode: kIsWeb
+                SocialAuthButtons(
+                  providers: _oAuthProviders,
+                  googleWebClientId: kGoogleWebClientId,
+                  googleIosClientId: kGoogleIosClientId,
+                  launchMode: kIsWeb
                       ? LaunchMode.platformDefault
                       : LaunchMode.externalApplication,
-                  socialProviders: _oAuthProviders,
                   redirectUrl: kIsWeb ? null : _nativeRedirect,
-                  showSuccessSnackBar: false,
-                  localization: SupaSocialsAuthLocalization(
-                    oAuthButtonLabels: {
-                      OAuthProvider.apple: l10n.authContinueWithApple,
-                      OAuthProvider.google: l10n.authContinueWithGoogle,
-                      OAuthProvider.github: l10n.authContinueWithGithub,
-                    },
-                  ),
-                  onSuccess: (session) {},
+                  unexpectedErrorMessage: l10n.authUnexpectedError,
+                  onError: _showError,
+                  labels: {
+                    OAuthProvider.apple: l10n.authContinueWithApple,
+                    OAuthProvider.google: l10n.authContinueWithGoogle,
+                    OAuthProvider.github: l10n.authContinueWithGithub,
+                  },
                 ),
                 const SizedBox(height: 20),
 

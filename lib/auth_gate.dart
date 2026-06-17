@@ -2,7 +2,7 @@ import 'package:deun/pages/users/user_model.dart';
 import 'package:deun/pages/users/user_repository.dart';
 import 'package:deun/widgets/splash_screen.dart';
 import 'package:flutter/material.dart';
-import 'package:supabase_auth_ui/supabase_auth_ui.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'main.dart';
 import 'navigation.dart';

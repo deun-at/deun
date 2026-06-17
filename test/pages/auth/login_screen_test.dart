@@ -1,12 +1,13 @@
 import 'package:deun/constants.dart';
 import 'package:deun/l10n/app_localizations.dart';
 import 'package:deun/pages/auth/sign_in.dart';
+import 'package:deun/pages/auth/social_auth_buttons.dart';
 import 'package:deun/widgets/theme_builder.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:supabase_auth_ui/supabase_auth_ui.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 Future<void> _pump(
   WidgetTester tester, {
@@ -79,7 +80,7 @@ void main() {
     // Forgot-password link.
     expect(find.text(l10n.authForgotPassword), findsOneWidget);
     // Social buttons present.
-    expect(find.byType(SupaSocialsAuth), findsOneWidget);
+    expect(find.byType(SocialAuthButtons), findsOneWidget);
     // Primary submit reads "Log in".
     expect(find.widgetWithText(FilledButton, l10n.authLoginCta), findsOneWidget);
     // Mode-switch action to sign up.

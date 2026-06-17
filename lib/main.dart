@@ -5,7 +5,7 @@ import 'package:flutter/foundation.dart' show kIsWeb, LicenseRegistry, LicenseEn
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:supabase_auth_ui/supabase_auth_ui.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'auth_gate.dart';
 import 'package:universal_html/html.dart' as html;
