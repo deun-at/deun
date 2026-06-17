@@ -688,6 +688,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get updatePasswordUpdatePassword => 'Update Password';
 
   @override
+  String get updatePasswordInstructions =>
+      'Choose a new password for your account.';
+
+  @override
   String get friends => 'Friends';
 
   @override
@@ -1438,6 +1442,16 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get onboardingDisplayNameRequired => 'Display name is required';
+
+  @override
+  String get onboardingUsernameHeading => 'Choose your username';
+
+  @override
+  String get onboardingUsernameSubtitle =>
+      'It\'s how friends find and add you. You can change it later.';
+
+  @override
+  String get onboardingHandlePreviewPrefix => 'Friends will see ';
 
   @override
   String get settingsUsername => 'Username';

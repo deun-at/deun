@@ -182,6 +182,7 @@
   "updatePasswordPasswordResetSent": "Ein Link zum Zurücksetzen des Passworts wurde gesendet.",
   "updatePasswordUnexpectedError": "Ein unerwarteter Fehler ist aufgetreten. Bitte versuche es später noch einmal.",
   "updatePasswordUpdatePassword": "Passwort aktualisieren",
+  "updatePasswordInstructions": "Wähle ein neues Passwort für dein Konto.",
   "friends": "Freunde",
   "friendsNoEntries": "Keine Freunde gefunden.",
   "friendDecline": "Ablehnen",
@@ -393,6 +394,9 @@
   "onboardingUsernameTaken": "Benutzername nicht verfügbar, bitte wähle einen anderen",
   "onboardingUsernameInvalid": "3–20 Zeichen: Buchstaben, Zahlen, Unterstriche",
   "onboardingDisplayNameRequired": "Anzeigename ist erforderlich",
+  "onboardingUsernameHeading": "Wähle deinen Benutzernamen",
+  "onboardingUsernameSubtitle": "So finden und fügen dich Freunde hinzu. Du kannst ihn später ändern.",
+  "onboardingHandlePreviewPrefix": "Freunde sehen ",
   "settingsUsername": "Benutzername",
   "settingsUsernameCode": "Dein Benutzername",
 

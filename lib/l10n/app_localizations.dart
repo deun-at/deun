@@ -1205,6 +1205,12 @@ abstract class AppLocalizations {
   /// **'Update Password'**
   String get updatePasswordUpdatePassword;
 
+  /// No description provided for @updatePasswordInstructions.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose a new password for your account.'**
+  String get updatePasswordInstructions;
+
   /// No description provided for @friends.
   ///
   /// In en, this message translates to:
@@ -2453,6 +2459,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Display name is required'**
   String get onboardingDisplayNameRequired;
+
+  /// No description provided for @onboardingUsernameHeading.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose your username'**
+  String get onboardingUsernameHeading;
+
+  /// No description provided for @onboardingUsernameSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'It\'s how friends find and add you. You can change it later.'**
+  String get onboardingUsernameSubtitle;
+
+  /// No description provided for @onboardingHandlePreviewPrefix.
+  ///
+  /// In en, this message translates to:
+  /// **'Friends will see '**
+  String get onboardingHandlePreviewPrefix;
 
   /// No description provided for @settingsUsername.
   ///
