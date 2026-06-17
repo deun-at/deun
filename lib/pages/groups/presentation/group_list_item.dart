@@ -123,14 +123,18 @@ class GroupListItem extends ConsumerWidget {
                           color: colorScheme.onSurfaceVariant,
                         ),
                       ),
-                      const SizedBox(height: 2),
-                      MoneyText(
-                        amount.abs(),
-                        semantic: moneySemantic,
-                        style: textTheme.titleMedium?.copyWith(
-                          fontWeight: FontWeight.w700,
+                      // Settled groups show "gray, no amount" (DESIGN_SPEC edge
+                      // states) — only render the balance amount when unsettled.
+                      if (!isSettled) ...[
+                        const SizedBox(height: 2),
+                        MoneyText(
+                          amount.abs(),
+                          semantic: moneySemantic,
+                          style: textTheme.titleMedium?.copyWith(
+                            fontWeight: FontWeight.w700,
+                          ),
                         ),
-                      ),
+                      ],
                     ],
                   ),
                 ],
