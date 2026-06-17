@@ -7,6 +7,7 @@ import 'package:deun/pages/groups/presentation/group_list_item.dart';
 import 'package:deun/pages/groups/provider/group_list.dart';
 import 'package:deun/pages/users/user_model.dart';
 import 'package:deun/provider.dart';
+import 'package:deun/widgets/restyle/money_text.dart';
 import 'package:deun/widgets/theme_builder.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -216,6 +217,32 @@ void main() {
 
     final items = tester.widgetList<GroupListItem>(find.byType(GroupListItem)).toList();
     expect(items.map((i) => i.group.id).toList(), ['fav', 'active', 'settled']);
+  });
+
+  testWidgets('settled group card shows the gray label and no amount', (tester) async {
+    await _pumpScreen(tester, groups: [_group(id: 's', name: 'Settled Group', totalShareAmount: 0)]);
+
+    final l10n = await AppLocalizations.delegate.load(const Locale('en'));
+    // The gray "settled" lead label is shown...
+    expect(find.text(l10n.balanceSettled), findsOneWidget);
+    // ...but no balance amount (no €0.00) is rendered inside the card.
+    final card = find.byType(GroupListItem);
+    expect(card, findsOneWidget);
+    expect(
+      find.descendant(of: card, matching: find.byType(MoneyText)),
+      findsNothing,
+      reason: 'a settled group shows "gray, no amount" per the spec',
+    );
+  });
+
+  testWidgets('unsettled group card still shows the balance amount', (tester) async {
+    await _pumpScreen(tester, groups: [_group(id: 'a', name: 'Active Group', totalShareAmount: 25)]);
+
+    final card = find.byType(GroupListItem);
+    expect(
+      find.descendant(of: card, matching: find.byType(MoneyText)),
+      findsOneWidget,
+    );
   });
 
   testWidgets('renders without throwing in dark mode', (tester) async {
