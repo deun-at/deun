@@ -281,6 +281,8 @@
   "copyLink": "Link kopieren",
   "share": "Teilen",
   "friendQrLetFriendScan": "Lass deinen Freund diesen Code scannen, um dich hinzuzufügen.",
+  "friendQrScanPrompt": "Auf den Code eines Freundes richten",
+  "friendQrLinkCopied": "Link kopiert",
   "friendQrLinkCopiedInstruction": "Link kopiert. Wenn deine Systemkamera QR-App-Links unterstützt, zeige diesen Code auf dem anderen Gerät und scanne ihn.",
   "friendQrShareLink": "Lass uns auf DEUN vernetzen! \uD83E\uDD1D\n{url}",
   "friendAcceptConfirmTitle": "Als Freund hinzufügen?",

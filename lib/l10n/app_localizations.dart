@@ -1884,6 +1884,18 @@ abstract class AppLocalizations {
   /// **'Let your friend scan this code to add you.'**
   String get friendQrLetFriendScan;
 
+  /// No description provided for @friendQrScanPrompt.
+  ///
+  /// In en, this message translates to:
+  /// **'Point at a friend\'s code'**
+  String get friendQrScanPrompt;
+
+  /// No description provided for @friendQrLinkCopied.
+  ///
+  /// In en, this message translates to:
+  /// **'Link copied'**
+  String get friendQrLinkCopied;
+
   /// No description provided for @friendQrLinkCopiedInstruction.
   ///
   /// In en, this message translates to:

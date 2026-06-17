@@ -1,0 +1,159 @@
+import 'package:deun/constants.dart';
+import 'package:deun/l10n/app_localizations.dart';
+import 'package:deun/pages/friends/presentation/friend_qr_page.dart';
+import 'package:deun/pages/users/user_model.dart';
+import 'package:deun/provider.dart';
+import 'package:deun/widgets/restyle/app_segmented_control.dart';
+import 'package:deun/widgets/restyle/member_avatar.dart';
+import 'package:deun/widgets/theme_builder.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:qr_flutter/qr_flutter.dart';
+
+SupaUser _fakeUser() => const SupaUser(
+      email: 'maya@deun.app',
+      displayName: 'Maya Okonkwo',
+      username: 'maya',
+      usernameCode: '4821',
+    );
+
+/// A [UserDetailNotifier] that returns a fixed user synchronously, skipping the
+/// supabase fetch.
+class _FakeUserDetailNotifier extends UserDetailNotifier {
+  _FakeUserDetailNotifier(this._user);
+
+  final SupaUser _user;
+
+  @override
+  Future<SupaUser> build() async => _user;
+}
+
+Future<void> _pumpQr(
+  WidgetTester tester, {
+  Brightness brightness = Brightness.light,
+  SupaUser? user,
+}) async {
+  await tester.pumpWidget(
+    ProviderScope(
+      overrides: [
+        userDetailProvider.overrideWith(() => _FakeUserDetailNotifier(user ?? _fakeUser())),
+      ],
+      child: MaterialApp(
+        theme: ThemeData(brightness: Brightness.light, splashFactory: NoSplash.splashFactory),
+        localizationsDelegates: const [
+          AppLocalizations.delegate,
+          GlobalMaterialLocalizations.delegate,
+          GlobalWidgetsLocalizations.delegate,
+          GlobalCupertinoLocalizations.delegate,
+        ],
+        supportedLocales: AppLocalizations.supportedLocales,
+        home: Builder(
+          builder: (context) => Theme(
+            data: getThemeData(context, kBrandSeed, brightness),
+            child: const FriendQrPage(),
+          ),
+        ),
+      ),
+    ),
+  );
+  await tester.pumpAndSettle();
+}
+
+void main() {
+  group('buildFriendQrLink', () {
+    test('encodes username and code into the accept deep link', () {
+      final link = FriendQrPage.buildFriendQrLink(_fakeUser());
+      expect(link, isNotNull);
+      final s = link!.toString();
+      expect(s, contains('/#/friend/accept'));
+      expect(s, contains('u=maya'));
+      expect(s, contains('c=4821'));
+    });
+
+    test('returns null when username or code is missing', () {
+      const user = SupaUser(email: 'x@y.z', displayName: 'No Handle');
+      expect(FriendQrPage.buildFriendQrLink(user), isNull);
+    });
+  });
+
+  group('FriendQrPage (restyled)', () {
+    testWidgets('renders the My code / Scan segmented control', (tester) async {
+      await _pumpQr(tester);
+      expect(find.byType(AppSegmentedControl<int>), findsOneWidget);
+    });
+
+    testWidgets('My code tab shows the QR, profile and Copy/Share actions',
+        (tester) async {
+      await _pumpQr(tester);
+      final l10n =
+          AppLocalizations.of(tester.element(find.byType(FriendQrPage)))!;
+
+      // QR rendered.
+      expect(find.byType(QrImageView), findsOneWidget);
+      // Profile row: avatar + name + @handle.
+      expect(find.byType(MemberAvatar), findsOneWidget);
+      expect(find.text('Maya Okonkwo'), findsOneWidget);
+      expect(find.text('@maya#4821'), findsOneWidget);
+      // Copy + Share actions.
+      expect(find.text(l10n.copyLink), findsOneWidget);
+      expect(find.text(l10n.share), findsOneWidget);
+    });
+
+    testWidgets('renders in dark mode without throwing (QR still present)',
+        (tester) async {
+      await _pumpQr(tester, brightness: Brightness.dark);
+      expect(find.byType(QrImageView), findsOneWidget);
+      expect(find.byType(AppSegmentedControl<int>), findsOneWidget);
+    });
+
+    testWidgets('switching to Scan renders the viewfinder chrome', (tester) async {
+      await _pumpQr(tester);
+      final l10n =
+          AppLocalizations.of(tester.element(find.byType(FriendQrPage)))!;
+
+      await tester.tap(find.text(l10n.friendQrTabScan));
+      await tester.pumpAndSettle();
+
+      // The scan prompt is shown over the viewfinder; no throw on camera chrome.
+      expect(find.text(l10n.friendQrScanPrompt), findsOneWidget);
+      // QR (My code) is no longer shown.
+      expect(find.byType(QrImageView), findsNothing);
+    });
+
+    testWidgets('tapping Copy writes the friend link to the clipboard',
+        (tester) async {
+      final calls = <MethodCall>[];
+      tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+        SystemChannels.platform,
+        (call) async {
+          calls.add(call);
+          return null;
+        },
+      );
+      addTearDown(() {
+        tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+          SystemChannels.platform,
+          null,
+        );
+      });
+
+      await _pumpQr(tester);
+      final l10n =
+          AppLocalizations.of(tester.element(find.byType(FriendQrPage)))!;
+
+      await tester.tap(find.text(l10n.copyLink));
+      await tester.pumpAndSettle();
+
+      final clipboardCall = calls.firstWhere(
+        (c) => c.method == 'Clipboard.setData',
+        orElse: () => const MethodCall('none'),
+      );
+      expect(clipboardCall.method, 'Clipboard.setData');
+      final text = (clipboardCall.arguments as Map)['text'] as String;
+      expect(text, contains('u=maya'));
+    });
+  });
+}
