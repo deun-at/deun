@@ -378,6 +378,14 @@ mechanism); version footer = static tagline (`package_info_plus` not a dep). *Ca
   fade left at framework default (not separately exposed without a custom route). *QA:* sheet rise easing in light+dark.
 - **E8-T4 Empty/edge states:** empty ledger, settled groups, fully-claimed vs unclaimed, over/under split,
   no-friends/no-requests.
+  ✅ **done · 39dc53f** — audit + one gap filled: group cards (`group_list_item.dart`) rendered `MoneyText(0)`
+  ("€0.00") for settled groups, contradicting spec's "gray, **no amount**" — now the balance `MoneyText` renders
+  only `if (!isSettled)`, leaving the gray `balanceSettled` label (matches friend cards). The other four states
+  verified already-correct (no rebuild, no invented scope): empty ledger (`EmptyListWidget(groupExpenseNoEntries)`),
+  fully/unclaimed callouts (`groupDetailAllClaimed`/`Unclaimed` warning-vs-muted + claim `_UnclaimedCallout`),
+  over/under split (`split_allocation.dart` ok/under/over → success/warning/danger), no-friends/no-requests
+  (`friendsNoEntries`). 2 widget tests; reused existing l10n; analyze clean, 538 green.
+  *QA:* settled group card shows gray "Settled" with no amount (owed/owe still shows colored amount) in light+dark.
 - **E8-T5 a11y & touch targets:** ≥48dp hit areas, semantics labels, contrast on muted text in both themes.
 
 ---
