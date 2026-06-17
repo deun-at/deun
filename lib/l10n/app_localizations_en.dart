@@ -598,6 +598,74 @@ class AppLocalizationsEn extends AppLocalizations {
   String get signInEmailTitle => 'Can\'t use social login?\nUse email instead!';
 
   @override
+  String get authLoginTitle => 'Welcome back';
+
+  @override
+  String get authSignupTitle => 'Create your account';
+
+  @override
+  String get authSubtitle => 'Simply split fairly with your group.';
+
+  @override
+  String get authContinueWithApple => 'Continue with Apple';
+
+  @override
+  String get authContinueWithGoogle => 'Continue with Google';
+
+  @override
+  String get authContinueWithGithub => 'Continue with GitHub';
+
+  @override
+  String get authDividerOr => 'or';
+
+  @override
+  String get authEmailLabel => 'Email';
+
+  @override
+  String get authPasswordLabel => 'Password';
+
+  @override
+  String get authNameLabel => 'Name';
+
+  @override
+  String get authEmailInvalid => 'Please enter a valid email address.';
+
+  @override
+  String get authPasswordTooShort =>
+      'Please enter a password that is at least 6 characters long.';
+
+  @override
+  String get authNameRequired => 'Please enter your name.';
+
+  @override
+  String get authForgotPassword => 'Forgot password?';
+
+  @override
+  String get authLoginCta => 'Log in';
+
+  @override
+  String get authSignupCta => 'Create account';
+
+  @override
+  String get authSwitchToSignupPrompt => 'Don\'t have an account?';
+
+  @override
+  String get authSwitchToSignupAction => 'Sign up';
+
+  @override
+  String get authSwitchToLoginPrompt => 'Already have an account?';
+
+  @override
+  String get authSwitchToLoginAction => 'Log in';
+
+  @override
+  String get authPasswordResetSent => 'Check your inbox for a reset link.';
+
+  @override
+  String get authUnexpectedError =>
+      'An unexpected error occurred. Please try again.';
+
+  @override
   String get updatePasswordTitle => 'Update Password';
 
   @override
