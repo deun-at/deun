@@ -388,5 +388,20 @@
   "datePickCustom": "Datum wählen…",
   "amountSheetTitle": "Betrag",
   "groupDetailAllClaimed": "alles beansprucht",
-  "groupDetailPaymentTag": "ZAHLUNG"
+  "groupDetailPaymentTag": "ZAHLUNG",
+  "paymentTitle": "Begleichen",
+  "paymentYouPay": "Du zahlst",
+  "paymentOwesYou": "Schuldet dir",
+  "paymentPay": "Zahlen",
+  "paymentRemind": "Erinnern",
+  "paymentAllSettled": "Alles beglichen",
+  "paymentMethodPaypal": "PayPal",
+  "paymentMethodPaypalSubtitle": "PayPal.me-Link öffnen",
+  "paymentMethodIban": "Überweisung",
+  "paymentMethodIbanSubtitle": "IBAN kopieren",
+  "paymentMethodCash": "Bargeld",
+  "paymentMethodCashSubtitle": "Persönlich begleichen",
+  "paymentIbanCopied": "IBAN in die Zwischenablage kopiert",
+  "paymentPayAmount": "{amount} zahlen",
+  "paymentMarkSettled": "Als beglichen markieren"
 }

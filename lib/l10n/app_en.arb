@@ -1331,5 +1331,73 @@
   "amountSheetTitle": "Amount",
   "@amountSheetTitle": {
     "description": "Title of the amount keypad bottom sheet."
+  },
+  "paymentTitle": "Settle up",
+  "@paymentTitle": {
+    "description": "Title of the settle-up / payment sheet (Screen 10)."
+  },
+  "paymentYouPay": "You pay",
+  "@paymentYouPay": {
+    "description": "Section label over the members the current user owes."
+  },
+  "paymentOwesYou": "Owes you",
+  "@paymentOwesYou": {
+    "description": "Section label over the members who owe the current user."
+  },
+  "paymentPay": "Pay",
+  "@paymentPay": {
+    "description": "Action on a you-pay row that opens the payment-method detail sheet."
+  },
+  "paymentRemind": "Remind",
+  "@paymentRemind": {
+    "description": "Action on an owes-you row that sends a payment reminder."
+  },
+  "paymentAllSettled": "You're all settled up",
+  "@paymentAllSettled": {
+    "description": "Empty state on the settle-up sheet when nothing is owed either way."
+  },
+  "paymentMethodPaypal": "PayPal",
+  "@paymentMethodPaypal": {
+    "description": "Title of the PayPal payment-method card."
+  },
+  "paymentMethodPaypalSubtitle": "Open PayPal.me link",
+  "@paymentMethodPaypalSubtitle": {
+    "description": "Subtitle of the PayPal payment-method card."
+  },
+  "paymentMethodIban": "Bank transfer",
+  "@paymentMethodIban": {
+    "description": "Title of the IBAN / bank-transfer payment-method card."
+  },
+  "paymentMethodIbanSubtitle": "Copy IBAN",
+  "@paymentMethodIbanSubtitle": {
+    "description": "Subtitle of the IBAN payment-method card."
+  },
+  "paymentMethodCash": "Cash",
+  "@paymentMethodCash": {
+    "description": "Title of the cash payment-method card."
+  },
+  "paymentMethodCashSubtitle": "Settle in person",
+  "@paymentMethodCashSubtitle": {
+    "description": "Subtitle of the cash payment-method card."
+  },
+  "paymentIbanCopied": "IBAN copied to clipboard",
+  "@paymentIbanCopied": {
+    "description": "Snackbar shown after copying a payee's IBAN."
+  },
+  "paymentPayAmount": "Pay {amount}",
+  "@paymentPayAmount": {
+    "description": "Sticky CTA on the method-detail sheet that records the payment.",
+    "placeholders": {
+      "amount": {
+        "type": "double",
+        "format": "currency",
+        "optionalParameters": { "decimalDigits": 2, "name": "€" },
+        "example": "12.00"
+      }
+    }
+  },
+  "paymentMarkSettled": "Mark settled",
+  "@paymentMarkSettled": {
+    "description": "Sticky CTA on the cash method-detail sheet that marks the balance settled."
   }
 }

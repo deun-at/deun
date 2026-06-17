@@ -1476,4 +1476,58 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get amountSheetTitle => 'Betrag';
+
+  @override
+  String get paymentTitle => 'Begleichen';
+
+  @override
+  String get paymentYouPay => 'Du zahlst';
+
+  @override
+  String get paymentOwesYou => 'Schuldet dir';
+
+  @override
+  String get paymentPay => 'Zahlen';
+
+  @override
+  String get paymentRemind => 'Erinnern';
+
+  @override
+  String get paymentAllSettled => 'Alles beglichen';
+
+  @override
+  String get paymentMethodPaypal => 'PayPal';
+
+  @override
+  String get paymentMethodPaypalSubtitle => 'PayPal.me-Link öffnen';
+
+  @override
+  String get paymentMethodIban => 'Überweisung';
+
+  @override
+  String get paymentMethodIbanSubtitle => 'IBAN kopieren';
+
+  @override
+  String get paymentMethodCash => 'Bargeld';
+
+  @override
+  String get paymentMethodCashSubtitle => 'Persönlich begleichen';
+
+  @override
+  String get paymentIbanCopied => 'IBAN in die Zwischenablage kopiert';
+
+  @override
+  String paymentPayAmount(double amount) {
+    final intl.NumberFormat amountNumberFormat = intl.NumberFormat.currency(
+      locale: localeName,
+      decimalDigits: 2,
+      name: '€',
+    );
+    final String amountString = amountNumberFormat.format(amount);
+
+    return '$amountString zahlen';
+  }
+
+  @override
+  String get paymentMarkSettled => 'Als beglichen markieren';
 }
