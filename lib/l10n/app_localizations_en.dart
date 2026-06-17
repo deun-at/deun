@@ -1140,6 +1140,33 @@ class AppLocalizationsEn extends AppLocalizations {
   String get receiptScanError => 'Something went wrong while scanning.';
 
   @override
+  String get receiptScanInstructions => 'Line up the receipt inside the frame';
+
+  @override
+  String get receiptScanReviewTitle => 'Detected items';
+
+  @override
+  String receiptScanItemCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count items',
+      one: '1 item',
+      zero: 'No items',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get receiptScanTotalLabel => 'Total';
+
+  @override
+  String get receiptScanUseItems => 'Use these items';
+
+  @override
+  String get receiptScanRetake => 'Retake';
+
+  @override
   String get splitModeAmount => 'Amount';
 
   @override
