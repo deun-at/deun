@@ -1,4 +1,5 @@
 import 'package:deun/helper/helper.dart';
+import 'package:deun/pages/settings/settings_sheets.dart';
 import 'package:deun/pages/users/user_model.dart';
 import 'package:deun/pages/users/user_repository.dart';
 import 'package:deun/provider.dart';
@@ -9,6 +10,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:form_builder_validators/form_builder_validators.dart';
 import 'package:deun/l10n/app_localizations.dart';
 
+/// Restyled profile form (E7-T3, Screen 6). Soft inset fields + a Language row
+/// that opens the [showLanguageSheet] picker. The save path is unchanged: the
+/// locale still flows through a (now hidden) FormBuilder `locale` field so the
+/// Update button's existing DB persistence keeps working.
 class SettingsProfileForm extends ConsumerStatefulWidget {
   const SettingsProfileForm({super.key});
 
@@ -19,14 +24,10 @@ class SettingsProfileForm extends ConsumerStatefulWidget {
 class _SettingsProfileFormState extends ConsumerState<SettingsProfileForm> {
   final _formKey = GlobalKey<FormBuilderState>();
 
-  List<String> localeOptions = AppLocalizations.supportedLocales
-      .map((l) => l.toLanguageTag())
-      .toList();
-
   @override
   Widget build(BuildContext context) {
-    const double spacing = 8;
     const double heightSpacing = 12;
+    final l10n = AppLocalizations.of(context)!;
 
     final SupaUser? user = ref.watch(userDetailProvider).value;
     final locale = ref.watch(localeProvider);
@@ -35,204 +36,231 @@ class _SettingsProfileFormState extends ConsumerState<SettingsProfileForm> {
       return const SizedBox.shrink();
     }
 
+    final String? localeTag = locale?.toLanguageTag();
+    final String languageLabel =
+        localeTag == null ? l10n.localeSelectorSystem : l10n.localeSelector(localeTag);
+
     return FormBuilder(
       key: _formKey,
       clearValueOnUnregister: true,
       initialValue: user.toJson(),
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Icon(Icons.person_outline),
-              const SizedBox(width: spacing),
-              Flexible(
-                child: Column(
-                  children: [
-                    FormBuilderField(
-                      name: "first_name",
-                      builder: (FormFieldState<dynamic> field) => TextFormField(
-                        initialValue: field.value,
-                        validator: FormBuilderValidators.required(
-                          errorText: AppLocalizations.of(context)!.settingsFirstNameValidationEmpty,
-                        ),
-                        decoration: InputDecoration(
-                          labelText: AppLocalizations.of(context)!.settingsFirstName,
-                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(16)),
-                        ),
-                        onChanged: (value) => field.didChange(value),
-                      ),
-                    ),
-                    const SizedBox(height: heightSpacing),
-                    FormBuilderField(
-                      name: "last_name",
-                      builder: (FormFieldState<dynamic> field) => TextFormField(
-                        initialValue: field.value,
-                        validator: FormBuilderValidators.required(
-                          errorText: AppLocalizations.of(context)!.settingsLastNameValidationEmpty,
-                        ),
-                        decoration: InputDecoration(
-                          labelText: AppLocalizations.of(context)!.settingsLastName,
-                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(16)),
-                        ),
-                        onChanged: (value) => field.didChange(value),
-                      ),
-                    ),
-                    const SizedBox(height: heightSpacing),
-                    FormBuilderField(
-                      name: "display_name",
-                      builder: (FormFieldState<dynamic> field) => TextFormField(
-                        initialValue: field.value,
-                        validator: FormBuilderValidators.required(
-                          errorText: AppLocalizations.of(context)!.settingsDisplayNameValidationEmpty,
-                        ),
-                        decoration: InputDecoration(
-                          labelText: AppLocalizations.of(context)!.settingsDisplayName,
-                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(16)),
-                        ),
-                        onChanged: (value) => field.didChange(value),
-                      ),
-                    ),
-                    const SizedBox(height: heightSpacing),
-                    FormBuilderField(
-                      name: "username",
-                      builder: (FormFieldState<dynamic> field) => TextFormField(
-                        initialValue: field.value,
-                        decoration: InputDecoration(
-                          labelText: AppLocalizations.of(context)!.settingsUsername,
-                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(16)),
-                          suffixText: user.usernameCode != null ? '#${user.usernameCode}' : null,
-                          suffixIcon: IconButton(
-                            icon: const Icon(Icons.copy),
-                            onPressed: () {
-                              Clipboard.setData(ClipboardData(text: user.fullUsername));
-                              showSnackBar(context, '${user.fullUsername} copied');
-                            },
-                          ),
-                        ),
-                        onChanged: (value) => field.didChange(value),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
+          _InsetFormField(
+            name: 'first_name',
+            label: l10n.settingsFirstName,
+            icon: Icons.badge_outlined,
+            validator: FormBuilderValidators.required(
+              errorText: l10n.settingsFirstNameValidationEmpty,
+            ),
           ),
           const SizedBox(height: heightSpacing),
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Icon(Icons.payment),
-              const SizedBox(width: spacing),
-              Flexible(
-                child: Column(
-                  children: [
-                    FormBuilderField(
-                      name: "paypal_me",
-                      builder: (FormFieldState<dynamic> field) => TextFormField(
-                        initialValue: field.value,
-                        decoration: InputDecoration(
-                          labelText: AppLocalizations.of(context)!.settingsPaypalMe,
-                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(16)),
-                          prefixText: 'paypal.me/',
-                        ),
-                        onChanged: (value) => field.didChange(value),
-                      ),
-                    ),
-                    const SizedBox(height: heightSpacing),
-                    FormBuilderField(
-                      name: "iban",
-                      builder: (FormFieldState<dynamic> field) => TextFormField(
-                        initialValue: field.value,
-                        decoration: InputDecoration(
-                          labelText: AppLocalizations.of(context)!.settingsIban,
-                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(16)),
-                        ),
-                        onChanged: (value) => field.didChange(value),
-                      ),
-                    ),
-                    const SizedBox(height: heightSpacing),
-                    FormBuilderDropdown(
-                      name: 'locale',
-                      initialValue: locale?.toLanguageTag(),
-                      decoration: InputDecoration(
-                        labelText: AppLocalizations.of(context)!.settingsLocale,
-                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(16)),
-                      ),
-                      items: [
-                        DropdownMenuItem(
-                          value: null,
-                          child: Text(AppLocalizations.of(context)!.localeSelectorSystem),
-                        ),
-                        ...localeOptions.map(
-                          (locale) => DropdownMenuItem(
-                            value: locale,
-                            child: Text(AppLocalizations.of(context)!.localeSelector(locale)),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
+          _InsetFormField(
+            name: 'last_name',
+            label: l10n.settingsLastName,
+            icon: Icons.badge_outlined,
+            validator: FormBuilderValidators.required(
+              errorText: l10n.settingsLastNameValidationEmpty,
+            ),
+          ),
+          const SizedBox(height: heightSpacing),
+          _InsetFormField(
+            name: 'display_name',
+            label: l10n.settingsDisplayName,
+            icon: Icons.person_outline,
+            validator: FormBuilderValidators.required(
+              errorText: l10n.settingsDisplayNameValidationEmpty,
+            ),
+          ),
+          const SizedBox(height: heightSpacing),
+          _InsetFormField(
+            name: 'username',
+            label: l10n.settingsUsername,
+            icon: Icons.alternate_email,
+            suffixText: user.usernameCode != null ? '#${user.usernameCode}' : null,
+            suffix: IconButton(
+              icon: const Icon(Icons.copy),
+              onPressed: () {
+                Clipboard.setData(ClipboardData(text: user.fullUsername));
+                showSnackBar(context, '${user.fullUsername} copied');
+              },
+            ),
+          ),
+          const SizedBox(height: heightSpacing),
+          _InsetFormField(
+            name: 'paypal_me',
+            label: l10n.settingsPaypalMe,
+            icon: Icons.payment,
+            prefixText: 'paypal.me/',
+          ),
+          const SizedBox(height: heightSpacing),
+          _InsetFormField(
+            name: 'iban',
+            label: l10n.settingsIban,
+            icon: Icons.account_balance_outlined,
+          ),
+          const SizedBox(height: heightSpacing),
+          // Language row → opens the picker sheet. The value is kept in a hidden
+          // FormBuilder field so the existing save path persists it.
+          FormBuilderField<String>(
+            name: 'locale',
+            initialValue: localeTag,
+            builder: (field) => _LanguageRow(
+              value: languageLabel,
+              onTap: () => showLanguageSheet(
+                context,
+                currentTag: field.value,
+                onSelected: (tag) => field.didChange(tag),
               ),
-            ],
+            ),
           ),
           const SizedBox(height: heightSpacing),
           Align(
             alignment: Alignment.centerRight,
             child: FilledButton(
-              onPressed: () async {
-                if (_formKey.currentState!.saveAndValidate()) {
-                  try {
-                    final formValue = _formKey.currentState!.value;
-                    final newUsername = formValue['username'] as String?;
-                    final usernameChanged =
-                        newUsername != null && newUsername.isNotEmpty && newUsername != user.username;
-
-                    if (usernameChanged) {
-                      await UserRepository.saveUsername(
-                        newUsername,
-                        formValue['display_name'] ?? user.displayName,
-                      );
-                    }
-
-                    await UserRepository.saveProfileData(formValue);
-                    ref.invalidate(userDetailProvider);
-                    if (context.mounted) {
-                      showSnackBar(
-                        context,
-                        AppLocalizations.of(context)!.settingsUserUpdateSuccess,
-                      );
-
-                      if (_formKey.currentState!.value['locale'] == null) {
-                        ref.read(localeProvider.notifier).resetLocale();
-                      } else {
-                        ref.read(localeProvider.notifier).setLocale(
-                              Locale(_formKey.currentState!.value['locale']),
-                            );
-                      }
-                    }
-                  } catch (e) {
-                    if (context.mounted) {
-                      showSnackBar(
-                        context,
-                        AppLocalizations.of(context)!.settingsUserUpdateError,
-                      );
-                    }
-                    debugPrint(e.toString());
-                  } finally {
-                    if (mounted) {
-                      if (context.mounted) {
-                        FocusScope.of(context).unfocus();
-                      }
-                    }
-                  }
-                }
-              },
-              child: Text(AppLocalizations.of(context)!.update),
+              onPressed: _onSave,
+              child: Text(l10n.update),
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Future<void> _onSave() async {
+    final user = ref.read(userDetailProvider).value;
+    if (user == null) return;
+    if (!_formKey.currentState!.saveAndValidate()) return;
+
+    try {
+      final formValue = _formKey.currentState!.value;
+      final newUsername = formValue['username'] as String?;
+      final usernameChanged =
+          newUsername != null && newUsername.isNotEmpty && newUsername != user.username;
+
+      if (usernameChanged) {
+        await UserRepository.saveUsername(
+          newUsername,
+          formValue['display_name'] ?? user.displayName,
+        );
+      }
+
+      await UserRepository.saveProfileData(formValue);
+      ref.invalidate(userDetailProvider);
+      if (mounted) {
+        showSnackBar(context, AppLocalizations.of(context)!.settingsUserUpdateSuccess);
+
+        final localeValue = _formKey.currentState!.value['locale'];
+        if (localeValue == null) {
+          ref.read(localeProvider.notifier).resetLocale();
+        } else {
+          ref.read(localeProvider.notifier).setLocale(Locale(localeValue));
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        showSnackBar(context, AppLocalizations.of(context)!.settingsUserUpdateError);
+      }
+      debugPrint(e.toString());
+    } finally {
+      if (mounted) {
+        FocusScope.of(context).unfocus();
+      }
+    }
+  }
+}
+
+/// A soft inset [FormBuilderField] text input matching the redesign field look
+/// (filled `surfaceContainer`, radius 16, no hard border, leading icon).
+class _InsetFormField extends StatelessWidget {
+  const _InsetFormField({
+    required this.name,
+    required this.label,
+    required this.icon,
+    this.validator,
+    this.suffixText,
+    this.suffix,
+    this.prefixText,
+  });
+
+  final String name;
+  final String label;
+  final IconData icon;
+  final String? Function(String?)? validator;
+  final String? suffixText;
+  final Widget? suffix;
+  final String? prefixText;
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final radius = BorderRadius.circular(16);
+
+    return FormBuilderField<String>(
+      name: name,
+      validator: validator,
+      builder: (field) => TextFormField(
+        initialValue: field.value,
+        onChanged: field.didChange,
+        decoration: InputDecoration(
+          labelText: label,
+          errorText: field.errorText,
+          prefixIcon: Icon(icon, color: colorScheme.onSurfaceVariant),
+          prefixText: prefixText,
+          suffixText: suffixText,
+          suffixIcon: suffix,
+          filled: true,
+          fillColor: colorScheme.surfaceContainer,
+          border: OutlineInputBorder(borderRadius: radius, borderSide: BorderSide.none),
+          enabledBorder: OutlineInputBorder(borderRadius: radius, borderSide: BorderSide.none),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: radius,
+            borderSide: BorderSide(color: colorScheme.primary, width: 1.5),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// The tappable Language row (mirrors the inset field surface) showing the
+/// current language and a chevron; tapping opens the language sheet.
+class _LanguageRow extends StatelessWidget {
+  const _LanguageRow({required this.value, required this.onTap});
+
+  final String value;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
+    final radius = BorderRadius.circular(16);
+
+    return Material(
+      color: colorScheme.surfaceContainer,
+      borderRadius: radius,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: radius,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+          child: Row(
+            children: [
+              Icon(Icons.translate, color: colorScheme.onSurfaceVariant),
+              const SizedBox(width: 12),
+              Text(
+                AppLocalizations.of(context)!.settingsLocale,
+                style: textTheme.bodyLarge?.copyWith(color: colorScheme.onSurfaceVariant),
+              ),
+              const Spacer(),
+              Text(value, style: textTheme.bodyLarge),
+              const SizedBox(width: 4),
+              Icon(Icons.chevron_right, color: colorScheme.onSurfaceVariant),
+            ],
+          ),
+        ),
       ),
     );
   }

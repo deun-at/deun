@@ -367,7 +367,7 @@ final class GroupMonthCategoryTotalsNotifierProvider
 }
 
 String _$groupMonthCategoryTotalsNotifierHash() =>
-    r'0451cebbaf6bc57435d2d373b4c19cbd3b4ec8b1';
+    r'07b72951968546805abd3753fd365633f437bdea';
 
 final class GroupMonthCategoryTotalsNotifierFamily extends $Family
     with
@@ -573,7 +573,7 @@ final class GroupRangeDataNotifierProvider
 }
 
 String _$groupRangeDataNotifierHash() =>
-    r'7a13e6ffd91bbb0a649b7069b76e9789585c72f4';
+    r'6ea0c8df073509384425f771916b6473fa481308';
 
 final class GroupRangeDataNotifierFamily extends $Family
     with

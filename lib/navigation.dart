@@ -561,13 +561,14 @@ class _NavigationScreenState extends ConsumerState<NavigationScreen> with Widget
   @override
   Widget build(BuildContext context) {
     final locale = ref.watch(localeProvider);
+    final themeMode = ref.watch(themeModeProvider);
 
     return MaterialApp.router(
       routerConfig: _routerConfig,
       title: 'Deun',
       theme: getThemeData(context, kBrandSeed, Brightness.light),
       darkTheme: getThemeData(context, kBrandSeed, Brightness.dark),
-      themeMode: ThemeMode.system,
+      themeMode: themeMode,
       locale: locale,
       localizationsDelegates: AppLocalizations.localizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,

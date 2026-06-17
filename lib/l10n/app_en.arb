@@ -1469,5 +1469,57 @@
   "paymentMarkSettled": "Mark settled",
   "@paymentMarkSettled": {
     "description": "Sticky CTA on the cash method-detail sheet that marks the balance settled."
+  },
+  "settingsProfileSection": "Profile",
+  "@settingsProfileSection": {
+    "description": "Section label above the profile form on the settings screen."
+  },
+  "settingsPreferencesSection": "Preferences",
+  "@settingsPreferencesSection": {
+    "description": "Section label above the settings list (notifications, appearance, privacy, contact)."
+  },
+  "settingsNotifications": "Notifications",
+  "@settingsNotifications": {
+    "description": "Label for the notifications toggle row on the settings screen."
+  },
+  "settingsAppearance": "Appearance",
+  "@settingsAppearance": {
+    "description": "Label for the appearance row and the appearance picker sheet title."
+  },
+  "settingsAppearanceSystem": "System",
+  "@settingsAppearanceSystem": {
+    "description": "Appearance option that follows the device theme."
+  },
+  "settingsAppearanceLight": "Light",
+  "@settingsAppearanceLight": {
+    "description": "Light appearance option."
+  },
+  "settingsAppearanceDark": "Dark",
+  "@settingsAppearanceDark": {
+    "description": "Dark appearance option."
+  },
+  "settingsAppearanceInfo": "System follows your device. Dark mode ships with the redesign.",
+  "@settingsAppearanceInfo": {
+    "description": "Info callout under the appearance options explaining the System option."
+  },
+  "settingsLanguageSheetTitle": "Language",
+  "@settingsLanguageSheetTitle": {
+    "description": "Title of the language picker bottom sheet."
+  },
+  "settingsDeleteAccountTitle": "Delete account?",
+  "@settingsDeleteAccountTitle": {
+    "description": "Title of the delete-account confirmation sheet."
+  },
+  "settingsDeleteAccountBody": "This permanently deletes your account and all your data. This cannot be undone.",
+  "@settingsDeleteAccountBody": {
+    "description": "Explanatory body in the delete-account sheet."
+  },
+  "settingsDeleteAccountConfirmButton": "Delete my account",
+  "@settingsDeleteAccountConfirmButton": {
+    "description": "Destructive confirm button in the delete-account sheet."
+  },
+  "settingsTagline": "Deun · Simply Split Fairly",
+  "@settingsTagline": {
+    "description": "Centered muted tagline footer at the bottom of the settings screen."
   }
 }
