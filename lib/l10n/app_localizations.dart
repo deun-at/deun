@@ -1932,6 +1932,42 @@ abstract class AppLocalizations {
   /// **'Something went wrong while scanning.'**
   String get receiptScanError;
 
+  /// No description provided for @receiptScanInstructions.
+  ///
+  /// In en, this message translates to:
+  /// **'Line up the receipt inside the frame'**
+  String get receiptScanInstructions;
+
+  /// No description provided for @receiptScanReviewTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Detected items'**
+  String get receiptScanReviewTitle;
+
+  /// No description provided for @receiptScanItemCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =0{No items} =1{1 item} other{{count} items}}'**
+  String receiptScanItemCount(int count);
+
+  /// No description provided for @receiptScanTotalLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Total'**
+  String get receiptScanTotalLabel;
+
+  /// No description provided for @receiptScanUseItems.
+  ///
+  /// In en, this message translates to:
+  /// **'Use these items'**
+  String get receiptScanUseItems;
+
+  /// No description provided for @receiptScanRetake.
+  ///
+  /// In en, this message translates to:
+  /// **'Retake'**
+  String get receiptScanRetake;
+
   /// No description provided for @splitModeAmount.
   ///
   /// In en, this message translates to:

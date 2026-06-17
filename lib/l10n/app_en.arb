@@ -1024,6 +1024,22 @@
   "@receiptScanNoData": {},
   "receiptScanError": "Something went wrong while scanning.",
   "@receiptScanError": {},
+  "receiptScanInstructions": "Line up the receipt inside the frame",
+  "@receiptScanInstructions": {},
+  "receiptScanReviewTitle": "Detected items",
+  "@receiptScanReviewTitle": {},
+  "receiptScanItemCount": "{count, plural, =0{No items} =1{1 item} other{{count} items}}",
+  "@receiptScanItemCount": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "receiptScanTotalLabel": "Total",
+  "@receiptScanTotalLabel": {},
+  "receiptScanUseItems": "Use these items",
+  "@receiptScanUseItems": {},
+  "receiptScanRetake": "Retake",
+  "@receiptScanRetake": {},
   "splitModeAmount": "Amount",
   "@splitModeAmount": {},
   "splitModePercentage": "%",
