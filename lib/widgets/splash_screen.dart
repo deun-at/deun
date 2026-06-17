@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import 'package:deun/constants.dart';
+
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
 
@@ -33,10 +35,12 @@ class _SplashScreenState extends State<SplashScreen>
 
   @override
   Widget build(BuildContext context) {
+    // The splash renders before any MaterialApp/theme is mounted (AuthGate is
+    // the app root), so the background can't come from colorScheme.surface.
+    // Use the warm-neutral app-background constants that match theme_builder.
     final brightness = MediaQuery.platformBrightnessOf(context);
-    final bgColor = brightness == Brightness.dark
-        ? const Color(0xFF1f2021)
-        : const Color(0xFFefedee);
+    final bgColor =
+        brightness == Brightness.dark ? kAppBackgroundDark : kAppBackgroundLight;
     return Directionality(
       textDirection: TextDirection.ltr,
       child: ColoredBox(

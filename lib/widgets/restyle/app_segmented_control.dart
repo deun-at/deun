@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import 'package:deun/constants.dart';
+
 /// One option in an [AppSegmentedControl].
 class AppSegment<T> {
   const AppSegment({required this.value, required this.label, this.icon});
@@ -84,15 +86,7 @@ class _Segment<T> extends StatelessWidget {
         decoration: BoxDecoration(
           color: selected ? colorScheme.surfaceContainerLowest : Colors.transparent,
           borderRadius: BorderRadius.circular(11),
-          boxShadow: selected
-              ? const [
-                  BoxShadow(
-                    color: Color(0x0A14120C),
-                    blurRadius: 4,
-                    offset: Offset(0, 2),
-                  ),
-                ]
-              : null,
+          boxShadow: selected ? kSoftCardShadow : null,
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,

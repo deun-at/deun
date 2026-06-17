@@ -1,4 +1,5 @@
 import 'package:async_preferences/async_preferences.dart';
+import 'package:deun/constants.dart';
 import 'package:deun/pages/settings/settings_sheets.dart';
 import 'package:deun/pages/users/user_model.dart';
 import 'package:deun/provider.dart';
@@ -249,16 +250,7 @@ class _ProfileHeroCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: heroSurface,
         borderRadius: BorderRadius.circular(24),
-        boxShadow: isDark
-            ? null
-            : const [
-                BoxShadow(
-                  color: Color(0x80141812),
-                  blurRadius: 30,
-                  offset: Offset(0, 18),
-                  spreadRadius: -18,
-                ),
-              ],
+        boxShadow: isDark ? null : kDarkHeroShadow,
       ),
       child: Row(
         children: [

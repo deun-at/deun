@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import 'package:deun/constants.dart';
+
 /// The base list-card container: a card-surface ([ColorScheme.surfaceContainerLowest])
 /// rounded rectangle with the soft spec card shadow.
 ///
@@ -46,15 +48,7 @@ class SoftCard extends StatelessWidget {
         color: color ?? colorScheme.surfaceContainerLowest,
         borderRadius: radius,
         // Spec card shadow: 0 2px 4px rgba(20,18,12,.04). Omitted in dark.
-        boxShadow: isDark
-            ? null
-            : const [
-                BoxShadow(
-                  color: Color(0x0A14120C),
-                  blurRadius: 4,
-                  offset: Offset(0, 2),
-                ),
-              ],
+        boxShadow: isDark ? null : kSoftCardShadow,
       ),
       child: ClipRRect(borderRadius: radius, child: content),
     );
