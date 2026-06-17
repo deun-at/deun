@@ -1219,6 +1219,18 @@ class AppLocalizationsDe extends AppLocalizations {
   String get friendQrScanPrompt => 'Auf den Code eines Freundes richten';
 
   @override
+  String get friendQrTorchToggle => 'Taschenlampe umschalten';
+
+  @override
+  String get friendQrSwitchCamera => 'Kamera wechseln';
+
+  @override
+  String get stepperDecrease => 'Verringern';
+
+  @override
+  String get stepperIncrease => 'Erhöhen';
+
+  @override
   String get friendQrLinkCopied => 'Link kopiert';
 
   @override

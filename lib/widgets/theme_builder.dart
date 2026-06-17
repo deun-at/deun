@@ -165,7 +165,11 @@ ThemeData getThemeData(BuildContext context, Color seedColor, Brightness brightn
     surfaceBright = const Color(0xFF262824);
     surfaceDim = const Color(0xFF121311);
     onSurface = const Color(0xFFECEBE6);
-    onSurfaceVariant = const Color(0xFF9A968C);
+    // Lifted one step from the prototype's #9A968C so muted/neutral body text
+    // clears WCAG AA (>=4.5:1) on every dark surface — notably the warm
+    // surfaceContainerHighest used by the settled BalancePill, where #9A968C
+    // measured 3.87:1 (E8-T5 a11y audit).
+    onSurfaceVariant = const Color(0xFFADA99F);
     surfaceContainerHighest = const Color(0xFF373B35);
     surfaceContainerHigh = const Color(0xFF2E302B);
     surfaceContainer = const Color(0xFF262824);

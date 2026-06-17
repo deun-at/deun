@@ -2028,6 +2028,30 @@ abstract class AppLocalizations {
   /// **'Point at a friend\'s code'**
   String get friendQrScanPrompt;
 
+  /// No description provided for @friendQrTorchToggle.
+  ///
+  /// In en, this message translates to:
+  /// **'Toggle flashlight'**
+  String get friendQrTorchToggle;
+
+  /// No description provided for @friendQrSwitchCamera.
+  ///
+  /// In en, this message translates to:
+  /// **'Switch camera'**
+  String get friendQrSwitchCamera;
+
+  /// No description provided for @stepperDecrease.
+  ///
+  /// In en, this message translates to:
+  /// **'Decrease'**
+  String get stepperDecrease;
+
+  /// No description provided for @stepperIncrease.
+  ///
+  /// In en, this message translates to:
+  /// **'Increase'**
+  String get stepperIncrease;
+
   /// No description provided for @friendQrLinkCopied.
   ///
   /// In en, this message translates to:

@@ -386,11 +386,13 @@ class _ScanView extends StatelessWidget {
                 children: [
                   _ScanCircleButton(
                     icon: Icons.flash_on,
+                    tooltip: l10n.friendQrTorchToggle,
                     onTap: () => controller.toggleTorch(),
                   ),
                   const SizedBox(width: 8),
                   _ScanCircleButton(
                     icon: Icons.cameraswitch,
+                    tooltip: l10n.friendQrSwitchCamera,
                     onTap: () => controller.switchCamera(),
                   ),
                   const Spacer(),
@@ -437,20 +439,35 @@ class _ScanCircleButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
-    final button = SizedBox(
-      width: 42,
-      height: 42,
-      child: Material(
-        color: filled ? colorScheme.primary : Colors.white24,
-        shape: const CircleBorder(),
-        clipBehavior: Clip.antiAlias,
-        child: InkWell(
-          onTap: onTap,
-          child: Icon(icon, size: 21, color: filled ? colorScheme.onPrimary : Colors.white),
+    // The visible circle stays 42px, but the whole 48dp box is tappable (a11y
+    // minimum hit area): the InkResponse fills 48x48 with the 42px circle
+    // centered inside it.
+    final target = Semantics(
+      button: true,
+      label: tooltip,
+      child: InkResponse(
+        onTap: onTap,
+        radius: 24,
+        containedInkWell: false,
+        child: SizedBox(
+          width: 48,
+          height: 48,
+          child: Center(
+            child: Container(
+              width: 42,
+              height: 42,
+              alignment: Alignment.center,
+              decoration: ShapeDecoration(
+                color: filled ? colorScheme.primary : Colors.white24,
+                shape: const CircleBorder(),
+              ),
+              child: Icon(icon, size: 21, color: filled ? colorScheme.onPrimary : Colors.white),
+            ),
+          ),
         ),
       ),
     );
-    return tooltip != null ? Tooltip(message: tooltip!, child: button) : button;
+    return tooltip != null ? Tooltip(message: tooltip!, child: target) : target;
   }
 }
 

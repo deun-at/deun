@@ -103,6 +103,7 @@ class _GroupDetailState extends ConsumerState<GroupDetail> {
                     SearchAnchor(
                       builder: (context, controller) {
                         return IconButton(
+                          tooltip: AppLocalizations.of(context)!.expensesSearchTitle,
                           onPressed: () {
                             controller.openView();
                           },
@@ -126,12 +127,14 @@ class _GroupDetailState extends ConsumerState<GroupDetail> {
                       },
                     ),
                     IconButton(
+                      tooltip: AppLocalizations.of(context)!.statisticsTitle,
                       onPressed: () {
                         GoRouter.of(context).push("/group/details/statistics", extra: {'group': widget.group});
                       },
                       icon: const Icon(Icons.bar_chart),
                     ),
                     IconButton(
+                      tooltip: AppLocalizations.of(context)!.editGroup,
                       onPressed: () {
                         GoRouter.of(context).push("/group/edit", extra: {'group': widget.group});
                       },

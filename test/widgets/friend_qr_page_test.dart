@@ -123,6 +123,40 @@ void main() {
       expect(find.byType(QrImageView), findsNothing);
     });
 
+    testWidgets('scan controls expose localized semantics labels', (tester) async {
+      await _pumpQr(tester);
+      final l10n =
+          AppLocalizations.of(tester.element(find.byType(FriendQrPage)))!;
+
+      await tester.tap(find.text(l10n.friendQrTabScan));
+      await tester.pumpAndSettle();
+
+      // Torch + camera-switch + copy controls must announce themselves.
+      expect(find.bySemanticsLabel(l10n.friendQrTorchToggle), findsOneWidget);
+      expect(find.bySemanticsLabel(l10n.friendQrSwitchCamera), findsOneWidget);
+      expect(find.bySemanticsLabel(l10n.copyLink), findsOneWidget);
+    });
+
+    testWidgets('scan controls have >=48dp hit targets', (tester) async {
+      await _pumpQr(tester);
+      final l10n =
+          AppLocalizations.of(tester.element(find.byType(FriendQrPage)))!;
+
+      await tester.tap(find.text(l10n.friendQrTabScan));
+      await tester.pumpAndSettle();
+
+      for (final icon in [Icons.flash_on, Icons.cameraswitch, Icons.link]) {
+        final target = find.ancestor(
+          of: find.byIcon(icon),
+          matching: find.byType(InkResponse),
+        );
+        expect(target, findsOneWidget);
+        final size = tester.getSize(target);
+        expect(size.width, greaterThanOrEqualTo(48.0));
+        expect(size.height, greaterThanOrEqualTo(48.0));
+      }
+    });
+
     testWidgets('tapping Copy writes the friend link to the clipboard',
         (tester) async {
       final calls = <MethodCall>[];
