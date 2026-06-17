@@ -68,6 +68,38 @@ class ExpenseRepository {
     return expense;
   }
 
+  /// Explodes one itemized line (unit price + quantity) into per-unit
+  /// claim entries. Each unit is its own expense_entry (quantity 1,
+  /// split_mode 'claim', amount = unit price), grouped by [itemGroupSeq] so
+  /// the save_expense_all RPC can assign one shared item_group_id per run of
+  /// equal sequence values (server-side grouping; no client uuid dependency).
+  /// New units start with no claimers (empty shares) — the payer covers them
+  /// until someone claims.
+  static List<Map<String, dynamic>> explodeItemizedEntry({
+    required String? name,
+    required double unitPrice,
+    required int quantity,
+    required int itemGroupSeq,
+    required int sortIdStart,
+  }) {
+    final qty = quantity > 0 ? quantity : 1;
+    final units = <Map<String, dynamic>>[];
+    for (int i = 0; i < qty; i++) {
+      units.add({
+        'entry': {
+          'name': name,
+          'amount': roundCurrency(unitPrice),
+          'quantity': 1,
+          'split_mode': 'claim',
+          'item_group_seq': itemGroupSeq,
+          'sort_id': sortIdStart + i,
+        },
+        'shares': <Map<String, dynamic>>[],
+      });
+    }
+    return units;
+  }
+
   /// Saves an expense with all its entries and share splits atomically via
   /// the save_expense_all RPC (one transaction server-side). Falls back to
   /// the legacy multi-step write path when the database doesn't have the

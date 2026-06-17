@@ -7,8 +7,13 @@ class ExpenseEntry {
   late int quantity;
   late String splitMode;
   late String createdAt;
+  late String? itemGroupId;
 
   double get unitPrice => quantity > 0 ? amount / quantity : amount;
+
+  /// True when this entry is a single claimable unit produced by the
+  /// per-unit claim model (split_mode 'claim', quantity 1).
+  bool get isClaimUnit => splitMode == 'claim' && quantity == 1;
 
   List<ExpenseEntryShare> expenseEntryShares = [];
 
@@ -23,6 +28,7 @@ class ExpenseEntry {
     quantity = int.tryParse((json["quantity"] ?? 1).toString()) ?? 1;
     splitMode = json["split_mode"] ?? 'equal';
     createdAt = json["created_at"];
+    itemGroupId = json["item_group_id"];
 
     expenseEntryShares = [];
     if (json["expense_entry_share"] != null) {
