@@ -594,6 +594,10 @@
   "@addFriends": {},
   "friendsNoEntries": "No friends yet",
   "@friendsNoEntries": {},
+  "friendDecline": "Decline",
+  "@friendDecline": {
+    "description": "Tooltip/label for declining an incoming friend request."
+  },
   "friendRequests": "Friend Requests ({count})",
   "@friendRequests": {
     "placeholders": {

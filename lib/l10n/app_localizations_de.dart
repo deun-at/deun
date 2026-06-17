@@ -646,6 +646,9 @@ class AppLocalizationsDe extends AppLocalizations {
   String get friendsNoEntries => 'Keine Freunde gefunden.';
 
   @override
+  String get friendDecline => 'Ablehnen';
+
+  @override
   String friendRequests(int count) {
     return 'Freundschaftsanfragen ($count)';
   }

@@ -161,6 +161,7 @@
   "updatePasswordUpdatePassword": "Passwort aktualisieren",
   "friends": "Freunde",
   "friendsNoEntries": "Keine Freunde gefunden.",
+  "friendDecline": "Ablehnen",
   "friendRequests": "Freundschaftsanfragen ({count})",
   "pendingRequests": "Ausstehende Anfragen ({count})",
   "addFriends": "Freunde hinzufügen",
