@@ -1085,6 +1085,12 @@ abstract class AppLocalizations {
   /// **'No friends yet'**
   String get friendsNoEntries;
 
+  /// Tooltip/label for declining an incoming friend request.
+  ///
+  /// In en, this message translates to:
+  /// **'Decline'**
+  String get friendDecline;
+
   /// No description provided for @friendRequests.
   ///
   /// In en, this message translates to:
