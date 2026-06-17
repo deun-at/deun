@@ -722,6 +722,84 @@ abstract class AppLocalizations {
   /// **'Couldn\'t load this expense.'**
   String get claimLoadError;
 
+  /// Dashed open chip on an unclaimed unit; tap to claim it.
+  ///
+  /// In en, this message translates to:
+  /// **'Take one'**
+  String get claimTakeOne;
+
+  /// Chip label on a unit split between several people, showing the per-person cost.
+  ///
+  /// In en, this message translates to:
+  /// **'split · {amount}'**
+  String claimSplitLabel(String amount);
+
+  /// Action on a claim chip that opens the member picker to split a single unit.
+  ///
+  /// In en, this message translates to:
+  /// **'Split one'**
+  String get claimSplitOne;
+
+  /// Title of the inline member picker sheet for splitting one unit.
+  ///
+  /// In en, this message translates to:
+  /// **'Split this item'**
+  String get claimSplitSheetTitle;
+
+  /// Live per-person cost shown in the split picker as members are selected.
+  ///
+  /// In en, this message translates to:
+  /// **'{amount} each'**
+  String claimSplitPerPerson(String amount);
+
+  /// Confirm button in the split-one member picker.
+  ///
+  /// In en, this message translates to:
+  /// **'Apply split'**
+  String get claimSplitApply;
+
+  /// Warning callout above the items when some units have no claimer.
+  ///
+  /// In en, this message translates to:
+  /// **'{amount} still unclaimed'**
+  String claimUnclaimedCallout(String amount);
+
+  /// Action in the unclaimed callout that reminds members to claim their items.
+  ///
+  /// In en, this message translates to:
+  /// **'Nudge'**
+  String get claimNudge;
+
+  /// Snackbar confirmation shown after tapping Nudge.
+  ///
+  /// In en, this message translates to:
+  /// **'Nudge sent to remind everyone to claim.'**
+  String get claimNudgeSent;
+
+  /// Sticky CTA that confirms the persona's claimed total.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm — I had {amount}'**
+  String claimConfirm(String amount);
+
+  /// Title of the success sheet shown after confirming a claim.
+  ///
+  /// In en, this message translates to:
+  /// **'You\'re all set'**
+  String get claimConfirmedTitle;
+
+  /// Body of the claim success sheet, showing the confirmed share.
+  ///
+  /// In en, this message translates to:
+  /// **'Your share of {amount} is saved. We\'ll keep the totals up to date as others claim.'**
+  String claimConfirmedBody(String amount);
+
+  /// Dismiss button on the claim success sheet.
+  ///
+  /// In en, this message translates to:
+  /// **'Done'**
+  String get claimConfirmedDone;
+
   /// Trailing label for a member who is owed in the per-member breakdown.
   ///
   /// In en, this message translates to:

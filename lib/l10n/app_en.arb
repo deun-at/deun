@@ -300,6 +300,73 @@
   "@claimLoadError": {
     "description": "Error state shown when the claim screen fails to load the expense."
   },
+  "claimTakeOne": "Take one",
+  "@claimTakeOne": {
+    "description": "Dashed open chip on an unclaimed unit; tap to claim it."
+  },
+  "claimSplitLabel": "split · {amount}",
+  "@claimSplitLabel": {
+    "description": "Chip label on a unit split between several people, showing the per-person cost.",
+    "placeholders": {
+      "amount": { "type": "String" }
+    }
+  },
+  "claimSplitOne": "Split one",
+  "@claimSplitOne": {
+    "description": "Action on a claim chip that opens the member picker to split a single unit."
+  },
+  "claimSplitSheetTitle": "Split this item",
+  "@claimSplitSheetTitle": {
+    "description": "Title of the inline member picker sheet for splitting one unit."
+  },
+  "claimSplitPerPerson": "{amount} each",
+  "@claimSplitPerPerson": {
+    "description": "Live per-person cost shown in the split picker as members are selected.",
+    "placeholders": {
+      "amount": { "type": "String" }
+    }
+  },
+  "claimSplitApply": "Apply split",
+  "@claimSplitApply": {
+    "description": "Confirm button in the split-one member picker."
+  },
+  "claimUnclaimedCallout": "{amount} still unclaimed",
+  "@claimUnclaimedCallout": {
+    "description": "Warning callout above the items when some units have no claimer.",
+    "placeholders": {
+      "amount": { "type": "String" }
+    }
+  },
+  "claimNudge": "Nudge",
+  "@claimNudge": {
+    "description": "Action in the unclaimed callout that reminds members to claim their items."
+  },
+  "claimNudgeSent": "Nudge sent to remind everyone to claim.",
+  "@claimNudgeSent": {
+    "description": "Snackbar confirmation shown after tapping Nudge."
+  },
+  "claimConfirm": "Confirm — I had {amount}",
+  "@claimConfirm": {
+    "description": "Sticky CTA that confirms the persona's claimed total.",
+    "placeholders": {
+      "amount": { "type": "String" }
+    }
+  },
+  "claimConfirmedTitle": "You're all set",
+  "@claimConfirmedTitle": {
+    "description": "Title of the success sheet shown after confirming a claim."
+  },
+  "claimConfirmedBody": "Your share of {amount} is saved. We'll keep the totals up to date as others claim.",
+  "@claimConfirmedBody": {
+    "description": "Body of the claim success sheet, showing the confirmed share.",
+    "placeholders": {
+      "amount": { "type": "String" }
+    }
+  },
+  "claimConfirmedDone": "Done",
+  "@claimConfirmedDone": {
+    "description": "Dismiss button on the claim success sheet."
+  },
   "expenseMemberLent": "lent",
   "@expenseMemberLent": {
     "description": "Trailing label for a member who is owed in the per-member breakdown."

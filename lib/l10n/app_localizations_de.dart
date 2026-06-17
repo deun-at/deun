@@ -348,6 +348,56 @@ class AppLocalizationsDe extends AppLocalizations {
   String get claimLoadError => 'Diese Ausgabe konnte nicht geladen werden.';
 
   @override
+  String get claimTakeOne => 'Nehmen';
+
+  @override
+  String claimSplitLabel(String amount) {
+    return 'geteilt · $amount';
+  }
+
+  @override
+  String get claimSplitOne => 'Aufteilen';
+
+  @override
+  String get claimSplitSheetTitle => 'Diesen Posten aufteilen';
+
+  @override
+  String claimSplitPerPerson(String amount) {
+    return '$amount pro Person';
+  }
+
+  @override
+  String get claimSplitApply => 'Aufteilung übernehmen';
+
+  @override
+  String claimUnclaimedCallout(String amount) {
+    return '$amount noch nicht zugeordnet';
+  }
+
+  @override
+  String get claimNudge => 'Anstupsen';
+
+  @override
+  String get claimNudgeSent =>
+      'Erinnerung gesendet, damit alle ihre Posten zuordnen.';
+
+  @override
+  String claimConfirm(String amount) {
+    return 'Bestätigen – ich hatte $amount';
+  }
+
+  @override
+  String get claimConfirmedTitle => 'Alles erledigt';
+
+  @override
+  String claimConfirmedBody(String amount) {
+    return 'Dein Anteil von $amount ist gespeichert. Wir halten die Summen aktuell, sobald andere zuordnen.';
+  }
+
+  @override
+  String get claimConfirmedDone => 'Fertig';
+
+  @override
   String get expenseMemberLent => 'ausgelegt';
 
   @override

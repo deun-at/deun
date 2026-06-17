@@ -220,17 +220,20 @@ void main() {
     expect(find.text(l10n.toCurrency(3)), findsWidgets);
   });
 
-  testWidgets('item list renders a read-only row per claim unit',
-      (tester) async {
+  testWidgets('item list renders a row per claim unit', (tester) async {
     final l10n = await AppLocalizations.delegate.load(const Locale('en'));
     await _pump(tester, expense: _itemizedExpense());
+
+    // The item area is below the fold of the lazily-built list — scroll it in.
+    await tester.scrollUntilVisible(find.text('Bread'), 200);
+    await tester.pumpAndSettle();
 
     expect(find.text(l10n.claimItemsLabel), findsOneWidget);
     expect(find.text('Cheese'), findsOneWidget);
     expect(find.text('Wine'), findsOneWidget);
     expect(find.text('Bread'), findsOneWidget);
-    // The unclaimed unit shows the "unclaimed" chip.
-    expect(find.text(l10n.claimItemUnclaimed), findsOneWidget);
+    // The unclaimed unit (Bread) shows the dashed "take one" chip (E3-T3).
+    expect(find.text(l10n.claimTakeOne), findsWidgets);
   });
 
   testWidgets('renders in dark mode without throwing', (tester) async {
