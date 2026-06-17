@@ -548,6 +548,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get payBackDialogDone => 'Mark as paid';
 
   @override
+  String get friendPayBackMarkPaidSubtitle => 'Settle the balance manually';
+
+  @override
   String get payBackError =>
       'There was an error with paying back the amount. Please try again later!';
 

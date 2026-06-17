@@ -977,6 +977,12 @@ abstract class AppLocalizations {
   /// **'Mark as paid'**
   String get payBackDialogDone;
 
+  /// Subtitle for the 'Mark as paid' option in the friend detail sheet.
+  ///
+  /// In en, this message translates to:
+  /// **'Settle the balance manually'**
+  String get friendPayBackMarkPaidSubtitle;
+
   /// No description provided for @payBackError.
   ///
   /// In en, this message translates to:
