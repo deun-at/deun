@@ -261,6 +261,11 @@ providers/badge/queries untouched. Fixed a real unbounded-height crash in empty/
 **E5-T2 · Add friend** · `friend_add_page.dart` (+ `search_result_list.dart`, `contact_suggestion_list.dart`)
 Search by `username#code`, live results, contacts, Add/Requested buttons.
 *Deps:* E5-T1. *Screen 15a.*
+✅ **done · c50c15e** — restyled `friend_add_page.dart` + `search_result_list.dart` + `contact_suggestion_list.dart`
+with new `FriendAddRow` (`MemberAvatar` + `@user#code` + Add/Requested pill); pure `friend_add_button_state.dart`;
+search/add providers + queries + routes untouched. 4 tests; analyze clean, 474 green. *(Subagent dropped on an API
+socket error after doing the work; controller fixed an unused-local warning + committed.)*
+*QA:* search field, live results, contacts, Add→Requested in light+dark.
 
 **E5-T3 · QR** · `friend_qr_page.dart`
 My-code (QR + profile + Copy/Share) / Scan viewfinder segmented tabs.
