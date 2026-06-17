@@ -978,6 +978,34 @@
       }
     }
   },
+  "splitSectionLabel": "Split",
+  "@splitSectionLabel": {},
+  "splitAllocatedLabel": "All set",
+  "@splitAllocatedLabel": {},
+  "splitRemainingLabel": "{amount} left",
+  "@splitRemainingLabel": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "splitOverLabel": "{amount} over",
+  "@splitOverLabel": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "discardChangesTitle": "Discard changes?",
+  "@discardChangesTitle": {},
+  "discardChangesMessage": "You have unsaved changes. If you leave now, they will be lost.",
+  "@discardChangesMessage": {},
+  "discardChangesConfirm": "Discard",
+  "@discardChangesConfirm": {},
+  "discardChangesKeepEditing": "Keep editing",
+  "@discardChangesKeepEditing": {},
   "onboardingTitle": "Welcome to Deun!",
   "@onboardingTitle": {},
   "onboardingSubtitle": "Choose a username to get started",

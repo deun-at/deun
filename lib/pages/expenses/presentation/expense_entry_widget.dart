@@ -1,5 +1,6 @@
 import 'package:deun/helper/helper.dart';
 import 'package:deun/main.dart';
+import 'package:deun/widgets/theme_builder.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_form_builder/flutter_form_builder.dart';
@@ -7,8 +8,15 @@ import 'package:form_builder_validators/form_builder_validators.dart';
 import 'package:deun/l10n/app_localizations.dart';
 
 import '../../../widgets/decimal_text_input_formatter.dart';
+import '../../../widgets/restyle/app_segmented_control.dart';
+import '../../../widgets/restyle/member_avatar.dart';
+import '../../../widgets/restyle/money_text.dart';
+import '../../../widgets/restyle/progress_bar.dart';
+import '../../../widgets/restyle/section_label.dart';
+import '../../../widgets/restyle/stepper_control.dart';
 import '../../groups/data/group_member_model.dart';
 import '../data/expense_entry_model.dart';
+import '../data/split_allocation.dart';
 import '../data/split_mode.dart';
 
 class ExpenseEntryWidget extends StatefulWidget {
@@ -268,7 +276,9 @@ class _ExpenseEntryWidgetState extends State<ExpenseEntryWidget> {
             // Row 2: Amount + quantity
             _buildAmountQuantityRow(l10n),
             const SizedBox(height: spacing * 2),
-            // Row 3: Split mode selector
+            // Row 3: Split section — label + 3-way mode selector
+            SectionLabel(l10n.splitSectionLabel),
+            const SizedBox(height: spacing),
             _buildSplitModeSelector(l10n),
             const SizedBox(height: spacing),
           ],
@@ -437,43 +447,31 @@ class _ExpenseEntryWidgetState extends State<ExpenseEntryWidget> {
   }
 
   Widget _buildSplitModeSelector(AppLocalizations l10n) {
-    return Center(
-      child: SegmentedButton<SplitMode>(
-        showSelectedIcon: false,
-        segments: [
-          ButtonSegment(
-            value: SplitMode.amount,
-            label: Text(l10n.splitModeAmount),
-          ),
-          ButtonSegment(
-            value: SplitMode.percentage,
-            label: Text(l10n.splitModePercentage),
-          ),
-          ButtonSegment(
-            value: SplitMode.shares,
-            label: Text(l10n.splitModeShares),
-          ),
-        ],
-        selected: {_splitMode},
-        onSelectionChanged: (Set<SplitMode> selected) {
-          setState(() {
-            _splitMode = selected.first;
-            _lockedMembers.clear();
-            // Dispose old controllers so new ones get created for the new mode
-            for (var controller in _memberControllers.values) {
-              controller.dispose();
+    return AppSegmentedControl<SplitMode>(
+      value: _splitMode,
+      segments: [
+        AppSegment(value: SplitMode.amount, label: l10n.splitModeAmount),
+        AppSegment(value: SplitMode.percentage, label: l10n.splitModePercentage),
+        AppSegment(value: SplitMode.shares, label: l10n.splitModeShares),
+      ],
+      onChanged: (SplitMode selected) {
+        setState(() {
+          _splitMode = selected;
+          _lockedMembers.clear();
+          // Dispose old controllers so new ones get created for the new mode
+          for (var controller in _memberControllers.values) {
+            controller.dispose();
+          }
+          _memberControllers.clear();
+          // Initialize defaults for new mode
+          for (var email in _enabledMembers) {
+            if (!_memberParts.containsKey(email)) {
+              _memberParts[email] = 1;
             }
-            _memberControllers.clear();
-            // Initialize defaults for new mode
-            for (var email in _enabledMembers) {
-              if (!_memberParts.containsKey(email)) {
-                _memberParts[email] = 1;
-              }
-            }
-            _updateSplitState(controllersInvalid: true);
-          });
-        },
-      ),
+          }
+          _updateSplitState(controllersInvalid: true);
+        });
+      },
     );
   }
 
@@ -547,10 +545,8 @@ class _ExpenseEntryWidgetState extends State<ExpenseEntryWidget> {
                     bool isEnabled = _enabledMembers.contains(member.email);
                     return _buildMemberRow(member, isEnabled, sharesField);
                   }),
-                  if (!widget.isSingleEntry) ...[
-                    const SizedBox(height: 4),
-                    _buildSummaryRow(),
-                  ],
+                  const SizedBox(height: 8),
+                  _buildAllocationSummary(l10n),
                 ],
               ),
             );
@@ -618,6 +614,17 @@ class _ExpenseEntryWidgetState extends State<ExpenseEntryWidget> {
               },
             ),
           ),
+          // Avatar
+          Opacity(
+            opacity: isEnabled ? 1 : 0.4,
+            child: MemberAvatar(
+              name: displayName,
+              colorKey: member.email,
+              radius: 16,
+              isYou: member.email == supabase.auth.currentUser?.email,
+            ),
+          ),
+          const SizedBox(width: 10),
           // Name
           Expanded(
             child: Text(
@@ -630,44 +637,102 @@ class _ExpenseEntryWidgetState extends State<ExpenseEntryWidget> {
           ),
           // Input area — fixed width to prevent layout shifts
           if (!widget.isSingleEntry)
-            SizedBox(
-              width: 160,
-              child: isEnabled
-                  ? Row(
-                      mainAxisAlignment: MainAxisAlignment.end,
-                      children: [
+            isEnabled
+                ? Row(
+                    mainAxisSize: MainAxisSize.min,
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      // Non-equal modes use a ± stepper (which also shows the
+                      // current value); amount mode keeps the editable field.
+                      if (_splitMode == SplitMode.amount) ...[
                         _buildMemberInput(member.email),
-                        if (isLocked && _splitMode != SplitMode.shares)
+                        if (isLocked)
                           Padding(
                             padding: const EdgeInsets.only(left: 2),
                             child: Icon(Icons.lock_outline,
                                 size: 14,
                                 color: Theme.of(context).colorScheme.outline),
                           ),
+                      ] else ...[
+                        _buildMemberStepper(member.email),
+                        const SizedBox(width: 6),
                         // € preview for percentage and parts mode
-                        if (_splitMode == SplitMode.percentage ||
-                            _splitMode == SplitMode.shares) ...[
-                          const SizedBox(width: 4),
-                          SizedBox(
-                            width: 60,
-                            child: Text(
-                              "€${_getAmountPreview(member.email)}",
-                              style:
-                                  Theme.of(context).textTheme.bodySmall?.copyWith(
-                                        color:
-                                            Theme.of(context).colorScheme.outline,
-                                      ),
-                              textAlign: TextAlign.end,
-                            ),
+                        SizedBox(
+                          width: 52,
+                          child: MoneyText(
+                            double.parse(_getAmountPreview(member.email)),
+                            style: Theme.of(context)
+                                .textTheme
+                                .bodySmall
+                                ?.copyWith(
+                                  color: Theme.of(context).colorScheme.outline,
+                                ),
+                            textAlign: TextAlign.end,
                           ),
-                        ],
+                        ),
                       ],
-                    )
-                  : const SizedBox.shrink(),
-            ),
+                    ],
+                  )
+                : const SizedBox.shrink(),
         ],
       ),
     );
+  }
+
+  /// A ± stepper for non-equal modes: ±1 part (shares), ±5% (percentage),
+  /// ±€0.50 (amount). Mutates the same per-member maps the text inputs use and
+  /// runs the existing recalculation path so the split math is unchanged.
+  Widget _buildMemberStepper(String email) {
+    switch (_splitMode) {
+      case SplitMode.shares:
+        final parts = _memberParts[email] ?? 1;
+        return StepperControl(
+          value: "$parts",
+          canDecrement: parts > 0,
+          onDecrement: () => setState(() {
+            _memberParts[email] = (parts - 1).clamp(0, 9999);
+            _updateSplitState();
+          }),
+          onIncrement: () => setState(() {
+            _memberParts[email] = parts + 1;
+            _updateSplitState();
+          }),
+        );
+      case SplitMode.percentage:
+        final pct = _memberPercentages[email] ?? 0;
+        return StepperControl(
+          value: "${pct.toStringAsFixed(0)}%",
+          canDecrement: pct > 0,
+          onDecrement: () => _stepPercentage(email, -5),
+          onIncrement: () => _stepPercentage(email, 5),
+        );
+      case SplitMode.amount:
+        final amt = _memberAmounts[email] ?? 0;
+        return StepperControl(
+          value: AppLocalizations.of(context)!.toCurrency(amt),
+          canDecrement: amt > 0,
+          onDecrement: () => _stepAmount(email, -0.50),
+          onIncrement: () => _stepAmount(email, 0.50),
+        );
+    }
+  }
+
+  void _stepPercentage(String email, double delta) {
+    setState(() {
+      final next = ((_memberPercentages[email] ?? 0) + delta).clamp(0.0, 100.0);
+      _memberPercentages[email] = next;
+      _lockedMembers.add(email);
+      _updateSplitState();
+    });
+  }
+
+  void _stepAmount(String email, double delta) {
+    setState(() {
+      final next = roundCurrency(((_memberAmounts[email] ?? 0) + delta));
+      _memberAmounts[email] = next < 0 ? 0 : next;
+      _lockedMembers.add(email);
+      _updateSplitState();
+    });
   }
 
   TextEditingController _getOrCreateController(
@@ -836,55 +901,110 @@ class _ExpenseEntryWidgetState extends State<ExpenseEntryWidget> {
     return preview.toStringAsFixed(2);
   }
 
-  Widget _buildSummaryRow() {
-    final l10n = AppLocalizations.of(context)!;
-    String summary;
-    bool isValid = _isSplitValid();
+  /// Allocation bar + live remaining indicator. Reads the same numbers the
+  /// existing validation uses (via the pure [SplitAllocation] helper) so the
+  /// progress fill, the semantic color, and the save-time validity stay in sync.
+  Widget _buildAllocationSummary(AppLocalizations l10n) {
+    final semantic = Theme.of(context).extension<SemanticColors>()!;
+    final colorScheme = Theme.of(context).colorScheme;
 
-    switch (_splitMode) {
-      case SplitMode.amount:
-        double sum = _enabledMembers.fold(
-            0.0, (s, email) => s + (_memberAmounts[email] ?? 0));
-        summary =
-            "${l10n.totalLabel}: €${sum.toStringAsFixed(2)} / €${_entryTotal.toStringAsFixed(2)}";
+    final allocation = SplitAllocation.compute(
+      mode: _splitMode,
+      total: _entryTotal,
+      amounts: _memberAmounts,
+      percentages: _memberPercentages,
+      parts: _memberParts,
+      enabled: _enabledMembers,
+    );
+
+    final Color statusColor;
+    final String statusLabel;
+    switch (allocation.status) {
+      case AllocationStatus.ok:
+        statusColor = semantic.success;
+        statusLabel = l10n.splitAllocatedLabel;
         break;
-      case SplitMode.percentage:
-        double sum = _enabledMembers.fold(
-            0.0, (s, email) => s + (_memberPercentages[email] ?? 0));
-        summary = "${l10n.totalLabel}: ${sum.toStringAsFixed(1)}%";
+      case AllocationStatus.under:
+        statusColor = semantic.warning;
+        statusLabel = _splitMode == SplitMode.amount
+            ? l10n.splitRemainingLabel(l10n.toCurrency(allocation.remaining))
+            : _underLabel(l10n);
         break;
-      case SplitMode.shares:
-        int totalParts = _enabledMembers.fold(
-            0, (sum, e) => sum + (_memberParts[e] ?? 1));
-        summary =
-            "${l10n.splitSharesSummary(totalParts)} · €${_entryTotal.toStringAsFixed(2)}";
+      case AllocationStatus.over:
+        statusColor = semantic.danger;
+        statusLabel = _splitMode == SplitMode.amount
+            ? l10n.splitOverLabel(l10n.toCurrency(allocation.remaining.abs()))
+            : _overLabel(l10n);
         break;
     }
 
-    return Padding(
-      padding: const EdgeInsets.only(top: 4),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.end,
-        children: [
-          Text(
-            summary,
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: isValid
-                      ? Theme.of(context).colorScheme.outline
-                      : Theme.of(context).colorScheme.error,
-                ),
-          ),
-          const SizedBox(width: 4),
-          Icon(
-            isValid ? Icons.check_circle_outline : Icons.error_outline,
-            size: 16,
-            color: isValid
-                ? Theme.of(context).colorScheme.primary
-                : Theme.of(context).colorScheme.error,
-          ),
-        ],
-      ),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        ProgressBar(value: allocation.fraction, fillColor: statusColor),
+        const SizedBox(height: 6),
+        Row(
+          children: [
+            Expanded(
+              child: Text(
+                _allocationDetail(l10n),
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: colorScheme.onSurfaceVariant,
+                    ),
+              ),
+            ),
+            Icon(
+              allocation.status == AllocationStatus.ok
+                  ? Icons.check_circle_outline
+                  : Icons.error_outline,
+              size: 16,
+              color: statusColor,
+            ),
+            const SizedBox(width: 4),
+            Text(
+              statusLabel,
+              style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                    color: statusColor,
+                    fontWeight: FontWeight.w600,
+                  ),
+            ),
+          ],
+        ),
+      ],
     );
+  }
+
+  /// The left-side detail of the allocation row (allocated / target).
+  String _allocationDetail(AppLocalizations l10n) {
+    switch (_splitMode) {
+      case SplitMode.amount:
+        final sum = _enabledMembers.fold<double>(
+            0, (s, e) => s + (_memberAmounts[e] ?? 0));
+        return "${l10n.toCurrency(sum)} / ${l10n.toCurrency(_entryTotal)}";
+      case SplitMode.percentage:
+        final sum = _enabledMembers.fold<double>(
+            0, (s, e) => s + (_memberPercentages[e] ?? 0));
+        return "${sum.toStringAsFixed(1)}% / 100%";
+      case SplitMode.shares:
+        final totalParts = _enabledMembers.fold<int>(
+            0, (s, e) => s + (_memberParts[e] ?? 1));
+        return l10n.splitSharesSummary(totalParts);
+    }
+  }
+
+  String _underLabel(AppLocalizations l10n) {
+    if (_splitMode == SplitMode.percentage) {
+      final sum = _enabledMembers.fold<double>(
+          0, (s, e) => s + (_memberPercentages[e] ?? 0));
+      return "${(100 - sum).toStringAsFixed(1)}%";
+    }
+    return l10n.expenseEntrySharesValidationEmpty;
+  }
+
+  String _overLabel(AppLocalizations l10n) {
+    final sum = _enabledMembers.fold<double>(
+        0, (s, e) => s + (_memberPercentages[e] ?? 0));
+    return "+${(sum - 100).toStringAsFixed(1)}%";
   }
 
   Widget _buildHiddenFormFields() {

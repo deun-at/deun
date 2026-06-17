@@ -1125,6 +1125,35 @@ class AppLocalizationsDe extends AppLocalizations {
   }
 
   @override
+  String get splitSectionLabel => 'Aufteilung';
+
+  @override
+  String get splitAllocatedLabel => 'Passt';
+
+  @override
+  String splitRemainingLabel(String amount) {
+    return '$amount übrig';
+  }
+
+  @override
+  String splitOverLabel(String amount) {
+    return '$amount zu viel';
+  }
+
+  @override
+  String get discardChangesTitle => 'Änderungen verwerfen?';
+
+  @override
+  String get discardChangesMessage =>
+      'Du hast ungespeicherte Änderungen. Wenn du jetzt gehst, gehen sie verloren.';
+
+  @override
+  String get discardChangesConfirm => 'Verwerfen';
+
+  @override
+  String get discardChangesKeepEditing => 'Weiter bearbeiten';
+
+  @override
   String get onboardingTitle => 'Willkommen bei Deun!';
 
   @override

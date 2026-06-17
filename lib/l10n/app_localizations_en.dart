@@ -1101,6 +1101,35 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get splitSectionLabel => 'Split';
+
+  @override
+  String get splitAllocatedLabel => 'All set';
+
+  @override
+  String splitRemainingLabel(String amount) {
+    return '$amount left';
+  }
+
+  @override
+  String splitOverLabel(String amount) {
+    return '$amount over';
+  }
+
+  @override
+  String get discardChangesTitle => 'Discard changes?';
+
+  @override
+  String get discardChangesMessage =>
+      'You have unsaved changes. If you leave now, they will be lost.';
+
+  @override
+  String get discardChangesConfirm => 'Discard';
+
+  @override
+  String get discardChangesKeepEditing => 'Keep editing';
+
+  @override
   String get onboardingTitle => 'Welcome to Deun!';
 
   @override
