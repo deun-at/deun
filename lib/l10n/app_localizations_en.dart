@@ -1449,4 +1449,58 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get amountSheetTitle => 'Amount';
+
+  @override
+  String get paymentTitle => 'Settle up';
+
+  @override
+  String get paymentYouPay => 'You pay';
+
+  @override
+  String get paymentOwesYou => 'Owes you';
+
+  @override
+  String get paymentPay => 'Pay';
+
+  @override
+  String get paymentRemind => 'Remind';
+
+  @override
+  String get paymentAllSettled => 'You\'re all settled up';
+
+  @override
+  String get paymentMethodPaypal => 'PayPal';
+
+  @override
+  String get paymentMethodPaypalSubtitle => 'Open PayPal.me link';
+
+  @override
+  String get paymentMethodIban => 'Bank transfer';
+
+  @override
+  String get paymentMethodIbanSubtitle => 'Copy IBAN';
+
+  @override
+  String get paymentMethodCash => 'Cash';
+
+  @override
+  String get paymentMethodCashSubtitle => 'Settle in person';
+
+  @override
+  String get paymentIbanCopied => 'IBAN copied to clipboard';
+
+  @override
+  String paymentPayAmount(double amount) {
+    final intl.NumberFormat amountNumberFormat = intl.NumberFormat.currency(
+      locale: localeName,
+      decimalDigits: 2,
+      name: '€',
+    );
+    final String amountString = amountNumberFormat.format(amount);
+
+    return 'Pay $amountString';
+  }
+
+  @override
+  String get paymentMarkSettled => 'Mark settled';
 }

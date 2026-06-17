@@ -2417,6 +2417,96 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Amount'**
   String get amountSheetTitle;
+
+  /// Title of the settle-up / payment sheet (Screen 10).
+  ///
+  /// In en, this message translates to:
+  /// **'Settle up'**
+  String get paymentTitle;
+
+  /// Section label over the members the current user owes.
+  ///
+  /// In en, this message translates to:
+  /// **'You pay'**
+  String get paymentYouPay;
+
+  /// Section label over the members who owe the current user.
+  ///
+  /// In en, this message translates to:
+  /// **'Owes you'**
+  String get paymentOwesYou;
+
+  /// Action on a you-pay row that opens the payment-method detail sheet.
+  ///
+  /// In en, this message translates to:
+  /// **'Pay'**
+  String get paymentPay;
+
+  /// Action on an owes-you row that sends a payment reminder.
+  ///
+  /// In en, this message translates to:
+  /// **'Remind'**
+  String get paymentRemind;
+
+  /// Empty state on the settle-up sheet when nothing is owed either way.
+  ///
+  /// In en, this message translates to:
+  /// **'You\'re all settled up'**
+  String get paymentAllSettled;
+
+  /// Title of the PayPal payment-method card.
+  ///
+  /// In en, this message translates to:
+  /// **'PayPal'**
+  String get paymentMethodPaypal;
+
+  /// Subtitle of the PayPal payment-method card.
+  ///
+  /// In en, this message translates to:
+  /// **'Open PayPal.me link'**
+  String get paymentMethodPaypalSubtitle;
+
+  /// Title of the IBAN / bank-transfer payment-method card.
+  ///
+  /// In en, this message translates to:
+  /// **'Bank transfer'**
+  String get paymentMethodIban;
+
+  /// Subtitle of the IBAN payment-method card.
+  ///
+  /// In en, this message translates to:
+  /// **'Copy IBAN'**
+  String get paymentMethodIbanSubtitle;
+
+  /// Title of the cash payment-method card.
+  ///
+  /// In en, this message translates to:
+  /// **'Cash'**
+  String get paymentMethodCash;
+
+  /// Subtitle of the cash payment-method card.
+  ///
+  /// In en, this message translates to:
+  /// **'Settle in person'**
+  String get paymentMethodCashSubtitle;
+
+  /// Snackbar shown after copying a payee's IBAN.
+  ///
+  /// In en, this message translates to:
+  /// **'IBAN copied to clipboard'**
+  String get paymentIbanCopied;
+
+  /// Sticky CTA on the method-detail sheet that records the payment.
+  ///
+  /// In en, this message translates to:
+  /// **'Pay {amount}'**
+  String paymentPayAmount(double amount);
+
+  /// Sticky CTA on the cash method-detail sheet that marks the balance settled.
+  ///
+  /// In en, this message translates to:
+  /// **'Mark settled'**
+  String get paymentMarkSettled;
 }
 
 class _AppLocalizationsDelegate
