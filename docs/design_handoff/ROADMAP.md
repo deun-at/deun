@@ -163,6 +163,11 @@ opens editor (left as-is). *QA:* summary, your-net pill, claim banner, breakdown
 Restyle the scanner UI (corner brackets + scan line + detected-items preview) feeding the existing Gemini
 parser → itemized editor. **OCR already works — UI only.**
 *Deps:* E2-T2. *Sheet.*
+✅ **done · cd6fc56** — restyled `receipt_scanner_sheet.dart`: `ReceiptScanViewport` (corner-bracket painter +
+2.4s scan-line sweep, reduced-motion aware), `_ScanStage` state machine, `ReceiptItemsPreview` detected-items
+review (names + `MoneyText` + total) before confirm; parser/service untouched, same `ReceiptScanResult` returned;
+pure `receiptPreviewTotal`; 10 tests; 6 en+de keys; analyze clean, 384 green. *v0:* deliberate dark camera scrim
+(no live preview wired; capture via image_picker). *QA:* viewport/scan-line, scanning, error, review in light+dark.
 
 ---
 
