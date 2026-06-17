@@ -99,6 +99,17 @@ const spacer = SizedBox(
   height: 12,
 );
 
+/// Bottom-sheet rise motion (DESIGN_SPEC): translateY 101%→0 over 0.28s,
+/// cubic-bezier(.22, 1, .36, 1); scrim fade follows the route default.
+/// Applied via `sheetAnimationStyle` on `showModalBottomSheet` and
+/// `ModalBottomSheetRoute` so every modal sheet rises with the spec curve.
+const AnimationStyle kSheetAnimationStyle = AnimationStyle(
+  curve: Cubic(0.22, 1.0, 0.36, 1.0),
+  duration: Duration(milliseconds: 280),
+  reverseCurve: Cubic(0.22, 1.0, 0.36, 1.0),
+  reverseDuration: Duration(milliseconds: 200),
+);
+
 /// Shadow under the dark hero / summary cards (group list, settings, personal
 /// statistics). Encodes DESIGN_SPEC `0 18px 30px -18px rgba(20,18,12,.5)`.
 /// Applied in light mode only; call sites pass `null` in dark.

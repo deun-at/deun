@@ -607,6 +607,7 @@ class _ExpenseDetailState extends ConsumerState<ExpenseDetail> {
   Future<void> _scanReceipt() async {
     final result = await showModalBottomSheet<ReceiptScanResult>(
       context: context,
+      sheetAnimationStyle: kSheetAnimationStyle,
       builder: (context) => const ReceiptScannerSheet(),
     );
     if (result == null || !mounted) return;

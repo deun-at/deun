@@ -1,3 +1,4 @@
+import 'package:deun/constants.dart';
 import 'package:deun/helper/helper.dart';
 import 'package:deun/pages/friends/data/friendship_model.dart';
 import 'package:deun/pages/friends/data/friendship_repository.dart';
@@ -302,6 +303,7 @@ void openFriendDetailSheet(BuildContext context, Friendship friendship) {
   showModalBottomSheet<void>(
     context: context,
     isScrollControlled: true,
+    sheetAnimationStyle: kSheetAnimationStyle,
     backgroundColor: Colors.transparent,
     builder: (_) => FriendDetailSheet(friendship: friendship),
   );

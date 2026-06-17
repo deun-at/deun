@@ -1,3 +1,4 @@
+import 'package:deun/constants.dart';
 import 'package:deun/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 
@@ -12,6 +13,7 @@ Future<bool?> showDiscardConfirmationSheet(BuildContext context) {
   return showModalBottomSheet<bool>(
     context: context,
     isScrollControlled: true,
+    sheetAnimationStyle: kSheetAnimationStyle,
     backgroundColor: Colors.transparent,
     builder: (sheetContext) {
       final colorScheme = Theme.of(sheetContext).colorScheme;

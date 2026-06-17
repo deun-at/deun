@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import 'package:deun/constants.dart';
+
 class ModalBottomSheetPage<T> extends Page<T> {
   final Offset? anchorPoint;
   final WidgetBuilder builder;
@@ -29,6 +31,7 @@ class ModalBottomSheetPage<T> extends Page<T> {
       enableDrag: enableDrag,
       isScrollControlled: true,
       useSafeArea: true,
+      sheetAnimationStyle: kSheetAnimationStyle,
       anchorPoint: anchorPoint,
       settings: this);
 }
