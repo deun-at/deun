@@ -350,9 +350,9 @@ class _NavigationScreenState extends ConsumerState<NavigationScreen> with Widget
       errorBuilder: (context, state) {
         return Scaffold(
             appBar: AppBar(
-              title: const Text('Page not found'),
+              title: Text(AppLocalizations.of(context)!.pageNotFound),
             ),
-            body: const Center(child: Text('Page not found')));
+            body: Center(child: Text(AppLocalizations.of(context)!.pageNotFound)));
       },
     );
   }

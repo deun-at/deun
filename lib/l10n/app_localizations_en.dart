@@ -1647,4 +1647,12 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get settingsTagline => 'Deun · Simply Split Fairly';
+
+  @override
+  String settingsUsernameCopied(String handle) {
+    return '$handle copied';
+  }
+
+  @override
+  String get pageNotFound => 'Page not found';
 }

@@ -1,3 +1,4 @@
+import 'package:deun/l10n/app_localizations.dart';
 import 'package:deun/pages/settings/contact.dart';
 import 'package:deun/pages/settings/privacy_policy.dart';
 import 'package:deun/widgets/deun_app.dart';
@@ -19,11 +20,11 @@ class LoginScreen extends StatelessWidget {
       onUnknownRoute: (RouteSettings settings) {
         return MaterialPageRoute<void>(
           settings: settings,
-          builder: (BuildContext context) => const Scaffold(
+          builder: (BuildContext context) => Scaffold(
             body: Center(
               child: Text(
-                'Not Found',
-                style: TextStyle(
+                AppLocalizations.of(context)!.pageNotFound,
+                style: const TextStyle(
                   fontSize: 42,
                   fontWeight: FontWeight.bold,
                 ),

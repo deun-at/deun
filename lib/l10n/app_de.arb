@@ -449,5 +449,19 @@
   "settingsDeleteAccountTitle": "Konto löschen?",
   "settingsDeleteAccountBody": "Damit werden dein Konto und alle deine Daten dauerhaft gelöscht. Das kann nicht rückgängig gemacht werden.",
   "settingsDeleteAccountConfirmButton": "Mein Konto löschen",
-  "settingsTagline": "Deun · Einfach fair teilen"
+  "settingsTagline": "Deun · Einfach fair teilen",
+  "settingsUsernameCopied": "{handle} kopiert",
+  "pageNotFound": "Seite nicht gefunden",
+  "groupNotificationTitle": "{userDisplayName} hat dich zu einer neuen Gruppe hinzugefügt!",
+  "groupNotificationBody": "Du hast jetzt Zugriff auf \"{groupName}\".",
+  "groupPayBackNotificationTitle": "{userDisplayName} hat die Schulden in \"{groupName}\" zurückgezahlt!",
+  "groupPayBackNotificationBody": "Du solltest {amount} in den nächsten Tagen erhalten.",
+  "expenseNotificationTitle": "{userDisplayName} hat eine neue Ausgabe hinzugefügt!",
+  "expenseNotificationBody": "\"{expenseName}\" wurde zu \"{groupName}\" mit einem Gesamtbetrag von {amount} hinzugefügt.",
+  "friendRequestNotificationTitle": "Du hast eine neue Freundschaftsanfrage",
+  "friendRequestNotificationBody": "{userDisplayName} möchte sich mit dir vernetzen.",
+  "friendAcceptNotificationTitle": "Deine Freundschaftsanfrage wurde angenommen",
+  "friendAcceptNotificationBody": "{userDisplayName} hat deine Freundschaftsanfrage angenommen.",
+  "friendDeclineNotificationTitle": "Deine Freundschaftsanfrage wurde abgelehnt",
+  "friendDeclineNotificationBody": "{userDisplayName} hat deine Freundschaftsanfrage abgelehnt."
 }

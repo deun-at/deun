@@ -2783,6 +2783,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Deun · Simply Split Fairly'**
   String get settingsTagline;
+
+  /// Snackbar shown after copying the user's full username to the clipboard.
+  ///
+  /// In en, this message translates to:
+  /// **'{handle} copied'**
+  String settingsUsernameCopied(String handle);
+
+  /// Fallback message shown for unknown/invalid routes.
+  ///
+  /// In en, this message translates to:
+  /// **'Page not found'**
+  String get pageNotFound;
 }
 
 class _AppLocalizationsDelegate
