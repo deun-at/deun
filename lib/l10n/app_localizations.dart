@@ -1860,6 +1860,54 @@ abstract class AppLocalizations {
   /// **'{count} {count, plural, =1{part} other{parts}}'**
   String splitSharesSummary(int count);
 
+  /// No description provided for @splitSectionLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Split'**
+  String get splitSectionLabel;
+
+  /// No description provided for @splitAllocatedLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'All set'**
+  String get splitAllocatedLabel;
+
+  /// No description provided for @splitRemainingLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'{amount} left'**
+  String splitRemainingLabel(String amount);
+
+  /// No description provided for @splitOverLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'{amount} over'**
+  String splitOverLabel(String amount);
+
+  /// No description provided for @discardChangesTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Discard changes?'**
+  String get discardChangesTitle;
+
+  /// No description provided for @discardChangesMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'You have unsaved changes. If you leave now, they will be lost.'**
+  String get discardChangesMessage;
+
+  /// No description provided for @discardChangesConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Discard'**
+  String get discardChangesConfirm;
+
+  /// No description provided for @discardChangesKeepEditing.
+  ///
+  /// In en, this message translates to:
+  /// **'Keep editing'**
+  String get discardChangesKeepEditing;
+
   /// No description provided for @onboardingTitle.
   ///
   /// In en, this message translates to:

@@ -20,6 +20,7 @@ import '../data/expense_category.dart';
 import '../data/receipt_scan_result.dart';
 import '../../../widgets/category_selector.dart';
 import '../../../widgets/user_avatar.dart';
+import '../../../widgets/restyle/discard_sheet.dart';
 
 class ExpenseEntryData {
   final int index;
@@ -63,6 +64,13 @@ class _ExpenseDetailState extends ConsumerState<ExpenseDetail> {
   int _newTextFieldId = 0;
 
   bool get _isSingleEntry => _entries.length == 1;
+
+  /// Whether the user has touched the form (drives the discard guard).
+  bool _isDirty = false;
+
+  /// Set once a save succeeds (or the expense is deleted) so the post-action
+  /// `Navigator.pop` is not intercepted by the dirty guard.
+  bool _bypassDiscardGuard = false;
 
   ExpenseCategory? _detectedCategory;
 
@@ -201,6 +209,7 @@ class _ExpenseDetailState extends ConsumerState<ExpenseDetail> {
               } finally {
                 //pop both dialog and edit page, because this item is not existing anymore
                 if (context.mounted) {
+                  _bypassDiscardGuard = true;
                   Navigator.pop(context);
                   Navigator.pop(modalContext);
                 }
@@ -421,6 +430,7 @@ class _ExpenseDetailState extends ConsumerState<ExpenseDetail> {
           } finally {
             if (mounted) {
               if (context.mounted) {
+                _bypassDiscardGuard = true;
                 Navigator.pop(context);
               }
             }
@@ -448,7 +458,17 @@ class _ExpenseDetailState extends ConsumerState<ExpenseDetail> {
     return ThemeBuilder(
       colorValue: widget.group.colorValue,
       builder: (context) {
-        return Scaffold(
+        return PopScope(
+          canPop: !_isDirty || _bypassDiscardGuard,
+          onPopInvokedWithResult: (didPop, result) async {
+            if (didPop) return;
+            final discard = await showDiscardConfirmationSheet(context);
+            if (discard == true && context.mounted) {
+              _bypassDiscardGuard = true;
+              Navigator.pop(context);
+            }
+          },
+          child: Scaffold(
           appBar: AppBar(
             actions: [...expenseActions],
           ),
@@ -460,6 +480,11 @@ class _ExpenseDetailState extends ConsumerState<ExpenseDetail> {
                   key: _formKey,
                   clearValueOnUnregister: true,
                   initialValue: widget.expense?.toJson() ?? {},
+                  onChanged: () {
+                    if (!_isDirty) {
+                      setState(() => _isDirty = true);
+                    }
+                  },
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -529,6 +554,7 @@ class _ExpenseDetailState extends ConsumerState<ExpenseDetail> {
                 ),
               )
             ],
+          ),
           ),
         );
       },
