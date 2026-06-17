@@ -116,6 +116,14 @@ Mode segmented (Quick/Itemized); category tile (→ category sheet), big amount 
 paid-by/when rows, 4-way split segmented (`SplitMode`), allocation bar + remaining indicator, per-member rows
 (include/avatar/stepper/amount). Wire to existing `expenseEntryShares`. Dirty-guard → Discard sheet.
 *Deps:* E0-T4. *Screen 8 (quick).*
+✅ **done · ddcc86b + 4d4e25e** — restyled split section (`SplitMode` segmented, `ProgressBar` allocation bar +
+semantic remaining indicator, per-member include/avatar/`StepperControl`/amount via `MoneyText`; pure
+`split_allocation.dart`) + input tiles (category/amount/description/paid-by/when as `SoftCard` tiles opening the
+existing pickers) + PopScope dirty-guard → `discard_sheet.dart`. Split math untouched; 20 tests; 10 en+de keys;
+analyze clean, 312 green. *v0:* SplitMode bound to the REAL 3-way model (amount/%/shares), not the spec's 4-way
+(Equal/Exact are amount-mode variants) — changing the enum/DB is forbidden; amount stays inline-editable (keypad
+sheet = E2-T3). **Carry to E2-T2:** explicit Quick/Itemized top segmented toggle (mode today derives from entry
+count; coheres with the itemized view). *QA:* tiles, split modes, remaining over/under/ok, discard sheet in light+dark.
 
 **E2-T2 · Expense editor — Itemized** · `expense_entry_widget.dart`
 Total-from-items + Scan; item cards (editable name/unit/qty/line total/delete via `ExpenseEntry`), add-item,
