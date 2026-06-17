@@ -294,6 +294,8 @@
   "splitPercentageError": "Muss 100% ergeben",
   "splitAmountError": "Muss die Gesamtsumme ergeben",
   "splitSharesSummary": "{count} {count, plural, =1{Anteil} other{Anteile}}",
+  "expenseDetailsLabel": "Details",
+  "categoryLabel": "Kategorie",
   "splitSectionLabel": "Aufteilung",
   "splitAllocatedLabel": "Passt",
   "splitRemainingLabel": "{amount} übrig",

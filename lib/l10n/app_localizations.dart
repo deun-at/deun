@@ -1860,6 +1860,18 @@ abstract class AppLocalizations {
   /// **'{count} {count, plural, =1{part} other{parts}}'**
   String splitSharesSummary(int count);
 
+  /// No description provided for @expenseDetailsLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Details'**
+  String get expenseDetailsLabel;
+
+  /// No description provided for @categoryLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Category'**
+  String get categoryLabel;
+
   /// No description provided for @splitSectionLabel.
   ///
   /// In en, this message translates to:

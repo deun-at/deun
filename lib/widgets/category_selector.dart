@@ -5,6 +5,7 @@ import 'package:deun/l10n/app_localizations.dart';
 import 'package:deun/pages/expenses/data/expense_category.dart';
 
 import 'card_list_view_builder.dart';
+import 'restyle/soft_card.dart';
 
 class CategorySelector extends StatefulWidget {
   const CategorySelector({
@@ -83,20 +84,45 @@ class _CategorySelectorState extends State<CategorySelector> {
         return SearchAnchor(
           searchController: _searchController,
           builder: (BuildContext context, SearchController controller) {
-            return CardListTile(
-              isTop: true,
-              isBottom: true,
-              child: ListTile(
-                leading: _CategoryIcon(category: _selectedCategory!),
-                title: Text(
-                  _selectedCategory!.getDisplayName(localizations),
-                ),
-                onTap: widget.enabled
-                    ? () {
-                        controller.text = ''; // Clear search field when opening
-                        controller.openView();
-                      }
-                    : null,
+            final colorScheme = Theme.of(context).colorScheme;
+            final textTheme = Theme.of(context).textTheme;
+            return SoftCard(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              onTap: widget.enabled
+                  ? () {
+                      controller.text = ''; // Clear search field when opening
+                      controller.openView();
+                    }
+                  : null,
+              child: Row(
+                children: [
+                  _CategoryIcon(category: _selectedCategory!),
+                  const SizedBox(width: 14),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          localizations.categoryLabel,
+                          style: textTheme.bodySmall?.copyWith(
+                            color: colorScheme.onSurfaceVariant,
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          _selectedCategory!.getDisplayName(localizations),
+                          style: textTheme.titleMedium?.copyWith(
+                            color: colorScheme.onSurface,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  if (widget.enabled)
+                    Icon(Icons.chevron_right, color: colorScheme.onSurfaceVariant),
+                ],
               ),
             );
           },

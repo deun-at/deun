@@ -21,6 +21,9 @@ import '../data/receipt_scan_result.dart';
 import '../../../widgets/category_selector.dart';
 import '../../../widgets/user_avatar.dart';
 import '../../../widgets/restyle/discard_sheet.dart';
+import '../../../widgets/restyle/soft_card.dart';
+import '../../../widgets/restyle/section_label.dart';
+import '../../../widgets/restyle/member_avatar.dart';
 
 class ExpenseEntryData {
   final int index;
@@ -246,7 +249,40 @@ class _ExpenseDetailState extends ConsumerState<ExpenseDetail> {
         : member.displayName;
   }
 
+  Widget _buildNameField() {
+    final l10n = AppLocalizations.of(context)!;
+    final colorScheme = Theme.of(context).colorScheme;
+    return FormBuilderField(
+      name: "name",
+      builder: (FormFieldState<dynamic> field) => TextFormField(
+        controller: _nameController,
+        style: Theme.of(context)
+            .textTheme
+            .displaySmall!
+            .copyWith(color: colorScheme.primary),
+        validator: FormBuilderValidators.required(
+            errorText: l10n.expenseNameValidationEmpty),
+        decoration: InputDecoration(
+          border: InputBorder.none,
+          hintText: l10n.addExpenseTitle,
+          hintStyle: Theme.of(context)
+              .textTheme
+              .displaySmall!
+              .copyWith(color: colorScheme.onSurfaceVariant),
+          contentPadding: const EdgeInsets.symmetric(horizontal: 4),
+        ),
+        onChanged: (value) {
+          field.didChange(value);
+          if (value.isNotEmpty) {
+            detectAndUpdateCategory(value);
+          }
+        },
+      ),
+    );
+  }
+
   Widget _buildDateSelector() {
+    final l10n = AppLocalizations.of(context)!;
     final initial = widget.expense?.expenseDate != null
         ? DateTime.parse(widget.expense!.expenseDate)
         : DateTime.now();
@@ -255,23 +291,19 @@ class _ExpenseDetailState extends ConsumerState<ExpenseDetail> {
       initialValue: initial,
       builder: (FormFieldState<DateTime?> field) {
         final value = field.value ?? initial;
-        return CardListTile(
-          isTop: true,
-          isBottom: true,
-          child: ListTile(
-            leading: const Icon(Icons.calendar_month_outlined),
-            title: Text(AppLocalizations.of(context)!.expenseDate),
-            subtitle: Text(formatDate(value.toIso8601String(), context)),
-            onTap: () async {
-              final picked = await showDatePicker(
-                context: context,
-                initialDate: value,
-                firstDate: DateTime(2000),
-                lastDate: DateTime.now().add(const Duration(days: 365 * 5)),
-              );
-              if (picked != null) field.didChange(picked);
-            },
-          ),
+        return _EditorTile(
+          icon: Icons.calendar_month_outlined,
+          label: l10n.expenseDate,
+          value: formatDate(value.toIso8601String(), context),
+          onTap: () async {
+            final picked = await showDatePicker(
+              context: context,
+              initialDate: value,
+              firstDate: DateTime(2000),
+              lastDate: DateTime.now().add(const Duration(days: 365 * 5)),
+            );
+            if (picked != null) field.didChange(picked);
+          },
         );
       },
     );
@@ -289,24 +321,26 @@ class _ExpenseDetailState extends ConsumerState<ExpenseDetail> {
         return SearchAnchor(
           searchController: _paidBySearchController,
           builder: (BuildContext context, SearchController controller) {
-            return CardListTile(
-              isTop: true,
-              isBottom: true,
-              child: ListTile(
-                leading: selectedMember != null
-                    ? UserAvatar(displayName: selectedMember.displayName, radius: 18)
-                    : null,
-                title: Text(selectedMember != null
-                    ? _memberDisplayName(selectedMember)
-                    : AppLocalizations.of(context)!.expensePaidBy),
-                subtitle: selectedMember != null
-                    ? Text(selectedMember.fullUsername)
-                    : null,
-                onTap: () {
-                  controller.text = '';
-                  controller.openView();
-                },
-              ),
+            final l10n = AppLocalizations.of(context)!;
+            final isYou = selectedMember?.email == supabase.auth.currentUser?.email;
+            return _EditorTile(
+              icon: Icons.account_circle_outlined,
+              label: l10n.expensePaidBy,
+              value: selectedMember != null
+                  ? _memberDisplayName(selectedMember)
+                  : l10n.expensePaidBy,
+              leading: selectedMember != null
+                  ? MemberAvatar(
+                      name: selectedMember.displayName,
+                      colorKey: selectedMember.email,
+                      radius: 18,
+                      isYou: isYou,
+                    )
+                  : null,
+              onTap: () {
+                controller.text = '';
+                controller.openView();
+              },
             );
           },
           suggestionsBuilder: (BuildContext context, SearchController controller) {
@@ -354,38 +388,54 @@ class _ExpenseDetailState extends ConsumerState<ExpenseDetail> {
         },
       ]),
       builder: (FormFieldState<dynamic> field) {
-        return InputDecorator(
-          decoration: InputDecoration(
-            errorText: field.errorText,
-            border: InputBorder.none,
-            contentPadding: const EdgeInsets.all(0),
-          ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Text("€", style: Theme.of(context).textTheme.headlineMedium),
-              IntrinsicWidth(
-                child: ConstrainedBox(
-                  constraints: BoxConstraints(
-                    minWidth: 0,
-                    maxWidth: MediaQuery.of(context).size.width * 0.35,
-                  ),
-                  child: TextFormField(
-                    controller: _amountController,
-                    onChanged: (value) {
-                      field.didChange(value);
-                    },
-                    keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                    inputFormatters: [DecimalTextInputFormatter(decimalRange: 2)],
-                    style: Theme.of(context).textTheme.headlineMedium,
-                    decoration: const InputDecoration(
-                      contentPadding: EdgeInsets.only(right: 10, left: 10),
-                      border: InputBorder.none,
+        final colorScheme = Theme.of(context).colorScheme;
+        final amountStyle = Theme.of(context)
+            .textTheme
+            .displayMedium
+            ?.copyWith(color: colorScheme.onSurface);
+        return SoftCard(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
+          child: InputDecorator(
+            decoration: InputDecoration(
+              errorText: field.errorText,
+              border: InputBorder.none,
+              isDense: true,
+              contentPadding: const EdgeInsets.all(0),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.baseline,
+              textBaseline: TextBaseline.alphabetic,
+              children: [
+                Text(
+                  "€",
+                  style: amountStyle?.copyWith(color: colorScheme.onSurfaceVariant),
+                ),
+                IntrinsicWidth(
+                  child: ConstrainedBox(
+                    constraints: BoxConstraints(
+                      minWidth: 0,
+                      maxWidth: MediaQuery.of(context).size.width * 0.5,
+                    ),
+                    child: TextFormField(
+                      controller: _amountController,
+                      onChanged: (value) {
+                        field.didChange(value);
+                      },
+                      textAlign: TextAlign.center,
+                      keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                      inputFormatters: [DecimalTextInputFormatter(decimalRange: 2)],
+                      style: amountStyle,
+                      decoration: const InputDecoration(
+                        isDense: true,
+                        contentPadding: EdgeInsets.only(right: 8, left: 8),
+                        border: InputBorder.none,
+                      ),
                     ),
                   ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         );
       },
@@ -489,42 +539,30 @@ class _ExpenseDetailState extends ConsumerState<ExpenseDetail> {
                     mainAxisSize: MainAxisSize.min,
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: <Widget>[
-                      FormBuilderField(
-                        name: "name",
-                        builder: (FormFieldState<dynamic> field) => TextFormField(
-                          controller: _nameController,
-                          style: Theme.of(context)
-                              .textTheme
-                              .displaySmall!
-                              .copyWith(color: Theme.of(context).colorScheme.primary),
-                          validator: FormBuilderValidators.required(
-                              errorText: AppLocalizations.of(context)!.expenseNameValidationEmpty),
-                          decoration: InputDecoration(
-                            border: InputBorder.none,
-                            hintText: AppLocalizations.of(context)!.addExpenseTitle,
-                            contentPadding: const EdgeInsets.only(left: 8, right: 8),
-                          ),
-                          onChanged: (value) {
-                            field.didChange(value);
-                            if (value.isNotEmpty) {
-                              detectAndUpdateCategory(value);
-                            }
-                          },
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            _buildNameField(),
+                            // Expense-level amount (single entry mode only)
+                            if (_isSingleEntry) ...[
+                              const SizedBox(height: spacing * 2),
+                              _buildExpenseLevelAmount(),
+                            ],
+                            const SizedBox(height: spacing * 2),
+                            SectionLabel(AppLocalizations.of(context)!.expenseDetailsLabel),
+                            const SizedBox(height: spacing),
+                            _buildPaidBySelector(),
+                            const SizedBox(height: spacing),
+                            _buildDateSelector(),
+                            const SizedBox(height: spacing),
+                            CategorySelector(
+                              name: "category",
+                              initialValue: _detectedCategory ?? widget.expense?.category,
+                            ),
+                          ],
                         ),
-                      ),
-                      // Expense-level amount (single entry mode only)
-                      if (_isSingleEntry) ...[
-                        const SizedBox(height: spacing),
-                        _buildExpenseLevelAmount(),
-                      ],
-                      const SizedBox(height: spacing),
-                      _buildPaidBySelector(),
-                      const SizedBox(height: spacing),
-                      _buildDateSelector(),
-                      const SizedBox(height: spacing),
-                      CategorySelector(
-                        name: "category",
-                        initialValue: _detectedCategory ?? widget.expense?.category,
                       ),
                       const SizedBox(height: spacing),
                       CardColumn(children: _entries.map((data) =>
@@ -558,6 +596,79 @@ class _ExpenseDetailState extends ConsumerState<ExpenseDetail> {
           ),
         );
       },
+    );
+  }
+}
+
+/// A restyled trigger row for the Quick editor (paid-by / date). A [SoftCard]
+/// with a leading icon chip (or custom [leading]), a small [label], the current
+/// [value], and a trailing chevron. Tapping fires [onTap] — which opens the
+/// existing picker/sheet unchanged.
+class _EditorTile extends StatelessWidget {
+  const _EditorTile({
+    required this.icon,
+    required this.label,
+    required this.value,
+    required this.onTap,
+    this.leading,
+  });
+
+  final IconData icon;
+  final String label;
+  final String value;
+  final VoidCallback onTap;
+
+  /// Optional leading widget (e.g. a member avatar) replacing the icon chip.
+  final Widget? leading;
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
+
+    final Widget leadingWidget = leading ??
+        Container(
+          width: 36,
+          height: 36,
+          decoration: BoxDecoration(
+            color: colorScheme.surfaceContainerHighest,
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: Icon(icon, color: colorScheme.onSurfaceVariant, size: 20),
+        );
+
+    return SoftCard(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      onTap: onTap,
+      child: Row(
+        children: [
+          leadingWidget,
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  label,
+                  style: textTheme.bodySmall?.copyWith(
+                    color: colorScheme.onSurfaceVariant,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  value,
+                  style: textTheme.titleMedium?.copyWith(
+                    color: colorScheme.onSurface,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Icon(Icons.chevron_right, color: colorScheme.onSurfaceVariant),
+        ],
+      ),
     );
   }
 }
