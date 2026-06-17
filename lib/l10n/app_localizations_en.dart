@@ -1606,4 +1606,45 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get paymentMarkSettled => 'Mark settled';
+
+  @override
+  String get settingsProfileSection => 'Profile';
+
+  @override
+  String get settingsPreferencesSection => 'Preferences';
+
+  @override
+  String get settingsNotifications => 'Notifications';
+
+  @override
+  String get settingsAppearance => 'Appearance';
+
+  @override
+  String get settingsAppearanceSystem => 'System';
+
+  @override
+  String get settingsAppearanceLight => 'Light';
+
+  @override
+  String get settingsAppearanceDark => 'Dark';
+
+  @override
+  String get settingsAppearanceInfo =>
+      'System follows your device. Dark mode ships with the redesign.';
+
+  @override
+  String get settingsLanguageSheetTitle => 'Language';
+
+  @override
+  String get settingsDeleteAccountTitle => 'Delete account?';
+
+  @override
+  String get settingsDeleteAccountBody =>
+      'This permanently deletes your account and all your data. This cannot be undone.';
+
+  @override
+  String get settingsDeleteAccountConfirmButton => 'Delete my account';
+
+  @override
+  String get settingsTagline => 'Deun · Simply Split Fairly';
 }

@@ -2705,6 +2705,84 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Mark settled'**
   String get paymentMarkSettled;
+
+  /// Section label above the profile form on the settings screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Profile'**
+  String get settingsProfileSection;
+
+  /// Section label above the settings list (notifications, appearance, privacy, contact).
+  ///
+  /// In en, this message translates to:
+  /// **'Preferences'**
+  String get settingsPreferencesSection;
+
+  /// Label for the notifications toggle row on the settings screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Notifications'**
+  String get settingsNotifications;
+
+  /// Label for the appearance row and the appearance picker sheet title.
+  ///
+  /// In en, this message translates to:
+  /// **'Appearance'**
+  String get settingsAppearance;
+
+  /// Appearance option that follows the device theme.
+  ///
+  /// In en, this message translates to:
+  /// **'System'**
+  String get settingsAppearanceSystem;
+
+  /// Light appearance option.
+  ///
+  /// In en, this message translates to:
+  /// **'Light'**
+  String get settingsAppearanceLight;
+
+  /// Dark appearance option.
+  ///
+  /// In en, this message translates to:
+  /// **'Dark'**
+  String get settingsAppearanceDark;
+
+  /// Info callout under the appearance options explaining the System option.
+  ///
+  /// In en, this message translates to:
+  /// **'System follows your device. Dark mode ships with the redesign.'**
+  String get settingsAppearanceInfo;
+
+  /// Title of the language picker bottom sheet.
+  ///
+  /// In en, this message translates to:
+  /// **'Language'**
+  String get settingsLanguageSheetTitle;
+
+  /// Title of the delete-account confirmation sheet.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete account?'**
+  String get settingsDeleteAccountTitle;
+
+  /// Explanatory body in the delete-account sheet.
+  ///
+  /// In en, this message translates to:
+  /// **'This permanently deletes your account and all your data. This cannot be undone.'**
+  String get settingsDeleteAccountBody;
+
+  /// Destructive confirm button in the delete-account sheet.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete my account'**
+  String get settingsDeleteAccountConfirmButton;
+
+  /// Centered muted tagline footer at the bottom of the settings screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Deun · Simply Split Fairly'**
+  String get settingsTagline;
 }
 
 class _AppLocalizationsDelegate

@@ -436,5 +436,18 @@
   "paymentMethodCashSubtitle": "Persönlich begleichen",
   "paymentIbanCopied": "IBAN in die Zwischenablage kopiert",
   "paymentPayAmount": "{amount} zahlen",
-  "paymentMarkSettled": "Als beglichen markieren"
+  "paymentMarkSettled": "Als beglichen markieren",
+  "settingsProfileSection": "Profil",
+  "settingsPreferencesSection": "Einstellungen",
+  "settingsNotifications": "Benachrichtigungen",
+  "settingsAppearance": "Erscheinungsbild",
+  "settingsAppearanceSystem": "System",
+  "settingsAppearanceLight": "Hell",
+  "settingsAppearanceDark": "Dunkel",
+  "settingsAppearanceInfo": "System richtet sich nach deinem Gerät. Der Dunkelmodus kommt mit dem Redesign.",
+  "settingsLanguageSheetTitle": "Sprache",
+  "settingsDeleteAccountTitle": "Konto löschen?",
+  "settingsDeleteAccountBody": "Damit werden dein Konto und alle deine Daten dauerhaft gelöscht. Das kann nicht rückgängig gemacht werden.",
+  "settingsDeleteAccountConfirmButton": "Mein Konto löschen",
+  "settingsTagline": "Deun · Einfach fair teilen"
 }

@@ -1634,4 +1634,45 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get paymentMarkSettled => 'Als beglichen markieren';
+
+  @override
+  String get settingsProfileSection => 'Profil';
+
+  @override
+  String get settingsPreferencesSection => 'Einstellungen';
+
+  @override
+  String get settingsNotifications => 'Benachrichtigungen';
+
+  @override
+  String get settingsAppearance => 'Erscheinungsbild';
+
+  @override
+  String get settingsAppearanceSystem => 'System';
+
+  @override
+  String get settingsAppearanceLight => 'Hell';
+
+  @override
+  String get settingsAppearanceDark => 'Dunkel';
+
+  @override
+  String get settingsAppearanceInfo =>
+      'System richtet sich nach deinem Gerät. Der Dunkelmodus kommt mit dem Redesign.';
+
+  @override
+  String get settingsLanguageSheetTitle => 'Sprache';
+
+  @override
+  String get settingsDeleteAccountTitle => 'Konto löschen?';
+
+  @override
+  String get settingsDeleteAccountBody =>
+      'Damit werden dein Konto und alle deine Daten dauerhaft gelöscht. Das kann nicht rückgängig gemacht werden.';
+
+  @override
+  String get settingsDeleteAccountConfirmButton => 'Mein Konto löschen';
+
+  @override
+  String get settingsTagline => 'Deun · Einfach fair teilen';
 }
