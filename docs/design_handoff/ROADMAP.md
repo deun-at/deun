@@ -179,6 +179,12 @@ unclaim / split-one = mutating that unit's `expense_entry_share` rows (split = `
 Supabase migration + adapt the write path (incl. receipt-parser output) to emit per-unit entries. Add a
 Riverpod notifier for claim state; unit-test the cost math. **Schema changes approved.**
 *Deps:* E2-T2. *Blocks the rest of E3.*
+📝 **PLANNED · 3a19f1c** — plan at [plans/E3-T1-claim-data-model.md](plans/E3-T1-claim-data-model.md). v0: persist N
+unit rows (`quantity:1`, `split_mode:'claim'`) grouped by new `item_group_id`; **split = `percentage = 100/claimers`**
+(so `groupMemberShareStatistic`/spending-summary aggregation needs ZERO read-side change); unclaimed unit = 0 share
+rows. Migration `supabase/migrations/20260618000000_per_unit_claim_entries.sql` (manual-apply): `item_group_id` +
+index, `save_expense_all` v2, atomic `claim_set_unit_shares` RPC, opt-in `explode_itemized_entries` backfill.
+8 bite-size TDD steps → implement next (steps 1-3/5 gate E3-T2; step 4 gates E3-T3).
 
 **E3-T2 · Claim screen — layout & summary** · new page `lib/pages/expenses/presentation/claim_page.dart` + new
 go_router child route under `/group/details`
