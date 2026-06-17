@@ -2123,6 +2123,36 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'PAYMENT'**
   String get groupDetailPaymentTag;
+
+  /// Title of the category picker bottom sheet (icon grid).
+  ///
+  /// In en, this message translates to:
+  /// **'Category'**
+  String get categorySheetTitle;
+
+  /// Title of the paid-by picker bottom sheet (member list).
+  ///
+  /// In en, this message translates to:
+  /// **'Paid by'**
+  String get paidBySheetTitle;
+
+  /// Title of the date picker bottom sheet.
+  ///
+  /// In en, this message translates to:
+  /// **'Date'**
+  String get dateSheetTitle;
+
+  /// Option in the date sheet that opens the platform calendar.
+  ///
+  /// In en, this message translates to:
+  /// **'Pick a date…'**
+  String get datePickCustom;
+
+  /// Title of the amount keypad bottom sheet.
+  ///
+  /// In en, this message translates to:
+  /// **'Amount'**
+  String get amountSheetTitle;
 }
 
 class _AppLocalizationsDelegate

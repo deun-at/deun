@@ -7,7 +7,6 @@ import 'package:deun/l10n/app_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:form_builder_validators/form_builder_validators.dart';
 
-import '../../../widgets/decimal_text_input_formatter.dart';
 import '../../../constants.dart';
 import '../../../main.dart';
 import '../../../widgets/theme_builder.dart';
@@ -22,9 +21,9 @@ import '../data/expense_category.dart';
 import '../data/itemized_totals.dart';
 import '../data/receipt_scan_result.dart';
 import '../../../widgets/category_selector.dart';
-import '../../../widgets/user_avatar.dart';
 import '../../../widgets/restyle/app_segmented_control.dart';
 import '../../../widgets/restyle/discard_sheet.dart';
+import '../../../widgets/restyle/expense_picker_sheets.dart';
 import '../../../widgets/restyle/soft_card.dart';
 import '../../../widgets/restyle/section_label.dart';
 import '../../../widgets/restyle/member_avatar.dart';
@@ -65,7 +64,6 @@ class _ExpenseDetailState extends ConsumerState<ExpenseDetail> {
   final _formKey = GlobalKey<FormBuilderState>();
   final _nameController = TextEditingController();
   final _amountController = TextEditingController(text: "0");
-  final _paidBySearchController = SearchController();
   List<GroupMember> groupMembers = [];
   ColorSeed groupColor = ColorSeed.baseColor;
   final List<ExpenseEntryData> _entries = [];
@@ -179,7 +177,6 @@ class _ExpenseDetailState extends ConsumerState<ExpenseDetail> {
   void dispose() {
     _nameController.dispose();
     _amountController.dispose();
-    _paidBySearchController.dispose();
     super.dispose();
   }
 
@@ -404,12 +401,7 @@ class _ExpenseDetailState extends ConsumerState<ExpenseDetail> {
           label: l10n.expenseDate,
           value: formatDate(value.toIso8601String(), context),
           onTap: () async {
-            final picked = await showDatePicker(
-              context: context,
-              initialDate: value,
-              firstDate: DateTime(2000),
-              lastDate: DateTime.now().add(const Duration(days: 365 * 5)),
-            );
+            final picked = await showDateOptionsSheet(context, current: value);
             if (picked != null) field.didChange(picked);
           },
         );
@@ -424,52 +416,31 @@ class _ExpenseDetailState extends ConsumerState<ExpenseDetail> {
       name: "paid_by",
       initialValue: initialEmail,
       builder: (FormFieldState<String?> field) {
+        final l10n = AppLocalizations.of(context)!;
         final selectedMember = _findMember(field.value);
-
-        return SearchAnchor(
-          searchController: _paidBySearchController,
-          builder: (BuildContext context, SearchController controller) {
-            final l10n = AppLocalizations.of(context)!;
-            final isYou = selectedMember?.email == supabase.auth.currentUser?.email;
-            return _EditorTile(
-              icon: Icons.account_circle_outlined,
-              label: l10n.expensePaidBy,
-              value: selectedMember != null
-                  ? _memberDisplayName(selectedMember)
-                  : l10n.expensePaidBy,
-              leading: selectedMember != null
-                  ? MemberAvatar(
-                      name: selectedMember.displayName,
-                      colorKey: selectedMember.email,
-                      radius: 18,
-                      isYou: isYou,
-                    )
-                  : null,
-              onTap: () {
-                controller.text = '';
-                controller.openView();
-              },
+        final isYou = selectedMember?.email == supabase.auth.currentUser?.email;
+        return _EditorTile(
+          icon: Icons.account_circle_outlined,
+          label: l10n.expensePaidBy,
+          value: selectedMember != null
+              ? _memberDisplayName(selectedMember)
+              : l10n.expensePaidBy,
+          leading: selectedMember != null
+              ? MemberAvatar(
+                  name: selectedMember.displayName,
+                  colorKey: selectedMember.email,
+                  radius: 18,
+                  isYou: isYou,
+                )
+              : null,
+          onTap: () async {
+            final picked = await showPaidBySheet(
+              context,
+              members: _sortedMembers,
+              selectedEmail: field.value,
+              currentUserEmail: supabase.auth.currentUser?.email,
             );
-          },
-          suggestionsBuilder: (BuildContext context, SearchController controller) {
-            final members = _sortedMembers;
-            return members.asMap().entries.map((entry) {
-              final index = entry.key;
-              final member = entry.value;
-              return CardListTile(
-                isTop: index == 0,
-                isBottom: index == members.length - 1,
-                child: ListTile(
-                  leading: UserAvatar(displayName: member.displayName, radius: 18),
-                  title: Text(_memberDisplayName(member)),
-                  subtitle: Text(member.fullUsername),
-                  onTap: () {
-                    field.didChange(member.email);
-                    controller.closeView(_memberDisplayName(member));
-                  },
-                ),
-              );
-            }).toList();
+            if (picked != null) field.didChange(picked);
           },
         );
       },
@@ -501,8 +472,10 @@ class _ExpenseDetailState extends ConsumerState<ExpenseDetail> {
             .textTheme
             .displayMedium
             ?.copyWith(color: colorScheme.onSurface);
+        final amount = double.tryParse(_amountController.text) ?? 0;
         return SoftCard(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
+          onTap: () => _openAmountKeypad(field, amount),
           child: InputDecorator(
             decoration: InputDecoration(
               errorText: field.errorText,
@@ -519,28 +492,11 @@ class _ExpenseDetailState extends ConsumerState<ExpenseDetail> {
                   "€",
                   style: amountStyle?.copyWith(color: colorScheme.onSurfaceVariant),
                 ),
-                IntrinsicWidth(
-                  child: ConstrainedBox(
-                    constraints: BoxConstraints(
-                      minWidth: 0,
-                      maxWidth: MediaQuery.of(context).size.width * 0.5,
-                    ),
-                    child: TextFormField(
-                      controller: _amountController,
-                      onChanged: (value) {
-                        field.didChange(value);
-                      },
-                      textAlign: TextAlign.center,
-                      keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                      inputFormatters: [DecimalTextInputFormatter(decimalRange: 2)],
-                      style: amountStyle,
-                      decoration: const InputDecoration(
-                        isDense: true,
-                        contentPadding: EdgeInsets.only(right: 8, left: 8),
-                        border: InputBorder.none,
-                      ),
-                    ),
-                  ),
+                const SizedBox(width: 4),
+                Text(
+                  amount.toStringAsFixed(2),
+                  textAlign: TextAlign.center,
+                  style: amountStyle,
                 ),
               ],
             ),
@@ -548,6 +504,24 @@ class _ExpenseDetailState extends ConsumerState<ExpenseDetail> {
         );
       },
     );
+  }
+
+  /// Opens the restyled amount keypad sheet and, on confirm, writes the value
+  /// back through the same channels the inline editor used: the form field
+  /// (validated/saved) and the shared [_amountController] (split-sync). The
+  /// written string keeps the `toStringAsFixed(2)` format the inline editor
+  /// produced, so the value round-trips and validators are unchanged.
+  Future<void> _openAmountKeypad(
+    FormFieldState<dynamic> field,
+    double current,
+  ) async {
+    final picked = await showAmountKeypadSheet(context, initialAmount: current);
+    if (picked == null || !mounted) return;
+    final text = picked.toStringAsFixed(2);
+    setState(() {
+      _amountController.text = text;
+    });
+    field.didChange(text);
   }
 
   void _addNewEntry() {

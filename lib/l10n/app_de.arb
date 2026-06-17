@@ -338,6 +338,11 @@
   "groupDetailTapToClaim": "Zum Beanspruchen tippen",
   "groupDetailYouClaimed": "Du hast {amount} beansprucht",
   "groupDetailUnclaimed": "{amount} offen",
+  "categorySheetTitle": "Kategorie",
+  "paidBySheetTitle": "Bezahlt von",
+  "dateSheetTitle": "Datum",
+  "datePickCustom": "Datum wählen…",
+  "amountSheetTitle": "Betrag",
   "groupDetailAllClaimed": "alles beansprucht",
   "groupDetailPaymentTag": "ZAHLUNG"
 }

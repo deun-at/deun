@@ -3,6 +3,7 @@ import 'package:deun/l10n/app_localizations.dart';
 import 'package:deun/pages/expenses/presentation/expense_detail.dart';
 import 'package:deun/pages/groups/data/group_member_model.dart';
 import 'package:deun/pages/groups/data/group_model.dart';
+import 'package:deun/widgets/restyle/expense_picker_sheets.dart';
 import 'package:deun/widgets/restyle/section_label.dart';
 import 'package:deun/widgets/restyle/soft_card.dart';
 import 'package:deun/widgets/theme_builder.dart';
@@ -107,11 +108,33 @@ void main() {
     expect(find.text(l10n.categoryLabel), findsOneWidget);
   });
 
-  testWidgets('tapping the date tile opens the date picker', (tester) async {
+  testWidgets('tapping the date tile opens the date options sheet',
+      (tester) async {
     await _pump(tester);
     final l10n = await AppLocalizations.delegate.load(const Locale('en'));
 
     await tester.tap(find.text(l10n.expenseDate));
+    await tester.pumpAndSettle();
+
+    // The restyled date sheet shows quick options, not the platform picker yet.
+    // ("Today" can also be the tile's current value, so scope to the sheet.)
+    final sheet = find.byType(DateOptionsSheet);
+    expect(sheet, findsOneWidget);
+    expect(find.descendant(of: sheet, matching: find.text(l10n.dateYesterday)),
+        findsOneWidget);
+    expect(find.descendant(of: sheet, matching: find.text(l10n.datePickCustom)),
+        findsOneWidget);
+    expect(find.byType(DatePickerDialog), findsNothing);
+  });
+
+  testWidgets('"Pick a date…" in the date sheet opens the platform picker',
+      (tester) async {
+    await _pump(tester);
+    final l10n = await AppLocalizations.delegate.load(const Locale('en'));
+
+    await tester.tap(find.text(l10n.expenseDate));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text(l10n.datePickCustom));
     await tester.pumpAndSettle();
 
     expect(find.byType(DatePickerDialog), findsOneWidget);
