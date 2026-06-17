@@ -270,6 +270,12 @@ socket error after doing the work; controller fixed an unused-local warning + co
 **E5-T3 · QR** · `friend_qr_page.dart`
 My-code (QR + profile + Copy/Share) / Scan viewfinder segmented tabs.
 *Deps:* E5-T1. *Screen 15b.*
+✅ **done · 207d44a** — restyled `friend_qr_page.dart`: `AppSegmentedControl` My-code/Scan; My-code = dark-on-white
+QR card + `MemberAvatar` profile + `@user#code` + Copy/Share; Scan = dark viewfinder w/ accent corner brackets +
+torch/switch/copy controls (reuses `MobileScanner` + existing scan→request); pure `buildFriendQrLink`; now reads
+`userDetailProvider`. QR/route/payload unchanged. 7 tests; 2 en+de keys; analyze clean, 481 green.
+*v0:* QR never themed (scannability); no animated scan-line (corner brackets suffice). *QA:* tab switch, QR card,
+scan viewfinder in light+dark.
 
 ---
 
