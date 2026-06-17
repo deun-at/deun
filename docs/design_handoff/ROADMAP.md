@@ -336,6 +336,17 @@ System/Light/Dark picker sheet**, privacy, contact), personal-stats entry, delet
 language sheet, sign out. Wire Appearance to the app `themeMode`: replace the hard-coded
 `ThemeMode.system` in `navigation.dart` with a Riverpod `themeModeProvider` (persist the choice) the picker sets.
 *Deps:* E0-T4. *Screen 6.*
+✅ **done · afb59d8** — restyled `setting.dart` (Bricolage header + circular sign-out, dark profile hero card reusing the
+E1-T1/E6 hero treatment, `SoftCard` settings list, error delete card, tagline footer) + `settings_profile_form.dart`
+(soft inset fields, username copy, Language now a row→sheet) + new `settings_sheets.dart` (Language/Appearance/Delete
+sheets on `SheetScaffold`). New persisted `ThemeModeNotifier` (`@Riverpod keepAlive`, `AsyncPreferences`-backed) wired
+into `navigation.dart` `themeMode: ref.watch(themeModeProvider)`; pure `theme_mode_pref.dart` (TDD). All existing logic
+preserved (sign-out, GDPR prefs, delete-account edge fn, profile save). 5 tests; new en+de keys; build_runner ran,
+`provider.g.dart` committed; analyze clean, 531 green. *v0:* locale still saved via the existing FormBuilder path (sheet
+drives `localeProvider` + a hidden locale field); Notifications = persisted-only local pref (no FCM gating, no existing
+mechanism); version footer = static tagline (`package_info_plus` not a dep). *Carry to E8-T1:* dark-hero shadow
+`Color(0x80141812)` is hard-coded (matches accepted E1-T1) — factor a shared hero-shadow token in the dark audit.
+*QA:* profile hero, inset fields, list dividers, Language/Appearance/Delete sheets, live theme flip + persistence in light+dark.
 
 ---
 
