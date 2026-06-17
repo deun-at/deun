@@ -362,6 +362,12 @@ mechanism); version footer = static tagline (`package_info_plus` not a dep). *Ca
   loading scrim, category data palette, old `UserAvatar` (separate consistency follow-up). *QA:* hero shadows,
   group_detail balance hues, shimmer, splash in light+dark.
 - **E8-T2 l10n audit:** no literal strings; en+de keys exist for all new copy; regenerated.
+  ✅ **done · cc85a5c** — redesign copy was already fully en+de (per-task discipline held). Converted the 3 remaining
+  hard-coded user-facing literals to keys: `settingsUsernameCopied(handle)` (username-copy snackbar in
+  `settings_profile_form.dart`) + shared `pageNotFound` (unknown-route fallbacks in `navigation.dart` ×2 and
+  `login_screen.dart`). Completed the 12 pre-existing untranslated **de** FCM notification strings
+  (group/groupPayBack/expense/friendRequest/Accept/Decline ×title+body) so `flutter gen-l10n` now reports **0
+  untranslated**. analyze clean, 534 green.
 - **E8-T3 Motion:** sheet rise, scrim fade, scan sweep, presence pulse; Android predictive-back still works.
 - **E8-T4 Empty/edge states:** empty ledger, settled groups, fully-claimed vs unclaimed, over/under split,
   no-friends/no-requests.
