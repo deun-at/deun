@@ -73,6 +73,10 @@ class ShimmerCardListState extends State<ShimmerCardList>
     return AnimatedBuilder(
         animation: _shimmerController,
         builder: (context, child) {
+          // Theme-derived base fill so the shimmer reads as a subtle
+          // placeholder in both light and dark (was Colors.black, which looked
+          // wrong on dark surfaces). The gradient above is painted over this.
+          final baseColor = Theme.of(context).colorScheme.surfaceContainerHighest;
           return ShaderMask(
               shaderCallback: (bounds) {
                 return gradient.createShader(bounds);
@@ -81,7 +85,7 @@ class ShimmerCardListState extends State<ShimmerCardList>
               child: CardListView(
                 shrinkWrap: true,
                 physics: const NeverScrollableScrollPhysics(),
-                color: Colors.black,
+                color: baseColor,
                 itemCount: widget.listEntryLength,
                 itemBuilder: (context, index) {
                   return SizedBox(

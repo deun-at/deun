@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:deun/constants.dart';
 import 'package:deun/helper/helper.dart';
 import 'package:deun/pages/friends/data/friendship_repository.dart';
 import 'package:deun/pages/friends/provider/friend_add_notifier.dart';
@@ -128,15 +129,7 @@ class _SearchField extends StatelessWidget {
       decoration: BoxDecoration(
         color: colorScheme.surfaceContainerLowest,
         borderRadius: BorderRadius.circular(14),
-        boxShadow: isDark
-            ? null
-            : const [
-                BoxShadow(
-                  color: Color(0x0A14120C),
-                  blurRadius: 4,
-                  offset: Offset(0, 2),
-                ),
-              ],
+        boxShadow: isDark ? null : kSoftCardShadow,
       ),
       padding: const EdgeInsets.symmetric(horizontal: 14),
       child: Row(

@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:deun/l10n/app_localizations.dart';
 
+import 'package:deun/widgets/theme_builder.dart';
 import '../data/group_model.dart';
+import 'group_share_view_model.dart';
 
 class GroupShareWidget extends StatelessWidget {
   const GroupShareWidget({super.key, required this.group, this.textColor, this.onRemind});
@@ -12,6 +14,8 @@ class GroupShareWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final semantic = Theme.of(context).extension<SemanticColors>()!;
+
     List<Widget> sharedWidget = group.groupSharesSummary
         .map(
           (String key, GroupSharesSummary e) {
@@ -19,11 +23,10 @@ class GroupShareWidget extends StatelessWidget {
               return MapEntry(key, const SizedBox());
             }
 
-            Color textColor = Colors.red;
+            Color textColor = shareBalanceColor(e.shareAmount, semantic);
             String paidByYourself = "";
             if (e.shareAmount > 0) {
               paidByYourself = "yes";
-              textColor = Colors.green;
             }
 
             final textWidget = Text(
@@ -66,10 +69,9 @@ class GroupShareWidget extends StatelessWidget {
         .toList();
 
     String paidByYourselfAll = "";
-    Color textColorAll = Colors.red;
+    Color textColorAll = shareBalanceColor(group.totalShareAmount, semantic);
     if (group.totalShareAmount > 0) {
       paidByYourselfAll = "yes";
-      textColorAll = Colors.green;
     }
 
     String totalSharedText = AppLocalizations.of(context)!
@@ -77,7 +79,7 @@ class GroupShareWidget extends StatelessWidget {
     bool isAllDone = group.totalShareAmount.abs() < 0.005;
     if (isAllDone) {
       totalSharedText = AppLocalizations.of(context)!.allDone;
-      textColorAll = Colors.green;
+      textColorAll = semantic.success;
     }
 
     sharedWidget.insert(
@@ -103,7 +105,7 @@ class GroupShareWidget extends StatelessWidget {
       totalShareContent = Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Icon(Icons.check_circle_outlined, size: 20, color: Colors.green),
+          Icon(Icons.check_circle_outlined, size: 20, color: semantic.success),
           const SizedBox(width: 8),
           totalShareContent,
         ],

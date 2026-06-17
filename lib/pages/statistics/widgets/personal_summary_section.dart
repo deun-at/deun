@@ -1,3 +1,4 @@
+import 'package:deun/constants.dart';
 import 'package:deun/l10n/app_localizations.dart';
 import 'package:deun/pages/statistics/provider/personal_statistics_notifiers.dart';
 import 'package:deun/pages/statistics/statistics_models.dart';
@@ -36,16 +37,7 @@ class PersonalSummarySection extends ConsumerWidget {
         decoration: BoxDecoration(
           color: heroSurface,
           borderRadius: BorderRadius.circular(24),
-          boxShadow: isDark
-              ? null
-              : const [
-                  BoxShadow(
-                    color: Color(0x80141812),
-                    blurRadius: 30,
-                    offset: Offset(0, 18),
-                    spreadRadius: -18,
-                  ),
-                ],
+          boxShadow: isDark ? null : kDarkHeroShadow,
         ),
         child: state.when(
           loading: () => const SizedBox(

@@ -99,6 +99,40 @@ const spacer = SizedBox(
   height: 12,
 );
 
+/// Shadow under the dark hero / summary cards (group list, settings, personal
+/// statistics). Encodes DESIGN_SPEC `0 18px 30px -18px rgba(20,18,12,.5)`.
+/// Applied in light mode only; call sites pass `null` in dark.
+const List<BoxShadow> kDarkHeroShadow = [
+  BoxShadow(
+    color: Color(0x80141812),
+    blurRadius: 30,
+    offset: Offset(0, 18),
+    spreadRadius: -18,
+  ),
+];
+
+/// Shared shadow color for soft cards. Encodes DESIGN_SPEC
+/// `rgba(20,18,12,.04)`. Exposed alongside [kSoftCardShadow] for the rare site
+/// that needs the color with different blur/offset.
+const Color kSoftShadowColor = Color(0x0A14120C);
+
+/// Soft drop shadow for list-card surfaces (soft cards, segmented-control
+/// thumb, search field). Encodes DESIGN_SPEC `0 2px 4px rgba(20,18,12,.04)`.
+/// Applied in light mode only; call sites pass `null` in dark.
+const List<BoxShadow> kSoftCardShadow = [
+  BoxShadow(
+    color: kSoftShadowColor,
+    blurRadius: 4,
+    offset: Offset(0, 2),
+  ),
+];
+
+/// App background surfaces, matching `theme_builder.dart`'s `surface` for each
+/// brightness. Used by the splash screen, which renders before any
+/// MaterialApp/theme is mounted and so cannot read `colorScheme.surface`.
+const Color kAppBackgroundLight = Color(0xFFF4F3EF);
+const Color kAppBackgroundDark = Color(0xFF121311);
+
 enum MobileAdMobs {
   androidGroupList(String.fromEnvironment('MOBILE_AD_MOB_ANDROID_GROUP_LIST')),
   androidExpenseList(String.fromEnvironment('MOBILE_AD_MOB_ANDROID_EXPENSE_LIST')),
