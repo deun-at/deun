@@ -345,6 +345,55 @@ class AppLocalizationsEn extends AppLocalizations {
   String get claimLoadError => 'Couldn\'t load this expense.';
 
   @override
+  String get claimTakeOne => 'Take one';
+
+  @override
+  String claimSplitLabel(String amount) {
+    return 'split · $amount';
+  }
+
+  @override
+  String get claimSplitOne => 'Split one';
+
+  @override
+  String get claimSplitSheetTitle => 'Split this item';
+
+  @override
+  String claimSplitPerPerson(String amount) {
+    return '$amount each';
+  }
+
+  @override
+  String get claimSplitApply => 'Apply split';
+
+  @override
+  String claimUnclaimedCallout(String amount) {
+    return '$amount still unclaimed';
+  }
+
+  @override
+  String get claimNudge => 'Nudge';
+
+  @override
+  String get claimNudgeSent => 'Nudge sent to remind everyone to claim.';
+
+  @override
+  String claimConfirm(String amount) {
+    return 'Confirm — I had $amount';
+  }
+
+  @override
+  String get claimConfirmedTitle => 'You\'re all set';
+
+  @override
+  String claimConfirmedBody(String amount) {
+    return 'Your share of $amount is saved. We\'ll keep the totals up to date as others claim.';
+  }
+
+  @override
+  String get claimConfirmedDone => 'Done';
+
+  @override
   String get expenseMemberLent => 'lent';
 
   @override

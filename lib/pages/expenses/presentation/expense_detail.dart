@@ -13,6 +13,7 @@ import '../../../widgets/theme_builder.dart';
 import '../../groups/data/group_model.dart';
 import 'expense_entry_widget.dart';
 import 'receipt_scanner_sheet.dart';
+import '../data/claimable_form.dart';
 import '../data/editor_mode.dart';
 import '../data/expense_entry_model.dart';
 import '../data/expense_model.dart';
@@ -640,10 +641,17 @@ class _ExpenseDetailState extends ConsumerState<ExpenseDetail> {
     });
   }
 
-  Future<void> _saveExpense(BuildContext context) async {
+  /// Saves the expense. When [claimable] is true (the itemized
+  /// "Add & share for claiming" CTA) every entry is flagged claimable so
+  /// [ExpenseRepository.saveAll] explodes the lines into per-unit claim
+  /// entries; a plain save leaves the manual-split path untouched.
+  Future<void> _saveExpense(BuildContext context, {bool claimable = false}) async {
     if (_formKey.currentState!.saveAndValidate()) {
       try {
-        await ExpenseRepository.saveAll(context, widget.group.id, widget.expense?.id, _formKey.currentState!.value);
+        final formValue = claimable
+            ? markEntriesClaimable(_formKey.currentState!.value)
+            : _formKey.currentState!.value;
+        await ExpenseRepository.saveAll(context, widget.group.id, widget.expense?.id, formValue);
         if (context.mounted) {
           showSnackBar(context, AppLocalizations.of(context)!.expenseCreateSuccess);
         }
@@ -796,7 +804,8 @@ class _ExpenseDetailState extends ConsumerState<ExpenseDetail> {
                           child: SizedBox(
                             width: double.infinity,
                             child: FilledButton(
-                              onPressed: () => _saveExpense(context),
+                              onPressed: () =>
+                                  _saveExpense(context, claimable: true),
                               child: Text(widget.expense != null
                                   ? AppLocalizations.of(context)!.save
                                   : AppLocalizations.of(context)!

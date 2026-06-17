@@ -32,6 +32,52 @@ class ClaimUnitRow {
   final Map<String, String> claimerNames;
 }
 
+/// The per-persona view-state for one claim unit's chip on the claim screen
+/// (Screen 9). Derived purely from a [ClaimUnitRow] for the current persona:
+/// whether the persona claims it, how many members share it, the per-claimer
+/// cost, and whether the unit is still open (no claimers — the dashed
+/// "take one" affordance).
+class ClaimChipState {
+  const ClaimChipState({
+    required this.claimedByYou,
+    required this.splitCount,
+    required this.perUnitCost,
+    required this.open,
+  });
+
+  /// True when the persona is one of the unit's claimers.
+  final bool claimedByYou;
+
+  /// Number of members sharing this unit (0 when open).
+  final int splitCount;
+
+  /// Cost to each claimer = unitCost / claimers (0 when open). Reuses
+  /// [ClaimUnit.perClaimerCost] — no separate math.
+  final double perUnitCost;
+
+  /// True when nobody has claimed the unit yet (renders the dashed chip).
+  final bool open;
+
+  /// Derives the chip state for [personaEmail] from [row].
+  factory ClaimChipState.forPersona(ClaimUnitRow row, String personaEmail) {
+    final claimers = row.unit.claimers;
+    return ClaimChipState(
+      claimedByYou: claimers.contains(personaEmail),
+      splitCount: claimers.length,
+      perUnitCost: row.unit.perClaimerCost,
+      open: claimers.isEmpty,
+    );
+  }
+}
+
+/// The persona's confirm total = their share summed across every [rows] unit.
+/// Equivalent to `memberShareTotals(...)[personaEmail]` — the amount surfaced
+/// on the sticky "Confirm — I had €X" CTA.
+double confirmTotalForPersona(List<ClaimUnitRow> rows, String personaEmail) {
+  final totals = memberShareTotals(rows.map((r) => r.unit).toList());
+  return totals[personaEmail] ?? 0.0;
+}
+
 /// Per-member share totals across all units. A member's total is the sum,
 /// over every unit they claimed, of `unitCost / claimers`. Equivalent to
 /// `Expense.groupMemberShareStatistic` for claim units (percentage = 100/n).

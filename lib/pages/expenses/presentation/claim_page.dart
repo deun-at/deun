@@ -12,8 +12,10 @@ import 'package:deun/widgets/restyle/member_avatar.dart';
 import 'package:deun/widgets/restyle/money_text.dart';
 import 'package:deun/widgets/restyle/progress_bar.dart';
 import 'package:deun/widgets/restyle/section_label.dart';
+import 'package:deun/widgets/restyle/sheet_scaffold.dart';
 import 'package:deun/widgets/restyle/soft_card.dart';
 import 'package:deun/widgets/theme_builder.dart';
+import 'package:deun/helper/helper.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -68,6 +70,73 @@ class _ClaimPageState extends ConsumerState<ClaimPage> {
     return _memberFor(email)?.displayName ?? email;
   }
 
+  ClaimNotifier get _notifier =>
+      ref.read(claimProvider(widget.group.id, widget.expense.id).notifier);
+
+  /// Toggles the persona's claim on [row]: claim when open or not yet claimed
+  /// by the persona, otherwise unclaim. Each tap persists immediately via the
+  /// notifier (optimistic refetch keeps the chips live).
+  Future<void> _toggleClaim(ClaimUnitRow row) async {
+    final persona = _persona;
+    if (persona.isEmpty) return;
+    final state = ClaimChipState.forPersona(row, persona);
+    try {
+      if (state.claimedByYou) {
+        await _notifier.unclaimUnit(row.entryId, persona);
+      } else {
+        await _notifier.claimUnit(row.entryId, persona);
+      }
+    } catch (_) {
+      if (mounted) {
+        showSnackBar(context, AppLocalizations.of(context)!.claimLoadError);
+      }
+    }
+  }
+
+  /// Opens the inline member picker to split a single unit, then applies the
+  /// chosen claimer set via the notifier.
+  Future<void> _openSplitPicker(ClaimUnitRow row) async {
+    final result = await showModalBottomSheet<List<String>>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (sheetContext) => _SplitPickerSheet(
+        unitCost: row.unit.unitCost,
+        members: widget.group.groupMembers,
+        currentUserEmail: _currentUserEmail,
+        initialClaimers: row.unit.claimers.toSet(),
+      ),
+    );
+    if (result == null || !mounted) return;
+    try {
+      await _notifier.splitUnit(row.entryId, result);
+    } catch (_) {
+      if (mounted) {
+        showSnackBar(context, AppLocalizations.of(context)!.claimLoadError);
+      }
+    }
+  }
+
+  /// v0 Nudge: claims are already persisted per-tap, so there is no dedicated
+  /// reminder backend on this branch. Surfaces a localized confirmation
+  /// snackbar (the reminder path is a follow-up).
+  void _nudge() {
+    showSnackBar(context, AppLocalizations.of(context)!.claimNudgeSent);
+  }
+
+  /// v0 Confirm: per-tap claims are already saved, so Confirm is an
+  /// acknowledgement that shows the success sheet, then pops the screen.
+  Future<void> _confirm(double yourTotal) async {
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (sheetContext) => _ClaimSuccessSheet(amount: yourTotal),
+    );
+    if (!mounted) return;
+    if (Navigator.of(context).canPop()) Navigator.of(context).pop();
+  }
+
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
@@ -100,36 +169,59 @@ class _ClaimPageState extends ConsumerState<ClaimPage> {
                 units: rows.map((r) => r.unit).toList(),
                 personaEmail: _persona,
               );
+              final yourTotal = confirmTotalForPersona(rows, _persona);
 
-              return ListView(
-                padding: const EdgeInsets.fromLTRB(16, 12, 16, 40),
+              return Column(
                 children: [
-                  _Header(
-                    merchant: expense.name,
-                    onEdit: _openEditor,
+                  Expanded(
+                    child: ListView(
+                      padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
+                      children: [
+                        _Header(
+                          merchant: expense.name,
+                          onEdit: _openEditor,
+                        ),
+                        const SizedBox(height: 16),
+                        _PersonaSwitcher(
+                          members: widget.group.groupMembers,
+                          selected: _persona,
+                          currentUserEmail: _currentUserEmail,
+                          onChanged: (email) =>
+                              setState(() => _personaEmail = email),
+                        ),
+                        const SizedBox(height: 16),
+                        _SummaryCard(
+                          summary: summary,
+                          displayName: (e) => _displayName(context, e),
+                          currentUserEmail: _currentUserEmail,
+                        ),
+                        if (!summary.isFullyClaimed &&
+                            summary.unclaimed > 0.005) ...[
+                          const SizedBox(height: 16),
+                          _UnclaimedCallout(
+                            unclaimed: summary.unclaimed,
+                            onNudge: _nudge,
+                          ),
+                        ],
+                        const SizedBox(height: 24),
+                        SectionLabel(l10n.claimItemsLabel),
+                        const SizedBox(height: 8),
+                        _ItemList(
+                          rows: rows,
+                          persona: _persona,
+                          currentUserEmail: _currentUserEmail,
+                          displayName: (e) => _displayName(context, e),
+                          onToggle: _toggleClaim,
+                          onSplit: _openSplitPicker,
+                        ),
+                      ],
+                    ),
                   ),
-                  const SizedBox(height: 16),
-                  _PersonaSwitcher(
-                    members: widget.group.groupMembers,
-                    selected: _persona,
-                    currentUserEmail: _currentUserEmail,
-                    onChanged: (email) =>
-                        setState(() => _personaEmail = email),
-                  ),
-                  const SizedBox(height: 16),
-                  _SummaryCard(
-                    summary: summary,
-                    displayName: (e) => _displayName(context, e),
-                    currentUserEmail: _currentUserEmail,
-                  ),
-                  const SizedBox(height: 24),
-                  SectionLabel(l10n.claimItemsLabel),
-                  const SizedBox(height: 8),
-                  _ItemList(
-                    rows: rows,
-                    currentUserEmail: _currentUserEmail,
-                    displayName: (e) => _displayName(context, e),
-                  ),
+                  if (rows.isNotEmpty)
+                    _ConfirmBar(
+                      yourTotal: yourTotal,
+                      onConfirm: () => _confirm(yourTotal),
+                    ),
                 ],
               );
             },
@@ -469,21 +561,28 @@ class _MemberTotalRow extends StatelessWidget {
   }
 }
 
-/// Read-only list of claimable items. Each row shows the item name, unit cost
-/// and current claimers (avatars or an "unclaimed" chip).
-///
-// TODO(E3-T3): interactive chips — replace the read-only claimer display with
-// per-unit claim / unclaim / "split one" controls + the sticky Confirm CTA.
+/// Interactive list of claimable items. Each unit renders a chip:
+/// • open units show a dashed "take one" affordance;
+/// • claimed units show their claimer avatar(s) + the per-claimer cost when
+///   split, tinted with the "you" accent when the persona is a claimer.
+/// Tapping a chip toggles the persona's claim; "Split one" opens the member
+/// picker.
 class _ItemList extends StatelessWidget {
   const _ItemList({
     required this.rows,
+    required this.persona,
     required this.currentUserEmail,
     required this.displayName,
+    required this.onToggle,
+    required this.onSplit,
   });
 
   final List<ClaimUnitRow> rows;
+  final String persona;
   final String? currentUserEmail;
   final String Function(String email) displayName;
+  final ValueChanged<ClaimUnitRow> onToggle;
+  final ValueChanged<ClaimUnitRow> onSplit;
 
   @override
   Widget build(BuildContext context) {
@@ -506,8 +605,11 @@ class _ItemList extends StatelessWidget {
         for (final row in rows) ...[
           _ItemRow(
             row: row,
+            persona: persona,
             currentUserEmail: currentUserEmail,
             displayName: displayName,
+            onToggle: () => onToggle(row),
+            onSplit: () => onSplit(row),
           ),
           if (row != rows.last) const SizedBox(height: 8),
         ],
@@ -519,30 +621,25 @@ class _ItemList extends StatelessWidget {
 class _ItemRow extends StatelessWidget {
   const _ItemRow({
     required this.row,
+    required this.persona,
     required this.currentUserEmail,
     required this.displayName,
+    required this.onToggle,
+    required this.onSplit,
   });
 
   final ClaimUnitRow row;
+  final String persona;
   final String? currentUserEmail;
   final String Function(String email) displayName;
+  final VoidCallback onToggle;
+  final VoidCallback onSplit;
 
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
     final colorScheme = Theme.of(context).colorScheme;
-    final semantic = Theme.of(context).extension<SemanticColors>()!;
     final textTheme = Theme.of(context).textTheme;
-
-    final claimers = row.unit.claimers;
-    final stackMembers = [
-      for (final email in claimers)
-        AvatarStackMember(
-          name: displayName(email),
-          colorKey: email,
-          isYou: email == currentUserEmail,
-        ),
-    ];
+    final chipState = ClaimChipState.forPersona(row, persona);
 
     return SoftCard(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
@@ -568,24 +665,384 @@ class _ItemRow extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 10),
-          // TODO(E3-T3): interactive chips go here (take one / split / claimed).
-          if (row.unit.isClaimed)
-            AvatarStack(members: stackMembers, radius: 14)
-          else
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-              decoration: ShapeDecoration(
-                color: semantic.warning.withValues(alpha: 0.16),
-                shape: const StadiumBorder(),
-              ),
-              child: Text(
-                l10n.claimItemUnclaimed,
-                style: textTheme.labelMedium?.copyWith(
-                  color: semantic.warning,
-                  fontWeight: FontWeight.w600,
-                ),
+          _ClaimChip(
+            row: row,
+            chipState: chipState,
+            currentUserEmail: currentUserEmail,
+            displayName: displayName,
+            onToggle: onToggle,
+            onSplit: onSplit,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// The per-unit chip. Open units are a dashed "take one" pill; claimed units
+/// are a tinted pill with claimer avatar(s), the "split · €X" label when shared,
+/// and a "Split one" affordance to open the picker.
+class _ClaimChip extends StatelessWidget {
+  const _ClaimChip({
+    required this.row,
+    required this.chipState,
+    required this.currentUserEmail,
+    required this.displayName,
+    required this.onToggle,
+    required this.onSplit,
+  });
+
+  final ClaimUnitRow row;
+  final ClaimChipState chipState;
+  final String? currentUserEmail;
+  final String Function(String email) displayName;
+  final VoidCallback onToggle;
+  final VoidCallback onSplit;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    final colorScheme = Theme.of(context).colorScheme;
+
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Flexible(child: _pill(context)),
+        const SizedBox(width: 4),
+        IconButton(
+          tooltip: l10n.claimSplitOne,
+          visualDensity: VisualDensity.compact,
+          onPressed: onSplit,
+          icon: Icon(Icons.call_split, size: 18, color: colorScheme.primary),
+        ),
+      ],
+    );
+  }
+
+  /// The tappable pill: a dashed "take one" for an open unit, otherwise a
+  /// tinted avatar pill (with the "split · €X" label when shared).
+  Widget _pill(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    final colorScheme = Theme.of(context).colorScheme;
+    final semantic = Theme.of(context).extension<SemanticColors>()!;
+    final textTheme = Theme.of(context).textTheme;
+
+    if (chipState.open) {
+      return _DashedChip(
+        color: semantic.warning,
+        onTap: onToggle,
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.add, size: 16, color: semantic.warning),
+            const SizedBox(width: 4),
+            Text(
+              l10n.claimTakeOne,
+              style: textTheme.labelMedium?.copyWith(
+                color: semantic.warning,
+                fontWeight: FontWeight.w600,
               ),
             ),
+          ],
+        ),
+      );
+    }
+
+    final claimers = row.unit.claimers;
+    final stackMembers = [
+      for (final email in claimers)
+        AvatarStackMember(
+          name: displayName(email),
+          colorKey: email,
+          isYou: email == currentUserEmail,
+        ),
+    ];
+    // "You" accent when the persona is one of the claimers.
+    final Color bg = chipState.claimedByYou
+        ? colorScheme.primary.withValues(alpha: 0.14)
+        : colorScheme.surfaceContainerHighest;
+
+    return InkWell(
+      onTap: onToggle,
+      borderRadius: BorderRadius.circular(40),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+        decoration: ShapeDecoration(color: bg, shape: const StadiumBorder()),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            AvatarStack(members: stackMembers, radius: 12, ringColor: bg),
+            if (chipState.splitCount > 1) ...[
+              const SizedBox(width: 8),
+              Flexible(
+                child: Text(
+                  l10n.claimSplitLabel(l10n.toCurrency(chipState.perUnitCost)),
+                  overflow: TextOverflow.ellipsis,
+                  style: textTheme.labelSmall?.copyWith(
+                    color: colorScheme.onSurface,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// A dashed-border stadium chip used for the open "take one" affordance.
+class _DashedChip extends StatelessWidget {
+  const _DashedChip({
+    required this.child,
+    required this.color,
+    required this.onTap,
+  });
+
+  final Widget child;
+  final Color color;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(40),
+      child: CustomPaint(
+        painter: _DashedStadiumPainter(color: color),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+          child: child,
+        ),
+      ),
+    );
+  }
+}
+
+/// Paints a dashed stadium (pill) border in [color].
+class _DashedStadiumPainter extends CustomPainter {
+  const _DashedStadiumPainter({required this.color});
+
+  final Color color;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = color
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.4;
+    final rrect = RRect.fromRectAndRadius(
+      Offset.zero & size,
+      Radius.circular(size.height / 2),
+    );
+    final path = Path()..addRRect(rrect);
+    const dash = 4.0;
+    const gap = 3.0;
+    for (final metric in path.computeMetrics()) {
+      double distance = 0;
+      while (distance < metric.length) {
+        canvas.drawPath(
+          metric.extractPath(distance, distance + dash),
+          paint,
+        );
+        distance += dash + gap;
+      }
+    }
+  }
+
+  @override
+  bool shouldRepaint(_DashedStadiumPainter oldDelegate) =>
+      oldDelegate.color != color;
+}
+
+/// Warning-tinted callout shown above the items while some units are still
+/// unclaimed, with a Nudge action.
+class _UnclaimedCallout extends StatelessWidget {
+  const _UnclaimedCallout({required this.unclaimed, required this.onNudge});
+
+  final double unclaimed;
+  final VoidCallback onNudge;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    final semantic = Theme.of(context).extension<SemanticColors>()!;
+    final textTheme = Theme.of(context).textTheme;
+
+    return Container(
+      padding: const EdgeInsets.fromLTRB(14, 12, 8, 12),
+      decoration: BoxDecoration(
+        color: semantic.warning.withValues(alpha: 0.14),
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Row(
+        children: [
+          Icon(Icons.error_outline, size: 20, color: semantic.warning),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              l10n.claimUnclaimedCallout(l10n.toCurrency(unclaimed)),
+              style: textTheme.bodyMedium?.copyWith(
+                color: semantic.warning,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+          TextButton(
+            onPressed: onNudge,
+            style: TextButton.styleFrom(foregroundColor: semantic.warning),
+            child: Text(l10n.claimNudge),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Sticky bottom bar with the "Confirm — I had €X" CTA.
+class _ConfirmBar extends StatelessWidget {
+  const _ConfirmBar({required this.yourTotal, required this.onConfirm});
+
+  final double yourTotal;
+  final VoidCallback onConfirm;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    final colorScheme = Theme.of(context).colorScheme;
+
+    return Container(
+      decoration: BoxDecoration(
+        color: colorScheme.surface,
+        border: Border(
+          top: BorderSide(color: colorScheme.outlineVariant, width: 1),
+        ),
+      ),
+      child: SafeArea(
+        top: false,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+          child: SizedBox(
+            width: double.infinity,
+            child: FilledButton(
+              onPressed: onConfirm,
+              child: Text(l10n.claimConfirm(l10n.toCurrency(yourTotal))),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Inline member picker for "Split one": choose who shares a single unit, with
+/// the live per-person cost (unit / selected). Applies via [splitUnit].
+class _SplitPickerSheet extends StatefulWidget {
+  const _SplitPickerSheet({
+    required this.unitCost,
+    required this.members,
+    required this.currentUserEmail,
+    required this.initialClaimers,
+  });
+
+  final double unitCost;
+  final List<GroupMember> members;
+  final String? currentUserEmail;
+  final Set<String> initialClaimers;
+
+  @override
+  State<_SplitPickerSheet> createState() => _SplitPickerSheetState();
+}
+
+class _SplitPickerSheetState extends State<_SplitPickerSheet> {
+  late final Set<String> _selected = {...widget.initialClaimers};
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    final textTheme = Theme.of(context).textTheme;
+    final colorScheme = Theme.of(context).colorScheme;
+    final perPerson =
+        _selected.isEmpty ? 0.0 : widget.unitCost / _selected.length;
+
+    return SheetScaffold(
+      title: l10n.claimSplitSheetTitle,
+      footer: FilledButton(
+        onPressed: () => Navigator.of(context).pop(_selected.toList()),
+        child: Text(l10n.claimSplitApply),
+      ),
+      body: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            l10n.claimSplitPerPerson(l10n.toCurrency(perPerson)),
+            style: textTheme.titleMedium?.copyWith(color: colorScheme.primary),
+          ),
+          const SizedBox(height: 8),
+          for (final m in widget.members)
+            CheckboxListTile(
+              contentPadding: EdgeInsets.zero,
+              controlAffinity: ListTileControlAffinity.leading,
+              value: _selected.contains(m.email),
+              onChanged: (checked) => setState(() {
+                if (checked == true) {
+                  _selected.add(m.email);
+                } else {
+                  _selected.remove(m.email);
+                }
+              }),
+              secondary: MemberAvatar(
+                name: m.displayName,
+                colorKey: m.email,
+                radius: 16,
+                isYou: m.email == widget.currentUserEmail,
+              ),
+              title: Text(
+                m.email == widget.currentUserEmail ? l10n.you : m.displayName,
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Success sheet shown after Confirm, echoing the persona's confirmed share.
+class _ClaimSuccessSheet extends StatelessWidget {
+  const _ClaimSuccessSheet({required this.amount});
+
+  final double amount;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    final semantic = Theme.of(context).extension<SemanticColors>()!;
+    final textTheme = Theme.of(context).textTheme;
+
+    return SheetScaffold(
+      footer: FilledButton(
+        onPressed: () => Navigator.of(context).pop(),
+        child: Text(l10n.claimConfirmedDone),
+      ),
+      body: Column(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Icon(Icons.check_circle, size: 56, color: semantic.success),
+          const SizedBox(height: 16),
+          Text(
+            l10n.claimConfirmedTitle,
+            style: textTheme.headlineSmall,
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 8),
+          Text(
+            l10n.claimConfirmedBody(l10n.toCurrency(amount)),
+            style: textTheme.bodyMedium?.copyWith(
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+            ),
+            textAlign: TextAlign.center,
+          ),
         ],
       ),
     );
