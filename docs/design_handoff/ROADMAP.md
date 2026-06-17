@@ -238,6 +238,11 @@ analyze clean, 448 green. *v0:* cash always offered; single amount CTA covers al
 **E4-T2 · Friend detail sheet** · within `friend_list.dart`
 Friend balance + pay-back options (PayPal / Copy IBAN / Mark paid) + remove friend.
 *Deps:* E5-T1. *Sheet.*
+✅ **done · 4ac99ee** — new `friend_detail_sheet.dart` (`SheetScaffold`): identity + semantic balance (`MoneyText`),
+pay-back cards (PayPal/IBAN gated by `friendPayBackMethods` mirroring E4-T1's `paymentMethodsFor`; Mark paid always),
+destructive Remove; reuses existing `payBackAll`/PayPal-launch/IBAN-copy/remove logic + confirm. Old ListTile sheet
+removed. 13 tests; 1 en+de key; analyze clean, 470 green. *v0:* pay-back gated on owe (`shareAmount < -0.01`).
+*QA:* balance, pay-back cards (only friend's methods), remove in light+dark.
 
 ---
 
