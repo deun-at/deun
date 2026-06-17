@@ -369,6 +369,13 @@ mechanism); version footer = static tagline (`package_info_plus` not a dep). *Ca
   (group/groupPayBack/expense/friendRequest/Accept/Decline ×title+body) so `flutter gen-l10n` now reports **0
   untranslated**. analyze clean, 534 green.
 - **E8-T3 Motion:** sheet rise, scrim fade, scan sweep, presence pulse; Android predictive-back still works.
+  ✅ **done · 91608aa** — applied the spec sheet-rise curve (`Cubic(.22,1,.36,1)`, 280ms + 200ms reverse) via a shared
+  `const AnimationStyle kSheetAnimationStyle` in `constants.dart`, wired through `sheetAnimationStyle:` on all 12
+  `showModalBottomSheet` call sites + the `ModalBottomSheetRoute` go_router wrapper (`modal_bottom_sheet_page.dart`).
+  2 token tests; analyze clean, 536 green. *Already correct (verified, no change):* scan sweep (E2-T5) + presence pulse
+  (E3-T2) both reduced-motion aware; Android predictive-back — `enableOnBackInvokedCallback="true"` in the manifest +
+  both `PopScope`s use `onPopInvokedWithResult`/`canPop` (no deprecated `WillPopScope`/`onPopInvoked`). *v0:* scrim
+  fade left at framework default (not separately exposed without a custom route). *QA:* sheet rise easing in light+dark.
 - **E8-T4 Empty/edge states:** empty ledger, settled groups, fully-claimed vs unclaimed, over/under split,
   no-friends/no-requests.
 - **E8-T5 a11y & touch targets:** ≥48dp hit areas, semantics labels, contrast on muted text in both themes.
