@@ -199,6 +199,13 @@ go_router child route under `/group/details`
 Header (merchant + presence pulse + edit), persona switcher, dark summary card (your share, progress, unclaimed,
 per-member totals). Route from itemized ledger rows + the read-detail banner.
 *Deps:* E3-T1, E1-T2. *Screen 9.*
+✅ **done · 17fe9bc** — new `claim_page.dart` + route `/group/details/claim` (args `{group, expense}` like
+expense-detail); header (merchant + ~1.6s presence pulse, reduced-motion aware + edit→editor), persona "Preview as"
+`AppSegmentedControl`, dark summary card (your-share/progress/unclaimed/per-member) bound to `ClaimNotifier` +
+pure `claim_summary_view_model.dart`; itemized ledger row + read-detail banner now route here (TODO(E3) stubs
+removed). 11 tests; 13 en+de keys; analyze clean, 412 green. *v0:* persona switches viewed perspective only (no
+mutation); dark card reuses group-tinted hero. *Stub:* item area read-only — interactive chips/confirm = E3-T3.
+*QA:* hero card, presence pulse, persona switch, per-member totals in light+dark.
 
 **E3-T3 · Claim items — chips & actions** · `claim_page.dart`
 Per-unit chips (claimed avatars + name/"split · €X"; open dashed "take one"), tap to claim/unclaim, "Split one"
