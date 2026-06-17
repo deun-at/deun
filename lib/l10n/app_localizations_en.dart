@@ -1101,6 +1101,12 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get expenseDetailsLabel => 'Details';
+
+  @override
+  String get categoryLabel => 'Category';
+
+  @override
   String get splitSectionLabel => 'Split';
 
   @override
