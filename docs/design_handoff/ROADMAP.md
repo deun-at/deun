@@ -129,6 +129,12 @@ count; coheres with the itemized view). *QA:* tiles, split modes, remaining over
 Total-from-items + Scan; item cards (editable name/unit/qty/line total/delete via `ExpenseEntry`), add-item,
 info callout, "Add & share for claiming" CTA.
 *Deps:* E2-T1. *Screen 8 (itemized).*
+✅ **done · 8a09acf** — restyled itemized editor (total-from-items header + Scan via existing scanner, `SoftCard`
+item cards w/ qty `StepperControl`/line totals/delete, add-item, tinted info callout, "Add & share for claiming"
+CTA) + **Quick/Itemized `AppSegmentedControl` toggle** (resolves E2-T1 carry-over) bound to existing entry-count
+mode via pure `editor_mode.dart`; pure `itemized_totals.dart`; 12 tests; 7 en+de keys; SplitMode/DB/queries
+untouched; analyze clean, 324 green. *v0:* quick→itemized seeds amount; itemized→quick collapses only at 1 entry.
+*QA:* toggle switch, item cards, add-item, total, scan, callout in light+dark.
 
 **E2-T3 · Category / Paid-by / Date / Keypad sheets** · within `expense_entry_widget.dart` + `SheetScaffold`
 Category grid uses `ExpenseCategory` (`getIcon`/`getColor`/`getDisplayName`); paid-by member list; date
