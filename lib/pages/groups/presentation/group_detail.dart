@@ -260,6 +260,7 @@ class _GroupDetailState extends ConsumerState<GroupDetail> {
                 onPressed: () async {
                   final result = await showModalBottomSheet<ReceiptScanResult>(
                     context: context,
+                    sheetAnimationStyle: kSheetAnimationStyle,
                     builder: (context) => const ReceiptScannerSheet(),
                   );
                   if (result != null && context.mounted) {

@@ -1,3 +1,4 @@
+import 'package:deun/constants.dart';
 import 'package:deun/l10n/app_localizations.dart';
 import 'package:deun/main.dart';
 import 'package:deun/pages/expenses/data/claim_math.dart';
@@ -99,6 +100,7 @@ class _ClaimPageState extends ConsumerState<ClaimPage> {
     final result = await showModalBottomSheet<List<String>>(
       context: context,
       isScrollControlled: true,
+      sheetAnimationStyle: kSheetAnimationStyle,
       backgroundColor: Colors.transparent,
       builder: (sheetContext) => _SplitPickerSheet(
         unitCost: row.unit.unitCost,
@@ -130,6 +132,7 @@ class _ClaimPageState extends ConsumerState<ClaimPage> {
     await showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
+      sheetAnimationStyle: kSheetAnimationStyle,
       backgroundColor: Colors.transparent,
       builder: (sheetContext) => _ClaimSuccessSheet(amount: yourTotal),
     );

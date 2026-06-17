@@ -1,3 +1,4 @@
+import 'package:deun/constants.dart';
 import 'package:deun/helper/helper.dart';
 import 'package:deun/l10n/app_localizations.dart';
 import 'package:deun/main.dart';
@@ -25,6 +26,7 @@ void showLanguageSheet(
     isScrollControlled: true,
     backgroundColor: Colors.transparent,
     useSafeArea: true,
+    sheetAnimationStyle: kSheetAnimationStyle,
     builder: (_) => _LanguageSheet(currentTag: currentTag, onSelected: onSelected),
   );
 }
@@ -85,6 +87,7 @@ void showAppearanceSheet(BuildContext context) {
     isScrollControlled: true,
     backgroundColor: Colors.transparent,
     useSafeArea: true,
+    sheetAnimationStyle: kSheetAnimationStyle,
     builder: (_) => const _AppearanceSheet(),
   );
 }
@@ -216,6 +219,7 @@ void showDeleteAccountSheet(BuildContext context) {
     isScrollControlled: true,
     backgroundColor: Colors.transparent,
     useSafeArea: true,
+    sheetAnimationStyle: kSheetAnimationStyle,
     builder: (_) => const _DeleteAccountSheet(),
   );
 }

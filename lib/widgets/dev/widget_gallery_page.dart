@@ -1,3 +1,4 @@
+import 'package:deun/constants.dart';
 import 'package:deun/widgets/restyle/app_segmented_control.dart';
 import 'package:deun/widgets/restyle/avatar_stack.dart';
 import 'package:deun/widgets/restyle/balance_pill.dart';
@@ -112,6 +113,7 @@ class _WidgetGalleryPageState extends State<WidgetGalleryPage> {
               onPressed: () => showModalBottomSheet<void>(
                 context: context,
                 isScrollControlled: true,
+                sheetAnimationStyle: kSheetAnimationStyle,
                 backgroundColor: Colors.transparent,
                 builder: (_) => SheetScaffold(
                   title: 'Pick a category',

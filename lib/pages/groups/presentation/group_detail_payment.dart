@@ -1,3 +1,4 @@
+import 'package:deun/constants.dart';
 import 'package:deun/helper/helper.dart';
 import 'package:deun/widgets/restyle/member_avatar.dart';
 import 'package:deun/widgets/restyle/money_text.dart';
@@ -224,6 +225,7 @@ class _PayRow extends StatelessWidget {
     showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
+      sheetAnimationStyle: kSheetAnimationStyle,
       builder: (_) => ThemeBuilder(
         colorValue: group.colorValue,
         builder: (_) => _PaymentMethodSheet(

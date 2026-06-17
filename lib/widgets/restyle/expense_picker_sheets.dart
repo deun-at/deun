@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import 'package:deun/constants.dart';
 import 'package:deun/l10n/app_localizations.dart';
 import 'package:deun/pages/expenses/data/date_option.dart';
 import 'package:deun/pages/expenses/data/expense_category.dart';
@@ -15,6 +16,7 @@ Future<T?> _showSheet<T>(BuildContext context, Widget child) {
   return showModalBottomSheet<T>(
     context: context,
     isScrollControlled: true,
+    sheetAnimationStyle: kSheetAnimationStyle,
     backgroundColor: Colors.transparent,
     builder: (_) => child,
   );
