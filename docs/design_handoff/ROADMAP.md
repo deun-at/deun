@@ -211,6 +211,13 @@ mutation); dark card reuses group-tinted hero. *Stub:* item area read-only — i
 Per-unit chips (claimed avatars + name/"split · €X"; open dashed "take one"), tap to claim/unclaim, "Split one"
 inline member picker (per-unit cost), unclaimed callout + Nudge, sticky Confirm → success sheet.
 *Deps:* E3-T2. *Screen 9.*
+✅ **done · 24c4e5d** — interactive per-unit chips (dashed "take one" / tinted claimed pill + "split · €X") bound to
+`ClaimNotifier.claimUnit/unclaimUnit/splitUnit`; `_SplitPickerSheet` (live per-unit cost), warning unclaimed callout
++ Nudge, sticky Confirm → success `SheetScaffold`; pure `ClaimChipState`/`confirmTotalForPersona`/`markEntriesClaimable`.
+**Carry-over resolved:** itemized editor's "Add & share for claiming" CTA → `claimable:true` (plain Save preserves
+manual split). 18 tests; 13 en+de keys; analyze clean, 430 green. *v0:* Nudge = localized snackbar (no reminder
+backend); Confirm = acknowledgement (claims persist per-tap). *QA:* chips, split picker, unclaimed callout, confirm
+success sheet in light+dark.
 
 ---
 
