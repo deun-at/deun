@@ -21,6 +21,10 @@ class _FriendAddPageState extends ConsumerState<FriendAddPage> {
   late final FocusNode _searchFocusNode;
   Timer? _debounce;
 
+  /// Emails the user has requested in this session. Flips the per-row button to
+  /// "Requested" immediately, before the provider's exclusion-list refresh lands.
+  final Set<String> _requestedEmails = {};
+
   @override
   void initState() {
     super.initState();
@@ -46,35 +50,38 @@ class _FriendAddPageState extends ConsumerState<FriendAddPage> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Scaffold(
       appBar: AppBar(
-        title: Text(AppLocalizations.of(context)!.addFriends),
+        title: Text(l10n.addFriends),
         centerTitle: true,
       ),
-      body: Column(
-        children: [
-          // SearchBar is outside the provider-watched subtree so it never
-          // rebuilds when results change — prevents keyboard dismissal.
-          Padding(
-            padding: const EdgeInsets.only(left: 8.0, right: 8.0),
-            child: SearchBar(
-              controller: _searchController,
-              focusNode: _searchFocusNode,
-              elevation: WidgetStateProperty.all(0),
-              hintText:
-                  AppLocalizations.of(context)!.addFriendshipSelectionEmpty,
-              onChanged: _onSearchChanged,
+      body: SafeArea(
+        top: false,
+        child: Column(
+          children: [
+            // Search field is outside the provider-watched subtree so it never
+            // rebuilds when results change — prevents keyboard dismissal.
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 6, 20, 12),
+              child: _SearchField(
+                controller: _searchController,
+                focusNode: _searchFocusNode,
+                hintText: l10n.addFriendshipSearchHint,
+                onChanged: _onSearchChanged,
+              ),
             ),
-          ),
-          Expanded(
-            child: _FriendAddResults(
-              onRequest: _requestFriendship,
-              onRequestContactPermission: () {
-                ref.read(friendAddProvider.notifier).retryContactPermission();
-              },
+            Expanded(
+              child: _FriendAddResults(
+                requestedEmails: _requestedEmails,
+                onRequest: _requestFriendship,
+                onRequestContactPermission: () {
+                  ref.read(friendAddProvider.notifier).retryContactPermission();
+                },
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -83,27 +90,95 @@ class _FriendAddPageState extends ConsumerState<FriendAddPage> {
     try {
       await FriendshipRepository.request(userEmail);
       if (!mounted) return;
-      showSnackBar(context,
-          AppLocalizations.of(context)!.friendshipRequestSent(displayName));
+      setState(() => _requestedEmails.add(userEmail));
+      showSnackBar(context, l10nOf(context).friendshipRequestSent(displayName));
       sendFriendRequestNotification(context, {userEmail});
       unawaited(ref.read(friendAddProvider.notifier).refresh());
     } catch (e) {
       if (!mounted) return;
-      showSnackBar(context, AppLocalizations.of(context)!.generalError);
+      showSnackBar(context, l10nOf(context).generalError);
     }
   }
+}
 
+AppLocalizations l10nOf(BuildContext context) => AppLocalizations.of(context)!;
+
+/// Restyled inset search field: a [SoftCard]-style rounded surface with a
+/// leading search glyph and a borderless text field.
+class _SearchField extends StatelessWidget {
+  const _SearchField({
+    required this.controller,
+    required this.focusNode,
+    required this.hintText,
+    required this.onChanged,
+  });
+
+  final TextEditingController controller;
+  final FocusNode focusNode;
+  final String hintText;
+  final ValueChanged<String> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final textTheme = Theme.of(context).textTheme;
+
+    return Container(
+      decoration: BoxDecoration(
+        color: colorScheme.surfaceContainerLowest,
+        borderRadius: BorderRadius.circular(14),
+        boxShadow: isDark
+            ? null
+            : const [
+                BoxShadow(
+                  color: Color(0x0A14120C),
+                  blurRadius: 4,
+                  offset: Offset(0, 2),
+                ),
+              ],
+      ),
+      padding: const EdgeInsets.symmetric(horizontal: 14),
+      child: Row(
+        children: [
+          Icon(Icons.search, size: 20, color: colorScheme.onSurfaceVariant),
+          const SizedBox(width: 10),
+          Expanded(
+            child: TextField(
+              controller: controller,
+              focusNode: focusNode,
+              onChanged: onChanged,
+              textInputAction: TextInputAction.search,
+              style: textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w600),
+              decoration: InputDecoration(
+                isDense: true,
+                border: InputBorder.none,
+                contentPadding: const EdgeInsets.symmetric(vertical: 14),
+                hintText: hintText,
+                hintStyle: textTheme.titleSmall?.copyWith(
+                  fontWeight: FontWeight.w600,
+                  color: colorScheme.onSurfaceVariant,
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 }
 
 /// Isolates the provider watch so that rebuilds from data loading
-/// don't propagate up to the SearchBar and dismiss the keyboard.
+/// don't propagate up to the search field and dismiss the keyboard.
 /// Each section uses select() to only rebuild when its own data changes.
 class _FriendAddResults extends StatelessWidget {
   const _FriendAddResults({
+    required this.requestedEmails,
     required this.onRequest,
     this.onRequestContactPermission,
   });
 
+  final Set<String> requestedEmails;
   final Future<void> Function(String, String) onRequest;
   final VoidCallback? onRequestContactPermission;
 
@@ -123,6 +198,7 @@ class _FriendAddResults extends StatelessWidget {
               searchText: searchText,
               isLoading: isLoading,
               isAmbiguousUsername: isAmbiguous,
+              requestedEmails: requestedEmails,
             );
           }),
         ),
@@ -137,6 +213,7 @@ class _FriendAddResults extends StatelessWidget {
               isLoading: isLoading,
               contactPermissionDenied: permissionDenied,
               onRequestPermission: onRequestContactPermission,
+              requestedEmails: requestedEmails,
             );
           }),
         ),
