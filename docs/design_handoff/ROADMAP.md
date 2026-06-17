@@ -228,6 +228,12 @@ Color hero (overall), You-pay (Pay → method detail) / Owes-you (Remind) sectio
 payee's `paypalMe`/`iban` (from `GroupSharesSummary`), confirm → settled. **Settlement amounts already
 computed in `group_model.dart` — bind, don't recompute.**
 *Deps:* E0-T4. *Screen 10, route `/group/details/payment`.*
+✅ **done · 995c21b** — restyled `group_detail_payment.dart`: color hero (overall via `totalShareAmount`),
+You-pay/Owes-you sections via pure `payment_view_model.dart` (`PaymentPartition.fromSummary` buckets the existing
+`GroupSharesSummary` — no recompute), method-detail `SheetScaffold` (`paymentMethodsFor` filters PayPal/IBAN +
+always-cash), Pay → existing `payBack` RPC, Remind → existing reminder path (24h cooldown). 19 tests; 13 en+de keys;
+analyze clean, 448 green. *v0:* cash always offered; single amount CTA covers all methods.
+*QA:* hero, you-pay/owes-you, method sheet (only payee's methods), settle in light+dark.
 
 **E4-T2 · Friend detail sheet** · within `friend_list.dart`
 Friend balance + pay-back options (PayPal / Copy IBAN / Mark paid) + remove friend.
