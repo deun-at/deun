@@ -557,6 +557,9 @@ class AppLocalizationsDe extends AppLocalizations {
   String get payBackDialogDone => 'Als bezahlt markieren';
 
   @override
+  String get friendPayBackMarkPaidSubtitle => 'Saldo manuell ausgleichen';
+
+  @override
   String get payBackError =>
       'Es gab einen Fehler beim Zurückzahlen des Betrags. Bitte versuche es später noch einmal!';
 

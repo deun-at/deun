@@ -516,6 +516,10 @@
   "@payBackDialogIban": {},
   "payBackDialogDone": "Mark as paid",
   "@payBackDialogDone": {},
+  "friendPayBackMarkPaidSubtitle": "Settle the balance manually",
+  "@friendPayBackMarkPaidSubtitle": {
+    "description": "Subtitle for the 'Mark as paid' option in the friend detail sheet."
+  },
   "payBackError": "There was an error with paying back the amount. Please try again later!",
   "@payBackError": {},
   "payBackSuccess": "You paid back {amount} to {displayName}",

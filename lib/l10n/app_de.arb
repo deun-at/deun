@@ -145,6 +145,7 @@
   "payBackDialogPaypal": "Paypal-Link öffnen",
   "payBackDialogIban": "IBAN kopieren",
   "payBackDialogDone": "Als bezahlt markieren",
+  "friendPayBackMarkPaidSubtitle": "Saldo manuell ausgleichen",
   "payBackError": "Es gab einen Fehler beim Zurückzahlen des Betrags. Bitte versuche es später noch einmal!",
   "payBackSuccess": "Du hast {displayName} {amount} zurückgezahlt",
   "groupDisplayPaidBack": "{paidBy} {paidByYourself, select, yes{hast} other{hat}} {paidForYourself, select, yes{dir} other{{paidFor}}} {amount} zurückgezahlt",
