@@ -1,11 +1,16 @@
 import 'package:deun/l10n/app_localizations.dart';
 import 'package:deun/pages/statistics/provider/statistics_notifiers.dart';
 import 'package:deun/pages/statistics/statistics_models.dart';
+import 'package:deun/pages/statistics/widgets/stats_chart_math.dart';
+import 'package:deun/widgets/restyle/section_label.dart';
+import 'package:deun/widgets/restyle/soft_card.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
+/// Monthly trend: themed bars (or a smooth line for shorter spans). Tapping a
+/// month opens the month detail sheet via [onMonthTap].
 class StatsTrendSection extends ConsumerWidget {
   const StatsTrendSection({super.key, required this.args, required this.onMonthTap});
   final StatsRangeArgs args;
@@ -18,39 +23,34 @@ class StatsTrendSection extends ConsumerWidget {
     final l10n = AppLocalizations.of(context)!;
 
     return Padding(
-      padding: const EdgeInsets.all(8),
-      child: Card(
-        elevation: 0,
-        color: theme.colorScheme.surfaceContainerLow,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(16, 14, 16, 10),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(l10n.statisticsTrend, style: theme.textTheme.titleSmall),
-              const SizedBox(height: 10),
-              SizedBox(
-                height: 180,
-                child: state.when(
-                  loading: () => const Center(child: CircularProgressIndicator()),
-                  error: (e, _) => Center(child: Text(e.toString())),
-                  data: (months) {
-                    if (months.isEmpty) {
-                      return Center(
-                        child: Text(l10n.statisticsNoExpenses,
-                            style: theme.textTheme.bodyMedium?.copyWith(color: theme.hintColor)),
-                      );
-                    }
-                    return months.length > 12
-                        ? _TrendBars(months: months, onMonthTap: onMonthTap)
-                        : _TrendLine(months: months, onMonthTap: onMonthTap);
-                  },
-                ),
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SectionLabel(l10n.statisticsTrend),
+          const SizedBox(height: 8),
+          SoftCard(
+            child: SizedBox(
+              height: 180,
+              child: state.when(
+                loading: () => const Center(child: CircularProgressIndicator()),
+                error: (e, _) =>
+                    Center(child: Text(l10n.statisticsNoExpenses, style: theme.textTheme.bodyMedium)),
+                data: (months) {
+                  if (months.isEmpty) {
+                    return Center(
+                      child: Text(l10n.statisticsNoExpenses,
+                          style: theme.textTheme.bodyMedium?.copyWith(color: theme.hintColor)),
+                    );
+                  }
+                  return months.length > 12
+                      ? _TrendBars(months: months, onMonthTap: onMonthTap)
+                      : _TrendLine(months: months, onMonthTap: onMonthTap);
+                },
               ),
-            ],
+            ),
           ),
-        ),
+        ],
       ),
     );
   }
@@ -195,13 +195,13 @@ Widget _bottomLabel(double value, TitleMeta meta, List<MonthBucket> months, Them
     {bool withYear = false}) {
   final idx = value.toInt();
   if (idx < 0 || idx >= months.length) return const SizedBox.shrink();
-  final step = (months.length / 6).ceil().clamp(1, months.length);
+  final step = labelStep(months.length);
   if (idx % step != 0 && idx != months.length - 1) return const SizedBox.shrink();
   return SideTitleWidget(
     meta: meta,
     child: Text(
       DateFormat(withYear ? 'MMM yy' : 'MMM').format(months[idx].start),
-      style: theme.textTheme.labelSmall,
+      style: theme.textTheme.labelSmall?.copyWith(color: theme.colorScheme.onSurfaceVariant),
     ),
   );
 }
