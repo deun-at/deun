@@ -306,6 +306,48 @@ class AppLocalizationsDe extends AppLocalizations {
   String get expenseReviewClaimAction => 'Prüfen & beanspruchen';
 
   @override
+  String get claimTitle => 'Zum Beanspruchen tippen';
+
+  @override
+  String get claimPresenceLive => 'Live';
+
+  @override
+  String get claimEditItems => 'Positionen bearbeiten';
+
+  @override
+  String get claimPreviewAs => 'Vorschau als';
+
+  @override
+  String get claimYourShare => 'Dein Anteil';
+
+  @override
+  String claimProgressLabel(String claimed, String total) {
+    return '$claimed von $total beansprucht';
+  }
+
+  @override
+  String get claimUnclaimedLabel => 'Nicht beansprucht';
+
+  @override
+  String get claimAllClaimed => 'Alles beansprucht';
+
+  @override
+  String get claimPerMemberLabel => 'Pro Person';
+
+  @override
+  String get claimItemsLabel => 'Positionen';
+
+  @override
+  String get claimItemUnclaimed => 'Frei';
+
+  @override
+  String get claimNoItems =>
+      'Diese Ausgabe hat keine beanspruchbaren Positionen.';
+
+  @override
+  String get claimLoadError => 'Diese Ausgabe konnte nicht geladen werden.';
+
+  @override
   String get expenseMemberLent => 'ausgelegt';
 
   @override

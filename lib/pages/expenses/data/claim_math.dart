@@ -14,6 +14,24 @@ class ClaimUnit {
   double get perClaimerCost => claimers.isEmpty ? 0 : unitCost / claimers.length;
 }
 
+/// A claim unit paired with its DB identity and display metadata, for the
+/// claim screen's item list. [unit] carries the cost-math; [entryId] is the
+/// `expense_entry.id` used to mutate claimers; [claimerNames] maps each
+/// claimer email to its display name for avatars/labels.
+class ClaimUnitRow {
+  const ClaimUnitRow({
+    required this.entryId,
+    required this.name,
+    required this.unit,
+    required this.claimerNames,
+  });
+
+  final String entryId;
+  final String? name;
+  final ClaimUnit unit;
+  final Map<String, String> claimerNames;
+}
+
 /// Per-member share totals across all units. A member's total is the sum,
 /// over every unit they claimed, of `unitCost / claimers`. Equivalent to
 /// `Expense.groupMemberShareStatistic` for claim units (percentage = 100/n).

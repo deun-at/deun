@@ -304,6 +304,47 @@ class AppLocalizationsEn extends AppLocalizations {
   String get expenseReviewClaimAction => 'Review & claim';
 
   @override
+  String get claimTitle => 'Tap to claim';
+
+  @override
+  String get claimPresenceLive => 'Live';
+
+  @override
+  String get claimEditItems => 'Edit items';
+
+  @override
+  String get claimPreviewAs => 'Preview as';
+
+  @override
+  String get claimYourShare => 'Your share';
+
+  @override
+  String claimProgressLabel(String claimed, String total) {
+    return '$claimed of $total claimed';
+  }
+
+  @override
+  String get claimUnclaimedLabel => 'Unclaimed';
+
+  @override
+  String get claimAllClaimed => 'All claimed';
+
+  @override
+  String get claimPerMemberLabel => 'Per person';
+
+  @override
+  String get claimItemsLabel => 'Items';
+
+  @override
+  String get claimItemUnclaimed => 'Unclaimed';
+
+  @override
+  String get claimNoItems => 'This expense has no claimable items.';
+
+  @override
+  String get claimLoadError => 'Couldn\'t load this expense.';
+
+  @override
   String get expenseMemberLent => 'lent';
 
   @override

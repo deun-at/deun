@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:deun/helper/helper.dart';
 import 'package:deun/main.dart';
 import 'package:deun/pages/auth/update_password.dart';
+import 'package:deun/pages/expenses/presentation/claim_page.dart';
 import 'package:deun/pages/expenses/presentation/expense_detail.dart';
 import 'package:deun/pages/expenses/presentation/expense_detail_read.dart';
 import 'package:deun/pages/expenses/data/expense_model.dart';
@@ -138,6 +139,19 @@ class _NavigationScreenState extends ConsumerState<NavigationScreen> with Widget
                                 var expense = extra['expense'] as Expense;
 
                                 return ExpenseDetailRead(
+                                  group: group,
+                                  expense: expense,
+                                );
+                              }),
+                          GoRoute(
+                              path: 'claim',
+                              parentNavigatorKey: _rootNavigatorKey,
+                              builder: (context, state) {
+                                var extra = state.extra as Map<String, dynamic>;
+                                var group = extra['group'] as Group;
+                                var expense = extra['expense'] as Expense;
+
+                                return ClaimPage(
                                   group: group,
                                   expense: expense,
                                 );

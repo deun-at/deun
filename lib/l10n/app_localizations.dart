@@ -644,6 +644,84 @@ abstract class AppLocalizations {
   /// **'Review & claim'**
   String get expenseReviewClaimAction;
 
+  /// App-bar / header title for the itemized claim screen (Screen 9).
+  ///
+  /// In en, this message translates to:
+  /// **'Tap to claim'**
+  String get claimTitle;
+
+  /// Label next to the live-presence pulse dot in the claim screen header.
+  ///
+  /// In en, this message translates to:
+  /// **'Live'**
+  String get claimPresenceLive;
+
+  /// Tooltip / label for the edit-items action that opens the itemized editor from the claim screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit items'**
+  String get claimEditItems;
+
+  /// Label above the persona switcher that previews the claim view as a chosen member.
+  ///
+  /// In en, this message translates to:
+  /// **'Preview as'**
+  String get claimPreviewAs;
+
+  /// Label above the selected persona's claimed total on the dark summary card.
+  ///
+  /// In en, this message translates to:
+  /// **'Your share'**
+  String get claimYourShare;
+
+  /// Progress caption under the claimed/total progress bar on the summary card.
+  ///
+  /// In en, this message translates to:
+  /// **'{claimed} of {total} claimed'**
+  String claimProgressLabel(String claimed, String total);
+
+  /// Label for the amount on the receipt nobody has claimed yet.
+  ///
+  /// In en, this message translates to:
+  /// **'Unclaimed'**
+  String get claimUnclaimedLabel;
+
+  /// Status shown on the summary card when nothing is left unclaimed.
+  ///
+  /// In en, this message translates to:
+  /// **'All claimed'**
+  String get claimAllClaimed;
+
+  /// Section label above the per-member totals on the summary card.
+  ///
+  /// In en, this message translates to:
+  /// **'Per person'**
+  String get claimPerMemberLabel;
+
+  /// Section label above the list of claimable items.
+  ///
+  /// In en, this message translates to:
+  /// **'Items'**
+  String get claimItemsLabel;
+
+  /// Chip text on an item that nobody has claimed yet.
+  ///
+  /// In en, this message translates to:
+  /// **'Unclaimed'**
+  String get claimItemUnclaimed;
+
+  /// Empty state shown when an expense has no per-unit claim items.
+  ///
+  /// In en, this message translates to:
+  /// **'This expense has no claimable items.'**
+  String get claimNoItems;
+
+  /// Error state shown when the claim screen fails to load the expense.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t load this expense.'**
+  String get claimLoadError;
+
   /// Trailing label for a member who is owed in the per-member breakdown.
   ///
   /// In en, this message translates to:
