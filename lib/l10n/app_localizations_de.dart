@@ -706,6 +706,15 @@ class AppLocalizationsDe extends AppLocalizations {
   String get addFriendshipContactNoResult => 'Keine Kontakte gefunden!';
 
   @override
+  String get addFriendshipSearchHint => 'Nach Benutzername#Code suchen';
+
+  @override
+  String get addFriendshipFromContacts => 'Aus deinen Kontakten';
+
+  @override
+  String get addFriendshipRequestedButton => 'Angefragt';
+
+  @override
   String get requestFriendship => 'Freund hinzufügen';
 
   @override

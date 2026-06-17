@@ -1,17 +1,22 @@
 import 'package:deun/l10n/app_localizations.dart';
+import 'package:deun/pages/friends/presentation/friend_add_row.dart';
 import 'package:deun/pages/users/user_model.dart';
-import 'package:deun/widgets/card_list_view_builder.dart';
+import 'package:deun/widgets/restyle/section_label.dart';
+import 'package:deun/widgets/restyle/soft_card.dart';
 import 'package:deun/widgets/shimmer_card_list.dart';
 import 'package:flutter/material.dart';
 
-import '../../../widgets/user_avatar.dart';
-
+/// Restyled live search-results section (Screen 15a): a [SectionLabel] header
+/// over a [SoftCard] of [FriendAddRow]s. Renders nothing until the user types.
 class SearchResultList extends StatelessWidget {
   final List<SupaUser> searchResults;
   final Function(String userEmail, String displayName) onRequest;
   final String searchText;
   final bool isLoading;
   final bool isAmbiguousUsername;
+
+  /// Emails already requested in this session — flips a row to "Requested".
+  final Set<String> requestedEmails;
 
   const SearchResultList({
     super.key,
@@ -20,67 +25,73 @@ class SearchResultList extends StatelessWidget {
     required this.searchText,
     required this.isLoading,
     this.isAmbiguousUsername = false,
+    this.requestedEmails = const {},
   });
 
   @override
   Widget build(BuildContext context) {
     if (searchText.isEmpty) {
-      return Container();
+      return const SizedBox.shrink();
     }
 
-    Widget title = ListTile(
-      enabled: false,
-      minTileHeight: 1,
-      title: Padding(
-        padding: const EdgeInsetsGeometry.only(top: 10),
-        child: Text(
-          AppLocalizations.of(context)!.addFriendshipSearchResult,
-          style: Theme.of(context).textTheme.bodyMedium,
-        ),
-      ),
+    final l10n = AppLocalizations.of(context)!;
+
+    final header = Padding(
+      padding: const EdgeInsets.fromLTRB(4, 4, 4, 10),
+      child: SectionLabel(l10n.addFriendshipSearchResult),
     );
 
+    Widget body;
     if (isLoading) {
-      return Column(children: [
-        title,
-        const ShimmerCardList(height: 50, listEntryLength: 3),
-      ]);
-    }
-
-    List<Widget> widgets = List.empty(growable: true);
-
-    if (isAmbiguousUsername) {
-      widgets.add(ListTile(
-          title: Text(AppLocalizations.of(context)!.addFriendshipAmbiguousUsername)));
+      body = const ShimmerCardList(height: 64, listEntryLength: 2);
+    } else if (isAmbiguousUsername) {
+      body = _MessageCard(message: l10n.addFriendshipAmbiguousUsername);
     } else if (searchResults.isEmpty) {
-      widgets.add(ListTile(
-          title: Text(AppLocalizations.of(context)!.addFriendshipNoResult)));
+      body = _MessageCard(message: l10n.addFriendshipNoResult);
     } else {
-      widgets.addAll(
-        searchResults.map(
-          (user) {
-            return ListTile(
-              leading: UserAvatar(displayName: user.displayName, radius: 18),
-              title: Text(user.displayName),
-              subtitle: Text(user.fullUsername),
-              trailing: FilledButton(
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const Icon(Icons.person_add_outlined),
-                    const SizedBox(width: 5),
-                    Text(AppLocalizations.of(context)!.add),
-                  ],
-                ),
-                onPressed: () => onRequest(user.email, user.displayName),
+      body = SoftCard(
+        padding: const EdgeInsets.symmetric(vertical: 6),
+        child: Column(
+          children: [
+            for (final user in searchResults)
+              FriendAddRow(
+                user: user,
+                isRequested: requestedEmails
+                    .any((e) => e.toLowerCase() == user.email.toLowerCase()),
+                onRequest: () => onRequest(user.email, user.displayName),
               ),
-            );
-          },
+          ],
         ),
       );
     }
 
-    return Column(children: [title, CardColumn(children: widgets)]);
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 6, 20, 20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [header, body],
+      ),
+    );
+  }
+}
+
+/// A soft card holding a single centered status message (empty / ambiguous).
+class _MessageCard extends StatelessWidget {
+  const _MessageCard({required this.message});
+
+  final String message;
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    return SoftCard(
+      child: Text(
+        message,
+        style: Theme.of(context)
+            .textTheme
+            .bodyMedium
+            ?.copyWith(color: colorScheme.onSurfaceVariant),
+      ),
+    );
   }
 }

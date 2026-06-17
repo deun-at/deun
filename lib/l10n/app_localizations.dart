@@ -1187,6 +1187,24 @@ abstract class AppLocalizations {
   /// **'No Contacts found!'**
   String get addFriendshipContactNoResult;
 
+  /// No description provided for @addFriendshipSearchHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Search by username#code'**
+  String get addFriendshipSearchHint;
+
+  /// No description provided for @addFriendshipFromContacts.
+  ///
+  /// In en, this message translates to:
+  /// **'From your contacts'**
+  String get addFriendshipFromContacts;
+
+  /// No description provided for @addFriendshipRequestedButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Requested'**
+  String get addFriendshipRequestedButton;
+
   /// No description provided for @requestFriendship.
   ///
   /// In en, this message translates to:
