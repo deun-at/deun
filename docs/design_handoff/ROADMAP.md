@@ -140,6 +140,12 @@ untouched; analyze clean, 324 green. *v0:* quick→itemized seeds amount; itemiz
 Category grid uses `ExpenseCategory` (`getIcon`/`getColor`/`getDisplayName`); paid-by member list; date
 options; amount keypad (2-dec/7-digit limit).
 *Deps:* E0-T4. *Sheets.*
+✅ **done · ceefb7f** — 4 sheets in `expense_picker_sheets.dart` via `SheetScaffold`: category icon grid
+(`ExpenseCategory` get*), paid-by member list, date options (Today/Yesterday/Pick…), numeric keypad (pure
+`keypad_amount.dart` reducer: 2-dec/7-digit, unit-tested); amount tile now opens keypad (round-trips via
+`toStringAsFixed(2)` to field+controller, validators intact); pure `date_option.dart`; 38 tests; 5 en+de keys;
+analyze clean, 362 green. *v0:* "Pick a date…" defers to platform `showDatePicker`; itemized item amounts stay inline.
+*QA:* category grid, paid-by, date, keypad sheets in light+dark.
 
 **E2-T4 · Expense detail (read)** · `expense_detail.dart`
 Summary card (icon/title/cat·date/total/payer/your net), itemized "Review & claim" banner (→ E3), per-member
