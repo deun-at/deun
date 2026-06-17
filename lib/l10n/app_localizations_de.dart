@@ -1142,6 +1142,12 @@ class AppLocalizationsDe extends AppLocalizations {
       'Lass deinen Freund diesen Code scannen, um dich hinzuzufügen.';
 
   @override
+  String get friendQrScanPrompt => 'Auf den Code eines Freundes richten';
+
+  @override
+  String get friendQrLinkCopied => 'Link kopiert';
+
+  @override
   String get friendQrLinkCopiedInstruction =>
       'Link kopiert. Wenn deine Systemkamera QR-App-Links unterstützt, zeige diesen Code auf dem anderen Gerät und scanne ihn.';
 

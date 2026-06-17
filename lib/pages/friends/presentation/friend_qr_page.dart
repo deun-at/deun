@@ -2,10 +2,11 @@ import 'dart:async';
 
 import 'package:deun/constants.dart';
 import 'package:deun/helper/helper.dart';
-import 'package:deun/main.dart';
-import 'package:deun/pages/users/user_repository.dart';
+import 'package:deun/pages/users/user_model.dart';
+import 'package:deun/provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:deun/l10n/app_localizations.dart';
@@ -13,14 +14,36 @@ import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 import 'package:share_plus/share_plus.dart';
 
-class FriendQrPage extends StatefulWidget {
+import '../../../widgets/restyle/app_segmented_control.dart';
+import '../../../widgets/restyle/member_avatar.dart';
+import '../../../widgets/restyle/soft_card.dart';
+
+/// Restyled friend-QR page (E5-T3). Presents the user's add-friend QR on a white
+/// card with a profile row plus Copy/Share, and a camera viewfinder for scanning
+/// a friend's code, behind a segmented My-code / Scan switch.
+///
+/// QR payload, scan/add-friend handling and the `/friend/qr` route are unchanged
+/// from the original screen — only the chrome is restyled.
+class FriendQrPage extends ConsumerStatefulWidget {
   const FriendQrPage({super.key});
 
+  /// Builds the add-friend deep link a friend opens / scans.
+  ///
+  /// Always username+code based — never email, which would leak the address
+  /// through QR codes, share sheets and clipboard history. Returns null when the
+  /// user has no username yet.
+  static Uri? buildFriendQrLink(SupaUser user) {
+    if (user.username == null || user.usernameCode == null) return null;
+    return Uri.parse(
+      '$kWebAppBaseUrl/#/friend/accept?u=${Uri.encodeComponent(user.username!)}&c=${Uri.encodeComponent(user.usernameCode!)}',
+    );
+  }
+
   @override
-  State<FriendQrPage> createState() => _FriendQrPageState();
+  ConsumerState<FriendQrPage> createState() => _FriendQrPageState();
 }
 
-class _FriendQrPageState extends State<FriendQrPage> {
+class _FriendQrPageState extends ConsumerState<FriendQrPage> {
   int _tabIndex = 1; // default to My Code
   late final MobileScannerController _cameraController;
   bool _handlingScan = false;
@@ -34,38 +57,12 @@ class _FriendQrPageState extends State<FriendQrPage> {
       torchEnabled: false,
       formats: const [BarcodeFormat.qrCode],
     );
-    _buildUsernameLink();
   }
 
   @override
   void dispose() {
     _cameraController.dispose();
     super.dispose();
-  }
-
-  // The link is always username+code based — never email, which would leak
-  // the address through QR codes, share sheets, and clipboard history.
-  Uri? _cachedLink;
-  bool _linkLoadFailed = false;
-
-  Future<void> _buildUsernameLink() async {
-    setState(() => _linkLoadFailed = false);
-    try {
-      final email = supabase.auth.currentUser?.email ?? '';
-      final user = await UserRepository.fetchDetail(email);
-      if (!mounted) return;
-      if (user.username != null && user.usernameCode != null) {
-        setState(() {
-          _cachedLink = Uri.parse(
-            '$kWebAppBaseUrl/#/friend/accept?u=${Uri.encodeComponent(user.username!)}&c=${Uri.encodeComponent(user.usernameCode!)}',
-          );
-        });
-      } else {
-        setState(() => _linkLoadFailed = true);
-      }
-    } catch (_) {
-      if (mounted) setState(() => _linkLoadFailed = true);
-    }
   }
 
   void _restartScanner() {
@@ -129,157 +126,403 @@ class _FriendQrPageState extends State<FriendQrPage> {
 
   @override
   Widget build(BuildContext context) {
-    final link = _cachedLink;
+    final l10n = AppLocalizations.of(context)!;
+    final userAsync = ref.watch(userDetailProvider);
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(AppLocalizations.of(context)!.friendQrTitle,
-            style: GoogleFonts.robotoSerif(
-                textStyle: Theme.of(context).textTheme.titleLarge!.copyWith(fontWeight: FontWeight.w900)),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis),
+        title: Text(
+          l10n.friendQrTitle,
+          style: GoogleFonts.robotoSerif(
+            textStyle: Theme.of(context).textTheme.titleLarge!.copyWith(fontWeight: FontWeight.w900),
+          ),
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+        ),
       ),
       body: Column(
         children: [
-          const SizedBox(height: 12),
-          Center(
-            child: SegmentedButton<int>(
+          Padding(
+            padding: const EdgeInsets.fromLTRB(20, 12, 20, 12),
+            child: AppSegmentedControl<int>(
+              value: _tabIndex,
+              onChanged: (v) => setState(() => _tabIndex = v),
               segments: [
-                ButtonSegment(value: 0, label: Text(AppLocalizations.of(context)!.friendQrTabScan)),
-                ButtonSegment(value: 1, label: Text(AppLocalizations.of(context)!.friendQrTabMyCode)),
+                AppSegment(value: 0, label: l10n.friendQrTabScan, icon: Icons.qr_code_scanner),
+                AppSegment(value: 1, label: l10n.friendQrTabMyCode, icon: Icons.qr_code_2),
               ],
-              selected: {_tabIndex},
-              onSelectionChanged: (s) => setState(() => _tabIndex = s.first),
-              showSelectedIcon: false,
             ),
           ),
-          const SizedBox(height: 12),
           Expanded(
             child: AnimatedSwitcher(
               duration: const Duration(milliseconds: 250),
-              child: _tabIndex == 0 ? _buildScanner() : _buildMyCode(context, link),
+              child: _tabIndex == 0
+                  ? _ScanView(
+                      key: const ValueKey('scan'),
+                      controller: _cameraController,
+                      onDetect: _handleBarcode,
+                      shareLink: () {
+                        final u = userAsync.value;
+                        return u == null ? null : FriendQrPage.buildFriendQrLink(u);
+                      },
+                    )
+                  : _MyCodeView(
+                      key: const ValueKey('mine'),
+                      userAsync: userAsync,
+                      onRetry: () => ref.invalidate(userDetailProvider),
+                    ),
             ),
           ),
         ],
       ),
     );
   }
+}
 
-  Widget _buildScanner() {
-    return Stack(
-      children: [
-        MobileScanner(
-          controller: _cameraController,
-          onDetect: _handleBarcode,
-        ),
-        Positioned(
-          left: 12,
-          right: 12,
-          bottom: 24,
-          child: Row(
+/// The "My code" tab: QR on a white card + profile row + Copy/Share.
+class _MyCodeView extends StatelessWidget {
+  const _MyCodeView({super.key, required this.userAsync, required this.onRetry});
+
+  final AsyncValue<SupaUser> userAsync;
+  final VoidCallback onRetry;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
+    return userAsync.when(
+      loading: () => const Center(child: CircularProgressIndicator()),
+      error: (_, _) => _ErrorState(onRetry: onRetry),
+      data: (user) {
+        final link = FriendQrPage.buildFriendQrLink(user);
+        if (link == null) {
+          return _ErrorState(onRetry: onRetry);
+        }
+        return SingleChildScrollView(
+          padding: const EdgeInsets.fromLTRB(20, 4, 20, 24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
             children: [
-              IconButton.filledTonal(
-                onPressed: () => _cameraController.toggleTorch(),
-                icon: const Icon(Icons.flash_on),
+              // QR centered on a white rounded card. Kept dark-on-white even in
+              // dark mode for scannability (per DESIGN_SPEC).
+              Center(
+                child: Container(
+                  padding: const EdgeInsets.all(20),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(24),
+                  ),
+                  child: QrImageView(
+                    data: link.toString(),
+                    version: QrVersions.auto,
+                    size: 240.0,
+                    backgroundColor: Colors.white,
+                    eyeStyle: const QrEyeStyle(
+                      eyeShape: QrEyeShape.square,
+                      color: Colors.black,
+                    ),
+                    dataModuleStyle: const QrDataModuleStyle(
+                      dataModuleShape: QrDataModuleShape.square,
+                      color: Colors.black,
+                    ),
+                  ),
+                ),
               ),
-              const SizedBox(width: 8),
-              IconButton.filledTonal(
-                onPressed: () => _cameraController.switchCamera(),
-                icon: const Icon(Icons.cameraswitch),
+              const SizedBox(height: 18),
+              _ProfileRow(user: user),
+              const SizedBox(height: 14),
+              Text(
+                l10n.friendQrLetFriendScan,
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    ),
+                textAlign: TextAlign.center,
               ),
-              const Spacer(),
-              // Open system camera app as alternative
-              IconButton.filled(
-                onPressed: () async {
-                  final url = _cachedLink?.toString();
-                  if (url == null) {
-                    showSnackBar(context, AppLocalizations.of(context)!.generalError);
-                    return;
-                  }
-                  // Opening system camera is not directly possible; instruct via copying the link
-                  await Clipboard.setData(ClipboardData(text: url));
-                  if (mounted) {
-                    showSnackBar(
-                        context, AppLocalizations.of(context)!.friendQrLinkCopiedInstruction);
-                  }
-                },
-                icon: const Icon(Icons.link),
-                tooltip: AppLocalizations.of(context)!.copyLink,
+              const SizedBox(height: 18),
+              Row(
+                children: [
+                  Expanded(
+                    child: FilledButton.tonalIcon(
+                      onPressed: () async {
+                        await Clipboard.setData(ClipboardData(text: link.toString()));
+                        if (context.mounted) {
+                          showSnackBar(context, l10n.friendQrLinkCopied);
+                        }
+                      },
+                      icon: const Icon(Icons.copy, size: 19),
+                      label: Text(l10n.copyLink),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: FilledButton.icon(
+                      onPressed: () async {
+                        await SharePlus.instance
+                            .share(ShareParams(text: l10n.friendQrShareLink(link.toString())));
+                      },
+                      icon: const Icon(Icons.ios_share, size: 19),
+                      label: Text(l10n.share),
+                    ),
+                  ),
+                ],
               ),
             ],
           ),
+        );
+      },
+    );
+  }
+}
+
+/// Avatar + display name + @username#code.
+class _ProfileRow extends StatelessWidget {
+  const _ProfileRow({required this.user});
+
+  final SupaUser user;
+
+  @override
+  Widget build(BuildContext context) {
+    final textTheme = Theme.of(context).textTheme;
+    final colorScheme = Theme.of(context).colorScheme;
+    final name = user.displayName.isNotEmpty ? user.displayName : (user.username ?? '');
+    final handle = (user.username != null && user.usernameCode != null)
+        ? '@${user.username}#${user.usernameCode}'
+        : null;
+
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        MemberAvatar(name: name, colorKey: user.email, isYou: true, radius: 18),
+        const SizedBox(width: 10),
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              name,
+              style: textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700),
+            ),
+            if (handle != null)
+              Text(
+                handle,
+                style: textTheme.bodySmall?.copyWith(
+                  color: colorScheme.onSurfaceVariant,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+          ],
         ),
       ],
     );
   }
+}
 
-  Widget _buildMyCode(BuildContext context, Uri? link) {
-    if (link == null) {
-      return Center(
-        child: _linkLoadFailed
-            ? Column(
-                mainAxisSize: MainAxisSize.min,
+/// The "Scan" tab: the camera viewfinder with restyled corner-bracket framing.
+class _ScanView extends StatelessWidget {
+  const _ScanView({
+    super.key,
+    required this.controller,
+    required this.onDetect,
+    required this.shareLink,
+  });
+
+  final MobileScannerController controller;
+  final void Function(BarcodeCapture) onDetect;
+  final Uri? Function() shareLink;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    final colorScheme = Theme.of(context).colorScheme;
+    // Dark viewfinder surface in both themes (camera feed sits on dark chrome).
+    const frameColor = Color(0xFF16181A);
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 4, 20, 24),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(24),
+        child: Stack(
+          fit: StackFit.expand,
+          children: [
+            ColoredBox(
+              color: frameColor,
+              child: MobileScanner(
+                controller: controller,
+                onDetect: onDetect,
+              ),
+            ),
+            // Corner brackets overlay (accent-colored).
+            IgnorePointer(
+              child: CustomPaint(
+                painter: _ViewfinderPainter(color: colorScheme.primary),
+              ),
+            ),
+            // Prompt centered over the viewfinder.
+            IgnorePointer(
+              child: Center(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(Icons.qr_code_scanner, size: 34, color: Colors.white70),
+                    const SizedBox(height: 8),
+                    Text(
+                      l10n.friendQrScanPrompt,
+                      style: const TextStyle(
+                        color: Colors.white70,
+                        fontWeight: FontWeight.w600,
+                        fontSize: 13,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            // Controls row.
+            Positioned(
+              left: 16,
+              right: 16,
+              bottom: 18,
+              child: Row(
                 children: [
-                  Text(
-                    AppLocalizations.of(context)!.generalError,
-                    style: Theme.of(context).textTheme.bodyMedium,
+                  _ScanCircleButton(
+                    icon: Icons.flash_on,
+                    onTap: () => controller.toggleTorch(),
                   ),
-                  const SizedBox(height: 12),
-                  FilledButton.tonal(
-                    onPressed: _buildUsernameLink,
-                    child: Text(AppLocalizations.of(context)!.retry),
+                  const SizedBox(width: 8),
+                  _ScanCircleButton(
+                    icon: Icons.cameraswitch,
+                    onTap: () => controller.switchCamera(),
+                  ),
+                  const Spacer(),
+                  _ScanCircleButton(
+                    icon: Icons.link,
+                    filled: true,
+                    tooltip: l10n.copyLink,
+                    onTap: () async {
+                      final url = shareLink()?.toString();
+                      if (url == null) {
+                        showSnackBar(context, l10n.generalError);
+                        return;
+                      }
+                      await Clipboard.setData(ClipboardData(text: url));
+                      if (context.mounted) {
+                        showSnackBar(context, l10n.friendQrLinkCopiedInstruction);
+                      }
+                    },
                   ),
                 ],
-              )
-            : const CircularProgressIndicator(),
-      );
-    }
-    return SingleChildScrollView(
-        child: Center(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(16),
-            ),
-            child: QrImageView(
-              data: link.toString(),
-              version: QrVersions.auto,
-              size: 260.0,
-            ),
-          ),
-          const SizedBox(height: 16),
-          Text(
-            AppLocalizations.of(context)!.friendQrLetFriendScan,
-            style: Theme.of(context).textTheme.bodyMedium,
-            textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: 16),
-          Wrap(
-            spacing: 12,
-            children: [
-              FilledButton.icon(
-                onPressed: () async {
-                  await Clipboard.setData(ClipboardData(text: link.toString()));
-                },
-                icon: const Icon(Icons.copy),
-                label: Text(AppLocalizations.of(context)!.copyLink),
               ),
-              FilledButton.icon(
-                onPressed: () async {
-                  final url = link.toString();
-                  await SharePlus.instance.share(ShareParams(text: AppLocalizations.of(context)!.friendQrShareLink(url)));
-                },
-                icon: const Icon(Icons.ios_share),
-                label: Text(AppLocalizations.of(context)!.share),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// A round translucent (or filled-accent) control button over the viewfinder.
+class _ScanCircleButton extends StatelessWidget {
+  const _ScanCircleButton({
+    required this.icon,
+    required this.onTap,
+    this.filled = false,
+    this.tooltip,
+  });
+
+  final IconData icon;
+  final VoidCallback onTap;
+  final bool filled;
+  final String? tooltip;
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final button = SizedBox(
+      width: 42,
+      height: 42,
+      child: Material(
+        color: filled ? colorScheme.primary : Colors.white24,
+        shape: const CircleBorder(),
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+          onTap: onTap,
+          child: Icon(icon, size: 21, color: filled ? colorScheme.onPrimary : Colors.white),
+        ),
+      ),
+    );
+    return tooltip != null ? Tooltip(message: tooltip!, child: button) : button;
+  }
+}
+
+/// Paints four rounded corner brackets framing the viewfinder.
+class _ViewfinderPainter extends CustomPainter {
+  _ViewfinderPainter({required this.color});
+
+  final Color color;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    const inset = 24.0;
+    const len = 34.0;
+    final paint = Paint()
+      ..color = color
+      ..strokeWidth = 3
+      ..strokeCap = StrokeCap.round
+      ..style = PaintingStyle.stroke;
+
+    const left = inset;
+    const top = inset;
+    final right = size.width - inset;
+    final bottom = size.height - inset;
+
+    // Top-left
+    canvas.drawLine(const Offset(left, top), const Offset(left + len, top), paint);
+    canvas.drawLine(const Offset(left, top), const Offset(left, top + len), paint);
+    // Top-right
+    canvas.drawLine(Offset(right, top), Offset(right - len, top), paint);
+    canvas.drawLine(Offset(right, top), Offset(right, top + len), paint);
+    // Bottom-left
+    canvas.drawLine(Offset(left, bottom), Offset(left + len, bottom), paint);
+    canvas.drawLine(Offset(left, bottom), Offset(left, bottom - len), paint);
+    // Bottom-right
+    canvas.drawLine(Offset(right, bottom), Offset(right - len, bottom), paint);
+    canvas.drawLine(Offset(right, bottom), Offset(right, bottom - len), paint);
+  }
+
+  @override
+  bool shouldRepaint(_ViewfinderPainter oldDelegate) => oldDelegate.color != color;
+}
+
+/// Error / no-username state with a retry action.
+class _ErrorState extends StatelessWidget {
+  const _ErrorState({required this.onRetry});
+
+  final VoidCallback onRetry;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(20),
+        child: SoftCard(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                l10n.generalError,
+                style: Theme.of(context).textTheme.bodyMedium,
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 12),
+              FilledButton.tonal(
+                onPressed: onRetry,
+                child: Text(l10n.retry),
               ),
             ],
           ),
-        ],
+        ),
       ),
-    ));
+    );
   }
 }
