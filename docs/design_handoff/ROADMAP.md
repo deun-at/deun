@@ -387,6 +387,15 @@ mechanism); version footer = static tagline (`package_info_plus` not a dep). *Ca
   (`friendsNoEntries`). 2 widget tests; reused existing l10n; analyze clean, 538 green.
   *QA:* settled group card shows gray "Settled" with no amount (owed/owe still shows colored amount) in light+dark.
 - **E8-T5 a11y & touch targets:** ≥48dp hit areas, semantics labels, contrast on muted text in both themes.
+  ✅ **done · 1d025a2** — audit + targeted fixes: `StepperControl` ± buttons (40→48dp `InkResponse` + `Semantics`
+  button/localized increase/decrease labels, fixed once at source); `friend_qr_page.dart` torch/switch/copy → 48dp
+  + localized tooltips; `group_detail.dart` app-bar search/statistics/edit tooltips (reused keys). **Muted-text
+  contrast:** dark `onSurfaceVariant` `#9A968C`→`#ADA99F` (single +19/channel step; failed AA on
+  `surfaceContainerHighest` at 3.87:1 → 4.87:1; all dark surfaces now ≥4.5:1); light `#56524A` already passed
+  (6.3–7.8:1), unchanged; E0-T1 exact-slot test updated (not weakened). 6 tests incl. real WCAG-ratio
+  `muted_text_contrast_test.dart` (light+dark); 4 en+de keys; analyze clean, 544 green. *Already-accessible left
+  as-is:* favorite star/sign-out/claim edit `IconButton`s, text-labeled sheets/chips/scanner.
+  *QA:* screen-reader announces QR/app-bar/stepper controls; settled BalancePill + muted captions legible in dark.
 
 ---
 
