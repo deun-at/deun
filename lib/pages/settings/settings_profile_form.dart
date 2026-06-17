@@ -83,7 +83,7 @@ class _SettingsProfileFormState extends ConsumerState<SettingsProfileForm> {
               icon: const Icon(Icons.copy),
               onPressed: () {
                 Clipboard.setData(ClipboardData(text: user.fullUsername));
-                showSnackBar(context, '${user.fullUsername} copied');
+                showSnackBar(context, AppLocalizations.of(context)!.settingsUsernameCopied(user.fullUsername));
               },
             ),
           ),

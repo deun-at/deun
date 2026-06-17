@@ -862,12 +862,12 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String groupNotificationTitle(String userDisplayName) {
-    return '$userDisplayName added you to a new group!';
+    return '$userDisplayName hat dich zu einer neuen Gruppe hinzugefügt!';
   }
 
   @override
   String groupNotificationBody(String groupName) {
-    return 'You now have access to \"$groupName\".';
+    return 'Du hast jetzt Zugriff auf \"$groupName\".';
   }
 
   @override
@@ -875,7 +875,7 @@ class AppLocalizationsDe extends AppLocalizations {
     String userDisplayName,
     String groupName,
   ) {
-    return '$userDisplayName paid their debts in \"$groupName\" back!';
+    return '$userDisplayName hat die Schulden in \"$groupName\" zurückgezahlt!';
   }
 
   @override
@@ -887,12 +887,12 @@ class AppLocalizationsDe extends AppLocalizations {
     );
     final String amountString = amountNumberFormat.format(amount);
 
-    return 'You should receive $amountString in the next days.';
+    return 'Du solltest $amountString in den nächsten Tagen erhalten.';
   }
 
   @override
   String expenseNotificationTitle(String userDisplayName) {
-    return '$userDisplayName added a new expense!';
+    return '$userDisplayName hat eine neue Ausgabe hinzugefügt!';
   }
 
   @override
@@ -908,33 +908,34 @@ class AppLocalizationsDe extends AppLocalizations {
     );
     final String amountString = amountNumberFormat.format(amount);
 
-    return '\"$expenseName\" has been added to \"$groupName\" with a total of $amountString.';
+    return '\"$expenseName\" wurde zu \"$groupName\" mit einem Gesamtbetrag von $amountString hinzugefügt.';
   }
 
   @override
-  String get friendRequestNotificationTitle => 'You have a new friend request';
+  String get friendRequestNotificationTitle =>
+      'Du hast eine neue Freundschaftsanfrage';
 
   @override
   String friendRequestNotificationBody(String userDisplayName) {
-    return '$userDisplayName wants to connect with you.';
+    return '$userDisplayName möchte sich mit dir vernetzen.';
   }
 
   @override
   String get friendAcceptNotificationTitle =>
-      'Your friend request got accepted';
+      'Deine Freundschaftsanfrage wurde angenommen';
 
   @override
   String friendAcceptNotificationBody(String userDisplayName) {
-    return '$userDisplayName accepted your friend request.';
+    return '$userDisplayName hat deine Freundschaftsanfrage angenommen.';
   }
 
   @override
   String get friendDeclineNotificationTitle =>
-      'Your friend request got declined';
+      'Deine Freundschaftsanfrage wurde abgelehnt';
 
   @override
   String friendDeclineNotificationBody(String userDisplayName) {
-    return '$userDisplayName declined your friend request.';
+    return '$userDisplayName hat deine Freundschaftsanfrage abgelehnt.';
   }
 
   @override
@@ -1675,4 +1676,12 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get settingsTagline => 'Deun · Einfach fair teilen';
+
+  @override
+  String settingsUsernameCopied(String handle) {
+    return '$handle kopiert';
+  }
+
+  @override
+  String get pageNotFound => 'Seite nicht gefunden';
 }

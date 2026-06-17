@@ -1521,5 +1521,18 @@
   "settingsTagline": "Deun · Simply Split Fairly",
   "@settingsTagline": {
     "description": "Centered muted tagline footer at the bottom of the settings screen."
+  },
+  "settingsUsernameCopied": "{handle} copied",
+  "@settingsUsernameCopied": {
+    "description": "Snackbar shown after copying the user's full username to the clipboard.",
+    "placeholders": {
+      "handle": {
+        "type": "String"
+      }
+    }
+  },
+  "pageNotFound": "Page not found",
+  "@pageNotFound": {
+    "description": "Fallback message shown for unknown/invalid routes."
   }
 }
