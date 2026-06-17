@@ -13,17 +13,22 @@ import '../../../main.dart';
 import '../../../widgets/theme_builder.dart';
 import '../../groups/data/group_model.dart';
 import 'expense_entry_widget.dart';
+import 'receipt_scanner_sheet.dart';
+import '../data/editor_mode.dart';
 import '../data/expense_entry_model.dart';
 import '../data/expense_model.dart';
 import '../data/expense_repository.dart';
 import '../data/expense_category.dart';
+import '../data/itemized_totals.dart';
 import '../data/receipt_scan_result.dart';
 import '../../../widgets/category_selector.dart';
 import '../../../widgets/user_avatar.dart';
+import '../../../widgets/restyle/app_segmented_control.dart';
 import '../../../widgets/restyle/discard_sheet.dart';
 import '../../../widgets/restyle/soft_card.dart';
 import '../../../widgets/restyle/section_label.dart';
 import '../../../widgets/restyle/member_avatar.dart';
+import '../../../widgets/restyle/money_text.dart';
 
 class ExpenseEntryData {
   final int index;
@@ -66,7 +71,23 @@ class _ExpenseDetailState extends ConsumerState<ExpenseDetail> {
   final List<ExpenseEntryData> _entries = [];
   int _newTextFieldId = 0;
 
-  bool get _isSingleEntry => _entries.length == 1;
+  /// Drives the Quick/Itemized top toggle. The app still distinguishes the two
+  /// layouts by entry count (a single entry = Quick); this override lets the
+  /// toggle force the Itemized layout while only one entry exists, without
+  /// inventing a parallel data model. See [resolveEditorMode].
+  bool _itemizedOverride = false;
+
+  /// Quick layout is shown only for a single entry with no itemized override.
+  bool get _isSingleEntry =>
+      isSingleEntryQuick(
+        entryCount: _entries.length,
+        itemizedOverride: _itemizedOverride,
+      );
+
+  EditorMode get _editorMode => resolveEditorMode(
+        entryCount: _entries.length,
+        itemizedOverride: _itemizedOverride,
+      );
 
   /// Whether the user has touched the form (drives the discard guard).
   bool _isDirty = false;
@@ -95,6 +116,8 @@ class _ExpenseDetailState extends ConsumerState<ExpenseDetail> {
         ));
       });
     } else if (widget.receiptResult != null && widget.receiptResult!.lineItems.isNotEmpty) {
+      // A scanned receipt with itemized lines opens in the Itemized layout.
+      _itemizedOverride = true;
       for (final item in widget.receiptResult!.lineItems) {
         final expenseEntry = ExpenseEntry(index: _newTextFieldId++);
         _entries.add(ExpenseEntryData(
@@ -247,6 +270,91 @@ class _ExpenseDetailState extends ConsumerState<ExpenseDetail> {
     return member.email == supabase.auth.currentUser?.email
         ? AppLocalizations.of(context)!.you
         : member.displayName;
+  }
+
+  /// The Quick / Itemized top segmented toggle. Bound to the existing
+  /// entry-count mode via [_onEditorModeChanged] — no parallel state.
+  Widget _buildModeToggle() {
+    final l10n = AppLocalizations.of(context)!;
+    return AppSegmentedControl<EditorMode>(
+      value: _editorMode,
+      segments: [
+        AppSegment(value: EditorMode.quick, label: l10n.editorModeQuick),
+        AppSegment(value: EditorMode.itemized, label: l10n.editorModeItemized),
+      ],
+      onChanged: _onEditorModeChanged,
+    );
+  }
+
+  /// Itemized header: the live total summed from the item line totals, with a
+  /// Scan action that triggers the existing receipt scanner.
+  Widget _buildItemizedTotalHeader() {
+    final l10n = AppLocalizations.of(context)!;
+    final colorScheme = Theme.of(context).colorScheme;
+    final total = _itemizedTotalFromForm();
+    return SoftCard(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+      child: Row(
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  l10n.itemizedTotalFromItems(_entries.length),
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: colorScheme.onSurfaceVariant,
+                      ),
+                ),
+                const SizedBox(height: 4),
+                MoneyText(
+                  total,
+                  style: Theme.of(context)
+                      .textTheme
+                      .displaySmall
+                      ?.copyWith(color: colorScheme.onSurface),
+                ),
+              ],
+            ),
+          ),
+          FilledButton.tonalIcon(
+            onPressed: _scanReceipt,
+            icon: const Icon(Icons.document_scanner_outlined),
+            label: Text(l10n.receiptScanButton),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Tinted info callout explaining itemized / claiming. Uses a primary tint,
+  /// never a hard-coded hex.
+  Widget _buildItemizedInfoCallout() {
+    final l10n = AppLocalizations.of(context)!;
+    final colorScheme = Theme.of(context).colorScheme;
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: colorScheme.primaryContainer.withValues(alpha: 0.5),
+        borderRadius: BorderRadius.circular(14),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(Icons.info_outline, size: 20, color: colorScheme.primary),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              l10n.itemizedInfoCallout,
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: colorScheme.onSurfaceVariant,
+                  ),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   Widget _buildNameField() {
@@ -459,35 +567,138 @@ class _ExpenseDetailState extends ConsumerState<ExpenseDetail> {
     });
   }
 
+  /// Maps the Quick/Itemized toggle onto the existing entry-count mode.
+  ///
+  /// Quick → Itemized: flip the override so the (possibly single) entry renders
+  /// as an item card, seeding the first item's amount from the quick amount —
+  /// the same hand-off [_addNewEntry] already performs.
+  ///
+  /// Itemized → Quick: only collapses cleanly when a single entry exists. With
+  /// multiple entries the layout is inherently itemized, so the toggle keeps the
+  /// override on (no data is dropped) — the user removes items to collapse.
+  void _onEditorModeChanged(EditorMode mode) {
+    if (mode == _editorMode) return;
+    setState(() {
+      if (mode == EditorMode.itemized) {
+        if (_entries.length == 1 &&
+            _amountController.text.isNotEmpty &&
+            _amountController.text != "0") {
+          _entries.first.initialAmount = _amountController.text;
+        }
+        _itemizedOverride = true;
+      } else {
+        // Back to Quick: only the single-entry case can collapse. Copy the
+        // entry amount back to the expense-level controller so it is preserved.
+        if (_entries.length == 1) {
+          final firstIndex = _entries.first.index;
+          final amount = _formKey.currentState
+              ?.fields["expense_entry[$firstIndex][amount]"]?.value
+              ?.toString();
+          if (amount != null && amount.isNotEmpty) {
+            _amountController.text = amount;
+            _entries.first.initialAmount = amount;
+          }
+          _itemizedOverride = false;
+        }
+      }
+    });
+  }
+
+  /// Sum of the current item line totals, read live from the form fields so the
+  /// header tracks edits. Uses the pure [itemizedTotal] helper.
+  double _itemizedTotalFromForm() {
+    final formState = _formKey.currentState;
+    final lines = <ItemLine>[];
+    for (final data in _entries) {
+      double unitPrice = double.tryParse(data.initialAmount ?? '') ?? 0;
+      int quantity = int.tryParse(data.initialQuantity ?? '') ?? 1;
+      if (formState != null) {
+        final amountVal =
+            formState.fields["expense_entry[${data.index}][amount]"]?.value;
+        if (amountVal != null) {
+          unitPrice = double.tryParse(amountVal.toString()) ?? unitPrice;
+        }
+        final qtyVal =
+            formState.fields["expense_entry[${data.index}][quantity]"]?.value;
+        if (qtyVal != null) {
+          quantity = int.tryParse(qtyVal.toString()) ?? quantity;
+        }
+      }
+      lines.add(ItemLine(unitPrice: unitPrice, quantity: quantity));
+    }
+    return itemizedTotal(lines);
+  }
+
+  Future<void> _scanReceipt() async {
+    final result = await showModalBottomSheet<ReceiptScanResult>(
+      context: context,
+      builder: (context) => const ReceiptScannerSheet(),
+    );
+    if (result == null || !mounted) return;
+    setState(() {
+      _itemizedOverride = true;
+      if (result.merchantName != null) {
+        _nameController.text = result.merchantName!;
+        _formKey.currentState?.fields['name']?.didChange(result.merchantName);
+        detectAndUpdateCategory(result.merchantName!);
+      }
+      if (result.date != null) {
+        _formKey.currentState?.fields['expense_date']?.didChange(result.date);
+      }
+      if (result.lineItems.isNotEmpty) {
+        // Replace the current items with the scanned lines.
+        _entries.clear();
+        for (final item in result.lineItems) {
+          final expenseEntry = ExpenseEntry(index: _newTextFieldId++);
+          _entries.add(ExpenseEntryData(
+            index: expenseEntry.index,
+            expenseEntry: expenseEntry,
+            onRemove: () => _removeEntry(expenseEntry),
+            groupMembers: groupMembers,
+            initialName: item.name,
+            initialAmount: item.amount.toStringAsFixed(2),
+          ));
+        }
+      } else if (result.total != null && _entries.isNotEmpty) {
+        _entries.first.initialAmount = result.total!.toStringAsFixed(2);
+      }
+      _isDirty = true;
+    });
+  }
+
+  Future<void> _saveExpense(BuildContext context) async {
+    if (_formKey.currentState!.saveAndValidate()) {
+      try {
+        await ExpenseRepository.saveAll(context, widget.group.id, widget.expense?.id, _formKey.currentState!.value);
+        if (context.mounted) {
+          showSnackBar(context, AppLocalizations.of(context)!.expenseCreateSuccess);
+        }
+      } catch (e) {
+        if (context.mounted) {
+          showSnackBar(context, AppLocalizations.of(context)!.expenseCreateError);
+        }
+      } finally {
+        if (mounted) {
+          if (context.mounted) {
+            _bypassDiscardGuard = true;
+            Navigator.pop(context);
+          }
+        }
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     const double spacing = 8;
 
     List<Widget> expenseActions = [];
 
-    Widget saveExpenseButton = FilledButton(
-      onPressed: () async {
-        if (_formKey.currentState!.saveAndValidate()) {
-          try {
-            await ExpenseRepository.saveAll(context, widget.group.id, widget.expense?.id, _formKey.currentState!.value);
-            if (context.mounted) {
-              showSnackBar(context, AppLocalizations.of(context)!.expenseCreateSuccess);
-            }
-          } catch (e) {
-            if (context.mounted) {
-              showSnackBar(context, AppLocalizations.of(context)!.expenseCreateError);
-            }
-          } finally {
-            if (mounted) {
-              if (context.mounted) {
-                _bypassDiscardGuard = true;
-                Navigator.pop(context);
-              }
-            }
-          }
-        }
-      },
-      child: Text(AppLocalizations.of(context)!.save),
+    Widget saveExpenseButton = Builder(
+      builder: (context) => FilledButton(
+        onPressed: () => _saveExpense(context),
+        child: Text(AppLocalizations.of(context)!.save),
+      ),
     );
 
     if (widget.expense != null) {
@@ -544,11 +755,17 @@ class _ExpenseDetailState extends ConsumerState<ExpenseDetail> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
+                            _buildModeToggle(),
+                            const SizedBox(height: spacing * 2),
                             _buildNameField(),
-                            // Expense-level amount (single entry mode only)
+                            // Quick layout: expense-level amount card.
+                            // Itemized layout: total-from-items header + Scan.
                             if (_isSingleEntry) ...[
                               const SizedBox(height: spacing * 2),
                               _buildExpenseLevelAmount(),
+                            ] else ...[
+                              const SizedBox(height: spacing * 2),
+                              _buildItemizedTotalHeader(),
                             ],
                             const SizedBox(height: spacing * 2),
                             SectionLabel(AppLocalizations.of(context)!.expenseDetailsLabel),
@@ -561,6 +778,10 @@ class _ExpenseDetailState extends ConsumerState<ExpenseDetail> {
                               name: "category",
                               initialValue: _detectedCategory ?? widget.expense?.category,
                             ),
+                            if (!_isSingleEntry) ...[
+                              const SizedBox(height: spacing * 2),
+                              SectionLabel(AppLocalizations.of(context)!.itemizedItemsLabel),
+                            ],
                           ],
                         ),
                       ),
@@ -583,10 +804,33 @@ class _ExpenseDetailState extends ConsumerState<ExpenseDetail> {
                       Center(
                         child: FilledButton.tonalIcon(
                           icon: const Icon(Icons.add),
-                          label: Text(AppLocalizations.of(context)!.addNewExpenseEntry),
+                          label: Text(_isSingleEntry
+                              ? AppLocalizations.of(context)!.addNewExpenseEntry
+                              : AppLocalizations.of(context)!.addItemByHand),
                           onPressed: () => _addNewEntry(),
                         ),
                       ),
+                      if (!_isSingleEntry) ...[
+                        const SizedBox(height: spacing * 2),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 16),
+                          child: _buildItemizedInfoCallout(),
+                        ),
+                        const SizedBox(height: spacing * 2),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 16),
+                          child: SizedBox(
+                            width: double.infinity,
+                            child: FilledButton(
+                              onPressed: () => _saveExpense(context),
+                              child: Text(widget.expense != null
+                                  ? AppLocalizations.of(context)!.save
+                                  : AppLocalizations.of(context)!
+                                      .expenseSaveAndShareForClaiming),
+                            ),
+                          ),
+                        ),
+                      ],
                     ],
                   ),
                 ),
