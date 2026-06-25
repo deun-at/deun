@@ -45,6 +45,7 @@ import 'pages/groups/data/group_model.dart';
 import 'pages/groups/data/group_repository.dart';
 import 'pages/settings/setting.dart';
 import 'widgets/modal_bottom_sheet_page.dart';
+import 'widgets/page_transitions.dart';
 import 'widgets/restyle/app_bottom_nav.dart';
 
 final _rootNavigatorKey = GlobalKey<NavigatorState>(debugLabel: 'root');
@@ -109,62 +110,77 @@ class _NavigationScreenState extends ConsumerState<NavigationScreen> with Widget
                     GoRoute(
                         path: 'details',
                         parentNavigatorKey: _rootNavigatorKey,
-                        builder: (context, state) {
+                        pageBuilder: (context, state) {
                           var extra = state.extra as Map<String, dynamic>;
                           var group = extra['group'] as Group;
 
-                          return GroupDetail(group: group);
+                          return sharedAxisPage(
+                            key: state.pageKey,
+                            child: GroupDetail(group: group),
+                          );
                         },
                         routes: [
                           GoRoute(
                               path: 'expense',
                               parentNavigatorKey: _rootNavigatorKey,
-                              builder: (context, state) {
+                              pageBuilder: (context, state) {
                                 var extra = state.extra as Map<String, dynamic>;
                                 var group = extra['group'] as Group;
                                 var expense = extra['expense'] as Expense?;
                                 var receiptResult = extra['receiptResult'] as ReceiptScanResult?;
 
-                                return ExpenseDetail(
-                                  group: group,
-                                  expense: expense,
-                                  receiptResult: receiptResult,
+                                return sharedAxisPage(
+                                  key: state.pageKey,
+                                  child: ExpenseDetail(
+                                    group: group,
+                                    expense: expense,
+                                    receiptResult: receiptResult,
+                                  ),
                                 );
                               }),
                           GoRoute(
                               path: 'expense-detail',
                               parentNavigatorKey: _rootNavigatorKey,
-                              builder: (context, state) {
+                              pageBuilder: (context, state) {
                                 var extra = state.extra as Map<String, dynamic>;
                                 var group = extra['group'] as Group;
                                 var expense = extra['expense'] as Expense;
 
-                                return ExpenseDetailRead(
-                                  group: group,
-                                  expense: expense,
+                                return sharedAxisPage(
+                                  key: state.pageKey,
+                                  child: ExpenseDetailRead(
+                                    group: group,
+                                    expense: expense,
+                                  ),
                                 );
                               }),
                           GoRoute(
                               path: 'claim',
                               parentNavigatorKey: _rootNavigatorKey,
-                              builder: (context, state) {
+                              pageBuilder: (context, state) {
                                 var extra = state.extra as Map<String, dynamic>;
                                 var group = extra['group'] as Group;
                                 var expense = extra['expense'] as Expense;
 
-                                return ClaimPage(
-                                  group: group,
-                                  expense: expense,
+                                return sharedAxisPage(
+                                  key: state.pageKey,
+                                  child: ClaimPage(
+                                    group: group,
+                                    expense: expense,
+                                  ),
                                 );
                               }),
                           GoRoute(
                               path: 'statistics',
                               parentNavigatorKey: _rootNavigatorKey,
-                              builder: (context, state) {
+                              pageBuilder: (context, state) {
                                 var extra = state.extra as Map<String, dynamic>;
                                 var group = extra['group'] as Group;
 
-                                return GroupStatisticsPage(group: group);
+                                return sharedAxisPage(
+                                  key: state.pageKey,
+                                  child: GroupStatisticsPage(group: group),
+                                );
                               },
                               routes: [
                                 GoRoute(
@@ -220,11 +236,14 @@ class _NavigationScreenState extends ConsumerState<NavigationScreen> with Widget
                     GoRoute(
                         path: 'edit',
                         parentNavigatorKey: _rootNavigatorKey,
-                        builder: (context, state) {
+                        pageBuilder: (context, state) {
                           var extra = state.extra as Map<String, dynamic>?;
                           var group = extra?['group'] as Group?;
 
-                          return GroupEdit(group: group);
+                          return sharedAxisPage(
+                            key: state.pageKey,
+                            child: GroupEdit(group: group),
+                          );
                         }),
                     GoRoute(
                         path: 'share',
@@ -239,10 +258,13 @@ class _NavigationScreenState extends ConsumerState<NavigationScreen> with Widget
                     GoRoute(
                         path: 'join',
                         parentNavigatorKey: _rootNavigatorKey,
-                        builder: (context, state) {
+                        pageBuilder: (context, state) {
                           final groupId = state.uri.queryParameters['groupId'];
                           final groupName = state.uri.queryParameters['name'];
-                          return GroupJoinPage(groupId: groupId ?? '', groupName: groupName);
+                          return sharedAxisPage(
+                            key: state.pageKey,
+                            child: GroupJoinPage(groupId: groupId ?? '', groupName: groupName),
+                          );
                         }),
                   ],
                 ),
@@ -261,24 +283,33 @@ class _NavigationScreenState extends ConsumerState<NavigationScreen> with Widget
                       GoRoute(
                           path: 'add',
                           parentNavigatorKey: _rootNavigatorKey,
-                          builder: (context, state) => const FriendAddPage(),
+                          pageBuilder: (context, state) => sharedAxisPage(
+                            key: state.pageKey,
+                            child: const FriendAddPage(),
+                          ),
                       ),
                       GoRoute(
                         path: 'qr',
                         parentNavigatorKey: _rootNavigatorKey,
-                        builder: (context, state) => const FriendQrPage(),
+                        pageBuilder: (context, state) => sharedAxisPage(
+                          key: state.pageKey,
+                          child: const FriendQrPage(),
+                        ),
                       ),
                       GoRoute(
                         path: 'accept',
                         parentNavigatorKey: _rootNavigatorKey,
-                        builder: (context, state) {
+                        pageBuilder: (context, state) {
                           final email = state.uri.queryParameters['email'];
                           final username = state.uri.queryParameters['u'];
                           final code = state.uri.queryParameters['c'];
-                          return FriendAcceptPage(
-                            email: email,
-                            username: username,
-                            usernameCode: code,
+                          return sharedAxisPage(
+                            key: state.pageKey,
+                            child: FriendAcceptPage(
+                              email: email,
+                              username: username,
+                              usernameCode: code,
+                            ),
                           );
                         },
                       ),
@@ -300,22 +331,27 @@ class _NavigationScreenState extends ConsumerState<NavigationScreen> with Widget
                       GoRoute(
                         path: 'privacy-policy',
                         parentNavigatorKey: _rootNavigatorKey,
-                        builder: (context, state) {
-                          return const PrivacyPolicy();
-                        },
+                        pageBuilder: (context, state) => sharedAxisPage(
+                          key: state.pageKey,
+                          child: const PrivacyPolicy(),
+                        ),
                       ),
                       GoRoute(
                         path: 'statistics',
                         parentNavigatorKey: _rootNavigatorKey,
-                        builder: (context, state) => const PersonalStatisticsPage(),
+                        pageBuilder: (context, state) => sharedAxisPage(
+                          key: state.pageKey,
+                          child: const PersonalStatisticsPage(),
+                        ),
                       ),
                       // child route
                       GoRoute(
                         path: 'contact',
                         parentNavigatorKey: _rootNavigatorKey,
-                        builder: (context, state) {
-                          return const Contact();
-                        },
+                        pageBuilder: (context, state) => sharedAxisPage(
+                          key: state.pageKey,
+                          child: const Contact(),
+                        ),
                       ),
                     ]),
               ],
@@ -324,20 +360,23 @@ class _NavigationScreenState extends ConsumerState<NavigationScreen> with Widget
         ),
         GoRoute(
           path: '/privacy-policy',
-          pageBuilder: (context, state) => const NoTransitionPage(
-            child: PrivacyPolicy(),
+          pageBuilder: (context, state) => sharedAxisPage(
+            key: state.pageKey,
+            child: const PrivacyPolicy(),
           ),
         ),
         GoRoute(
           path: '/contact',
-          pageBuilder: (context, state) => const NoTransitionPage(
-            child: Contact(),
+          pageBuilder: (context, state) => sharedAxisPage(
+            key: state.pageKey,
+            child: const Contact(),
           ),
         ),
         GoRoute(
           path: '/update-password',
-          pageBuilder: (context, state) => const NoTransitionPage(
-            child: UpdatePassword(),
+          pageBuilder: (context, state) => sharedAxisPage(
+            key: state.pageKey,
+            child: const UpdatePassword(),
           ),
         ),
         // Throwaway dev/QA route for the E0-T4 shared restyle widgets.
