@@ -235,8 +235,12 @@ class _InsetFormField extends StatelessWidget {
   }
 }
 
-/// The tappable Language row (mirrors the inset field surface) showing the
-/// current language and a chevron; tapping opens the language sheet.
+/// The tappable Language row. Per v3 (and consistent with the iconless
+/// [_InsetFormField] styling that F09/F11 established), this carries no leading
+/// translate icon: it is a floating label + current value with a trailing
+/// dropdown chevron ([Icons.expand_more], v3 `chevron_down`) so it reads as a
+/// dropdown selector rather than a navigate-forward row. Tapping still opens
+/// the language sheet — only the icon/chevron presentation changed.
 class _LanguageRow extends StatelessWidget {
   const _LanguageRow({required this.value, required this.onTap});
 
@@ -246,7 +250,6 @@ class _LanguageRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
-    final textTheme = Theme.of(context).textTheme;
     final radius = BorderRadius.circular(12);
 
     return Material(
@@ -255,22 +258,16 @@ class _LanguageRow extends StatelessWidget {
       child: InkWell(
         onTap: onTap,
         borderRadius: radius,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-          child: Row(
-            children: [
-              Icon(Icons.translate, color: colorScheme.onSurfaceVariant),
-              const SizedBox(width: 12),
-              Text(
-                AppLocalizations.of(context)!.settingsLocale,
-                style: textTheme.bodyLarge?.copyWith(color: colorScheme.onSurfaceVariant),
-              ),
-              const Spacer(),
-              Text(value, style: textTheme.bodyLarge),
-              const SizedBox(width: 4),
-              Icon(Icons.chevron_right, color: colorScheme.onSurfaceVariant),
-            ],
+        child: InputDecorator(
+          decoration: InputDecoration(
+            labelText: AppLocalizations.of(context)!.settingsLocale,
+            filled: true,
+            fillColor: colorScheme.surfaceContainer,
+            border: OutlineInputBorder(borderRadius: radius, borderSide: BorderSide.none),
+            enabledBorder: OutlineInputBorder(borderRadius: radius, borderSide: BorderSide.none),
+            suffixIcon: Icon(Icons.expand_more, color: colorScheme.onSurfaceVariant),
           ),
+          child: Text(value, style: Theme.of(context).textTheme.bodyLarge),
         ),
       ),
     );
