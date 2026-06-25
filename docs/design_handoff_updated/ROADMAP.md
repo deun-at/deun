@@ -238,7 +238,7 @@ these are the in-scope tasks, foundation-first:
     (payment sheet re-scoped to V3-T9 — it's a draggable sheet, governed by COMPONENTS §3)
 - **V3-T4 · Shared-axis route transitions** · `navigation.dart` (ANIMATIONS §1) ✅ done · 8fdf6e6
   (16 drill-down routes; home-tab fade-through deferred as v0; predictive-back needs device QA)
-- **V3-T5 · Staggered list entrance** · groups/friends lists (ANIMATIONS §2) — pending
+- **V3-T5 · Staggered list entrance** · groups/friends lists (ANIMATIONS §2) ✅ done · 625ba6b
 - **V3-T6 · Count-up heroes** · existing hero amounts (ANIMATIONS §3) — pending
 - **V3-T7 · Success pop+ring** · confirm/success sheets (ANIMATIONS §4) — pending
 - **V3-T8 · Chart/progress grow** · stats + claim/progress bars (ANIMATIONS §5) — pending
