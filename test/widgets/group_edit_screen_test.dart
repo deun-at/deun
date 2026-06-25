@@ -3,6 +3,7 @@ import 'package:deun/l10n/app_localizations.dart';
 import 'package:deun/pages/groups/data/group_member_model.dart';
 import 'package:deun/pages/groups/data/group_model.dart';
 import 'package:deun/pages/groups/presentation/group_detail_edit.dart';
+import 'package:deun/widgets/restyle/primary_button.dart';
 import 'package:deun/widgets/theme_builder.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -115,7 +116,7 @@ void main() {
     expect(find.text(l10n.groupTrackingModeSimplifiedTitle), findsOneWidget);
     expect(find.text(l10n.groupTrackingModeDetailedTitle), findsOneWidget);
     // Sticky Create button (new group, not Save).
-    expect(find.byType(FilledButton), findsOneWidget);
+    expect(find.byType(PrimaryButton), findsOneWidget);
     expect(find.text(l10n.create), findsOneWidget);
   });
 
