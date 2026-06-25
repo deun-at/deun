@@ -47,20 +47,32 @@ class _SettingsProfileFormState extends ConsumerState<SettingsProfileForm> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          _InsetFormField(
-            name: 'first_name',
-            label: l10n.settingsFirstName,
-            validator: FormBuilderValidators.required(
-              errorText: l10n.settingsFirstNameValidationEmpty,
-            ),
-          ),
-          const SizedBox(height: heightSpacing),
-          _InsetFormField(
-            name: 'last_name',
-            label: l10n.settingsLastName,
-            validator: FormBuilderValidators.required(
-              errorText: l10n.settingsLastNameValidationEmpty,
-            ),
+          // First + Last name share a single two-column row (v3 profile form).
+          // crossAxisAlignment.start keeps the pair top-aligned if one field
+          // shows a validation error and grows taller than the other.
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: _InsetFormField(
+                  name: 'first_name',
+                  label: l10n.settingsFirstName,
+                  validator: FormBuilderValidators.required(
+                    errorText: l10n.settingsFirstNameValidationEmpty,
+                  ),
+                ),
+              ),
+              const SizedBox(width: heightSpacing),
+              Expanded(
+                child: _InsetFormField(
+                  name: 'last_name',
+                  label: l10n.settingsLastName,
+                  validator: FormBuilderValidators.required(
+                    errorText: l10n.settingsLastNameValidationEmpty,
+                  ),
+                ),
+              ),
+            ],
           ),
           const SizedBox(height: heightSpacing),
           _InsetFormField(
