@@ -7,6 +7,7 @@ import 'package:deun/pages/statistics/widgets/members_section.dart';
 import 'package:deun/pages/statistics/widgets/range_selector.dart';
 import 'package:deun/pages/statistics/widgets/summary_section.dart';
 import 'package:deun/pages/statistics/widgets/trend_section.dart';
+import 'package:deun/widgets/restyle/deun_header.dart';
 import 'package:deun/widgets/theme_builder.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -70,34 +71,39 @@ class _GroupStatisticsPageState extends ConsumerState<GroupStatisticsPage> {
       colorValue: widget.group.colorValue,
       builder: (context) {
         return Scaffold(
-          appBar: AppBar(
-            title: Text(l10n.statisticsTitle, maxLines: 1, overflow: TextOverflow.ellipsis),
-          ),
-          body: SafeArea(
-            child: CustomScrollView(
-              slivers: [
-                SliverToBoxAdapter(
-                  child: StatsRangeSelector(
-                    current: _range,
-                    onChanged: (r) => setState(() {
-                      _range = r;
-                      _offset = 0;
-                    }),
-                    offsetMonths: _offset,
-                    onOffsetChanged: (o) => setState(() => _offset = o),
+          body: Column(
+            children: [
+              DeunHeader(title: l10n.statisticsTitle),
+              Expanded(
+                child: SafeArea(
+                  top: false,
+                  child: CustomScrollView(
+                    slivers: [
+                      SliverToBoxAdapter(
+                        child: StatsRangeSelector(
+                          current: _range,
+                          onChanged: (r) => setState(() {
+                            _range = r;
+                            _offset = 0;
+                          }),
+                          offsetMonths: _offset,
+                          onOffsetChanged: (o) => setState(() => _offset = o),
+                        ),
+                      ),
+                      SliverToBoxAdapter(child: StatsSummarySection(args: args)),
+                      SliverToBoxAdapter(
+                        child: StatsTrendSection(args: args, onMonthTap: _openMonth),
+                      ),
+                      SliverToBoxAdapter(child: StatsMembersSection(args: args)),
+                      SliverToBoxAdapter(
+                        child: StatsCategoriesSection(args: args, onCategoryTap: _openCategory),
+                      ),
+                      const SliverToBoxAdapter(child: SizedBox(height: 24)),
+                    ],
                   ),
                 ),
-                SliverToBoxAdapter(child: StatsSummarySection(args: args)),
-                SliverToBoxAdapter(
-                  child: StatsTrendSection(args: args, onMonthTap: _openMonth),
-                ),
-                SliverToBoxAdapter(child: StatsMembersSection(args: args)),
-                SliverToBoxAdapter(
-                  child: StatsCategoriesSection(args: args, onCategoryTap: _openCategory),
-                ),
-                const SliverToBoxAdapter(child: SizedBox(height: 24)),
-              ],
-            ),
+              ),
+            ],
           ),
         );
       },

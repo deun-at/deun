@@ -4,6 +4,7 @@ import 'package:deun/constants.dart';
 import 'package:deun/helper/helper.dart';
 import 'package:deun/pages/friends/data/friendship_repository.dart';
 import 'package:deun/pages/friends/provider/friend_add_notifier.dart';
+import 'package:deun/widgets/restyle/deun_header.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:deun/l10n/app_localizations.dart';
@@ -53,36 +54,39 @@ class _FriendAddPageState extends ConsumerState<FriendAddPage> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     return Scaffold(
-      appBar: AppBar(
-        title: Text(l10n.addFriends),
-        centerTitle: true,
-      ),
-      body: SafeArea(
-        top: false,
-        child: Column(
-          children: [
-            // Search field is outside the provider-watched subtree so it never
-            // rebuilds when results change — prevents keyboard dismissal.
-            Padding(
-              padding: const EdgeInsets.fromLTRB(20, 6, 20, 12),
-              child: _SearchField(
-                controller: _searchController,
-                focusNode: _searchFocusNode,
-                hintText: l10n.addFriendshipSearchHint,
-                onChanged: _onSearchChanged,
+      body: Column(
+        children: [
+          DeunHeader(title: l10n.addFriends),
+          Expanded(
+            child: SafeArea(
+              top: false,
+              child: Column(
+                children: [
+                  // Search field is outside the provider-watched subtree so it never
+                  // rebuilds when results change — prevents keyboard dismissal.
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(20, 6, 20, 12),
+                    child: _SearchField(
+                      controller: _searchController,
+                      focusNode: _searchFocusNode,
+                      hintText: l10n.addFriendshipSearchHint,
+                      onChanged: _onSearchChanged,
+                    ),
+                  ),
+                  Expanded(
+                    child: _FriendAddResults(
+                      requestedEmails: _requestedEmails,
+                      onRequest: _requestFriendship,
+                      onRequestContactPermission: () {
+                        ref.read(friendAddProvider.notifier).retryContactPermission();
+                      },
+                    ),
+                  ),
+                ],
               ),
             ),
-            Expanded(
-              child: _FriendAddResults(
-                requestedEmails: _requestedEmails,
-                onRequest: _requestFriendship,
-                onRequestContactPermission: () {
-                  ref.read(friendAddProvider.notifier).retryContactPermission();
-                },
-              ),
-            ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }

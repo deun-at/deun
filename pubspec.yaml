@@ -60,6 +60,8 @@ dev_dependencies:
   json_serializable: ^6.9.0
   mockito: ^5.4.5
   flutter_native_splash: ^2.4.5
+  plugin_platform_interface: ^2.1.8
+  webview_flutter_platform_interface: ^2.15.1
 
 flutter_native_splash:
   color: "#efedee"

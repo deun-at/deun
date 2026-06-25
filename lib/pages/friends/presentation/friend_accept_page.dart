@@ -2,6 +2,7 @@ import 'package:deun/helper/helper.dart';
 import 'package:deun/pages/friends/data/friendship_repository.dart';
 import 'package:deun/pages/users/user_model.dart';
 import 'package:deun/pages/users/user_repository.dart';
+import 'package:deun/widgets/restyle/deun_header.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:deun/l10n/app_localizations.dart';
@@ -104,9 +105,12 @@ class _FriendAcceptPageState extends State<FriendAcceptPage> {
     final colorScheme = Theme.of(context).colorScheme;
 
     return Scaffold(
-      appBar: AppBar(title: Text(AppLocalizations.of(context)!.requestFriendship)),
-      body: Center(
-        child: _error != null
+      body: Column(
+        children: [
+          DeunHeader(title: AppLocalizations.of(context)!.requestFriendship),
+          Expanded(
+            child: Center(
+              child: _error != null
             ? Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
@@ -183,6 +187,9 @@ class _FriendAcceptPageState extends State<FriendAcceptPage> {
                       ],
                     ),
                   ),
+            ),
+          ),
+        ],
       ),
     );
   }

@@ -1,5 +1,6 @@
 import 'package:deun/l10n/app_localizations.dart';
 import 'package:deun/main.dart';
+import 'package:deun/widgets/restyle/deun_header.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -70,13 +71,17 @@ class _UpdatePasswordState extends State<UpdatePassword> {
 
     return Scaffold(
       backgroundColor: colorScheme.surface,
-      appBar: AppBar(
-        backgroundColor: colorScheme.surface,
-        elevation: 0,
-      ),
-      body: SafeArea(
-        child: Center(
-          child: ConstrainedBox(
+      body: Column(
+        children: [
+          DeunHeader(
+            title: l10n.updatePasswordTitle,
+            showLeading: false,
+          ),
+          Expanded(
+            child: SafeArea(
+              top: false,
+              child: Center(
+              child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 440),
             child: ListView(
               keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
@@ -162,7 +167,10 @@ class _UpdatePasswordState extends State<UpdatePassword> {
               ],
             ),
           ),
+            ),
+          ),
         ),
+        ],
       ),
     );
   }

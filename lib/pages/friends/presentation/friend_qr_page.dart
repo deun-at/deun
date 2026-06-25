@@ -4,11 +4,11 @@ import 'package:deun/constants.dart';
 import 'package:deun/helper/helper.dart';
 import 'package:deun/pages/users/user_model.dart';
 import 'package:deun/provider.dart';
+import 'package:deun/widgets/restyle/deun_header.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:deun/l10n/app_localizations.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:qr_flutter/qr_flutter.dart';
@@ -130,47 +130,44 @@ class _FriendQrPageState extends ConsumerState<FriendQrPage> {
     final userAsync = ref.watch(userDetailProvider);
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text(
-          l10n.friendQrTitle,
-          style: GoogleFonts.robotoSerif(
-            textStyle: Theme.of(context).textTheme.titleLarge!.copyWith(fontWeight: FontWeight.w900),
-          ),
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-        ),
-      ),
       body: Column(
         children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(20, 12, 20, 12),
-            child: AppSegmentedControl<int>(
-              value: _tabIndex,
-              onChanged: (v) => setState(() => _tabIndex = v),
-              segments: [
-                AppSegment(value: 0, label: l10n.friendQrTabScan, icon: Icons.qr_code_scanner),
-                AppSegment(value: 1, label: l10n.friendQrTabMyCode, icon: Icons.qr_code_2),
-              ],
-            ),
-          ),
+          DeunHeader(title: l10n.friendQrTitle),
           Expanded(
-            child: AnimatedSwitcher(
-              duration: const Duration(milliseconds: 250),
-              child: _tabIndex == 0
-                  ? _ScanView(
-                      key: const ValueKey('scan'),
-                      controller: _cameraController,
-                      onDetect: _handleBarcode,
-                      shareLink: () {
-                        final u = userAsync.value;
-                        return u == null ? null : FriendQrPage.buildFriendQrLink(u);
-                      },
-                    )
-                  : _MyCodeView(
-                      key: const ValueKey('mine'),
-                      userAsync: userAsync,
-                      onRetry: () => ref.invalidate(userDetailProvider),
-                    ),
+            child: Column(
+              children: [
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(20, 12, 20, 12),
+                  child: AppSegmentedControl<int>(
+                    value: _tabIndex,
+                    onChanged: (v) => setState(() => _tabIndex = v),
+                    segments: [
+                      AppSegment(value: 0, label: l10n.friendQrTabScan, icon: Icons.qr_code_scanner),
+                      AppSegment(value: 1, label: l10n.friendQrTabMyCode, icon: Icons.qr_code_2),
+                    ],
+                  ),
+                ),
+                Expanded(
+                  child: AnimatedSwitcher(
+                    duration: const Duration(milliseconds: 250),
+                    child: _tabIndex == 0
+                        ? _ScanView(
+                            key: const ValueKey('scan'),
+                            controller: _cameraController,
+                            onDetect: _handleBarcode,
+                            shareLink: () {
+                              final u = userAsync.value;
+                              return u == null ? null : FriendQrPage.buildFriendQrLink(u);
+                            },
+                          )
+                        : _MyCodeView(
+                            key: const ValueKey('mine'),
+                            userAsync: userAsync,
+                            onRetry: () => ref.invalidate(userDetailProvider),
+                          ),
+                  ),
+                ),
+              ],
             ),
           ),
         ],
