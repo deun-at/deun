@@ -328,4 +328,102 @@ void main() {
       );
     });
   });
+
+  group('HeaderIconButton', () {
+    testWidgets('tinted variant (default) uses the warm-tint surface + onSurface icon',
+        (tester) async {
+      await _pump(
+        tester,
+        HeaderIconButton(icon: Icons.qr_code, onTap: () {}),
+      );
+
+      final context = tester.element(find.byIcon(Icons.qr_code));
+      final colorScheme = Theme.of(context).colorScheme;
+
+      final container = tester.widget<Container>(
+        find.ancestor(
+          of: find.byIcon(Icons.qr_code),
+          matching: find.byType(Container),
+        ).first,
+      );
+      expect(
+        (container.decoration as BoxDecoration).color,
+        colorScheme.onSurface.withValues(alpha: 0.04),
+      );
+      expect(
+        (container.decoration as BoxDecoration).boxShadow,
+        isEmpty,
+      );
+
+      final icon = tester.widget<Icon>(find.byIcon(Icons.qr_code));
+      expect(icon.color, colorScheme.onSurface);
+    });
+
+    testWidgets('filled variant uses primary fill + legible onPrimary icon + soft shadow',
+        (tester) async {
+      await _pump(
+        tester,
+        HeaderIconButton(icon: Icons.person_add, onTap: () {}, filled: true),
+      );
+
+      final context = tester.element(find.byIcon(Icons.person_add));
+      final colorScheme = Theme.of(context).colorScheme;
+
+      final container = tester.widget<Container>(
+        find.ancestor(
+          of: find.byIcon(Icons.person_add),
+          matching: find.byType(Container),
+        ).first,
+      );
+      final decoration = container.decoration as BoxDecoration;
+      expect(decoration.color, colorScheme.primary);
+      expect(decoration.boxShadow, isNotEmpty);
+
+      final icon = tester.widget<Icon>(find.byIcon(Icons.person_add));
+      expect(icon.color, colorScheme.onPrimary);
+    });
+
+    testWidgets('hit target is at least 48dp', (tester) async {
+      await _pump(
+        tester,
+        HeaderIconButton(icon: Icons.qr_code, onTap: () {}),
+      );
+      final inkWell = find.ancestor(
+        of: find.byIcon(Icons.qr_code),
+        matching: find.byType(InkWell),
+      );
+      expect(inkWell, findsOneWidget);
+      final size = tester.getSize(inkWell);
+      expect(size.width, greaterThanOrEqualTo(48.0));
+      expect(size.height, greaterThanOrEqualTo(48.0));
+    });
+
+    testWidgets('tapping invokes onTap', (tester) async {
+      var tapped = false;
+      await _pump(
+        tester,
+        HeaderIconButton(icon: Icons.qr_code, onTap: () => tapped = true),
+      );
+      await tester.tap(find.byIcon(Icons.qr_code));
+      await tester.pumpAndSettle();
+      expect(tapped, isTrue);
+    });
+
+    testWidgets('renders correctly in dark mode (filled variant)', (tester) async {
+      await _pump(
+        tester,
+        HeaderIconButton(icon: Icons.person_add, onTap: () {}, filled: true),
+        brightness: Brightness.dark,
+      );
+      final context = tester.element(find.byIcon(Icons.person_add));
+      final colorScheme = Theme.of(context).colorScheme;
+      final container = tester.widget<Container>(
+        find.ancestor(
+          of: find.byIcon(Icons.person_add),
+          matching: find.byType(Container),
+        ).first,
+      );
+      expect((container.decoration as BoxDecoration).color, colorScheme.primary);
+    });
+  });
 }

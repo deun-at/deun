@@ -5,6 +5,7 @@ import 'package:deun/pages/friends/presentation/friend_list.dart';
 import 'package:deun/pages/friends/provider/friendship_list.dart';
 import 'package:deun/pages/users/user_model.dart';
 import 'package:deun/widgets/restyle/balance_pill.dart';
+import 'package:deun/widgets/restyle/deun_header.dart';
 import 'package:deun/widgets/restyle/member_avatar.dart';
 import 'package:deun/widgets/restyle/money_text.dart';
 import 'package:deun/widgets/theme_builder.dart';
@@ -77,10 +78,60 @@ Color? _balanceLabelColor(WidgetTester tester, String text) {
 }
 
 void main() {
-  testWidgets('header shows QR and add buttons', (tester) async {
+  testWidgets('header shows a tinted QR action and a filled accent add action',
+      (tester) async {
     await _pumpFriendList(tester, const FriendshipListState());
+
+    // Both header actions are the shared 38×38 HeaderIconButton.
     expect(find.byIcon(Icons.qr_code), findsOneWidget);
-    expect(find.byIcon(Icons.person_add_outlined), findsOneWidget);
+    expect(find.byIcon(Icons.person_add), findsOneWidget);
+
+    final qr = tester.widget<HeaderIconButton>(
+      find.ancestor(
+        of: find.byIcon(Icons.qr_code),
+        matching: find.byType(HeaderIconButton),
+      ),
+    );
+    final add = tester.widget<HeaderIconButton>(
+      find.ancestor(
+        of: find.byIcon(Icons.person_add),
+        matching: find.byType(HeaderIconButton),
+      ),
+    );
+
+    // QR is the tinted (secondary) variant; add-friend is the filled accent
+    // (primary) variant.
+    expect(qr.filled, isFalse);
+    expect(add.filled, isTrue);
+
+    // The filled accent circle paints colorScheme.primary with an onPrimary
+    // icon (legible); the tinted circle paints the warm-tint surface.
+    final context = tester.element(find.byType(FriendList));
+    final colorScheme = Theme.of(context).colorScheme;
+
+    final addContainer = tester.widget<Container>(
+      find.ancestor(
+        of: find.byIcon(Icons.person_add),
+        matching: find.byType(Container),
+      ).first,
+    );
+    expect(
+      (addContainer.decoration as BoxDecoration).color,
+      colorScheme.primary,
+    );
+    final addIcon = tester.widget<Icon>(find.byIcon(Icons.person_add));
+    expect(addIcon.color, colorScheme.onPrimary);
+
+    final qrContainer = tester.widget<Container>(
+      find.ancestor(
+        of: find.byIcon(Icons.qr_code),
+        matching: find.byType(Container),
+      ).first,
+    );
+    expect(
+      (qrContainer.decoration as BoxDecoration).color,
+      colorScheme.onSurface.withValues(alpha: 0.04),
+    );
   });
 
   testWidgets('incoming request renders accept and decline actions',

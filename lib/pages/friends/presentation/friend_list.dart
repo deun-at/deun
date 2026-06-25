@@ -6,6 +6,7 @@ import 'package:deun/pages/friends/presentation/friend_detail_sheet.dart';
 import 'package:deun/pages/users/user_model.dart';
 import 'package:deun/widgets/empty_list_widget.dart';
 import 'package:deun/widgets/restyle/balance_pill.dart' show BalanceState;
+import 'package:deun/widgets/restyle/deun_header.dart' show HeaderIconButton;
 import 'package:deun/widgets/restyle/member_avatar.dart';
 import 'package:deun/widgets/restyle/money_text.dart';
 import 'package:deun/widgets/restyle/section_label.dart';
@@ -196,7 +197,7 @@ class _FriendsHeader extends StatelessWidget {
     final textTheme = Theme.of(context).textTheme;
 
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 14, 4, 0),
+      padding: const EdgeInsets.fromLTRB(16, 14, 11, 0),
       child: Row(
         children: [
           Expanded(
@@ -206,15 +207,17 @@ class _FriendsHeader extends StatelessWidget {
               overflow: TextOverflow.ellipsis,
             ),
           ),
-          IconButton(
-            onPressed: () => GoRouter.of(context).push('/friend/qr'),
+          HeaderIconButton(
+            onTap: () => GoRouter.of(context).push('/friend/qr'),
             tooltip: l10n.qr,
-            icon: const Icon(Icons.qr_code),
+            icon: Icons.qr_code,
           ),
-          IconButton(
-            onPressed: () => GoRouter.of(context).push('/friend/add'),
+          const SizedBox(width: 8),
+          HeaderIconButton(
+            onTap: () => GoRouter.of(context).push('/friend/add'),
             tooltip: l10n.addFriends,
-            icon: const Icon(Icons.person_add_outlined),
+            icon: Icons.person_add,
+            filled: true,
           ),
         ],
       ),

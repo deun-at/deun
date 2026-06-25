@@ -89,7 +89,7 @@ class DeunHeader extends StatelessWidget {
 
     Widget leadingSlot;
     if (showLeading) {
-      leadingSlot = _HeaderIconButton(
+      leadingSlot = HeaderIconButton(
         icon: leadingIcon,
         onTap: onLeading ?? () => Navigator.of(context).maybePop(),
       );
@@ -181,21 +181,69 @@ class DeunHeader extends StatelessWidget {
   }
 }
 
-/// Internal 38×38 circular icon button with a ≥48dp hit target.
+/// The standard 38×38 circular header-action button (COMPONENTS.md §1 "Icon
+/// buttons" / §2 "App headers"), with a ≥48dp hit target.
 ///
-/// The visible circle (38dp) carries the faint warm-tint background; the
-/// [InkWell] is padded to 48dp so the real tap target satisfies accessibility
-/// guidelines.
-class _HeaderIconButton extends StatelessWidget {
-  const _HeaderIconButton({required this.icon, required this.onTap});
+/// The visible circle (38dp) carries the action background; the [InkWell] is
+/// padded to 48dp so the real tap target satisfies accessibility guidelines.
+///
+/// Two variants, both routed through the theme (never inline prototype hex):
+///
+/// - **Tinted (default)** — faint warm-tint surface
+///   `colorScheme.onSurface.withValues(alpha: 0.04)` with an `onSurface` icon.
+///   Reads as a faint warm tint on light and a faint light tint on dark, so it
+///   is correct in both brightnesses. Used for back/close and secondary
+///   actions (e.g. QR).
+/// - **Filled accent** ([filled] = true) — `colorScheme.primary` fill (the
+///   app's accent indigo, `#5750E6` in the brand seed) with a legible
+///   `onPrimary` icon and the v3 colored soft drop-shadow
+///   (`0 8 16 -8 primary@0.5`, softened on dark). Used for the primary action
+///   in a header (e.g. add-friend).
+///
+/// Reuse this across custom headers (Friends/Add-friend/QR, etc.) instead of
+/// bespoke circles or Material [IconButton]s.
+class HeaderIconButton extends StatelessWidget {
+  const HeaderIconButton({
+    super.key,
+    required this.icon,
+    required this.onTap,
+    this.filled = false,
+    this.tooltip,
+  });
 
   final IconData icon;
   final VoidCallback onTap;
 
+  /// When true, renders the filled accent variant (primary fill + onPrimary
+  /// icon + colored soft shadow). Otherwise the faint warm-tint variant.
+  final bool filled;
+
+  /// Optional tooltip / semantic label for the action.
+  final String? tooltip;
+
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
-    final bgColor = colorScheme.onSurface.withValues(alpha: 0.04);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    final bgColor = filled
+        ? colorScheme.primary
+        : colorScheme.onSurface.withValues(alpha: 0.04);
+    final iconColor = filled ? colorScheme.onPrimary : colorScheme.onSurface;
+
+    // Filled accent carries the v3 colored soft drop-shadow; softened on dark
+    // (a saturated drop-shadow reads as glow on near-black surfaces), matching
+    // PrimaryButton.
+    final List<BoxShadow> shadows = filled
+        ? [
+            BoxShadow(
+              color: colorScheme.primary.withValues(alpha: isDark ? 0.25 : 0.5),
+              offset: const Offset(0, 8),
+              blurRadius: 16,
+              spreadRadius: -8,
+            ),
+          ]
+        : const [];
 
     // Outer padding inflates the hit target to ≥48dp while keeping the
     // visible circle at 38dp.
@@ -203,7 +251,7 @@ class _HeaderIconButton extends StatelessWidget {
     const double hitTarget = 48;
     const double pad = (hitTarget - visibleSize) / 2;
 
-    return InkWell(
+    Widget button = InkWell(
       onTap: onTap,
       customBorder: const CircleBorder(),
       child: Padding(
@@ -214,14 +262,20 @@ class _HeaderIconButton extends StatelessWidget {
           decoration: BoxDecoration(
             color: bgColor,
             shape: BoxShape.circle,
+            boxShadow: shadows,
           ),
           child: Icon(
             icon,
             size: 22,
-            color: colorScheme.onSurface,
+            color: iconColor,
           ),
         ),
       ),
     );
+
+    if (tooltip != null) {
+      button = Tooltip(message: tooltip!, child: button);
+    }
+    return button;
   }
 }
