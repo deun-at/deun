@@ -7,6 +7,7 @@ import 'package:deun/pages/expenses/data/expense_model.dart';
 import 'package:deun/pages/expenses/data/expense_repository.dart';
 import 'package:deun/pages/groups/data/group_member_model.dart';
 import 'package:deun/pages/groups/data/group_model.dart';
+import 'package:deun/widgets/restyle/deun_header.dart';
 import 'package:deun/widgets/restyle/member_avatar.dart';
 import 'package:deun/widgets/restyle/money_text.dart';
 import 'package:deun/widgets/restyle/section_label.dart';
@@ -121,26 +122,48 @@ class ExpenseDetailRead extends ConsumerWidget {
       colorValue: group.colorValue,
       builder: (context) {
         return Scaffold(
-          appBar: AppBar(
-            title: Text(l10n.expenseDetailTitle),
-            actions: [
-              IconButton(
-                tooltip: l10n.edit,
-                onPressed: () => _openEditor(context),
-                icon: const Icon(Icons.edit_outlined),
-              ),
-              IconButton(
-                tooltip: l10n.delete,
-                onPressed: () => _confirmDelete(context),
-                icon: Icon(
-                  Icons.delete_outline,
-                  color: Theme.of(context).colorScheme.onSurface,
+          body: Column(
+            children: [
+              DeunHeader(
+                title: l10n.expenseDetailTitle,
+                trailing: OverflowBox(
+                  maxWidth: double.infinity,
+                  alignment: Alignment.centerRight,
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      IconButton(
+                        tooltip: l10n.edit,
+                        onPressed: () => _openEditor(context),
+                        icon: const Icon(Icons.edit_outlined),
+                        iconSize: 22,
+                        constraints: const BoxConstraints(
+                          minWidth: 38,
+                          minHeight: 38,
+                        ),
+                        padding: EdgeInsets.zero,
+                      ),
+                      IconButton(
+                        tooltip: l10n.delete,
+                        onPressed: () => _confirmDelete(context),
+                        icon: Icon(
+                          Icons.delete_outline,
+                          color: Theme.of(context).colorScheme.onSurface,
+                        ),
+                        iconSize: 22,
+                        constraints: const BoxConstraints(
+                          minWidth: 38,
+                          minHeight: 38,
+                        ),
+                        padding: EdgeInsets.zero,
+                      ),
+                    ],
+                  ),
                 ),
               ),
-            ],
-          ),
-          body: ListView(
-            padding: const EdgeInsets.fromLTRB(16, 12, 16, 40),
+              Expanded(
+                child: ListView(
+                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 40),
             children: [
               _SummaryCard(
                 expense: expense,
@@ -175,6 +198,9 @@ class ExpenseDetailRead extends ConsumerWidget {
                 const SizedBox(height: 8),
                 _CategoryTag(category: expense.category!),
               ],
+            ],
+                ),
+              ),
             ],
           ),
         );

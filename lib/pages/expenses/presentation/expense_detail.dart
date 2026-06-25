@@ -1,6 +1,7 @@
 import 'package:deun/helper/helper.dart';
 import 'package:deun/pages/groups/data/group_member_model.dart';
 import 'package:deun/widgets/card_list_view_builder.dart';
+import 'package:deun/widgets/restyle/deun_header.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_form_builder/flutter_form_builder.dart';
 import 'package:deun/l10n/app_localizations.dart';
@@ -675,33 +676,23 @@ class _ExpenseDetailState extends ConsumerState<ExpenseDetail> {
   Widget build(BuildContext context) {
     const double spacing = 8;
 
-    List<Widget> expenseActions = [];
-
-    Widget saveExpenseButton = Builder(
-      builder: (context) => FilledButton(
-        onPressed: () => _saveExpense(context),
-        child: Text(AppLocalizations.of(context)!.save),
-      ),
-    );
-
-    if (widget.expense != null) {
-      expenseActions.add(saveExpenseButton);
-
-      expenseActions.add(IconButton(
-        onPressed: () {
-          openDeleteItemDialog(context, widget.expense!);
-        },
-        icon: Icon(Icons.delete_outline, color: Theme.of(context).colorScheme.onSurface),
-      ));
-    } else {
-      expenseActions.add(
-        Padding(padding: const EdgeInsetsGeometry.only(right: 8), child: saveExpenseButton),
-      );
-    }
-
     return ThemeBuilder(
       colorValue: widget.group.colorValue,
       builder: (context) {
+        final colorScheme = Theme.of(context).colorScheme;
+        final l10n = AppLocalizations.of(context)!;
+
+        Widget? headerTrailing;
+        if (widget.expense != null) {
+          headerTrailing = IconButton(
+            onPressed: () => openDeleteItemDialog(context, widget.expense!),
+            icon: Icon(Icons.delete_outline, color: colorScheme.onSurface),
+            iconSize: 22,
+            constraints: const BoxConstraints(minWidth: 38, minHeight: 38),
+            padding: EdgeInsets.zero,
+          );
+        }
+
         return PopScope(
           canPop: !_isDirty || _bypassDiscardGuard,
           onPopInvokedWithResult: (didPop, result) async {
@@ -713,13 +704,18 @@ class _ExpenseDetailState extends ConsumerState<ExpenseDetail> {
             }
           },
           child: Scaffold(
-          appBar: AppBar(
-            actions: [...expenseActions],
-          ),
-          body: ListView(
-            children: [
-              Padding(
-                padding: const EdgeInsets.only(top: 10, bottom: 40),
+            body: Column(
+              children: [
+                DeunHeader(
+                  title: l10n.expenseDetailTitle,
+                  leadingIcon: Icons.close,
+                  trailing: headerTrailing,
+                ),
+                Expanded(
+                  child: ListView(
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.only(top: 10, bottom: 0),
                 child: FormBuilder(
                   key: _formKey,
                   clearValueOnUnregister: true,
@@ -819,8 +815,25 @@ class _ExpenseDetailState extends ConsumerState<ExpenseDetail> {
                   ),
                 ),
               )
-            ],
-          ),
+                    ],
+                  ),
+                ),
+                // Save footer: pinned below the scrollable body.
+                Builder(
+                  builder: (context) => Container(
+                    color: colorScheme.surface,
+                    padding: const EdgeInsets.fromLTRB(20, 14, 20, 20),
+                    child: SizedBox(
+                      width: double.infinity,
+                      child: FilledButton(
+                        onPressed: () => _saveExpense(context),
+                        child: Text(AppLocalizations.of(context)!.save),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
         );
       },

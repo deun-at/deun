@@ -1,9 +1,9 @@
 import 'package:deun/helper/helper.dart';
 import 'package:deun/main.dart';
 import 'package:deun/pages/groups/data/group_repository.dart';
+import 'package:deun/widgets/restyle/deun_header.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:deun/l10n/app_localizations.dart';
 
 class GroupJoinPage extends StatefulWidget {
@@ -138,16 +138,17 @@ class _GroupJoinPageState extends State<GroupJoinPage> {
   Widget build(BuildContext context) {
     final t = AppLocalizations.of(context)!;
     return Scaffold(
-      appBar: AppBar(
-        title: Text(t.groupInviteJoinTitle,
-            style: GoogleFonts.robotoSerif(
-                textStyle: Theme.of(context).textTheme.titleLarge!.copyWith(fontWeight: FontWeight.w900))),
-      ),
-      body: Center(
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
+      body: Column(
+        children: [
+          DeunHeader(title: t.groupInviteJoinTitle),
+          Expanded(
+            child: SafeArea(
+              top: false,
+              child: Center(
+                child: Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
             children: [
               Icon(Icons.group, size: 64, color: Theme.of(context).colorScheme.primary),
               const SizedBox(height: 12),
@@ -219,8 +220,12 @@ class _GroupJoinPageState extends State<GroupJoinPage> {
                 label: Text(t.groupInviteTransferButton),
               ),
             ],
+                  ),
+                ),
+              ),
+            ),
           ),
-        ),
+        ],
       ),
     );
   }

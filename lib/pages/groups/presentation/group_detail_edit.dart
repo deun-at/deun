@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:deun/helper/helper.dart';
 import 'package:deun/pages/groups/data/group_repository.dart';
+import 'package:deun/widgets/restyle/deun_header.dart';
 import 'package:deun/widgets/restyle/section_label.dart';
 import 'package:deun/widgets/restyle/soft_card.dart';
 import 'package:deun/widgets/theme_builder.dart';
@@ -77,51 +78,58 @@ class _GroupEditState extends ConsumerState<GroupEdit> {
         final colorScheme = Theme.of(context).colorScheme;
 
         return Scaffold(
-          appBar: AppBar(
-            title: Text(_isEdit ? l10n.groupEditTitle : l10n.groupCreateTitle),
-          ),
-          body: SafeArea(
-            top: false,
-            child: Column(
-              children: [
-                Expanded(
-                  child: FormBuilder(
-                    key: _formKey,
-                    clearValueOnUnregister: true,
-                    initialValue: widget.group?.toJson() ?? {},
-                    child: ListView(
-                      padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
-                      children: <Widget>[
-                        _NameAndColorCard(formKey: _formKey),
-                        const SizedBox(height: 24),
-                        SectionLabel(l10n.groupMemberSectionTitle),
-                        const SizedBox(height: 8),
-                        FormBuilderField(
-                          name: "group_members",
-                          builder: (FormFieldState<dynamic> field) {
-                            return GroupMemberSearch(field: field);
-                          },
+          body: Column(
+            children: [
+              DeunHeader(
+                title: _isEdit ? l10n.groupEditTitle : l10n.groupCreateTitle,
+                leadingIcon: Icons.close,
+              ),
+              Expanded(
+                child: SafeArea(
+                  top: false,
+                  child: Column(
+                    children: [
+                      Expanded(
+                        child: FormBuilder(
+                          key: _formKey,
+                          clearValueOnUnregister: true,
+                          initialValue: widget.group?.toJson() ?? {},
+                          child: ListView(
+                            padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
+                            children: <Widget>[
+                              _NameAndColorCard(formKey: _formKey),
+                              const SizedBox(height: 24),
+                              SectionLabel(l10n.groupMemberSectionTitle),
+                              const SizedBox(height: 8),
+                              FormBuilderField(
+                                name: "group_members",
+                                builder: (FormFieldState<dynamic> field) {
+                                  return GroupMemberSearch(field: field);
+                                },
+                              ),
+                              const SizedBox(height: 24),
+                              SectionLabel(l10n.groupTrackingModeTitle),
+                              const SizedBox(height: 8),
+                              const _TrackingModeField(),
+                              if (_isEdit) ...[
+                                const SizedBox(height: 24),
+                                _buildGroupActions(context),
+                              ],
+                            ],
+                          ),
                         ),
-                        const SizedBox(height: 24),
-                        SectionLabel(l10n.groupTrackingModeTitle),
-                        const SizedBox(height: 8),
-                        const _TrackingModeField(),
-                        if (_isEdit) ...[
-                          const SizedBox(height: 24),
-                          _buildGroupActions(context),
-                        ],
-                      ],
-                    ),
+                      ),
+                      _StickyFooter(
+                        label: _isEdit ? l10n.save : l10n.create,
+                        isBusy: _isSaving,
+                        onPressed: _save,
+                        background: colorScheme.surface,
+                      ),
+                    ],
                   ),
                 ),
-                _StickyFooter(
-                  label: _isEdit ? l10n.save : l10n.create,
-                  isBusy: _isSaving,
-                  onPressed: _save,
-                  background: colorScheme.surface,
-                ),
-              ],
-            ),
+              ),
+            ],
           ),
         );
       },
