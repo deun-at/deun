@@ -4,7 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-/// Regression tests for design-audit findings F01 and F02.
+/// Regression tests for design-audit findings F01, F02 and F33.
 ///
 /// F01: a failed/unloaded AdMob native ad must mount NO platform-view, occupy
 /// zero hit-test area, and never intercept taps meant for the sibling group
@@ -16,6 +16,15 @@ import 'package:flutter_test/flutter_test.dart';
 /// never paint. That block is rendered by the platform-view that an [AdWidget]
 /// mounts, so the invariant is simply: NO [AdWidget] exists in the tree unless
 /// the ad genuinely reported "loaded".
+///
+/// F33: on a real device the SDK paints that same red debug block ("Ad with the
+/// following id could not be found: 0") because debug/test builds have EMPTY ad
+/// unit IDs, so the SDK never gets fill and shows its debug platform-view.
+/// [NativeAdBlock] therefore must not even REQUEST an ad in debug builds
+/// (`!kDebugMode`). The lifecycle tests below opt back into requesting via the
+/// `requestInDebug: true` test seam so the loaded/failed/disposed paths can
+/// still be exercised; the dedicated F33 test asserts the default (debug) build
+/// dispatches no request at all.
 const _channelName = 'plugins.flutter.io/google_mobile_ads';
 
 /// Recovers the plain-int `adId` from a `loadNativeAd` method-call envelope
@@ -80,6 +89,27 @@ ByteData _encodeFailedToLoadEvent({required int adId}) {
   return buffer.done();
 }
 
+/// Encodes an inbound `onAdEvent` with eventName `onAdLoaded` for [adId],
+/// driving the widget's real `onAdLoaded` callback so an [AdWidget] mounts.
+ByteData _encodeLoadedEvent({required int adId}) {
+  const codec = StandardMessageCodec();
+  final buffer = WriteBuffer();
+
+  codec.writeValue(buffer, 'onAdEvent'); // method name
+
+  // arguments map: { adId, eventName }
+  buffer.putUint8(13); // map type
+  codec.writeSize(buffer, 2);
+
+  codec.writeValue(buffer, 'adId');
+  codec.writeValue(buffer, adId);
+
+  codec.writeValue(buffer, 'eventName');
+  codec.writeValue(buffer, 'onAdLoaded');
+
+  return buffer.done();
+}
+
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
@@ -130,7 +160,8 @@ void main() {
               // The ad block, pinned to the top where we will tap.
               const Align(
                 alignment: Alignment.topCenter,
-                child: NativeAdBlock(adUnitId: 'test-ad-unit'),
+                child: NativeAdBlock(
+                    adUnitId: 'test-ad-unit', requestInDebug: true),
               ),
             ],
           ),
@@ -168,7 +199,8 @@ void main() {
         home: Scaffold(
           body: Align(
             alignment: Alignment.topCenter,
-            child: NativeAdBlock(adUnitId: 'test-ad-unit'),
+            child: NativeAdBlock(
+                adUnitId: 'test-ad-unit', requestInDebug: true),
           ),
         ),
       ),
@@ -205,5 +237,84 @@ void main() {
     await tester.pump(const Duration(seconds: 31));
     expect(find.byType(AdWidget), findsNothing,
         reason: 'the retried (still-unloaded) ad must also mount no AdWidget');
+  });
+
+  testWidgets(
+      'F33: in a debug build NO ad is requested and NO AdWidget ever mounts',
+      (tester) async {
+    int? capturedAdId;
+    mockAdsChannel(onLoadNativeAd: (adId) => capturedAdId = adId);
+
+    // Default constructor => requestInDebug is null => falls back to !kDebugMode.
+    // Tests run in debug, so this is exactly the build the design audit sees.
+    await tester.pumpWidget(
+      const MaterialApp(
+        home: Scaffold(
+          body: Align(
+            alignment: Alignment.topCenter,
+            child: NativeAdBlock(adUnitId: 'test-ad-unit'),
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+
+    // The SDK is never even asked to load: no empty-unit-id "could not be
+    // found: 0" debug platform-view can appear because no ad is requested.
+    expect(capturedAdId, isNull,
+        reason: 'a debug build must NOT dispatch a loadNativeAd request');
+    expect(find.byType(AdWidget), findsNothing,
+        reason: 'no AdWidget may mount in a debug build');
+    expect(tester.getSize(find.byType(NativeAdBlock)), Size.zero,
+        reason: 'the debug-gated ad block must occupy zero layout area');
+  });
+
+  testWidgets(
+      'F33 race: an ad that loads then is disposed leaves no live AdWidget',
+      (tester) async {
+    int? capturedAdId;
+    mockAdsChannel(onLoadNativeAd: (adId) => capturedAdId = adId);
+
+    await tester.pumpWidget(
+      const MaterialApp(
+        home: Scaffold(
+          body: Align(
+            alignment: Alignment.topCenter,
+            child: NativeAdBlock(
+                adUnitId: 'test-ad-unit', requestInDebug: true),
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+    expect(capturedAdId, isNotNull);
+
+    // 1) Drive a genuine load: onAdLoaded mounts a real AdWidget/platform-view.
+    await TestWidgetsFlutterBinding.ensureInitialized()
+        .defaultBinaryMessenger
+        .handlePlatformMessage(
+            _channelName, _encodeLoadedEvent(adId: capturedAdId!), (_) {});
+    await tester.pump();
+    expect(find.byType(AdWidget), findsOneWidget,
+        reason: 'a genuinely-loaded ad mounts exactly one AdWidget');
+
+    // 2) Now the underlying ad/platform-view goes away (dispose/rebuild race on
+    // device). Simulate the SDK then reporting the SAME adId as failed — the
+    // disposed path. The widget must tear the AdWidget down so no AdWidget can
+    // reference a disposed ad (which is what paints "could not be found: 0").
+    await TestWidgetsFlutterBinding.ensureInitialized()
+        .defaultBinaryMessenger
+        .handlePlatformMessage(
+            _channelName, _encodeFailedToLoadEvent(adId: capturedAdId!), (_) {});
+    await tester.pump();
+
+    expect(find.byType(AdWidget), findsNothing,
+        reason: 'a disposed ad must leave no live AdWidget in the tree');
+    expect(tester.getSize(find.byType(NativeAdBlock)), Size.zero,
+        reason: 'after teardown the block collapses to zero size');
+
+    // Flush the 30s retry so no timer leaks; still no AdWidget afterwards.
+    await tester.pump(const Duration(seconds: 31));
+    expect(find.byType(AdWidget), findsNothing);
   });
 }

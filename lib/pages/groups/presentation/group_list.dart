@@ -6,7 +6,7 @@ import 'package:deun/widgets/restyle/money_text.dart';
 import 'package:deun/widgets/restyle/section_label.dart';
 import 'package:deun/widgets/staggered_list.dart';
 import 'package:deun/widgets/theme_builder.dart';
-import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:flutter/foundation.dart' show kDebugMode, kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_staggered_animations/flutter_staggered_animations.dart';
@@ -37,7 +37,15 @@ class _GroupListState extends ConsumerState<GroupList> {
   void initState() {
     super.initState();
 
-    if (kIsWeb) {
+    // Native ads are only mounted in non-web RELEASE builds. In debug/test (and
+    // the design-audit) builds the ad unit IDs come from empty
+    // String.fromEnvironment dart-defines, so the AdMob SDK paints its own red
+    // "Ad with the following id could not be found: 0" debug platform-view
+    // instead of an ad (design-audit F33). Gating creation behind !kDebugMode
+    // means no ad is ever requested or mounted in debug, so that banner can
+    // never appear on the home — while production (release, real fill) keeps
+    // the ad feature unchanged.
+    if (kIsWeb || kDebugMode) {
       _adBlock = const SizedBox();
     } else {
       _adBlock = NativeAdBlock(

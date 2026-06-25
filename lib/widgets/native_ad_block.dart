@@ -1,10 +1,17 @@
+import 'package:flutter/foundation.dart' show kDebugMode;
 import 'package:flutter/material.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 
 class NativeAdBlock extends StatefulWidget {
-  const NativeAdBlock({super.key, required this.adUnitId});
+  const NativeAdBlock({super.key, required this.adUnitId, bool? requestInDebug})
+      : _requestInDebug = requestInDebug;
 
   final String adUnitId;
+
+  /// Test-only seam. In production this stays null and the widget falls back to
+  /// `!kDebugMode` — i.e. an ad is requested only in release builds. Tests that
+  /// need to exercise the real load/failed/disposed lifecycle pass `true`.
+  final bool? _requestInDebug;
 
   @override
   State<NativeAdBlock> createState() => _NativeAdBlockState();
@@ -49,7 +56,19 @@ class _NativeAdBlockState extends State<NativeAdBlock> {
     _loadAd();
   }
 
+  /// Whether an ad should be requested in this build. In production this is
+  /// `!kDebugMode` (request only in release); tests can force it via
+  /// `requestInDebug`.
+  bool get _shouldRequestAd => widget._requestInDebug ?? !kDebugMode;
+
   void _loadAd() {
+    // Never request or mount a native ad in debug/test builds: the ad unit IDs
+    // are empty in those builds and the AdMob SDK would paint its own red
+    // "Ad with the following id could not be found: 0" debug platform-view
+    // (design-audit F33). Defense-in-depth alongside the caller's !kDebugMode
+    // gate so this widget is safe even if mounted directly in a debug build.
+    if (!_shouldRequestAd) return;
+
     _nativeAd = NativeAd(
       adUnitId: widget.adUnitId,
       request: const AdRequest(),
