@@ -240,7 +240,7 @@ these are the in-scope tasks, foundation-first:
   (16 drill-down routes; home-tab fade-through deferred as v0; predictive-back needs device QA)
 - **V3-T5 · Staggered list entrance** · groups/friends lists (ANIMATIONS §2) ✅ done · 625ba6b
 - **V3-T6 · Count-up heroes** · existing hero amounts (ANIMATIONS §3) ✅ done · 8ae1d19
-- **V3-T7 · Success pop+ring** · confirm/success sheets (ANIMATIONS §4) — pending
+- **V3-T7 · Success pop+ring** · confirm/success sheets (ANIMATIONS §4) ✅ done · 45705a6
 - **V3-T8 · Chart/progress grow** · stats + claim/progress bars (ANIMATIONS §5) — pending
 - **V3-T9 · Sheet shell refinement** · `sheet_scaffold.dart` to COMPONENTS §3 — pending
 - **V3-T10 · Primary CTA custom button** · colored soft shadow (COMPONENTS §1) — pending
