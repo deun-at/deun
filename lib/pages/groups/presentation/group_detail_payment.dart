@@ -6,7 +6,6 @@ import 'package:deun/widgets/restyle/section_label.dart';
 import 'package:deun/widgets/restyle/sheet_scaffold.dart';
 import 'package:deun/widgets/restyle/soft_card.dart';
 import 'package:deun/widgets/restyle/success_badge.dart';
-import 'package:deun/widgets/rounded_container.dart';
 import 'package:deun/widgets/shimmer_card_list.dart';
 import 'package:deun/widgets/theme_builder.dart';
 import 'package:flutter/material.dart';
@@ -36,37 +35,27 @@ class GroupPaymentBottomSheet extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context)!;
     return ThemeBuilder(
       colorValue: group.colorValue,
       builder: (context) {
-        return DraggableScrollableSheet(
-          expand: false,
-          initialChildSize: .8,
-          snap: true,
-          builder: (context, scrollController) {
-            return RoundedContainer(
-              child: Scaffold(
-                appBar: AppBar(
-                  title: Text(AppLocalizations.of(context)!.paymentTitle),
-                  centerTitle: true,
-                ),
-                body: Consumer(
-                  builder: (context, ref, child) {
-                    final Group? detail = ref.watch(groupDetailProvider(group.id)).value;
+        return SheetScaffold(
+          title: l10n.paymentTitle,
+          titleTrailing: IconButton(
+            icon: const Icon(Icons.close),
+            onPressed: () => Navigator.of(context).maybePop(),
+          ),
+          body: Consumer(
+            builder: (context, ref, child) {
+              final Group? detail = ref.watch(groupDetailProvider(group.id)).value;
 
-                    if (detail == null) {
-                      return const ShimmerCardList(height: 50, listEntryLength: 8);
-                    }
+              if (detail == null) {
+                return const ShimmerCardList(height: 50, listEntryLength: 8);
+              }
 
-                    return _PaymentBody(
-                      group: detail,
-                      scrollController: scrollController,
-                    );
-                  },
-                ),
-              ),
-            );
-          },
+              return _PaymentBody(group: detail);
+            },
+          ),
         );
       },
     );
@@ -74,19 +63,17 @@ class GroupPaymentBottomSheet extends ConsumerWidget {
 }
 
 class _PaymentBody extends StatelessWidget {
-  const _PaymentBody({required this.group, required this.scrollController});
+  const _PaymentBody({required this.group});
 
   final Group group;
-  final ScrollController scrollController;
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     final partition = PaymentPartition.fromSummary(group.groupSharesSummary);
 
-    return ListView(
-      controller: scrollController,
-      padding: const EdgeInsets.fromLTRB(20, 8, 20, 32),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         _OverallHero(group: group),
         const SizedBox(height: 20),

@@ -4,6 +4,7 @@ import 'package:deun/pages/groups/data/group_member_model.dart';
 import 'package:deun/pages/groups/data/group_model.dart';
 import 'package:deun/pages/groups/presentation/group_detail_payment.dart';
 import 'package:deun/pages/groups/provider/group_detail.dart';
+import 'package:deun/widgets/restyle/sheet_scaffold.dart';
 import 'package:deun/widgets/theme_builder.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -178,5 +179,71 @@ void main() {
     expect(tester.takeException(), isNull);
     expect(find.text('Sam'), findsOneWidget);
     expect(find.text('Priya'), findsOneWidget);
+  });
+
+  testWidgets('sheet uses SheetScaffold (no AppBar) and shows the paymentTitle', (tester) async {
+    final l10n = await AppLocalizations.delegate.load(const Locale('en'));
+    await _pump(tester, group: _group());
+
+    // SheetScaffold must be present; AppBar must NOT be present.
+    expect(find.byType(SheetScaffold), findsOneWidget);
+    expect(find.byType(AppBar), findsNothing);
+    // The title text from SheetScaffold's title row.
+    expect(find.text(l10n.paymentTitle), findsOneWidget);
+  });
+
+  testWidgets('close button (Icons.close) is present and dismisses the bottom sheet', (tester) async {
+    bool dismissed = false;
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          groupDetailProvider(_group().id).overrideWith(() => _FakeGroupDetailNotifier(_group())),
+        ],
+        child: MaterialApp(
+          localizationsDelegates: const [
+            AppLocalizations.delegate,
+            GlobalMaterialLocalizations.delegate,
+            GlobalWidgetsLocalizations.delegate,
+            GlobalCupertinoLocalizations.delegate,
+          ],
+          supportedLocales: AppLocalizations.supportedLocales,
+          home: Builder(
+            builder: (context) => Theme(
+              data: getThemeData(context, kBrandSeed, Brightness.light)
+                  .copyWith(splashFactory: NoSplash.splashFactory),
+              child: Scaffold(
+                body: TextButton(
+                  onPressed: () {
+                    showModalBottomSheet<void>(
+                      context: context,
+                      isScrollControlled: true,
+                      builder: (_) => GroupPaymentBottomSheet(group: _group()),
+                    ).then((_) => dismissed = true);
+                  },
+                  child: const Text('Open'),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    // Open the sheet.
+    await tester.tap(find.text('Open'));
+    await tester.pumpAndSettle();
+
+    // Close button must exist inside the sheet.
+    final closeBtn = find.widgetWithIcon(IconButton, Icons.close);
+    expect(closeBtn, findsOneWidget);
+
+    await tester.tap(closeBtn);
+    await tester.pumpAndSettle();
+
+    // Sheet is dismissed: the future resolves and dismissed flips to true.
+    expect(dismissed, isTrue);
+    // The sheet is gone.
+    expect(find.widgetWithIcon(IconButton, Icons.close), findsNothing);
   });
 }
