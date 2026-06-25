@@ -3,6 +3,7 @@ import 'package:deun/pages/settings/settings_sheets.dart';
 import 'package:deun/pages/users/user_model.dart';
 import 'package:deun/pages/users/user_repository.dart';
 import 'package:deun/provider.dart';
+import 'package:deun/widgets/restyle/primary_button.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_form_builder/flutter_form_builder.dart';
@@ -128,9 +129,10 @@ class _SettingsProfileFormState extends ConsumerState<SettingsProfileForm> {
           const SizedBox(height: heightSpacing),
           Align(
             alignment: Alignment.centerRight,
-            child: FilledButton(
+            child: PrimaryButton(
+              label: l10n.update,
               onPressed: _onSave,
-              child: Text(l10n.update),
+              fullWidth: false,
             ),
           ),
         ],
