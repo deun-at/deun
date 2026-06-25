@@ -7,8 +7,10 @@ import 'package:deun/pages/expenses/data/expense_model.dart';
 import 'package:deun/pages/expenses/provider/claim_notifier.dart';
 import 'package:deun/pages/groups/data/group_member_model.dart';
 import 'package:deun/pages/groups/data/group_model.dart';
+import 'package:deun/widgets/motion.dart';
 import 'package:deun/widgets/restyle/app_segmented_control.dart';
 import 'package:deun/widgets/restyle/avatar_stack.dart';
+import 'package:deun/widgets/restyle/deun_header.dart';
 import 'package:deun/widgets/restyle/member_avatar.dart';
 import 'package:deun/widgets/restyle/money_text.dart';
 import 'package:deun/widgets/restyle/progress_bar.dart';
@@ -153,16 +155,6 @@ class _ClaimPageState extends ConsumerState<ClaimPage> {
       colorValue: widget.group.colorValue,
       builder: (context) {
         return Scaffold(
-          appBar: AppBar(
-            title: Text(l10n.claimTitle),
-            actions: [
-              IconButton(
-                tooltip: l10n.claimEditItems,
-                onPressed: _openEditor,
-                icon: const Icon(Icons.edit_outlined),
-              ),
-            ],
-          ),
           body: claimState.when(
             loading: () => const Center(child: CircularProgressIndicator()),
             error: (error, stack) => _ErrorState(message: l10n.claimLoadError),
@@ -176,15 +168,21 @@ class _ClaimPageState extends ConsumerState<ClaimPage> {
 
               return Column(
                 children: [
+                  DeunHeader(
+                    title: expense.name,
+                    subtitle: l10n.claimPresenceLive,
+                    subtitleLeading: const _PresencePulse(),
+                    leadingIcon: Icons.arrow_back,
+                    trailing: IconButton(
+                      tooltip: l10n.claimEditItems,
+                      onPressed: _openEditor,
+                      icon: const Icon(Icons.edit_outlined),
+                    ),
+                  ),
                   Expanded(
                     child: ListView(
                       padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
                       children: [
-                        _Header(
-                          merchant: expense.name,
-                          onEdit: _openEditor,
-                        ),
-                        const SizedBox(height: 16),
                         _PersonaSwitcher(
                           members: widget.group.groupMembers,
                           selected: _persona,
@@ -235,59 +233,6 @@ class _ClaimPageState extends ConsumerState<ClaimPage> {
   }
 }
 
-/// Header: merchant title with a pulsing live-presence dot, plus an edit-items
-/// affordance. The pulse honors the platform "reduce motion" setting.
-class _Header extends StatelessWidget {
-  const _Header({required this.merchant, required this.onEdit});
-
-  final String merchant;
-  final VoidCallback onEdit;
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
-    final textTheme = Theme.of(context).textTheme;
-    final colorScheme = Theme.of(context).colorScheme;
-
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                merchant,
-                style: textTheme.headlineSmall,
-                overflow: TextOverflow.ellipsis,
-                maxLines: 2,
-              ),
-              const SizedBox(height: 6),
-              Row(
-                children: [
-                  const _PresencePulse(),
-                  const SizedBox(width: 8),
-                  Text(
-                    l10n.claimPresenceLive,
-                    style: textTheme.bodySmall
-                        ?.copyWith(color: colorScheme.onSurfaceVariant),
-                  ),
-                ],
-              ),
-            ],
-          ),
-        ),
-        const SizedBox(width: 12),
-        OutlinedButton.icon(
-          onPressed: onEdit,
-          icon: const Icon(Icons.tune, size: 18),
-          label: Text(l10n.claimEditItems),
-        ),
-      ],
-    );
-  }
-}
-
 /// A small dot that pulses on a ~1.6s loop (Motion spec). Collapses to a static
 /// dot when the user has requested reduced motion.
 class _PresencePulse extends StatefulWidget {
@@ -301,7 +246,7 @@ class _PresencePulseState extends State<_PresencePulse>
     with SingleTickerProviderStateMixin {
   late final AnimationController _controller = AnimationController(
     vsync: this,
-    duration: const Duration(milliseconds: 1600),
+    duration: Motion.presencePulse,
   );
 
   @override

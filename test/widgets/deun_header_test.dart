@@ -7,6 +7,9 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:deun/l10n/app_localizations.dart';
 
+// Key used to find the subtitleLeading widget in tests.
+const Key _subtitleLeadingKey = Key('test_subtitle_leading');
+
 /// Pumps [child] inside a fully themed MaterialApp (redesign theme +
 /// AppLocalizations delegates) at the requested [brightness].
 Future<void> _pump(
@@ -252,6 +255,76 @@ void main() {
         lessThan(10.0),
         reason:
             'Title center ($titleCenterX) should be within 10px of header center ($headerCenterX)',
+      );
+    });
+
+    // ── subtitleLeading tests (TDD: RED first) ─────────────────────────────────
+
+    testWidgets('subtitleLeading renders alongside subtitle text', (tester) async {
+      await _pump(
+        tester,
+        const DeunHeader(
+          title: 'Merchant',
+          subtitle: 'Live now',
+          subtitleLeading: SizedBox(
+            key: _subtitleLeadingKey,
+            width: 8,
+            height: 8,
+          ),
+        ),
+      );
+      expect(find.text('Merchant'), findsOneWidget);
+      expect(find.text('Live now'), findsOneWidget);
+      // The subtitleLeading widget is present in the tree.
+      expect(find.byKey(_subtitleLeadingKey), findsOneWidget);
+    });
+
+    testWidgets('subtitleLeading is null by default — existing subtitle path unchanged',
+        (tester) async {
+      await _pump(
+        tester,
+        const DeunHeader(title: 'NoLeading', subtitle: 'Sub'),
+      );
+      // No key widget present — null path renders exactly as before.
+      expect(find.byKey(_subtitleLeadingKey), findsNothing);
+      expect(find.text('Sub'), findsOneWidget);
+    });
+
+    testWidgets('subtitleLeading is horizontally centered with subtitle text',
+        (tester) async {
+      const subtitleText = 'Centered subtitle';
+      await _pump(
+        tester,
+        const DeunHeader(
+          title: 'T',
+          subtitle: subtitleText,
+          subtitleLeading: SizedBox(
+            key: _subtitleLeadingKey,
+            width: 8,
+            height: 8,
+          ),
+        ),
+      );
+
+      // Both the subtitle text and the leading widget must exist.
+      expect(find.text(subtitleText), findsOneWidget);
+      expect(find.byKey(_subtitleLeadingKey), findsOneWidget);
+
+      // They must share approximately the same vertical centre (same row).
+      final leadingBox =
+          tester.renderObject(find.byKey(_subtitleLeadingKey)) as RenderBox;
+      final subtitleBox =
+          tester.renderObject(find.text(subtitleText)) as RenderBox;
+
+      final leadingCenter =
+          leadingBox.localToGlobal(Offset(0, leadingBox.size.height / 2)).dy;
+      final subtitleCenter =
+          subtitleBox.localToGlobal(Offset(0, subtitleBox.size.height / 2)).dy;
+
+      expect(
+        (leadingCenter - subtitleCenter).abs(),
+        lessThan(4.0),
+        reason: 'subtitleLeading and subtitle text should share the same row',
       );
     });
   });

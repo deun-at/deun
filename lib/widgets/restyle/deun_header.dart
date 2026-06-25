@@ -29,6 +29,7 @@ class DeunHeader extends StatelessWidget {
     super.key,
     required this.title,
     this.subtitle,
+    this.subtitleLeading,
     this.leadingIcon = Icons.arrow_back,
     this.onLeading,
     this.showLeading = true,
@@ -41,6 +42,12 @@ class DeunHeader extends StatelessWidget {
 
   /// Optional subtitle rendered below the title at bodySmall size.
   final String? subtitle;
+
+  /// Optional widget rendered immediately before the subtitle text in a
+  /// centered [Row]. Intended for small ambient indicators such as a
+  /// live-presence pulse dot. When null, the subtitle renders as a plain
+  /// [Text] exactly as before (no change to existing layout).
+  final Widget? subtitleLeading;
 
   /// Icon for the leading button. Defaults to [Icons.arrow_back]; pass
   /// [Icons.close] for modal-style full-screen forms.
@@ -107,6 +114,30 @@ class DeunHeader extends StatelessWidget {
     // The title block is centered across the FULL header width using a Stack.
     // Leading and trailing are pinned to left/right; the title sits in the
     // center layer and spans the full width with overflow ellipsis.
+    final subtitleWidget = subtitle != null
+        ? (subtitleLeading != null
+            ? Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  subtitleLeading!,
+                  const SizedBox(width: 8),
+                  Text(
+                    subtitle!,
+                    style: subtitleStyle,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
+              )
+            : Text(
+                subtitle!,
+                style: subtitleStyle,
+                textAlign: TextAlign.center,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ))
+        : null;
+
     final titleBlock = Column(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -117,14 +148,7 @@ class DeunHeader extends StatelessWidget {
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
         ),
-        if (subtitle != null)
-          Text(
-            subtitle!,
-            style: subtitleStyle,
-            textAlign: TextAlign.center,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-          ),
+        ?subtitleWidget,
       ],
     );
 

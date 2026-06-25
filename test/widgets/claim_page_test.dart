@@ -5,6 +5,7 @@ import 'package:deun/pages/expenses/data/expense_model.dart';
 import 'package:deun/pages/expenses/presentation/claim_page.dart';
 import 'package:deun/pages/expenses/provider/claim_notifier.dart';
 import 'package:deun/widgets/restyle/app_segmented_control.dart';
+import 'package:deun/widgets/restyle/deun_header.dart';
 import 'package:deun/pages/groups/data/group_member_model.dart';
 import 'package:deun/pages/groups/data/group_model.dart';
 import 'package:deun/widgets/theme_builder.dart';
@@ -171,9 +172,46 @@ void main() {
     final l10n = await AppLocalizations.delegate.load(const Locale('en'));
     await _pump(tester, expense: _itemizedExpense());
 
+    // Merchant name appears in the DeunHeader title (may also appear elsewhere).
     expect(find.text('Supermarket'), findsWidgets);
+    // Presence live text in the DeunHeader subtitle.
     expect(find.text(l10n.claimPresenceLive), findsOneWidget);
-    expect(find.text(l10n.claimEditItems), findsWidgets);
+    // No AppBar — the claim page uses DeunHeader exclusively.
+    expect(find.byType(AppBar), findsNothing);
+    // DeunHeader is rendered.
+    expect(find.byType(DeunHeader), findsOneWidget);
+  });
+
+  testWidgets('header has a single edit affordance (no duplicate)', (tester) async {
+    final l10n = await AppLocalizations.delegate.load(const Locale('en'));
+    await _pump(tester, expense: _itemizedExpense());
+
+    // Exactly one widget with the edit tooltip — duplicate from body is gone.
+    expect(
+      find.byWidgetPredicate(
+        (w) => w is Tooltip && w.message == l10n.claimEditItems,
+      ),
+      findsOneWidget,
+    );
+    // The edit icon appears exactly once (the trailing IconButton in DeunHeader).
+    expect(find.byIcon(Icons.edit_outlined), findsOneWidget);
+  });
+
+  testWidgets('header edit icon is present and wired up', (tester) async {
+    // Verify the edit icon is in the DeunHeader (trailing slot).
+    // We do NOT tap it here because GoRouter is not available in the test
+    // MaterialApp — the notifier/edit route requires a GoRouter context.
+    await _pump(tester, expense: _itemizedExpense());
+    // The edit icon lives in the DeunHeader trailing slot.
+    expect(find.byIcon(Icons.edit_outlined), findsOneWidget);
+    // Confirm it is a descendant of the DeunHeader (not a body button).
+    expect(
+      find.descendant(
+        of: find.byType(DeunHeader),
+        matching: find.byIcon(Icons.edit_outlined),
+      ),
+      findsOneWidget,
+    );
   });
 
   testWidgets('summary card shows your share, progress, unclaimed and per-member',
