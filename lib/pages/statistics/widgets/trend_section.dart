@@ -2,6 +2,7 @@ import 'package:deun/l10n/app_localizations.dart';
 import 'package:deun/pages/statistics/provider/statistics_notifiers.dart';
 import 'package:deun/pages/statistics/statistics_models.dart';
 import 'package:deun/pages/statistics/widgets/stats_chart_math.dart';
+import 'package:deun/widgets/motion.dart';
 import 'package:deun/widgets/restyle/section_label.dart';
 import 'package:deun/widgets/restyle/soft_card.dart';
 import 'package:fl_chart/fl_chart.dart';
@@ -137,56 +138,108 @@ class _TrendLine extends StatelessWidget {
   }
 }
 
-class _TrendBars extends StatelessWidget {
+class _TrendBars extends StatefulWidget {
   const _TrendBars({required this.months, required this.onMonthTap});
   final List<MonthBucket> months;
   final ValueChanged<MonthBucket> onMonthTap;
 
   @override
+  State<_TrendBars> createState() => _TrendBarsState();
+}
+
+class _TrendBarsState extends State<_TrendBars> with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _animation;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: Motion.barGrowDuration,
+    );
+    _animation = CurvedAnimation(parent: _controller, curve: Motion.barGrow);
+
+    // Start grow on next frame so the widget has been laid out.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      final reduceMotion = MediaQuery.of(context).disableAnimations;
+      if (reduceMotion) {
+        // Skip to end immediately.
+        _controller.value = 1.0;
+      } else {
+        _controller.forward();
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return BarChart(
-      BarChartData(
-        gridData: const FlGridData(show: false),
-        borderData: FlBorderData(show: false),
-        titlesData: FlTitlesData(
-          topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-          rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-          leftTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-          bottomTitles: AxisTitles(
-            sideTitles: SideTitles(
-              showTitles: true,
-              reservedSize: 26,
-              interval: 1,
-              getTitlesWidget: (value, meta) => _bottomLabel(value, meta, months, theme, withYear: true),
-            ),
-          ),
-        ),
-        barTouchData: BarTouchData(
-          enabled: true,
-          touchCallback: (event, response) {
-            if (!(event is FlTapUpEvent || event is FlLongPressEnd)) return;
-            final spot = response?.spot;
-            if (spot == null) return;
-            final idx = spot.touchedBarGroupIndex;
-            if (idx >= 0 && idx < months.length) onMonthTap(months[idx]);
-          },
-        ),
-        barGroups: [
-          for (int i = 0; i < months.length; i++)
-            BarChartGroupData(
-              x: i,
-              barRods: [
-                BarChartRodData(
-                  toY: months[i].total,
-                  width: 10,
-                  borderRadius: BorderRadius.circular(4),
-                  color: theme.colorScheme.primary,
+    final months = widget.months;
+
+    if (months.isEmpty) return const SizedBox.shrink();
+
+    final maxTotal = months.map((m) => m.total).reduce((a, b) => a > b ? a : b);
+    final step = labelStep(months.length);
+
+    return AnimatedBuilder(
+      animation: _animation,
+      builder: (context, _) {
+        return Row(
+          crossAxisAlignment: CrossAxisAlignment.end,
+          children: [
+            for (int i = 0; i < months.length; i++)
+              Expanded(
+                child: GestureDetector(
+                  onTap: () => widget.onMonthTap(months[i]),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      // Animated bar fill growing from bottom.
+                      Expanded(
+                        child: Align(
+                          alignment: Alignment.bottomCenter,
+                          child: FractionallySizedBox(
+                            heightFactor: _animation.value,
+                            child: FractionallySizedBox(
+                              heightFactor: maxTotal > 0 ? months[i].total / maxTotal : 0,
+                              child: Container(
+                                margin: const EdgeInsets.symmetric(horizontal: 2),
+                                decoration: BoxDecoration(
+                                  color: theme.colorScheme.primary,
+                                  borderRadius: BorderRadius.circular(4),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                      // Month label (shown for every nth bar).
+                      SizedBox(
+                        height: 26,
+                        child: (i % step == 0 || i == months.length - 1)
+                            ? Text(
+                                DateFormat('MMM yy').format(months[i].start),
+                                style: theme.textTheme.labelSmall
+                                    ?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+                                overflow: TextOverflow.ellipsis,
+                              )
+                            : const SizedBox.shrink(),
+                      ),
+                    ],
+                  ),
                 ),
-              ],
-            ),
-        ],
-      ),
+              ),
+          ],
+        );
+      },
     );
   }
 }

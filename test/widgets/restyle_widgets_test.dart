@@ -422,6 +422,79 @@ void main() {
       final bar = tester.widget<ProgressBar>(find.byType(ProgressBar));
       expect(bar.clampedValue, 0.0);
     });
+
+    // -------------------------------------------------------------------------
+    // V3-T8: grow-on-entrance animation
+    // -------------------------------------------------------------------------
+
+    testWidgets(
+        'after pumpAndSettle widthFactor equals clampedValue (animation finished)',
+        (tester) async {
+      const value = 0.6;
+      await _pumpWithMediaQuery(tester, const ProgressBar(value: value));
+      await tester.pumpAndSettle();
+      final box = tester.widget<FractionallySizedBox>(find.byType(FractionallySizedBox));
+      expect(box.widthFactor, closeTo(value, 0.001));
+    });
+
+    testWidgets(
+        'widthFactor is less than clampedValue 50ms after first pump (animating)',
+        (tester) async {
+      const value = 0.8;
+      // Use _pumpWithMediaQuery (animations enabled — default MediaQuery).
+      await _pumpWithMediaQuery(tester, const ProgressBar(value: value));
+      // At 50ms the 100ms delay has not yet elapsed, so widthFactor must be 0.
+      await tester.pump(const Duration(milliseconds: 50));
+      final box = tester.widget<FractionallySizedBox>(find.byType(FractionallySizedBox));
+      expect(
+        box.widthFactor! < value,
+        isTrue,
+        reason: 'progress bar should still be growing at 50ms (100ms delay + 720ms total)',
+      );
+    });
+
+    testWidgets(
+        'with disableAnimations widthFactor equals clampedValue immediately',
+        (tester) async {
+      const value = 0.5;
+      final mediaQuery = const MediaQueryData().copyWith(disableAnimations: true);
+      await _pumpWithMediaQuery(
+        tester,
+        const ProgressBar(value: value),
+        mediaQuery: mediaQuery,
+      );
+      // No pumpAndSettle — reduced motion must show full value right away.
+      await tester.pump(const Duration(milliseconds: 1));
+      final box = tester.widget<FractionallySizedBox>(find.byType(FractionallySizedBox));
+      expect(box.widthFactor, closeTo(value, 0.001));
+    });
+
+    testWidgets(
+        'value change animates to new clampedValue after pumpAndSettle',
+        (tester) async {
+      double currentValue = 0.4;
+      await _pumpWithMediaQuery(
+        tester,
+        StatefulBuilder(
+          builder: (context, setState) => Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ProgressBar(value: currentValue),
+              TextButton(
+                onPressed: () => setState(() => currentValue = 0.9),
+                child: const Text('update'),
+              ),
+            ],
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      // Trigger the value change.
+      await tester.tap(find.text('update'));
+      await tester.pumpAndSettle();
+      final box = tester.widget<FractionallySizedBox>(find.byType(FractionallySizedBox));
+      expect(box.widthFactor, closeTo(0.9, 0.001));
+    });
   });
 
   group('BalancePill', () {
