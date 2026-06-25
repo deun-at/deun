@@ -6,6 +6,9 @@ remaining fidelity gaps are easy to see and hand back as a fix loop.
 - **Design** = `Deun Redesign v2.dc.html` prototype, rendered in a browser (light mode).
 - **Current app** = live build on physical device `R5CY22DR0FK` (`app.deun.www`), branch `feat/v3-motion-foundation`.
 
+> **Automating this:** [`../superpowers/AUDIT_LOOP.md`](../superpowers/AUDIT_LOOP.md) drives the
+> FIX → AUDIT → STOP loop over this checklist. Capture harness: [`tools/`](tools/capture.md).
+
 ## Folder layout
 ```
 design_audit/
