@@ -42,7 +42,7 @@ Settle up · Invite · **Tap to Claim** · Login · Reset password · Onboarding
 
 ### QR code
 - [ ] F13 · QR code · Profile row (avatar + name) renders BELOW the QR; v3 places it ABOVE the QR (between segmented control and code) ⚠️ — lib/pages/friends/presentation/friend_qr_page.dart:212 vs 292 — target: avatar/name block above QrImageView — ev: compare/compare_qr.png ⛔ blocked — false positive: v3 prototype + compare_qr.png both show the profile row BELOW the QR (audit inverted above/below); app already matches v3. Fixing would regress.
-- [ ] F14 · QR code · Copy/Share are full-stadium pills and "Link kopieren" wraps to two lines; v3 uses radius-15 buttons, Copy = white+1.5px border (secondary), Share = solid indigo, single-line ⚠️ — lib/pages/friends/presentation/friend_qr_page.dart:242,255 — target: radius-15; Copy white+#E4E1D8 border; one-line labels (more h-padding/width) — ev: compare/compare_qr.png
+- [x] F14 · QR code · Copy/Share are full-stadium pills and "Link kopieren" wraps to two lines; v3 uses radius-15 buttons, Copy = white+1.5px border (secondary), Share = solid indigo, single-line ⚠️ — lib/pages/friends/presentation/friend_qr_page.dart:242,255 — target: radius-15; Copy white+#E4E1D8 border; one-line labels (more h-padding/width) — ev: compare/compare_qr.png ✅ 6419da9 (PrimaryButton + new SecondaryButton, radius-15, single-line)
 
 ### Add friend
 - [ ] F15 · Add friend · Header has no trailing QR action; v3 "Add friends" header carries a trailing qr_code_2 button 💅 — lib/pages/friends/presentation/friend_add_page.dart (header) — target: add trailing qr_code_2 38×38 action — ev: compare/compare_add_friend.png
