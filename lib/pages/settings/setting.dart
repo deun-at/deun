@@ -4,9 +4,11 @@ import 'package:deun/pages/settings/settings_sheets.dart';
 import 'package:deun/pages/users/user_model.dart';
 import 'package:deun/provider.dart';
 import 'package:deun/widgets/initialization_helper.dart';
+import 'package:deun/widgets/restyle/deun_header.dart';
 import 'package:deun/widgets/restyle/member_avatar.dart';
 import 'package:deun/widgets/restyle/section_label.dart';
 import 'package:deun/widgets/restyle/soft_card.dart';
+import 'package:deun/widgets/theme_builder.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -55,13 +57,14 @@ class _SettingState extends ConsumerState<Setting> {
                   Expanded(
                     child: Text(l10n.settings, style: theme.textTheme.headlineMedium),
                   ),
-                  IconButton(
+                  // v3: neutral warm-white circle (the shared header-action
+                  // circle, which adapts to dark) with a danger-red logout
+                  // glyph — NOT an error-container-tinted circle.
+                  HeaderIconButton(
+                    icon: Icons.logout,
                     tooltip: l10n.settingsSignOut,
-                    onPressed: () => _showSignOutDialog(context),
-                    style: IconButton.styleFrom(
-                      backgroundColor: colorScheme.errorContainer.withValues(alpha: 0.5),
-                    ),
-                    icon: Icon(Icons.logout, color: colorScheme.error),
+                    onTap: () => _showSignOutDialog(context),
+                    iconColor: theme.extension<SemanticColors>()!.danger,
                   ),
                 ],
               ),

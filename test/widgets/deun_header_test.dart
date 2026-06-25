@@ -359,6 +359,75 @@ void main() {
       expect(icon.color, colorScheme.onSurface);
     });
 
+    testWidgets(
+        'iconColor override keeps the neutral circle but tints the glyph (danger logout)',
+        (tester) async {
+      await _pump(
+        tester,
+        Builder(
+          builder: (context) => HeaderIconButton(
+            icon: Icons.logout,
+            onTap: () {},
+            iconColor: Theme.of(context).extension<SemanticColors>()!.danger,
+          ),
+        ),
+      );
+
+      final context = tester.element(find.byIcon(Icons.logout));
+      final colorScheme = Theme.of(context).colorScheme;
+      final danger = Theme.of(context).extension<SemanticColors>()!.danger;
+
+      // Circle stays the neutral warm-white header-action surface (no error
+      // tint) and carries no shadow.
+      final container = tester.widget<Container>(
+        find.ancestor(
+          of: find.byIcon(Icons.logout),
+          matching: find.byType(Container),
+        ).first,
+      );
+      final decoration = container.decoration as BoxDecoration;
+      expect(decoration.color, colorScheme.onSurface.withValues(alpha: 0.04));
+      expect(decoration.boxShadow, isEmpty);
+
+      // Only the glyph takes the danger semantic.
+      final icon = tester.widget<Icon>(find.byIcon(Icons.logout));
+      expect(icon.color, danger);
+    });
+
+    testWidgets(
+        'iconColor override adapts the danger glyph in dark mode (circle still neutral)',
+        (tester) async {
+      await _pump(
+        tester,
+        Builder(
+          builder: (context) => HeaderIconButton(
+            icon: Icons.logout,
+            onTap: () {},
+            iconColor: Theme.of(context).extension<SemanticColors>()!.danger,
+          ),
+        ),
+        brightness: Brightness.dark,
+      );
+
+      final context = tester.element(find.byIcon(Icons.logout));
+      final colorScheme = Theme.of(context).colorScheme;
+      final danger = Theme.of(context).extension<SemanticColors>()!.danger;
+
+      final container = tester.widget<Container>(
+        find.ancestor(
+          of: find.byIcon(Icons.logout),
+          matching: find.byType(Container),
+        ).first,
+      );
+      expect(
+        (container.decoration as BoxDecoration).color,
+        colorScheme.onSurface.withValues(alpha: 0.04),
+      );
+
+      final icon = tester.widget<Icon>(find.byIcon(Icons.logout));
+      expect(icon.color, danger);
+    });
+
     testWidgets('filled variant uses primary fill + legible onPrimary icon + soft shadow',
         (tester) async {
       await _pump(

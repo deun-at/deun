@@ -209,6 +209,7 @@ class HeaderIconButton extends StatelessWidget {
     required this.onTap,
     this.filled = false,
     this.tooltip,
+    this.iconColor,
   });
 
   final IconData icon;
@@ -221,6 +222,13 @@ class HeaderIconButton extends StatelessWidget {
   /// Optional tooltip / semantic label for the action.
   final String? tooltip;
 
+  /// Optional override for the icon color, layered on top of the tinted
+  /// variant's neutral warm-white circle. Used for semantic actions that keep
+  /// the neutral circle but tint only the glyph (e.g. the danger-red logout /
+  /// sign-out action). Ignored for the [filled] variant. Pass a theme-resolved
+  /// color (e.g. `SemanticColors.danger`) — never inline prototype hex.
+  final Color? iconColor;
+
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
@@ -229,7 +237,12 @@ class HeaderIconButton extends StatelessWidget {
     final bgColor = filled
         ? colorScheme.primary
         : colorScheme.onSurface.withValues(alpha: 0.04);
-    final iconColor = filled ? colorScheme.onPrimary : colorScheme.onSurface;
+    // The tinted variant keeps its neutral circle but allows an [iconColor]
+    // override for semantic glyphs (e.g. danger-red logout); the filled accent
+    // always uses onPrimary for legibility on the primary fill.
+    final resolvedIconColor = filled
+        ? colorScheme.onPrimary
+        : (iconColor ?? colorScheme.onSurface);
 
     // Filled accent carries the v3 colored soft drop-shadow; softened on dark
     // (a saturated drop-shadow reads as glow on near-black surfaces), matching
@@ -267,7 +280,7 @@ class HeaderIconButton extends StatelessWidget {
           child: Icon(
             icon,
             size: 22,
-            color: iconColor,
+            color: resolvedIconColor,
           ),
         ),
       ),
