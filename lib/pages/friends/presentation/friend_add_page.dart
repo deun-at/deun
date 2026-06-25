@@ -6,6 +6,7 @@ import 'package:deun/pages/friends/data/friendship_repository.dart';
 import 'package:deun/pages/friends/provider/friend_add_notifier.dart';
 import 'package:deun/widgets/restyle/deun_header.dart';
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:deun/l10n/app_localizations.dart';
 import 'package:deun/pages/friends/presentation/search_result_list.dart';
@@ -56,7 +57,14 @@ class _FriendAddPageState extends ConsumerState<FriendAddPage> {
     return Scaffold(
       body: Column(
         children: [
-          DeunHeader(title: l10n.addFriends),
+          DeunHeader(
+            title: l10n.addFriends,
+            trailing: HeaderIconButton(
+              onTap: () => GoRouter.of(context).push('/friend/qr'),
+              tooltip: l10n.qr,
+              icon: Icons.qr_code_2,
+            ),
+          ),
           Expanded(
             child: SafeArea(
               top: false,
