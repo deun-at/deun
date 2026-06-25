@@ -1,0 +1,31 @@
+<!doctype html><meta charset="utf-8">
+<style>
+  body{margin:0;background:#fff;font-family:'Segoe UI',Arial,sans-serif;color:#16181A}
+  .row{display:flex;gap:0;align-items:stretch;width:1180px}
+  .col{flex:1;display:flex;flex-direction:column;align-items:center;padding:14px 10px 18px;box-sizing:border-box}
+  .col.design{background:#F4F3EF}
+  .col.app{background:#fff;border-left:2px dashed #d9d6cd}
+  .tag{font-size:15px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;margin-bottom:10px}
+  .design .tag{color:#5750E6}
+  .app .tag{color:#C25A3C}
+  img{height:760px;width:auto;display:block;border-radius:10px}
+  .app img{box-shadow:0 2px 10px rgba(0,0,0,.12)}
+</style>
+<div id="r" class="row">
+  <div class="col design"><div class="tag">Design (handoff v3)</div><img id="d" src=""></div>
+  <div class="col app"><div class="tag">Current app</div><img id="a" src=""></div>
+</div>
+<script>
+  const pairs = {
+    groups:['design/design_01_groups.png','app/app_01_groups.png'],
+    friends:['design/design_02_friends.png','app/app_02_friends.png'],
+    settings:['design/design_03_settings.png','app/app_03_settings.png'],
+    group_detail:['design/design_04_group_detail.png','app/app_06_group_detail.png'],
+    group_form:['design/design_05_group_form.png','app/app_05_newgroup.png'],
+    add_friend:['design/design_13_add_friend.png','app/app_15a_add_friend.png'],
+    personal_stats:['design/design_14_personal_stats.png','app/app_14_personal_stats.png'],
+    qr:['design/design_15_qr.png','app/app_15b_qr.png'],
+  };
+  function show(k){document.getElementById('d').src=pairs[k][0];document.getElementById('a').src=pairs[k][1];}
+  show(new URLSearchParams(location.search).get('p')||'groups');
+</script>
