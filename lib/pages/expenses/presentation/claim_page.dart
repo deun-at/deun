@@ -17,6 +17,7 @@ import 'package:deun/widgets/restyle/progress_bar.dart';
 import 'package:deun/widgets/restyle/section_label.dart';
 import 'package:deun/widgets/restyle/sheet_scaffold.dart';
 import 'package:deun/widgets/restyle/soft_card.dart';
+import 'package:deun/widgets/restyle/success_badge.dart';
 import 'package:deun/widgets/theme_builder.dart';
 import 'package:deun/helper/helper.dart';
 import 'package:flutter/material.dart';
@@ -977,7 +978,7 @@ class _ClaimSuccessSheet extends StatelessWidget {
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          Icon(Icons.check_circle, size: 56, color: semantic.success),
+          SuccessBadge(icon: Icons.check_circle, size: 56, color: semantic.success),
           const SizedBox(height: 16),
           Text(
             l10n.claimConfirmedTitle,

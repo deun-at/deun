@@ -5,6 +5,7 @@ import 'package:deun/widgets/restyle/money_text.dart';
 import 'package:deun/widgets/restyle/section_label.dart';
 import 'package:deun/widgets/restyle/sheet_scaffold.dart';
 import 'package:deun/widgets/restyle/soft_card.dart';
+import 'package:deun/widgets/restyle/success_badge.dart';
 import 'package:deun/widgets/rounded_container.dart';
 import 'package:deun/widgets/shimmer_card_list.dart';
 import 'package:deun/widgets/theme_builder.dart';
@@ -337,7 +338,7 @@ class _AllSettled extends StatelessWidget {
       padding: const EdgeInsets.symmetric(vertical: 40),
       child: Column(
         children: [
-          Icon(Icons.check_circle_outline, size: 48, color: semantic.success),
+          SuccessBadge(icon: Icons.check_circle_outline, size: 48, color: semantic.success),
           const SizedBox(height: 12),
           Text(
             l10n.paymentAllSettled,
