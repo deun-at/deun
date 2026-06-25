@@ -116,6 +116,10 @@ void main() {
     expect(pills[0].state, BalanceState.owed);
     expect(pills[1].state, BalanceState.owe);
     expect(pills[2].state, BalanceState.settled);
+
+    // V3: every accepted-friend row ends in a trailing chevron signalling it
+    // opens the friend sheet (one per accepted row).
+    expect(find.byIcon(Icons.chevron_right), findsNWidgets(3));
   });
 
   testWidgets('empty state shows the no-friends message', (tester) async {

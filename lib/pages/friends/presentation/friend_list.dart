@@ -351,6 +351,7 @@ class _FriendCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
+    final colorScheme = Theme.of(context).colorScheme;
     final state = friendBalanceState(friendship.shareAmount);
 
     final String label;
@@ -377,6 +378,11 @@ class _FriendCard extends StatelessWidget {
             state: state,
             amount: state == BalanceState.settled ? null : friendship.shareAmount.abs(),
           ),
+          const SizedBox(width: 4),
+          // v3 ends an accepted-friend row in a muted chevron to signal it opens
+          // the friend sheet (matches the group-list row pattern). `outline`
+          // resolves the warm muted-gray token and flips with brightness.
+          Icon(Icons.chevron_right, color: colorScheme.outline),
         ],
       ),
     );
