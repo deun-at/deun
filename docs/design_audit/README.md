@@ -41,7 +41,7 @@ Settle up · Invite · **Tap to Claim** · Login · Reset password · Onboarding
 - [ ] F12 · Settings · Logout icon button has a red errorContainer-tinted circle; v3 logout is a plain white circle with a red (#D85A47) icon 💅 — lib/pages/settings/setting.dart:62 — target: white circle bg, red icon, no error tint — ev: compare/compare_settings.png
 
 ### QR code
-- [ ] F13 · QR code · Profile row (avatar + name) renders BELOW the QR; v3 places it ABOVE the QR (between segmented control and code) ⚠️ — lib/pages/friends/presentation/friend_qr_page.dart:212 vs 292 — target: avatar/name block above QrImageView — ev: compare/compare_qr.png
+- [ ] F13 · QR code · Profile row (avatar + name) renders BELOW the QR; v3 places it ABOVE the QR (between segmented control and code) ⚠️ — lib/pages/friends/presentation/friend_qr_page.dart:212 vs 292 — target: avatar/name block above QrImageView — ev: compare/compare_qr.png ⛔ blocked — false positive: v3 prototype + compare_qr.png both show the profile row BELOW the QR (audit inverted above/below); app already matches v3. Fixing would regress.
 - [ ] F14 · QR code · Copy/Share are full-stadium pills and "Link kopieren" wraps to two lines; v3 uses radius-15 buttons, Copy = white+1.5px border (secondary), Share = solid indigo, single-line ⚠️ — lib/pages/friends/presentation/friend_qr_page.dart:242,255 — target: radius-15; Copy white+#E4E1D8 border; one-line labels (more h-padding/width) — ev: compare/compare_qr.png
 
 ### Add friend
