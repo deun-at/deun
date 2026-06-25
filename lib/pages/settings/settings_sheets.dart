@@ -27,6 +27,7 @@ void showLanguageSheet(
     backgroundColor: Colors.transparent,
     useSafeArea: true,
     sheetAnimationStyle: kSheetAnimationStyle,
+    barrierColor: kSheetBarrierColor,
     builder: (_) => _LanguageSheet(currentTag: currentTag, onSelected: onSelected),
   );
 }
@@ -88,6 +89,7 @@ void showAppearanceSheet(BuildContext context) {
     backgroundColor: Colors.transparent,
     useSafeArea: true,
     sheetAnimationStyle: kSheetAnimationStyle,
+    barrierColor: kSheetBarrierColor,
     builder: (_) => const _AppearanceSheet(),
   );
 }
@@ -220,6 +222,7 @@ void showDeleteAccountSheet(BuildContext context) {
     backgroundColor: Colors.transparent,
     useSafeArea: true,
     sheetAnimationStyle: kSheetAnimationStyle,
+    barrierColor: kSheetBarrierColor,
     builder: (_) => const _DeleteAccountSheet(),
   );
 }

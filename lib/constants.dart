@@ -99,6 +99,13 @@ const spacer = SizedBox(
   height: 12,
 );
 
+/// Scrim color for modal bottom sheets (COMPONENTS §3 "Bottom sheets").
+/// rgba(16,16,14,0.4) — a warm near-black at ~40% opacity.
+/// 0x66 ≈ 0.400 alpha (102/255). Applied via `barrierColor` /
+/// `modalBarrierColor` on every `showModalBottomSheet` and
+/// `ModalBottomSheetPage` call so the dimmer is consistent across sheets.
+const Color kSheetBarrierColor = Color(0x6610100E);
+
 /// Bottom-sheet rise motion (DESIGN_SPEC): translateY 101%→0 over 0.28s,
 /// cubic-bezier(.22, 1, .36, 1); scrim fade follows the route default.
 /// Applied via `sheetAnimationStyle` on `showModalBottomSheet` and

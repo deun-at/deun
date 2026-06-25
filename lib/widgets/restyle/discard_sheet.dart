@@ -14,6 +14,7 @@ Future<bool?> showDiscardConfirmationSheet(BuildContext context) {
     context: context,
     isScrollControlled: true,
     sheetAnimationStyle: kSheetAnimationStyle,
+    barrierColor: kSheetBarrierColor,
     backgroundColor: Colors.transparent,
     builder: (sheetContext) {
       final colorScheme = Theme.of(sheetContext).colorScheme;

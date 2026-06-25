@@ -114,6 +114,7 @@ class _WidgetGalleryPageState extends State<WidgetGalleryPage> {
                 context: context,
                 isScrollControlled: true,
                 sheetAnimationStyle: kSheetAnimationStyle,
+                barrierColor: kSheetBarrierColor,
                 backgroundColor: Colors.transparent,
                 builder: (_) => SheetScaffold(
                   title: 'Pick a category',

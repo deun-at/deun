@@ -17,6 +17,7 @@ Future<T?> _showSheet<T>(BuildContext context, Widget child) {
     context: context,
     isScrollControlled: true,
     sheetAnimationStyle: kSheetAnimationStyle,
+    barrierColor: kSheetBarrierColor,
     backgroundColor: Colors.transparent,
     builder: (_) => child,
   );

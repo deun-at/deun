@@ -32,6 +32,7 @@ class ModalBottomSheetPage<T> extends Page<T> {
       isScrollControlled: true,
       useSafeArea: true,
       sheetAnimationStyle: kSheetAnimationStyle,
+      modalBarrierColor: kSheetBarrierColor,
       anchorPoint: anchorPoint,
       settings: this);
 }

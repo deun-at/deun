@@ -247,11 +247,17 @@ ThemeData getThemeData(BuildContext context, Color seedColor, Brightness brightn
     dialogTheme: DialogThemeData(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
     ),
-    bottomSheetTheme: const BottomSheetThemeData(
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+    bottomSheetTheme: BottomSheetThemeData(
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(30)),
       ),
-      showDragHandle: true,
+      // SheetScaffold draws its own custom drag handle (38×4, outlineVariant).
+      // Setting showDragHandle:false prevents a double-handle when using
+      // SheetScaffold. Non-SheetScaffold sheets should use SheetScaffold.
+      showDragHandle: false,
+      // Warm flat surface — kills M3's tonal elevation tint (surfaceTintColor).
+      backgroundColor: surfaceContainerLow,
+      surfaceTintColor: Colors.transparent,
     ),
   );
 }

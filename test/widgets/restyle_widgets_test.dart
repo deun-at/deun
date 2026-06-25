@@ -556,5 +556,125 @@ void main() {
       );
       expect(find.text('sheet body'), findsOneWidget);
     });
+
+    // -------------------------------------------------------------------------
+    // V3-T9a: §3 spec — radius 30, single 38×4 outlineVariant handle, title w700
+    // -------------------------------------------------------------------------
+
+    testWidgets('surface uses surfaceContainerLow with top radius 30, square bottom',
+        (tester) async {
+      late ColorScheme colorScheme;
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: ThemeData(brightness: Brightness.light, splashFactory: NoSplash.splashFactory),
+          localizationsDelegates: const [
+            AppLocalizations.delegate,
+            GlobalMaterialLocalizations.delegate,
+            GlobalWidgetsLocalizations.delegate,
+            GlobalCupertinoLocalizations.delegate,
+          ],
+          supportedLocales: AppLocalizations.supportedLocales,
+          home: Builder(
+            builder: (context) {
+              final theme = getThemeData(context, kBrandSeed, Brightness.light);
+              colorScheme = theme.colorScheme;
+              return Theme(
+                data: theme,
+                child: const Scaffold(
+                  body: Center(child: SheetScaffold(body: Text('body'))),
+                ),
+              );
+            },
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      // Surface color is surfaceContainerLow.
+      final container = tester.widget<Container>(
+        find.ancestor(of: find.text('body'), matching: find.byType(Container)).first,
+      );
+      final decoration = container.decoration as BoxDecoration;
+      expect(decoration.color, colorScheme.surfaceContainerLow,
+          reason: 'Sheet surface must use surfaceContainerLow');
+      // Top radius 30, bottom square.
+      expect(
+        decoration.borderRadius,
+        const BorderRadius.vertical(top: Radius.circular(30)),
+        reason: 'Top radius must be 30, bottom must be square (no radius)',
+      );
+    });
+
+    testWidgets('exactly one drag handle rendered — sized 38×4 — colored outlineVariant',
+        (tester) async {
+      late ColorScheme colorScheme;
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: ThemeData(brightness: Brightness.light, splashFactory: NoSplash.splashFactory),
+          localizationsDelegates: const [
+            AppLocalizations.delegate,
+            GlobalMaterialLocalizations.delegate,
+            GlobalWidgetsLocalizations.delegate,
+            GlobalCupertinoLocalizations.delegate,
+          ],
+          supportedLocales: AppLocalizations.supportedLocales,
+          home: Builder(
+            builder: (context) {
+              final theme = getThemeData(context, kBrandSeed, Brightness.light);
+              colorScheme = theme.colorScheme;
+              return Theme(
+                data: theme,
+                child: const Scaffold(
+                  body: Center(child: SheetScaffold(body: Text('body'))),
+                ),
+              );
+            },
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      // Find containers with the outlineVariant color — exactly one (the handle).
+      final containers = tester.widgetList<Container>(find.byType(Container)).toList();
+      final handles = containers.where((c) {
+        final deco = c.decoration;
+        if (deco is BoxDecoration && deco.color == colorScheme.outlineVariant) return true;
+        return false;
+      }).toList();
+      expect(handles.length, 1, reason: 'Exactly one drag handle must be rendered');
+
+      // The handle container must be 38 wide and 4 tall.
+      final handleFinder = find.byWidgetPredicate((w) {
+        if (w is Container) {
+          final deco = w.decoration;
+          if (deco is BoxDecoration && deco.color == colorScheme.outlineVariant) return true;
+        }
+        return false;
+      });
+      final size = tester.getSize(handleFinder);
+      expect(size.width, 38.0, reason: 'Drag handle width must be 38');
+      expect(size.height, 4.0, reason: 'Drag handle height must be 4');
+    });
+
+    testWidgets('title renders with fontWeight w700', (tester) async {
+      await _pump(
+        tester,
+        const SheetScaffold(title: 'My Sheet', body: Text('body')),
+      );
+      final titleText = tester.widget<Text>(find.text('My Sheet'));
+      // Style may be resolved; check the effective weight.
+      final weight = titleText.style?.fontWeight;
+      expect(weight, FontWeight.w700, reason: 'Sheet title must use fontWeight w700');
+    });
+
+    testWidgets('default padding is EdgeInsets.fromLTRB(20, 8, 20, 26)', (tester) async {
+      const sheet = SheetScaffold(body: Text('content'));
+      expect(sheet.padding, const EdgeInsets.fromLTRB(20, 8, 20, 26));
+    });
+
+    testWidgets('kSheetBarrierColor has approximately 0.4 opacity', (tester) async {
+      // 0x66 / 0xFF ≈ 0.400.
+      expect(kSheetBarrierColor.a, closeTo(0.4, 0.01));
+    });
   });
 }

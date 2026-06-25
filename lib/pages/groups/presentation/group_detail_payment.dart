@@ -228,6 +228,7 @@ class _PayRow extends StatelessWidget {
       context: context,
       isScrollControlled: true,
       sheetAnimationStyle: kSheetAnimationStyle,
+      barrierColor: kSheetBarrierColor,
       builder: (_) => ThemeBuilder(
         colorValue: group.colorValue,
         builder: (_) => _PaymentMethodSheet(

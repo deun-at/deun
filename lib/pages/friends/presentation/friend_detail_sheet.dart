@@ -304,6 +304,7 @@ void openFriendDetailSheet(BuildContext context, Friendship friendship) {
     context: context,
     isScrollControlled: true,
     sheetAnimationStyle: kSheetAnimationStyle,
+    barrierColor: kSheetBarrierColor,
     backgroundColor: Colors.transparent,
     builder: (_) => FriendDetailSheet(friendship: friendship),
   );

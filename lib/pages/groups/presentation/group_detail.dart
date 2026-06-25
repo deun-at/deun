@@ -264,6 +264,7 @@ class _GroupDetailState extends ConsumerState<GroupDetail> {
                   final result = await showModalBottomSheet<ReceiptScanResult>(
                     context: context,
                     sheetAnimationStyle: kSheetAnimationStyle,
+                    barrierColor: kSheetBarrierColor,
                     builder: (context) => const ReceiptScannerSheet(),
                   );
                   if (result != null && context.mounted) {

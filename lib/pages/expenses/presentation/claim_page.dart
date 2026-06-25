@@ -104,6 +104,7 @@ class _ClaimPageState extends ConsumerState<ClaimPage> {
       context: context,
       isScrollControlled: true,
       sheetAnimationStyle: kSheetAnimationStyle,
+      barrierColor: kSheetBarrierColor,
       backgroundColor: Colors.transparent,
       builder: (sheetContext) => _SplitPickerSheet(
         unitCost: row.unit.unitCost,
@@ -136,6 +137,7 @@ class _ClaimPageState extends ConsumerState<ClaimPage> {
       context: context,
       isScrollControlled: true,
       sheetAnimationStyle: kSheetAnimationStyle,
+      barrierColor: kSheetBarrierColor,
       backgroundColor: Colors.transparent,
       builder: (sheetContext) => _ClaimSuccessSheet(amount: yourTotal),
     );
