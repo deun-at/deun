@@ -234,7 +234,8 @@ these are the in-scope tasks, foundation-first:
 - **V3-T3 · `DeunHeader` custom header** · new widget + personal_statistics (COMPONENTS §2) ✅ done · aef3c35
   - **V3-T3b · Header migration batch A** · group_detail_edit, expense_detail, expense_detail_read, group_join_page → `DeunHeader` ✅ done · 8b9192c (+ fix 40e32a3)
   - **V3-T3c · Header migration batch B** · friends/auth/stats/settings sub-screens → `DeunHeader` ✅ done · 0683c08
-  - **V3-T3d · Special headers** · claim_page (merchant+presence) & group_detail_payment (modal sheet) — pending
+  - **V3-T3d · Claim special header** · claim_page (merchant+presence+pulse, consolidated edit) ✅ done · e689b13
+    (payment sheet re-scoped to V3-T9 — it's a draggable sheet, governed by COMPONENTS §3)
 - **V3-T4 · Shared-axis route transitions** · `navigation.dart` (ANIMATIONS §1) — pending
 - **V3-T5 · Staggered list entrance** · groups/friends lists (ANIMATIONS §2) — pending
 - **V3-T6 · Count-up heroes** · existing hero amounts (ANIMATIONS §3) — pending
