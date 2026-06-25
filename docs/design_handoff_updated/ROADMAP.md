@@ -230,7 +230,7 @@ these are the in-scope tasks, foundation-first:
 
 - **V3-T1 · Motion foundation** · `lib/widgets/motion.dart` (+ `animations`, `flutter_staggered_animations` deps)
   Named curves/durations from `ANIMATIONS.md` + pure reduced-motion helper. ✅ done · 16e7f89
-- **V3-T2 · Custom sliding tab pill bottom bar** · `navigation.dart` (ANIMATIONS §6) — pending
+- **V3-T2 · Custom sliding tab pill bottom bar** · `navigation.dart` (ANIMATIONS §6) ✅ done · 8ba39d8
 - **V3-T3 · `DeunHeader` custom header** · new widget + sub-screens (COMPONENTS §2) — pending
 - **V3-T4 · Shared-axis route transitions** · `navigation.dart` (ANIMATIONS §1) — pending
 - **V3-T5 · Staggered list entrance** · groups/friends lists (ANIMATIONS §2) — pending
