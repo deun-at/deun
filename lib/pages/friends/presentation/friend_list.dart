@@ -5,11 +5,13 @@ import 'package:deun/pages/friends/presentation/friend_balance.dart';
 import 'package:deun/pages/friends/presentation/friend_detail_sheet.dart';
 import 'package:deun/pages/users/user_model.dart';
 import 'package:deun/widgets/empty_list_widget.dart';
-import 'package:deun/widgets/restyle/balance_pill.dart';
+import 'package:deun/widgets/restyle/balance_pill.dart' show BalanceState;
 import 'package:deun/widgets/restyle/member_avatar.dart';
+import 'package:deun/widgets/restyle/money_text.dart';
 import 'package:deun/widgets/restyle/section_label.dart';
 import 'package:deun/widgets/restyle/soft_card.dart';
 import 'package:deun/widgets/staggered_list.dart';
+import 'package:deun/widgets/theme_builder.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_staggered_animations/flutter_staggered_animations.dart';
@@ -340,8 +342,12 @@ class _OutgoingRequestCard extends StatelessWidget {
   }
 }
 
-/// An accepted friend: identity + a semantic balance pill. Tapping opens the
-/// friend sheet (see [onTap]).
+/// An accepted friend: identity + a plain semantic-colored balance label.
+/// Tapping opens the friend sheet (see [onTap]).
+///
+/// v3 renders the friend-row balance as PLAIN text colored by state — green when
+/// the friend owes you, red when you owe, neutral gray when settled — with no
+/// filled chip/pill background (matches `Deun Redesign v3.dc.html` "All friends").
 class _FriendCard extends StatelessWidget {
   const _FriendCard({required this.friendship, required this.onTap});
 
@@ -352,20 +358,38 @@ class _FriendCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     final colorScheme = Theme.of(context).colorScheme;
+    final semantic = Theme.of(context).extension<SemanticColors>()!;
     final state = friendBalanceState(friendship.shareAmount);
 
     final String label;
+    final Color balanceColor;
+    final MoneySemantic moneySemantic;
     switch (state) {
       case BalanceState.owed:
         label = l10n.balanceOwed;
+        balanceColor = semantic.success;
+        moneySemantic = MoneySemantic.positive;
         break;
       case BalanceState.owe:
         label = l10n.balanceOwe;
+        balanceColor = semantic.danger;
+        moneySemantic = MoneySemantic.negative;
         break;
       case BalanceState.settled:
         label = l10n.balanceSettled;
+        // Neutral muted-gray token (the warm onSurfaceVariant), brightness-aware
+        // and a11y-checked — v3's settled gray.
+        balanceColor = colorScheme.onSurfaceVariant;
+        moneySemantic = MoneySemantic.neutral;
         break;
     }
+
+    // v3 balance text: 13px / w600, the whole label tinted by state. No chip
+    // background, no pill padding — plain semantic-colored text.
+    final balanceStyle = Theme.of(context).textTheme.labelMedium?.copyWith(
+          color: balanceColor,
+          fontWeight: FontWeight.w600,
+        );
 
     return SoftCard(
       onTap: onTap,
@@ -373,10 +397,19 @@ class _FriendCard extends StatelessWidget {
         children: [
           Expanded(child: _FriendIdentity(user: friendship.user)),
           const SizedBox(width: 8),
-          BalancePill(
-            label: label,
-            state: state,
-            amount: state == BalanceState.settled ? null : friendship.shareAmount.abs(),
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(label, style: balanceStyle),
+              if (state != BalanceState.settled) ...[
+                const SizedBox(width: 6),
+                MoneyText(
+                  friendship.shareAmount.abs(),
+                  semantic: moneySemantic,
+                  style: balanceStyle,
+                ),
+              ],
+            ],
           ),
           const SizedBox(width: 4),
           // v3 ends an accepted-friend row in a muted chevron to signal it opens

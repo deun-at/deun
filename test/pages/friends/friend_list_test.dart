@@ -6,6 +6,7 @@ import 'package:deun/pages/friends/provider/friendship_list.dart';
 import 'package:deun/pages/users/user_model.dart';
 import 'package:deun/widgets/restyle/balance_pill.dart';
 import 'package:deun/widgets/restyle/member_avatar.dart';
+import 'package:deun/widgets/restyle/money_text.dart';
 import 'package:deun/widgets/theme_builder.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
@@ -63,6 +64,18 @@ Future<void> _pumpFriendList(
   await tester.pumpAndSettle();
 }
 
+/// The [SemanticColors] theme extension resolved from the friend list subtree.
+SemanticColors _semanticColors(WidgetTester tester) {
+  final context = tester.element(find.byType(FriendList));
+  return Theme.of(context).extension<SemanticColors>()!;
+}
+
+/// The color the balance label [text] is rendered in (its plain-text tint).
+Color? _balanceLabelColor(WidgetTester tester, String text) {
+  final widget = tester.widget<Text>(find.text(text));
+  return widget.style?.color;
+}
+
 void main() {
   testWidgets('header shows QR and add buttons', (tester) async {
     await _pumpFriendList(tester, const FriendshipListState());
@@ -97,7 +110,7 @@ void main() {
     expect(find.text(l10n.cancel), findsOneWidget);
   });
 
-  testWidgets('accepted friends render with semantic balance pills',
+  testWidgets('accepted friends render plain semantic-colored balance text',
       (tester) async {
     await _pumpFriendList(
       tester,
@@ -109,13 +122,27 @@ void main() {
         ],
       ),
     );
-    expect(find.byType(BalancePill), findsNWidgets(3));
+
+    final l10n = await AppLocalizations.delegate.load(const Locale('en'));
+
+    // V3: plain colored balance TEXT, not a filled chip/pill.
+    expect(find.byType(BalancePill), findsNothing);
     expect(find.byType(MemberAvatar), findsNWidgets(3));
 
-    final pills = tester.widgetList<BalancePill>(find.byType(BalancePill)).toList();
-    expect(pills[0].state, BalanceState.owed);
-    expect(pills[1].state, BalanceState.owe);
-    expect(pills[2].state, BalanceState.settled);
+    // Each settlement state renders its localized balance label as plain text.
+    expect(find.text(l10n.balanceOwed), findsOneWidget); // "You're owed"
+    expect(find.text(l10n.balanceOwe), findsOneWidget); // "You owe"
+    expect(find.text(l10n.balanceSettled), findsOneWidget); // "Settled up"
+
+    // The balance text is tinted by the semantic token: green (success) for the
+    // owed friend, red (danger) for the owe friend, neutral for settled.
+    final semantic = _semanticColors(tester);
+    expect(_balanceLabelColor(tester, l10n.balanceOwed), semantic.success);
+    expect(_balanceLabelColor(tester, l10n.balanceOwe), semantic.danger);
+
+    // Settled rows render NO amount (label only) — owed/owe rows render an amount
+    // alongside (MoneyText), colored to match.
+    expect(find.byType(MoneyText), findsNWidgets(2));
 
     // V3: every accepted-friend row ends in a trailing chevron signalling it
     // opens the friend sheet (one per accepted row).
@@ -137,7 +164,14 @@ void main() {
       brightness: Brightness.dark,
     );
     expect(find.text('Dark Friend'), findsOneWidget);
-    expect(find.byType(BalancePill), findsOneWidget);
+    // Plain colored balance text (owed → MoneyText amount), no pill, in dark mode.
+    expect(find.byType(BalancePill), findsNothing);
+    expect(find.byType(MoneyText), findsOneWidget);
+    final l10n = await AppLocalizations.delegate.load(const Locale('en'));
+    expect(
+      _balanceLabelColor(tester, l10n.balanceOwed),
+      _semanticColors(tester).success,
+    );
   });
 
   // -------------------------------------------------------------------------
@@ -156,7 +190,7 @@ void main() {
     );
 
     // All cards visible — entrance animation must have completed.
-    expect(find.byType(BalancePill), findsNWidgets(2));
+    expect(find.byType(MoneyText), findsNWidgets(2));
     // The AnimationLimiter must be in the tree.
     expect(find.byType(AnimationLimiter), findsOneWidget);
   });
@@ -198,7 +232,7 @@ void main() {
 
     await tester.pumpAndSettle();
 
-    expect(find.byType(BalancePill), findsOneWidget);
+    expect(find.byType(MoneyText), findsOneWidget);
     // In reduced-motion mode there is no AnimationLimiter wrapper.
     expect(find.byType(AnimationLimiter), findsNothing);
   });
