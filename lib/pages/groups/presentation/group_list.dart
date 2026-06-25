@@ -4,10 +4,12 @@ import 'package:deun/widgets/empty_list_widget.dart';
 import 'package:deun/widgets/restyle/member_avatar.dart';
 import 'package:deun/widgets/restyle/money_text.dart';
 import 'package:deun/widgets/restyle/section_label.dart';
+import 'package:deun/widgets/staggered_list.dart';
 import 'package:deun/widgets/theme_builder.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_staggered_animations/flutter_staggered_animations.dart';
 import 'package:go_router/go_router.dart';
 import 'package:deun/l10n/app_localizations.dart';
 
@@ -118,42 +120,56 @@ class _GroupListState extends ConsumerState<GroupList> {
     final sorted = sortGroups(allGroups, isFavorite: (g) => g.isFavorite);
     final overall = aggregateOverallBalance(allGroups);
 
+    // Non-animated prefix items (header, hero, section label) are excluded from
+    // the stagger so only the group cards enter with the animation.
+    final List<Widget> prefixItems = [
+      _GreetingHeader(),
+      const SizedBox(height: 12),
+      _OverallBalanceHero(overall: overall),
+      const SizedBox(height: 24),
+      SectionLabel(
+        l10n.homeYourGroups,
+        trailing: TextButton.icon(
+          onPressed: () => GoRouter.of(context).push("/group/edit"),
+          icon: const Icon(Icons.add, size: 18),
+          label: Text(l10n.commonNew),
+          style: TextButton.styleFrom(
+            visualDensity: VisualDensity.compact,
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+          ),
+        ),
+      ),
+      const SizedBox(height: 4),
+    ];
+
+    final List<Widget> cardItems = [
+      for (final group in sorted)
+        GroupListItem(
+          key: ValueKey(group.id),
+          group: group,
+          isFavorite: group.isFavorite,
+          onFavoriteToggle: () => _toggleFavorite(group.id),
+        ),
+      if (_adBlock != null) ...[
+        const SizedBox(height: 8),
+        _adBlock!,
+      ],
+    ];
+
+    final listView = ListView(
+      controller: _scrollController,
+      padding: const EdgeInsets.fromLTRB(16, 0, 16, 110),
+      children: [
+        ...prefixItems,
+        ...staggeredChildren(context, cardItems),
+      ],
+    );
+
     return RefreshIndicator(
       onRefresh: updateGroupList,
-      child: ListView(
-        controller: _scrollController,
-        padding: const EdgeInsets.fromLTRB(16, 0, 16, 110),
-        children: [
-          _GreetingHeader(),
-          const SizedBox(height: 12),
-          _OverallBalanceHero(overall: overall),
-          const SizedBox(height: 24),
-          SectionLabel(
-            l10n.homeYourGroups,
-            trailing: TextButton.icon(
-              onPressed: () => GoRouter.of(context).push("/group/edit"),
-              icon: const Icon(Icons.add, size: 18),
-              label: Text(l10n.commonNew),
-              style: TextButton.styleFrom(
-                visualDensity: VisualDensity.compact,
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-              ),
-            ),
-          ),
-          const SizedBox(height: 4),
-          for (final group in sorted)
-            GroupListItem(
-              key: ValueKey(group.id),
-              group: group,
-              isFavorite: group.isFavorite,
-              onFavoriteToggle: () => _toggleFavorite(group.id),
-            ),
-          if (_adBlock != null) ...[
-            const SizedBox(height: 8),
-            _adBlock!,
-          ],
-        ],
-      ),
+      child: MediaQuery.of(context).disableAnimations
+          ? listView
+          : AnimationLimiter(child: listView),
     );
   }
 }

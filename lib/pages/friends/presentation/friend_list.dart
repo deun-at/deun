@@ -9,8 +9,10 @@ import 'package:deun/widgets/restyle/balance_pill.dart';
 import 'package:deun/widgets/restyle/member_avatar.dart';
 import 'package:deun/widgets/restyle/section_label.dart';
 import 'package:deun/widgets/restyle/soft_card.dart';
+import 'package:deun/widgets/staggered_list.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_staggered_animations/flutter_staggered_animations.dart';
 import 'package:deun/l10n/app_localizations.dart';
 import 'package:go_router/go_router.dart';
 
@@ -63,6 +65,71 @@ class _FriendListState extends ConsumerState<FriendList> {
     }
   }
 
+  Widget _buildFriendListView(
+    BuildContext context,
+    FriendshipListState value,
+    AppLocalizations l10n,
+  ) {
+    final children = <Widget>[
+      _FriendsHeader(),
+      const SizedBox(height: 12),
+      if (value.pendingIncomingRequests.isNotEmpty) ...[
+        SectionLabel(l10n.friendRequests(value.pendingIncomingRequests.length)),
+        const SizedBox(height: 8),
+        for (final friendship in value.pendingIncomingRequests)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 8),
+            child: _IncomingRequestCard(
+              friendship: friendship,
+              onAccept: () =>
+                  _acceptFriendRequest(friendship.user.email, friendship.user.displayName),
+              onDecline: () =>
+                  _declineFriendRequest(friendship.user.email, friendship.user.displayName),
+            ),
+          ),
+        const SizedBox(height: 16),
+      ],
+      if (value.pendingOutgoingRequests.isNotEmpty) ...[
+        SectionLabel(l10n.pendingRequests(value.pendingOutgoingRequests.length)),
+        const SizedBox(height: 8),
+        for (final friendship in value.pendingOutgoingRequests)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 8),
+            child: _OutgoingRequestCard(
+              friendship: friendship,
+              onCancel: () =>
+                  _cancelFriendRequest(friendship.user.email, friendship.user.displayName),
+            ),
+          ),
+        const SizedBox(height: 16),
+      ],
+      if (value.acceptedFriends.isNotEmpty) ...[
+        SectionLabel(l10n.friends),
+        const SizedBox(height: 8),
+        for (final friendship in value.acceptedFriends)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 8),
+            child: _FriendCard(
+              friendship: friendship,
+              onTap: () => openFriendDetailSheet(context, friendship),
+            ),
+          ),
+      ],
+    ];
+
+    final listView = ListView(
+      padding: const EdgeInsets.fromLTRB(16, 0, 16, 110),
+      children: staggeredChildren(context, children),
+    );
+
+    return RefreshIndicator(
+      onRefresh: updateFriendshipList,
+      child: MediaQuery.of(context).disableAnimations
+          ? listView
+          : AnimationLimiter(child: listView),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final AsyncValue<FriendshipListState> friendshipProvider = ref.watch(friendshipListProvider);
@@ -89,58 +156,7 @@ class _FriendListState extends ConsumerState<FriendList> {
                     ),
                   ],
                 )
-              : RefreshIndicator(
-                  onRefresh: updateFriendshipList,
-                  child: ListView(
-                    padding: const EdgeInsets.fromLTRB(16, 0, 16, 110),
-                    children: [
-                      _FriendsHeader(),
-                      const SizedBox(height: 12),
-                      if (value.pendingIncomingRequests.isNotEmpty) ...[
-                        SectionLabel(l10n.friendRequests(value.pendingIncomingRequests.length)),
-                        const SizedBox(height: 8),
-                        for (final friendship in value.pendingIncomingRequests)
-                          Padding(
-                            padding: const EdgeInsets.only(bottom: 8),
-                            child: _IncomingRequestCard(
-                              friendship: friendship,
-                              onAccept: () => _acceptFriendRequest(
-                                  friendship.user.email, friendship.user.displayName),
-                              onDecline: () => _declineFriendRequest(
-                                  friendship.user.email, friendship.user.displayName),
-                            ),
-                          ),
-                        const SizedBox(height: 16),
-                      ],
-                      if (value.pendingOutgoingRequests.isNotEmpty) ...[
-                        SectionLabel(l10n.pendingRequests(value.pendingOutgoingRequests.length)),
-                        const SizedBox(height: 8),
-                        for (final friendship in value.pendingOutgoingRequests)
-                          Padding(
-                            padding: const EdgeInsets.only(bottom: 8),
-                            child: _OutgoingRequestCard(
-                              friendship: friendship,
-                              onCancel: () => _cancelFriendRequest(
-                                  friendship.user.email, friendship.user.displayName),
-                            ),
-                          ),
-                        const SizedBox(height: 16),
-                      ],
-                      if (value.acceptedFriends.isNotEmpty) ...[
-                        SectionLabel(l10n.friends),
-                        const SizedBox(height: 8),
-                        for (final friendship in value.acceptedFriends)
-                          Padding(
-                            padding: const EdgeInsets.only(bottom: 8),
-                            child: _FriendCard(
-                              friendship: friendship,
-                              onTap: () => openFriendDetailSheet(context, friendship),
-                            ),
-                          ),
-                      ],
-                    ],
-                  ),
-                ),
+              : _buildFriendListView(context, value, l10n),
           AsyncError() => Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
@@ -168,7 +184,6 @@ class _FriendListState extends ConsumerState<FriendList> {
       ),
     );
   }
-
 }
 
 /// Screen title with QR + person-add actions.

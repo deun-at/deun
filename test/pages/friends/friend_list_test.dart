@@ -10,6 +10,7 @@ import 'package:deun/widgets/theme_builder.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_staggered_animations/flutter_staggered_animations.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 /// A [FriendshipListNotifier] that skips realtime/supabase wiring and returns a
@@ -133,5 +134,68 @@ void main() {
     );
     expect(find.text('Dark Friend'), findsOneWidget);
     expect(find.byType(BalancePill), findsOneWidget);
+  });
+
+  // -------------------------------------------------------------------------
+  // V3-T5: Staggered list entrance
+  // -------------------------------------------------------------------------
+
+  testWidgets('friend cards are fully visible after pumpAndSettle (stagger completes)', (tester) async {
+    await _pumpFriendList(
+      tester,
+      FriendshipListState(
+        acceptedFriends: [
+          _friend('Alice', 'alice@x.com', shareAmount: 10),
+          _friend('Bob', 'bob@x.com', shareAmount: -5),
+        ],
+      ),
+    );
+
+    // All cards visible — entrance animation must have completed.
+    expect(find.byType(BalancePill), findsNWidgets(2));
+    // The AnimationLimiter must be in the tree.
+    expect(find.byType(AnimationLimiter), findsOneWidget);
+  });
+
+  testWidgets(
+      'friend list is visible immediately with disableAnimations=true (reduced motion)', (tester) async {
+    final state = FriendshipListState(
+      acceptedFriends: [_friend('Alice', 'alice@x.com', shareAmount: 10)],
+    );
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          friendshipListProvider.overrideWith(() => _FakeFriendshipListNotifier(state)),
+        ],
+        child: MaterialApp(
+          // Use builder to inject MediaQuery override *inside* MaterialApp so it
+          // takes effect after MaterialApp's own MediaQuery is established.
+          builder: (context, child) => MediaQuery(
+            data: MediaQuery.of(context).copyWith(disableAnimations: true),
+            child: child!,
+          ),
+          localizationsDelegates: const [
+            AppLocalizations.delegate,
+            GlobalMaterialLocalizations.delegate,
+            GlobalWidgetsLocalizations.delegate,
+            GlobalCupertinoLocalizations.delegate,
+          ],
+          supportedLocales: AppLocalizations.supportedLocales,
+          home: Builder(
+            builder: (context) => Theme(
+              data: getThemeData(context, kBrandSeed, Brightness.light),
+              child: const FriendList(),
+            ),
+          ),
+        ),
+      ),
+    );
+
+    await tester.pumpAndSettle();
+
+    expect(find.byType(BalancePill), findsOneWidget);
+    // In reduced-motion mode there is no AnimationLimiter wrapper.
+    expect(find.byType(AnimationLimiter), findsNothing);
   });
 }

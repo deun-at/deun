@@ -13,6 +13,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_staggered_animations/flutter_staggered_animations.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -252,6 +253,109 @@ void main() {
       brightness: Brightness.dark,
     );
     expect(find.text('Dark Group'), findsOneWidget);
+  });
+
+  // -------------------------------------------------------------------------
+  // V3-T5: Staggered list entrance
+  // -------------------------------------------------------------------------
+
+  testWidgets('group cards are fully visible after pumpAndSettle (stagger completes)', (tester) async {
+    await _pumpScreen(tester, groups: [
+      _group(id: 'a', name: 'Alpha Group', totalShareAmount: 10),
+      _group(id: 'b', name: 'Beta Group', totalShareAmount: -5),
+    ]);
+
+    // All cards visible — entrance animation must have completed.
+    expect(find.byType(GroupListItem), findsNWidgets(2));
+    // The AnimationLimiter must be in the tree (wrapping the data list).
+    expect(find.byType(AnimationLimiter), findsOneWidget);
+  });
+
+  testWidgets(
+      'group cards are visible immediately when disableAnimations is true (reduced motion)', (tester) async {
+    final groups = [
+      _group(id: 'a', name: 'Alpha Group', totalShareAmount: 10),
+    ];
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          groupListProvider.overrideWith(() => _FakeGroupListNotifier(groups, [])),
+          userDetailProvider.overrideWith(() => _FakeUserNotifier()),
+        ],
+        child: MaterialApp(
+          // Use builder to inject MediaQuery override *inside* MaterialApp so it
+          // takes effect after MaterialApp's own MediaQuery is established.
+          builder: (context, child) => MediaQuery(
+            data: MediaQuery.of(context).copyWith(disableAnimations: true),
+            child: child!,
+          ),
+          localizationsDelegates: const [
+            AppLocalizations.delegate,
+            GlobalMaterialLocalizations.delegate,
+            GlobalWidgetsLocalizations.delegate,
+            GlobalCupertinoLocalizations.delegate,
+          ],
+          supportedLocales: AppLocalizations.supportedLocales,
+          home: Builder(
+            builder: (context) => Theme(
+              data: getThemeData(context, kBrandSeed, Brightness.light)
+                  .copyWith(splashFactory: NoSplash.splashFactory),
+              child: const GroupList(),
+            ),
+          ),
+        ),
+      ),
+    );
+
+    await tester.pumpAndSettle();
+
+    expect(find.byType(GroupListItem), findsOneWidget);
+    // In reduced-motion mode there is no AnimationLimiter wrapper.
+    expect(find.byType(AnimationLimiter), findsNothing);
+  });
+
+  testWidgets('favorite toggle does not throw and keeps cards visible (no-replay guard)', (tester) async {
+    final toggled = <String>[];
+    final groups = [_group(id: 'a', name: 'Alpha Group', totalShareAmount: 10)];
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          groupListProvider.overrideWith(() => _FakeGroupListNotifier(groups, toggled)),
+          userDetailProvider.overrideWith(() => _FakeUserNotifier()),
+        ],
+        child: MaterialApp(
+          localizationsDelegates: const [
+            AppLocalizations.delegate,
+            GlobalMaterialLocalizations.delegate,
+            GlobalWidgetsLocalizations.delegate,
+            GlobalCupertinoLocalizations.delegate,
+          ],
+          supportedLocales: AppLocalizations.supportedLocales,
+          home: Builder(
+            builder: (context) => Theme(
+              data: getThemeData(context, kBrandSeed, Brightness.light)
+                  .copyWith(splashFactory: NoSplash.splashFactory),
+              child: const GroupList(),
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    // AnimationLimiter is in the tree for the data list.
+    expect(find.byType(AnimationLimiter), findsOneWidget);
+
+    // Trigger a favorite toggle (state change / rebuild).
+    await tester.tap(find.byIcon(Icons.star_border));
+    await tester.pumpAndSettle();
+
+    // After rebuild: AnimationLimiter still present (not unmounted/remounted),
+    // card is still visible — no crash, no hidden items.
+    expect(find.byType(AnimationLimiter), findsOneWidget);
+    expect(find.byType(GroupListItem), findsOneWidget);
   });
 }
 
