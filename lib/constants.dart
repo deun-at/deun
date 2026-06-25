@@ -31,6 +31,42 @@ int selectedGroupSwatchIndex(int? colorValue) {
   return 0;
 }
 
+/// Hand-tuned light tint for each group base color (DESIGN_SPEC "Group color
+/// palette" / prototype `swatches`). These are exact spec tokens — a soft,
+/// near-white wash *paired* with the saturated icon color — NOT an alpha
+/// overlay of the base color (which reads muddier and, when every group keeps
+/// the default seed, makes every leading icon a uniform flat square: F04).
+/// Keyed by the base color's ARGB int.
+const Map<int, Color> _kGroupTintLight = <int, Color>{
+  0xFF5750E6: Color(0xFFECEBFC),
+  0xFF2F73D9: Color(0xFFE4EEFB),
+  0xFFE0853D: Color(0xFFFBEEDD),
+  0xFFD45A8A: Color(0xFFFBE7F0),
+  0xFFE0735A: Color(0xFFFBEAE5),
+  0xFFB85C9E: Color(0xFFF6E8F1),
+};
+
+/// Dark group-card surface the dark tint is composited over, matching
+/// `theme_builder.dart`'s `surfaceContainerLowest` (card surface) in dark.
+const Color _kGroupTintDarkBase = Color(0xFF1F211E);
+
+/// The leading-icon tint background for a group, resolved per [brightness].
+///
+/// Light returns the spec's hand-tuned tint token (e.g. `#5750E6 → #ECEBFC`).
+/// The near-white light tints are illegible on dark surfaces, so in dark we
+/// derive a *dark* tint of the same hue by compositing the base color at low
+/// opacity over the dark card surface — the icon stays the saturated base
+/// color, the background reads as a faint colored dark chip. A legacy/unknown
+/// [colorValue] (e.g. the old teal default) falls back to an alpha overlay of
+/// that color so older groups still tint sensibly.
+Color groupTint(int colorValue, Brightness brightness) {
+  final base = Color(colorValue);
+  if (brightness == Brightness.dark) {
+    return Color.alphaBlend(base.withValues(alpha: 0.22), _kGroupTintDarkBase);
+  }
+  return _kGroupTintLight[colorValue] ?? base.withValues(alpha: 0.16);
+}
+
 /// Fixed palette of member-avatar background colors (DESIGN_SPEC "Member avatar
 /// colors"). White initials are drawn on top by the avatar widget; this only
 /// supplies the background. Pick via [memberAvatarColor] for a stable mapping.

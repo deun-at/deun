@@ -7,6 +7,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:deun/l10n/app_localizations.dart';
 
+import '../../../constants.dart';
 import '../data/group_model.dart';
 
 /// A single group card on the home screen: tinted leading icon, group name,
@@ -36,6 +37,11 @@ class GroupListItem extends ConsumerWidget {
     final l10n = AppLocalizations.of(context)!;
 
     final groupColor = Color(group.colorValue);
+    // Per-group leading-icon tint: the saturated group color on its hand-tuned
+    // spec tint background (light) / a dark-surface derivation (dark) — routed
+    // through the centralized `groupTint` mapping, never a flat alpha overlay
+    // (F04).
+    final groupTintBg = groupTint(group.colorValue, Theme.of(context).brightness);
     final amount = group.totalShareAmount;
     final isSettled = amount.abs() < _settledThreshold;
 
@@ -74,7 +80,7 @@ class GroupListItem extends ConsumerWidget {
                     width: 40,
                     height: 40,
                     decoration: BoxDecoration(
-                      color: groupColor.withValues(alpha: 0.16),
+                      color: groupTintBg,
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Icon(Icons.receipt_long, color: groupColor, size: 22),

@@ -35,11 +35,12 @@ Group _group({
   double totalShareAmount = 0,
   bool favorite = false,
   List<GroupMember>? members,
+  Color? color,
 }) {
   final g = Group();
   g.id = id;
   g.name = name;
-  g.colorValue = kGroupColorPalette.first.toARGB32();
+  g.colorValue = (color ?? kGroupColorPalette.first).toARGB32();
   g.simplifiedExpenses = true;
   g.createdAt = '';
   g.userId = null;
@@ -279,6 +280,73 @@ void main() {
       findsOneWidget,
     );
   });
+
+  // -------------------------------------------------------------------------
+  // F04: per-group tinted leading icon (not one flat uniform square)
+  // -------------------------------------------------------------------------
+
+  // Resolves the leading-icon container background for the card whose icon is
+  // the receipt glyph, scoped to a single GroupListItem.
+  Color leadingTint(WidgetTester tester, Finder card) {
+    final container = tester.widget<Container>(
+      find
+          .descendant(of: card, matching: find.byType(Container))
+          .first,
+    );
+    return (container.decoration as BoxDecoration).color!;
+  }
+
+  for (final brightness in Brightness.values) {
+    testWidgets('group cards show distinct per-group tints matching the palette ($brightness)',
+        (tester) async {
+      tester.view.physicalSize = const Size(1080, 2400);
+      tester.view.devicePixelRatio = 3.0;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+
+      const indigo = Color(0xFF5750E6);
+      const orange = Color(0xFFE0853D);
+
+      await _pumpScreen(
+        tester,
+        brightness: brightness,
+        groups: [
+          _group(id: 'i', name: 'Indigo', totalShareAmount: 10, color: indigo),
+          _group(id: 'o', name: 'Orange', totalShareAmount: 12, color: orange),
+        ],
+      );
+
+      final indigoCard = find.ancestor(
+        of: find.text('Indigo'),
+        matching: find.byType(GroupListItem),
+      );
+      final orangeCard = find.ancestor(
+        of: find.text('Orange'),
+        matching: find.byType(GroupListItem),
+      );
+
+      final indigoTint = leadingTint(tester, indigoCard);
+      final orangeTint = leadingTint(tester, orangeCard);
+
+      // Two different group colors must NOT collapse to the same flat square.
+      expect(indigoTint, isNot(orangeTint),
+          reason: 'per-group tints must differ (F04)');
+
+      // Tints resolve through the centralized mapping for this brightness.
+      expect(indigoTint, groupTint(indigo.toARGB32(), brightness));
+      expect(orangeTint, groupTint(orange.toARGB32(), brightness));
+
+      if (brightness == Brightness.light) {
+        // Exact spec light tint tokens.
+        expect(indigoTint, const Color(0xFFECEBFC));
+        expect(orangeTint, const Color(0xFFFBEEDD));
+      } else {
+        // Dark tints are derived dark surfaces, not the near-white light tint.
+        expect(indigoTint.computeLuminance(), lessThan(0.35));
+        expect(orangeTint.computeLuminance(), lessThan(0.35));
+      }
+    });
+  }
 
   testWidgets('renders without throwing in dark mode', (tester) async {
     await _pumpScreen(
