@@ -30,7 +30,7 @@ Settle up · Invite · **Tap to Claim** · Login · Reset password · Onboarding
 - [ ] F05 · Groups home · Group-card balance footer label/amount is small and lacks the v3 "lead label + colored amount" weight hierarchy 💅 — lib/pages/groups/presentation/group_list.dart (GroupListItem) — target: caption lead label + card-title-weight green owed / red owe / gray settled amount — ev: compare/compare_groups.png
 
 ### Friends
-- [ ] F06 · Friends · Accepted-friend row has no trailing chevron; v3 row ends in chevron_right to signal it opens the friend sheet ⚠️ — lib/pages/friends/presentation/friend_list.dart:375 — target: add trailing Icons.chevron_right (#C9C5BB) after the balance — ev: compare/compare_friends.png
+- [x] F06 · Friends · Accepted-friend row has no trailing chevron; v3 row ends in chevron_right to signal it opens the friend sheet ⚠️ — lib/pages/friends/presentation/friend_list.dart:375 — target: add trailing Icons.chevron_right (#C9C5BB) after the balance — ev: compare/compare_friends.png ✅ 1a27194 (chevron via colorScheme.outline)
 - [ ] F07 · Friends · Balance rendered as a filled BalancePill ("Du schuldest …" / "Ausgeglichen" chip); v3 uses plain colored text (green owed / red owe / gray settled), no pill ⚠️ — lib/pages/friends/presentation/friend_list.dart:375 (widgets/restyle/balance_pill.dart) — target: plain semantic-colored balance text, not a filled chip — ev: compare/compare_friends.png
 - [ ] F08 · Friends · Header person-add and QR are plain M3 IconButtons; v3 makes the primary add-friend a filled indigo (#5750E6) accent circle, QR a 38×38 warm-tint circle ⚠️ — lib/pages/friends/presentation/friend_list.dart:207-216 — target: person_add = filled accent circle, qr = 38px rgba(20,18,12,.04) circle — ev: compare/compare_friends.png
 
