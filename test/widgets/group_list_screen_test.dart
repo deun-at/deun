@@ -358,6 +358,112 @@ void main() {
   });
 
   // -------------------------------------------------------------------------
+  // F05: balance footer hierarchy — muted caption lead label + heavier,
+  // semantic-colored card-title amount (not one small flat block).
+  // -------------------------------------------------------------------------
+
+  // Resolves the rendered Text style for the balance lead label text *inside the
+  // group card* (the same label string also appears in the overall hero, so we
+  // scope the lookup to the GroupListItem subtree).
+  TextStyle leadLabelStyle(WidgetTester tester, String label) =>
+      tester
+          .widget<Text>(find.descendant(
+            of: find.byType(GroupListItem),
+            matching: find.text(label),
+          ))
+          .style!;
+
+  for (final brightness in Brightness.values) {
+    testWidgets('owed card footer: muted caption lead label + green card-title amount ($brightness)',
+        (tester) async {
+      await _pumpScreen(
+        tester,
+        brightness: brightness,
+        groups: [_group(id: 'a', name: 'Owed Group', totalShareAmount: 25)],
+      );
+
+      final l10n = await AppLocalizations.delegate.load(const Locale('en'));
+      final ctx = tester.element(find.byType(GroupListItem));
+      final theme = Theme.of(ctx);
+      final semantic = theme.extension<SemanticColors>()!;
+
+      // Lead label: localized "You're owed", caption tier (labelMedium) in the
+      // muted onSurfaceVariant token — NOT the tiny labelSmall.
+      final labelStyle = leadLabelStyle(tester, l10n.balanceOwed);
+      expect(labelStyle.fontSize, theme.textTheme.labelMedium!.fontSize);
+      expect(labelStyle.color, theme.colorScheme.onSurfaceVariant);
+
+      // Amount: heavier card-title weight (w700), card-title size (titleMedium),
+      // colored by the positive/success semantic token.
+      final cardMoney = find.descendant(
+        of: find.byType(GroupListItem),
+        matching: find.byType(MoneyText),
+      );
+      final money = tester.widget<MoneyText>(cardMoney);
+      expect(money.semantic, MoneySemantic.positive);
+      expect(money.style?.fontWeight, FontWeight.w700);
+      expect(money.style?.fontSize, theme.textTheme.titleMedium!.fontSize);
+      // The amount is heavier/larger than the caption lead label (clear hierarchy).
+      expect(money.style!.fontSize!, greaterThan(labelStyle.fontSize!));
+
+      // The rendered amount glyph carries the success color.
+      final amountText = tester.widget<Text>(
+        find.descendant(of: cardMoney, matching: find.byType(Text)),
+      );
+      expect(amountText.style?.color, semantic.success);
+    });
+  }
+
+  testWidgets('owe card footer: amount uses the danger (red) semantic token', (tester) async {
+    await _pumpScreen(
+      tester,
+      groups: [_group(id: 'a', name: 'Owe Group', totalShareAmount: -18)],
+    );
+
+    final l10n = await AppLocalizations.delegate.load(const Locale('en'));
+    expect(
+      find.descendant(of: find.byType(GroupListItem), matching: find.text(l10n.balanceOwe)),
+      findsOneWidget,
+    );
+
+    final cardMoney = find.descendant(
+      of: find.byType(GroupListItem),
+      matching: find.byType(MoneyText),
+    );
+    final money = tester.widget<MoneyText>(cardMoney);
+    expect(money.semantic, MoneySemantic.negative);
+    expect(money.style?.fontWeight, FontWeight.w700);
+
+    final ctx = tester.element(find.byType(GroupListItem));
+    final semantic = Theme.of(ctx).extension<SemanticColors>()!;
+    final amountText = tester.widget<Text>(
+      find.descendant(of: cardMoney, matching: find.byType(Text)),
+    );
+    expect(amountText.style?.color, semantic.danger);
+  });
+
+  testWidgets('settled card footer: muted gray caption label, no colored amount', (tester) async {
+    await _pumpScreen(
+      tester,
+      groups: [_group(id: 's', name: 'Settled', totalShareAmount: 0)],
+    );
+
+    final l10n = await AppLocalizations.delegate.load(const Locale('en'));
+    final ctx = tester.element(find.byType(GroupListItem));
+    final theme = Theme.of(ctx);
+
+    // Lead label present and in the neutral muted-gray caption token...
+    final labelStyle = leadLabelStyle(tester, l10n.balanceSettled);
+    expect(labelStyle.fontSize, theme.textTheme.labelMedium!.fontSize);
+    expect(labelStyle.color, theme.colorScheme.onSurfaceVariant);
+    // ...with no amount rendered (settled = gray, no amount).
+    expect(
+      find.descendant(of: find.byType(GroupListItem), matching: find.byType(MoneyText)),
+      findsNothing,
+    );
+  });
+
+  // -------------------------------------------------------------------------
   // V3-T5: Staggered list entrance
   // -------------------------------------------------------------------------
 

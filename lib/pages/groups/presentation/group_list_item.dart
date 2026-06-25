@@ -123,9 +123,15 @@ class GroupListItem extends ConsumerWidget {
                     crossAxisAlignment: CrossAxisAlignment.end,
                     mainAxisSize: MainAxisSize.min,
                     children: [
+                      // v3 footer hierarchy (F05): a muted caption lead label
+                      // (#9A968C / 12px / w500 in the prototype) above a heavier,
+                      // semantic-colored card-title amount. The lead label maps
+                      // to the caption tier (labelMedium) in the warm
+                      // onSurfaceVariant token — NOT the tinier labelSmall, which
+                      // read too weak versus the v3 lead/amount weight contrast.
                       Text(
                         balanceLabel,
-                        style: textTheme.labelSmall?.copyWith(
+                        style: textTheme.labelMedium?.copyWith(
                           color: colorScheme.onSurfaceVariant,
                         ),
                       ),
@@ -133,6 +139,10 @@ class GroupListItem extends ConsumerWidget {
                       // states) — only render the balance amount when unsettled.
                       if (!isSettled) ...[
                         const SizedBox(height: 2),
+                        // Amount: card-title size (titleMedium) at w700, colored
+                        // green owed / red owe via the SemanticColors token
+                        // (MoneySemantic). This is the heavier half of the
+                        // lead-label + amount hierarchy.
                         MoneyText(
                           amount.abs(),
                           semantic: moneySemantic,
