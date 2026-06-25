@@ -50,7 +50,6 @@ class _SettingsProfileFormState extends ConsumerState<SettingsProfileForm> {
           _InsetFormField(
             name: 'first_name',
             label: l10n.settingsFirstName,
-            icon: Icons.badge_outlined,
             validator: FormBuilderValidators.required(
               errorText: l10n.settingsFirstNameValidationEmpty,
             ),
@@ -59,7 +58,6 @@ class _SettingsProfileFormState extends ConsumerState<SettingsProfileForm> {
           _InsetFormField(
             name: 'last_name',
             label: l10n.settingsLastName,
-            icon: Icons.badge_outlined,
             validator: FormBuilderValidators.required(
               errorText: l10n.settingsLastNameValidationEmpty,
             ),
@@ -68,7 +66,6 @@ class _SettingsProfileFormState extends ConsumerState<SettingsProfileForm> {
           _InsetFormField(
             name: 'display_name',
             label: l10n.settingsDisplayName,
-            icon: Icons.person_outline,
             validator: FormBuilderValidators.required(
               errorText: l10n.settingsDisplayNameValidationEmpty,
             ),
@@ -77,7 +74,6 @@ class _SettingsProfileFormState extends ConsumerState<SettingsProfileForm> {
           _InsetFormField(
             name: 'username',
             label: l10n.settingsUsername,
-            icon: Icons.alternate_email,
             suffixText: user.usernameCode != null ? '#${user.usernameCode}' : null,
             suffix: IconButton(
               icon: const Icon(Icons.copy),
@@ -91,14 +87,12 @@ class _SettingsProfileFormState extends ConsumerState<SettingsProfileForm> {
           _InsetFormField(
             name: 'paypal_me',
             label: l10n.settingsPaypalMe,
-            icon: Icons.payment,
             prefixText: 'paypal.me/',
           ),
           const SizedBox(height: heightSpacing),
           _InsetFormField(
             name: 'iban',
             label: l10n.settingsIban,
-            icon: Icons.account_balance_outlined,
           ),
           const SizedBox(height: heightSpacing),
           // Language row → opens the picker sheet. The value is kept in a hidden
@@ -172,12 +166,12 @@ class _SettingsProfileFormState extends ConsumerState<SettingsProfileForm> {
 }
 
 /// A soft inset [FormBuilderField] text input matching the redesign field look
-/// (filled `surfaceContainer`, radius 16, no hard border, leading icon).
+/// (filled `surfaceContainer`, radius 16, no hard border). Per the v3 profile
+/// form, fields carry no leading icon — they are label + value only.
 class _InsetFormField extends StatelessWidget {
   const _InsetFormField({
     required this.name,
     required this.label,
-    required this.icon,
     this.validator,
     this.suffixText,
     this.suffix,
@@ -186,7 +180,6 @@ class _InsetFormField extends StatelessWidget {
 
   final String name;
   final String label;
-  final IconData icon;
   final String? Function(String?)? validator;
   final String? suffixText;
   final Widget? suffix;
@@ -206,7 +199,6 @@ class _InsetFormField extends StatelessWidget {
         decoration: InputDecoration(
           labelText: label,
           errorText: field.errorText,
-          prefixIcon: Icon(icon, color: colorScheme.onSurfaceVariant),
           prefixText: prefixText,
           suffixText: suffixText,
           suffixIcon: suffix,
