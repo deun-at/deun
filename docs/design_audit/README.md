@@ -45,8 +45,8 @@ Settle up · Invite · **Tap to Claim** · Login · Reset password · Onboarding
 - [x] F14 · QR code · Copy/Share are full-stadium pills and "Link kopieren" wraps to two lines; v3 uses radius-15 buttons, Copy = white+1.5px border (secondary), Share = solid indigo, single-line ⚠️ — lib/pages/friends/presentation/friend_qr_page.dart:242,255 — target: radius-15; Copy white+#E4E1D8 border; one-line labels (more h-padding/width) — ev: compare/compare_qr.png ✅ 6419da9 (PrimaryButton + new SecondaryButton, radius-15, single-line)
 
 ### Add friend
-- [ ] F15 · Add friend · Header has no trailing QR action; v3 "Add friends" header carries a trailing qr_code_2 button 💅 — lib/pages/friends/presentation/friend_add_page.dart (header) — target: add trailing qr_code_2 38×38 action — ev: compare/compare_add_friend.png
-- [ ] F16 · Add friend · Custom header title not centered between symmetric 38×38 slots (sits left, near back arrow) 💅 — lib/pages/friends/presentation/friend_add_page.dart (header) — target: centered title, equal leading/trailing slots per COMPONENTS.md §2 — ev: compare/compare_add_friend.png
+- [x] F15 · Add friend · Header has no trailing QR action; v3 "Add friends" header carries a trailing qr_code_2 button 💅 — lib/pages/friends/presentation/friend_add_page.dart (header) — target: add trailing qr_code_2 38×38 action — ev: compare/compare_add_friend.png ✅ db277fb (DeunHeader trailing HeaderIconButton → /friend/qr)
+- [x] F16 · Add friend · Custom header title not centered between symmetric 38×38 slots (sits left, near back arrow) 💅 — lib/pages/friends/presentation/friend_add_page.dart (header) — target: centered title, equal leading/trailing slots per COMPONENTS.md §2 — ev: compare/compare_add_friend.png ✅ db277fb (symmetric DeunHeader slots center the title)
 
 ### Capture-pending (not yet auditable — re-audit after F01 unblocks the group flow)
 These screens could not be reached this pass (most are gated behind the tap-blocked Groups home, F01). They are NOT fixable items yet; a later AUDIT re-captures them once F01 lands.
