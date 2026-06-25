@@ -50,7 +50,14 @@ class SoftCard extends StatelessWidget {
         // Spec card shadow: 0 2px 4px rgba(20,18,12,.04). Omitted in dark.
         boxShadow: isDark ? null : kSoftCardShadow,
       ),
-      child: ClipRRect(borderRadius: radius, child: content),
+      child: ClipRRect(
+        borderRadius: radius,
+        clipBehavior: Clip.antiAlias,
+        child: Material(
+          type: MaterialType.transparency,
+          child: content,
+        ),
+      ),
     );
   }
 }
