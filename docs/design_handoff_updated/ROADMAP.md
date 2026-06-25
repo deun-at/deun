@@ -244,7 +244,7 @@ these are the in-scope tasks, foundation-first:
 - **V3-T8 · Chart/progress grow** · stats + claim/progress bars (ANIMATIONS §5) ✅ done · 53600f1
   (ProgressBar fills + >12mo trend bars; ≤12mo line variant not animated as v0; trend-bar parity needs device QA)
 - **V3-T9a · Sheet shell** · `sheet_scaffold.dart` + theme + scrim to COMPONENTS §3 ✅ done · 1ddaffd
-  - **V3-T9b · Payment sheet migration** · group_detail_payment → SheetScaffold (re-scoped from V3-T3d) — pending
+  - **V3-T9b · Payment sheet migration** · group_detail_payment → SheetScaffold ✅ done · b638a45
 - **V3-T10 · Primary CTA custom button** · colored soft shadow (COMPONENTS §1) — pending
 
 ## Reminders
