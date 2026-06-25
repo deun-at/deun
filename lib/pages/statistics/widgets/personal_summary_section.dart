@@ -64,6 +64,7 @@ class PersonalSummarySection extends ConsumerWidget {
                   fontWeight: FontWeight.w700,
                   color: onHero,
                 ),
+                animate: true,
               ),
               const SizedBox(height: 18),
               Row(

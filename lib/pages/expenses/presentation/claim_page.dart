@@ -414,6 +414,7 @@ class _SummaryCard extends StatelessWidget {
           MoneyText(
             summary.yourShare,
             style: textTheme.displaySmall?.copyWith(color: onHero),
+            animate: true,
           ),
           const SizedBox(height: 18),
           ProgressBar(

@@ -66,6 +66,7 @@ class StatsSummarySection extends ConsumerWidget {
                             fontWeight: FontWeight.w700,
                             color: onHero,
                           ),
+                          animate: true,
                         ),
                       ],
                     ),

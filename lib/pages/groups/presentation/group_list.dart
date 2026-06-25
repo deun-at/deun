@@ -273,6 +273,7 @@ class _OverallBalanceHero extends StatelessWidget {
               net.abs(),
               semantic: semanticMode,
               style: Theme.of(context).textTheme.displaySmall,
+              animate: true,
             ),
           const SizedBox(height: 18),
           Row(

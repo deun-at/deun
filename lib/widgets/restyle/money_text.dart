@@ -1,4 +1,5 @@
 import 'package:deun/l10n/app_localizations.dart';
+import 'package:deun/widgets/motion.dart';
 import 'package:deun/widgets/theme_builder.dart';
 import 'package:flutter/material.dart';
 
@@ -20,6 +21,13 @@ enum MoneySemantic {
 /// Renders a monetary [amount] via the locale-aware
 /// `AppLocalizations.toCurrency`, in a tabular figure style, with an optional
 /// semantic color and an optional explicit sign.
+///
+/// When [animate] is true the amount counts up from 0 on mount using a
+/// [TweenAnimationBuilder] (750 ms, ease-out-cubic). The semantic color is
+/// always resolved from the **final** [amount] (not the intermediate value)
+/// so the color does not flicker across zero during the count.
+/// Reduced motion (`MediaQuery.of(context).disableAnimations`) is respected:
+/// when set the final value is shown immediately.
 class MoneyText extends StatelessWidget {
   const MoneyText(
     this.amount, {
@@ -28,6 +36,7 @@ class MoneyText extends StatelessWidget {
     this.style,
     this.showSign = false,
     this.textAlign,
+    this.animate = false,
   });
 
   /// The amount to display. Sign is taken from this value.
@@ -47,6 +56,14 @@ class MoneyText extends StatelessWidget {
 
   final TextAlign? textAlign;
 
+  /// When true, the amount animates from 0 to [amount] on mount (count-up).
+  ///
+  /// Reduced motion is respected: if `MediaQuery.of(context).disableAnimations`
+  /// is true, the final amount is shown immediately with no tween.
+  ///
+  /// Defaults to false so existing usages are unchanged.
+  final bool animate;
+
   Color? _resolveColor(BuildContext context) {
     final semanticColors = Theme.of(context).extension<SemanticColors>()!;
     switch (semantic) {
@@ -63,12 +80,14 @@ class MoneyText extends StatelessWidget {
     }
   }
 
-  @override
-  Widget build(BuildContext context) {
-    final formatted = AppLocalizations.of(context)!.toCurrency(amount);
+  Text _buildText(BuildContext context, double displayAmount) {
+    final formatted = AppLocalizations.of(context)!.toCurrency(displayAmount);
+    // showSign uses the final amount (not intermediate) so the "+" appears
+    // exactly when the final value is positive — color and sign are consistent.
     final text = (showSign && amount > 0) ? '+$formatted' : formatted;
 
     final baseStyle = style ?? Theme.of(context).textTheme.titleMedium;
+    // Color is always resolved from the FINAL amount, not displayAmount.
     final color = _resolveColor(context);
 
     return Text(
@@ -78,6 +97,22 @@ class MoneyText extends StatelessWidget {
         color: color,
         fontFeatures: const [FontFeature.tabularFigures()],
       ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (!animate || MediaQuery.of(context).disableAnimations) {
+      // Static path: exactly today's behavior.
+      return _buildText(context, amount);
+    }
+
+    // Animated path: count up from 0 → amount.
+    return TweenAnimationBuilder<double>(
+      tween: Tween<double>(begin: 0, end: amount),
+      duration: Motion.countUp,
+      curve: Curves.easeOutCubic,
+      builder: (context, value, _) => _buildText(context, value),
     );
   }
 }

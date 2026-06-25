@@ -421,6 +421,7 @@ class _GroupBalanceHero extends StatelessWidget {
             settled ? 0 : net.abs(),
             semantic: semanticMode,
             style: Theme.of(context).textTheme.displaySmall?.copyWith(color: onHero),
+            animate: true,
           ),
           const SizedBox(height: 18),
           Row(

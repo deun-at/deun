@@ -164,6 +164,7 @@ class _OverallHero extends StatelessWidget {
             settled ? 0 : net.abs(),
             semantic: MoneySemantic.neutral,
             style: Theme.of(context).textTheme.displaySmall?.copyWith(color: onHero),
+            animate: true,
           ),
         ],
       ),

@@ -15,6 +15,37 @@ import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+/// Helper to pump [child] inside a themed MaterialApp with specific
+/// [MediaQueryData] injected (e.g. to override disableAnimations).
+Future<void> _pumpWithMediaQuery(
+  WidgetTester tester,
+  Widget child, {
+  Brightness brightness = Brightness.light,
+  MediaQueryData? mediaQuery,
+}) async {
+  await tester.pumpWidget(
+    MaterialApp(
+      theme: ThemeData(brightness: Brightness.light, splashFactory: NoSplash.splashFactory),
+      localizationsDelegates: const [
+        AppLocalizations.delegate,
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
+      supportedLocales: AppLocalizations.supportedLocales,
+      builder: mediaQuery != null
+          ? (context, child) => MediaQuery(data: mediaQuery, child: child!)
+          : null,
+      home: Builder(
+        builder: (context) => Theme(
+          data: getThemeData(context, kBrandSeed, brightness),
+          child: Scaffold(body: Center(child: child)),
+        ),
+      ),
+    ),
+  );
+}
+
 /// Pumps [child] inside a fully themed MaterialApp (redesign theme +
 /// AppLocalizations delegates) at the requested [brightness].
 Future<void> _pump(
@@ -88,6 +119,109 @@ void main() {
     testWidgets('showSign prepends a + on positive amounts', (tester) async {
       await _pump(tester, const MoneyText(12.5, showSign: true));
       expect(find.textContaining('+'), findsOneWidget);
+    });
+
+    // -------------------------------------------------------------------------
+    // V3-T6: count-up animation
+    // -------------------------------------------------------------------------
+
+    testWidgets('animate defaults to false — same behavior as before', (tester) async {
+      await _pump(tester, const MoneyText(99.0));
+      // Default behavior: final amount shown immediately after pumpAndSettle.
+      expect(find.textContaining('99'), findsOneWidget);
+    });
+
+    testWidgets(
+        'animate:true with animations enabled — mid-count text differs from final after first pump',
+        (tester) async {
+      const amount = 50.0;
+      // Use _pumpWithMediaQuery so MediaQuery includes disableAnimations:false
+      // (which is the default, so this is a normal environment).
+      await _pumpWithMediaQuery(
+        tester,
+        const MoneyText(amount, animate: true),
+      );
+      // After the first frame (before pumpAndSettle) the tween is still
+      // running, so the displayed value is less than the final amount.
+      // We deliberately do NOT call pumpAndSettle yet.
+      // Note: tester.pump() was already called once inside pumpWidget.
+      // We pump a small delta to advance the tween slightly but not finish it.
+      await tester.pump(const Duration(milliseconds: 50));
+
+      final l10n = AppLocalizations.of(tester.element(find.byType(MoneyText)))!;
+      final finalText = l10n.toCurrency(amount);
+
+      // The text shown is NOT yet the final formatted amount.
+      expect(find.text(finalText), findsNothing,
+          reason: 'count-up should still be in progress after 50ms (750ms total)');
+
+      // After settle the count finishes and the final value is shown.
+      await tester.pumpAndSettle();
+      expect(find.text(finalText), findsOneWidget);
+    });
+
+    testWidgets(
+        'animate:true with disableAnimations:true — final amount shown immediately',
+        (tester) async {
+      const amount = 42.0;
+      // Inject MediaQuery with disableAnimations:true.
+      final mediaQuery = const MediaQueryData().copyWith(disableAnimations: true);
+      await _pumpWithMediaQuery(
+        tester,
+        const MoneyText(amount, animate: true),
+        mediaQuery: mediaQuery,
+      );
+      // Even before pumpAndSettle, reduced motion must show the final value.
+      await tester.pump(const Duration(milliseconds: 50));
+
+      final l10n = AppLocalizations.of(tester.element(find.byType(MoneyText)))!;
+      final finalText = l10n.toCurrency(amount);
+      expect(find.text(finalText), findsOneWidget,
+          reason: 'reduced motion must show the final amount immediately');
+    });
+
+    testWidgets(
+        'animate:true — semantic color resolves from final amount, not mid-count value',
+        (tester) async {
+      // Use a positive amount with MoneySemantic.auto — should always be
+      // success color, even mid-count (when the intermediate value is near 0).
+      const amount = 25.0;
+      await _pumpWithMediaQuery(
+        tester,
+        const MoneyText(amount, animate: true, semantic: MoneySemantic.auto),
+      );
+      // Advance partway through the tween.
+      await tester.pump(const Duration(milliseconds: 100));
+
+      // Color must still be success (resolved from the final amount, not the
+      // intermediate ~3.3 value which is still positive anyway — the real test
+      // is that it doesn't transiently show neutral for a near-zero mid value).
+      final text = tester.widget<Text>(find.byType(Text));
+      const semanticColors = SemanticColors.light;
+      expect(text.style!.color, semanticColors.success,
+          reason: 'color must be resolved from the final positive amount');
+
+      await tester.pumpAndSettle();
+    });
+
+    testWidgets(
+        'animate:true — tabular figures feature is present during animation',
+        (tester) async {
+      const amount = 10.0;
+      await _pumpWithMediaQuery(
+        tester,
+        const MoneyText(amount, animate: true),
+      );
+      await tester.pump(const Duration(milliseconds: 100));
+
+      final text = tester.widget<Text>(find.byType(Text));
+      expect(
+        text.style?.fontFeatures,
+        contains(const FontFeature.tabularFigures()),
+        reason: 'tabular figures must be applied during count-up',
+      );
+
+      await tester.pumpAndSettle();
     });
   });
 
