@@ -16,6 +16,7 @@ import 'package:share_plus/share_plus.dart';
 
 import '../../../widgets/restyle/app_segmented_control.dart';
 import '../../../widgets/restyle/member_avatar.dart';
+import '../../../widgets/restyle/primary_button.dart';
 import '../../../widgets/restyle/soft_card.dart';
 
 /// Restyled friend-QR page (E5-T3). Presents the user's add-friend QR on a white
@@ -236,29 +237,31 @@ class _MyCodeView extends StatelessWidget {
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 18),
+              // Copy = secondary (white + hairline border), Share = primary
+              // (solid accent indigo); both radius-15, single-line labels.
               Row(
                 children: [
                   Expanded(
-                    child: FilledButton.tonalIcon(
+                    child: SecondaryButton(
                       onPressed: () async {
                         await Clipboard.setData(ClipboardData(text: link.toString()));
                         if (context.mounted) {
                           showSnackBar(context, l10n.friendQrLinkCopied);
                         }
                       },
-                      icon: const Icon(Icons.copy, size: 19),
-                      label: Text(l10n.copyLink),
+                      icon: Icons.copy,
+                      label: l10n.copyLink,
                     ),
                   ),
                   const SizedBox(width: 12),
                   Expanded(
-                    child: FilledButton.icon(
+                    child: PrimaryButton(
                       onPressed: () async {
                         await SharePlus.instance
                             .share(ShareParams(text: l10n.friendQrShareLink(link.toString())));
                       },
-                      icon: const Icon(Icons.ios_share, size: 19),
-                      label: Text(l10n.share),
+                      icon: Icons.ios_share,
+                      label: l10n.share,
                     ),
                   ),
                 ],

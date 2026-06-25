@@ -154,3 +154,130 @@ class _PrimaryButtonState extends State<PrimaryButton> {
     return button;
   }
 }
+
+/// The v3 secondary button (COMPONENTS §"Secondary / social buttons").
+///
+/// A white-filled, hairline-bordered counterpart to [PrimaryButton], used as the
+/// low-emphasis option in a two-button row (e.g. Copy alongside a primary Share).
+///
+/// - Background: [ColorScheme.surfaceContainerLowest] (the card-white surface).
+/// - Border: 1.5px [ColorScheme.outlineVariant] — the warm hairline token
+///   (~#E4E1D8 in light) the spec calls for; flips to the dark hairline in dark
+///   mode so the outline stays legible without an inline hex.
+/// - Text/icon: [ColorScheme.onSurface] (label) / [ColorScheme.onSurfaceVariant]
+///   (icon), [TextTheme.bodyLarge] at w700.
+/// - Geometry: radius 15, vertical padding 15, full-width by default (≥50 dp
+///   tall) — matches [PrimaryButton] so the two sit flush in a row.
+/// - Press feedback: the same subtle [AnimatedScale] to 0.98 (no heavy ripple).
+///
+/// Labels are kept to a single line ([Text.maxLines] == 1, no wrap) so localized
+/// strings like "Link kopieren" don't break across two lines in a tight row.
+class SecondaryButton extends StatefulWidget {
+  const SecondaryButton({
+    super.key,
+    required this.onPressed,
+    required this.label,
+    this.icon,
+    this.fullWidth = true,
+  });
+
+  /// Callback fired on tap. `null` disables the button.
+  final VoidCallback? onPressed;
+
+  /// Button label text.
+  final String label;
+
+  /// Optional leading icon shown to the left of the label.
+  final IconData? icon;
+
+  /// When `true` (the default), the button expands to fill its parent's width.
+  final bool fullWidth;
+
+  @override
+  State<SecondaryButton> createState() => _SecondaryButtonState();
+}
+
+class _SecondaryButtonState extends State<SecondaryButton> {
+  bool _pressed = false;
+
+  bool get _enabled => widget.onPressed != null;
+
+  void _handleTapDown(TapDownDetails _) {
+    if (_enabled) setState(() => _pressed = true);
+  }
+
+  void _handleTapUp(TapUpDetails _) {
+    if (_pressed) setState(() => _pressed = false);
+  }
+
+  void _handleTapCancel() {
+    if (_pressed) setState(() => _pressed = false);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
+
+    final opacity = _enabled ? 1.0 : 0.5;
+    final bgColor = colorScheme.surfaceContainerLowest;
+    final borderColor = colorScheme.outlineVariant.withValues(alpha: opacity);
+    final fgColor = colorScheme.onSurface.withValues(alpha: opacity);
+    final iconColor = colorScheme.onSurfaceVariant.withValues(alpha: opacity);
+
+    final labelStyle = (textTheme.bodyLarge ?? const TextStyle()).copyWith(
+      fontWeight: FontWeight.w700,
+      color: fgColor,
+    );
+
+    final Widget label = Text(
+      widget.label,
+      style: labelStyle,
+      maxLines: 1,
+      softWrap: false,
+      overflow: TextOverflow.ellipsis,
+    );
+
+    Widget content;
+    if (widget.icon != null) {
+      content = Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(widget.icon, size: 18, color: iconColor),
+          const SizedBox(width: 8),
+          Flexible(child: label),
+        ],
+      );
+    } else {
+      content = label;
+    }
+
+    final inner = AnimatedScale(
+      scale: _pressed ? 0.98 : 1.0,
+      duration: const Duration(milliseconds: 80),
+      child: Container(
+        decoration: BoxDecoration(
+          color: bgColor,
+          borderRadius: BorderRadius.circular(15),
+          border: Border.all(color: borderColor, width: 1.5),
+        ),
+        padding: const EdgeInsets.symmetric(vertical: 15, horizontal: 12),
+        child: Center(child: content),
+      ),
+    );
+
+    final button = GestureDetector(
+      onTapDown: _handleTapDown,
+      onTapUp: _handleTapUp,
+      onTapCancel: _handleTapCancel,
+      onTap: _enabled ? widget.onPressed : null,
+      behavior: HitTestBehavior.opaque,
+      child: inner,
+    );
+
+    if (widget.fullWidth) {
+      return SizedBox(width: double.infinity, child: button);
+    }
+    return button;
+  }
+}

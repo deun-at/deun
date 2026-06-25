@@ -5,6 +5,7 @@ import 'package:deun/pages/users/user_model.dart';
 import 'package:deun/provider.dart';
 import 'package:deun/widgets/restyle/app_segmented_control.dart';
 import 'package:deun/widgets/restyle/member_avatar.dart';
+import 'package:deun/widgets/restyle/primary_button.dart';
 import 'package:deun/widgets/theme_builder.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -35,6 +36,7 @@ Future<void> _pumpQr(
   WidgetTester tester, {
   Brightness brightness = Brightness.light,
   SupaUser? user,
+  Locale? locale,
 }) async {
   await tester.pumpWidget(
     ProviderScope(
@@ -42,6 +44,7 @@ Future<void> _pumpQr(
         userDetailProvider.overrideWith(() => _FakeUserDetailNotifier(user ?? _fakeUser())),
       ],
       child: MaterialApp(
+        locale: locale,
         theme: ThemeData(brightness: Brightness.light, splashFactory: NoSplash.splashFactory),
         localizationsDelegates: const [
           AppLocalizations.delegate,
@@ -100,6 +103,52 @@ void main() {
       // Copy + Share actions.
       expect(find.text(l10n.copyLink), findsOneWidget);
       expect(find.text(l10n.share), findsOneWidget);
+    });
+
+    testWidgets(
+        'Copy is a SecondaryButton and Share a PrimaryButton (radius-15, not stadium pills)',
+        (tester) async {
+      await _pumpQr(tester);
+      final l10n =
+          AppLocalizations.of(tester.element(find.byType(FriendQrPage)))!;
+
+      // Copy = secondary (white + hairline border); Share = primary (solid indigo).
+      expect(find.byType(SecondaryButton), findsOneWidget);
+      expect(find.byType(PrimaryButton), findsOneWidget);
+      // The copy label lives inside the SecondaryButton, share inside the primary.
+      expect(
+        find.descendant(
+          of: find.byType(SecondaryButton),
+          matching: find.text(l10n.copyLink),
+        ),
+        findsOneWidget,
+      );
+      expect(
+        find.descendant(
+          of: find.byType(PrimaryButton),
+          matching: find.text(l10n.share),
+        ),
+        findsOneWidget,
+      );
+      // No leftover stadium-pill FilledButtons for these two actions.
+      expect(find.byType(FilledButton), findsNothing);
+    });
+
+    testWidgets('the German "Link kopieren" label stays on a single line',
+        (tester) async {
+      await _pumpQr(tester, locale: const Locale('de'));
+      final text = tester.widget<Text>(find.text('Link kopieren'));
+      expect(text.maxLines, 1);
+      expect(text.softWrap, isFalse);
+      // And it must actually fit — no ellipsis truncation at the row width.
+      final painter = TextPainter(
+        text: TextSpan(text: 'Link kopieren', style: text.style),
+        textDirection: TextDirection.ltr,
+        maxLines: 1,
+      )..layout();
+      expect(painter.didExceedMaxLines, isFalse);
+      expect(tester.getSize(find.text('Link kopieren')).width,
+          greaterThanOrEqualTo(painter.width));
     });
 
     testWidgets('renders in dark mode without throwing (QR still present)',
