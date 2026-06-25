@@ -150,10 +150,6 @@ class _GroupListState extends ConsumerState<GroupList> {
           isFavorite: group.isFavorite,
           onFavoriteToggle: () => _toggleFavorite(group.id),
         ),
-      if (_adBlock != null) ...[
-        const SizedBox(height: 8),
-        _adBlock!,
-      ],
     ];
 
     final listView = ListView(
@@ -165,11 +161,28 @@ class _GroupListState extends ConsumerState<GroupList> {
       ],
     );
 
-    return RefreshIndicator(
+    final refreshable = RefreshIndicator(
       onRefresh: updateGroupList,
       child: MediaQuery.of(context).disableAnimations
           ? listView
           : AnimationLimiter(child: listView),
+    );
+
+    // The native ad lives in its OWN sibling region BELOW the scrolling card
+    // list — never inside it. The AdMob AdWidget mounts an opaque platform-view
+    // (PlatformViewHitTestBehavior.opaque); a failed/disposed ad would otherwise
+    // sit in the card list's gesture arena and swallow taps meant for the group
+    // cards (design-audit F01). Isolating it here means its hit-test region can
+    // only ever cover its own footer box, and when the ad is not loaded the
+    // NativeAdBlock collapses to a zero-size, non-hit-testing box (so this
+    // footer occupies nothing).
+    if (_adBlock == null) return refreshable;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Expanded(child: refreshable),
+        _adBlock!,
+      ],
     );
   }
 }
