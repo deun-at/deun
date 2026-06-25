@@ -10,10 +10,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:form_builder_validators/form_builder_validators.dart';
 import 'package:deun/l10n/app_localizations.dart';
 
-/// Restyled profile form (E7-T3, Screen 6). Soft inset fields + a Language row
-/// that opens the [showLanguageSheet] picker. The save path is unchanged: the
-/// locale still flows through a (now hidden) FormBuilder `locale` field so the
-/// Update button's existing DB persistence keeps working.
+/// Restyled profile form (E7-T3, Screen 6). The whole form is grouped inside
+/// the single grouping [SoftCard] provided by the parent settings screen (v3
+/// white card surface, radius 18, soft shadow); the inset fields and the
+/// Language row that opens the [showLanguageSheet] picker sit as tight,
+/// borderless inset rows (radius 12, 11px gap) inside that one card. The save
+/// path is unchanged: the locale still flows through a (now hidden) FormBuilder
+/// `locale` field so the Update button's existing DB persistence keeps working.
 class SettingsProfileForm extends ConsumerStatefulWidget {
   const SettingsProfileForm({super.key});
 
@@ -26,7 +29,8 @@ class _SettingsProfileFormState extends ConsumerState<SettingsProfileForm> {
 
   @override
   Widget build(BuildContext context) {
-    const double heightSpacing = 12;
+    // v3 profile card stacks fields with an 11px inter-row gap inside the card.
+    const double heightSpacing = 11;
     final l10n = AppLocalizations.of(context)!;
 
     final SupaUser? user = ref.watch(userDetailProvider).value;
@@ -178,8 +182,9 @@ class _SettingsProfileFormState extends ConsumerState<SettingsProfileForm> {
 }
 
 /// A soft inset [FormBuilderField] text input matching the redesign field look
-/// (filled `surfaceContainer`, radius 16, no hard border). Per the v3 profile
-/// form, fields carry no leading icon — they are label + value only.
+/// (filled `surfaceContainer`, radius 12, no hard border). Per the v3 profile
+/// form, fields carry no leading icon — they are label + value only, and sit
+/// as inset rows inside the one grouping [SoftCard].
 class _InsetFormField extends StatelessWidget {
   const _InsetFormField({
     required this.name,
@@ -200,7 +205,7 @@ class _InsetFormField extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
-    final radius = BorderRadius.circular(16);
+    final radius = BorderRadius.circular(12);
 
     return FormBuilderField<String>(
       name: name,
@@ -240,7 +245,7 @@ class _LanguageRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
-    final radius = BorderRadius.circular(16);
+    final radius = BorderRadius.circular(12);
 
     return Material(
       color: colorScheme.surfaceContainer,

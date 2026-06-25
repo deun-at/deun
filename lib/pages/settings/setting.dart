@@ -71,7 +71,12 @@ class _SettingState extends ConsumerState<Setting> {
             const SizedBox(height: 24),
             SectionLabel(l10n.settingsProfileSection),
             const SizedBox(height: 8),
-            const SoftCard(child: SettingsProfileForm()),
+            // v3 profile card: 14px padding (vs the default 16) so the inset
+            // field rows group tightly inside the single white card.
+            const SoftCard(
+              padding: EdgeInsets.all(14),
+              child: SettingsProfileForm(),
+            ),
             const SizedBox(height: 24),
             SectionLabel(l10n.settingsPreferencesSection),
             const SizedBox(height: 8),
