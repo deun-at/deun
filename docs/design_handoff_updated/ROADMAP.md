@@ -232,8 +232,9 @@ these are the in-scope tasks, foundation-first:
   Named curves/durations from `ANIMATIONS.md` + pure reduced-motion helper. ✅ done · 16e7f89
 - **V3-T2 · Custom sliding tab pill bottom bar** · `navigation.dart` (ANIMATIONS §6) ✅ done · 8ba39d8
 - **V3-T3 · `DeunHeader` custom header** · new widget + personal_statistics (COMPONENTS §2) ✅ done · aef3c35
-  - **V3-T3b · Header migration batch A** · group/expense sub-screens → `DeunHeader` — pending
+  - **V3-T3b · Header migration batch A** · group_detail_edit, expense_detail, expense_detail_read, group_join_page → `DeunHeader` ✅ done · 8b9192c (+ fix 40e32a3)
   - **V3-T3c · Header migration batch B** · friends/auth/stats/settings sub-screens → `DeunHeader` — pending
+  - **V3-T3d · Special headers** · claim_page (merchant+presence) & group_detail_payment (modal sheet) — pending
 - **V3-T4 · Shared-axis route transitions** · `navigation.dart` (ANIMATIONS §1) — pending
 - **V3-T5 · Staggered list entrance** · groups/friends lists (ANIMATIONS §2) — pending
 - **V3-T6 · Count-up heroes** · existing hero amounts (ANIMATIONS §3) — pending
