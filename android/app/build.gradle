@@ -37,10 +37,12 @@ if (flutterVersionName == null) {
 android {
     signingConfigs {
         release {
-            storeFile file(keyProperties.getProperty('storeFile'))
-            storePassword keyProperties.getProperty('storePassword')
-            keyAlias keyProperties.getProperty('keyAlias')
-            keyPassword keyProperties.getProperty('keyPassword')
+            if (keyPropertiesFile.exists()) {
+                storeFile keyProperties.getProperty('storeFile') ? rootProject.file(keyProperties.getProperty('storeFile')) : null
+                storePassword keyProperties.getProperty('storePassword')
+                keyAlias keyProperties.getProperty('keyAlias')
+                keyPassword keyProperties.getProperty('keyPassword')
+            }
         }
     }
     namespace = "app.deun.www"
