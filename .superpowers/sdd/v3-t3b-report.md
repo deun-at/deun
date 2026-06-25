@@ -1,5 +1,61 @@
 # V3-T3b Report — Header migration batch A: 4 screens → DeunHeader
 
+---
+
+## V3-T3b FIX: DeunHeader robust centered title + trailingActions (edit+delete)
+
+### Summary
+Fixed `DeunHeader` to use a `Stack`-based layout for robust optical centering of the title regardless of trailing slot width, and added a `trailingActions: List<Widget>?` parameter. Removed the `OverflowBox` stop-gap from `expense_detail_read.dart`.
+
+### Commands & output tails
+
+#### flutter analyze
+```
+Analyzing deun...
+No issues found! (ran in 9.1s)
+```
+
+#### flutter test test/widgets/deun_header_test.dart
+```
+00:01 +15: All tests passed!
+```
+15 tests (12 existing + 3 new trailingActions/centering tests), all green.
+
+#### flutter test test/widgets/expense_detail_read_test.dart
+```
+00:01 +6: All tests passed!
+```
+
+#### flutter test (full suite)
+```
+00:35 +613 -6: Some tests failed.
+```
+613 pass (was 610 before this fix, +3 new), 6 failures are the same pre-existing ones.
+
+#### grep -n OverflowBox lib/pages/expenses/presentation/expense_detail_read.dart
+```
+(no output — OverflowBox removed)
+```
+
+### Files changed
+
+#### Production
+- `lib/widgets/restyle/deun_header.dart` — Stack-based centering, `trailingActions` param
+- `lib/pages/expenses/presentation/expense_detail_read.dart` — removed OverflowBox, use `trailingActions`
+
+#### Tests
+- `test/widgets/deun_header_test.dart` — 3 new tests added (TDD: written before implementation)
+
+### Test counts
+| Stage | Passed | Failed |
+|-------|--------|--------|
+| Before this fix | 610 | 6 |
+| After this fix | 613 | 6 |
+| New tests added | 3 | 0 |
+| New failures | 0 | 0 |
+
+---
+
 ## Commands & output tails
 
 ### flutter analyze

@@ -153,5 +153,106 @@ void main() {
       );
       expect(find.byIcon(Icons.arrow_back), findsNothing);
     });
+
+    // ── trailingActions tests (TDD: added before implementation) ──────────────
+
+    testWidgets('trailingActions renders both action widgets', (tester) async {
+      await _pump(
+        tester,
+        DeunHeader(
+          title: 'T',
+          trailingActions: [
+            IconButton(
+              key: const Key('action_edit'),
+              icon: const Icon(Icons.edit_outlined),
+              onPressed: () {},
+            ),
+            IconButton(
+              key: const Key('action_delete'),
+              icon: const Icon(Icons.delete_outline),
+              onPressed: () {},
+            ),
+          ],
+        ),
+      );
+      expect(find.byIcon(Icons.edit_outlined), findsOneWidget);
+      expect(find.byIcon(Icons.delete_outline), findsOneWidget);
+    });
+
+    testWidgets('trailingActions: both actions are independently tappable', (tester) async {
+      var editTapped = false;
+      var deleteTapped = false;
+      await _pump(
+        tester,
+        DeunHeader(
+          title: 'T',
+          trailingActions: [
+            IconButton(
+              icon: const Icon(Icons.edit_outlined),
+              onPressed: () => editTapped = true,
+            ),
+            IconButton(
+              icon: const Icon(Icons.delete_outline),
+              onPressed: () => deleteTapped = true,
+            ),
+          ],
+        ),
+      );
+      await tester.tap(find.byIcon(Icons.edit_outlined));
+      await tester.pumpAndSettle();
+      expect(editTapped, isTrue);
+      expect(deleteTapped, isFalse);
+
+      await tester.tap(find.byIcon(Icons.delete_outline));
+      await tester.pumpAndSettle();
+      expect(deleteTapped, isTrue);
+    });
+
+    testWidgets(
+        'with long title + trailingActions, title is horizontally centered in the header',
+        (tester) async {
+      const headerKey = Key('header_centering_test');
+      await _pump(
+        tester,
+        DeunHeader(
+          key: headerKey,
+          title: 'A Very Long Expense Title That Could Overflow The Screen Width',
+          trailingActions: [
+            IconButton(
+              icon: const Icon(Icons.edit_outlined),
+              onPressed: () {},
+            ),
+            IconButton(
+              icon: const Icon(Icons.delete_outline),
+              onPressed: () {},
+            ),
+          ],
+        ),
+      );
+
+      // Get the header bounds
+      final headerBox = tester.renderObject(find.byKey(headerKey)) as RenderBox;
+      final headerOffset = headerBox.localToGlobal(Offset.zero);
+      final headerWidth = headerBox.size.width;
+      final headerCenterX = headerOffset.dx + headerWidth / 2;
+
+      // Find the title Text widget and get its center
+      final titleFinder = find.text(
+        'A Very Long Expense Title That Could Overflow The Screen Width',
+      );
+      expect(titleFinder, findsOneWidget);
+      final titleBox = tester.renderObject(titleFinder) as RenderBox;
+      final titleOffset = titleBox.localToGlobal(Offset.zero);
+      final titleCenterX = titleOffset.dx + titleBox.size.width / 2;
+
+      // Title center should be within 10px of header center — the Stack
+      // positions title across the full width so it should be very close.
+      expect(
+        (titleCenterX - headerCenterX).abs(),
+        lessThan(10.0),
+        reason:
+            'Title center ($titleCenterX) should be within 10px of header center ($headerCenterX)',
+      );
+    });
   });
 }

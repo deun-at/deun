@@ -126,40 +126,33 @@ class ExpenseDetailRead extends ConsumerWidget {
             children: [
               DeunHeader(
                 title: l10n.expenseDetailTitle,
-                trailing: OverflowBox(
-                  maxWidth: double.infinity,
-                  alignment: Alignment.centerRight,
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      IconButton(
-                        tooltip: l10n.edit,
-                        onPressed: () => _openEditor(context),
-                        icon: const Icon(Icons.edit_outlined),
-                        iconSize: 22,
-                        constraints: const BoxConstraints(
-                          minWidth: 38,
-                          minHeight: 38,
-                        ),
-                        padding: EdgeInsets.zero,
-                      ),
-                      IconButton(
-                        tooltip: l10n.delete,
-                        onPressed: () => _confirmDelete(context),
-                        icon: Icon(
-                          Icons.delete_outline,
-                          color: Theme.of(context).colorScheme.onSurface,
-                        ),
-                        iconSize: 22,
-                        constraints: const BoxConstraints(
-                          minWidth: 38,
-                          minHeight: 38,
-                        ),
-                        padding: EdgeInsets.zero,
-                      ),
-                    ],
+                trailingActions: [
+                  IconButton(
+                    tooltip: l10n.edit,
+                    onPressed: () => _openEditor(context),
+                    icon: const Icon(Icons.edit_outlined),
+                    iconSize: 22,
+                    constraints: const BoxConstraints(
+                      minWidth: 38,
+                      minHeight: 38,
+                    ),
+                    padding: EdgeInsets.zero,
                   ),
-                ),
+                  IconButton(
+                    tooltip: l10n.delete,
+                    onPressed: () => _confirmDelete(context),
+                    icon: Icon(
+                      Icons.delete_outline,
+                      color: Theme.of(context).colorScheme.onSurface,
+                    ),
+                    iconSize: 22,
+                    constraints: const BoxConstraints(
+                      minWidth: 38,
+                      minHeight: 38,
+                    ),
+                    padding: EdgeInsets.zero,
+                  ),
+                ],
               ),
               Expanded(
                 child: ListView(

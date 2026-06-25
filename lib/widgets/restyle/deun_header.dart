@@ -2,13 +2,20 @@ import 'package:flutter/material.dart';
 
 /// Custom app-header widget that replaces Material [AppBar] on sub-screens.
 ///
-/// Renders a single 38px-tall flex row with:
-///   `[leading 38×38 icon button] · [flex:1 centered title] · [trailing 38×38 action or spacer]`
+/// Renders a header with:
+///   - A leading 38×38 icon button (or spacer when [showLeading] is false)
+///   - A title (+ optional subtitle) **optically centered across the full
+///     header width** using a [Stack], so centering is robust regardless of
+///     how wide the trailing slot is.
+///   - A trailing slot: either a single [trailing] widget (38×38) or a list
+///     of [trailingActions] rendered as a compact [Row]. When neither is
+///     provided, a 38×38 spacer preserves optical centering.
 ///
-/// The empty 38×38 right spacer keeps the title optically centered when there
-/// is no trailing action. Wrapped in a [SafeArea] (bottom: false) so screens
-/// can drop it at the very top of their body without worrying about the
-/// status-bar inset.
+/// [trailing] and [trailingActions] are mutually exclusive. When both are
+/// provided, [trailingActions] takes precedence.
+///
+/// Wrapped in a [SafeArea] (bottom: false) so screens can drop it at the
+/// very top of their body without worrying about the status-bar inset.
 ///
 /// Token mapping (light / dark):
 /// - Title: `bodyLarge` (16px Hanken) + w700 → `colorScheme.onSurface`
@@ -26,6 +33,7 @@ class DeunHeader extends StatelessWidget {
     this.onLeading,
     this.showLeading = true,
     this.trailing,
+    this.trailingActions,
   });
 
   /// Primary title text. Hanken 16/w700, centered.
@@ -45,9 +53,19 @@ class DeunHeader extends StatelessWidget {
   /// instead (rare — used when there is no back destination).
   final bool showLeading;
 
-  /// Optional 38×38 trailing action widget. When null, a 38×38 spacer
+  /// Optional single 38×38 trailing action widget. When null, a 38×38 spacer
   /// preserves optical centering of the title.
+  ///
+  /// Mutually exclusive with [trailingActions]. When both are provided,
+  /// [trailingActions] takes precedence.
   final Widget? trailing;
+
+  /// Optional list of trailing action widgets rendered as a compact [Row].
+  /// Use this when you need more than one trailing action (e.g. edit + delete).
+  ///
+  /// Mutually exclusive with [trailing]. When both are provided, this takes
+  /// precedence over [trailing].
+  final List<Widget>? trailingActions;
 
   @override
   Widget build(BuildContext context) {
@@ -72,43 +90,66 @@ class DeunHeader extends StatelessWidget {
       leadingSlot = const SizedBox(width: 38, height: 38);
     }
 
+    // Build the trailing slot.
+    // trailingActions takes precedence over trailing.
     Widget trailingSlot;
-    if (trailing != null) {
+    if (trailingActions != null && trailingActions!.isNotEmpty) {
+      trailingSlot = Row(
+        mainAxisSize: MainAxisSize.min,
+        children: trailingActions!,
+      );
+    } else if (trailing != null) {
       trailingSlot = SizedBox(width: 38, height: 38, child: trailing);
     } else {
       trailingSlot = const SizedBox(width: 38, height: 38);
     }
 
+    // The title block is centered across the FULL header width using a Stack.
+    // Leading and trailing are pinned to left/right; the title sits in the
+    // center layer and spans the full width with overflow ellipsis.
+    final titleBlock = Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(
+          title,
+          style: titleStyle,
+          textAlign: TextAlign.center,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+        ),
+        if (subtitle != null)
+          Text(
+            subtitle!,
+            style: subtitleStyle,
+            textAlign: TextAlign.center,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+      ],
+    );
+
     return SafeArea(
       bottom: false,
       child: Padding(
         padding: const EdgeInsets.fromLTRB(14, 4, 14, 8),
-        child: Row(
+        child: Stack(
+          alignment: Alignment.center,
           children: [
-            leadingSlot,
-            Expanded(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    title,
-                    style: titleStyle,
-                    textAlign: TextAlign.center,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  if (subtitle != null)
-                    Text(
-                      subtitle!,
-                      style: subtitleStyle,
-                      textAlign: TextAlign.center,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                ],
-              ),
+            // Title centred across the full row width.
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 46),
+              child: titleBlock,
             ),
-            trailingSlot,
+            // Leading pinned to the left.
+            Align(
+              alignment: Alignment.centerLeft,
+              child: leadingSlot,
+            ),
+            // Trailing pinned to the right.
+            Align(
+              alignment: Alignment.centerRight,
+              child: trailingSlot,
+            ),
           ],
         ),
       ),
