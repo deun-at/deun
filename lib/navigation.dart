@@ -45,6 +45,7 @@ import 'pages/groups/data/group_model.dart';
 import 'pages/groups/data/group_repository.dart';
 import 'pages/settings/setting.dart';
 import 'widgets/modal_bottom_sheet_page.dart';
+import 'widgets/restyle/app_bottom_nav.dart';
 
 final _rootNavigatorKey = GlobalKey<NavigatorState>(debugLabel: 'root');
 final _shellNavigatorGroupKey = GlobalKey<NavigatorState>(debugLabel: 'shellGroup');
@@ -616,37 +617,31 @@ class _ScaffoldWithNestedNavigationState
     final pendingCount = ref.watch(pendingFriendRequestCountProvider);
     final showBadge = pendingCount > 0 && friendshipState.hasValue;
 
+    final l10n = AppLocalizations.of(context)!;
+
     return Scaffold(
       body: widget.navigationShell,
-      bottomNavigationBar: NavigationBar(
-        labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
+      bottomNavigationBar: AppBottomNav(
         selectedIndex: widget.navigationShell.currentIndex,
-        destinations: <Widget>[
-          NavigationDestination(
-            selectedIcon: const Icon(Icons.receipt_long),
-            icon: const Icon(Icons.receipt_long_outlined),
-            label: AppLocalizations.of(context)!.groups,
+        onSelect: _goBranch,
+        items: [
+          AppBottomNavItem(
+            icon: Icons.receipt_long_outlined,
+            selectedIcon: Icons.receipt_long,
+            label: l10n.groups,
           ),
-          NavigationDestination(
-            selectedIcon: Badge(
-              isLabelVisible: showBadge,
-              label: Text('$pendingCount'),
-              child: const Icon(Icons.group),
-            ),
-            icon: Badge(
-              isLabelVisible: showBadge,
-              label: Text('$pendingCount'),
-              child: const Icon(Icons.group_outlined),
-            ),
-            label: AppLocalizations.of(context)!.friends,
+          AppBottomNavItem(
+            icon: Icons.group_outlined,
+            selectedIcon: Icons.group,
+            label: l10n.friends,
+            badgeCount: showBadge ? pendingCount : 0,
           ),
-          NavigationDestination(
-            selectedIcon: const Icon(Icons.settings),
-            icon: const Icon(Icons.settings_outlined),
-            label: AppLocalizations.of(context)!.settings,
+          AppBottomNavItem(
+            icon: Icons.settings_outlined,
+            selectedIcon: Icons.settings,
+            label: l10n.settings,
           ),
         ],
-        onDestinationSelected: _goBranch,
       ),
     );
   }

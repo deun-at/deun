@@ -59,6 +59,9 @@ abstract final class Motion {
   /// Home-tab switch (vertical fade-up, no X slide).
   static const Duration tabSwitch = Duration(milliseconds: 260);
 
+  /// Tab-bar pill slide between destinations (§6).  Use with [tabPill] curve.
+  static const Duration tabPillSlide = Duration(milliseconds: 340);
+
   // -------------------------------------------------------------------------
   // Durations — §2 Staggered list entrance
   // -------------------------------------------------------------------------

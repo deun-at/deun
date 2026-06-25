@@ -60,6 +60,10 @@ void main() {
     test('tabSwitch is 260 ms', () {
       expect(Motion.tabSwitch, const Duration(milliseconds: 260));
     });
+
+    test('tabPillSlide is 340 ms', () {
+      expect(Motion.tabPillSlide, const Duration(milliseconds: 340));
+    });
   });
 
   group('Motion durations — staggered list', () {
