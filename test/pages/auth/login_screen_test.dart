@@ -2,6 +2,7 @@ import 'package:deun/constants.dart';
 import 'package:deun/l10n/app_localizations.dart';
 import 'package:deun/pages/auth/sign_in.dart';
 import 'package:deun/pages/auth/social_auth_buttons.dart';
+import 'package:deun/widgets/restyle/primary_button.dart';
 import 'package:deun/widgets/theme_builder.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -82,7 +83,7 @@ void main() {
     // Social buttons present.
     expect(find.byType(SocialAuthButtons), findsOneWidget);
     // Primary submit reads "Log in".
-    expect(find.widgetWithText(FilledButton, l10n.authLoginCta), findsOneWidget);
+    expect(find.widgetWithText(PrimaryButton, l10n.authLoginCta), findsOneWidget);
     // Mode-switch action to sign up.
     expect(find.text(l10n.authSwitchToSignupAction), findsOneWidget);
   });
@@ -100,7 +101,7 @@ void main() {
     expect(find.text(l10n.authNameLabel), findsWidgets);
     // CTA flips to "Create account".
     expect(
-      find.widgetWithText(FilledButton, l10n.authSignupCta),
+      find.widgetWithText(PrimaryButton, l10n.authSignupCta),
       findsOneWidget,
     );
     // Forgot-password hidden in signup mode.
@@ -115,7 +116,7 @@ void main() {
 
     expect(find.byIcon(Icons.call_split), findsOneWidget);
     expect(find.text(l10n.authLoginTitle), findsOneWidget);
-    expect(find.widgetWithText(FilledButton, l10n.authLoginCta), findsOneWidget);
+    expect(find.widgetWithText(PrimaryButton, l10n.authLoginCta), findsOneWidget);
   });
 
   testWidgets('empty submit surfaces validation errors (no auth call)',
@@ -123,7 +124,7 @@ void main() {
     final l10n = await AppLocalizations.delegate.load(const Locale('en'));
     await _pump(tester);
 
-    await tester.tap(find.widgetWithText(FilledButton, l10n.authLoginCta));
+    await tester.tap(find.widgetWithText(PrimaryButton, l10n.authLoginCta));
     await tester.pump();
 
     expect(find.text(l10n.authEmailInvalid), findsOneWidget);

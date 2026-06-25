@@ -8,6 +8,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:deun/pages/auth/social_auth_buttons.dart';
+import 'package:deun/widgets/restyle/primary_button.dart';
 
 /// Pragmatic email shape check (same intent as the package's email validator):
 /// a non-empty local part, an `@`, a domain with at least one dot.
@@ -317,21 +318,10 @@ class _SignUpState extends State<SignUp> {
                           ),
                         ),
                       const SizedBox(height: 8),
-                      SizedBox(
-                        height: 52,
-                        child: FilledButton(
-                          onPressed: _isLoading ? null : _submit,
-                          child: _isLoading
-                              ? SizedBox(
-                                  height: 20,
-                                  width: 20,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2,
-                                    color: colorScheme.onPrimary,
-                                  ),
-                                )
-                              : Text(submitLabel),
-                        ),
+                      PrimaryButton(
+                        onPressed: _isLoading ? null : _submit,
+                        label: submitLabel,
+                        loading: _isLoading,
                       ),
                     ],
                   ),

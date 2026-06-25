@@ -30,6 +30,7 @@ import '../../../widgets/restyle/soft_card.dart';
 import '../../../widgets/restyle/section_label.dart';
 import '../../../widgets/restyle/member_avatar.dart';
 import '../../../widgets/restyle/money_text.dart';
+import '../../../widgets/restyle/primary_button.dart';
 
 class ExpenseEntryData {
   final int index;
@@ -799,16 +800,12 @@ class _ExpenseDetailState extends ConsumerState<ExpenseDetail> {
                         const SizedBox(height: spacing * 2),
                         Padding(
                           padding: const EdgeInsets.symmetric(horizontal: 16),
-                          child: SizedBox(
-                            width: double.infinity,
-                            child: FilledButton(
-                              onPressed: () =>
-                                  _saveExpense(context, claimable: true),
-                              child: Text(widget.expense != null
-                                  ? AppLocalizations.of(context)!.save
-                                  : AppLocalizations.of(context)!
-                                      .expenseSaveAndShareForClaiming),
-                            ),
+                          child: PrimaryButton(
+                            onPressed: () => _saveExpense(context, claimable: true),
+                            label: widget.expense != null
+                                ? AppLocalizations.of(context)!.save
+                                : AppLocalizations.of(context)!
+                                    .expenseSaveAndShareForClaiming,
                           ),
                         ),
                       ],
@@ -824,12 +821,9 @@ class _ExpenseDetailState extends ConsumerState<ExpenseDetail> {
                   builder: (context) => Container(
                     color: colorScheme.surface,
                     padding: const EdgeInsets.fromLTRB(20, 14, 20, 20),
-                    child: SizedBox(
-                      width: double.infinity,
-                      child: FilledButton(
-                        onPressed: () => _saveExpense(context),
-                        child: Text(AppLocalizations.of(context)!.save),
-                      ),
+                    child: PrimaryButton(
+                      onPressed: () => _saveExpense(context),
+                      label: AppLocalizations.of(context)!.save,
                     ),
                   ),
                 ),

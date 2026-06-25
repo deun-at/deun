@@ -17,6 +17,7 @@ import 'package:deun/widgets/restyle/progress_bar.dart';
 import 'package:deun/widgets/restyle/section_label.dart';
 import 'package:deun/widgets/restyle/sheet_scaffold.dart';
 import 'package:deun/widgets/restyle/soft_card.dart';
+import 'package:deun/widgets/restyle/primary_button.dart';
 import 'package:deun/widgets/restyle/success_badge.dart';
 import 'package:deun/widgets/theme_builder.dart';
 import 'package:deun/helper/helper.dart';
@@ -875,12 +876,9 @@ class _ConfirmBar extends StatelessWidget {
         top: false,
         child: Padding(
           padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
-          child: SizedBox(
-            width: double.infinity,
-            child: FilledButton(
-              onPressed: onConfirm,
-              child: Text(l10n.claimConfirm(l10n.toCurrency(yourTotal))),
-            ),
+          child: PrimaryButton(
+            onPressed: onConfirm,
+            label: l10n.claimConfirm(l10n.toCurrency(yourTotal)),
           ),
         ),
       ),
@@ -920,9 +918,9 @@ class _SplitPickerSheetState extends State<_SplitPickerSheet> {
 
     return SheetScaffold(
       title: l10n.claimSplitSheetTitle,
-      footer: FilledButton(
+      footer: PrimaryButton(
         onPressed: () => Navigator.of(context).pop(_selected.toList()),
-        child: Text(l10n.claimSplitApply),
+        label: l10n.claimSplitApply,
       ),
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -973,9 +971,9 @@ class _ClaimSuccessSheet extends StatelessWidget {
     final textTheme = Theme.of(context).textTheme;
 
     return SheetScaffold(
-      footer: FilledButton(
+      footer: PrimaryButton(
         onPressed: () => Navigator.of(context).pop(),
-        child: Text(l10n.claimConfirmedDone),
+        label: l10n.claimConfirmedDone,
       ),
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.center,

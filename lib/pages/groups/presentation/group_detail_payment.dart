@@ -4,6 +4,7 @@ import 'package:deun/widgets/restyle/member_avatar.dart';
 import 'package:deun/widgets/restyle/money_text.dart';
 import 'package:deun/widgets/restyle/section_label.dart';
 import 'package:deun/widgets/restyle/sheet_scaffold.dart';
+import 'package:deun/widgets/restyle/primary_button.dart';
 import 'package:deun/widgets/restyle/soft_card.dart';
 import 'package:deun/widgets/restyle/success_badge.dart';
 import 'package:deun/widgets/shimmer_card_list.dart';
@@ -377,12 +378,9 @@ class _PaymentMethodSheet extends StatelessWidget {
           ],
         ],
       ),
-      footer: FilledButton(
+      footer: PrimaryButton(
         onPressed: () => _settle(context),
-        style: FilledButton.styleFrom(
-          minimumSize: const Size.fromHeight(52),
-        ),
-        child: Text(l10n.paymentPayAmount(entry.amount)),
+        label: l10n.paymentPayAmount(entry.amount),
       ),
     );
   }

@@ -7,6 +7,7 @@ import 'package:share_plus/share_plus.dart';
 
 import '../../../helper/helper.dart';
 import '../../../widgets/restyle/section_label.dart';
+import '../../../widgets/restyle/primary_button.dart';
 import '../../../widgets/restyle/sheet_scaffold.dart';
 import '../data/group_model.dart';
 
@@ -42,13 +43,13 @@ class GroupInvitePage extends StatelessWidget {
         onPressed: () => Navigator.of(context).maybePop(),
         tooltip: MaterialLocalizations.of(context).closeButtonTooltip,
       ),
-      footer: FilledButton.icon(
+      footer: PrimaryButton(
         onPressed: () async {
           await SharePlus.instance
               .share(ShareParams(text: l10n.friendQrShareLink(linkText)));
         },
-        icon: const Icon(Icons.ios_share),
-        label: Text(l10n.share),
+        icon: Icons.ios_share,
+        label: l10n.share,
       ),
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,

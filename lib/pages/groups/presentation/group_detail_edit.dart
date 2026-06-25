@@ -4,6 +4,7 @@ import 'package:deun/helper/helper.dart';
 import 'package:deun/pages/groups/data/group_repository.dart';
 import 'package:deun/widgets/restyle/deun_header.dart';
 import 'package:deun/widgets/restyle/section_label.dart';
+import 'package:deun/widgets/restyle/primary_button.dart';
 import 'package:deun/widgets/restyle/soft_card.dart';
 import 'package:deun/widgets/theme_builder.dart';
 import 'package:flutter/material.dart';
@@ -477,18 +478,10 @@ class _StickyFooter extends StatelessWidget {
     return Container(
       color: background,
       padding: const EdgeInsets.fromLTRB(20, 14, 20, 20),
-      child: SizedBox(
-        width: double.infinity,
-        child: FilledButton(
-          onPressed: isBusy ? null : onPressed,
-          child: isBusy
-              ? const SizedBox(
-                  width: 20,
-                  height: 20,
-                  child: CircularProgressIndicator(strokeWidth: 2),
-                )
-              : Text(label),
-        ),
+      child: PrimaryButton(
+        onPressed: isBusy ? null : onPressed,
+        label: label,
+        loading: isBusy,
       ),
     );
   }

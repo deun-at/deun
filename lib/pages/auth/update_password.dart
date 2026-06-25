@@ -1,6 +1,7 @@
 import 'package:deun/l10n/app_localizations.dart';
 import 'package:deun/main.dart';
 import 'package:deun/widgets/restyle/deun_header.dart';
+import 'package:deun/widgets/restyle/primary_button.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -145,21 +146,10 @@ class _UpdatePasswordState extends State<UpdatePassword> {
                         },
                       ),
                       const SizedBox(height: 20),
-                      SizedBox(
-                        height: 52,
-                        child: FilledButton(
-                          onPressed: _isLoading ? null : _submit,
-                          child: _isLoading
-                              ? SizedBox(
-                                  height: 20,
-                                  width: 20,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2,
-                                    color: colorScheme.onPrimary,
-                                  ),
-                                )
-                              : Text(l10n.updatePasswordUpdatePassword),
-                        ),
+                      PrimaryButton(
+                        onPressed: _isLoading ? null : _submit,
+                        label: l10n.updatePasswordUpdatePassword,
+                        loading: _isLoading,
                       ),
                     ],
                   ),

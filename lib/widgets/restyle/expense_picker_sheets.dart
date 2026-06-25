@@ -9,6 +9,7 @@ import 'package:deun/pages/groups/data/group_member_model.dart';
 
 import 'member_avatar.dart';
 import 'money_text.dart';
+import 'primary_button.dart';
 import 'sheet_scaffold.dart';
 
 /// Shared rounded-top shape + scroll control for these pickers.
@@ -353,13 +354,10 @@ class _AmountKeypadSheetState extends State<AmountKeypadSheet> {
           ),
         ],
       ),
-      footer: SizedBox(
-        width: double.infinity,
-        child: FilledButton(
-          key: const ValueKey('keypad_confirm'),
-          onPressed: () => Navigator.of(context).pop(_amount.value),
-          child: Text(l10n.save),
-        ),
+      footer: PrimaryButton(
+        key: const ValueKey('keypad_confirm'),
+        onPressed: () => Navigator.of(context).pop(_amount.value),
+        label: l10n.save,
       ),
     );
   }

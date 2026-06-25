@@ -2,6 +2,7 @@ import 'package:deun/l10n/app_localizations.dart';
 import 'package:deun/pages/auth/onboarding_username.dart';
 import 'package:deun/pages/users/user_repository.dart';
 import 'package:deun/widgets/deun_app.dart';
+import 'package:deun/widgets/restyle/primary_button.dart';
 import 'package:deun/widgets/restyle/section_label.dart';
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -201,23 +202,10 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                         ),
                         Padding(
                           padding: const EdgeInsets.fromLTRB(24, 8, 24, 16),
-                          child: SizedBox(
-                            width: double.infinity,
-                            height: 52,
-                            child: FilledButton(
-                              onPressed:
-                                  _isLoading ? null : () => _submit(ctx),
-                              child: _isLoading
-                                  ? SizedBox(
-                                      height: 20,
-                                      width: 20,
-                                      child: CircularProgressIndicator(
-                                        strokeWidth: 2,
-                                        color: colorScheme.onPrimary,
-                                      ),
-                                    )
-                                  : Text(l10n.onboardingButton),
-                            ),
+                          child: PrimaryButton(
+                            onPressed: _isLoading ? null : () => _submit(ctx),
+                            label: l10n.onboardingButton,
+                            loading: _isLoading,
                           ),
                         ),
                       ],
