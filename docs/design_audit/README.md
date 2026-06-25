@@ -37,7 +37,7 @@ Settle up · Invite · **Tap to Claim** · Login · Reset password · Onboarding
 ### Settings/Profile
 - [x] F09 · Settings · Profile fields each carry a leading icon (badge/person/@/card/bank); v3 profile fields have NO leading icons (label + value only) ⚠️ — lib/pages/settings/settings_profile_form.dart:53,62,70 (_InsetFormField icon:) — target: remove field leading icons — ev: compare/compare_settings.png ✅ e02c851 (icon made optional; removed at profile call sites)
 - [x] F10 · Settings · First name / Last name stacked as two full-width rows; v3 places them side-by-side in one two-column row ⚠️ — lib/pages/settings/settings_profile_form.dart:50-66 — target: First + Last in a single Row (two Expanded columns) — ev: compare/compare_settings.png ✅ e4e0b9c (two Expanded columns, 12px gap)
-- [ ] F11 · Settings · Profile fields are separate inset fills with large gaps; v3 groups the whole profile form inside one white card 💅 — lib/pages/settings/settings_profile_form.dart:43-47 — target: wrap fields in a single SoftCard/white container; tighter row spacing — ev: compare/compare_settings.png
+- [x] F11 · Settings · Profile fields are separate inset fills with large gaps; v3 groups the whole profile form inside one white card 💅 — lib/pages/settings/settings_profile_form.dart:43-47 — target: wrap fields in a single SoftCard/white container; tighter row spacing — ev: compare/compare_settings.png ✅ ab12f4e (already in SoftCard; tightened padding/gap/radius to v3 tokens)
 - [ ] F12 · Settings · Logout icon button has a red errorContainer-tinted circle; v3 logout is a plain white circle with a red (#D85A47) icon 💅 — lib/pages/settings/setting.dart:62 — target: white circle bg, red icon, no error tint — ev: compare/compare_settings.png
 
 ### QR code
