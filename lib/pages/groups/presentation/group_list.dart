@@ -279,13 +279,17 @@ class _OverallBalanceHero extends StatelessWidget {
           if (settled)
             Text(
               l10n.toCurrency(0),
-              style: Theme.of(context).textTheme.displaySmall?.copyWith(color: onHero),
+              // Hero amount: big w700 Bricolage display tier (DESIGN_SPEC
+              // "hero amount"). displayMedium (45px / w700 / -0.02em, tabular)
+              // is the shared big-amount token — displaySmall (40px / w600) was
+              // too small and too light versus the v3 hero.
+              style: Theme.of(context).textTheme.displayMedium?.copyWith(color: onHero),
             )
           else
             MoneyText(
               net.abs(),
               semantic: semanticMode,
-              style: Theme.of(context).textTheme.displaySmall,
+              style: Theme.of(context).textTheme.displayMedium,
               animate: true,
             ),
           const SizedBox(height: 18),

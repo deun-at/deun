@@ -165,6 +165,32 @@ void main() {
     expect(find.text(l10n.homeOverallOwed), findsWidgets);
   });
 
+  for (final brightness in Brightness.values) {
+    testWidgets('overall-balance hero amount uses the big displayMedium tier ($brightness)', (tester) async {
+      // Regression guard for F03: the hero amount must use the large w700
+      // Bricolage hero tier (displayMedium, 45px / -0.02em) — not the smaller,
+      // lighter displaySmall (40px / w600) that read far weaker than the v3 hero.
+      await _pumpScreen(
+        tester,
+        brightness: brightness,
+        groups: [_group(id: 'a', name: 'A', totalShareAmount: 20)],
+      );
+
+      // The hero amount is the first MoneyText on screen (rendered above the
+      // group cards).
+      final heroMoney = tester.widget<MoneyText>(find.byType(MoneyText).first);
+
+      // Resolve the expected hero size straight from the active theme so the
+      // assertion tracks the token, not a hard-coded number.
+      final ctx = tester.element(find.byType(MoneyText).first);
+      final expected = Theme.of(ctx).textTheme.displayMedium!;
+
+      expect(heroMoney.style?.fontSize, expected.fontSize);
+      expect(heroMoney.style?.fontWeight, FontWeight.w700);
+      expect(heroMoney.style?.fontSize, greaterThan(Theme.of(ctx).textTheme.displaySmall!.fontSize!));
+    });
+  }
+
   testWidgets('tapping the star toggles favorite and does not navigate', (tester) async {
     final toggled = <String>[];
     final navObserver = _RecordingNavigatorObserver();
@@ -210,6 +236,14 @@ void main() {
   });
 
   testWidgets('cards appear in favorite-sort order', (tester) async {
+    // The list is a lazy ListView; give the test surface enough height that all
+    // three cards build (the redesign hero is tall, so the default 600px
+    // viewport would scroll the last card out of the build window).
+    tester.view.physicalSize = const Size(1080, 2400);
+    tester.view.devicePixelRatio = 3.0;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
     await _pumpScreen(tester, groups: [
       _group(id: 'settled', name: 'Zeta settled', totalShareAmount: 0),
       _group(id: 'fav', name: 'Alpha fav', totalShareAmount: 12, favorite: true),
