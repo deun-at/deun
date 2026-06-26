@@ -98,7 +98,7 @@ Captured via the new Chrome/web path (AUDIT round 3) — this is the one screen 
 - [x] F77 · Expense delete · Delete confirm is a centered M3 AlertDialog; COMPONENTS.md §3 wants a warm bottom sheet with a 54px danger badge ⚠️ — lib/pages/expenses/presentation/expense_detail_read.dart (_confirmDelete) — target: custom delete-confirm bottom sheet (reuse SheetScaffold) per §3 — ev: compare/compare_expense_detail.png ✅ 5880fe3 (warm SheetScaffold confirm + 54px danger badge, same delete handler/flow; en+de)
 
 ### Settle up (resolves F24)
-- [ ] F59 · Settle up · "Remind" button is a white outlined pill with a bell icon; v3 Remind is a plain gray tonal pill, no icon 💅 — lib/pages/groups/presentation/group_detail_payment.dart — target: gray tonal pill, no icon — ev: compare/compare_settle_up.png
+- [x] F59 · Settle up · "Remind" button is a white outlined pill with a bell icon; v3 Remind is a plain gray tonal pill, no icon 💅 — lib/pages/groups/presentation/group_detail_payment.dart — target: gray tonal pill, no icon — ev: compare/compare_settle_up.png ✅ 76bd9ec (gray tonal FilledButton, no bell icon; handler/label unchanged)
 - [ ] F60 · Settle up · Hero lead label "You're owed"; v3 says "You're owed overall" 💅 — lib/pages/groups/presentation/group_detail_payment.dart — target: "You're owed overall" — ev: compare/compare_settle_up.png
 - F58 · Settle up · Implemented as a modal bottom sheet (close X); v3 (DESIGN_SPEC §10) is a full drill-down screen with back-arrow header ⚠️ — navigation.dart:221-228 (ModalBottomSheetPage) / group_detail_payment.dart — target: full page — ev: compare/compare_settle_up.png ⛔ blocked — out of scope: sheet→full-page is nav/routing re-architecture.
 
