@@ -676,6 +676,10 @@ class AppLocalizationsDe extends AppLocalizations {
   String get authSwitchToLoginAction => 'Anmelden';
 
   @override
+  String get authLegalDisclaimer =>
+      'Mit dem Fortfahren stimmst du unseren Nutzungsbedingungen & Datenschutzrichtlinien zu.';
+
+  @override
   String get authPasswordResetSent =>
       'Sieh in deinem Postfach nach dem Link zum Zurücksetzen.';
 

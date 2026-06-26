@@ -173,6 +173,7 @@
   "authSwitchToSignupAction": "Registrieren",
   "authSwitchToLoginPrompt": "Schon ein Konto?",
   "authSwitchToLoginAction": "Anmelden",
+  "authLegalDisclaimer": "Mit dem Fortfahren stimmst du unseren Nutzungsbedingungen & Datenschutzrichtlinien zu.",
   "authPasswordResetSent": "Sieh in deinem Postfach nach dem Link zum Zurücksetzen.",
   "authUnexpectedError": "Ein unerwarteter Fehler ist aufgetreten. Bitte versuche es erneut.",
   "updatePasswordTitle": "Passwort aktualisieren",

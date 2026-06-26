@@ -618,6 +618,8 @@
   "@authSwitchToLoginPrompt": {"description": "Prompt before the link to switch to login mode."},
   "authSwitchToLoginAction": "Log in",
   "@authSwitchToLoginAction": {"description": "Action link to switch to login mode."},
+  "authLegalDisclaimer": "By continuing you agree to our Terms & Privacy Policy.",
+  "@authLegalDisclaimer": {"description": "Muted legal microcopy footer under the login / sign-up CTA."},
   "authPasswordResetSent": "Check your inbox for a reset link.",
   "@authPasswordResetSent": {"description": "Snackbar confirmation after a password reset email is sent."},
   "authUnexpectedError": "An unexpected error occurred. Please try again.",

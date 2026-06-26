@@ -356,6 +356,17 @@ class _SignUpState extends State<SignUp> {
                     ),
                   ],
                 ),
+                const SizedBox(height: 16),
+
+                // Legal microcopy footer (v3): muted, centered caption under
+                // the CTA. ponytail: plain text now; wire real Terms/Privacy
+                // URLs when they exist.
+                Text(
+                  l10n.authLegalDisclaimer,
+                  style: theme.textTheme.bodySmall
+                      ?.copyWith(color: colorScheme.onSurfaceVariant),
+                  textAlign: TextAlign.center,
+                ),
               ],
             ),
           ),

@@ -1151,6 +1151,12 @@ abstract class AppLocalizations {
   /// **'Log in'**
   String get authSwitchToLoginAction;
 
+  /// Muted legal microcopy footer under the login / sign-up CTA.
+  ///
+  /// In en, this message translates to:
+  /// **'By continuing you agree to our Terms & Privacy Policy.'**
+  String get authLegalDisclaimer;
+
   /// Snackbar confirmation after a password reset email is sent.
   ///
   /// In en, this message translates to:

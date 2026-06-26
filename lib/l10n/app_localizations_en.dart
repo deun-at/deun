@@ -659,6 +659,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get authSwitchToLoginAction => 'Log in';
 
   @override
+  String get authLegalDisclaimer =>
+      'By continuing you agree to our Terms & Privacy Policy.';
+
+  @override
   String get authPasswordResetSent => 'Check your inbox for a reset link.';
 
   @override
