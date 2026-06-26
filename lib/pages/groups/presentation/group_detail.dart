@@ -23,6 +23,7 @@ import '../provider/group_detail.dart';
 
 import '../../../widgets/card_list_view_builder.dart';
 import '../../../widgets/restyle/avatar_stack.dart';
+import '../../../widgets/restyle/soft_card.dart';
 import '../../../widgets/restyle/money_text.dart';
 import '../../../widgets/theme_builder.dart';
 import '../../groups/data/group_member_model.dart';
@@ -584,29 +585,71 @@ class _GroupQuickActions extends StatelessWidget {
     return Row(
       children: [
         Expanded(
-          child: OutlinedButton.icon(
-            onPressed: () {
+          child: _QuickActionCard(
+            icon: Icons.bar_chart,
+            label: l10n.statisticsTitle,
+            onTap: () {
               GoRouter.of(
                 context,
               ).push("/group/details/statistics", extra: {'group': group});
             },
-            icon: const Icon(Icons.bar_chart, size: 18),
-            label: Text(l10n.statisticsTitle),
           ),
         ),
-        const SizedBox(width: 12),
+        const SizedBox(width: 10),
         Expanded(
-          child: OutlinedButton.icon(
-            onPressed: () {
+          child: _QuickActionCard(
+            icon: Icons.person_add_alt_1,
+            label: l10n.invite,
+            onTap: () {
               GoRouter.of(
                 context,
               ).push("/group/share", extra: {'group': group});
             },
-            icon: const Icon(Icons.person_add_alt_1, size: 18),
-            label: Text(l10n.invite),
           ),
         ),
       ],
+    );
+  }
+}
+
+/// A single white-filled quick-action card (COMPONENTS §quick actions): an
+/// accent-tinted icon beside a 700-weight label on a [SoftCard], left-aligned.
+/// The icon picks up `colorScheme.primary` — the group's accent, since the
+/// detail subtree is wrapped in the group-tinted `ThemeBuilder`.
+class _QuickActionCard extends StatelessWidget {
+  const _QuickActionCard({
+    required this.icon,
+    required this.label,
+    required this.onTap,
+  });
+
+  final IconData icon;
+  final String label;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
+
+    return SoftCard(
+      onTap: onTap,
+      borderRadius: 16,
+      padding: const EdgeInsets.symmetric(vertical: 13, horizontal: 14),
+      child: Row(
+        children: [
+          Icon(icon, size: 21, color: colorScheme.primary),
+          const SizedBox(width: 10),
+          Flexible(
+            child: Text(
+              label,
+              style: textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w700),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
