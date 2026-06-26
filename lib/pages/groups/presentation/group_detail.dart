@@ -543,18 +543,17 @@ class _GroupBalanceHero extends StatelessWidget {
               if (members.isNotEmpty)
                 AvatarStack(members: members, ringColor: heroSurface),
               const Spacer(),
-              FilledButton.icon(
+              FilledButton(
                 onPressed: () {
                   GoRouter.of(
                     context,
                   ).push("/group/details/payment", extra: {'group': group});
                 },
-                icon: const Icon(Icons.credit_card, size: 18),
-                label: Text(l10n.groupDetailSettleUp),
                 style: FilledButton.styleFrom(
                   backgroundColor: onHero,
                   foregroundColor: heroSurface,
                 ),
+                child: Text(l10n.groupDetailSettleUp),
               ),
             ],
           ),
