@@ -12,7 +12,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get addNewGroup => 'New group';
 
   @override
-  String get addNewExpense => 'New expense';
+  String get addNewExpense => 'Add expense';
 
   @override
   String get groups => 'Groups';
@@ -442,6 +442,10 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get expenseDeleteItemTitle => 'Delete this expense?';
+
+  @override
+  String get expenseDeleteItemMessage =>
+      'This permanently removes the expense and updates everyone\'s balances. This can\'t be undone.';
 
   @override
   String get expenseDeleteError => 'Error while deleting expense!';

@@ -1,7 +1,7 @@
 {
   "@@locale": "de",
   "addNewGroup": "Neue Gruppe",
-  "addNewExpense": "Neue Ausgabe",
+  "addNewExpense": "Ausgabe hinzufügen",
   "groups": "Gruppen",
   "groupSectionFavorites": "Favoriten",
   "groupSectionSettled": "Abgeschlossen",

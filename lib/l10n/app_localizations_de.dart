@@ -12,7 +12,7 @@ class AppLocalizationsDe extends AppLocalizations {
   String get addNewGroup => 'Neue Gruppe';
 
   @override
-  String get addNewExpense => 'Neue Ausgabe';
+  String get addNewExpense => 'Ausgabe hinzufügen';
 
   @override
   String get groups => 'Gruppen';
@@ -447,6 +447,10 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get expenseDeleteItemTitle => 'Diese Ausgabe löschen?';
+
+  @override
+  String get expenseDeleteItemMessage =>
+      'Die Ausgabe wird endgültig entfernt und alle Salden werden aktualisiert. Das kann nicht rückgängig gemacht werden.';
 
   @override
   String get expenseDeleteError => 'Fehler beim Löschen der Ausgabe!';

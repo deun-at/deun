@@ -4,7 +4,7 @@
   "@addNewGroup": {
     "description": "Button to add a new group."
   },
-  "addNewExpense": "New expense",
+  "addNewExpense": "Add expense",
   "@addNewExpense": {},
   "groups": "Groups",
   "@groups": {},
