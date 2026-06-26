@@ -118,7 +118,7 @@ Captured via the new Chrome/web path (AUDIT round 3) — this is the one screen 
 
 ### Tap to Claim (resolves F26)
 - [x] F73 · Tap to Claim · Summary card is group-tinted indigo; DESIGN_SPEC §9 specifies a DARK ink card (#16181A) 💅 — lib/pages/expenses/presentation/claim_page.dart:397-398 (colorScheme.primary) — target: fixed dark ink summary card — ev: compare/compare_claim.png ✅ be6c9fa (reuse SemanticColors.ink/onInk fixed #16181A bg+fg, both brightnesses)
-- [ ] F74 · Tap to Claim · Per-member totals render as vertical rows; v3 wants a horizontal member-chip strip (data already computed) 💅 — lib/pages/expenses/presentation/claim_page.dart:451-470 (_MemberTotalRow) — target: horizontal chip strip — ev: compare/compare_claim.png
+- [x] F74 · Tap to Claim · Per-member totals render as vertical rows; v3 wants a horizontal member-chip strip (data already computed) 💅 — lib/pages/expenses/presentation/claim_page.dart:451-470 (_MemberTotalRow) — target: horizontal chip strip — ev: compare/compare_claim.png ✅ 6fee4ac (horizontal scrollable _MemberTotalChip strip, reuses memberTotals/MemberAvatar; light+dark)
 - [ ] F76 · Tap to Claim · Items header "Items"; v3 uses "TAP TO TAKE WHAT YOU HAD" caption (persona switcher already exists) 💅 — lib/pages/expenses/presentation/claim_page.dart:212 (l10n.claimItemsLabel) — target: v3 header copy — ev: compare/compare_claim.png
 - F75 · Tap to Claim · Item cards minimal (name + total + claim chip); v3 adds category icon, ×N qty, "€X each · N ordered" subline, claimer-avatar chips ⚠️ — lib/pages/expenses/presentation/claim_page.dart:597-632 — target: richer item rows per design_07 — ev: compare/compare_claim.png ⛔ blocked — out of scope: pulls in itemized/quantity data the row doesn't currently surface.
 
