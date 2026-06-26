@@ -107,7 +107,7 @@ abstract class AppLocalizations {
   /// No description provided for @addNewExpense.
   ///
   /// In en, this message translates to:
-  /// **'New expense'**
+  /// **'Add expense'**
   String get addNewExpense;
 
   /// No description provided for @groups.
@@ -883,6 +883,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Delete this expense?'**
   String get expenseDeleteItemTitle;
+
+  /// No description provided for @expenseDeleteItemMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'This permanently removes the expense and updates everyone\'s balances. This can\'t be undone.'**
+  String get expenseDeleteItemMessage;
 
   /// No description provided for @expenseDeleteError.
   ///
