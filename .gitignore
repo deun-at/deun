@@ -53,3 +53,4 @@ android/app/.cxx
 # design-audit web capture auth (session tokens — never commit)
 docs/design_audit/tools/.web-auth.json
 .playwright-mcp/
+docs/design_audit/tools/.web-creds

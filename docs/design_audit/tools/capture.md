@@ -25,8 +25,12 @@ flutter run -d web-server --web-port 8740 --dart-define-from-file .env_flutter/d
 ```
 - Playwright: open `http://localhost:8740`, resize **390×844** (mobile). Flutter web renders to canvas
   but responds to real pointer events — click by coordinate/`target=<ref>` from a snapshot.
-- **Auth:** the app needs a signed-in session. Reuse a saved Playwright `storageState` if present
-  (`tools/.web-auth.json`); else log in once (the dev account), then save storageState there for reuse.
+- **Auth (with self-heal):** the app needs a signed-in session.
+  1. If `tools/.web-auth.json` storageState exists, load it and open the app.
+  2. If no session (or any nav below bounces to the login screen mid-run = expired), read
+     `tools/.web-creds` (gitignored; `email=` / `password=` lines), drive the login form via
+     Playwright, then **save fresh storageState to `tools/.web-auth.json`** and resume.
+  3. Only after a *failed* re-login is a screen `⏳ capture-pending — web auth blocked`.
 - Use **hans** for group flows; now reachable — drive into group detail, expense detail/editor (quick +
   itemized), settle up, claim, stats, invite; sign out to reach login / reset / onboarding.
 - Let live lists settle (`browser_wait_for`) before each screenshot; verify each nav by snapshot.

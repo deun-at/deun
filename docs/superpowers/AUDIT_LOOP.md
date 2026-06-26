@@ -30,7 +30,8 @@ similar enough (no 🔥/⚠️ deltas left). Best run in its own clean session.
 | Locked spec | [`DESIGN_SPEC.md`](../design_handoff_updated/DESIGN_SPEC.md) + [`COMPONENTS.md`](../design_handoff_updated/COMPONENTS.md) (tokens/layouts/copy). |
 | Orchestration | thin orchestrator dispatches **one subagent per iteration**; sequential; images/source never enter the orchestrator context. |
 | FIX subagent | reproduces against v3, implements (theme-level where possible), uses `superpowers:systematic-debugging` + `superpowers:verification-before-completion`, commits, returns `SHA + one line + PASS/BLOCKED`. |
-| AUDIT subagent | captures app (**Flutter web in Chrome via Playwright**, mobile 390×844) + prototype via [`docs/design_audit/tools/capture.md`](../design_audit/tools/capture.md), regenerates composites, returns a **text** findings list (no images). Web is authoritative for layout/structure/color/type/copy; final light+dark pixel sign-off stays on the phone. |
+| AUDIT subagent | captures app (**Flutter web in Chrome via Playwright**, mobile 390×844, auth + self-heal) + prototype via [`docs/design_audit/tools/capture.md`](../design_audit/tools/capture.md), regenerates composites, returns a **text** findings list (no images). Web is authoritative for layout/structure/color/type/copy; final light+dark pixel sign-off stays on the phone. |
+| Triage gate | after AUDIT, **one** triage subagent verifies each raw finding vs the v3 prototype + spec → REAL+IN-SCOPE (becomes open `- [ ]`), OUT-OF-SCOPE (appended pre-`⛔ blocked`), or FALSE (dropped). Keeps false positives / out-of-scope items out of the FIX queue. |
 | Test group | **hans** — safe to navigate/write. Never touch other groups. |
 | Verify | `flutter analyze` clean; `flutter test` green; looks right in **light AND dark**; new copy via `AppLocalizations` (en+de); if a provider/notifier changed, `dart run build_runner build --delete-conflicting-outputs` and commit the `.g.dart`. **Known flake:** a `+722 -5` (claim_chips / expense_detail_tiles / expense_picker_sheets / group_detail_payment) is a STALE-ARTIFACT artifact, not a regression — re-run with `flutter clean && flutter pub get && flutter test` and it's 727 green. Always clean before trusting a `-5`. |
 | Push policy | never push; commit on the current local `feat/…` / `fix/…` branch only. |
@@ -43,7 +44,7 @@ similar enough (no 🔥/⚠️ deltas left). Best run in its own clean session.
 iteration read ONLY docs/design_audit/README.md (the Findings) and git, decide the mode, and dispatch
 exactly ONE subagent (Agent tool) to do the heavy work. NEVER read screenshots or source files in your
 own context — that belongs to the subagent, whose context is thrown away on return; you keep only its
-short text result. Run iterations SEQUENTIALLY (one phone, one browser, one git worktree — no parallel
+short text result. Run iterations SEQUENTIALLY (one browser, one git worktree — no parallel
 subagents). Do exactly one of:
 
 1. FIX — if there's an open `- [ ]` item: take the highest-severity one (🔥 → ⚠️ → 💅; ties top-to-bottom).
@@ -56,7 +57,10 @@ subagents). Do exactly one of:
    tests. Use superpowers:systematic-debugging to locate the issue. If it's too big for one iteration,
    decompose with superpowers:writing-plans (plan under docs/design_audit/plans/) and fix the first slice.
    Before finishing run superpowers:verification-before-completion: flutter analyze clean, flutter test
-   green, screen looks right in BOTH light and dark (capture from the phone via the hans group); if a
+   green, screen looks right in BOTH light and dark (capture via the Chrome/web harness using the hans
+   group). KNOWN FLAKE: a `+722 -5` on claim_chips / expense_detail_tiles / expense_picker_sheets /
+   group_detail_payment is a STALE-ARTIFACT artifact, NOT a regression — before reporting BLOCKED on those,
+   re-run `flutter clean && flutter pub get && flutter test` (it's 727 green clean). If a
    provider/notifier changed, dart run build_runner build --delete-conflicting-outputs and commit the .g.dart.
    Commit on the current feat/… or fix/… branch — NEVER push, set upstream, force, amend, reset, or open a PR.
    Return ONLY: commit SHA, a one-line summary, and PASS or BLOCKED(<reason>)." When the subagent returns
@@ -74,9 +78,18 @@ subagents). Do exactly one of:
    DESIGN_SPEC.md / COMPONENTS.md and the rendered prototype, regenerate the composites in
    docs/design_audit/compare/, and RETURN ONLY a plain-text findings list — one per line, severity-tagged:
    `<id> · <screen> · <delta> 🔥|⚠️|💅 — <file:loc> — target: <value> — ev: compare/<x>.png`. Do NOT return
-   images. Flag any screen you cannot reach as `⏳ capture-pending`." When it returns, APPEND the findings
-   under the right screens in README.md (skip duplicates of existing or done items) and commit README +
-   composites.
+   images. Flag any screen you cannot reach as `⏳ capture-pending`."
+   Then run the TRIAGE GATE before anything enters the FIX queue: dispatch ONE triage subagent with the raw
+   findings list and this brief: "For each finding, verify against the rendered v3 prototype
+   (docs/design_handoff_updated/Deun Redesign v3.dc.html) + DESIGN_SPEC.md / COMPONENTS.md and return a
+   verdict line per finding: REAL+IN-SCOPE | FALSE(<why>) | OUT-OF-SCOPE(<why>). REAL = the app genuinely
+   diverges from v3 (not an audit misread — check direction/above-below/which-element). OUT-OF-SCOPE = fixing
+   it needs a new screen/route, changed Supabase queries/*SelectString, removed/added real data or
+   functionality, or nav re-architecture (per the loop's Out-of-scope row). Confirm the severity tag. Return
+   ONLY the verdict lines, no images, no prose." When triage returns, APPEND to README under the right
+   screens (skip duplicates of existing/done items): REAL+IN-SCOPE → open `- [ ]`; OUT-OF-SCOPE → a line
+   pre-marked `⛔ blocked — out of scope: <reason>` (NOT an open item); FALSE → omit it (record the drop +
+   reason in the commit body). Commit README + composites.
 
 3. STOP — if the most recent AUDIT returned no 🔥/⚠️ findings (only 💅, or nothing): end the loop with a
    final report — items fixed (with SHAs), findings added per audit round, blocked items, and the per-screen
