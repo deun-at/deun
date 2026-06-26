@@ -30,7 +30,7 @@ similar enough (no 🔥/⚠️ deltas left). Best run in its own clean session.
 | Locked spec | [`DESIGN_SPEC.md`](../design_handoff_updated/DESIGN_SPEC.md) + [`COMPONENTS.md`](../design_handoff_updated/COMPONENTS.md) (tokens/layouts/copy). |
 | Orchestration | thin orchestrator dispatches **one subagent per iteration**; sequential; images/source never enter the orchestrator context. |
 | FIX subagent | reproduces against v3, implements (theme-level where possible), uses `superpowers:systematic-debugging` + `superpowers:verification-before-completion`, commits, returns `SHA + one line + PASS/BLOCKED`. |
-| AUDIT subagent | captures app + prototype via [`docs/design_audit/tools/capture.md`](../design_audit/tools/capture.md), regenerates composites, returns a **text** findings list (no images). |
+| AUDIT subagent | captures app (**Flutter web in Chrome via Playwright**, mobile 390×844) + prototype via [`docs/design_audit/tools/capture.md`](../design_audit/tools/capture.md), regenerates composites, returns a **text** findings list (no images). Web is authoritative for layout/structure/color/type/copy; final light+dark pixel sign-off stays on the phone. |
 | Test group | **hans** — safe to navigate/write. Never touch other groups. |
 | Verify | `flutter analyze` clean; `flutter test` green; looks right in **light AND dark**; new copy via `AppLocalizations` (en+de); if a provider/notifier changed, `dart run build_runner build --delete-conflicting-outputs` and commit the `.g.dart`. |
 | Push policy | never push; commit on the current local `feat/…` / `fix/…` branch only. |
@@ -64,10 +64,13 @@ subagents). Do exactly one of:
    3 distinct attempts), mark the item `⛔ blocked — <reason>` in README.md and move to the next item.
 
 2. AUDIT — if no open `- [ ]` items remain: dispatch ONE subagent with this brief: "Audit the live Deun app
-   against the v3 prototype following docs/design_audit/tools/capture.md. Capture EVERY screen — app via adb
-   on device R5CY22DR0FK (use the hans test group for any group navigation; attempt the deep expense /
-   settle up / claim / stats flows; retry flaky in-group taps; let live lists settle) and the v3 prototype
-   via Playwright. (First run re-baselines docs/design_audit/design/* to v3.) Compare each screen to
+   against the v3 prototype following docs/design_audit/tools/capture.md. Capture EVERY screen — app as
+   Flutter web in Chrome via Playwright (flutter run -d web-server --web-port 8740 ...; viewport 390×844;
+   real pointer events reach the group flow that adb taps could not; use the hans test group for any group
+   navigation; drive the deep group-detail / expense / settle up / claim / stats / login / onboarding flows;
+   let live lists settle) and the v3 prototype via Playwright. Web is authoritative for layout/structure/
+   color/type/copy — flag anything web can't show (native share, OAuth, camera) for the phone, and note
+   AdMob doesn't render on web. (First run re-baselines docs/design_audit/design/* to v3.) Compare each screen to
    DESIGN_SPEC.md / COMPONENTS.md and the rendered prototype, regenerate the composites in
    docs/design_audit/compare/, and RETURN ONLY a plain-text findings list — one per line, severity-tagged:
    `<id> · <screen> · <delta> 🔥|⚠️|💅 — <file:loc> — target: <value> — ev: compare/<x>.png`. Do NOT return

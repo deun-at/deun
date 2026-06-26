@@ -49,3 +49,7 @@ supabase/seed.sql
 .env_flutter
 supabase/push.ts
 android/app/.cxx
+
+# design-audit web capture auth (session tokens — never commit)
+docs/design_audit/tools/.web-auth.json
+.playwright-mcp/

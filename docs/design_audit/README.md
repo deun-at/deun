@@ -5,7 +5,7 @@ The loop reads the **Findings** below each iteration: it FIXes the highest-sever
 none are open — runs an AUDIT to compare the live app against the v3 prototype and append new findings.
 
 - **Design** = `design_handoff_updated/Deun Redesign v3.dc.html`, rendered in a browser (light mode).
-- **Current app** = live build on physical device `R5CY22DR0FK` (`app.deun.www`), branch `feat/v3-motion-foundation`.
+- **Current app** = Flutter web in Chrome via Playwright (mobile 390×844), branch `feat/v3-motion-foundation`. Web is authoritative for layout/structure/color/type/copy; final light+dark pixel sign-off stays on physical device `R5CY22DR0FK`.
 - **Capture harness:** [`tools/`](tools/capture.md) (`serve.js` + `capture.md`). Test group for nav/writes: **hans**.
 
 ## Severity & format
