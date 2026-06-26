@@ -126,7 +126,7 @@ void main() {
     await tester.pumpAndSettle();
 
     // One item card to start (the seeded entry).
-    expect(find.text(l10n.expenseEntryTitle), findsOneWidget);
+    expect(find.text(l10n.expenseDescriptionHint), findsOneWidget);
 
     await tester.ensureVisible(find.text(l10n.addItemByHand));
     await tester.pumpAndSettle();
@@ -134,7 +134,7 @@ void main() {
     await tester.pumpAndSettle();
 
     // A second item card's name hint appears.
-    expect(find.text(l10n.expenseEntryTitle), findsNWidgets(2));
+    expect(find.text(l10n.expenseDescriptionHint), findsNWidgets(2));
   });
 
   testWidgets('switching back to Quick shows the Quick amount card',

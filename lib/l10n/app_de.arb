@@ -74,6 +74,7 @@
   "expenseDate": "Datum",
   "expensePaidBy": "Bezahlt von",
   "expenseEntryTitle": "Eintrag Titel hinzufügen",
+  "expenseDescriptionHint": "Beschreibung hinzufügen",
   "addNewExpenseEntry": "Eintrag hinzufügen",
   "editorModeQuick": "Schnell teilen",
   "editorModeItemized": "Nach Artikeln",

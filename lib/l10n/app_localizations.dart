@@ -542,6 +542,12 @@ abstract class AppLocalizations {
   /// **'Add item title'**
   String get expenseEntryTitle;
 
+  /// Placeholder in the inset description field of the expense editor item card.
+  ///
+  /// In en, this message translates to:
+  /// **'Add a description'**
+  String get expenseDescriptionHint;
+
   /// No description provided for @addNewExpenseEntry.
   ///
   /// In en, this message translates to:

@@ -292,6 +292,8 @@ class _ExpenseEntryWidgetState extends State<ExpenseEntryWidget> {
   }
 
   Widget _buildNameRow(double spacing, AppLocalizations l10n) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final radius = BorderRadius.circular(12);
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
@@ -302,10 +304,18 @@ class _ExpenseEntryWidgetState extends State<ExpenseEntryWidget> {
             initialValue: widget.initialName,
             builder: (FormFieldState<dynamic> field) => TextFormField(
               initialValue: field.value,
-              style: Theme.of(context).textTheme.titleLarge,
               decoration: InputDecoration(
-                border: InputBorder.none,
-                hintText: l10n.expenseEntryTitle,
+                hintText: l10n.expenseDescriptionHint,
+                filled: true,
+                fillColor: colorScheme.surfaceContainer,
+                border: OutlineInputBorder(
+                    borderRadius: radius, borderSide: BorderSide.none),
+                enabledBorder: OutlineInputBorder(
+                    borderRadius: radius, borderSide: BorderSide.none),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: radius,
+                  borderSide: BorderSide(color: colorScheme.primary, width: 1.5),
+                ),
               ),
               onChanged: (value) => field.didChange(value),
             ),

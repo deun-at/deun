@@ -243,6 +243,9 @@ class AppLocalizationsDe extends AppLocalizations {
   String get expenseEntryTitle => 'Eintrag Titel hinzufügen';
 
   @override
+  String get expenseDescriptionHint => 'Beschreibung hinzufügen';
+
+  @override
   String get addNewExpenseEntry => 'Eintrag hinzufügen';
 
   @override

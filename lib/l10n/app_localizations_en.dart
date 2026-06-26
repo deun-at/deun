@@ -242,6 +242,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get expenseEntryTitle => 'Add item title';
 
   @override
+  String get expenseDescriptionHint => 'Add a description';
+
+  @override
   String get addNewExpenseEntry => 'Add item';
 
   @override

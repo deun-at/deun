@@ -186,6 +186,10 @@
   "@expensePaidBy": {},
   "expenseEntryTitle": "Add item title",
   "@expenseEntryTitle": {},
+  "expenseDescriptionHint": "Add a description",
+  "@expenseDescriptionHint": {
+    "description": "Placeholder in the inset description field of the expense editor item card."
+  },
   "addNewExpenseEntry": "Add item",
   "@addNewExpenseEntry": {},
   "editorModeQuick": "Quick split",
