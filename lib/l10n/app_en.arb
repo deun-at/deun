@@ -59,6 +59,10 @@
   "@balanceSettled": {
     "description": "Balance lead label on a group card when the group is settled."
   },
+  "paymentBalanceOwed": "You're owed overall",
+  "@paymentBalanceOwed": {
+    "description": "Lead label on the settle-up hero when the user is owed money overall."
+  },
   "createGroup": "Create group",
   "@createGroup": {},
   "editGroup": "Edit group",

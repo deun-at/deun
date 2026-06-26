@@ -59,6 +59,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get balanceSettled => 'Settled up';
 
   @override
+  String get paymentBalanceOwed => 'You\'re owed overall';
+
+  @override
   String get createGroup => 'Create group';
 
   @override

@@ -194,6 +194,12 @@ abstract class AppLocalizations {
   /// **'Settled up'**
   String get balanceSettled;
 
+  /// Lead label on the settle-up hero when the user is owed money overall.
+  ///
+  /// In en, this message translates to:
+  /// **'You\'re owed overall'**
+  String get paymentBalanceOwed;
+
   /// No description provided for @createGroup.
   ///
   /// In en, this message translates to:

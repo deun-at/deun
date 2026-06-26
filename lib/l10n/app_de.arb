@@ -16,6 +16,7 @@
   "balanceOwed": "Dir wird geschuldet",
   "balanceOwe": "Du schuldest",
   "balanceSettled": "Ausgeglichen",
+  "paymentBalanceOwed": "Dir wird insgesamt geschuldet",
   "createGroup": "Gruppe erstellen",
   "editGroup": "Gruppe bearbeiten",
   "groupName": "Name",

@@ -129,7 +129,7 @@ class _OverallHero extends StatelessWidget {
     if (settled) {
       leadLabel = l10n.balanceSettled;
     } else if (net > 0) {
-      leadLabel = l10n.balanceOwed;
+      leadLabel = l10n.paymentBalanceOwed;
     } else {
       leadLabel = l10n.balanceOwe;
     }

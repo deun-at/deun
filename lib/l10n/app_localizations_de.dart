@@ -59,6 +59,9 @@ class AppLocalizationsDe extends AppLocalizations {
   String get balanceSettled => 'Ausgeglichen';
 
   @override
+  String get paymentBalanceOwed => 'Dir wird insgesamt geschuldet';
+
+  @override
   String get createGroup => 'Gruppe erstellen';
 
   @override
