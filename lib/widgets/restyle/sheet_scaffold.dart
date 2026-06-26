@@ -42,11 +42,13 @@ class SheetScaffold extends StatelessWidget {
 
     return SafeArea(
       top: false,
-      child: Container(
-        decoration: BoxDecoration(
-          color: colorScheme.surfaceContainerLow,
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(30)),
-        ),
+      // Material (not a bare DecoratedBox) so the inner ListTiles paint their
+      // ink on this surface instead of a hidden Material ancestor above the
+      // colored box — see Flutter's "ListTile ... DecoratedBox will hide ink"
+      // assertion. Identical idle look; ink now clips to the rounded surface.
+      child: Material(
+        color: colorScheme.surfaceContainerLow,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(30)),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [

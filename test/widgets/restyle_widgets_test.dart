@@ -590,16 +590,16 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      // Surface color is surfaceContainerLow.
-      final container = tester.widget<Container>(
-        find.ancestor(of: find.text('body'), matching: find.byType(Container)).first,
+      // Surface is a Material (so ListTile ink paints on it, not a hidden
+      // ancestor) tinted surfaceContainerLow with a top-only radius of 30.
+      final material = tester.widget<Material>(
+        find.ancestor(of: find.text('body'), matching: find.byType(Material)).first,
       );
-      final decoration = container.decoration as BoxDecoration;
-      expect(decoration.color, colorScheme.surfaceContainerLow,
+      expect(material.color, colorScheme.surfaceContainerLow,
           reason: 'Sheet surface must use surfaceContainerLow');
       // Top radius 30, bottom square.
       expect(
-        decoration.borderRadius,
+        material.borderRadius,
         const BorderRadius.vertical(top: Radius.circular(30)),
         reason: 'Top radius must be 30, bottom must be square (no radius)',
       );
