@@ -4,7 +4,6 @@ import 'package:deun/pages/statistics/statistics_models.dart';
 import 'package:deun/pages/statistics/widgets/personal_groups_section.dart';
 import 'package:deun/pages/statistics/widgets/personal_summary_section.dart';
 import 'package:deun/pages/statistics/widgets/personal_trend_section.dart';
-import 'package:deun/widgets/restyle/app_segmented_control.dart';
 import 'package:deun/widgets/restyle/deun_header.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -17,7 +16,8 @@ class PersonalStatisticsPage extends ConsumerStatefulWidget {
 }
 
 class _PersonalStatisticsPageState extends ConsumerState<PersonalStatisticsPage> {
-  StatsRange _range = StatsRange.sixMonths;
+  // ponytail: fixed range — v3 personal stats has no range control (DESIGN_SPEC §14).
+  static const _range = StatsRange.sixMonths;
 
   @override
   Widget build(BuildContext context) {
@@ -36,19 +36,6 @@ class _PersonalStatisticsPageState extends ConsumerState<PersonalStatisticsPage>
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    Padding(
-                      padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
-                      child: AppSegmentedControl<StatsRange>(
-                        value: _range,
-                        onChanged: (r) => setState(() => _range = r),
-                        segments: [
-                          AppSegment(value: StatsRange.threeMonths, label: l10n.statisticsRangeThreeMonths),
-                          AppSegment(value: StatsRange.sixMonths, label: l10n.statisticsRangeSixMonths),
-                          AppSegment(value: StatsRange.twelveMonths, label: l10n.statisticsRangeTwelveMonths),
-                          AppSegment(value: StatsRange.allTime, label: l10n.statisticsRangeAllTime),
-                        ],
-                      ),
-                    ),
                     state.when(
                       loading: () => const Padding(
                         padding: EdgeInsets.all(32),
@@ -67,7 +54,7 @@ class _PersonalStatisticsPageState extends ConsumerState<PersonalStatisticsPage>
                             ),
                           );
                         }
-                        return Column(
+                        return const Column(
                           crossAxisAlignment: CrossAxisAlignment.stretch,
                           children: [
                             PersonalSummarySection(range: _range),
