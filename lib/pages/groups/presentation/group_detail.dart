@@ -530,9 +530,11 @@ class _GroupBalanceHero extends StatelessWidget {
           MoneyText(
             settled ? 0 : net.abs(),
             semantic: semanticMode,
+            // Hero amount: matches the home hero (group_list.dart) — shared
+            // displayMedium token (45px / w700 / -0.02em, tabular Bricolage).
             style: Theme.of(
               context,
-            ).textTheme.displaySmall?.copyWith(color: onHero),
+            ).textTheme.displayMedium?.copyWith(color: onHero),
             animate: true,
           ),
           const SizedBox(height: 18),
