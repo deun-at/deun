@@ -2310,6 +2310,12 @@ abstract class AppLocalizations {
   /// **'Scan receipt'**
   String get receiptScanButton;
 
+  /// No description provided for @expenseScanShort.
+  ///
+  /// In en, this message translates to:
+  /// **'Scan'**
+  String get expenseScanShort;
+
   /// No description provided for @receiptScanTitle.
   ///
   /// In en, this message translates to:

@@ -1250,6 +1250,8 @@
   },
   "receiptScanButton": "Scan receipt",
   "@receiptScanButton": {},
+  "expenseScanShort": "Scan",
+  "@expenseScanShort": {},
   "receiptScanTitle": "Scan a receipt",
   "@receiptScanTitle": {},
   "receiptScanTakePhoto": "Take Photo",

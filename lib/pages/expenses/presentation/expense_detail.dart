@@ -291,6 +291,7 @@ class _ExpenseDetailState extends ConsumerState<ExpenseDetail> {
   Widget _buildItemizedTotalHeader() {
     final l10n = AppLocalizations.of(context)!;
     final colorScheme = Theme.of(context).colorScheme;
+    final ink = Theme.of(context).extension<SemanticColors>()!;
     final total = _itemizedTotalFromForm();
     return SoftCard(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
@@ -318,10 +319,16 @@ class _ExpenseDetailState extends ConsumerState<ExpenseDetail> {
               ],
             ),
           ),
-          FilledButton.tonalIcon(
+          // v3: dark-ink solid pill labeled "Scan" (not a light indigo tint).
+          FilledButton.icon(
             onPressed: _scanReceipt,
+            style: FilledButton.styleFrom(
+              backgroundColor: ink.ink,
+              foregroundColor: ink.onInk,
+              shape: const StadiumBorder(),
+            ),
             icon: const Icon(Icons.document_scanner_outlined),
-            label: Text(l10n.receiptScanButton),
+            label: Text(l10n.expenseScanShort),
           ),
         ],
       ),

@@ -13,6 +13,8 @@ class SemanticColors extends ThemeExtension<SemanticColors> {
     required this.warning,
     required this.paybackBackground,
     required this.paybackText,
+    required this.ink,
+    required this.onInk,
   });
 
   /// Owed / positive (e.g. "you're owed", lent, settled).
@@ -30,6 +32,14 @@ class SemanticColors extends ThemeExtension<SemanticColors> {
   /// Text/foreground for the ledger payback / payment chip.
   final Color paybackText;
 
+  /// Deliberate dark "ink" surface for solid ink pills / dark hero cards
+  /// (DESIGN_SPEC: Ink `#16181A`). Fixed in both brightnesses — an ink pill
+  /// stays ink in dark mode.
+  final Color ink;
+
+  /// Foreground/label color on top of [ink].
+  final Color onInk;
+
   /// Light-mode values (DESIGN_SPEC "Color tokens").
   static const SemanticColors light = SemanticColors(
     success: Color(0xFF1A8F5E),
@@ -37,6 +47,8 @@ class SemanticColors extends ThemeExtension<SemanticColors> {
     warning: Color(0xFFC98A2E),
     paybackBackground: Color(0xFFEAF6EF),
     paybackText: Color(0xFF2F7A55),
+    ink: Color(0xFF16181A),
+    onInk: Color(0xFFFFFFFF),
   );
 
   /// Dark-mode values: the lighter on-dark semantic variants so they stay
@@ -49,6 +61,8 @@ class SemanticColors extends ThemeExtension<SemanticColors> {
     warning: Color(0xFFF2C97F),
     paybackBackground: Color(0xFF1E3A2C),
     paybackText: Color(0xFF5FA882),
+    ink: Color(0xFF16181A),
+    onInk: Color(0xFFFFFFFF),
   );
 
   @override
@@ -58,6 +72,8 @@ class SemanticColors extends ThemeExtension<SemanticColors> {
     Color? warning,
     Color? paybackBackground,
     Color? paybackText,
+    Color? ink,
+    Color? onInk,
   }) {
     return SemanticColors(
       success: success ?? this.success,
@@ -65,6 +81,8 @@ class SemanticColors extends ThemeExtension<SemanticColors> {
       warning: warning ?? this.warning,
       paybackBackground: paybackBackground ?? this.paybackBackground,
       paybackText: paybackText ?? this.paybackText,
+      ink: ink ?? this.ink,
+      onInk: onInk ?? this.onInk,
     );
   }
 
@@ -77,6 +95,8 @@ class SemanticColors extends ThemeExtension<SemanticColors> {
       warning: Color.lerp(warning, other.warning, t)!,
       paybackBackground: Color.lerp(paybackBackground, other.paybackBackground, t)!,
       paybackText: Color.lerp(paybackText, other.paybackText, t)!,
+      ink: Color.lerp(ink, other.ink, t)!,
+      onInk: Color.lerp(onInk, other.onInk, t)!,
     );
   }
 }

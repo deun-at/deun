@@ -1380,6 +1380,9 @@ class AppLocalizationsDe extends AppLocalizations {
   String get receiptScanButton => 'Beleg scannen';
 
   @override
+  String get expenseScanShort => 'Scannen';
+
+  @override
   String get receiptScanTitle => 'Beleg scannen';
 
   @override

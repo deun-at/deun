@@ -370,6 +370,7 @@
   },
   "errorLoadingData": "Fehler beim Laden der Daten!",
   "receiptScanButton": "Beleg scannen",
+  "expenseScanShort": "Scannen",
   "receiptScanTitle": "Beleg scannen",
   "receiptScanTakePhoto": "Foto aufnehmen",
   "receiptScanChooseGallery": "Aus Galerie wählen",

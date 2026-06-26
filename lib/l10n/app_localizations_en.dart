@@ -1351,6 +1351,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get receiptScanButton => 'Scan receipt';
 
   @override
+  String get expenseScanShort => 'Scan';
+
+  @override
   String get receiptScanTitle => 'Scan a receipt';
 
   @override
