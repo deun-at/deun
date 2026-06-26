@@ -10,10 +10,13 @@ import 'package:deun/constants.dart';
 import 'package:deun/l10n/app_localizations.dart';
 import 'package:deun/pages/expenses/data/expense_entry_model.dart';
 import 'package:deun/pages/expenses/data/expense_model.dart';
+import 'package:deun/pages/expenses/provider/expense_list.dart';
+import 'package:deun/pages/groups/provider/group_detail.dart';
 import 'package:deun/pages/expenses/presentation/expense_detail.dart';
 import 'package:deun/pages/expenses/presentation/expense_detail_read.dart';
 import 'package:deun/pages/groups/data/group_member_model.dart';
 import 'package:deun/pages/groups/data/group_model.dart';
+import 'package:deun/pages/groups/presentation/group_detail.dart';
 import 'package:deun/pages/groups/presentation/group_detail_edit.dart';
 import 'package:deun/pages/groups/presentation/group_join_page.dart';
 import 'package:deun/widgets/restyle/deun_header.dart';
@@ -106,8 +109,11 @@ Future<void> _pumpInScope(
         supportedLocales: AppLocalizations.supportedLocales,
         home: Builder(
           builder: (context) => Theme(
-            data: getThemeData(context, kBrandSeed, brightness)
-                .copyWith(splashFactory: NoSplash.splashFactory),
+            data: getThemeData(
+              context,
+              kBrandSeed,
+              brightness,
+            ).copyWith(splashFactory: NoSplash.splashFactory),
             child: child,
           ),
         ),
@@ -125,15 +131,14 @@ void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
   setUpAll(() async {
-    TestWidgetsFlutterBinding.ensureInitialized()
-        .defaultBinaryMessenger
+    TestWidgetsFlutterBinding.ensureInitialized().defaultBinaryMessenger
         .setMockMethodCallHandler(
-      const MethodChannel('plugins.flutter.io/shared_preferences'),
-      (call) async {
-        if (call.method == 'getAll') return <String, Object>{};
-        return null;
-      },
-    );
+          const MethodChannel('plugins.flutter.io/shared_preferences'),
+          (call) async {
+            if (call.method == 'getAll') return <String, Object>{};
+            return null;
+          },
+        );
     // Supabase is already initialized by other tests; guard against re-init.
     try {
       await Supabase.initialize(
@@ -153,8 +158,9 @@ void main() {
   // 1. GroupEdit — Icons.close, no AppBar actions
   // -------------------------------------------------------------------------
   group('GroupEdit (group_detail_edit.dart) header migration', () {
-    testWidgets('has DeunHeader with close icon and create title (new group)',
-        (tester) async {
+    testWidgets('has DeunHeader with close icon and create title (new group)', (
+      tester,
+    ) async {
       await _pumpInScope(tester, const GroupEdit());
       final l10n = await AppLocalizations.delegate.load(const Locale('en'));
 
@@ -165,8 +171,9 @@ void main() {
       expect(find.text(l10n.groupTrackingModeSimplifiedTitle), findsOneWidget);
     });
 
-    testWidgets('has DeunHeader with edit title when editing a group',
-        (tester) async {
+    testWidgets('has DeunHeader with edit title when editing a group', (
+      tester,
+    ) async {
       await _pumpInScope(tester, GroupEdit(group: _group()));
       // The existing ListTile-inside-DecoratedBox assertion is a pre-existing
       // issue (not introduced by this migration). Consume it so the test can
@@ -189,18 +196,20 @@ void main() {
   // 2. ExpenseDetail — Icons.close, actions moved to trailing
   // -------------------------------------------------------------------------
   group('ExpenseDetail (expense_detail.dart) header migration', () {
-    testWidgets('has DeunHeader with close icon (new expense)',
-        (tester) async {
+    testWidgets('has DeunHeader with close icon (new expense)', (tester) async {
       await _pumpInScope(tester, ExpenseDetail(group: _group()));
 
       expect(find.byType(DeunHeader), findsOneWidget);
       expect(find.byIcon(Icons.close), findsOneWidget);
     });
 
-    testWidgets('delete icon present when editing existing expense',
-        (tester) async {
+    testWidgets('delete icon present when editing existing expense', (
+      tester,
+    ) async {
       await _pumpInScope(
-          tester, ExpenseDetail(group: _group(), expense: _expense()));
+        tester,
+        ExpenseDetail(group: _group(), expense: _expense()),
+      );
 
       expect(find.byType(DeunHeader), findsOneWidget);
       expect(find.byIcon(Icons.delete_outline), findsOneWidget);
@@ -216,10 +225,13 @@ void main() {
   // 3. ExpenseDetailRead — Icons.arrow_back, two actions (edit + delete)
   // -------------------------------------------------------------------------
   group('ExpenseDetailRead (expense_detail_read.dart) header migration', () {
-    testWidgets('has DeunHeader with arrow_back and expense detail title',
-        (tester) async {
+    testWidgets('has DeunHeader with arrow_back and expense detail title', (
+      tester,
+    ) async {
       await _pumpInScope(
-          tester, ExpenseDetailRead(group: _group(), expense: _expense()));
+        tester,
+        ExpenseDetailRead(group: _group(), expense: _expense()),
+      );
       final l10n = await AppLocalizations.delegate.load(const Locale('en'));
 
       expect(find.byType(DeunHeader), findsOneWidget);
@@ -227,10 +239,13 @@ void main() {
       expect(find.byIcon(Icons.arrow_back), findsOneWidget);
     });
 
-    testWidgets('edit and delete icons are present in header trailing',
-        (tester) async {
+    testWidgets('edit and delete icons are present in header trailing', (
+      tester,
+    ) async {
       await _pumpInScope(
-          tester, ExpenseDetailRead(group: _group(), expense: _expense()));
+        tester,
+        ExpenseDetailRead(group: _group(), expense: _expense()),
+      );
 
       expect(find.byIcon(Icons.edit_outlined), findsOneWidget);
       expect(find.byIcon(Icons.delete_outline), findsOneWidget);
@@ -238,15 +253,104 @@ void main() {
 
     testWidgets('no AppBar present after migration', (tester) async {
       await _pumpInScope(
-          tester, ExpenseDetailRead(group: _group(), expense: _expense()));
+        tester,
+        ExpenseDetailRead(group: _group(), expense: _expense()),
+      );
       expect(find.byType(AppBar), findsNothing);
     });
 
     testWidgets('body still renders the summary card', (tester) async {
       await _pumpInScope(
-          tester, ExpenseDetailRead(group: _group(), expense: _expense()));
+        tester,
+        ExpenseDetailRead(group: _group(), expense: _expense()),
+      );
       // The expense name appears in the summary card body.
       expect(find.text('Dinner'), findsOneWidget);
+    });
+  });
+
+  // -------------------------------------------------------------------------
+  // 3b. GroupDetail — DeunHeader, centered title, ONE trailing edit (F39)
+  //     v3 group detail (COMPONENTS.md §2): single 38px header row, no
+  //     SliverAppBar.medium, no search/stats header actions.
+  // -------------------------------------------------------------------------
+  group('GroupDetail (group_detail.dart) header migration (F39)', () {
+    // GroupDetail watches groupDetail + expenseList providers, which subscribe
+    // to Supabase realtime channels (scheduling retry timers) in build(). The
+    // header renders independently of that data, so we override both providers
+    // with stubs that return synchronously and never subscribe — keeping the
+    // smoke test offline and free of pending timers.
+    Future<void> pumpFrame(WidgetTester tester) async {
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            groupDetailProvider('g1').overrideWith(_StubGroupDetail.new),
+            expenseListProvider('g1').overrideWith(_StubExpenseList.new),
+          ],
+          child: MaterialApp(
+            localizationsDelegates: const [
+              AppLocalizations.delegate,
+              GlobalMaterialLocalizations.delegate,
+              GlobalWidgetsLocalizations.delegate,
+              GlobalCupertinoLocalizations.delegate,
+            ],
+            supportedLocales: AppLocalizations.supportedLocales,
+            home: Builder(
+              builder: (context) => Theme(
+                data: getThemeData(
+                  context,
+                  kBrandSeed,
+                  Brightness.light,
+                ).copyWith(splashFactory: NoSplash.splashFactory),
+                child: GroupDetail(group: _group()),
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.pump();
+    }
+
+    testWidgets('has DeunHeader with arrow_back and centered group name', (
+      tester,
+    ) async {
+      await pumpFrame(tester);
+
+      expect(find.byType(DeunHeader), findsOneWidget);
+      expect(find.text('Trip to Rome'), findsOneWidget);
+      expect(find.byIcon(Icons.arrow_back), findsOneWidget);
+    });
+
+    testWidgets('header has ONE trailing edit, no search/stats header actions', (
+      tester,
+    ) async {
+      await pumpFrame(tester);
+
+      // v3: the header carries a single trailing edit. Statistics is a
+      // quick-action card (bar_chart lives there, not the header) and search
+      // moved into the scroll body — so neither icon is inside the header.
+      final header = find.byType(DeunHeader);
+      expect(
+        find.descendant(of: header, matching: find.byIcon(Icons.edit)),
+        findsOneWidget,
+      );
+      expect(
+        find.descendant(of: header, matching: find.byIcon(Icons.bar_chart)),
+        findsNothing,
+      );
+      expect(
+        find.descendant(of: header, matching: find.byIcon(Icons.search)),
+        findsNothing,
+      );
+    });
+
+    testWidgets('no AppBar / SliverAppBar present after migration', (
+      tester,
+    ) async {
+      await pumpFrame(tester);
+
+      expect(find.byType(AppBar), findsNothing);
+      expect(find.byType(SliverAppBar), findsNothing);
     });
   });
 
@@ -254,8 +358,9 @@ void main() {
   // 4. GroupJoinPage — Icons.arrow_back, no AppBar actions
   // -------------------------------------------------------------------------
   group('GroupJoinPage (group_join_page.dart) header migration', () {
-    testWidgets('has DeunHeader with arrow_back and join title',
-        (tester) async {
+    testWidgets('has DeunHeader with arrow_back and join title', (
+      tester,
+    ) async {
       await _pumpInScope(
         tester,
         const GroupJoinPage(groupId: 'g1', groupName: 'Trip'),
@@ -275,8 +380,9 @@ void main() {
       expect(find.byType(AppBar), findsNothing);
     });
 
-    testWidgets('body still renders the group name and join button',
-        (tester) async {
+    testWidgets('body still renders the group name and join button', (
+      tester,
+    ) async {
       await _pumpInScope(
         tester,
         const GroupJoinPage(groupId: 'g1', groupName: 'Trip'),
@@ -286,4 +392,18 @@ void main() {
       expect(find.text(l10n.groupInviteTransferButton), findsOneWidget);
     });
   });
+}
+
+/// Offline stub for GroupDetailNotifier: returns the group synchronously and
+/// never subscribes to a realtime channel (no pending retry timers in tests).
+class _StubGroupDetail extends GroupDetailNotifier {
+  @override
+  Future<Group> build(String groupId) async => _group();
+}
+
+/// Offline stub for ExpenseListNotifier: returns an empty list, no realtime
+/// subscription.
+class _StubExpenseList extends ExpenseListNotifier {
+  @override
+  Future<List<Expense>> build(String groupId) async => <Expense>[];
 }

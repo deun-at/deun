@@ -14,8 +14,8 @@ import 'package:flutter/rendering.dart';
 import 'package:deun/l10n/app_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:google_fonts/google_fonts.dart';
 import '../../../constants.dart';
+import '../../../widgets/restyle/deun_header.dart';
 import '../../../widgets/native_ad_block.dart';
 import '../../expenses/data/receipt_scan_result.dart';
 import '../../expenses/presentation/receipt_scanner_sheet.dart';
@@ -54,7 +54,9 @@ class _GroupDetailState extends ConsumerState<GroupDetail> {
       _adBlock = const SizedBox();
     } else {
       _adBlock = NativeAdBlock(
-        adUnitId: Platform.isAndroid ? MobileAdMobs.androidExpenseList.value : MobileAdMobs.iosExpenseList.value,
+        adUnitId: Platform.isAndroid
+            ? MobileAdMobs.androidExpenseList.value
+            : MobileAdMobs.iosExpenseList.value,
       );
     }
   }
@@ -67,13 +69,15 @@ class _GroupDetailState extends ConsumerState<GroupDetail> {
   }
 
   void _handleScroll() {
-    if (_scrollController.position.userScrollDirection == ScrollDirection.reverse) {
+    if (_scrollController.position.userScrollDirection ==
+        ScrollDirection.reverse) {
       if (_showText) {
         setState(() {
           _showText = false;
         });
       }
-    } else if (_scrollController.position.userScrollDirection == ScrollDirection.forward) {
+    } else if (_scrollController.position.userScrollDirection ==
+        ScrollDirection.forward) {
       if (!_showText) {
         setState(() {
           _showText = true;
@@ -89,159 +93,208 @@ class _GroupDetailState extends ConsumerState<GroupDetail> {
       builder: (context) {
         return Scaffold(
           body: NotificationListener<ScrollUpdateNotification>(
-            child: NestedScrollView(
-              physics: const BouncingScrollPhysics(),
-              controller: _scrollController,
-              headerSliverBuilder: (context, innerBoxIsScrolled) => [
-                SliverAppBar.medium(
-                  title: Text(widget.group.name,
-                      style: GoogleFonts.robotoSerif(
-                          textStyle: Theme.of(context).textTheme.titleLarge!.copyWith(fontWeight: FontWeight.w900)),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis),
-                  actions: [
-                    SearchAnchor(
-                      builder: (context, controller) {
-                        return IconButton(
-                          tooltip: AppLocalizations.of(context)!.expensesSearchTitle,
-                          onPressed: () {
-                            controller.openView();
-                          },
-                          icon: const Icon(Icons.search),
-                        );
-                      },
-                      searchController: _searchController,
-                      suggestionsBuilder: (context, controller) {
-                        if (controller.text.isEmpty) {
-                          return <Widget>[
-                            CardListTile(
-                              isTop: true,
-                              isBottom: true,
-                              child: ListTile(
-                                title: Text(AppLocalizations.of(context)!.expensesSearchDescription),
-                              ),
-                            ),
-                          ];
-                        }
-                        return getExpenseSuggestions(controller, widget.group);
-                      },
-                    ),
-                    IconButton(
-                      tooltip: AppLocalizations.of(context)!.statisticsTitle,
-                      onPressed: () {
-                        GoRouter.of(context).push("/group/details/statistics", extra: {'group': widget.group});
-                      },
-                      icon: const Icon(Icons.bar_chart),
-                    ),
-                    IconButton(
-                      tooltip: AppLocalizations.of(context)!.editGroup,
-                      onPressed: () {
-                        GoRouter.of(context).push("/group/edit", extra: {'group': widget.group});
-                      },
-                      icon: const Icon(Icons.edit),
-                    ),
-                  ],
+            child: Column(
+              children: [
+                // v3 group-detail header (COMPONENTS.md §2): single 38px row,
+                // centered 16/700 title, arrow_back leading + ONE trailing edit.
+                // Statistics lives in the in-content quick-action card below
+                // (matches v3); the expense search moves into the scroll body.
+                DeunHeader(
+                  title: widget.group.name,
+                  onLeading: () => GoRouter.of(context).pop(),
+                  trailing: HeaderIconButton(
+                    icon: Icons.edit,
+                    tooltip: AppLocalizations.of(context)!.editGroup,
+                    onTap: () {
+                      GoRouter.of(
+                        context,
+                      ).push("/group/edit", extra: {'group': widget.group});
+                    },
+                  ),
                 ),
-                SliverToBoxAdapter(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Consumer(
-                        builder: (ctx, watch, child) {
-                          final groupDetailState = ref.watch(groupDetailProvider(widget.group.id));
-                          final isLoading = groupDetailState.isLoading;
-                          final groupDetail = groupDetailState.value;
+                Expanded(
+                  child: NestedScrollView(
+                    physics: const BouncingScrollPhysics(),
+                    controller: _scrollController,
+                    headerSliverBuilder: (context, innerBoxIsScrolled) => [
+                      SliverToBoxAdapter(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Consumer(
+                              builder: (ctx, watch, child) {
+                                final groupDetailState = ref.watch(
+                                  groupDetailProvider(widget.group.id),
+                                );
+                                final isLoading = groupDetailState.isLoading;
+                                final groupDetail = groupDetailState.value;
 
-                          if (isLoading || groupDetail == null) {
-                            return const Padding(
-                              padding: EdgeInsets.only(bottom: 5.0, top: 5.0),
-                              child: Column(
-                                mainAxisAlignment: MainAxisAlignment.start,
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  SizedBox(
-                                      height: 30, width: 250, child: ShimmerCardList(height: 20, listEntryLength: 1)),
-                                  SizedBox(
-                                    height: 16,
-                                    width: 250,
-                                    child: ShimmerCardList(height: 10, listEntryLength: 1),
+                                if (isLoading || groupDetail == null) {
+                                  return const Padding(
+                                    padding: EdgeInsets.only(
+                                      bottom: 5.0,
+                                      top: 5.0,
+                                    ),
+                                    child: Column(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.start,
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        SizedBox(
+                                          height: 30,
+                                          width: 250,
+                                          child: ShimmerCardList(
+                                            height: 20,
+                                            listEntryLength: 1,
+                                          ),
+                                        ),
+                                        SizedBox(
+                                          height: 16,
+                                          width: 250,
+                                          child: ShimmerCardList(
+                                            height: 10,
+                                            listEntryLength: 1,
+                                          ),
+                                        ),
+                                        SizedBox(
+                                          height: 16,
+                                          width: 250,
+                                          child: ShimmerCardList(
+                                            height: 10,
+                                            listEntryLength: 1,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  );
+                                }
+
+                                return Padding(
+                                  padding: const EdgeInsets.fromLTRB(
+                                    16.0,
+                                    6.0,
+                                    16.0,
+                                    6.0,
                                   ),
-                                  SizedBox(
-                                    height: 16,
-                                    width: 250,
-                                    child: ShimmerCardList(height: 10, listEntryLength: 1),
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      _GroupBalanceHero(group: groupDetail),
+                                      const SizedBox(height: 14),
+                                      _GroupQuickActions(group: groupDetail),
+                                      const SizedBox(height: 14),
+                                      GroupShareWidget(
+                                        group: groupDetail,
+                                        onRemind: (email) async {
+                                          try {
+                                            final lastReminder =
+                                                await ReminderRepository.getLastReminder(
+                                                  groupDetail.id,
+                                                  email,
+                                                );
+                                            if (lastReminder != null &&
+                                                DateTime.now()
+                                                        .difference(
+                                                          lastReminder,
+                                                        )
+                                                        .inHours <
+                                                    24) {
+                                              if (context.mounted) {
+                                                ScaffoldMessenger.of(
+                                                  context,
+                                                ).showSnackBar(
+                                                  SnackBar(
+                                                    content: Text(
+                                                      AppLocalizations.of(
+                                                        context,
+                                                      )!.reminderCooldown,
+                                                    ),
+                                                  ),
+                                                );
+                                              }
+                                              return;
+                                            }
+
+                                            await ReminderRepository.sendReminder(
+                                              groupDetail.id,
+                                              email,
+                                            );
+
+                                            if (context.mounted) {
+                                              sendPaymentReminderNotification(
+                                                context,
+                                                groupDetail.id,
+                                                {email},
+                                                groupDetail
+                                                        .groupSharesSummary[email]
+                                                        ?.shareAmount
+                                                        .abs() ??
+                                                    0,
+                                              );
+
+                                              final displayName =
+                                                  groupDetail
+                                                      .groupSharesSummary[email]
+                                                      ?.displayName ??
+                                                  email;
+                                              ScaffoldMessenger.of(
+                                                context,
+                                              ).showSnackBar(
+                                                SnackBar(
+                                                  content: Text(
+                                                    AppLocalizations.of(
+                                                      context,
+                                                    )!.reminderSent(
+                                                      displayName,
+                                                    ),
+                                                  ),
+                                                ),
+                                              );
+                                            }
+                                          } catch (e) {
+                                            debugPrint(
+                                              'Reminder failed for $email: $e',
+                                            );
+                                            if (context.mounted) {
+                                              showSnackBar(
+                                                context,
+                                                AppLocalizations.of(
+                                                  context,
+                                                )!.generalError,
+                                              );
+                                            }
+                                          }
+                                        },
+                                      ),
+                                      const SizedBox(height: 6),
+                                      _buildExpenseSearch(context),
+                                    ],
                                   ),
-                                ],
-                              ),
-                            );
-                          }
-
-                          return Padding(
-                            padding: const EdgeInsets.fromLTRB(16.0, 6.0, 16.0, 6.0),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                _GroupBalanceHero(group: groupDetail),
-                                const SizedBox(height: 14),
-                                _GroupQuickActions(group: groupDetail),
-                                const SizedBox(height: 14),
-                                GroupShareWidget(
-                                  group: groupDetail,
-                                  onRemind: (email) async {
-                                  try {
-                                    final lastReminder = await ReminderRepository.getLastReminder(groupDetail.id, email);
-                                    if (lastReminder != null && DateTime.now().difference(lastReminder).inHours < 24) {
-                                      if (context.mounted) {
-                                        ScaffoldMessenger.of(context).showSnackBar(
-                                          SnackBar(content: Text(AppLocalizations.of(context)!.reminderCooldown)),
-                                        );
-                                      }
-                                      return;
-                                    }
-
-                                    await ReminderRepository.sendReminder(groupDetail.id, email);
-
-                                    if (context.mounted) {
-                                      sendPaymentReminderNotification(
-                                        context,
-                                        groupDetail.id,
-                                        {email},
-                                        groupDetail.groupSharesSummary[email]?.shareAmount.abs() ?? 0,
-                                      );
-
-                                      final displayName = groupDetail.groupSharesSummary[email]?.displayName ?? email;
-                                      ScaffoldMessenger.of(context).showSnackBar(
-                                        SnackBar(content: Text(AppLocalizations.of(context)!.reminderSent(displayName))),
-                                      );
-                                    }
-                                    } catch (e) {
-                                      debugPrint('Reminder failed for $email: $e');
-                                      if (context.mounted) {
-                                        showSnackBar(context, AppLocalizations.of(context)!.generalError);
-                                      }
-                                    }
-                                  },
-                                ),
-                              ],
+                                );
+                              },
                             ),
-                          );
-                        },
+                          ],
+                        ),
                       ),
                     ],
+                    body: SafeArea(
+                      top: false,
+                      child: GroupDetailList(
+                        group: widget.group,
+                        adBlock: _adBlock,
+                      ),
+                    ),
                   ),
                 ),
               ],
-              body: SafeArea(
-                top: false,
-                child: GroupDetailList(
-                  group: widget.group,
-                  adBlock: _adBlock,
-                ),
-              ),
             ),
             onNotification: (ScrollUpdateNotification notification) {
               final FocusScopeNode currentScope = FocusScope.of(context);
-              if (notification.dragDetails != null && !currentScope.hasPrimaryFocus && currentScope.hasFocus) {
+              if (notification.dragDetails != null &&
+                  !currentScope.hasPrimaryFocus &&
+                  currentScope.hasFocus) {
                 FocusManager.instance.primaryFocus?.unfocus();
               }
               return false;
@@ -253,7 +306,10 @@ class _GroupDetailState extends ConsumerState<GroupDetail> {
             children: [
               FloatingActionButton.small(
                 onPressed: () {
-                  GoRouter.of(context).push("/group/details/payment", extra: {'group': widget.group});
+                  GoRouter.of(context).push(
+                    "/group/details/payment",
+                    extra: {'group': widget.group},
+                  );
                 },
                 child: const Icon(Icons.credit_card),
               ),
@@ -268,11 +324,16 @@ class _GroupDetailState extends ConsumerState<GroupDetail> {
                     builder: (context) => const ReceiptScannerSheet(),
                   );
                   if (result != null && context.mounted) {
-                    unawaited(GoRouter.of(context).push("/group/details/expense", extra: {
-                      'group': widget.group,
-                      'expense': null,
-                      'receiptResult': result,
-                    }));
+                    unawaited(
+                      GoRouter.of(context).push(
+                        "/group/details/expense",
+                        extra: {
+                          'group': widget.group,
+                          'expense': null,
+                          'receiptResult': result,
+                        },
+                      ),
+                    );
                   }
                 },
                 child: const Icon(Icons.document_scanner_outlined),
@@ -283,12 +344,17 @@ class _GroupDetailState extends ConsumerState<GroupDetail> {
                 extendedIconLabelSpacing: _showText ? 10 : 0,
                 extendedPadding: _showText ? null : const EdgeInsets.all(16),
                 onPressed: () {
-                  GoRouter.of(context).push("/group/details/expense", extra: {'group': widget.group, 'expense': null});
+                  GoRouter.of(context).push(
+                    "/group/details/expense",
+                    extra: {'group': widget.group, 'expense': null},
+                  );
                 },
                 label: AnimatedSize(
                   duration: const Duration(milliseconds: 300),
                   curve: Curves.easeOutBack,
-                  child: _showText ? Text(AppLocalizations.of(context)!.addNewExpense) : const Text(""),
+                  child: _showText
+                      ? Text(AppLocalizations.of(context)!.addNewExpense)
+                      : const Text(""),
                 ),
                 icon: const Icon(Icons.add),
               ),
@@ -299,7 +365,42 @@ class _GroupDetailState extends ConsumerState<GroupDetail> {
     );
   }
 
-  Future<Iterable<Widget>> getExpenseSuggestions(SearchController controller, Group group) async {
+  /// Expense search relocated out of the (now v3-faithful) header into the
+  /// scroll body. v3 group detail has no header search action — this keeps the
+  /// existing expense-search feature alive as a slim search bar above the list.
+  Widget _buildExpenseSearch(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    return SearchAnchor(
+      searchController: _searchController,
+      builder: (context, controller) {
+        return SearchBar(
+          controller: controller,
+          hintText: l10n.expensesSearchTitle,
+          leading: const Icon(Icons.search),
+          elevation: const WidgetStatePropertyAll(0),
+          onTap: controller.openView,
+          onChanged: (_) => controller.openView(),
+        );
+      },
+      suggestionsBuilder: (context, controller) {
+        if (controller.text.isEmpty) {
+          return <Widget>[
+            CardListTile(
+              isTop: true,
+              isBottom: true,
+              child: ListTile(title: Text(l10n.expensesSearchDescription)),
+            ),
+          ];
+        }
+        return getExpenseSuggestions(controller, widget.group);
+      },
+    );
+  }
+
+  Future<Iterable<Widget>> getExpenseSuggestions(
+    SearchController controller,
+    Group group,
+  ) async {
     final String input = controller.value.text;
 
     if (input.isEmpty) {
@@ -308,15 +409,18 @@ class _GroupDetailState extends ConsumerState<GroupDetail> {
 
     final l10n = AppLocalizations.of(context)!;
 
-    List<Expense> result = await ExpenseRepository.fetchData(group.id, 0, 9, input);
+    List<Expense> result = await ExpenseRepository.fetchData(
+      group.id,
+      0,
+      9,
+      input,
+    );
     if (result.isEmpty) {
       return [
         CardListTile(
           isTop: true,
           isBottom: true,
-          child: ListTile(
-            title: Text(l10n.expensesSearchEmpty),
-          ),
+          child: ListTile(title: Text(l10n.expensesSearchEmpty)),
         ),
       ];
     }
@@ -324,37 +428,43 @@ class _GroupDetailState extends ConsumerState<GroupDetail> {
     int resultLength = result.length;
     int index = 0;
 
-    return result.map(
-      (expense) {
-        double expenseSum = expense.expenseEntries.values.fold<double>(0, (sum, expense) => sum + expense.amount);
+    return result.map((expense) {
+      double expenseSum = expense.expenseEntries.values.fold<double>(
+        0,
+        (sum, expense) => sum + expense.amount,
+      );
 
-        bool isTop = false;
-        bool isBottom = false;
-        if (index == 0) {
-          isTop = true;
-        }
+      bool isTop = false;
+      bool isBottom = false;
+      if (index == 0) {
+        isTop = true;
+      }
 
-        if (index == resultLength - 1) {
-          isBottom = true;
-        }
+      if (index == resultLength - 1) {
+        isBottom = true;
+      }
 
-        index++;
+      index++;
 
-        return CardListTile(
-          isTop: isTop,
-          isBottom: isBottom,
-          child: ListTile(
-            title: Text(expense.name),
-            subtitle: Text(AppLocalizations.of(context)!.toCurrency(expenseSum)),
-            trailing: Text(formatDate(expense.expenseDate, context)),
-            onTap: () async {
-              controller.closeView("");
-              unawaited(GoRouter.of(context).push("/group/details/expense", extra: {'group': group, 'expense': expense}));
-            },
-          ),
-        );
-      },
-    );
+      return CardListTile(
+        isTop: isTop,
+        isBottom: isBottom,
+        child: ListTile(
+          title: Text(expense.name),
+          subtitle: Text(AppLocalizations.of(context)!.toCurrency(expenseSum)),
+          trailing: Text(formatDate(expense.expenseDate, context)),
+          onTap: () async {
+            controller.closeView("");
+            unawaited(
+              GoRouter.of(context).push(
+                "/group/details/expense",
+                extra: {'group': group, 'expense': expense},
+              ),
+            );
+          },
+        ),
+      );
+    });
   }
 }
 
@@ -375,8 +485,12 @@ class _GroupBalanceHero extends StatelessWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     // Group-tinted hero surface from the (already re-themed) color scheme.
-    final Color heroSurface = isDark ? colorScheme.primaryContainer : colorScheme.primary;
-    final Color onHero = isDark ? colorScheme.onPrimaryContainer : colorScheme.onPrimary;
+    final Color heroSurface = isDark
+        ? colorScheme.primaryContainer
+        : colorScheme.primary;
+    final Color onHero = isDark
+        ? colorScheme.onPrimaryContainer
+        : colorScheme.onPrimary;
     final Color onHeroMuted = onHero.withValues(alpha: 0.7);
 
     final net = group.totalShareAmount;
@@ -396,11 +510,13 @@ class _GroupBalanceHero extends StatelessWidget {
     }
 
     final members = group.groupMembers
-        .map((GroupMember m) => AvatarStackMember(
-              name: m.displayName,
-              colorKey: m.email,
-              isYou: m.email == supabase.auth.currentUser?.email,
-            ))
+        .map(
+          (GroupMember m) => AvatarStackMember(
+            name: m.displayName,
+            colorKey: m.email,
+            isYou: m.email == supabase.auth.currentUser?.email,
+          ),
+        )
         .toList();
 
     return Container(
@@ -415,27 +531,30 @@ class _GroupBalanceHero extends StatelessWidget {
         children: [
           Text(
             leadLabel,
-            style: Theme.of(context).textTheme.labelLarge?.copyWith(color: onHeroMuted),
+            style: Theme.of(
+              context,
+            ).textTheme.labelLarge?.copyWith(color: onHeroMuted),
           ),
           const SizedBox(height: 6),
           MoneyText(
             settled ? 0 : net.abs(),
             semantic: semanticMode,
-            style: Theme.of(context).textTheme.displaySmall?.copyWith(color: onHero),
+            style: Theme.of(
+              context,
+            ).textTheme.displaySmall?.copyWith(color: onHero),
             animate: true,
           ),
           const SizedBox(height: 18),
           Row(
             children: [
               if (members.isNotEmpty)
-                AvatarStack(
-                  members: members,
-                  ringColor: heroSurface,
-                ),
+                AvatarStack(members: members, ringColor: heroSurface),
               const Spacer(),
               FilledButton.icon(
                 onPressed: () {
-                  GoRouter.of(context).push("/group/details/payment", extra: {'group': group});
+                  GoRouter.of(
+                    context,
+                  ).push("/group/details/payment", extra: {'group': group});
                 },
                 icon: const Icon(Icons.credit_card, size: 18),
                 label: Text(l10n.groupDetailSettleUp),
@@ -467,7 +586,9 @@ class _GroupQuickActions extends StatelessWidget {
         Expanded(
           child: OutlinedButton.icon(
             onPressed: () {
-              GoRouter.of(context).push("/group/details/statistics", extra: {'group': group});
+              GoRouter.of(
+                context,
+              ).push("/group/details/statistics", extra: {'group': group});
             },
             icon: const Icon(Icons.bar_chart, size: 18),
             label: Text(l10n.statisticsTitle),
@@ -477,7 +598,9 @@ class _GroupQuickActions extends StatelessWidget {
         Expanded(
           child: OutlinedButton.icon(
             onPressed: () {
-              GoRouter.of(context).push("/group/share", extra: {'group': group});
+              GoRouter.of(
+                context,
+              ).push("/group/share", extra: {'group': group});
             },
             icon: const Icon(Icons.person_add_alt_1, size: 18),
             label: Text(l10n.invite),
