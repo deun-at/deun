@@ -20,10 +20,10 @@ Settle up · Invite · **Tap to Claim** · Login · Reset password · Onboarding
 
 ---
 
-## Loop status — ⏸ STOPPED (round 3, 2026-06-26) — needs a web session to continue
-3 AUDIT rounds + 20 FIX iterations. **18 fixed** (F01–F12, F14, F15, F16, F30, F32, F33, F35, F37, F38), **4 blocked** (F13 false-positive; F31/F34 out-of-scope; F36 = net-new reset screen, needs greenlight), **11 screens capture-pending** (F17–F26, F29). Round 3 switched app capture to **Chrome/Flutter-web via Playwright** — confirmed working (pointer events drive Flutter; the adb-tap blocker is GONE). Login (the one pre-auth screen) is fully audited + fixed.
+## Loop status — ▶ ACTIVE (round 4, 2026-06-26) — full coverage, FIX queue loaded
+4 AUDIT rounds + 20 FIX iterations. **18 fixed** (F01–F12, F14, F15, F16, F30, F32, F33, F35, F37, F38). Round 4 used the **overhaul**: web auth (tester account via gitignored `.web-creds`) finally reached the 10 deep screens, and the new **triage gate** vetted the 39 raw findings → **30 real in-scope** (now open `- [ ]`, mostly 💅 copy/token/layout), **7 out-of-scope** pre-blocked (F46/F47 multi-mode split, F58 nav, F64 chart, F67 RPC bug, F71 friends-toggle, F75 itemized data), **2 false positives dropped** (F53, F63 — would've wasted FIX iterations under the old loop). Only **1 screen capture-pending** (F29 Onboarding — needs a fresh account).
 
-**To finish:** the remaining 11 screens are blocked ONLY by **web auth** — the harness has no signed-in session (self-hosted backend, OAuth-only social login). Drop a valid signed-in Playwright `storageState` at `docs/design_audit/tools/.web-auth.json` (or give the harness dev email+password), then one AUDIT round captures all 11 and the loop resumes. Suite green on clean build: **727 passing**.
+**Total blocked (need greenlight / separate tasks):** F13 (false), F31/F34 (data), F36 (reset screen), F46/F47/F58/F64/F71/F75 (feature/nav), **F67 (real RPC 400 bug on personal stats — worth its own fix)**. Next: FIX top-down through the 30 open items. Suite green on clean build: **727 passing**.
 
 ## Findings
 
@@ -65,16 +65,64 @@ Captured via the new Chrome/web path (AUDIT round 3) — this is the one screen 
 - [x] F37 · Login · Social buttons are uniform M3 outlined pills with centered indigo-tinted labels; v3 Google/GitHub are white filled cards with brand-colored icon + black bold left-aligned label ⚠️ — lib/pages/auth/social_auth_buttons.dart — target: white card, 1px border, leading brand icon, left-aligned ink-bold label per design_17 — ev: compare/compare_login.png ✅ 2fa6190 (reuse SecondaryButton + leading brand mark, left-aligned; Apple dark variant) — note: Google glyph monochrome brand-blue (font_awesome), not multicolor — add real SVG only if pixel-fidelity needed
 - [x] F38 · Login · Missing "By continuing you agree to our Terms & Privacy Policy." footer that v3 shows under the primary CTA 💅 — lib/pages/auth/sign_in.dart (below SocialAuthButtons/primary button) — target: add terms/privacy legal microcopy footer — ev: compare/compare_login.png ✅ f7aa8de (muted localized caption en+de; plain text — no Terms/Privacy URLs exist yet; suite green on clean build, 727)
 
-### Capture-pending (blocked on web AUTH — provide a signed-in session to finish)
-The Chrome/web capture path WORKS (Playwright pointer events drive Flutter web; the old adb-tap blocker is gone). These 12 screens are now gated only by **authentication**: the live backend is self-hosted (`api.deun.app`), there's no saved session, email/password creds aren't available to the harness, and social login is OAuth-redirect (non-automatable headlessly). **To finish: drop a valid signed-in Playwright `storageState` at `docs/design_audit/tools/.web-auth.json` (or give the harness a dev email+password).** Then one AUDIT round captures all of these.
-- F17 · Group detail — web auth blocked; /group routes 404 without a session — ev: compare/compare_group_detail.png ⏳ capture-pending
-- F18 · New/Edit group — web auth blocked; reached from authed Groups home — ev: compare/compare_group_form.png ⏳ capture-pending
-- F19 · Group statistics — web auth blocked; reached from group detail — ev: compare/compare_group_stats.png ⏳ capture-pending
-- F20 · Personal statistics — web auth blocked; reached via Settings → statistics — ev: compare/compare_personal_stats.png ⏳ capture-pending
-- F21 · Expense detail — web auth blocked; reached from group-detail ledger — ev: compare/compare_expense_detail.png ⏳ capture-pending
-- F22 · Expense editor (quick) — web auth blocked; reached from group-detail FAB — ev: compare/compare_expense_quick.png ⏳ capture-pending
-- F23 · Expense editor (itemized) — web auth blocked; reached from expense editor — ev: compare/compare_expense_itemized.png ⏳ capture-pending
-- F24 · Settle up — web auth blocked; reached from group-detail hero — ev: compare/compare_settle_up.png ⏳ capture-pending
-- F25 · Invite — web auth blocked; reached from group-detail quick action — ev: compare/compare_invite.png ⏳ capture-pending
-- F26 · Tap to Claim — web auth blocked; reached from itemized expense — ev: compare/compare_claim.png ⏳ capture-pending
-- F29 · Onboarding — web auth blocked; AuthGate gates it behind sign-in + needsOnboarding — ev: compare/compare_onboarding.png ⏳ capture-pending
+### Group detail (resolves F17)
+- [ ] F39 · Group detail · Header uses SliverAppBar.medium (large left-aligned Bricolage title + 3 actions search/stats/edit) instead of v3's single 38px row with centered 16/700 title and ONE trailing edit 🔥 — lib/pages/groups/presentation/group_detail.dart:96-144 — target: custom DeunHeader, centered title, single trailing edit per COMPONENTS.md §2 — ev: compare/compare_group_detail.png
+- [ ] F40 · Group detail · Quick-action Statistics/Invite are transparent OutlinedButton.icon pills; v3 quick actions are white filled cards ⚠️ — lib/pages/groups/presentation/group_detail.dart:468,477 — target: white filled cards (SecondaryButton/SoftCard) — ev: compare/compare_group_detail.png
+- [ ] F41 · Group detail · Three stacked FABs (payment, scan, add) vs v3's two (scan + add); the credit_card payment FAB duplicates the hero "Settle up" ⚠️ — lib/pages/groups/presentation/group_detail.dart:254-259 — target: drop the payment FAB, keep Scan + Add only — ev: compare/compare_group_detail.png
+- [ ] F42 · Group detail · Add-expense FAB label "New expense"; v3 is "Add expense" 💅 — lib/pages/groups/presentation/group_detail.dart:291 (l10n.addNewExpense) — target: "Add expense" — ev: compare/compare_group_detail.png
+- [ ] F43 · Group detail · Hero amount textTheme.displaySmall (~36px); v3 ~46px Bricolage w700 (same class as F03 on home) 💅 — lib/pages/groups/presentation/group_detail.dart:424 — target: displayMedium token to match home hero — ev: compare/compare_group_detail.png
+- [ ] F44 · Group detail · Hero "Settle up" button has a leading credit_card icon; v3 hero Settle-up is icon-less white pill 💅 — lib/pages/groups/presentation/group_detail.dart:440 — target: drop icon, white text-only pill — ev: compare/compare_group_detail.png
+- [ ] F45 · Group detail · Extra summary block ("Total expenses / You are owed / <name> owes you" + bell) under quick-actions not in v3 (Remind lives in Settle-up) 💅 — lib/pages/groups/presentation/group_share_widget.dart — target: remove the textual summary block — ev: compare/compare_group_detail.png
+
+### New/Edit group (resolves F18)
+- [ ] F70 · New/Edit group · Group icon + name laid side-by-side in a card with "Add title"; v3 centers the icon tile ABOVE a full-width "Group name" field 💅 — lib/pages/groups/presentation/group_detail_edit.dart:237-275 — target: centered icon over full-width name field; placeholder "Group name" — ev: compare/compare_group_form.png
+- [ ] F72 · New/Edit group · CTA label "Create"; v3 says "Create group" 💅 — lib/pages/groups/presentation/group_detail_edit.dart:124 (l10n.create) — target: "Create group" — ev: compare/compare_group_form.png
+- F71 · New/Edit group · Members shown as a single "Add friends" SearchAnchor; v3 lists the full member roster as inline toggle rows (You=Owner, each member +) + "Add guest" ⚠️ — lib/pages/groups/presentation/group_member_search.dart:214-262 — target: inline member-toggle list + Add guest per design_05 — ev: compare/compare_group_form.png ⛔ blocked — out of scope: requires fetching/wiring the friends list as a togglable selection (new selection behavior, not a restyle).
+
+### Expense editor (resolves F22, F23)
+- [ ] F48 · Expense editor · No standalone category tile above the amount; v3 places a prominent centered category tile (icon + edit badge) on top, then amount ⚠️ — lib/pages/expenses/presentation/expense_detail.dart:758-761 — target: category tile above amount per design_08/09 — ev: compare/compare_expense_quick.png
+- [ ] F49 · Expense editor · Description entered via a large "Add title" heading (titleLarge) instead of v3's inset "Add a description" field 💅 — lib/pages/expenses/presentation/expense_entry_widget.dart:303-309 — target: inset description field, not a heading — ev: compare/compare_expense_quick.png
+- [ ] F50 · Expense editor · Header title generic "Expense" for both new & edit; v3 says "New expense" / "Edit expense" 💅 — lib/pages/expenses/presentation/expense_detail.dart:712 (l10n.expenseDetailTitle) — target: context-aware "New expense"/"Edit expense" — ev: compare/compare_expense_quick.png
+- [ ] F51 · Expense editor · Active segmented-tab label renders black; v3 active tab ("Quick split"/"Itemized") label is indigo #5750E6 💅 — lib/widgets/restyle/app_segmented_control.dart — target: selected-segment label indigo — ev: compare/compare_expense_quick.png
+- [ ] F52 · Expense editor (itemized) · "Scan receipt" is a light indigo-tint pill; v3 "Scan" is a dark/ink solid pill 💅 — lib/pages/expenses/presentation/expense_detail.dart — target: dark ink solid Scan pill; label "Scan" — ev: compare/compare_expense_itemized.png
+- F46 · Expense editor (quick) · Split-mode segmented absent on quick split (gated behind !isSingleEntry), so quick shows checkboxes only ⚠️ — lib/pages/expenses/presentation/expense_entry_widget.dart:272,282 — target: expose split-mode on quick editor — ev: compare/compare_expense_quick.png ⛔ blocked — out of scope: enabling multi-mode split behavior on quick (loop excludes "multi-mode split").
+- F47 · Expense editor · Split-mode has 3 options (Amount/%/Shares); v3 specifies 4 (Equal/Shares/%/Exact) ⚠️ — lib/pages/expenses/presentation/expense_entry_widget.dart:453-455 — target: add Equal+Exact per DESIGN_SPEC §8 — ev: compare/compare_expense_itemized.png ⛔ blocked — out of scope: new SplitMode values + split math = multi-mode split functionality.
+
+### Expense detail (resolves F21)
+- [ ] F54 · Expense detail · Paid-by + Your-net rendered as two rows with generic person/swap icons; v3 shows one combined "{avatar} You paid · You lent €X" line with the payer's colored avatar ⚠️ — lib/pages/expenses/presentation/expense_detail_read.dart (_SummaryCard) — target: single payer-avatar line per design_11 — ev: compare/compare_expense_detail.png
+- [ ] F55 · Expense detail · Breakdown titled "Who owes what"; v3 uses the split-mode name ("Split equally") 💅 — lib/pages/expenses/presentation/expense_detail_read.dart:179 (expenseBreakdownLabel) — target: label derived from SplitMode — ev: compare/compare_expense_detail.png
+- [ ] F56 · Expense detail · Extra "Tags" section with category chip; v3 has none (category shown in summary subtitle) 💅 — lib/pages/expenses/presentation/expense_detail_read.dart:188-192 — target: remove Tags section — ev: compare/compare_expense_detail.png
+- [ ] F57 · Expense detail · Trailing actions edit-then-delete, both tonal; v3 is delete (red trash, left) + edit (indigo pencil in tinted circle, right) 💅 — lib/pages/expenses/presentation/expense_detail_read.dart:130,141 — target: match v3 order/styling — ev: compare/compare_expense_detail.png
+
+### Expense delete (component)
+- [ ] F77 · Expense delete · Delete confirm is a centered M3 AlertDialog; COMPONENTS.md §3 wants a warm bottom sheet with a 54px danger badge ⚠️ — lib/pages/expenses/presentation/expense_detail_read.dart (_confirmDelete) — target: custom delete-confirm bottom sheet (reuse SheetScaffold) per §3 — ev: compare/compare_expense_detail.png
+
+### Settle up (resolves F24)
+- [ ] F59 · Settle up · "Remind" button is a white outlined pill with a bell icon; v3 Remind is a plain gray tonal pill, no icon 💅 — lib/pages/groups/presentation/group_detail_payment.dart — target: gray tonal pill, no icon — ev: compare/compare_settle_up.png
+- [ ] F60 · Settle up · Hero lead label "You're owed"; v3 says "You're owed overall" 💅 — lib/pages/groups/presentation/group_detail_payment.dart — target: "You're owed overall" — ev: compare/compare_settle_up.png
+- F58 · Settle up · Implemented as a modal bottom sheet (close X); v3 (DESIGN_SPEC §10) is a full drill-down screen with back-arrow header ⚠️ — navigation.dart:221-228 (ModalBottomSheetPage) / group_detail_payment.dart — target: full page — ev: compare/compare_settle_up.png ⛔ blocked — out of scope: sheet→full-page is nav/routing re-architecture.
+
+### Invite (resolves F25)
+- [ ] F61 · Invite · Sheet surfaces the QR large by default ("Scan this QR code to join"); v3 surfaces the link first (link field + Copy) with QR behind a secondary toggle, subtitle "Anyone with this link can join the group." 💅 — lib/pages/groups/presentation/group_invite_page.dart:59-89 — target: link-first layout, QR secondary, v3 copy — ev: compare/compare_invite.png
+- [ ] F62 · Invite · Single full-width "Share" button; v3 pairs a secondary "QR" button + indigo "Share link" button in one row 💅 — lib/pages/groups/presentation/group_invite_page.dart:46-53 — target: QR + "Share link" button pair — ev: compare/compare_invite.png
+
+### Group statistics (resolves F19)
+- [ ] F65 · Group statistics · Avg/Expenses/Biggest shown as plain columns; v3 wraps each in a translucent chip tile 💅 — lib/pages/statistics (summary_section.dart:86-128 _MiniStat) — target: chip-tile summary stats — ev: compare/compare_group_stats.png
+- [ ] F66 · Group statistics · Header title "Statistics"; v3 title includes group name ("<group> · Stats") 💅 — lib/pages/statistics/...group_statistics_page.dart:76 (l10n.statisticsTitle) — target: "<group> · Stats" — ev: compare/compare_group_stats.png
+- F64 · Group statistics · Trend is a line/area chart "Trend"; v3 (DESIGN_SPEC §13) specifies a monthly BAR chart "Monthly trend" with the selected month highlighted ⚠️ — lib/pages/statistics (trend_section.dart:47-70, fl_chart LineChart) — target: monthly bar chart — ev: compare/compare_group_stats.png ⛔ blocked — out of scope: chart-type/data-shape swap beyond a token restyle (statistics functionality).
+
+### Personal statistics (resolves F20)
+- [ ] F68 · Personal statistics · Header title "Your Spending"; v3 is "Your statistics" 💅 — lib/pages/statistics (personal_statistics_page.dart:31, l10n.statisticsPersonalOverviewTitle) — target: "Your statistics" — ev: compare/compare_personal_stats.png
+- [ ] F69 · Personal statistics · Adds a 3M/6M/12M/All range segmented at top; v3 personal stats has no range control (DESIGN_SPEC §14) 💅 — lib/pages/statistics (personal_statistics_page.dart:41-50) — target: remove the range control here — ev: compare/compare_personal_stats.png
+- F67 · Personal statistics · Screen hangs on an infinite spinner — RPC get_user_spending_summary returns HTTP 400 repeatedly so the body never renders 🔥 — personal_statistics_notifiers.dart:28 / Supabase rpc get_user_spending_summary — target: fix the 400 (UI error/empty states already exist) — ev: compare/compare_personal_stats.png ⛔ blocked — out of scope: backend/Supabase RPC bug, not a restyle. **Real bug — worth a separate fix task.**
+
+### Tap to Claim (resolves F26)
+- [ ] F73 · Tap to Claim · Summary card is group-tinted indigo; DESIGN_SPEC §9 specifies a DARK ink card (#16181A) 💅 — lib/pages/expenses/presentation/claim_page.dart:397-398 (colorScheme.primary) — target: fixed dark ink summary card — ev: compare/compare_claim.png
+- [ ] F74 · Tap to Claim · Per-member totals render as vertical rows; v3 wants a horizontal member-chip strip (data already computed) 💅 — lib/pages/expenses/presentation/claim_page.dart:451-470 (_MemberTotalRow) — target: horizontal chip strip — ev: compare/compare_claim.png
+- [ ] F76 · Tap to Claim · Items header "Items"; v3 uses "TAP TO TAKE WHAT YOU HAD" caption (persona switcher already exists) 💅 — lib/pages/expenses/presentation/claim_page.dart:212 (l10n.claimItemsLabel) — target: v3 header copy — ev: compare/compare_claim.png
+- F75 · Tap to Claim · Item cards minimal (name + total + claim chip); v3 adds category icon, ×N qty, "€X each · N ordered" subline, claimer-avatar chips ⚠️ — lib/pages/expenses/presentation/claim_page.dart:597-632 — target: richer item rows per design_07 — ev: compare/compare_claim.png ⛔ blocked — out of scope: pulls in itemized/quantity data the row doesn't currently surface.
+
+### Capture-pending (1 left — needs a fresh account)
+- F29 · Onboarding — gated behind user.needsOnboarding (auth_gate.dart:90); tester@deun.app is already onboarded, so OnboardingScreen never renders. Reaching it needs a brand-new signup (out of scope to create random accounts). Capture from the phone with a fresh account, or via a throwaway signup if you want it audited. — ev: compare/compare_onboarding.png ⏳ capture-pending
+
+_Dropped by triage (FALSE positives, not real deltas): F53 (itemized "Total from N items" already sums loaded entries on open via expense_detail.dart:586-607), F63 (group-stats period-delta badge capability exists — summary_section.dart:74 + statistics_notifiers.dart:306; test data simply had no prior period)._
