@@ -20,6 +20,9 @@ Settle up · Invite · **Tap to Claim** · Login · Reset password · Onboarding
 
 ---
 
+## Loop status — ⏸ STOPPED (2026-06-26)
+2 AUDIT rounds + 17 FIX iterations. **15 findings fixed** (F01–F12, F14, F15, F16, F30, F32, F33), **3 blocked** (F13 false-positive, F31/F34 out-of-scope), **13 screens capture-pending** (F17–F29). The loop is **not idle by choice**: the 13 pending screens are blocked by a **device/harness limitation** — `adb input tap` does not trigger this app's Flutter gesture callbacks on R5CY22DR0FK (confirmed across both audits, 3 input methods each), so the whole group flow + auth screens are unreachable by the capture tooling. Resolving that (a tappable capture path) is the prerequisite to auditing the rest. All 5 reachable screens (Groups home, Friends, Settings, QR, Add friend) were re-verified against v3 on a fresh APK and match. Suite green on clean build: **727 passing**.
+
 ## Findings
 
 ### Groups home
