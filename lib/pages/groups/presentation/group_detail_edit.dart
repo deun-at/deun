@@ -234,28 +234,30 @@ class _NameAndColorCard extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Row(
-                children: [
-                  // Retinted group-icon preview reflecting the chosen color.
-                  Container(
-                    width: 52,
-                    height: 52,
-                    decoration: BoxDecoration(
-                      color: selectedColor.withValues(alpha: 0.16),
-                      borderRadius: BorderRadius.circular(16),
+              // v3: centered icon tile above a full-width group-name field.
+              Center(
+                child: Column(
+                  children: [
+                    // Retinted group-icon preview reflecting the chosen color.
+                    Container(
+                      width: 66,
+                      height: 66,
+                      decoration: BoxDecoration(
+                        color: selectedColor.withValues(alpha: 0.16),
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      alignment: Alignment.center,
+                      child: Icon(Icons.receipt_long, color: selectedColor, size: 32),
                     ),
-                    alignment: Alignment.center,
-                    child: Icon(Icons.receipt_long, color: selectedColor, size: 26),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: FormBuilderField(
+                    const SizedBox(height: 14),
+                    FormBuilderField(
                       name: "name",
                       validator: FormBuilderValidators.required(
                         errorText: l10n.groupNameValidationEmpty,
                       ),
                       builder: (FormFieldState<dynamic> field) => TextFormField(
                         initialValue: field.value,
+                        textAlign: TextAlign.center,
                         style: theme.textTheme.titleLarge,
                         autovalidateMode: AutovalidateMode.onUserInteraction,
                         keyboardType: TextInputType.text,
@@ -263,15 +265,15 @@ class _NameAndColorCard extends StatelessWidget {
                         decoration: InputDecoration(
                           border: InputBorder.none,
                           isDense: true,
-                          hintText: l10n.addGroupTitle,
+                          hintText: l10n.groupNameHint,
                           errorText: field.errorText,
                           contentPadding: EdgeInsets.zero,
                         ),
                         onChanged: (value) => field.didChange(value),
                       ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
               const SizedBox(height: 16),
               Text(

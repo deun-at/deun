@@ -20,6 +20,7 @@
   "editGroup": "Gruppe bearbeiten",
   "groupName": "Name",
   "addGroupTitle": "Titel hinzufügen",
+  "groupNameHint": "Gruppenname",
   "groupNameValidationEmpty": "Bitte gib einen Namen ein!",
   "groupSimplifiedExpensesTitle": "Vereinfachte Ausgaben aktivieren",
   "groupCreateTitle": "Neue Gruppe",

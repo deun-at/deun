@@ -67,6 +67,8 @@
   "@groupName": {},
   "addGroupTitle": "Add title",
   "@addGroupTitle": {},
+  "groupNameHint": "Group name",
+  "@groupNameHint": {},
   "groupNameValidationEmpty": "Please enter a name!",
   "@groupNameValidationEmpty": {},
   "groupSimplifiedExpensesTitle": "Activate simplified expenses",

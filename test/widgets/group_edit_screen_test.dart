@@ -109,10 +109,16 @@ void main() {
     final l10n = await AppLocalizations.delegate.load(const Locale('en'));
 
     // Name field hint.
-    expect(find.text(l10n.addGroupTitle), findsOneWidget);
+    expect(find.text(l10n.groupNameHint), findsOneWidget);
     // Six color swatches.
     expect(_swatchFinder(), findsNWidgets(kGroupColorPalette.length));
-    // Tracking-mode options.
+    // Tracking-mode options. The taller centered-icon header pushes this section
+    // below the 800x600 test viewport, so scroll it into view before asserting.
+    await tester.scrollUntilVisible(
+      find.text(l10n.groupTrackingModeSimplifiedTitle),
+      120,
+      scrollable: find.byType(Scrollable).first,
+    );
     expect(find.text(l10n.groupTrackingModeSimplifiedTitle), findsOneWidget);
     expect(find.text(l10n.groupTrackingModeDetailedTitle), findsOneWidget);
     // Sticky Create button (new group, not Save).
@@ -153,6 +159,14 @@ void main() {
     await _pump(tester);
 
     final l10n = await AppLocalizations.delegate.load(const Locale('en'));
+
+    // Scroll the tracking-mode section into the 800x600 test viewport (the
+    // taller centered-icon header pushes it below the fold).
+    await tester.scrollUntilVisible(
+      find.text(l10n.groupTrackingModeSimplifiedTitle),
+      120,
+      scrollable: find.byType(Scrollable).first,
+    );
 
     // Default (new group) is Detailed (simplified_expenses == false): the
     // Detailed row shows the checked radio.

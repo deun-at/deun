@@ -71,6 +71,9 @@ class AppLocalizationsDe extends AppLocalizations {
   String get addGroupTitle => 'Titel hinzufügen';
 
   @override
+  String get groupNameHint => 'Gruppenname';
+
+  @override
   String get groupNameValidationEmpty => 'Bitte gib einen Namen ein!';
 
   @override

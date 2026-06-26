@@ -167,7 +167,13 @@ void main() {
       expect(find.byType(DeunHeader), findsOneWidget);
       expect(find.text(l10n.groupCreateTitle), findsOneWidget);
       expect(find.byIcon(Icons.close), findsOneWidget);
-      // Body key element: the mode-selector section heading.
+      // Body key element: the mode-selector section heading. The taller
+      // centered-icon header pushes it below the test viewport, so scroll first.
+      await tester.scrollUntilVisible(
+        find.text(l10n.groupTrackingModeSimplifiedTitle),
+        120,
+        scrollable: find.byType(Scrollable).first,
+      );
       expect(find.text(l10n.groupTrackingModeSimplifiedTitle), findsOneWidget);
     });
 

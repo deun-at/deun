@@ -71,6 +71,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get addGroupTitle => 'Add title';
 
   @override
+  String get groupNameHint => 'Group name';
+
+  @override
   String get groupNameValidationEmpty => 'Please enter a name!';
 
   @override

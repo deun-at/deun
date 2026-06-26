@@ -218,6 +218,12 @@ abstract class AppLocalizations {
   /// **'Add title'**
   String get addGroupTitle;
 
+  /// No description provided for @groupNameHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Group name'**
+  String get groupNameHint;
+
   /// No description provided for @groupNameValidationEmpty.
   ///
   /// In en, this message translates to:
