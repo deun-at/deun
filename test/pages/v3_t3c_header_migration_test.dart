@@ -310,7 +310,7 @@ void main() {
   // 5. GroupStatisticsPage — statisticsTitle, arrow_back, wrapped in ThemeBuilder
   // -------------------------------------------------------------------------
   group('GroupStatisticsPage (group_statistics_page.dart) header migration', () {
-    testWidgets('has DeunHeader with arrow_back and statisticsTitle',
+    testWidgets('has DeunHeader with arrow_back and group stats title',
         (tester) async {
       await _pumpInScope(
         tester,
@@ -320,7 +320,7 @@ void main() {
       final l10n = await AppLocalizations.delegate.load(const Locale('en'));
 
       expect(find.byType(DeunHeader), findsOneWidget);
-      expect(find.text(l10n.statisticsTitle), findsOneWidget);
+      expect(find.text(l10n.statisticsGroupTitle('Trip to Rome')), findsOneWidget);
       expect(find.byIcon(Icons.arrow_back), findsOneWidget);
     });
 

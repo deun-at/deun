@@ -1285,6 +1285,11 @@ class AppLocalizationsEn extends AppLocalizations {
   String get statisticsTitle => 'Statistics';
 
   @override
+  String statisticsGroupTitle(String groupName) {
+    return '$groupName · Stats';
+  }
+
+  @override
   String get statisticsRangeThreeMonths => '3M';
 
   @override

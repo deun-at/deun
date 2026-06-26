@@ -1315,6 +1315,11 @@ class AppLocalizationsDe extends AppLocalizations {
   String get statisticsTitle => 'Statistiken';
 
   @override
+  String statisticsGroupTitle(String groupName) {
+    return '$groupName · Statistik';
+  }
+
+  @override
   String get statisticsRangeThreeMonths => '3M';
 
   @override

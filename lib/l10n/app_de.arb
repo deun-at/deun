@@ -333,6 +333,7 @@
   "friendAcceptConfirmBody": "Möchtest du {displayName} als Freund hinzufügen?",
   "friendAcceptSelfError": "Du kannst dich nicht selbst als Freund hinzufügen.",
   "statisticsTitle": "Statistiken",
+  "statisticsGroupTitle": "{groupName} · Statistik",
   "statisticsRangeThreeMonths": "3M",
   "statisticsRangeSixMonths": "6M",
   "statisticsRangeTwelveMonths": "12M",

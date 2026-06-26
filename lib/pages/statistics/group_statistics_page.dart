@@ -73,7 +73,7 @@ class _GroupStatisticsPageState extends ConsumerState<GroupStatisticsPage> {
         return Scaffold(
           body: Column(
             children: [
-              DeunHeader(title: l10n.statisticsTitle),
+              DeunHeader(title: l10n.statisticsGroupTitle(widget.group.name)),
               Expanded(
                 child: SafeArea(
                   top: false,

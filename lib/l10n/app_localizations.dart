@@ -2190,6 +2190,12 @@ abstract class AppLocalizations {
   /// **'Statistics'**
   String get statisticsTitle;
 
+  /// No description provided for @statisticsGroupTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'{groupName} · Stats'**
+  String statisticsGroupTitle(String groupName);
+
   /// No description provided for @statisticsRangeThreeMonths.
   ///
   /// In en, this message translates to:

@@ -1199,6 +1199,14 @@
   "@friendAcceptSelfError": {},
   "statisticsTitle": "Statistics",
   "@statisticsTitle": {},
+  "statisticsGroupTitle": "{groupName} · Stats",
+  "@statisticsGroupTitle": {
+    "placeholders": {
+      "groupName": {
+        "type": "String"
+      }
+    }
+  },
   "statisticsRangeThreeMonths": "3M",
   "@statisticsRangeThreeMonths": {},
   "statisticsRangeSixMonths": "6M",
