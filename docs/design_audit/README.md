@@ -107,7 +107,7 @@ Captured via the new Chrome/web path (AUDIT round 3) — this is the one screen 
 - [x] F62 · Invite · Single full-width "Share" button; v3 pairs a secondary "QR" button + indigo "Share link" button in one row 💅 — lib/pages/groups/presentation/group_invite_page.dart:46-53 — target: QR + "Share link" button pair — ev: compare/compare_invite.png ✅ 75a1eca (footer Row: secondary QR (drives F61 _showQr toggle) + primary Share link; en+de)
 
 ### Group statistics (resolves F19)
-- [ ] F65 · Group statistics · Avg/Expenses/Biggest shown as plain columns; v3 wraps each in a translucent chip tile 💅 — lib/pages/statistics (summary_section.dart:86-128 _MiniStat) — target: chip-tile summary stats — ev: compare/compare_group_stats.png
+- [x] F65 · Group statistics · Avg/Expenses/Biggest shown as plain columns; v3 wraps each in a translucent chip tile 💅 — lib/pages/statistics (summary_section.dart:86-128 _MiniStat) — target: chip-tile summary stats — ev: compare/compare_group_stats.png ✅ 9194b4b (each stat in translucent onHero@0.12 r13 chip tile, light+dark)
 - [ ] F66 · Group statistics · Header title "Statistics"; v3 title includes group name ("<group> · Stats") 💅 — lib/pages/statistics/...group_statistics_page.dart:76 (l10n.statisticsTitle) — target: "<group> · Stats" — ev: compare/compare_group_stats.png
 - F64 · Group statistics · Trend is a line/area chart "Trend"; v3 (DESIGN_SPEC §13) specifies a monthly BAR chart "Monthly trend" with the selected month highlighted ⚠️ — lib/pages/statistics (trend_section.dart:47-70, fl_chart LineChart) — target: monthly bar chart — ev: compare/compare_group_stats.png ⛔ blocked — out of scope: chart-type/data-shape swap beyond a token restyle (statistics functionality).
 
