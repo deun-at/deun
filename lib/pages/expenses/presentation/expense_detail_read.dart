@@ -112,30 +112,22 @@ class ExpenseDetailRead extends ConsumerWidget {
               DeunHeader(
                 title: l10n.expenseDetailTitle,
                 trailingActions: [
-                  IconButton(
-                    tooltip: l10n.edit,
-                    onPressed: () => _openEditor(context),
-                    icon: const Icon(Icons.edit_outlined),
-                    iconSize: 22,
-                    constraints: const BoxConstraints(
-                      minWidth: 38,
-                      minHeight: 38,
-                    ),
-                    padding: EdgeInsets.zero,
-                  ),
-                  IconButton(
+                  // v3 (expense detail header): delete on the LEFT — danger-red
+                  // trash glyph on the neutral warm-tint circle (like F12
+                  // logout); edit on the RIGHT — primary indigo pencil on the
+                  // same tinted circle.
+                  HeaderIconButton(
+                    icon: Icons.delete_outline,
                     tooltip: l10n.delete,
-                    onPressed: () => _confirmDelete(context),
-                    icon: Icon(
-                      Icons.delete_outline,
-                      color: Theme.of(context).colorScheme.onSurface,
-                    ),
-                    iconSize: 22,
-                    constraints: const BoxConstraints(
-                      minWidth: 38,
-                      minHeight: 38,
-                    ),
-                    padding: EdgeInsets.zero,
+                    onTap: () => _confirmDelete(context),
+                    iconColor:
+                        Theme.of(context).extension<SemanticColors>()!.danger,
+                  ),
+                  HeaderIconButton(
+                    icon: Icons.edit_outlined,
+                    tooltip: l10n.edit,
+                    onTap: () => _openEditor(context),
+                    iconColor: Theme.of(context).colorScheme.primary,
                   ),
                 ],
               ),
