@@ -84,6 +84,8 @@
   "itemizedInfoCallout": "Aufgeschlüsselte Ausgaben können geteilt werden, damit jede Person die Artikel beansprucht, die sie hatte. Der Anteil jeder Person ergibt sich aus dem, was sie beansprucht.",
   "expenseSaveAndShareForClaiming": "Hinzufügen & zum Beanspruchen teilen",
   "expenseDetailTitle": "Ausgabe",
+  "expenseDetailTitleNew": "Neue Ausgabe",
+  "expenseDetailTitleEdit": "Ausgabe bearbeiten",
   "expenseYourNetLabel": "Dein Saldo",
   "expensePaidByYou": "Du hast bezahlt",
   "expensePaidByOther": "{name} hat bezahlt",

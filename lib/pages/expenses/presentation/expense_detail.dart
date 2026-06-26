@@ -709,7 +709,9 @@ class _ExpenseDetailState extends ConsumerState<ExpenseDetail> {
             body: Column(
               children: [
                 DeunHeader(
-                  title: l10n.expenseDetailTitle,
+                  title: widget.expense == null
+                      ? l10n.expenseDetailTitleNew
+                      : l10n.expenseDetailTitleEdit,
                   leadingIcon: Icons.close,
                   trailing: headerTrailing,
                 ),

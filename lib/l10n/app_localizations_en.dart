@@ -282,6 +282,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get expenseDetailTitle => 'Expense';
 
   @override
+  String get expenseDetailTitleNew => 'New expense';
+
+  @override
+  String get expenseDetailTitleEdit => 'Edit expense';
+
+  @override
   String get expenseYourNetLabel => 'Your net';
 
   @override

@@ -214,6 +214,14 @@
   "@expenseDetailTitle": {
     "description": "App-bar title for the expense detail (read) screen."
   },
+  "expenseDetailTitleNew": "New expense",
+  "@expenseDetailTitleNew": {
+    "description": "Header title for the expense editor when creating a new expense."
+  },
+  "expenseDetailTitleEdit": "Edit expense",
+  "@expenseDetailTitleEdit": {
+    "description": "Header title for the expense editor when editing an existing expense."
+  },
   "expenseYourNetLabel": "Your net",
   "@expenseYourNetLabel": {
     "description": "Label above the current user's net amount on the expense detail summary card."

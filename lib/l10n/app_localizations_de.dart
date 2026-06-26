@@ -284,6 +284,12 @@ class AppLocalizationsDe extends AppLocalizations {
   String get expenseDetailTitle => 'Ausgabe';
 
   @override
+  String get expenseDetailTitleNew => 'Neue Ausgabe';
+
+  @override
+  String get expenseDetailTitleEdit => 'Ausgabe bearbeiten';
+
+  @override
   String get expenseYourNetLabel => 'Dein Saldo';
 
   @override

@@ -602,6 +602,18 @@ abstract class AppLocalizations {
   /// **'Expense'**
   String get expenseDetailTitle;
 
+  /// Header title for the expense editor when creating a new expense.
+  ///
+  /// In en, this message translates to:
+  /// **'New expense'**
+  String get expenseDetailTitleNew;
+
+  /// Header title for the expense editor when editing an existing expense.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit expense'**
+  String get expenseDetailTitleEdit;
+
   /// Label above the current user's net amount on the expense detail summary card.
   ///
   /// In en, this message translates to:
