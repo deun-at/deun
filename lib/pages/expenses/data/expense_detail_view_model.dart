@@ -1,4 +1,26 @@
+import '../../../l10n/app_localizations.dart';
 import 'expense_model.dart';
+
+/// The per-member breakdown heading, named after the expense's split mode so it
+/// matches the v3 prototype (e.g. "Split equally" rather than the generic "Who
+/// owes what"). Reads the raw `split_mode` string from the first line item
+/// (quick expenses have a single entry); unknown/claim/itemized modes fall back
+/// to [AppLocalizations.expenseBreakdownLabel].
+String breakdownHeading(Expense expense, AppLocalizations l10n) {
+  final entries = expense.expenseEntries.values;
+  switch (entries.isEmpty ? null : entries.first.splitMode) {
+    case 'equal':
+      return l10n.splitEquallyLabel;
+    case 'exact':
+      return l10n.splitByAmountLabel;
+    case 'percentage':
+      return l10n.splitByPercentLabel;
+    case 'shares':
+      return l10n.splitBySharesLabel;
+    default:
+      return l10n.expenseBreakdownLabel;
+  }
+}
 
 /// Whether an expense is itemized (more than one line item).
 ///

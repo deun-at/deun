@@ -164,7 +164,7 @@ class ExpenseDetailRead extends ConsumerWidget {
                 ),
               ],
               const SizedBox(height: 24),
-              SectionLabel(l10n.expenseBreakdownLabel),
+              SectionLabel(breakdownHeading(expense, l10n)),
               const SizedBox(height: 8),
               _MemberBreakdown(
                 expense: expense,

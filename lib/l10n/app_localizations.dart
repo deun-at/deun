@@ -2412,6 +2412,30 @@ abstract class AppLocalizations {
   /// **'Parts'**
   String get splitModeShares;
 
+  /// No description provided for @splitEquallyLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Split equally'**
+  String get splitEquallyLabel;
+
+  /// No description provided for @splitByAmountLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Split by exact amounts'**
+  String get splitByAmountLabel;
+
+  /// No description provided for @splitByPercentLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Split by percentage'**
+  String get splitByPercentLabel;
+
+  /// No description provided for @splitBySharesLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Split by shares'**
+  String get splitBySharesLabel;
+
   /// No description provided for @totalLabel.
   ///
   /// In en, this message translates to:

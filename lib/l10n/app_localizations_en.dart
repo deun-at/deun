@@ -1412,6 +1412,18 @@ class AppLocalizationsEn extends AppLocalizations {
   String get splitModeShares => 'Parts';
 
   @override
+  String get splitEquallyLabel => 'Split equally';
+
+  @override
+  String get splitByAmountLabel => 'Split by exact amounts';
+
+  @override
+  String get splitByPercentLabel => 'Split by percentage';
+
+  @override
+  String get splitBySharesLabel => 'Split by shares';
+
+  @override
   String get totalLabel => 'Total';
 
   @override

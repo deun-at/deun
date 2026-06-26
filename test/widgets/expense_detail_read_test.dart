@@ -39,7 +39,8 @@ Group _group() {
   return g;
 }
 
-ExpenseEntry _entry(int index) => ExpenseEntry(index: index);
+ExpenseEntry _entry(int index, {String splitMode = 'equal'}) =>
+    ExpenseEntry(index: index)..splitMode = splitMode;
 
 Expense _expense({
   required int entryCount,
@@ -135,7 +136,9 @@ void main() {
     expect(find.text(l10n.expensePaidByOther('Alice')), findsOneWidget);
     // Category tag.
     expect(find.text(ExpenseCategory.food.getDisplayName(l10n)), findsOneWidget);
-    expect(find.text(l10n.expenseBreakdownLabel), findsOneWidget);
+    // Breakdown heading now reflects the split mode (entries default to
+    // 'equal'), matching the v3 prototype instead of the generic "Who owes what".
+    expect(find.text(l10n.splitEquallyLabel), findsOneWidget);
     expect(find.byType(SoftCard), findsWidgets);
   });
 
