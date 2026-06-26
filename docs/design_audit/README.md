@@ -20,8 +20,8 @@ Settle up · Invite · **Tap to Claim** · Login · Reset password · Onboarding
 
 ---
 
-## Loop status — ⏸ STOPPED (2026-06-26)
-2 AUDIT rounds + 17 FIX iterations. **15 findings fixed** (F01–F12, F14, F15, F16, F30, F32, F33), **3 blocked** (F13 false-positive, F31/F34 out-of-scope), **13 screens capture-pending** (F17–F29). The loop is **not idle by choice**: the 13 pending screens are blocked by a **device/harness limitation** — `adb input tap` does not trigger this app's Flutter gesture callbacks on R5CY22DR0FK (confirmed across both audits, 3 input methods each), so the whole group flow + auth screens are unreachable by the capture tooling. Resolving that (a tappable capture path) is the prerequisite to auditing the rest. All 5 reachable screens (Groups home, Friends, Settings, QR, Add friend) were re-verified against v3 on a fresh APK and match. Suite green on clean build: **727 passing**.
+## Loop status — ▶ ACTIVE (round 3, 2026-06-26)
+3 AUDIT rounds + 17 FIX iterations. **15 fixed** (F01–F12, F14, F15, F16, F30, F32, F33), **3 blocked** (F13 false-positive, F31/F34 out-of-scope), **4 new open Login findings** (F35🔥 F36⚠️ F37⚠️ F38💅), **12 screens capture-pending** (F17–F26, F29). Round 3 switched app capture to **Chrome/Flutter-web via Playwright** — confirmed working (pointer events drive Flutter; the old adb-tap blocker is GONE). Login (the one pre-auth screen) is now audited → F35–F38. The remaining 12 screens are blocked only by **web auth**: drop a signed-in Playwright `storageState` at `tools/.web-auth.json` (or give the harness dev creds) and one more AUDIT finishes them. Suite green on clean build: **727 passing**.
 
 ## Findings
 
@@ -56,18 +56,23 @@ Settle up · Invite · **Tap to Claim** · Login · Reset password · Onboarding
 - [x] F15 · Add friend · Header has no trailing QR action; v3 "Add friends" header carries a trailing qr_code_2 button 💅 — lib/pages/friends/presentation/friend_add_page.dart (header) — target: add trailing qr_code_2 38×38 action — ev: compare/compare_add_friend.png ✅ db277fb (DeunHeader trailing HeaderIconButton → /friend/qr)
 - [x] F16 · Add friend · Custom header title not centered between symmetric 38×38 slots (sits left, near back arrow) 💅 — lib/pages/friends/presentation/friend_add_page.dart (header) — target: centered title, equal leading/trailing slots per COMPONENTS.md §2 — ev: compare/compare_add_friend.png ✅ db277fb (symmetric DeunHeader slots center the title)
 
-### Capture-pending (not yet auditable — re-audit after F01 unblocks the group flow)
-These screens could not be reached this pass (most are gated behind the tap-blocked Groups home, F01). They are NOT fixable items yet; a later AUDIT re-captures them once F01 lands.
-- F17 · Group detail — group cards untappable (F01), no adb deep-link possible (route needs in-process Group via state.extra, navigation.dart:114) — ev: compare/compare_group_detail.png ⏳ capture-pending
-- F18 · New/Edit group — reachable only via "+ Neu"/FAB on the tap-blocked home (F01) — ev: compare/compare_group_form.png ⏳ capture-pending
-- F19 · Group statistics — reached from group detail, blocked by F01 — ev: compare/compare_group_stats.png ⏳ capture-pending
-- F20 · Personal statistics — reached via Settings → Your statistics; stats-row tap lands in the same Flutter content layer; not captured this pass — ev: compare/compare_personal_stats.png ⏳ capture-pending
-- F21 · Expense detail — reached from group detail ledger, blocked by F01 — ev: compare/compare_expense_detail.png ⏳ capture-pending
-- F22 · Expense editor (quick) — reached via Add-expense FAB in group detail, blocked by F01 — ev: compare/compare_expense_quick.png ⏳ capture-pending
-- F23 · Expense editor (itemized) — reached via editor segmented control in group detail, blocked by F01 — ev: compare/compare_expense_itemized.png ⏳ capture-pending
-- F24 · Settle up — reached from group-detail hero "Settle up", blocked by F01 — ev: compare/compare_settle_up.png ⏳ capture-pending
-- F25 · Invite — reached from group-detail quick action, blocked by F01 — ev: compare/compare_invite.png ⏳ capture-pending
-- F26 · Tap to Claim — reached from an itemized expense in group detail, blocked by F01 — ev: compare/compare_claim.png ⏳ capture-pending
-- F27 · Login — requires sign-out from Settings, which routes back through the tap-blocked home shell; not captured this pass — ev: compare/compare_login.png ⏳ capture-pending
-- F28 · Reset password — reached from Login (F27) — ev: compare/compare_reset.png ⏳ capture-pending
-- F29 · Onboarding — reached via signup/social from Login (F27) — ev: compare/compare_onboarding.png ⏳ capture-pending
+### Login / Auth
+Captured via the new Chrome/web path (AUDIT round 3) — this is the one screen reachable pre-auth.
+- [ ] F35 · Login · Entire pre-auth surface (logo tile, "Anmelden" primary button, links) renders brand BLUE not indigo #5750E6 — DeunApp seeds theme with ColorSeed.blue.color while the main app uses kBrandSeed indigo 🔥 — lib/widgets/deun_app.dart:28-29 — target: getThemeData(context, kBrandSeed, …) for both theme/darkTheme (matches navigation.dart:609) — ev: compare/compare_login.png (resolves F27)
+- [ ] F36 · Reset password · App has NO dedicated reset screen; "Passwort vergessen?" is an inline link + snackbar on Login, whereas v3 is a full screen (back arrow, "Reset your password" title, subtitle, Email field, "Send reset link" button) ⚠️ — lib/pages/auth/sign_in.dart:140 (_recoverPassword) — target: dedicated reset-password screen per design_18 — ev: compare/compare_login.png (resolves F28)
+- [ ] F37 · Login · Social buttons are uniform M3 outlined pills with centered indigo-tinted labels; v3 Google/GitHub are white filled cards with brand-colored icon + black bold left-aligned label ⚠️ — lib/pages/auth/social_auth_buttons.dart — target: white card, 1px border, leading brand icon, left-aligned ink-bold label per design_17 — ev: compare/compare_login.png
+- [ ] F38 · Login · Missing "By continuing you agree to our Terms & Privacy Policy." footer that v3 shows under the primary CTA 💅 — lib/pages/auth/sign_in.dart (below SocialAuthButtons/primary button) — target: add terms/privacy legal microcopy footer — ev: compare/compare_login.png
+
+### Capture-pending (blocked on web AUTH — provide a signed-in session to finish)
+The Chrome/web capture path WORKS (Playwright pointer events drive Flutter web; the old adb-tap blocker is gone). These 12 screens are now gated only by **authentication**: the live backend is self-hosted (`api.deun.app`), there's no saved session, email/password creds aren't available to the harness, and social login is OAuth-redirect (non-automatable headlessly). **To finish: drop a valid signed-in Playwright `storageState` at `docs/design_audit/tools/.web-auth.json` (or give the harness a dev email+password).** Then one AUDIT round captures all of these.
+- F17 · Group detail — web auth blocked; /group routes 404 without a session — ev: compare/compare_group_detail.png ⏳ capture-pending
+- F18 · New/Edit group — web auth blocked; reached from authed Groups home — ev: compare/compare_group_form.png ⏳ capture-pending
+- F19 · Group statistics — web auth blocked; reached from group detail — ev: compare/compare_group_stats.png ⏳ capture-pending
+- F20 · Personal statistics — web auth blocked; reached via Settings → statistics — ev: compare/compare_personal_stats.png ⏳ capture-pending
+- F21 · Expense detail — web auth blocked; reached from group-detail ledger — ev: compare/compare_expense_detail.png ⏳ capture-pending
+- F22 · Expense editor (quick) — web auth blocked; reached from group-detail FAB — ev: compare/compare_expense_quick.png ⏳ capture-pending
+- F23 · Expense editor (itemized) — web auth blocked; reached from expense editor — ev: compare/compare_expense_itemized.png ⏳ capture-pending
+- F24 · Settle up — web auth blocked; reached from group-detail hero — ev: compare/compare_settle_up.png ⏳ capture-pending
+- F25 · Invite — web auth blocked; reached from group-detail quick action — ev: compare/compare_invite.png ⏳ capture-pending
+- F26 · Tap to Claim — web auth blocked; reached from itemized expense — ev: compare/compare_claim.png ⏳ capture-pending
+- F29 · Onboarding — web auth blocked; AuthGate gates it behind sign-in + needsOnboarding — ev: compare/compare_onboarding.png ⏳ capture-pending
