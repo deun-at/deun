@@ -306,16 +306,6 @@ class _GroupDetailState extends ConsumerState<GroupDetail> {
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
               FloatingActionButton.small(
-                onPressed: () {
-                  GoRouter.of(context).push(
-                    "/group/details/payment",
-                    extra: {'group': widget.group},
-                  );
-                },
-                child: const Icon(Icons.credit_card),
-              ),
-              const SizedBox(height: 8),
-              FloatingActionButton.small(
                 heroTag: "floating_action_button_scan",
                 onPressed: () async {
                   final result = await showModalBottomSheet<ReceiptScanResult>(
