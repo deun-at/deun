@@ -108,7 +108,7 @@ Captured via the new Chrome/web path (AUDIT round 3) — this is the one screen 
 
 ### Group statistics (resolves F19)
 - [x] F65 · Group statistics · Avg/Expenses/Biggest shown as plain columns; v3 wraps each in a translucent chip tile 💅 — lib/pages/statistics (summary_section.dart:86-128 _MiniStat) — target: chip-tile summary stats — ev: compare/compare_group_stats.png ✅ 9194b4b (each stat in translucent onHero@0.12 r13 chip tile, light+dark)
-- [ ] F66 · Group statistics · Header title "Statistics"; v3 title includes group name ("<group> · Stats") 💅 — lib/pages/statistics/...group_statistics_page.dart:76 (l10n.statisticsTitle) — target: "<group> · Stats" — ev: compare/compare_group_stats.png
+- [x] F66 · Group statistics · Header title "Statistics"; v3 title includes group name ("<group> · Stats") 💅 — lib/pages/statistics/...group_statistics_page.dart:76 (l10n.statisticsTitle) — target: "<group> · Stats" — ev: compare/compare_group_stats.png ✅ 6c073ea (statisticsGroupTitle(groupName) "<group> · Stats"/"· Statistik"; statisticsTitle kept for personal)
 - F64 · Group statistics · Trend is a line/area chart "Trend"; v3 (DESIGN_SPEC §13) specifies a monthly BAR chart "Monthly trend" with the selected month highlighted ⚠️ — lib/pages/statistics (trend_section.dart:47-70, fl_chart LineChart) — target: monthly bar chart — ev: compare/compare_group_stats.png ⛔ blocked — out of scope: chart-type/data-shape swap beyond a token restyle (statistics functionality).
 
 ### Personal statistics (resolves F20)
