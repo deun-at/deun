@@ -74,7 +74,7 @@ class _Segment<T> extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
-    final foreground = selected ? colorScheme.onSurface : colorScheme.onSurfaceVariant;
+    final foreground = selected ? colorScheme.primary : colorScheme.onSurfaceVariant;
 
     return GestureDetector(
       onTap: onTap,
