@@ -25,6 +25,14 @@
     add_friend:['design/design_13_add_friend.png','app/app_15a_add_friend.png'],
     personal_stats:['design/design_14_personal_stats.png','app/app_14_personal_stats.png'],
     qr:['design/design_15_qr.png','app/app_15b_qr.png'],
+    login:['design/design_17_login.png','app/app_17_login.png'],
+    group_stats:['design/design_12_group_stats.png','app/app_12_group_stats.png'],
+    expense_detail:['design/design_11_expense_detail.png','app/app_11_expense_detail.png'],
+    expense_quick:['design/design_08_expense_quick.png','app/app_08_expense_quick.png'],
+    expense_itemized:['design/design_09_expense_itemized.png','app/app_09_expense_itemized.png'],
+    settle_up:['design/design_10_settle_up.png','app/app_10_settle_up.png'],
+    invite:['design/design_16_invite.png','app/app_16_invite.png'],
+    claim:['design/design_07_claim.png','app/app_07_claim.png'],
   };
   function show(k){document.getElementById('d').src=pairs[k][0];document.getElementById('a').src=pairs[k][1];}
   show(new URLSearchParams(location.search).get('p')||'groups');
