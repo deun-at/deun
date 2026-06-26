@@ -95,8 +95,8 @@ void main() {
     await _pump(tester);
     final l10n = await AppLocalizations.delegate.load(const Locale('en'));
 
-    // Description / title field hint.
-    expect(find.text(l10n.addExpenseTitle), findsOneWidget);
+    // Description / title field hint (v3: inset field, reuses description hint).
+    expect(find.text(l10n.expenseDescriptionHint), findsWidgets);
 
     // Tiles are SoftCard panels now (amount + paid-by + date + category).
     expect(find.byType(SoftCard), findsWidgets);

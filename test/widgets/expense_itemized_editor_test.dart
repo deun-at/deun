@@ -125,16 +125,18 @@ void main() {
     await tester.tap(find.text(l10n.editorModeItemized));
     await tester.pumpAndSettle();
 
-    // One item card to start (the seeded entry).
-    expect(find.text(l10n.expenseDescriptionHint), findsOneWidget);
+    // One item card to start (the seeded entry). The top-level expense
+    // name field now reuses the same description hint, so the count is
+    // entries + 1 (the top-level inset field).
+    expect(find.text(l10n.expenseDescriptionHint), findsNWidgets(2));
 
     await tester.ensureVisible(find.text(l10n.addItemByHand));
     await tester.pumpAndSettle();
     await tester.tap(find.text(l10n.addItemByHand));
     await tester.pumpAndSettle();
 
-    // A second item card's name hint appears.
-    expect(find.text(l10n.expenseDescriptionHint), findsNWidgets(2));
+    // A second item card's name hint appears (2 entries + 1 top-level).
+    expect(find.text(l10n.expenseDescriptionHint), findsNWidgets(3));
   });
 
   testWidgets('switching back to Quick shows the Quick amount card',

@@ -367,24 +367,25 @@ class _ExpenseDetailState extends ConsumerState<ExpenseDetail> {
   Widget _buildNameField() {
     final l10n = AppLocalizations.of(context)!;
     final colorScheme = Theme.of(context).colorScheme;
+    final radius = BorderRadius.circular(12);
     return FormBuilderField(
       name: "name",
       builder: (FormFieldState<dynamic> field) => TextFormField(
         controller: _nameController,
-        style: Theme.of(context)
-            .textTheme
-            .displaySmall!
-            .copyWith(color: colorScheme.primary),
         validator: FormBuilderValidators.required(
             errorText: l10n.expenseNameValidationEmpty),
         decoration: InputDecoration(
-          border: InputBorder.none,
-          hintText: l10n.addExpenseTitle,
-          hintStyle: Theme.of(context)
-              .textTheme
-              .displaySmall!
-              .copyWith(color: colorScheme.onSurfaceVariant),
-          contentPadding: const EdgeInsets.symmetric(horizontal: 4),
+          hintText: l10n.expenseDescriptionHint,
+          filled: true,
+          fillColor: colorScheme.surfaceContainer,
+          border: OutlineInputBorder(
+              borderRadius: radius, borderSide: BorderSide.none),
+          enabledBorder: OutlineInputBorder(
+              borderRadius: radius, borderSide: BorderSide.none),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: radius,
+            borderSide: BorderSide(color: colorScheme.primary, width: 1.5),
+          ),
         ),
         onChanged: (value) {
           field.didChange(value);
@@ -746,8 +747,6 @@ class _ExpenseDetailState extends ConsumerState<ExpenseDetail> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             _buildModeToggle(),
-                            const SizedBox(height: spacing * 2),
-                            _buildNameField(),
                             // Quick layout: expense-level amount card.
                             // Itemized layout: total-from-items header + Scan.
                             if (_isSingleEntry) ...[
@@ -764,6 +763,10 @@ class _ExpenseDetailState extends ConsumerState<ExpenseDetail> {
                               const SizedBox(height: spacing * 2),
                               _buildItemizedTotalHeader(),
                             ],
+                            // v3: inset name/description field below the
+                            // amount/category block (name stays persisted).
+                            const SizedBox(height: spacing * 2),
+                            _buildNameField(),
                             const SizedBox(height: spacing * 2),
                             SectionLabel(AppLocalizations.of(context)!.expenseDetailsLabel),
                             const SizedBox(height: spacing),
