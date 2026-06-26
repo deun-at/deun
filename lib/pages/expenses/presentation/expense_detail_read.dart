@@ -1,7 +1,6 @@
 import 'package:deun/helper/helper.dart';
 import 'package:deun/l10n/app_localizations.dart';
 import 'package:deun/main.dart';
-import 'package:deun/pages/expenses/data/expense_category.dart';
 import 'package:deun/pages/expenses/data/expense_detail_view_model.dart';
 import 'package:deun/pages/expenses/data/expense_model.dart';
 import 'package:deun/pages/expenses/data/expense_repository.dart';
@@ -22,10 +21,9 @@ import 'package:go_router/go_router.dart';
 ///
 /// A read-only restyle of an existing [Expense]: summary card (category icon,
 /// title, "category · date" subtitle, total, payer, your-net), an optional
-/// "Review & claim" banner for itemized expenses (→ E3), a per-member
-/// breakdown bound to [Expense.groupMemberShareStatistic], and the category
-/// tag. Hosts Edit (→ existing editor) and Delete (→ existing repository)
-/// actions.
+/// "Review & claim" banner for itemized expenses (→ E3), and a per-member
+/// breakdown bound to [Expense.groupMemberShareStatistic]. Hosts Edit (→
+/// existing editor) and Delete (→ existing repository) actions.
 ///
 /// This is intentionally a SEPARATE widget from the editor
 /// (`expense_detail.dart`): tapping a quick expense in the ledger opens this
@@ -173,12 +171,6 @@ class ExpenseDetailRead extends ConsumerWidget {
                 displayName: (m) => _displayName(context, m),
                 currentUserEmail: _currentUserEmail,
               ),
-              if (expense.category != null) ...[
-                const SizedBox(height: 24),
-                SectionLabel(l10n.expenseTagsLabel),
-                const SizedBox(height: 8),
-                _CategoryTag(category: expense.category!),
-              ],
             ],
                 ),
               ),
@@ -527,43 +519,6 @@ class _MemberRow extends StatelessWidget {
             ],
           ),
         ],
-      ),
-    );
-  }
-}
-
-/// Category rendered as a tinted tag chip.
-class _CategoryTag extends StatelessWidget {
-  const _CategoryTag({required this.category});
-
-  final ExpenseCategory category;
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
-    final textTheme = Theme.of(context).textTheme;
-    final tint = category.getColor(context);
-
-    return Align(
-      alignment: Alignment.centerLeft,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-        decoration: ShapeDecoration(
-          color: tint.withValues(alpha: 0.16),
-          shape: const StadiumBorder(),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(category.getIcon(), size: 16, color: tint),
-            const SizedBox(width: 6),
-            Text(
-              category.getDisplayName(l10n),
-              style: textTheme.labelMedium
-                  ?.copyWith(color: tint, fontWeight: FontWeight.w600),
-            ),
-          ],
-        ),
       ),
     );
   }

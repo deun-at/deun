@@ -134,8 +134,12 @@ void main() {
     // Combined design_11 payer line: "{payer} paid" (no current auth user in
     // the test harness, so the payer "Alice" is not "you").
     expect(find.text(l10n.expensePaidByOther('Alice')), findsOneWidget);
-    // Category tag.
-    expect(find.text(ExpenseCategory.food.getDisplayName(l10n)), findsOneWidget);
+    // Category now lives only in the summary subtitle ("{category} · {date}"),
+    // not a separate Tags section (F56). Match the category name as a substring.
+    expect(
+      find.textContaining(ExpenseCategory.food.getDisplayName(l10n)),
+      findsOneWidget,
+    );
     // Breakdown heading now reflects the split mode (entries default to
     // 'equal'), matching the v3 prototype instead of the generic "Who owes what".
     expect(find.text(l10n.splitEquallyLabel), findsOneWidget);
