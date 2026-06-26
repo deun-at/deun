@@ -131,6 +131,7 @@
   "expenseEntrySharesLable": "Aufgeteilt zwischen",
   "expenseEntrySharesValidationEmpty": "Bitte wähle mindestens eine Person aus!",
   "expenseDeleteItemTitle": "Diese Ausgabe löschen?",
+  "expenseDeleteItemMessage": "Die Ausgabe wird endgültig entfernt und alle Salden werden aktualisiert. Das kann nicht rückgängig gemacht werden.",
   "expenseDeleteError": "Fehler beim Löschen der Ausgabe!",
   "expenseDeleteSuccess": "Ausgabe gelöscht!",
   "expenseCreateError": "Fehler beim Erstellen der Ausgabe!",

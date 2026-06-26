@@ -7,6 +7,7 @@ import 'package:deun/pages/expenses/data/expense_model.dart';
 import 'package:deun/pages/expenses/data/expense_repository.dart';
 import 'package:deun/pages/groups/data/group_member_model.dart';
 import 'package:deun/pages/groups/data/group_model.dart';
+import 'package:deun/widgets/restyle/delete_confirm_sheet.dart';
 import 'package:deun/widgets/restyle/deun_header.dart';
 import 'package:deun/widgets/restyle/member_avatar.dart';
 import 'package:deun/widgets/restyle/money_text.dart';
@@ -75,43 +76,29 @@ class ExpenseDetailRead extends ConsumerWidget {
     );
   }
 
-  void _confirmDelete(BuildContext context) {
+  Future<void> _confirmDelete(BuildContext context) async {
     final l10n = AppLocalizations.of(context)!;
-    showDialog<void>(
-      context: context,
-      builder: (dialogContext) => AlertDialog(
-        content: Text(l10n.expenseDeleteItemTitle),
-        actions: <Widget>[
-          TextButton(
-            child: Text(l10n.cancel),
-            onPressed: () => Navigator.pop(dialogContext),
-          ),
-          FilledButton(
-            style: FilledButton.styleFrom(
-              backgroundColor: Theme.of(dialogContext).colorScheme.error,
-              foregroundColor: Theme.of(dialogContext).colorScheme.onError,
-            ),
-            child: Text(l10n.delete),
-            onPressed: () async {
-              try {
-                await ExpenseRepository.delete(expense.id, expense.groupId);
-                if (context.mounted) {
-                  showSnackBar(context, l10n.expenseDeleteSuccess);
-                }
-              } catch (e) {
-                if (context.mounted) {
-                  showSnackBar(context, l10n.expenseDeleteError);
-                }
-              } finally {
-                // Pop both the dialog and this read screen — the expense is gone.
-                if (dialogContext.mounted) Navigator.pop(dialogContext);
-                if (context.mounted) Navigator.pop(context);
-              }
-            },
-          ),
-        ],
-      ),
+    final confirmed = await showDeleteConfirmationSheet(
+      context,
+      title: l10n.expenseDeleteItemTitle,
+      message: l10n.expenseDeleteItemMessage,
+      confirmLabel: l10n.delete,
+      cancelLabel: l10n.cancel,
     );
+    if (confirmed != true || !context.mounted) return;
+    try {
+      await ExpenseRepository.delete(expense.id, expense.groupId);
+      if (context.mounted) {
+        showSnackBar(context, l10n.expenseDeleteSuccess);
+      }
+    } catch (e) {
+      if (context.mounted) {
+        showSnackBar(context, l10n.expenseDeleteError);
+      }
+    } finally {
+      // Pop this read screen — the expense is gone.
+      if (context.mounted) Navigator.pop(context);
+    }
   }
 
   @override

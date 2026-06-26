@@ -416,6 +416,8 @@
   "@expenseEntrySharesValidationEmpty": {},
   "expenseDeleteItemTitle": "Delete this expense?",
   "@expenseDeleteItemTitle": {},
+  "expenseDeleteItemMessage": "This permanently removes the expense and updates everyone's balances. This can't be undone.",
+  "@expenseDeleteItemMessage": {},
   "expenseDeleteError": "Error while deleting expense!",
   "@expenseDeleteError": {},
   "expenseDeleteSuccess": "Expense deleted!",
