@@ -272,10 +272,15 @@ class _OwesRowState extends State<_OwesRow> {
             ),
           ),
           const SizedBox(width: 8),
-          OutlinedButton.icon(
+          // v3 (F59): plain gray tonal pill, no icon. surfaceContainer/onSurface
+          // map to the prototype's #F1EFE9 / #16181A and adapt in dark mode.
+          FilledButton(
             onPressed: _sending ? null : _remind,
-            icon: const Icon(Icons.notification_add_outlined, size: 18),
-            label: Text(l10n.paymentRemind),
+            style: FilledButton.styleFrom(
+              backgroundColor: Theme.of(context).colorScheme.surfaceContainer,
+              foregroundColor: Theme.of(context).colorScheme.onSurface,
+            ),
+            child: Text(l10n.paymentRemind),
           ),
         ],
       ),

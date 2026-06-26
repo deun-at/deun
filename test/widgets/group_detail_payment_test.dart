@@ -146,7 +146,8 @@ void main() {
 
     expect(find.text(l10n.paymentOwesYou), findsOneWidget);
     expect(find.text('Priya'), findsOneWidget);
-    expect(find.widgetWithText(OutlinedButton, l10n.paymentRemind), findsOneWidget);
+    // F59: Remind is a gray tonal FilledButton (no icon), not an outlined pill.
+    expect(find.widgetWithText(FilledButton, l10n.paymentRemind), findsOneWidget);
   });
 
   testWidgets('method-detail sheet shows only methods the payee has (PayPal present, IBAN absent)',
