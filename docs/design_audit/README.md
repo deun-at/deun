@@ -113,7 +113,7 @@ Captured via the new Chrome/web path (AUDIT round 3) — this is the one screen 
 
 ### Personal statistics (resolves F20)
 - [x] F68 · Personal statistics · Header title "Your Spending"; v3 is "Your statistics" 💅 — lib/pages/statistics (personal_statistics_page.dart:31, l10n.statisticsPersonalOverviewTitle) — target: "Your statistics" — ev: compare/compare_personal_stats.png ✅ 4260ece (statisticsPersonalOverviewTitle → "Your statistics"/"Deine Statistik", key used only here)
-- [ ] F69 · Personal statistics · Adds a 3M/6M/12M/All range segmented at top; v3 personal stats has no range control (DESIGN_SPEC §14) 💅 — lib/pages/statistics (personal_statistics_page.dart:41-50) — target: remove the range control here — ev: compare/compare_personal_stats.png
+- [x] F69 · Personal statistics · Adds a 3M/6M/12M/All range segmented at top; v3 personal stats has no range control (DESIGN_SPEC §14) 💅 — lib/pages/statistics (personal_statistics_page.dart:41-50) — target: remove the range control here — ev: compare/compare_personal_stats.png ✅ 804aa42 (removed range control; fixed StatsRange.sixMonths default, provider/query/charts unchanged)
 - F67 · Personal statistics · Screen hangs on an infinite spinner — RPC get_user_spending_summary returns HTTP 400 repeatedly so the body never renders 🔥 — personal_statistics_notifiers.dart:28 / Supabase rpc get_user_spending_summary — target: fix the 400 (UI error/empty states already exist) — ev: compare/compare_personal_stats.png ⛔ blocked — out of scope: backend/Supabase RPC bug, not a restyle. **Real bug — worth a separate fix task.**
 
 ### Tap to Claim (resolves F26)
