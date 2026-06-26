@@ -262,6 +262,7 @@
   "deleteAccountConfirmKeyword": "LÖSCHEN",
   "deleteAccountConfirmHint": "Gib {keyword} ein, um zu bestätigen",
   "create": "Erstellen",
+  "createGroup": "Gruppe erstellen",
   "cancel": "Abbrechen",
   "delete": "Löschen",
   "edit": "Bearbeiten",

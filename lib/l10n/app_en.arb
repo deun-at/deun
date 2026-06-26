@@ -1034,6 +1034,8 @@
   "@errorLoadingData": {},
   "create": "Create",
   "@create": {},
+  "createGroup": "Create group",
+  "@createGroup": {},
   "cancel": "Cancel",
   "@cancel": {},
   "delete": "Delete",

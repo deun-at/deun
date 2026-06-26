@@ -123,7 +123,7 @@ void main() {
     expect(find.text(l10n.groupTrackingModeDetailedTitle), findsOneWidget);
     // Sticky Create button (new group, not Save).
     expect(find.byType(PrimaryButton), findsOneWidget);
-    expect(find.text(l10n.create), findsOneWidget);
+    expect(find.text(l10n.createGroup), findsOneWidget);
   });
 
   testWidgets('shows Save button and the group name when editing', (tester) async {

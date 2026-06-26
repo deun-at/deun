@@ -121,7 +121,7 @@ class _GroupEditState extends ConsumerState<GroupEdit> {
                         ),
                       ),
                       _StickyFooter(
-                        label: _isEdit ? l10n.save : l10n.create,
+                        label: _isEdit ? l10n.save : l10n.createGroup,
                         isBusy: _isSaving,
                         onPressed: _save,
                         background: colorScheme.surface,
