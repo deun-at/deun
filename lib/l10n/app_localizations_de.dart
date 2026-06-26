@@ -178,6 +178,16 @@ class AppLocalizationsDe extends AppLocalizations {
   String get groupInviteLinkCopied => 'Link kopiert';
 
   @override
+  String get groupInviteSubtitle =>
+      'Jede Person mit diesem Link kann der Gruppe beitreten.';
+
+  @override
+  String get groupInviteShowQr => 'QR-Code anzeigen';
+
+  @override
+  String get groupInviteHideQr => 'QR-Code ausblenden';
+
+  @override
   String get groupInviteJoinTitle => 'Gruppe beitreten';
 
   @override

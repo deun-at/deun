@@ -56,26 +56,43 @@ void main() {
   });
 
   group('GroupInvitePage (restyled)', () {
-    testWidgets('renders inside a SheetScaffold with the QR, link and actions',
+    testWidgets(
+        'surfaces the link first with copy/share; QR is behind a toggle',
         (tester) async {
       await _pumpInvite(tester);
 
       expect(find.byType(SheetScaffold), findsOneWidget);
-      expect(find.byType(QrImageView), findsOneWidget);
 
       final l10n = AppLocalizations.of(
           tester.element(find.byType(GroupInvitePage)))!;
-      // The group link is shown in a copyable field.
+      // The link is the primary surface, with the join subtitle.
+      expect(find.text(l10n.groupInviteSubtitle), findsOneWidget);
       expect(find.textContaining('grp-123'), findsOneWidget);
       // Copy and Share controls render.
       expect(find.text(l10n.copyLink), findsOneWidget);
       expect(find.text(l10n.share), findsOneWidget);
+
+      // QR is secondary: hidden until the toggle is tapped.
+      expect(find.byType(QrImageView), findsNothing);
+      expect(find.text(l10n.groupInviteShowQr), findsOneWidget);
+
+      await tester.tap(find.text(l10n.groupInviteShowQr));
+      await tester.pumpAndSettle();
+
+      expect(find.byType(QrImageView), findsOneWidget);
+      expect(find.text(l10n.groupInviteHideQr), findsOneWidget);
     });
 
     testWidgets('renders in dark mode without throwing', (tester) async {
       await _pumpInvite(tester, brightness: Brightness.dark);
-      expect(find.byType(QrImageView), findsOneWidget);
       expect(find.byType(SheetScaffold), findsOneWidget);
+
+      final l10n = AppLocalizations.of(
+          tester.element(find.byType(GroupInvitePage)))!;
+      // Reveal the QR to exercise its dark-mode render path.
+      await tester.tap(find.text(l10n.groupInviteShowQr));
+      await tester.pumpAndSettle();
+      expect(find.byType(QrImageView), findsOneWidget);
     });
 
     testWidgets('tapping Copy writes the invite link to the clipboard',

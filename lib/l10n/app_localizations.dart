@@ -416,6 +416,24 @@ abstract class AppLocalizations {
   /// **'Link copied'**
   String get groupInviteLinkCopied;
 
+  /// No description provided for @groupInviteSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Anyone with this link can join the group.'**
+  String get groupInviteSubtitle;
+
+  /// No description provided for @groupInviteShowQr.
+  ///
+  /// In en, this message translates to:
+  /// **'Show QR code'**
+  String get groupInviteShowQr;
+
+  /// No description provided for @groupInviteHideQr.
+  ///
+  /// In en, this message translates to:
+  /// **'Hide QR code'**
+  String get groupInviteHideQr;
+
   /// No description provided for @groupInviteJoinTitle.
   ///
   /// In en, this message translates to:
