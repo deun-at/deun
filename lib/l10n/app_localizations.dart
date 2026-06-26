@@ -782,11 +782,11 @@ abstract class AppLocalizations {
   /// **'Per person'**
   String get claimPerMemberLabel;
 
-  /// Section label above the list of claimable items.
+  /// Uppercase caption above the list of claimable items on the Tap to Claim screen. Rendered in screaming caps via styling.
   ///
   /// In en, this message translates to:
-  /// **'Items'**
-  String get claimItemsLabel;
+  /// **'Tap to take what you had'**
+  String get claimItemsCaption;
 
   /// Chip text on an item that nobody has claimed yet.
   ///

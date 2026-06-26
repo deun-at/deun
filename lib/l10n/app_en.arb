@@ -337,9 +337,9 @@
   "@claimPerMemberLabel": {
     "description": "Section label above the per-member totals on the summary card."
   },
-  "claimItemsLabel": "Items",
-  "@claimItemsLabel": {
-    "description": "Section label above the list of claimable items."
+  "claimItemsCaption": "Tap to take what you had",
+  "@claimItemsCaption": {
+    "description": "Uppercase caption above the list of claimable items on the Tap to Claim screen. Rendered in screaming caps via styling."
   },
   "claimItemUnclaimed": "Unclaimed",
   "@claimItemUnclaimed": {

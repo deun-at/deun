@@ -381,7 +381,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get claimPerMemberLabel => 'Per person';
 
   @override
-  String get claimItemsLabel => 'Items';
+  String get claimItemsCaption => 'Tap to take what you had';
 
   @override
   String get claimItemUnclaimed => 'Unclaimed';

@@ -384,7 +384,7 @@ class AppLocalizationsDe extends AppLocalizations {
   String get claimPerMemberLabel => 'Pro Person';
 
   @override
-  String get claimItemsLabel => 'Positionen';
+  String get claimItemsCaption => 'Tippe, um zu nehmen, was du hattest';
 
   @override
   String get claimItemUnclaimed => 'Frei';

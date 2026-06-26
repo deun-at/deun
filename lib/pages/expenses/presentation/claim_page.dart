@@ -209,7 +209,7 @@ class _ClaimPageState extends ConsumerState<ClaimPage> {
                           ),
                         ],
                         const SizedBox(height: 24),
-                        SectionLabel(l10n.claimItemsLabel),
+                        _ItemsCaption(l10n.claimItemsCaption),
                         const SizedBox(height: 8),
                         _ItemList(
                           rows: rows,
@@ -535,6 +535,28 @@ class _MemberTotalChip extends StatelessWidget {
                 ?.copyWith(color: onHero, fontWeight: FontWeight.w700),
           ),
         ],
+      ),
+    );
+  }
+}
+
+/// Uppercase eyebrow caption above the item list (v3 "TAP TO TAKE WHAT YOU
+/// HAD"). Natural-case copy comes from l10n; the screaming caps are applied
+/// here via styling so the localized strings stay readable.
+class _ItemsCaption extends StatelessWidget {
+  const _ItemsCaption(this.label);
+
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Text(
+      label.toUpperCase(),
+      style: theme.textTheme.labelSmall?.copyWith(
+        color: theme.colorScheme.onSurfaceVariant,
+        fontWeight: FontWeight.w700,
+        letterSpacing: 0.5,
       ),
     );
   }

@@ -114,7 +114,7 @@
   "claimUnclaimedLabel": "Nicht beansprucht",
   "claimAllClaimed": "Alles beansprucht",
   "claimPerMemberLabel": "Pro Person",
-  "claimItemsLabel": "Positionen",
+  "claimItemsCaption": "Tippe, um zu nehmen, was du hattest",
   "claimItemUnclaimed": "Frei",
   "claimNoItems": "Diese Ausgabe hat keine beanspruchbaren Positionen.",
   "claimLoadError": "Diese Ausgabe konnte nicht geladen werden.",

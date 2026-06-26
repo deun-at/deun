@@ -272,7 +272,7 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(find.text(l10n.claimItemsLabel), findsOneWidget);
+    expect(find.text(l10n.claimItemsCaption.toUpperCase()), findsOneWidget);
     expect(find.text('Cheese'), findsOneWidget);
     expect(find.text('Wine'), findsOneWidget);
     expect(find.text('Bread'), findsOneWidget);
