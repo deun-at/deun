@@ -20,8 +20,10 @@ Settle up · Invite · **Tap to Claim** · Login · Reset password · Onboarding
 
 ---
 
-## Loop status — ▶ ACTIVE (round 3, 2026-06-26)
-3 AUDIT rounds + 17 FIX iterations. **15 fixed** (F01–F12, F14, F15, F16, F30, F32, F33), **3 blocked** (F13 false-positive, F31/F34 out-of-scope), **4 new open Login findings** (F35🔥 F36⚠️ F37⚠️ F38💅), **12 screens capture-pending** (F17–F26, F29). Round 3 switched app capture to **Chrome/Flutter-web via Playwright** — confirmed working (pointer events drive Flutter; the old adb-tap blocker is GONE). Login (the one pre-auth screen) is now audited → F35–F38. The remaining 12 screens are blocked only by **web auth**: drop a signed-in Playwright `storageState` at `tools/.web-auth.json` (or give the harness dev creds) and one more AUDIT finishes them. Suite green on clean build: **727 passing**.
+## Loop status — ⏸ STOPPED (round 3, 2026-06-26) — needs a web session to continue
+3 AUDIT rounds + 20 FIX iterations. **18 fixed** (F01–F12, F14, F15, F16, F30, F32, F33, F35, F37, F38), **4 blocked** (F13 false-positive; F31/F34 out-of-scope; F36 = net-new reset screen, needs greenlight), **11 screens capture-pending** (F17–F26, F29). Round 3 switched app capture to **Chrome/Flutter-web via Playwright** — confirmed working (pointer events drive Flutter; the adb-tap blocker is GONE). Login (the one pre-auth screen) is fully audited + fixed.
+
+**To finish:** the remaining 11 screens are blocked ONLY by **web auth** — the harness has no signed-in session (self-hosted backend, OAuth-only social login). Drop a valid signed-in Playwright `storageState` at `docs/design_audit/tools/.web-auth.json` (or give the harness dev email+password), then one AUDIT round captures all 11 and the loop resumes. Suite green on clean build: **727 passing**.
 
 ## Findings
 
