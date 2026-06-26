@@ -25,8 +25,8 @@ class DeunApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Deun',
-      theme: getThemeData(context, ColorSeed.blue.color, Brightness.light),
-      darkTheme: getThemeData(context, ColorSeed.blue.color, Brightness.dark),
+      theme: getThemeData(context, kBrandSeed, Brightness.light),
+      darkTheme: getThemeData(context, kBrandSeed, Brightness.dark),
       themeMode: ThemeMode.system,
       localizationsDelegates: AppLocalizations.localizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
