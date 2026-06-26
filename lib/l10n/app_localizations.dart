@@ -2289,7 +2289,7 @@ abstract class AppLocalizations {
   /// No description provided for @statisticsPersonalOverviewTitle.
   ///
   /// In en, this message translates to:
-  /// **'Your Spending'**
+  /// **'Your statistics'**
   String get statisticsPersonalOverviewTitle;
 
   /// No description provided for @statisticsPersonalOverviewEntry.

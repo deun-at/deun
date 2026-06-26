@@ -1335,7 +1335,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get statisticsCategoryBreakdown => 'Categories';
 
   @override
-  String get statisticsPersonalOverviewTitle => 'Your Spending';
+  String get statisticsPersonalOverviewTitle => 'Your statistics';
 
   @override
   String get statisticsPersonalOverviewEntry => 'Personal overview';
