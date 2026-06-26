@@ -10,6 +10,7 @@ import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'package:deun/main.dart' show supabase;
+import 'package:deun/widgets/restyle/primary_button.dart';
 
 /// Brand icon for a supported OAuth provider (font_awesome v11 `FaIconData`).
 FaIconData _brandIcon(OAuthProvider provider) => switch (provider) {
@@ -17,6 +18,15 @@ FaIconData _brandIcon(OAuthProvider provider) => switch (provider) {
       OAuthProvider.google => FontAwesomeIcons.google,
       OAuthProvider.github => FontAwesomeIcons.github,
       _ => FontAwesomeIcons.rightToBracket,
+    };
+
+/// Real brand color for a provider's mark on the white card. Google keeps its
+/// recognizable brand blue, GitHub/other render in the theme ink so they stay
+/// legible in both light and dark; Apple uses its own dark variant (see build).
+Color _brandColor(OAuthProvider provider, ColorScheme colorScheme) =>
+    switch (provider) {
+      OAuthProvider.google => const Color(0xFF4285F4), // Google brand blue
+      _ => colorScheme.onSurface,
     };
 
 /// Owned replacement for `supabase_auth_ui`'s `SupaSocialsAuth`.
@@ -170,22 +180,88 @@ class SocialAuthButtons extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         for (final provider in providers)
           Padding(
             padding: const EdgeInsets.symmetric(vertical: 6),
-            child: SizedBox(
-              height: 52,
-              child: OutlinedButton.icon(
-                onPressed: () => _onPressed(provider),
-                icon: FaIcon(_brandIcon(provider), size: 20),
-                label: Text(labels[provider] ?? provider.name),
-              ),
-            ),
+            child: provider == OAuthProvider.apple
+                ? _AppleButton(
+                    label: labels[provider] ?? provider.name,
+                    onPressed: () => _onPressed(provider),
+                  )
+                : SecondaryButton(
+                    onPressed: () => _onPressed(provider),
+                    label: labels[provider] ?? provider.name,
+                    alignStart: true,
+                    leading: FaIcon(
+                      _brandIcon(provider),
+                      size: 20,
+                      color: _brandColor(provider, colorScheme),
+                    ),
+                  ),
           ),
       ],
+    );
+  }
+}
+
+/// Apple's dark social-button variant (COMPONENTS §"Secondary / social
+/// buttons"): solid dark fill, white mark + label, no border. Mirrors
+/// [SecondaryButton]'s geometry (radius 15, vertical padding 15, w700 label,
+/// left-aligned mark with a 9px gap) so it sits flush with the white cards.
+class _AppleButton extends StatelessWidget {
+  const _AppleButton({required this.label, required this.onPressed});
+
+  final String label;
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    final textTheme = Theme.of(context).textTheme;
+    // Apple's mark/card stay brand-dark in both themes (brand identity), so the
+    // ink and white are fixed rather than theme-driven.
+    const ink = Color(0xFF16181A);
+    final labelStyle = (textTheme.bodyLarge ?? const TextStyle()).copyWith(
+      fontWeight: FontWeight.w700,
+      color: Colors.white,
+    );
+
+    return SizedBox(
+      width: double.infinity,
+      child: GestureDetector(
+        onTap: onPressed,
+        behavior: HitTestBehavior.opaque,
+        child: Container(
+          decoration: BoxDecoration(
+            color: ink,
+            borderRadius: BorderRadius.circular(15),
+          ),
+          padding: const EdgeInsets.symmetric(vertical: 15, horizontal: 16),
+          child: Align(
+            alignment: Alignment.centerLeft,
+            child: Row(
+              mainAxisSize: MainAxisSize.max,
+              children: [
+                const FaIcon(FontAwesomeIcons.apple,
+                    size: 20, color: Colors.white),
+                const SizedBox(width: 9),
+                Flexible(
+                  child: Text(
+                    label,
+                    style: labelStyle,
+                    maxLines: 1,
+                    softWrap: false,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
     );
   }
 }

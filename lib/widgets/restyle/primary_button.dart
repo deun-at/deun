@@ -172,12 +172,19 @@ class _PrimaryButtonState extends State<PrimaryButton> {
 ///
 /// Labels are kept to a single line ([Text.maxLines] == 1, no wrap) so localized
 /// strings like "Link kopieren" don't break across two lines in a tight row.
+///
+/// Social sign-in buttons (Google/GitHub) reuse this shape via [leading] (an
+/// untinted brand mark instead of the theme-tinted [icon]) and
+/// [alignStart] (left-aligned label per COMPONENTS §"Secondary / social
+/// buttons").
 class SecondaryButton extends StatefulWidget {
   const SecondaryButton({
     super.key,
     required this.onPressed,
     required this.label,
     this.icon,
+    this.leading,
+    this.alignStart = false,
     this.fullWidth = true,
   });
 
@@ -187,8 +194,18 @@ class SecondaryButton extends StatefulWidget {
   /// Button label text.
   final String label;
 
-  /// Optional leading icon shown to the left of the label.
+  /// Optional leading icon shown to the left of the label, tinted with the
+  /// theme's `onSurfaceVariant`. Use [leading] instead for an untinted widget
+  /// (e.g. a multicolor brand mark). Ignored when [leading] is set.
   final IconData? icon;
+
+  /// Optional untinted leading widget (e.g. a brand-colored icon) shown to the
+  /// left of the label. Takes precedence over [icon] and keeps its own color.
+  final Widget? leading;
+
+  /// When `true`, the leading mark + label are left-aligned (social-button
+  /// layout). Defaults to centered.
+  final bool alignStart;
 
   /// When `true` (the default), the button expands to fill its parent's width.
   final bool fullWidth;
@@ -238,13 +255,20 @@ class _SecondaryButtonState extends State<SecondaryButton> {
       overflow: TextOverflow.ellipsis,
     );
 
+    // Brand mark (untinted) takes precedence over the theme-tinted icon.
+    final Widget? mark = widget.leading ??
+        (widget.icon != null
+            ? Icon(widget.icon, size: 18, color: iconColor)
+            : null);
+
     Widget content;
-    if (widget.icon != null) {
+    if (mark != null) {
       content = Row(
-        mainAxisSize: MainAxisSize.min,
+        mainAxisSize:
+            widget.alignStart ? MainAxisSize.max : MainAxisSize.min,
         children: [
-          Icon(widget.icon, size: 18, color: iconColor),
-          const SizedBox(width: 8),
+          mark,
+          const SizedBox(width: 9),
           Flexible(child: label),
         ],
       );
@@ -261,8 +285,10 @@ class _SecondaryButtonState extends State<SecondaryButton> {
           borderRadius: BorderRadius.circular(15),
           border: Border.all(color: borderColor, width: 1.5),
         ),
-        padding: const EdgeInsets.symmetric(vertical: 15, horizontal: 12),
-        child: Center(child: content),
+        padding: const EdgeInsets.symmetric(vertical: 15, horizontal: 16),
+        child: widget.alignStart
+            ? Align(alignment: Alignment.centerLeft, child: content)
+            : Center(child: content),
       ),
     );
 

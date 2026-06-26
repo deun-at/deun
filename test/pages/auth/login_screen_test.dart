@@ -80,8 +80,19 @@ void main() {
     expect(find.text(l10n.authNameLabel), findsNothing);
     // Forgot-password link.
     expect(find.text(l10n.authForgotPassword), findsOneWidget);
-    // Social buttons present.
+    // Social buttons present, rendered as white SecondaryButton cards with a
+    // leading brand mark + the localized "Continue with …" labels (no M3
+    // OutlinedButton pills).
     expect(find.byType(SocialAuthButtons), findsOneWidget);
+    expect(find.byType(OutlinedButton), findsNothing);
+    expect(
+      find.widgetWithText(SecondaryButton, l10n.authContinueWithGoogle),
+      findsOneWidget,
+    );
+    expect(
+      find.widgetWithText(SecondaryButton, l10n.authContinueWithGithub),
+      findsOneWidget,
+    );
     // Primary submit reads "Log in".
     expect(find.widgetWithText(PrimaryButton, l10n.authLoginCta), findsOneWidget);
     // Mode-switch action to sign up.
