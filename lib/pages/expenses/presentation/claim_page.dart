@@ -389,15 +389,13 @@ class _SummaryCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
-    final colorScheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final semantic = Theme.of(context).extension<SemanticColors>()!;
 
-    // Same hero treatment as the group balance hero: tinted focal surface.
-    final Color heroSurface =
-        isDark ? colorScheme.primaryContainer : colorScheme.primary;
-    final Color onHero =
-        isDark ? colorScheme.onPrimaryContainer : colorScheme.onPrimary;
+    // DESIGN_SPEC §9: fixed dark-ink focal card (#16181A), not group-tinted —
+    // ink/onInk stay dark in both brightnesses.
+    final Color heroSurface = semantic.ink;
+    final Color onHero = semantic.onInk;
     final Color onHeroMuted = onHero.withValues(alpha: 0.7);
 
     return Container(
