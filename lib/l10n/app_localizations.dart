@@ -596,6 +596,30 @@ abstract class AppLocalizations {
   /// **'Your net'**
   String get expenseYourNetLabel;
 
+  /// Combined payer line on the expense detail summary card when the current user paid.
+  ///
+  /// In en, this message translates to:
+  /// **'You paid'**
+  String get expensePaidByYou;
+
+  /// Combined payer line on the expense detail summary card when someone else paid.
+  ///
+  /// In en, this message translates to:
+  /// **'{name} paid'**
+  String expensePaidByOther(String name);
+
+  /// Net phrase on the expense detail summary card when the user is owed for this expense.
+  ///
+  /// In en, this message translates to:
+  /// **'You lent {amount}'**
+  String expenseYouLentAmount(String amount);
+
+  /// Net phrase on the expense detail summary card when the user owes for this expense.
+  ///
+  /// In en, this message translates to:
+  /// **'You owe {amount}'**
+  String expenseYouOweAmount(String amount);
+
   /// Pill label on the expense detail summary card when the user is owed for this expense.
   ///
   /// In en, this message translates to:

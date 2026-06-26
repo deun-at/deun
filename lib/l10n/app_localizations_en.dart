@@ -279,6 +279,24 @@ class AppLocalizationsEn extends AppLocalizations {
   String get expenseYourNetLabel => 'Your net';
 
   @override
+  String get expensePaidByYou => 'You paid';
+
+  @override
+  String expensePaidByOther(String name) {
+    return '$name paid';
+  }
+
+  @override
+  String expenseYouLentAmount(String amount) {
+    return 'You lent $amount';
+  }
+
+  @override
+  String expenseYouOweAmount(String amount) {
+    return 'You owe $amount';
+  }
+
+  @override
   String get expenseYouLent => 'You lent';
 
   @override

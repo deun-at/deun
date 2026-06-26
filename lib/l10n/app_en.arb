@@ -212,6 +212,31 @@
   "@expenseYourNetLabel": {
     "description": "Label above the current user's net amount on the expense detail summary card."
   },
+  "expensePaidByYou": "You paid",
+  "@expensePaidByYou": {
+    "description": "Combined payer line on the expense detail summary card when the current user paid."
+  },
+  "expensePaidByOther": "{name} paid",
+  "@expensePaidByOther": {
+    "description": "Combined payer line on the expense detail summary card when someone else paid.",
+    "placeholders": {
+      "name": { "type": "String" }
+    }
+  },
+  "expenseYouLentAmount": "You lent {amount}",
+  "@expenseYouLentAmount": {
+    "description": "Net phrase on the expense detail summary card when the user is owed for this expense.",
+    "placeholders": {
+      "amount": { "type": "String" }
+    }
+  },
+  "expenseYouOweAmount": "You owe {amount}",
+  "@expenseYouOweAmount": {
+    "description": "Net phrase on the expense detail summary card when the user owes for this expense.",
+    "placeholders": {
+      "amount": { "type": "String" }
+    }
+  },
   "expenseYouLent": "You lent",
   "@expenseYouLent": {
     "description": "Pill label on the expense detail summary card when the user is owed for this expense."

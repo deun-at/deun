@@ -281,6 +281,24 @@ class AppLocalizationsDe extends AppLocalizations {
   String get expenseYourNetLabel => 'Dein Saldo';
 
   @override
+  String get expensePaidByYou => 'Du hast bezahlt';
+
+  @override
+  String expensePaidByOther(String name) {
+    return '$name hat bezahlt';
+  }
+
+  @override
+  String expenseYouLentAmount(String amount) {
+    return 'Du hast $amount ausgelegt';
+  }
+
+  @override
+  String expenseYouOweAmount(String amount) {
+    return 'Du schuldest $amount';
+  }
+
+  @override
   String get expenseYouLent => 'Du hast ausgelegt';
 
   @override

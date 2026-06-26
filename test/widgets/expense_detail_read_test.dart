@@ -130,8 +130,9 @@ void main() {
 
     expect(find.text('Dinner'), findsOneWidget);
     expect(find.text(l10n.toCurrency(20)), findsWidgets);
-    expect(find.text(l10n.expensePaidBy), findsWidgets);
-    expect(find.text(l10n.expenseYourNetLabel), findsOneWidget);
+    // Combined design_11 payer line: "{payer} paid" (no current auth user in
+    // the test harness, so the payer "Alice" is not "you").
+    expect(find.text(l10n.expensePaidByOther('Alice')), findsOneWidget);
     // Category tag.
     expect(find.text(ExpenseCategory.food.getDisplayName(l10n)), findsOneWidget);
     expect(find.text(l10n.expenseBreakdownLabel), findsOneWidget);

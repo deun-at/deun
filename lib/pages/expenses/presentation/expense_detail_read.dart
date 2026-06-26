@@ -161,6 +161,7 @@ class ExpenseDetailRead extends ConsumerWidget {
               _SummaryCard(
                 expense: expense,
                 payerName: _displayName(context, _findMember(expense.paidBy)),
+                payerIsYou: expense.paidBy == _currentUserEmail,
                 currentUserEmail: _currentUserEmail,
               ),
               if (isItemizedExpense(expense)) ...[
@@ -203,16 +204,19 @@ class ExpenseDetailRead extends ConsumerWidget {
 }
 
 /// Summary card: tinted category icon, title, "category · date" subtitle,
-/// total, payer row and the current user's net.
+/// total, and a single combined "{avatar} {payer} paid … {your net}" line
+/// (design_11).
 class _SummaryCard extends StatelessWidget {
   const _SummaryCard({
     required this.expense,
     required this.payerName,
+    required this.payerIsYou,
     required this.currentUserEmail,
   });
 
   final Expense expense;
   final String payerName;
+  final bool payerIsYou;
   final String? currentUserEmail;
 
   @override
@@ -278,10 +282,10 @@ class _SummaryCard extends StatelessWidget {
           const SizedBox(height: 16),
           Divider(height: 1, color: colorScheme.outlineVariant),
           const SizedBox(height: 14),
-          _PayerRow(payerName: payerName),
-          const SizedBox(height: 12),
-          _YourNetRow(
+          _PaidNetRow(
             expense: expense,
+            payerName: payerName,
+            payerIsYou: payerIsYou,
             currentUserEmail: currentUserEmail,
           ),
         ],
@@ -290,46 +294,21 @@ class _SummaryCard extends StatelessWidget {
   }
 }
 
-class _PayerRow extends StatelessWidget {
-  const _PayerRow({required this.payerName});
-
-  final String payerName;
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
-    final colorScheme = Theme.of(context).colorScheme;
-    final textTheme = Theme.of(context).textTheme;
-    return Row(
-      children: [
-        Icon(Icons.account_circle_outlined,
-            size: 20, color: colorScheme.onSurfaceVariant),
-        const SizedBox(width: 10),
-        Text(
-          l10n.expensePaidBy,
-          style: textTheme.bodyMedium
-              ?.copyWith(color: colorScheme.onSurfaceVariant),
-        ),
-        const Spacer(),
-        Text(
-          payerName,
-          style: textTheme.titleSmall
-              ?.copyWith(fontWeight: FontWeight.w600),
-        ),
-      ],
-    );
-  }
-}
-
-/// "Your net" row: lent (success) / owe (danger) / settled (neutral), derived
-/// from the existing share statistic — not recomputed.
-class _YourNetRow extends StatelessWidget {
-  const _YourNetRow({
+/// Single combined line (design_11): the payer's colored avatar + "{payer} paid"
+/// on the left, the current user's net phrase ("You lent €X" / "You owe €X" /
+/// "Settled") on the right. The net is derived from the existing share
+/// statistic — not recomputed.
+class _PaidNetRow extends StatelessWidget {
+  const _PaidNetRow({
     required this.expense,
+    required this.payerName,
+    required this.payerIsYou,
     required this.currentUserEmail,
   });
 
   final Expense expense;
+  final String payerName;
+  final bool payerIsYou;
   final String? currentUserEmail;
 
   @override
@@ -345,51 +324,47 @@ class _YourNetRow extends StatelessWidget {
     final net = breakdown.isEmpty ? 0.0 : breakdown.first.net;
     final isInvolved = breakdown.isNotEmpty;
 
-    final String label;
-    final MoneySemantic semantic;
+    final String netLabel;
+    final Color netColor;
     if (!isInvolved) {
-      label = l10n.expenseNoShares;
-      semantic = MoneySemantic.neutral;
+      netLabel = l10n.expenseNoShares;
+      netColor = colorScheme.onSurfaceVariant;
     } else if (net > 0.005) {
-      label = l10n.expenseYouLent;
-      semantic = MoneySemantic.positive;
+      netLabel = l10n.expenseYouLentAmount(l10n.toCurrency(net.abs()));
+      netColor = Theme.of(context).extension<SemanticColors>()!.success;
     } else if (net < -0.005) {
-      label = l10n.expenseYouOwe;
-      semantic = MoneySemantic.negative;
+      netLabel = l10n.expenseYouOweAmount(l10n.toCurrency(net.abs()));
+      netColor = Theme.of(context).extension<SemanticColors>()!.danger;
     } else {
-      label = l10n.expenseNetSettled;
-      semantic = MoneySemantic.neutral;
+      netLabel = l10n.expenseNetSettled;
+      netColor = colorScheme.onSurfaceVariant;
     }
 
     return Row(
       children: [
-        Icon(Icons.swap_horiz, size: 20, color: colorScheme.onSurfaceVariant),
-        const SizedBox(width: 10),
-        Text(
-          l10n.expenseYourNetLabel,
-          style: textTheme.bodyMedium
-              ?.copyWith(color: colorScheme.onSurfaceVariant),
+        MemberAvatar(
+          name: payerName,
+          colorKey: expense.paidBy ?? payerName,
+          radius: 12,
+          isYou: payerIsYou,
         ),
-        const Spacer(),
-        if (!isInvolved)
-          Text(
-            label,
-            style: textTheme.titleSmall
-                ?.copyWith(color: colorScheme.onSurfaceVariant),
-          )
-        else ...[
-          Text(
-            label,
+        const SizedBox(width: 8),
+        Flexible(
+          child: Text(
+            payerIsYou
+                ? l10n.expensePaidByYou
+                : l10n.expensePaidByOther(payerName),
             style: textTheme.bodyMedium
                 ?.copyWith(color: colorScheme.onSurfaceVariant),
+            overflow: TextOverflow.ellipsis,
           ),
-          const SizedBox(width: 8),
-          MoneyText(
-            net.abs(),
-            semantic: semantic,
-            style: textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700),
-          ),
-        ],
+        ),
+        const Spacer(),
+        Text(
+          netLabel,
+          style: textTheme.titleSmall
+              ?.copyWith(color: netColor, fontWeight: FontWeight.w700),
+        ),
       ],
     );
   }
