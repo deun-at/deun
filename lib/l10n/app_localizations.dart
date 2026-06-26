@@ -434,6 +434,18 @@ abstract class AppLocalizations {
   /// **'Hide QR code'**
   String get groupInviteHideQr;
 
+  /// No description provided for @inviteQrButton.
+  ///
+  /// In en, this message translates to:
+  /// **'QR'**
+  String get inviteQrButton;
+
+  /// No description provided for @inviteShareLink.
+  ///
+  /// In en, this message translates to:
+  /// **'Share link'**
+  String get inviteShareLink;
+
   /// No description provided for @groupInviteJoinTitle.
   ///
   /// In en, this message translates to:

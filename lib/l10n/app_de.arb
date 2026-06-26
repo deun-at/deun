@@ -56,6 +56,8 @@
   "groupInviteSubtitle": "Jede Person mit diesem Link kann der Gruppe beitreten.",
   "groupInviteShowQr": "QR-Code anzeigen",
   "groupInviteHideQr": "QR-Code ausblenden",
+  "inviteQrButton": "QR",
+  "inviteShareLink": "Link teilen",
   "groupInviteJoinTitle": "Gruppe beitreten",
   "groupInviteJoinSubtitle": "Tritt dieser Gruppe bei",
   "groupInviteJoinButton": "Gruppe beitreten",

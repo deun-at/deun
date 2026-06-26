@@ -188,6 +188,12 @@ class AppLocalizationsDe extends AppLocalizations {
   String get groupInviteHideQr => 'QR-Code ausblenden';
 
   @override
+  String get inviteQrButton => 'QR';
+
+  @override
+  String get inviteShareLink => 'Link teilen';
+
+  @override
   String get groupInviteJoinTitle => 'Gruppe beitreten';
 
   @override

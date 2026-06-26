@@ -68,19 +68,32 @@ void main() {
       // The link is the primary surface, with the join subtitle.
       expect(find.text(l10n.groupInviteSubtitle), findsOneWidget);
       expect(find.textContaining('grp-123'), findsOneWidget);
-      // Copy and Share controls render.
+      // Copy and the primary "Share link" controls render.
       expect(find.text(l10n.copyLink), findsOneWidget);
-      expect(find.text(l10n.share), findsOneWidget);
+      expect(find.text(l10n.inviteShareLink), findsOneWidget);
 
-      // QR is secondary: hidden until the toggle is tapped.
+      // QR is secondary: hidden until a toggle is tapped. Both the in-body
+      // "Show QR code" toggle and the footer "QR" button are present.
       expect(find.byType(QrImageView), findsNothing);
       expect(find.text(l10n.groupInviteShowQr), findsOneWidget);
+      expect(find.text(l10n.inviteQrButton), findsOneWidget);
 
       await tester.tap(find.text(l10n.groupInviteShowQr));
       await tester.pumpAndSettle();
 
       expect(find.byType(QrImageView), findsOneWidget);
       expect(find.text(l10n.groupInviteHideQr), findsOneWidget);
+    });
+
+    testWidgets('footer QR button reveals the QR code', (tester) async {
+      await _pumpInvite(tester);
+      final l10n = AppLocalizations.of(
+          tester.element(find.byType(GroupInvitePage)))!;
+
+      expect(find.byType(QrImageView), findsNothing);
+      await tester.tap(find.text(l10n.inviteQrButton));
+      await tester.pumpAndSettle();
+      expect(find.byType(QrImageView), findsOneWidget);
     });
 
     testWidgets('renders in dark mode without throwing', (tester) async {

@@ -51,13 +51,33 @@ class _GroupInvitePageState extends State<GroupInvitePage> {
         onPressed: () => Navigator.of(context).maybePop(),
         tooltip: MaterialLocalizations.of(context).closeButtonTooltip,
       ),
-      footer: PrimaryButton(
-        onPressed: () async {
-          await SharePlus.instance
-              .share(ShareParams(text: l10n.friendQrShareLink(linkText)));
-        },
-        icon: Icons.ios_share,
-        label: l10n.share,
+      // Footer action row (F62): a secondary "QR" button that toggles the same
+      // QR reveal as the in-body "Show QR code" control + an indigo "Share link"
+      // primary. flex 1:2 mirrors the v3 prototype's narrower QR / wider Share.
+      footer: Row(
+        children: [
+          Expanded(
+            child: SecondaryButton(
+              onPressed: () => setState(() => _showQr = !_showQr),
+              icon: Icons.qr_code_2,
+              label: l10n.inviteQrButton,
+              fullWidth: false,
+            ),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            flex: 2,
+            child: PrimaryButton(
+              onPressed: () async {
+                await SharePlus.instance
+                    .share(ShareParams(text: l10n.friendQrShareLink(linkText)));
+              },
+              icon: Icons.ios_share,
+              label: l10n.inviteShareLink,
+              fullWidth: false,
+            ),
+          ),
+        ],
       ),
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
