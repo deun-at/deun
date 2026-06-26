@@ -104,7 +104,7 @@ Captured via the new Chrome/web path (AUDIT round 3) — this is the one screen 
 
 ### Invite (resolves F25)
 - [x] F61 · Invite · Sheet surfaces the QR large by default ("Scan this QR code to join"); v3 surfaces the link first (link field + Copy) with QR behind a secondary toggle, subtitle "Anyone with this link can join the group." 💅 — lib/pages/groups/presentation/group_invite_page.dart:59-89 — target: link-first layout, QR secondary, v3 copy — ev: compare/compare_invite.png ✅ 6aef373 (link field + Copy first, subtitle added, QR behind "Show QR code" toggle; en+de)
-- [ ] F62 · Invite · Single full-width "Share" button; v3 pairs a secondary "QR" button + indigo "Share link" button in one row 💅 — lib/pages/groups/presentation/group_invite_page.dart:46-53 — target: QR + "Share link" button pair — ev: compare/compare_invite.png
+- [x] F62 · Invite · Single full-width "Share" button; v3 pairs a secondary "QR" button + indigo "Share link" button in one row 💅 — lib/pages/groups/presentation/group_invite_page.dart:46-53 — target: QR + "Share link" button pair — ev: compare/compare_invite.png ✅ 75a1eca (footer Row: secondary QR (drives F61 _showQr toggle) + primary Share link; en+de)
 
 ### Group statistics (resolves F19)
 - [ ] F65 · Group statistics · Avg/Expenses/Biggest shown as plain columns; v3 wraps each in a translucent chip tile 💅 — lib/pages/statistics (summary_section.dart:86-128 _MiniStat) — target: chip-tile summary stats — ev: compare/compare_group_stats.png
