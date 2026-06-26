@@ -743,6 +743,13 @@ class _ExpenseDetailState extends ConsumerState<ExpenseDetail> {
                             // Itemized layout: total-from-items header + Scan.
                             if (_isSingleEntry) ...[
                               const SizedBox(height: spacing * 2),
+                              CategorySelector(
+                                name: "category",
+                                compact: true,
+                                initialValue:
+                                    _detectedCategory ?? widget.expense?.category,
+                              ),
+                              const SizedBox(height: spacing * 2),
                               _buildExpenseLevelAmount(),
                             ] else ...[
                               const SizedBox(height: spacing * 2),
@@ -754,12 +761,13 @@ class _ExpenseDetailState extends ConsumerState<ExpenseDetail> {
                             _buildPaidBySelector(),
                             const SizedBox(height: spacing),
                             _buildDateSelector(),
-                            const SizedBox(height: spacing),
-                            CategorySelector(
-                              name: "category",
-                              initialValue: _detectedCategory ?? widget.expense?.category,
-                            ),
                             if (!_isSingleEntry) ...[
+                              const SizedBox(height: spacing),
+                              CategorySelector(
+                                name: "category",
+                                initialValue:
+                                    _detectedCategory ?? widget.expense?.category,
+                              ),
                               const SizedBox(height: spacing * 2),
                               SectionLabel(AppLocalizations.of(context)!.itemizedItemsLabel),
                             ],

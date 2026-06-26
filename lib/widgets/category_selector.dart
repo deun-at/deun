@@ -19,12 +19,18 @@ class CategorySelector extends StatefulWidget {
     this.initialValue,
     this.onChanged,
     this.enabled = true,
+    this.compact = false,
   });
 
   final String name;
   final ExpenseCategory? initialValue;
   final ValueChanged<ExpenseCategory?>? onChanged;
   final bool enabled;
+
+  /// When true, renders a centered category tile (tinted square icon + edit
+  /// badge) instead of the full-width row card. Used above the amount field in
+  /// the quick-split editor (v3 design_08/09).
+  final bool compact;
 
   @override
   State<CategorySelector> createState() => _CategorySelectorState();
@@ -69,20 +75,24 @@ class _CategorySelectorState extends State<CategorySelector> {
         // category is auto-detected from the title).
         final current = field.value ?? _selectedCategory!;
 
+        Future<void> openPicker() async {
+          final picked = await showCategoryGridSheet(context, selected: current);
+          if (picked != null) {
+            _selectCategory(picked);
+            field.didChange(picked);
+          }
+        }
+
+        if (widget.compact) {
+          return _CategoryTile(
+            category: current,
+            onTap: widget.enabled ? openPicker : null,
+          );
+        }
+
         return SoftCard(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-          onTap: widget.enabled
-              ? () async {
-                  final picked = await showCategoryGridSheet(
-                    context,
-                    selected: current,
-                  );
-                  if (picked != null) {
-                    _selectCategory(picked);
-                    field.didChange(picked);
-                  }
-                }
-              : null,
+          onTap: widget.enabled ? openPicker : null,
           child: Row(
             children: [
               _CategoryIcon(category: current),
@@ -115,6 +125,69 @@ class _CategorySelectorState extends State<CategorySelector> {
           ),
         );
       },
+    );
+  }
+}
+
+/// Centered, prominent category tile for the quick-split editor: a tinted
+/// 62×62 rounded square holding the category icon, with a small edit badge in
+/// the bottom-right corner (v3 design_08/09).
+class _CategoryTile extends StatelessWidget {
+  const _CategoryTile({required this.category, this.onTap});
+
+  final ExpenseCategory category;
+  final VoidCallback? onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final color = category.getColor(context);
+    return Center(
+      child: GestureDetector(
+        onTap: onTap,
+        behavior: HitTestBehavior.opaque,
+        child: SizedBox(
+          width: 70,
+          height: 70,
+          child: Stack(
+            clipBehavior: Clip.none,
+            children: [
+              Container(
+                width: 62,
+                height: 62,
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  color: color.withValues(alpha: 0.18),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Icon(category.getIcon(), color: color, size: 30),
+              ),
+              if (onTap != null)
+                Positioned(
+                  bottom: 0,
+                  right: 0,
+                  child: Container(
+                    width: 22,
+                    height: 22,
+                    decoration: BoxDecoration(
+                      color: colorScheme.surfaceContainerLowest,
+                      shape: BoxShape.circle,
+                      border: Border.all(color: colorScheme.outlineVariant, width: 1),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.10),
+                          blurRadius: 4,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
+                    ),
+                    child: Icon(Icons.edit, size: 14, color: colorScheme.onSurfaceVariant),
+                  ),
+                ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }

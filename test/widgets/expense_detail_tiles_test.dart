@@ -3,6 +3,7 @@ import 'package:deun/l10n/app_localizations.dart';
 import 'package:deun/pages/expenses/presentation/expense_detail.dart';
 import 'package:deun/pages/groups/data/group_member_model.dart';
 import 'package:deun/pages/groups/data/group_model.dart';
+import 'package:deun/widgets/category_selector.dart';
 import 'package:deun/widgets/restyle/expense_picker_sheets.dart';
 import 'package:deun/widgets/restyle/section_label.dart';
 import 'package:deun/widgets/restyle/soft_card.dart';
@@ -105,7 +106,9 @@ void main() {
     expect(find.byType(SectionLabel), findsWidgets);
     expect(find.text(l10n.expensePaidBy), findsWidgets);
     expect(find.text(l10n.expenseDate), findsOneWidget);
-    expect(find.text(l10n.categoryLabel), findsOneWidget);
+    // Quick mode surfaces the category as a centered compact tile above the
+    // amount (v3 design_08/09), not a labelled details row.
+    expect(find.byType(CategorySelector), findsOneWidget);
   });
 
   testWidgets('tapping the date tile opens the date options sheet',
@@ -113,6 +116,12 @@ void main() {
     await _pump(tester);
     final l10n = await AppLocalizations.delegate.load(const Locale('en'));
 
+    await tester.dragUntilVisible(
+      find.text(l10n.expenseDate),
+      find.byType(Scrollable).first,
+      const Offset(0, -120),
+    );
+    await tester.pumpAndSettle();
     await tester.tap(find.text(l10n.expenseDate));
     await tester.pumpAndSettle();
 
@@ -132,6 +141,12 @@ void main() {
     await _pump(tester);
     final l10n = await AppLocalizations.delegate.load(const Locale('en'));
 
+    await tester.dragUntilVisible(
+      find.text(l10n.expenseDate),
+      find.byType(Scrollable).first,
+      const Offset(0, -120),
+    );
+    await tester.pumpAndSettle();
     await tester.tap(find.text(l10n.expenseDate));
     await tester.pumpAndSettle();
     await tester.tap(find.text(l10n.datePickCustom));
