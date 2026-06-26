@@ -455,16 +455,27 @@ class _SummaryCard extends StatelessWidget {
               style: textTheme.labelMedium?.copyWith(color: onHeroMuted),
             ),
             const SizedBox(height: 10),
-            for (final m in summary.memberTotals) ...[
-              _MemberTotalRow(
-                name: displayName(m.email),
-                colorKey: m.email,
-                amount: m.amount,
-                isYou: m.email == currentUserEmail,
-                onHero: onHero,
+            // DESIGN_SPEC §9: per-member totals are a horizontal chip strip
+            // (avatar + name + total), not stacked rows — scrolls on overflow.
+            SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              clipBehavior: Clip.none,
+              child: Row(
+                children: [
+                  for (final m in summary.memberTotals) ...[
+                    _MemberTotalChip(
+                      name: displayName(m.email),
+                      colorKey: m.email,
+                      amount: m.amount,
+                      isYou: m.email == currentUserEmail,
+                      onHero: onHero,
+                    ),
+                    if (m != summary.memberTotals.last)
+                      const SizedBox(width: 8),
+                  ],
+                ],
               ),
-              if (m != summary.memberTotals.last) const SizedBox(height: 8),
-            ],
+            ),
           ],
         ],
       ),
@@ -472,8 +483,12 @@ class _SummaryCard extends StatelessWidget {
   }
 }
 
-class _MemberTotalRow extends StatelessWidget {
-  const _MemberTotalRow({
+/// One member's claim total as a compact chip in the horizontal per-member
+/// strip: avatar + name + total stacked, on a faint tinted background (the
+/// "you" accent for the current persona). Lives on the dark-ink hero card, so
+/// tints are keyed off [onHero] / primary and read correctly in both themes.
+class _MemberTotalChip extends StatelessWidget {
+  const _MemberTotalChip({
     required this.name,
     required this.colorKey,
     required this.amount,
@@ -490,24 +505,37 @@ class _MemberTotalRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
-    return Row(
-      children: [
-        MemberAvatar(name: name, colorKey: colorKey, radius: 14, isYou: isYou),
-        const SizedBox(width: 10),
-        Expanded(
-          child: Text(
+    final primary = Theme.of(context).colorScheme.primary;
+    final chipBg = isYou
+        ? primary.withValues(alpha: 0.22)
+        : onHero.withValues(alpha: 0.08);
+    return Container(
+      width: 92,
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
+      decoration: BoxDecoration(
+        color: chipBg,
+        borderRadius: BorderRadius.circular(14),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          MemberAvatar(name: name, colorKey: colorKey, radius: 14, isYou: isYou),
+          const SizedBox(height: 7),
+          Text(
             name,
-            style: textTheme.bodyMedium?.copyWith(color: onHero),
+            maxLines: 1,
             overflow: TextOverflow.ellipsis,
+            textAlign: TextAlign.center,
+            style: textTheme.bodySmall?.copyWith(color: onHero),
           ),
-        ),
-        const SizedBox(width: 10),
-        MoneyText(
-          amount,
-          style: textTheme.titleSmall
-              ?.copyWith(color: onHero, fontWeight: FontWeight.w700),
-        ),
-      ],
+          const SizedBox(height: 2),
+          MoneyText(
+            amount,
+            style: textTheme.titleSmall
+                ?.copyWith(color: onHero, fontWeight: FontWeight.w700),
+          ),
+        ],
+      ),
     );
   }
 }

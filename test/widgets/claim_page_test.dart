@@ -263,7 +263,13 @@ void main() {
     await _pump(tester, expense: _itemizedExpense());
 
     // The item area is below the fold of the lazily-built list — scroll it in.
-    await tester.scrollUntilVisible(find.text('Bread'), 200);
+    // The per-member strip adds its own horizontal Scrollable, so target the
+    // outer vertical ListView explicitly.
+    await tester.scrollUntilVisible(
+      find.text('Bread'),
+      200,
+      scrollable: find.byType(Scrollable).first,
+    );
     await tester.pumpAndSettle();
 
     expect(find.text(l10n.claimItemsLabel), findsOneWidget);
