@@ -5,7 +5,6 @@ import 'package:deun/helper/helper.dart';
 import 'package:deun/main.dart';
 import 'package:deun/pages/expenses/data/expense_model.dart';
 import 'package:deun/pages/expenses/data/expense_repository.dart';
-import 'package:deun/pages/groups/data/reminder_repository.dart';
 import 'package:deun/pages/groups/presentation/group_detail_list.dart';
 import 'package:deun/widgets/shimmer_card_list.dart';
 import 'package:flutter/foundation.dart';
@@ -28,7 +27,6 @@ import '../../../widgets/restyle/money_text.dart';
 import '../../../widgets/theme_builder.dart';
 import '../../groups/data/group_member_model.dart';
 import '../data/group_model.dart';
-import 'group_share_widget.dart';
 
 class GroupDetail extends ConsumerStatefulWidget {
   const GroupDetail({super.key, required this.group});
@@ -186,90 +184,6 @@ class _GroupDetailState extends ConsumerState<GroupDetail> {
                                       const SizedBox(height: 14),
                                       _GroupQuickActions(group: groupDetail),
                                       const SizedBox(height: 14),
-                                      GroupShareWidget(
-                                        group: groupDetail,
-                                        onRemind: (email) async {
-                                          try {
-                                            final lastReminder =
-                                                await ReminderRepository.getLastReminder(
-                                                  groupDetail.id,
-                                                  email,
-                                                );
-                                            if (lastReminder != null &&
-                                                DateTime.now()
-                                                        .difference(
-                                                          lastReminder,
-                                                        )
-                                                        .inHours <
-                                                    24) {
-                                              if (context.mounted) {
-                                                ScaffoldMessenger.of(
-                                                  context,
-                                                ).showSnackBar(
-                                                  SnackBar(
-                                                    content: Text(
-                                                      AppLocalizations.of(
-                                                        context,
-                                                      )!.reminderCooldown,
-                                                    ),
-                                                  ),
-                                                );
-                                              }
-                                              return;
-                                            }
-
-                                            await ReminderRepository.sendReminder(
-                                              groupDetail.id,
-                                              email,
-                                            );
-
-                                            if (context.mounted) {
-                                              sendPaymentReminderNotification(
-                                                context,
-                                                groupDetail.id,
-                                                {email},
-                                                groupDetail
-                                                        .groupSharesSummary[email]
-                                                        ?.shareAmount
-                                                        .abs() ??
-                                                    0,
-                                              );
-
-                                              final displayName =
-                                                  groupDetail
-                                                      .groupSharesSummary[email]
-                                                      ?.displayName ??
-                                                  email;
-                                              ScaffoldMessenger.of(
-                                                context,
-                                              ).showSnackBar(
-                                                SnackBar(
-                                                  content: Text(
-                                                    AppLocalizations.of(
-                                                      context,
-                                                    )!.reminderSent(
-                                                      displayName,
-                                                    ),
-                                                  ),
-                                                ),
-                                              );
-                                            }
-                                          } catch (e) {
-                                            debugPrint(
-                                              'Reminder failed for $email: $e',
-                                            );
-                                            if (context.mounted) {
-                                              showSnackBar(
-                                                context,
-                                                AppLocalizations.of(
-                                                  context,
-                                                )!.generalError,
-                                              );
-                                            }
-                                          }
-                                        },
-                                      ),
-                                      const SizedBox(height: 6),
                                       _buildExpenseSearch(context),
                                     ],
                                   ),

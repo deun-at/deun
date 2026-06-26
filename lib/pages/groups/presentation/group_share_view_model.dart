@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:deun/widgets/theme_builder.dart';
 
 /// Below this absolute amount a balance is treated as settled (mirrors the
-/// rounding threshold used throughout [GroupShareWidget]).
+/// rounding threshold used throughout group share displays).
 const double _settledThreshold = 0.005;
 
 /// Maps a share/balance [amount] to its semantic display color.
