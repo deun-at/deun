@@ -88,6 +88,7 @@ class StatsSummarySection extends ConsumerWidget {
                   Expanded(
                     child: _MiniStat(
                       label: l10n.statisticsAvgPerMonth,
+                      onHero: onHero,
                       onHeroMuted: onHeroMuted,
                       child: MoneyText(
                         s.avgPerMonth,
@@ -98,9 +99,11 @@ class StatsSummarySection extends ConsumerWidget {
                       ),
                     ),
                   ),
+                  const SizedBox(width: 8),
                   Expanded(
                     child: _MiniStat(
                       label: l10n.statisticsExpenseCount,
+                      onHero: onHero,
                       onHeroMuted: onHeroMuted,
                       child: Text(
                         s.expenseCount.toString(),
@@ -111,9 +114,11 @@ class StatsSummarySection extends ConsumerWidget {
                       ),
                     ),
                   ),
+                  const SizedBox(width: 8),
                   Expanded(
                     child: _MiniStat(
                       label: l10n.statisticsBiggestExpense,
+                      onHero: onHero,
                       onHeroMuted: onHeroMuted,
                       child: MoneyText(
                         s.biggestExpense,
@@ -135,21 +140,33 @@ class StatsSummarySection extends ConsumerWidget {
 }
 
 class _MiniStat extends StatelessWidget {
-  const _MiniStat({required this.label, required this.onHeroMuted, required this.child});
+  const _MiniStat({required this.label, required this.onHero, required this.onHeroMuted, required this.child});
   final String label;
+  final Color onHero;
   final Color onHeroMuted;
   final Widget child;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(label, style: theme.textTheme.labelSmall?.copyWith(color: onHeroMuted)),
-        const SizedBox(height: 2),
-        child,
-      ],
+    // v3 wraps each summary stat in a translucent chip tile sitting on the
+    // group-tinted hero. The fill derives from the on-hero color (like
+    // _DeltaChip) so it stays legible in both light and dark group themes —
+    // never a hard-coded prototype hex.
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 9),
+      decoration: BoxDecoration(
+        color: onHero.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(13),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(label, style: theme.textTheme.labelSmall?.copyWith(color: onHeroMuted)),
+          const SizedBox(height: 2),
+          child,
+        ],
+      ),
     );
   }
 }
