@@ -103,7 +103,7 @@ Captured via the new Chrome/web path (AUDIT round 3) — this is the one screen 
 - F58 · Settle up · Implemented as a modal bottom sheet (close X); v3 (DESIGN_SPEC §10) is a full drill-down screen with back-arrow header ⚠️ — navigation.dart:221-228 (ModalBottomSheetPage) / group_detail_payment.dart — target: full page — ev: compare/compare_settle_up.png ⛔ blocked — out of scope: sheet→full-page is nav/routing re-architecture.
 
 ### Invite (resolves F25)
-- [ ] F61 · Invite · Sheet surfaces the QR large by default ("Scan this QR code to join"); v3 surfaces the link first (link field + Copy) with QR behind a secondary toggle, subtitle "Anyone with this link can join the group." 💅 — lib/pages/groups/presentation/group_invite_page.dart:59-89 — target: link-first layout, QR secondary, v3 copy — ev: compare/compare_invite.png
+- [x] F61 · Invite · Sheet surfaces the QR large by default ("Scan this QR code to join"); v3 surfaces the link first (link field + Copy) with QR behind a secondary toggle, subtitle "Anyone with this link can join the group." 💅 — lib/pages/groups/presentation/group_invite_page.dart:59-89 — target: link-first layout, QR secondary, v3 copy — ev: compare/compare_invite.png ✅ 6aef373 (link field + Copy first, subtitle added, QR behind "Show QR code" toggle; en+de)
 - [ ] F62 · Invite · Single full-width "Share" button; v3 pairs a secondary "QR" button + indigo "Share link" button in one row 💅 — lib/pages/groups/presentation/group_invite_page.dart:46-53 — target: QR + "Share link" button pair — ev: compare/compare_invite.png
 
 ### Group statistics (resolves F19)
