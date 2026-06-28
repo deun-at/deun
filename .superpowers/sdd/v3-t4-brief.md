@@ -5,7 +5,7 @@ package (already a dependency, added in V3-T1). Currently the go_router child ro
 (default MaterialPage transition) and the 3 home tabs use `NoTransitionPage`.
 
 ## Source of truth
-`docs/design_handoff_updated/ANIMATIONS.md` **§1 "Screen transitions — Material shared-axis"**:
+`docs/design_handoff/ANIMATIONS.md` **§1 "Screen transitions — Material shared-axis"**:
 - Forward (deeper): translateX(28) scale(.985) + fade → rest, **0.36s** `Cubic(0.2,0.8,0.2,1)`.
 - Back (shallower): translateX(-24) scale(.985) + fade, 0.36s.
 - Tab switch (home tabs, same depth): translateY(8) + fade, 0.26s ease.

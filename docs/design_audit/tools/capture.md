@@ -3,12 +3,12 @@
 Produces the screenshots + composites the loop reasons over. **No app-code edits here.**
 App: **Flutter web in Chrome via Playwright** (real pointer events — unlike `adb input tap`, which
 this build's gesture arena ignores on device, so the group flow was unreachable). Mobile viewport
-**390×844**. Prototype: `../../design_handoff_updated/Deun Redesign v3.dc.html`.
+**390×844**. Prototype: `../../design_handoff/Deun Redesign v3.dc.html`.
 Test group for any group navigation / writes: **hans** (never touch real groups).
 
 ## 1. Prototype (design side → `../design/`)
 ```bash
-node tools/serve.js ../../design_handoff_updated 8731   # from docs/design_audit/
+node tools/serve.js ../../design_handoff 8731   # from docs/design_audit/
 ```
 - Playwright: open `http://localhost:8731/Deun%20Redesign%20v3.dc.html`, resize ~820×1000.
 - The phone frame renders one screen at a time (React/DC runtime). Navigate with the bottom

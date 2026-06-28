@@ -1,7 +1,7 @@
 # Deun Redesign — Design Spec (visual reference)
 
 The exact visual/behavioral reference for the redesign. Pairs with `README.md` (codebase map + rules) and
-`ROADMAP.md` (tasks). Source of truth for pixels/copy: the interactive prototype `Deun Redesign v2.dc.html`.
+`ROADMAP.md` (tasks). Source of truth for pixels/copy: the interactive prototype `Deun Redesign v3.dc.html`.
 
 > **Implementation note:** values below are the *target design*. In the Flutter app, express them through
 > `ThemeData`/`ColorScheme` + theme extensions (see README "Theme & tokens"), not hard-coded hex in widgets,
@@ -100,7 +100,7 @@ Three home tabs in a bottom `NavigationBar` (already built in `navigation.dart`)
 with back-arrow app bars; pickers/confirms are bottom sheets over a scrim. Active accent `#5750E6`, inactive `#ADA99F`.
 
 ## Screens / Views
-Open `Deun Redesign v2.dc.html` to interact. Each screen's existing Flutter file is in README's screen→code map.
+Open `Deun Redesign v3.dc.html` to interact. Each screen's existing Flutter file is in README's screen→code map.
 
 1. **Login / Sign-up** — app icon (`call_split`), title ("Welcome back"/"Create your account"), social buttons
    (Apple dark / Google / GitHub), divider, email+password (+name on signup), forgot-password (login), primary

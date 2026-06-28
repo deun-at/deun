@@ -2,12 +2,38 @@
 
 ## Overview
 This is a **visual + UX redesign of the existing Deun Flutter app** — not a new build. The prototype
-(`Deun Redesign v2.dc.html`) shows the target look and the flows; the app already implements almost all of
+(`Deun Redesign v3.dc.html`) shows the target look and the flows; the app already implements almost all of
 this functionality. The job is mostly **restyling existing screens** to the prototype's design language,
-plus one genuinely new feature (**Tap to Claim**).
+plus one genuinely new feature (**Tap to Claim**) and the **motion layer** added in v3.
 
-Read this together with `ROADMAP.md` (the task breakdown) and `DESIGN_SPEC.md` (the visual reference:
-tokens, per-screen layouts, copy). This file maps the prototype onto your actual code and states the rules.
+Read this together with `ROADMAP.md` (the task breakdown), `DESIGN_SPEC.md` (the visual reference:
+tokens, per-screen layouts, copy), `ANIMATIONS.md` (the v3 motion layer), and `COMPONENTS.md` (buttons /
+headers / bottom sheets — the de-Materialize specifics). This file maps the prototype onto your actual code
+and states the rules.
+
+> **⚠ This is an iterative, in-progress redesign — not a finished spec.** The earlier per-screen restyles
+> partly landed; the redesign is **still being refactored**. Treat the prototype as the source of truth and
+> **continue refactoring the UI toward it** — expect further direction in the coding session beyond what's
+> written here. `v2 → v3` are minor visual deltas plus the **new motion layer** (`ANIMATIONS.md`); the latest
+> file (`Deun Redesign v3.dc.html`) always wins over older notes if they disagree.
+
+## What's new since the last handoff (v3)
+- **Motion layer** — Material shared-axis screen transitions, staggered list entrance, count-up amounts,
+  success pop+ring, chart/progress grow, and a springy **sliding tab pill**. Full spec + Flutter mapping in
+  **`ANIMATIONS.md`**. (Expands `ROADMAP.md` task `E8-T3 Motion`.)
+- **De-Materialize specifics for buttons, app headers, and bottom sheets** — exact target widgets (build them
+  custom, don't style Material) in **`COMPONENTS.md`**. Complements `THEME_AUDIT.md` (which covers the other
+  un-themed stock components).
+- **Tab pill reconciliation:** v3 re-introduces a *custom* sliding accent-tint pill behind the active tab.
+  `THEME_AUDIT.md`'s "kill the pill" still applies to the **M3 tonal pill** — kill that, then draw the custom
+  one (see `ANIMATIONS.md §6`).
+- **Header titles are centered** (between two 38×38 side slots) — this supersedes the earlier
+  `centerTitle:false` suggestion in `THEME_AUDIT.md` (see `COMPONENTS.md §2`).
+
+> **If the build "still looks like Material Design," read `THEME_AUDIT.md` first.** The per-screen restyles
+> landed; the remaining Material feel comes from stock components (bottom nav bar, switches, snackbars,
+> inputs, cards, checkboxes) that were never given a component theme. `THEME_AUDIT.md` is the fix (task
+> **E0-T5**): the missing `*ThemeData` blocks with exact values + a verification checklist.
 
 ## ⚠️ Corrections to a generic handoff (read first)
 The prototype is a self-contained mock; several things it *appears* to introduce **already exist** in the
@@ -140,7 +166,15 @@ to emit per-unit entries. This is the only task that touches the backend; everyt
 
 ## Files in this bundle
 - `README.md` — this file (codebase map + rules + decisions).
+- `THEME_AUDIT.md` — **why it still looks Material + the de-Materialize fix** (task E0-T5): the component
+  themes that were never overridden, exact Flutter values, layout-bug suspects, and a verification checklist.
+- `COMPONENTS.md` — **buttons, app headers, and bottom sheets** built as custom widgets (the "don't look
+  Material" specifics), with exact v3 values + Flutter guidance.
+- `ANIMATIONS.md` — **the v3 motion layer** (shared-axis transitions, staggered lists, count-up, success
+  pop+ring, chart grow, sliding tab pill) mapped to Flutter.
 - `DESIGN_SPEC.md` — the visual reference (tokens, every screen's layout & copy, state, interactions).
 - `ROADMAP.md` — restyle + build tasks, sequenced for autonomous coding loops, each pointing at the file to edit.
-- `Deun Redesign v2.dc.html` + `support.js` — the interactive prototype. Open in a browser (keep them together)
-  to click through every flow. It's a **reference**, not code to port.
+- `BACKLOG.md` — the single list of everything **not yet done**: post-release bugs, deferred (out-of-scope)
+  audit findings, and capture-pending screens. (Done history stays in `ROADMAP.md` + `../design_audit/README.md`.)
+- `Deun Redesign v3.dc.html` + `support.js` — the interactive prototype. Open in a browser (keep them together)
+  to click through every flow and see all the v3 motion. It's a **reference**, not code to port.

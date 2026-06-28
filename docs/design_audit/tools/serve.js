@@ -1,7 +1,7 @@
 // docs/design_audit/tools/serve.js
 // Tiny static file server for the design-audit harness (Playwright blocks file://).
 // Usage: node serve.js <root-dir> <port>
-//   node serve.js ../../design_handoff_updated 8731   # prototype
+//   node serve.js ../../design_handoff 8731   # prototype
 //   node serve.js .. 8732                              # design_audit (for _build.html composites)
 const http = require('http'), fs = require('fs'), path = require('path');
 const root = process.argv[2] || '.';

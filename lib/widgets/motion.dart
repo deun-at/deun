@@ -1,7 +1,7 @@
 /// Motion constants for the Deun v3 animation layer.
 ///
 /// All curves and durations are transcribed verbatim from
-/// `docs/design_handoff_updated/ANIMATIONS.md`.  Import this file once;
+/// `docs/design_handoff/ANIMATIONS.md`.  Import this file once;
 /// never inline magic cubic-bezier values or millisecond literals in
 /// feature code.
 ///

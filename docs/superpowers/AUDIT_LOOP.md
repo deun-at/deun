@@ -26,8 +26,8 @@ similar enough (no 🔥/⚠️ deltas left). Best run in its own clean session.
 |---|---|
 | Source of truth | [`docs/design_audit/README.md`](../design_audit/README.md) — severity-tagged Findings. Open = `- [ ]`; done = `- [x] … ✅ <SHA>`; blocked = `⛔ blocked — <reason>`. |
 | Severity | 🔥 high · ⚠️ medium · 💅 low. |
-| Design ref | prototype [`docs/design_handoff_updated/Deun Redesign v3.dc.html`](../design_handoff_updated/Deun%20Redesign%20v3.dc.html), open in a browser. |
-| Locked spec | [`DESIGN_SPEC.md`](../design_handoff_updated/DESIGN_SPEC.md) + [`COMPONENTS.md`](../design_handoff_updated/COMPONENTS.md) (tokens/layouts/copy). |
+| Design ref | prototype [`docs/design_handoff/Deun Redesign v3.dc.html`](../design_handoff/Deun%20Redesign%20v3.dc.html), open in a browser. |
+| Locked spec | [`DESIGN_SPEC.md`](../design_handoff/DESIGN_SPEC.md) + [`COMPONENTS.md`](../design_handoff/COMPONENTS.md) (tokens/layouts/copy). |
 | Orchestration | thin orchestrator dispatches **one subagent per iteration**; sequential; images/source never enter the orchestrator context. |
 | FIX subagent | reproduces against v3, implements (theme-level where possible), uses `superpowers:systematic-debugging` + `superpowers:verification-before-completion`, commits, returns `SHA + one line + PASS/BLOCKED`. |
 | AUDIT subagent | captures app (**Flutter web in Chrome via Playwright**, mobile 390×844, auth + self-heal) + prototype via [`docs/design_audit/tools/capture.md`](../design_audit/tools/capture.md), regenerates composites, returns a **text** findings list (no images). Web is authoritative for layout/structure/color/type/copy; final light+dark pixel sign-off stays on the phone. |
@@ -49,7 +49,7 @@ subagents). Do exactly one of:
 
 1. FIX — if there's an open `- [ ]` item: take the highest-severity one (🔥 → ⚠️ → 💅; ties top-to-bottom).
    Dispatch ONE subagent with this brief: "Fix <the finding, verbatim>. Reproduce against the v3 prototype
-   docs/design_handoff_updated/Deun Redesign v3.dc.html; pull exact tokens from DESIGN_SPEC.md /
+   docs/design_handoff/Deun Redesign v3.dc.html; pull exact tokens from DESIGN_SPEC.md /
    COMPONENTS.md. Implement THEME-LEVEL where possible (so it propagates), per-widget only where the
    prototype diverges from a themeable default. Rules: colors via SemanticColors / theme extensions (never
    hard-code prototype hex); all visible copy via AppLocalizations (add en+de); reuse existing providers and
@@ -81,7 +81,7 @@ subagents). Do exactly one of:
    images. Flag any screen you cannot reach as `⏳ capture-pending`."
    Then run the TRIAGE GATE before anything enters the FIX queue: dispatch ONE triage subagent with the raw
    findings list and this brief: "For each finding, verify against the rendered v3 prototype
-   (docs/design_handoff_updated/Deun Redesign v3.dc.html) + DESIGN_SPEC.md / COMPONENTS.md and return a
+   (docs/design_handoff/Deun Redesign v3.dc.html) + DESIGN_SPEC.md / COMPONENTS.md and return a
    verdict line per finding: REAL+IN-SCOPE | FALSE(<why>) | OUT-OF-SCOPE(<why>). REAL = the app genuinely
    diverges from v3 (not an audit misread — check direction/above-below/which-element). OUT-OF-SCOPE = fixing
    it needs a new screen/route, changed Supabase queries/*SelectString, removed/added real data or
