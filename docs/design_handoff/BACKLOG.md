@@ -67,9 +67,11 @@ Surfaced by the design audit, intentionally **not** fixed because each needs a n
 query/schema change, added/removed real data, or a nav re-architecture — beyond a restyle. Full context per id
 is in [`../design_audit/README.md`](../design_audit/README.md).
 
-- **F67 · Personal statistics 🔥** — screen hangs on an infinite spinner: RPC `get_user_spending_summary`
-  returns HTTP 400 repeatedly so the body never renders. **Real backend bug — best candidate for a separate
-  fix task.** (`personal_statistics_notifiers.dart:28`.)
+- ~~**F67 · Personal statistics 🔥**~~ — ✅ **FIXED** (migration `20260628000000_fix_spending_summary_color_bigint.sql`).
+  Root cause: `get_user_spending_summary` declared its return column `color_value int`, but `group.color_value`
+  holds a 32-bit ARGB color (e.g. 4282339765) that overflows int4 → Postgres `22003 integer out of range` → the
+  400 → infinite spinner. Fix widened the return column to `bigint` (drop+recreate; body unchanged; no Dart
+  change — client reads `num`). Verified live: RPC now returns `HTTP 200` with rows.
 - **F36 · Reset password ⚠️** — no dedicated reset screen; recovery is an inline link + snackbar on Login.
   v3 wants a full screen (back / title / subtitle / email / "Send reset link"). Net-new screen + route.
 - **F58 · Settle up ⚠️** — implemented as a modal bottom sheet; v3 (DESIGN_SPEC §10) is a full drill-down
