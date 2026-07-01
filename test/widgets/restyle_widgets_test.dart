@@ -330,6 +330,26 @@ void main() {
       await tester.pumpAndSettle();
       expect(changed, 'b');
     });
+
+    testWidgets('long labels in a narrow width ellipsize instead of overflowing', (tester) async {
+      // Regression: claim page feeds member display names as labels — 7 long
+      // names on a phone width overflowed the segment rows (F79).
+      await _pump(
+        tester,
+        SizedBox(
+          width: 400,
+          child: AppSegmentedControl<int>(
+            value: 0,
+            segments: [
+              for (var i = 0; i < 7; i++)
+                AppSegment(value: i, label: 'way tooooo long this name and so on $i'),
+            ],
+            onChanged: (_) {},
+          ),
+        ),
+      );
+      expect(tester.takeException(), isNull);
+    });
   });
 
   group('StepperControl', () {

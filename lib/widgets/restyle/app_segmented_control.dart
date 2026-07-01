@@ -95,11 +95,15 @@ class _Segment<T> extends StatelessWidget {
               Icon(segment.icon, size: 16, color: foreground),
               const SizedBox(width: 6),
             ],
-            Text(
-              segment.label,
-              style: labelStyle?.copyWith(
-                color: foreground,
-                fontWeight: selected ? FontWeight.w600 : FontWeight.w500,
+            Flexible(
+              child: Text(
+                segment.label,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: labelStyle?.copyWith(
+                  color: foreground,
+                  fontWeight: selected ? FontWeight.w600 : FontWeight.w500,
+                ),
               ),
             ),
           ],
