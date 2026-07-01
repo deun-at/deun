@@ -3,8 +3,8 @@ import 'package:deun/pages/expenses/data/split_mode.dart';
 
 void main() {
   group('SplitMode.fromString', () {
-    test('"equal" → amount', () {
-      expect(SplitMode.fromString('equal'), SplitMode.amount);
+    test('"equal" → equal', () {
+      expect(SplitMode.fromString('equal'), SplitMode.equal);
     });
 
     test('"exact" → amount', () {
@@ -19,16 +19,20 @@ void main() {
       expect(SplitMode.fromString('shares'), SplitMode.shares);
     });
 
-    test('null → amount (default)', () {
-      expect(SplitMode.fromString(null), SplitMode.amount);
+    test('null → equal (default)', () {
+      expect(SplitMode.fromString(null), SplitMode.equal);
     });
 
-    test('unknown string → amount (default)', () {
-      expect(SplitMode.fromString('unknown'), SplitMode.amount);
+    test('unknown string → equal (default)', () {
+      expect(SplitMode.fromString('unknown'), SplitMode.equal);
     });
   });
 
   group('SplitMode.toDbValue', () {
+    test('equal → "equal"', () {
+      expect(SplitMode.equal.toDbValue(), 'equal');
+    });
+
     test('amount → "exact"', () {
       expect(SplitMode.amount.toDbValue(), 'exact');
     });

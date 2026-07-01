@@ -1429,10 +1429,21 @@ class AppLocalizationsEn extends AppLocalizations {
   String get splitModeAmount => 'Amount';
 
   @override
+  String get splitModeEqual => 'Equal';
+
+  @override
+  String get splitModeExact => 'Exact';
+
+  @override
   String get splitModePercentage => '%';
 
   @override
-  String get splitModeShares => 'Parts';
+  String get splitModeShares => 'Shares';
+
+  @override
+  String splitEqualSummary(String amount) {
+    return '$amount each';
+  }
 
   @override
   String get splitEquallyLabel => 'Split equally';

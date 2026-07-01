@@ -90,7 +90,9 @@ class _ExpenseEntryWidgetState extends State<ExpenseEntryWidget> {
     String amountStr = widget.initialAmount ??
         (widget.expenseEntry.expenseEntryShares.isNotEmpty
             ? widget.expenseEntry.unitPrice.toStringAsFixed(2)
-            : "0");
+            // Single-entry mode: seed from the expense-level amount so the
+            // split previews are correct before the first keystroke.
+            : (widget.expenseLevelAmountController?.text ?? "0"));
     _unitPrice = double.tryParse(amountStr) ?? 0;
 
     // Initialize enabled members
@@ -143,6 +145,9 @@ class _ExpenseEntryWidgetState extends State<ExpenseEntryWidget> {
     if (_enabledMembers.isEmpty) return;
 
     switch (_splitMode) {
+      case SplitMode.equal:
+        // Equal derives everything from total / included count on the fly.
+        break;
       case SplitMode.amount:
         _recalculateAmounts();
         break;
@@ -234,6 +239,13 @@ class _ExpenseEntryWidgetState extends State<ExpenseEntryWidget> {
     Map<String, dynamic> data = {};
     for (var email in _enabledMembers) {
       switch (_splitMode) {
+        case SplitMode.equal:
+          // Value is informational only — the save path ('equal' branch in
+          // ExpenseRepository) derives percentage = 100 / member count.
+          data[email] = _enabledMembers.isEmpty
+              ? 0.0
+              : roundCurrency(_entryTotal / _enabledMembers.length);
+          break;
         case SplitMode.amount:
           data[email] = _memberAmounts[email] ?? 0.0;
           break;
@@ -276,12 +288,13 @@ class _ExpenseEntryWidgetState extends State<ExpenseEntryWidget> {
             // Row 2: Amount + quantity
             _buildAmountQuantityRow(l10n),
             const SizedBox(height: spacing * 2),
-            // Row 3: Split section — label + 3-way mode selector
-            SectionLabel(l10n.splitSectionLabel),
-            const SizedBox(height: spacing),
-            _buildSplitModeSelector(l10n),
-            const SizedBox(height: spacing),
           ],
+          // Split section — label + 4-way mode selector (Equal/Shares/%/Exact).
+          // Shown on quick split too, per DESIGN_SPEC §8 (F105).
+          SectionLabel(l10n.splitSectionLabel),
+          const SizedBox(height: spacing),
+          _buildSplitModeSelector(l10n),
+          const SizedBox(height: spacing),
           // Row 4: Member list with inputs
           _buildMemberList(spacing, l10n),
           // Hidden form fields for data submission
@@ -460,9 +473,10 @@ class _ExpenseEntryWidgetState extends State<ExpenseEntryWidget> {
     return AppSegmentedControl<SplitMode>(
       value: _splitMode,
       segments: [
-        AppSegment(value: SplitMode.amount, label: l10n.splitModeAmount),
-        AppSegment(value: SplitMode.percentage, label: l10n.splitModePercentage),
+        AppSegment(value: SplitMode.equal, label: l10n.splitModeEqual),
         AppSegment(value: SplitMode.shares, label: l10n.splitModeShares),
+        AppSegment(value: SplitMode.percentage, label: l10n.splitModePercentage),
+        AppSegment(value: SplitMode.amount, label: l10n.splitModeExact),
       ],
       onChanged: (SplitMode selected) {
         setState(() {
@@ -488,6 +502,9 @@ class _ExpenseEntryWidgetState extends State<ExpenseEntryWidget> {
   bool _isSplitValid() {
     if (_enabledMembers.isEmpty) return false;
     switch (_splitMode) {
+      case SplitMode.equal:
+        // Equal is always fully allocated over the included members.
+        return true;
       case SplitMode.amount:
         double sum = _enabledMembers.fold(
             0.0, (s, email) => s + (_memberAmounts[email] ?? 0));
@@ -535,6 +552,7 @@ class _ExpenseEntryWidgetState extends State<ExpenseEntryWidget> {
                   return l10n.splitPercentageError;
                 case SplitMode.amount:
                   return l10n.splitAmountError;
+                case SplitMode.equal:
                 case SplitMode.shares:
                   return l10n.expenseEntrySharesValidationEmpty;
               }
@@ -646,44 +664,45 @@ class _ExpenseEntryWidgetState extends State<ExpenseEntryWidget> {
             ),
           ),
           // Input area — fixed width to prevent layout shifts
-          if (!widget.isSingleEntry)
-            isEnabled
-                ? Row(
-                    mainAxisSize: MainAxisSize.min,
-                    mainAxisAlignment: MainAxisAlignment.end,
-                    children: [
-                      // Non-equal modes use a ± stepper (which also shows the
-                      // current value); amount mode keeps the editable field.
-                      if (_splitMode == SplitMode.amount) ...[
-                        _buildMemberInput(member.email),
-                        if (isLocked)
-                          Padding(
-                            padding: const EdgeInsets.only(left: 2),
-                            child: Icon(Icons.lock_outline,
-                                size: 14,
-                                color: Theme.of(context).colorScheme.outline),
-                          ),
-                      ] else ...[
+          isEnabled
+              ? Row(
+                  mainAxisSize: MainAxisSize.min,
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    // Exact (amount) mode keeps the editable field; shares/%
+                    // use a ± stepper; equal shows just the per-head amount.
+                    if (_splitMode == SplitMode.amount) ...[
+                      _buildMemberInput(member.email),
+                      if (isLocked)
+                        Padding(
+                          padding: const EdgeInsets.only(left: 2),
+                          child: Icon(Icons.lock_outline,
+                              size: 14,
+                              color: Theme.of(context).colorScheme.outline),
+                        ),
+                    ] else ...[
+                      if (_splitMode != SplitMode.equal) ...[
                         _buildMemberStepper(member.email),
                         const SizedBox(width: 6),
-                        // € preview for percentage and parts mode
-                        SizedBox(
-                          width: 52,
-                          child: MoneyText(
-                            double.parse(_getAmountPreview(member.email)),
-                            style: Theme.of(context)
-                                .textTheme
-                                .bodySmall
-                                ?.copyWith(
-                                  color: Theme.of(context).colorScheme.outline,
-                                ),
-                            textAlign: TextAlign.end,
-                          ),
-                        ),
                       ],
+                      // € preview for equal, percentage and parts mode
+                      SizedBox(
+                        width: 52,
+                        child: MoneyText(
+                          double.parse(_getAmountPreview(member.email)),
+                          style: Theme.of(context)
+                              .textTheme
+                              .bodySmall
+                              ?.copyWith(
+                                color: Theme.of(context).colorScheme.outline,
+                              ),
+                          textAlign: TextAlign.end,
+                        ),
+                      ),
                     ],
-                  )
-                : const SizedBox.shrink(),
+                  ],
+                )
+              : const SizedBox.shrink(),
         ],
       ),
     );
@@ -694,6 +713,10 @@ class _ExpenseEntryWidgetState extends State<ExpenseEntryWidget> {
   /// runs the existing recalculation path so the split math is unchanged.
   Widget _buildMemberStepper(String email) {
     switch (_splitMode) {
+      case SplitMode.equal:
+        // Equal has no per-member control — never reached (guarded in
+        // _buildMemberRow).
+        return const SizedBox.shrink();
       case SplitMode.shares:
         final parts = _memberParts[email] ?? 1;
         return StepperControl(
@@ -755,6 +778,8 @@ class _ExpenseEntryWidgetState extends State<ExpenseEntryWidget> {
     for (var email in _enabledMembers) {
       if (_lockedMembers.contains(email)) continue;
       switch (_splitMode) {
+        case SplitMode.equal:
+          break; // No per-member text inputs in equal mode
         case SplitMode.amount:
           String key = "amount_${widget.index}_$email";
           String newVal = (_memberAmounts[email] ?? 0).toStringAsFixed(2);
@@ -779,6 +804,10 @@ class _ExpenseEntryWidgetState extends State<ExpenseEntryWidget> {
 
   Widget _buildMemberInput(String email) {
     switch (_splitMode) {
+      case SplitMode.equal:
+        // Equal has no editable input — never reached (guarded in
+        // _buildMemberRow).
+        return const SizedBox.shrink();
       case SplitMode.amount:
         double val = _memberAmounts[email] ?? 0;
         String ctrlKey = "amount_${widget.index}_$email";
@@ -894,6 +923,11 @@ class _ExpenseEntryWidgetState extends State<ExpenseEntryWidget> {
   String _getAmountPreview(String email) {
     double preview = 0;
     switch (_splitMode) {
+      case SplitMode.equal:
+        preview = _enabledMembers.isNotEmpty
+            ? _entryTotal / _enabledMembers.length
+            : 0;
+        break;
       case SplitMode.percentage:
         double pct = _memberPercentages[email] ?? 0;
         preview = _entryTotal * pct / 100;
@@ -987,6 +1021,11 @@ class _ExpenseEntryWidgetState extends State<ExpenseEntryWidget> {
   /// The left-side detail of the allocation row (allocated / target).
   String _allocationDetail(AppLocalizations l10n) {
     switch (_splitMode) {
+      case SplitMode.equal:
+        final each = _enabledMembers.isNotEmpty
+            ? _entryTotal / _enabledMembers.length
+            : 0.0;
+        return l10n.splitEqualSummary(l10n.toCurrency(each));
       case SplitMode.amount:
         final sum = _enabledMembers.fold<double>(
             0, (s, e) => s + (_memberAmounts[e] ?? 0));

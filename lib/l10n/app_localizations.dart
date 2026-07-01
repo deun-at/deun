@@ -2442,6 +2442,18 @@ abstract class AppLocalizations {
   /// **'Amount'**
   String get splitModeAmount;
 
+  /// No description provided for @splitModeEqual.
+  ///
+  /// In en, this message translates to:
+  /// **'Equal'**
+  String get splitModeEqual;
+
+  /// No description provided for @splitModeExact.
+  ///
+  /// In en, this message translates to:
+  /// **'Exact'**
+  String get splitModeExact;
+
   /// No description provided for @splitModePercentage.
   ///
   /// In en, this message translates to:
@@ -2451,8 +2463,14 @@ abstract class AppLocalizations {
   /// No description provided for @splitModeShares.
   ///
   /// In en, this message translates to:
-  /// **'Parts'**
+  /// **'Shares'**
   String get splitModeShares;
+
+  /// No description provided for @splitEqualSummary.
+  ///
+  /// In en, this message translates to:
+  /// **'{amount} each'**
+  String splitEqualSummary(String amount);
 
   /// No description provided for @splitEquallyLabel.
   ///

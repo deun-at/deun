@@ -46,6 +46,14 @@ class SplitAllocation {
     }
 
     switch (mode) {
+      case SplitMode.equal:
+        // Equal always allocates fully across the included members.
+        return const SplitAllocation(
+          status: AllocationStatus.ok,
+          fraction: 1.0,
+          remaining: 0,
+        );
+
       case SplitMode.amount:
         final sum = enabled.fold<double>(0, (s, e) => s + (amounts[e] ?? 0));
         final diff = roundCurrency(sum) - roundCurrency(total);

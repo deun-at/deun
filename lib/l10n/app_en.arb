@@ -1306,10 +1306,22 @@
   "@receiptScanRetake": {},
   "splitModeAmount": "Amount",
   "@splitModeAmount": {},
+  "splitModeEqual": "Equal",
+  "@splitModeEqual": {},
+  "splitModeExact": "Exact",
+  "@splitModeExact": {},
   "splitModePercentage": "%",
   "@splitModePercentage": {},
-  "splitModeShares": "Parts",
+  "splitModeShares": "Shares",
   "@splitModeShares": {},
+  "splitEqualSummary": "{amount} each",
+  "@splitEqualSummary": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
   "splitEquallyLabel": "Split equally",
   "@splitEquallyLabel": {},
   "splitByAmountLabel": "Split by exact amounts",

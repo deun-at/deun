@@ -31,6 +31,8 @@ Future<void> _pump(
   WidgetTester tester, {
   Brightness brightness = Brightness.light,
   String? initialAmount = '12.00',
+  bool isSingleEntry = false,
+  TextEditingController? expenseLevelAmountController,
 }) async {
   final members = [
     _member('a@test.com', 'Alice'),
@@ -61,6 +63,8 @@ Future<void> _pump(
                     onRemove: () {},
                     groupMembers: members,
                     initialAmount: initialAmount,
+                    isSingleEntry: isSingleEntry,
+                    expenseLevelAmountController: expenseLevelAmountController,
                   ),
                 ),
               ),
@@ -96,9 +100,80 @@ void main() {
     await Supabase.instance.dispose();
   });
 
-  testWidgets('renders the 3-way SplitMode segmented control', (tester) async {
+  testWidgets('renders the 4-way SplitMode segmented control (Equal/Shares/%/Exact)',
+      (tester) async {
     await _pump(tester);
+    final l10n = await AppLocalizations.delegate.load(const Locale('en'));
+
     expect(find.byType(AppSegmentedControl<SplitMode>), findsOneWidget);
+    expect(find.text(l10n.splitModeEqual), findsOneWidget);
+    expect(find.text(l10n.splitModeShares), findsOneWidget);
+    expect(find.text(l10n.splitModePercentage), findsOneWidget);
+    expect(find.text(l10n.splitModeExact), findsOneWidget);
+  });
+
+  testWidgets('quick split (single entry) also shows the split-mode selector',
+      (tester) async {
+    final controller = TextEditingController(text: '12.00');
+    addTearDown(controller.dispose);
+    await _pump(
+      tester,
+      initialAmount: null,
+      isSingleEntry: true,
+      expenseLevelAmountController: controller,
+    );
+    final l10n = await AppLocalizations.delegate.load(const Locale('en'));
+
+    expect(find.byType(AppSegmentedControl<SplitMode>), findsOneWidget);
+    expect(find.text(l10n.splitModeEqual), findsOneWidget);
+    expect(find.text(l10n.splitModeExact), findsOneWidget);
+  });
+
+  testWidgets('Equal mode splits the total evenly across included members',
+      (tester) async {
+    final controller = TextEditingController(text: '12.00');
+    addTearDown(controller.dispose);
+    await _pump(
+      tester,
+      initialAmount: null,
+      isSingleEntry: true,
+      expenseLevelAmountController: controller,
+    );
+    final l10n = await AppLocalizations.delegate.load(const Locale('en'));
+
+    // Default mode is Equal: €12 over 2 members → €6.00 each, no steppers.
+    expect(find.byType(StepperControl), findsNothing);
+    expect(find.text(l10n.toCurrency(6)), findsNWidgets(2));
+    expect(find.text(l10n.splitEqualSummary(l10n.toCurrency(6))), findsOneWidget);
+
+    // Unchecking a member re-splits over the remaining one.
+    await tester.tap(find.byType(Checkbox).first);
+    await tester.pumpAndSettle();
+    expect(find.text(l10n.toCurrency(12)), findsOneWidget);
+  });
+
+  testWidgets('Exact mode shows editable per-member amount fields on quick split',
+      (tester) async {
+    final controller = TextEditingController(text: '12.00');
+    addTearDown(controller.dispose);
+    await _pump(
+      tester,
+      initialAmount: null,
+      isSingleEntry: true,
+      expenseLevelAmountController: controller,
+    );
+    final l10n = await AppLocalizations.delegate.load(const Locale('en'));
+
+    await tester.tap(find.text(l10n.splitModeExact));
+    await tester.pumpAndSettle();
+
+    // Exact seeds each member with an equal share, editable per member.
+    expect(find.widgetWithText(TextFormField, '6.00'), findsNWidgets(2));
+
+    // Editing one member locks it and rebalances the other.
+    await tester.enterText(find.widgetWithText(TextFormField, '6.00').first, '9.00');
+    await tester.pumpAndSettle();
+    expect(find.widgetWithText(TextFormField, '3.00'), findsOneWidget);
   });
 
   testWidgets('renders an allocation ProgressBar and member avatars', (tester) async {
@@ -107,11 +182,11 @@ void main() {
     expect(find.byType(MemberAvatar), findsNWidgets(2));
   });
 
-  testWidgets('switching to Parts mode shows steppers', (tester) async {
+  testWidgets('switching to Shares mode shows steppers', (tester) async {
     await _pump(tester);
     final l10n = await AppLocalizations.delegate.load(const Locale('en'));
 
-    // No steppers in default (amount) mode.
+    // No steppers in default (equal) mode.
     expect(find.byType(StepperControl), findsNothing);
 
     await tester.tap(find.text(l10n.splitModeShares));

@@ -3,6 +3,35 @@ import 'package:deun/pages/expenses/data/split_allocation.dart';
 import 'package:deun/pages/expenses/data/split_mode.dart';
 
 void main() {
+  group('SplitAllocation.compute — equal mode', () {
+    test('any included members → ok, fraction 1', () {
+      final a = SplitAllocation.compute(
+        mode: SplitMode.equal,
+        total: 12,
+        amounts: {},
+        percentages: {},
+        parts: {},
+        enabled: {'a', 'b'},
+      );
+      expect(a.status, AllocationStatus.ok);
+      expect(a.fraction, 1.0);
+      expect(a.remaining, 0);
+    });
+
+    test('no members enabled → under', () {
+      final a = SplitAllocation.compute(
+        mode: SplitMode.equal,
+        total: 12,
+        amounts: {},
+        percentages: {},
+        parts: {},
+        enabled: {},
+      );
+      expect(a.status, AllocationStatus.under);
+      expect(a.fraction, 0.0);
+    });
+  });
+
   group('SplitAllocation.compute — amount mode', () {
     test('fully allocated → ok, fraction 1.0', () {
       final a = SplitAllocation.compute(
