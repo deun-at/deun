@@ -152,6 +152,44 @@ void main() {
     expect(find.text(l10n.toCurrency(12)), findsOneWidget);
   });
 
+  testWidgets('unchecked member shows "Not in" and no amount (F108)',
+      (tester) async {
+    final controller = TextEditingController(text: '12.00');
+    addTearDown(controller.dispose);
+    await _pump(
+      tester,
+      initialAmount: null,
+      isSingleEntry: true,
+      expenseLevelAmountController: controller,
+    );
+    final l10n = await AppLocalizations.delegate.load(const Locale('en'));
+
+    // Both members in: no "Not in", two €6.00 amounts.
+    expect(find.text(l10n.splitNotInLabel), findsNothing);
+    expect(find.text(l10n.toCurrency(6)), findsNWidgets(2));
+
+    // Uncheck Alice: her row shows "Not in", no €6.00 remains, and Bob's
+    // per-head amount recalculates to the full €12.00.
+    await tester.tap(find.byType(Checkbox).first);
+    await tester.pumpAndSettle();
+
+    expect(find.text(l10n.splitNotInLabel), findsOneWidget);
+    expect(find.text(l10n.toCurrency(6)), findsNothing);
+    expect(find.text(l10n.toCurrency(12)), findsOneWidget);
+
+    // Re-check: back to two equal shares, "Not in" gone.
+    await tester.tap(find.byType(Checkbox).first);
+    await tester.pumpAndSettle();
+    expect(find.text(l10n.splitNotInLabel), findsNothing);
+    expect(find.text(l10n.toCurrency(6)), findsNWidgets(2));
+  });
+
+  testWidgets('include toggle uses a round (circle) shape', (tester) async {
+    await _pump(tester);
+    final checkbox = tester.widget<Checkbox>(find.byType(Checkbox).first);
+    expect(checkbox.shape, isA<CircleBorder>());
+  });
+
   testWidgets('Exact mode shows editable per-member amount fields on quick split',
       (tester) async {
     final controller = TextEditingController(text: '12.00');

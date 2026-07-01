@@ -396,6 +396,7 @@
   "splitModeExact": "Exakt",
   "splitModePercentage": "%",
   "splitModeShares": "Anteile",
+  "splitNotInLabel": "Nicht dabei",
   "splitEqualSummary": "{amount} pro Person",
   "splitEquallyLabel": "Gleichmäßig aufgeteilt",
   "splitByAmountLabel": "Nach genauen Beträgen aufgeteilt",

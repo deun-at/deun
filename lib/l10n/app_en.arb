@@ -1314,6 +1314,8 @@
   "@splitModePercentage": {},
   "splitModeShares": "Shares",
   "@splitModeShares": {},
+  "splitNotInLabel": "Not in",
+  "@splitNotInLabel": {},
   "splitEqualSummary": "{amount} each",
   "@splitEqualSummary": {
     "placeholders": {

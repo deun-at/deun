@@ -2466,6 +2466,12 @@ abstract class AppLocalizations {
   /// **'Shares'**
   String get splitModeShares;
 
+  /// No description provided for @splitNotInLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Not in'**
+  String get splitNotInLabel;
+
   /// No description provided for @splitEqualSummary.
   ///
   /// In en, this message translates to:

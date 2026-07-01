@@ -1441,6 +1441,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get splitModeShares => 'Shares';
 
   @override
+  String get splitNotInLabel => 'Not in';
+
+  @override
   String splitEqualSummary(String amount) {
     return '$amount each';
   }

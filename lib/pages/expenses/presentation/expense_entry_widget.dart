@@ -621,10 +621,12 @@ class _ExpenseEntryWidgetState extends State<ExpenseEntryWidget> {
       padding: const EdgeInsets.symmetric(vertical: 2),
       child: Row(
         children: [
-          // Checkbox
+          // Round include-toggle: unchecked = empty circle (prototype
+          // "not in" state, F108). Full theme-level round checkbox is F107.
           SizedBox(
             width: 32,
             child: Checkbox(
+              shape: const CircleBorder(),
               value: isEnabled,
               onChanged: (bool? value) {
                 setState(() {
@@ -702,7 +704,14 @@ class _ExpenseEntryWidgetState extends State<ExpenseEntryWidget> {
                     ],
                   ],
                 )
-              : const SizedBox.shrink(),
+              // Excluded members show a muted "Not in" instead of an amount.
+              : Text(
+                  AppLocalizations.of(context)!.splitNotInLabel,
+                  style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                        color: Theme.of(context).colorScheme.outline,
+                        fontWeight: FontWeight.w600,
+                      ),
+                ),
         ],
       ),
     );

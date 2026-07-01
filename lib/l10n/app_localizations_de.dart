@@ -1471,6 +1471,9 @@ class AppLocalizationsDe extends AppLocalizations {
   String get splitModeShares => 'Anteile';
 
   @override
+  String get splitNotInLabel => 'Nicht dabei';
+
+  @override
   String splitEqualSummary(String amount) {
     return '$amount pro Person';
   }
