@@ -87,7 +87,7 @@
   "itemizedItemsLabel": "Artikel",
   "itemizedTotalFromItems": "{count, plural, =0{Noch keine Artikel} =1{Summe aus 1 Artikel} other{Summe aus {count} Artikeln}}",
   "addItemByHand": "Artikel manuell hinzufügen",
-  "itemizedInfoCallout": "Aufgeschlüsselte Ausgaben können geteilt werden, damit jede Person die Artikel beansprucht, die sie hatte. Der Anteil jeder Person ergibt sich aus dem, was sie beansprucht.",
+  "itemizedInfoCallout": "Nach dem Teilen beanspruchen die Mitglieder ihre eigenen Artikel – allein oder aufgeteilt, pro Stück.",
   "expenseSaveAndShareForClaiming": "Hinzufügen & zum Beanspruchen teilen",
   "expenseDetailTitle": "Ausgabe",
   "expenseDetailTitleNew": "Neue Ausgabe",

@@ -38,6 +38,26 @@ void main() {
       expect(out['expense_entry[2][claimable]'], isTrue);
     });
 
+    test('notifyEmails writes each entry\'s shares set for notifications', () {
+      final form = {
+        'expense_entry[0][amount]': '5.00',
+        'expense_entry[1][amount]': '8.50',
+      };
+      final emails = {'a@test.com', 'b@test.com'};
+
+      final out = markEntriesClaimable(form, notifyEmails: emails);
+
+      expect(out['expense_entry[0][shares]'], emails);
+      expect(out['expense_entry[1][shares]'], emails);
+      expect(out['expense_entry[0][claimable]'], isTrue);
+      expect(out['expense_entry[1][claimable]'], isTrue);
+    });
+
+    test('without notifyEmails no shares keys are added', () {
+      final out = markEntriesClaimable({'expense_entry[0][amount]': '5.00'});
+      expect(out.containsKey('expense_entry[0][shares]'), isFalse);
+    });
+
     test('no entries → no claimable keys added', () {
       final form = {'name': 'Shop'};
       final out = markEntriesClaimable(form);

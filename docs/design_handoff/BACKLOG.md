@@ -44,18 +44,22 @@ epic. Evidence: the custom widget library `lib/widgets/restyle/` (`primary_butto
 plus findings F30/F14/F37/F39/F40/F51/F77 and tasks E0-T5 (THEME_AUDIT) + V3-T1…T10. The `StadiumBorder`
 entries remaining in `theme_builder.dart` are FABs + balance pills, which I-3a explicitly says to keep stadium.
 
-### I-4 · "Claim items" doesn't toggle the split view in the expense editor 🔥 · 🔴 open
+### I-4 · "Claim items" doesn't toggle the split view in the expense editor 🔥 · ✅ RESOLVED by F118
 - **Screen:** expense editor (`expense_entry_widget.dart`), Quick/Itemized (split↔items) mode toggle bound to
   the entry-count-derived mode (`AppSegmentedControl` / editor mode).
 - **Symptom:** "claim items" does not switch the view as it should.
-- **Repro:** use the **hans** group (exact steps to pin during investigation).
+- **Resolution (2026-07-02):** F118 removed the per-item split UI entirely — the Itemized tab *is* the
+  claim-items view now (item cards only; Quick keeps the split section). Toggle verified on web (hans),
+  light + dark. See `../design_audit/plans/f118_itemized_claim_model.md`.
 
-### I-5 · Edit-expense Save vs "Add & share for claiming" behave inconsistently 🔥 · 🔴 open
+### I-5 · Edit-expense Save vs "Add & share for claiming" behave inconsistently 🔥 · ✅ RESOLVED by F118
 - **Screen:** editor save path + `claimable:true` wiring (`markEntriesClaimable`,
   `expense_repository.saveAll` auto-explode of itemized lines).
 - **Symptom:** editing an expense's items, then **Save** vs the **"Add & share for claiming"** ("hand off")
   CTA do different / wrong things — the two paths diverge incorrectly.
-- **Repro:** use the **hans** group (exact steps to pin during investigation).
+- **Resolution (2026-07-02):** the itemized tab now has a single CTA — "Add & share for claiming"
+  (`claimable:true`); the pinned footer Save renders in Quick mode only, so the diverging plain-save path
+  no longer exists. End-to-end share flow verified in hans (create → tap-to-claim units → delete).
 
 > **Splitting math (Equal/%/shares/exact, rounding, locked shares, per-unit claim):** a code-level review was
 > in progress; append any confirmed bug here with repro + numbers before fixing.

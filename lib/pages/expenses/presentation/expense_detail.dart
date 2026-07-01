@@ -661,7 +661,12 @@ class _ExpenseDetailState extends ConsumerState<ExpenseDetail> {
     if (_formKey.currentState!.saveAndValidate()) {
       try {
         final formValue = claimable
-            ? markEntriesClaimable(_formKey.currentState!.value)
+            ? markEntriesClaimable(
+                _formKey.currentState!.value,
+                // Share with the whole group so everyone is notified that
+                // there are items to claim (claim units start unclaimed).
+                notifyEmails: groupMembers.map((m) => m.email).toSet(),
+              )
             : _formKey.currentState!.value;
         await ExpenseRepository.saveAll(context, widget.group.id, widget.expense?.id, formValue);
         if (context.mounted) {
@@ -820,12 +825,12 @@ class _ExpenseDetailState extends ConsumerState<ExpenseDetail> {
                         const SizedBox(height: spacing * 2),
                         Padding(
                           padding: const EdgeInsets.symmetric(horizontal: 16),
+                          // Single itemized CTA: items are always shared for
+                          // claiming (F118) — no diverging plain-save path.
                           child: PrimaryButton(
                             onPressed: () => _saveExpense(context, claimable: true),
-                            label: widget.expense != null
-                                ? AppLocalizations.of(context)!.save
-                                : AppLocalizations.of(context)!
-                                    .expenseSaveAndShareForClaiming,
+                            label: AppLocalizations.of(context)!
+                                .expenseSaveAndShareForClaiming,
                           ),
                         ),
                       ],
@@ -836,17 +841,20 @@ class _ExpenseDetailState extends ConsumerState<ExpenseDetail> {
                     ],
                   ),
                 ),
-                // Save footer: pinned below the scrollable body.
-                Builder(
-                  builder: (context) => Container(
-                    color: colorScheme.surface,
-                    padding: const EdgeInsets.fromLTRB(20, 14, 20, 20),
-                    child: PrimaryButton(
-                      onPressed: () => _saveExpense(context),
-                      label: AppLocalizations.of(context)!.save,
+                // Save footer: pinned below the scrollable body. Quick mode
+                // only — the itemized tab has a single share-for-claiming CTA
+                // inline (F118), so no second, diverging save path.
+                if (_isSingleEntry)
+                  Builder(
+                    builder: (context) => Container(
+                      color: colorScheme.surface,
+                      padding: const EdgeInsets.fromLTRB(20, 14, 20, 20),
+                      child: PrimaryButton(
+                        onPressed: () => _saveExpense(context),
+                        label: AppLocalizations.of(context)!.save,
+                      ),
                     ),
                   ),
-                ),
               ],
             ),
           ),

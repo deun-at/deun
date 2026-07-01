@@ -100,9 +100,33 @@ void main() {
     await Supabase.instance.dispose();
   });
 
-  testWidgets('renders the 4-way SplitMode segmented control (Equal/Shares/%/Exact)',
+  testWidgets(
+      'itemized item card shows no per-item split UI — items are shared for claiming (F118)',
       (tester) async {
     await _pump(tester);
+    final l10n = await AppLocalizations.delegate.load(const Locale('en'));
+
+    // No split-mode selector, no member checkboxes/avatars, no allocation bar.
+    expect(find.byType(AppSegmentedControl<SplitMode>), findsNothing);
+    expect(find.byType(Checkbox), findsNothing);
+    expect(find.byType(MemberAvatar), findsNothing);
+    expect(find.byType(ProgressBar), findsNothing);
+    expect(find.text(l10n.splitSectionLabel), findsNothing);
+    // The item card itself (name + amount/quantity) is still there.
+    expect(find.text(l10n.expenseDescriptionHint), findsOneWidget);
+    expect(find.text('1x'), findsOneWidget);
+  });
+
+  testWidgets('quick split renders the 4-way SplitMode segmented control',
+      (tester) async {
+    final controller = TextEditingController(text: '12.00');
+    addTearDown(controller.dispose);
+    await _pump(
+      tester,
+      initialAmount: null,
+      isSingleEntry: true,
+      expenseLevelAmountController: controller,
+    );
     final l10n = await AppLocalizations.delegate.load(const Locale('en'));
 
     expect(find.byType(AppSegmentedControl<SplitMode>), findsOneWidget);
@@ -185,7 +209,14 @@ void main() {
   });
 
   testWidgets('include toggle uses a round (circle) shape', (tester) async {
-    await _pump(tester);
+    final controller = TextEditingController(text: '12.00');
+    addTearDown(controller.dispose);
+    await _pump(
+      tester,
+      initialAmount: null,
+      isSingleEntry: true,
+      expenseLevelAmountController: controller,
+    );
     final checkbox = tester.widget<Checkbox>(find.byType(Checkbox).first);
     expect(checkbox.shape, isA<CircleBorder>());
   });
@@ -214,14 +245,29 @@ void main() {
     expect(find.widgetWithText(TextFormField, '3.00'), findsOneWidget);
   });
 
-  testWidgets('renders an allocation ProgressBar and member avatars', (tester) async {
-    await _pump(tester);
+  testWidgets('quick split renders an allocation ProgressBar and member avatars',
+      (tester) async {
+    final controller = TextEditingController(text: '12.00');
+    addTearDown(controller.dispose);
+    await _pump(
+      tester,
+      initialAmount: null,
+      isSingleEntry: true,
+      expenseLevelAmountController: controller,
+    );
     expect(find.byType(ProgressBar), findsOneWidget);
     expect(find.byType(MemberAvatar), findsNWidgets(2));
   });
 
   testWidgets('switching to Shares mode shows steppers', (tester) async {
-    await _pump(tester);
+    final controller = TextEditingController(text: '12.00');
+    addTearDown(controller.dispose);
+    await _pump(
+      tester,
+      initialAmount: null,
+      isSingleEntry: true,
+      expenseLevelAmountController: controller,
+    );
     final l10n = await AppLocalizations.delegate.load(const Locale('en'));
 
     // No steppers in default (equal) mode.

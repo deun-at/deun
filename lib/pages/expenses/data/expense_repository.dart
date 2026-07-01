@@ -151,7 +151,9 @@ class ExpenseRepository {
 
         String splitMode = expenseEntry['split_mode'] ?? 'equal';
 
-        Set<String> expenseEntryShares = expenseEntry['shares'];
+        // Itemized claim cards register no split fields (F118), so 'shares'
+        // may be absent entirely.
+        Set<String> expenseEntryShares = expenseEntry['shares'] ?? <String>{};
         Map<String, dynamic> shareData = expenseEntry['share_data'] ?? {};
         Set<String> lockedMembers = expenseEntry['locked_members'] is Set<String>
             ? expenseEntry['locked_members']

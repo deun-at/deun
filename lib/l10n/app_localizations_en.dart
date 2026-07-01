@@ -291,7 +291,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get itemizedInfoCallout =>
-      'Itemized expenses can be shared so each person claims the items they had. Everyone\'s share is worked out from what they claim.';
+      'After you share, members claim their own items — solo or split, per unit.';
 
   @override
   String get expenseSaveAndShareForClaiming => 'Add & share for claiming';

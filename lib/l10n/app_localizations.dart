@@ -623,7 +623,7 @@ abstract class AppLocalizations {
   /// No description provided for @itemizedInfoCallout.
   ///
   /// In en, this message translates to:
-  /// **'Itemized expenses can be shared so each person claims the items they had. Everyone\'s share is worked out from what they claim.'**
+  /// **'After you share, members claim their own items — solo or split, per unit.'**
   String get itemizedInfoCallout;
 
   /// No description provided for @expenseSaveAndShareForClaiming.

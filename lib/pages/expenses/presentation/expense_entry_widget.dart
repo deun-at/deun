@@ -282,23 +282,22 @@ class _ExpenseEntryWidgetState extends State<ExpenseEntryWidget> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           if (!widget.isSingleEntry) ...[
-            // Row 1: Name + delete button
+            // Itemized item card: name + amount/quantity only. Items are
+            // shared for claiming (F118) — no per-item split UI; members
+            // claim their own units on the claim page instead.
             _buildNameRow(spacing, l10n),
             const SizedBox(height: spacing),
-            // Row 2: Amount + quantity
             _buildAmountQuantityRow(l10n),
-            const SizedBox(height: spacing * 2),
+          ] else ...[
+            // Quick split keeps the full split section — label + 4-way mode
+            // selector (Equal/Shares/%/Exact), per DESIGN_SPEC §8 (F105).
+            SectionLabel(l10n.splitSectionLabel),
+            const SizedBox(height: spacing),
+            _buildSplitModeSelector(l10n),
+            const SizedBox(height: spacing),
+            _buildMemberList(spacing, l10n),
+            _buildHiddenFormFields(),
           ],
-          // Split section — label + 4-way mode selector (Equal/Shares/%/Exact).
-          // Shown on quick split too, per DESIGN_SPEC §8 (F105).
-          SectionLabel(l10n.splitSectionLabel),
-          const SizedBox(height: spacing),
-          _buildSplitModeSelector(l10n),
-          const SizedBox(height: spacing),
-          // Row 4: Member list with inputs
-          _buildMemberList(spacing, l10n),
-          // Hidden form fields for data submission
-          _buildHiddenFormFields(),
         ],
       ),
     );

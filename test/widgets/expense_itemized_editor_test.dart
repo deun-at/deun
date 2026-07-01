@@ -1,6 +1,7 @@
 import 'package:deun/constants.dart';
 import 'package:deun/l10n/app_localizations.dart';
 import 'package:deun/pages/expenses/data/editor_mode.dart';
+import 'package:deun/pages/expenses/data/split_mode.dart';
 import 'package:deun/pages/expenses/presentation/expense_detail.dart';
 import 'package:deun/pages/groups/data/group_member_model.dart';
 import 'package:deun/pages/groups/data/group_model.dart';
@@ -116,6 +117,32 @@ void main() {
     expect(find.text(l10n.addItemByHand), findsOneWidget);
     expect(find.text(l10n.itemizedInfoCallout), findsOneWidget);
     expect(find.text(l10n.expenseSaveAndShareForClaiming), findsOneWidget);
+  });
+
+  testWidgets(
+      'itemized tab shows no per-item split UI and a single share-for-claiming CTA (F118)',
+      (tester) async {
+    await _pump(tester);
+    final l10n = await _l10n();
+
+    // Quick mode: footer Save present, split UI present.
+    expect(find.text(l10n.save), findsOneWidget);
+    expect(find.byType(AppSegmentedControl<SplitMode>), findsOneWidget);
+
+    await tester.tap(find.text(l10n.editorModeItemized));
+    await tester.pumpAndSettle();
+
+    // No per-item split UI: no split-mode selector, no member checkboxes.
+    expect(find.byType(AppSegmentedControl<SplitMode>), findsNothing);
+    expect(find.byType(Checkbox), findsNothing);
+    expect(find.text(l10n.splitSectionLabel), findsNothing);
+
+    // Info note explaining the share-then-claim model is present.
+    expect(find.text(l10n.itemizedInfoCallout), findsOneWidget);
+
+    // Single CTA: the share-for-claiming button — the footer Save is gone.
+    expect(find.text(l10n.expenseSaveAndShareForClaiming), findsOneWidget);
+    expect(find.text(l10n.save), findsNothing);
   });
 
   testWidgets('Add item by hand appends an item card', (tester) async {

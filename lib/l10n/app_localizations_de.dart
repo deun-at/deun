@@ -293,7 +293,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get itemizedInfoCallout =>
-      'Aufgeschlüsselte Ausgaben können geteilt werden, damit jede Person die Artikel beansprucht, die sie hatte. Der Anteil jeder Person ergibt sich aus dem, was sie beansprucht.';
+      'Nach dem Teilen beanspruchen die Mitglieder ihre eigenen Artikel – allein oder aufgeteilt, pro Stück.';
 
   @override
   String get expenseSaveAndShareForClaiming =>
