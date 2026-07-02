@@ -4,8 +4,8 @@ import 'package:deun/pages/expenses/data/expense_entry_model.dart';
 import 'package:deun/pages/expenses/data/expense_model.dart';
 import 'package:deun/pages/expenses/presentation/claim_page.dart';
 import 'package:deun/pages/expenses/provider/claim_notifier.dart';
-import 'package:deun/widgets/restyle/app_segmented_control.dart';
 import 'package:deun/widgets/restyle/deun_header.dart';
+import 'package:deun/widgets/restyle/member_avatar.dart';
 import 'package:deun/pages/groups/data/group_member_model.dart';
 import 'package:deun/pages/groups/data/group_model.dart';
 import 'package:deun/widgets/theme_builder.dart';
@@ -26,16 +26,17 @@ GroupMember _member(String email, String name) {
   return m;
 }
 
-Group _group() {
+Group _group({List<GroupMember>? members}) {
   final g = Group();
   g.id = 'g1';
   g.name = 'Trip';
   g.colorValue = kBrandSeed.toARGB32();
   g.simplifiedExpenses = false;
-  g.groupMembers = [
-    _member('a@test.com', 'Alice'),
-    _member('b@test.com', 'Bob'),
-  ];
+  g.groupMembers = members ??
+      [
+        _member('a@test.com', 'Alice'),
+        _member('b@test.com', 'Bob'),
+      ];
   g.expenses = [];
   return g;
 }
@@ -111,8 +112,9 @@ Future<void> _pump(
   WidgetTester tester, {
   required Expense expense,
   Brightness brightness = Brightness.light,
+  List<GroupMember>? members,
 }) async {
-  final group = _group();
+  final group = _group(members: members);
   await tester.pumpWidget(
     ProviderScope(
       overrides: [
@@ -236,26 +238,105 @@ void main() {
     expect(find.text(l10n.toCurrency(13)), findsWidgets);
   });
 
+  testWidgets('persona switcher renders one avatar with name per member',
+      (tester) async {
+    final l10n = await AppLocalizations.delegate.load(const Locale('en'));
+    await _pump(tester, expense: _itemizedExpense());
+
+    // The "Preview as" label sits on the switcher card.
+    expect(find.text(l10n.claimPreviewAs), findsOneWidget);
+    // One avatar+name persona per group member.
+    for (final email in ['a@test.com', 'b@test.com']) {
+      final persona = find.byKey(ValueKey('persona:$email'));
+      expect(persona, findsOneWidget);
+      expect(
+        find.descendant(of: persona, matching: find.byType(MemberAvatar)),
+        findsOneWidget,
+      );
+    }
+    expect(
+      find.descendant(
+        of: find.byKey(const ValueKey('persona:a@test.com')),
+        matching: find.text('Alice'),
+      ),
+      findsOneWidget,
+    );
+    expect(
+      find.descendant(
+        of: find.byKey(const ValueKey('persona:b@test.com')),
+        matching: find.text('Bob'),
+      ),
+      findsOneWidget,
+    );
+  });
+
   testWidgets('persona switcher changes the displayed your-share',
       (tester) async {
     final l10n = await AppLocalizations.delegate.load(const Locale('en'));
     await _pump(tester, expense: _itemizedExpense());
 
     // Preview as Alice → your share becomes €13.
-    await tester.tap(find.descendant(
-      of: find.byType(AppSegmentedControl<String>),
-      matching: find.text('Alice'),
-    ));
+    await tester.tap(find.byKey(const ValueKey('persona:a@test.com')));
     await tester.pumpAndSettle();
     expect(find.text(l10n.toCurrency(13)), findsWidgets);
 
     // Preview as Bob → your share becomes €3.
-    await tester.tap(find.descendant(
-      of: find.byType(AppSegmentedControl<String>),
-      matching: find.text('Bob'),
-    ));
+    await tester.tap(find.byKey(const ValueKey('persona:b@test.com')));
     await tester.pumpAndSettle();
     expect(find.text(l10n.toCurrency(3)), findsWidgets);
+  });
+
+  testWidgets('selected persona avatar shows the ink selection ring',
+      (tester) async {
+    await _pump(tester, expense: _itemizedExpense());
+
+    MemberAvatar avatarFor(String email) => tester.widget<MemberAvatar>(
+          find.descendant(
+            of: find.byKey(ValueKey('persona:$email')),
+            matching: find.byType(MemberAvatar),
+          ),
+        );
+    SemanticColors semanticOf(String email) => Theme.of(
+          tester.element(find.byKey(ValueKey('persona:$email'))),
+        ).extension<SemanticColors>()!;
+
+    // Select Alice → her avatar carries the ink ring, Bob's stays transparent.
+    await tester.tap(find.byKey(const ValueKey('persona:a@test.com')));
+    await tester.pumpAndSettle();
+    expect(avatarFor('a@test.com').ringWidth, greaterThan(0));
+    expect(
+      avatarFor('a@test.com').ringColor,
+      semanticOf('a@test.com').ink,
+    );
+    expect(avatarFor('b@test.com').ringColor, Colors.transparent);
+
+    // Select Bob → the ring moves to him.
+    await tester.tap(find.byKey(const ValueKey('persona:b@test.com')));
+    await tester.pumpAndSettle();
+    expect(avatarFor('b@test.com').ringColor, semanticOf('b@test.com').ink);
+    expect(avatarFor('a@test.com').ringColor, Colors.transparent);
+  });
+
+  testWidgets('persona switcher with 7 long-named members does not overflow',
+      (tester) async {
+    final members = [
+      for (var i = 0; i < 7; i++)
+        _member(
+          'member$i@test.com',
+          'Maximiliana Bartholomea von Hohenlohe-Langenburg $i',
+        ),
+    ];
+    await _pump(tester, expense: _itemizedExpense(), members: members);
+
+    // All 7 personas render inside the horizontally scrollable strip …
+    for (var i = 0; i < 7; i++) {
+      expect(
+        find.byKey(ValueKey('persona:member$i@test.com'), skipOffstage: false),
+        findsOneWidget,
+      );
+    }
+    // … without any layout overflow.
+    expect(tester.takeException(), isNull);
   });
 
   testWidgets('item list renders a row per claim unit', (tester) async {

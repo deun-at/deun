@@ -6,7 +6,6 @@ import 'package:deun/pages/expenses/presentation/claim_page.dart';
 import 'package:deun/pages/expenses/provider/claim_notifier.dart';
 import 'package:deun/pages/groups/data/group_member_model.dart';
 import 'package:deun/pages/groups/data/group_model.dart';
-import 'package:deun/widgets/restyle/app_segmented_control.dart';
 import 'package:deun/widgets/restyle/avatar_stack.dart';
 import 'package:deun/widgets/restyle/sheet_scaffold.dart';
 import 'package:deun/widgets/theme_builder.dart';
@@ -208,13 +207,11 @@ Future<void> _pump(
 Future<AppLocalizations> _l10n() =>
     AppLocalizations.delegate.load(const Locale('en'));
 
-/// Selects [name] in the persona switcher so claim mutations target a real
-/// email (tests have no signed-in user, so the default persona is empty).
-Future<void> _pickPersona(WidgetTester tester, String name) async {
-  await tester.tap(find.descendant(
-    of: find.byType(AppSegmentedControl<String>),
-    matching: find.text(name),
-  ));
+/// Selects the persona with [email] in the avatar switcher so claim mutations
+/// target a real email (tests have no signed-in user, so the default persona
+/// is empty).
+Future<void> _pickPersona(WidgetTester tester, String email) async {
+  await tester.tap(find.byKey(ValueKey('persona:$email')));
   await tester.pumpAndSettle();
 }
 
@@ -251,7 +248,7 @@ void main() {
       (tester) async {
     final l10n = await _l10n();
     await _pump(tester, expense: _expense());
-    await _pickPersona(tester, 'Alice');
+    await _pickPersona(tester, 'a@test.com');
 
     expect(_fake.claimCalls, isEmpty);
     await tester.tap(find.text(l10n.claimTakeOne).first);
@@ -266,7 +263,7 @@ void main() {
   testWidgets('tapping a chip claimed by you unclaims it', (tester) async {
     final l10n = await _l10n();
     await _pump(tester, expense: _expense());
-    await _pickPersona(tester, 'Alice');
+    await _pickPersona(tester, 'a@test.com');
 
     // Claim the first open unit, then tap its (now claimed-by-you) chip.
     await tester.tap(find.text(l10n.claimTakeOne).first);
