@@ -74,17 +74,25 @@ class ExpenseRepository {
   /// the save_expense_all RPC can assign one shared item_group_id per run of
   /// equal sequence values (server-side grouping; no client uuid dependency).
   /// New units start with no claimers (empty shares) — the payer covers them
-  /// until someone claims.
+  /// until someone claims. When re-saving an already-shared expense,
+  /// [unitClaims] carries each existing unit's claimer emails (in unit
+  /// order) so claims survive the re-explode: unit i keeps unitClaims[i],
+  /// each claimer at percentage = 100 / claimers (same convention as
+  /// claim_set_unit_shares). Units beyond the old quantity start unclaimed;
+  /// shrinking the quantity drops the trailing units' claims.
   static List<Map<String, dynamic>> explodeItemizedEntry({
     required String? name,
     required double unitPrice,
     required int quantity,
     required int itemGroupSeq,
     required int sortIdStart,
+    List<List<String>>? unitClaims,
   }) {
     final qty = quantity > 0 ? quantity : 1;
     final units = <Map<String, dynamic>>[];
     for (int i = 0; i < qty; i++) {
+      final claimers =
+          (unitClaims != null && i < unitClaims.length) ? unitClaims[i] : const <String>[];
       units.add({
         'entry': {
           'name': name,
@@ -94,7 +102,12 @@ class ExpenseRepository {
           'item_group_seq': itemGroupSeq,
           'sort_id': sortIdStart + i,
         },
-        'shares': <Map<String, dynamic>>[],
+        'shares': claimers
+            .map((email) => <String, dynamic>{
+                  'email': email,
+                  'percentage': 100 / claimers.length,
+                })
+            .toList(),
       });
     }
     return units;
@@ -170,12 +183,18 @@ class ExpenseRepository {
 
         if (isClaimable) {
           itemGroupSeq++;
+          // Existing per-unit claims (edit round-trip, F146) — injected by
+          // the editor from the regrouped entry so a re-save keeps claimers.
+          final unitClaims = (expenseEntry['existing_claims'] as List?)
+              ?.map((u) => (u as List).cast<String>())
+              .toList();
           entries.addAll(ExpenseRepository.explodeItemizedEntry(
             name: expenseEntry['name'] as String?,
             unitPrice: unitPrice,
             quantity: qty,
             itemGroupSeq: itemGroupSeq,
             sortIdStart: sortId,
+            unitClaims: unitClaims,
           ));
           sortId += qty * 10; // leave room between groups
           continue;

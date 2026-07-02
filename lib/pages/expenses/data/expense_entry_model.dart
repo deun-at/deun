@@ -15,6 +15,11 @@ class ExpenseEntry {
   /// per-unit claim model (split_mode 'claim', quantity 1).
   bool get isClaimUnit => splitMode == 'claim' && quantity == 1;
 
+  /// Per-unit claimer emails, in unit order. Only populated on the synthetic
+  /// qty-N entries produced by [Expense.editorEntries] when regrouping claim
+  /// units for the editor — used to preserve existing claims on re-save.
+  List<List<String>> unitClaims = const [];
+
   List<ExpenseEntryShare> expenseEntryShares = [];
 
   ExpenseEntry({required this.index});

@@ -107,15 +107,28 @@ class _ExpenseDetailState extends ConsumerState<ExpenseDetail> {
     _detectedCategory = widget.expense?.category;
     _nameController.text = widget.expense?.name ?? '';
     if (widget.expense != null && widget.expense!.expenseEntries.isNotEmpty) {
-      _newTextFieldId = widget.expense!.expenseEntries.length;
-      widget.expense!.expenseEntries.forEach((key, expenseEntry) {
+      // Claim units are regrouped into one qty-N item card per item_group_id
+      // (F146). Their claims ride along on the synthetic entry so a re-save
+      // can preserve them.
+      final editorEntries = widget.expense!.editorEntries;
+      _newTextFieldId = editorEntries.length;
+      // A shared claim expense is itemized by definition — keep the itemized
+      // layout even when its units regroup into a single card.
+      _itemizedOverride = editorEntries.any((e) => e.splitMode == 'claim');
+      for (final expenseEntry in editorEntries) {
         _entries.add(ExpenseEntryData(
           index: expenseEntry.index,
           expenseEntry: expenseEntry,
           onRemove: () => _removeEntry(expenseEntry),
           groupMembers: groupMembers,
+          initialName: expenseEntry.name,
+          // Seed the item card and the itemized total header directly from
+          // the loaded entry — claim units have no shares, so the widget's
+          // shares-gated seeding showed €0.00 line totals before.
+          initialAmount: expenseEntry.unitPrice.toStringAsFixed(2),
+          initialQuantity: expenseEntry.quantity.toString(),
         ));
-      });
+      }
     } else if (widget.receiptResult != null && widget.receiptResult!.lineItems.isNotEmpty) {
       // A scanned receipt with itemized lines opens in the Itemized layout.
       _itemizedOverride = true;
@@ -668,6 +681,18 @@ class _ExpenseDetailState extends ConsumerState<ExpenseDetail> {
                 notifyEmails: groupMembers.map((m) => m.email).toSet(),
               )
             : _formKey.currentState!.value;
+        if (claimable) {
+          // Re-saving a shared expense re-explodes its items into fresh
+          // claim units — thread each item's existing per-unit claims
+          // through so they are preserved (F146). Positional: shrinking an
+          // item's quantity drops the last units' claims.
+          for (final data in _entries) {
+            if (data.expenseEntry.unitClaims.isNotEmpty) {
+              formValue['expense_entry[${data.index}][existing_claims]'] =
+                  data.expenseEntry.unitClaims;
+            }
+          }
+        }
         await ExpenseRepository.saveAll(context, widget.group.id, widget.expense?.id, formValue);
         if (context.mounted) {
           showSnackBar(context, AppLocalizations.of(context)!.expenseCreateSuccess);

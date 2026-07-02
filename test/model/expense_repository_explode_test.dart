@@ -50,4 +50,57 @@ void main() {
       expect(units.length, 1);
     });
   });
+
+  group('ExpenseRepository.explodeItemizedEntry with unitClaims (F146)', () {
+    test('existing claims are preserved per unit on re-explode', () {
+      final units = ExpenseRepository.explodeItemizedEntry(
+        name: 'Beer', unitPrice: 2.5, quantity: 3,
+        itemGroupSeq: 1, sortIdStart: 10,
+        unitClaims: [
+          ['a@test.com'],
+          [],
+          ['a@test.com', 'b@test.com'],
+        ],
+      );
+
+      expect(units.length, 3);
+      final shares0 = units[0]['shares'] as List;
+      expect(shares0.length, 1);
+      expect((shares0[0] as Map)['email'], 'a@test.com');
+      expect((shares0[0] as Map)['percentage'], 100);
+
+      expect((units[1]['shares'] as List), isEmpty);
+
+      final shares2 = units[2]['shares'] as List;
+      expect(shares2.length, 2);
+      expect((shares2[0] as Map)['percentage'], 50);
+      expect((shares2[1] as Map)['percentage'], 50);
+    });
+
+    test('units beyond the old quantity start unclaimed', () {
+      final units = ExpenseRepository.explodeItemizedEntry(
+        name: 'Beer', unitPrice: 2.5, quantity: 3,
+        itemGroupSeq: 1, sortIdStart: 10,
+        unitClaims: [
+          ['a@test.com'],
+        ],
+      );
+      expect((units[0]['shares'] as List).length, 1);
+      expect((units[1]['shares'] as List), isEmpty);
+      expect((units[2]['shares'] as List), isEmpty);
+    });
+
+    test('shrinking the quantity drops trailing claims', () {
+      final units = ExpenseRepository.explodeItemizedEntry(
+        name: 'Beer', unitPrice: 2.5, quantity: 1,
+        itemGroupSeq: 1, sortIdStart: 10,
+        unitClaims: [
+          ['a@test.com'],
+          ['b@test.com'],
+        ],
+      );
+      expect(units.length, 1);
+      expect(((units[0]['shares'] as List)[0] as Map)['email'], 'a@test.com');
+    });
+  });
 }

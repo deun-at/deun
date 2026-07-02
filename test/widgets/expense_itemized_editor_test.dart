@@ -2,6 +2,7 @@ import 'package:deun/constants.dart';
 import 'package:deun/l10n/app_localizations.dart';
 import 'package:deun/pages/expenses/data/editor_mode.dart';
 import 'package:deun/pages/expenses/data/split_mode.dart';
+import 'package:deun/pages/expenses/data/expense_model.dart';
 import 'package:deun/pages/expenses/presentation/expense_detail.dart';
 import 'package:deun/pages/groups/data/group_member_model.dart';
 import 'package:deun/pages/groups/data/group_model.dart';
@@ -42,6 +43,7 @@ Group _group() {
 Future<void> _pump(
   WidgetTester tester, {
   Brightness brightness = Brightness.light,
+  Expense? expense,
 }) async {
   await tester.pumpWidget(
     ProviderScope(
@@ -57,13 +59,54 @@ Future<void> _pump(
           builder: (context) => Theme(
             data: getThemeData(context, kBrandSeed, brightness)
                 .copyWith(splashFactory: NoSplash.splashFactory),
-            child: ExpenseDetail(group: _group()),
+            child: ExpenseDetail(group: _group(), expense: expense),
           ),
         ),
       ),
     ),
   );
   await tester.pumpAndSettle();
+}
+
+/// A shared itemized expense as fetchDetail returns it: per-unit claim
+/// entries (qty 1, split_mode 'claim') grouped by item_group_id, one unit
+/// already claimed by Bob.
+Expense _sharedClaimExpense() {
+  Map<String, dynamic> unit(String id, {List<String> claimers = const []}) => {
+        'id': id,
+        'expense_id': 'exp1',
+        'name': 'Beer',
+        'amount': 2.5,
+        'quantity': 1,
+        'split_mode': 'claim',
+        'item_group_id': 'grp-1',
+        'created_at': '2026-07-01T10:00:00',
+        'expense_entry_share': claimers
+            .map((email) => {
+                  'expense_entry_id': id,
+                  'email': email,
+                  'display_name': email,
+                  'percentage': 100.0,
+                  'created_at': '2026-07-01T10:00:00',
+                })
+            .toList(),
+      };
+
+  final e = Expense();
+  e.loadDataFromJson({
+    'id': 'exp1',
+    'group_id': 'g1',
+    'name': 'Kiosk',
+    'expense_date': '2026-07-01',
+    'paid_by': 'a@test.com',
+    'created_at': '2026-07-01T10:00:00',
+    'is_paid_back_row': false,
+    'expense_entry': [
+      unit('u1', claimers: ['b@test.com']),
+      unit('u2'),
+    ],
+  });
+  return e;
 }
 
 Future<AppLocalizations> _l10n() =>
@@ -179,6 +222,32 @@ void main() {
     // Quick layout's claiming CTA is gone; quick view is back (SoftCard amount).
     expect(find.text(l10n.expenseSaveAndShareForClaiming), findsNothing);
     expect(find.byType(SoftCard), findsWidgets);
+  });
+
+  testWidgets(
+      'editing a shared expense regroups claim units into one qty-N item card (F146)',
+      (tester) async {
+    await _pump(tester, expense: _sharedClaimExpense());
+    final l10n = await _l10n();
+
+    // Opens directly in the itemized layout (no toggle tap needed).
+    expect(find.text(l10n.expenseSaveAndShareForClaiming), findsOneWidget);
+    expect(find.text(l10n.save), findsNothing);
+
+    // One card, quantity 2 — not two qty-1 unit cards.
+    expect(find.text('2x'), findsOneWidget);
+    expect(find.text(l10n.itemizedTotalFromItems(1)), findsOneWidget);
+  });
+
+  testWidgets(
+      'shared-expense item cards seed real line totals, not €0.00 (F146)',
+      (tester) async {
+    await _pump(tester, expense: _sharedClaimExpense());
+
+    // Unit price seeds the amount field; the line total is 2 × €2.50.
+    expect(find.text('2.50'), findsWidgets);
+    expect(find.text('= €5.00'), findsOneWidget);
+    expect(find.textContaining('€0.00'), findsNothing);
   });
 
   testWidgets('itemized editor renders in dark mode without throwing',

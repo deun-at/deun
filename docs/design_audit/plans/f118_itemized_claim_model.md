@@ -59,14 +59,7 @@ own items — solo or split, per unit.", single CTA "Add & share for claiming".
   block, per-item auto icons + drop Category row, item-card layout ("€ X
   each", line total right, trash bottom-left, qty stepper bottom-right),
   dashed ghost "Add item by hand" button, CTA copy pass.
-- Slice 3 (edit round-trip): when editing an already-shared claim expense,
-  regroup per-unit claim entries by `item_group_id` into one qty-N card and
-  preserve existing claims on re-save (today any edit-save re-explodes and
-  wipes claimers — pre-existing behavior, unchanged by slice 1). Also
-  pre-existing: claim units (empty shares) seed `_unitPrice` as 0 in
-  `ExpenseEntryWidget.initState`, so the "= €X" line total and the itemized
-  total header show €0.00 when editing a shared expense, even though the
-  amount field itself round-trips correctly.
+- ~~Slice 3 (edit round-trip)~~ — DONE 2026-07-02 as F146, see below.
 
 ## Slice 1 verification (2026-07-02)
 
@@ -80,3 +73,40 @@ own items — solo or split, per unit.", single CTA "Add & share for claiming".
   restored to its prior state.
 - BACKLOG I-4/I-5 resolved by this slice (single claim-model view + single
   itemized save path).
+
+## Slice 3 (F146, 2026-07-02) — edit round-trip
+
+Implemented:
+- `Expense.editorEntries` (expense_model.dart): regroups per-unit claim
+  entries by `item_group_id` into one synthetic qty-N entry (amount = group
+  total, `unitClaims` = each unit's claimer emails in unit order); non-claim
+  entries pass through; indices reassigned densely. `toJson()` now iterates
+  editorEntries and emits the unit price, so form initial values line up
+  with the regrouped cards.
+- `ExpenseDetail.initState`: builds item cards from `editorEntries`, passes
+  `initialName/initialAmount/initialQuantity` from the loaded entry (fixes
+  the pre-existing €0.00 line-total/header seed — claim units have empty
+  shares so the widget's shares-gated seeding never fired), and forces the
+  itemized layout when the expense contains claim entries.
+- `_saveExpense(claimable:true)`: injects `expense_entry[i][existing_claims]`
+  from each regrouped entry's `unitClaims`; `saveAll` threads it into
+  `explodeItemizedEntry`, which seeds unit i's shares from unitClaims[i]
+  (percentage = 100 / claimers, same convention as claim_set_unit_shares).
+  Positional: shrinking quantity drops trailing units' claims; new units
+  start unclaimed. No RPC/migration change needed —
+  `jsonb_populate_recordset` tolerates the email+percentage-only rows.
+
+Verification (2026-07-02):
+- `flutter analyze` clean; `flutter test` 753/753 green on a clean build
+  (`flutter clean && flutter pub get`).
+- Tests added: editorEntries regrouping/pass-through/standalone-unit +
+  toJson seeding (expense_entry_claim_test.dart), explode-with-unitClaims
+  preserve/grow/shrink (expense_repository_explode_test.dart), editor
+  regroups to one qty-2 card + seeds "= €5.00" not €0.00
+  (expense_itemized_editor_test.dart).
+- Live (Flutter web + Playwright, hans group): created throwaway 2×€2.50
+  itemized expense via the CTA → claimed one unit (Take one, Confirm) →
+  Edit items showed ONE "2x = €5.00" card, header "Total from 1 item €5.00"
+  → renamed item + re-saved via the CTA → claim survived (€2.50 of €5.00
+  claimed by You, unit 2 still Take one) → deleted the expense; hans
+  restored to its prior state (€877.74, original 4 expenses).
