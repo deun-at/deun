@@ -288,6 +288,65 @@ void main() {
     expect(amountRect.right, lessThan(chevronRect.left));
   });
 
+  // -------------------------------------------------------------------------
+  // F92: section wordings match the v3 handoff — incoming = "N friend
+  // request(s)" (count-prefixed, pluralized), outgoing = "Pending (N)".
+  // -------------------------------------------------------------------------
+
+  testWidgets('section labels match the v3 handoff copy (F92)', (tester) async {
+    await _pumpFriendList(
+      tester,
+      FriendshipListState(
+        pendingIncomingRequests: [
+          _friend('Req One', 'r1@x.com'),
+          _friend('Req Two', 'r2@x.com'),
+        ],
+        pendingOutgoingRequests: [_friend('Out One', 'o1@x.com')],
+      ),
+    );
+
+    // Incoming header: count-prefixed + pluralized ("2 friend requests").
+    expect(find.text('2 friend requests'), findsOneWidget);
+    // Outgoing header: "Pending (1)".
+    expect(find.text('Pending (1)'), findsOneWidget);
+    // Old wordings are gone.
+    expect(find.text('Friend Requests (2)'), findsNothing);
+    expect(find.text('Pending Requests (1)'), findsNothing);
+  });
+
+  testWidgets('incoming header uses singular form for a single request (F92)',
+      (tester) async {
+    await _pumpFriendList(
+      tester,
+      FriendshipListState(
+        pendingIncomingRequests: [_friend('Solo', 'solo@x.com')],
+      ),
+    );
+    expect(find.text('1 friend request'), findsOneWidget);
+  });
+
+  // -------------------------------------------------------------------------
+  // F97: no FAB on this screen → no reserved bottom space. The list ends with a
+  // normal 16px bottom margin, not the 110px FAB reservation.
+  // -------------------------------------------------------------------------
+
+  testWidgets('friends list has no extra reserved bottom padding (F97)',
+      (tester) async {
+    await _pumpFriendList(
+      tester,
+      FriendshipListState(
+        acceptedFriends: [_friend('Alice', 'alice@x.com', shareAmount: 10)],
+      ),
+    );
+
+    final listView = tester.widget<ListView>(find.byType(ListView));
+    expect(
+      listView.padding,
+      const EdgeInsets.fromLTRB(16, 0, 16, 16),
+      reason: 'bottom padding must not reserve space for a removed FAB',
+    );
+  });
+
   testWidgets('empty state shows the no-friends message', (tester) async {
     await _pumpFriendList(tester, const FriendshipListState());
     final l10n = await AppLocalizations.delegate.load(const Locale('en'));

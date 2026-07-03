@@ -776,7 +776,7 @@
   "@friendDecline": {
     "description": "Tooltip/label for declining an incoming friend request."
   },
-  "friendRequests": "Friend Requests ({count})",
+  "friendRequests": "{count, plural, one{{count} friend request} other{{count} friend requests}}",
   "@friendRequests": {
     "placeholders": {
       "count": {
@@ -784,7 +784,7 @@
       }
     }
   },
-  "pendingRequests": "Pending Requests ({count})",
+  "pendingRequests": "Pending ({count})",
   "@pendingRequests": {
     "placeholders": {
       "count": {

@@ -826,12 +826,18 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String friendRequests(int count) {
-    return 'Friend Requests ($count)';
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count friend requests',
+      one: '$count friend request',
+    );
+    return '$_temp0';
   }
 
   @override
   String pendingRequests(int count) {
-    return 'Pending Requests ($count)';
+    return 'Pending ($count)';
   }
 
   @override

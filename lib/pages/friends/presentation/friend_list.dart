@@ -128,7 +128,10 @@ class _FriendListState extends ConsumerState<FriendList> {
     ];
 
     final listView = ListView(
-      padding: const EdgeInsets.fromLTRB(16, 0, 16, 110),
+      // F97: no FAB on this screen, so no reserved bottom space — the list ends
+      // naturally with a normal 16px margin (the shell's nav bar sits below the
+      // body, not over it).
+      padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
       children: staggeredChildren(context, children),
     );
 

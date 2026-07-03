@@ -1412,13 +1412,13 @@ abstract class AppLocalizations {
   /// No description provided for @friendRequests.
   ///
   /// In en, this message translates to:
-  /// **'Friend Requests ({count})'**
+  /// **'{count, plural, one{{count} friend request} other{{count} friend requests}}'**
   String friendRequests(int count);
 
   /// No description provided for @pendingRequests.
   ///
   /// In en, this message translates to:
-  /// **'Pending Requests ({count})'**
+  /// **'Pending ({count})'**
   String pendingRequests(int count);
 
   /// No description provided for @addFriendshipSelectionEmpty.
