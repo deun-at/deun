@@ -15,13 +15,13 @@
 | 1 | Group list — `pages/groups/presentation/group_list.dart` + `group_list_item.dart` | `Padding(vertical:5)` + `SoftCard` per item, ad-hoc | **SPACED** | ad-hoc gap |
 | 2 | Friends screen requests (incoming) — `friend_list.dart` `_IncomingRequestCard` | `Padding(bottom:8)` + `SoftCard` | **SPACED** | ad-hoc gap |
 | 3 | Friends screen requests (outgoing) — `friend_list.dart` `_OutgoingRequestCard` | `Padding(bottom:8)` + `SoftCard` | **SPACED** | ad-hoc gap |
-| 4 | Friends screen all-friends — `friend_list.dart` `_FriendCard` | `Padding(bottom:8)` + `SoftCard` | **NON-SPACED** (per goal) *see note* | ad-hoc / wrong type |
+| 4 | Friends screen all-friends — `friend_list.dart` `_FriendCard` | **`CardColumn` (joined rows)** ✓ | **NON-SPACED** | ✓ fixed (slice 2) |
 | 5 | Settings preferences — `pages/settings/setting.dart` `_buildSettingsList` | `SoftCard(padding:0)` + `Column` + `_SettingsRow` + `_RowDivider` | **NON-SPACED** | joined, but own divider pattern (not `CardColumn`) |
 | 6 | Group-detail date groups — `group_detail_list.dart` (F138) | `SoftCard` + inner `Column` of rows | **NON-SPACED** | joined ✓ (already correct — DO NOT REGRESS) |
 | 7 | Expense-detail member breakdown — `expense_detail.dart` (F122) | `CardColumn` | **NON-SPACED** | joined ✓ shared (already correct) |
 | 8 | Friend-add page sub-lists — `pending_request_list.dart`, `requested_friendship_list.dart` | `CardColumn` | **NON-SPACED** | joined ✓ shared |
 
-**Note on #4 (all-friends):** the finding classifies all-friends as NON-SPACED. It currently renders SPACED with a rich balance row + chevron. Converting it to a joined `CardColumn` is a distinct visual change (rows lose their card gaps and shadow-per-row). Deferred to REMAINING to keep this slice verifiable — see below.
+**Note on #4 (all-friends):** DONE in slice 2. Converted from the SPACED preset (per-card `SoftCard` via `spacedCardItems`) to the shared NON-SPACED `CardColumn` — one card, rows joined, no inter-row gap, matching v3 "All friends" (`border-radius:22`, joined rows, hairline joins, chevron per row). `_FriendCard` dropped its `SoftCard` wrapper and became an ink-splashing `InkWell + Padding(16)` row (CardColumn's `CardListTile` now provides the card surface). Content/tap/keys/ordering/balance layout (F95/F07/F06) unchanged.
 
 ## STEP 2 — shared presets
 
@@ -35,8 +35,17 @@
 - Route **group list** (#1) through the shared spaced gap.
 - Route **friends screen requests** (#2, #3) through the shared spaced gap.
 
-**REMAINING (documented, not done this slice):**
-- #4 all-friends → NON-SPACED `CardColumn` conversion (visual change; needs its own audit pass for the balance-row-in-joined-card layout + tests).
-- #5 settings + #6 F138 joined lists → optionally route through `CardColumn` for a single non-spaced impl (currently correct, low value).
+## STEP 4 — slice 2 (final slice)
 
-**Status: PARTIAL.** Spaced preset now shared and applied to group list + friend requests. All-friends non-spaced conversion + joined-list consolidation remain.
+**DONE:**
+- #4 all-friends → converted to the shared NON-SPACED `CardColumn` (see note above). New `friend_list_test.dart` cases assert: all-friends renders one `CardColumn` with joined rows (bottom of one row card flush against the top of the next, no gap) and NO per-row `SoftCard`; the request sections still render per-card `SoftCard`s (SPACED preset).
+
+**Deliberately left on a local equivalent (NON-SPACED, visually correct, NOT routed through `CardColumn`):**
+- **#5 Settings preferences** (`setting.dart` `_buildSettingsList`) — one `SoftCard(padding:0)` + `Column` of `_SettingsRow`s separated by `_RowDivider` **hairline dividers**. This matches v3 Settings exactly (`border-bottom:1px solid rgba(20,18,12,0.05)` between rows). `CardColumn` joins rows with rounded-corner per-`Card` tiles and NO hairline divider, so routing settings through it would DROP the v3 hairlines — a visual regression. Kept as the correct local non-spaced pattern.
+- **#6 Group-detail date groups** (`group_detail_list.dart` `_DaySection`, F138) — one `SoftCard(borderRadius:20, padding:vertical 4)` + inner `Column` of ledger rows, with the payback row as an inset floating chip. `CardColumn` hardcodes radius 28/8 and per-row `Card` surfaces, which would change the single-card radius and the payback chip's inset — a distinct visual + F138 test risk. Kept; visually correct today.
+
+**Already shared NON-SPACED (no work):**
+- #7 Expense-detail breakdown (`expense_detail.dart`, F122) already uses `CardColumn`.
+- #8 Friend-add sub-lists already use `CardColumn`.
+
+**Status: F143 COMPLETE.** Exactly two shared presets in use: SPACED (`SpacedCardList`/`spacedCardItems`) on group list + friend requests/pending; NON-SPACED (`CardColumn`) on all-friends, expense-detail breakdown, and friend-add sub-lists. Settings + F138 group-detail keep their own visually-correct non-spaced patterns (hairline-divider list / single-card date group) that `CardColumn` cannot reproduce without regressing v3 fidelity — documented above.

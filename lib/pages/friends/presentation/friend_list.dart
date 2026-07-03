@@ -4,6 +4,7 @@ import 'package:deun/pages/friends/data/friendship_repository.dart';
 import 'package:deun/pages/friends/presentation/friend_balance.dart';
 import 'package:deun/pages/friends/presentation/friend_detail_sheet.dart';
 import 'package:deun/pages/users/user_model.dart';
+import 'package:deun/widgets/card_list_view_builder.dart';
 import 'package:deun/widgets/empty_list_widget.dart';
 import 'package:deun/widgets/restyle/balance_pill.dart' show BalanceState;
 import 'package:deun/widgets/restyle/deun_header.dart' show HeaderIconButton;
@@ -111,13 +112,18 @@ class _FriendListState extends ConsumerState<FriendList> {
       if (value.acceptedFriends.isNotEmpty) ...[
         SectionLabel(l10n.friends),
         const SizedBox(height: 8),
-        ...spacedCardItems([
-          for (final friendship in value.acceptedFriends)
-            _FriendCard(
-              friendship: friendship,
-              onTap: () => openFriendDetailSheet(context, friendship),
-            ),
-        ]),
+        // NON-SPACED joined-row preset (F143): all-friends is ONE card holding
+        // its rows joined (no inter-row gaps) — the CardColumn companion to the
+        // SPACED request lists above. Matches v3 "All friends".
+        CardColumn(
+          children: [
+            for (final friendship in value.acceptedFriends)
+              _FriendCard(
+                friendship: friendship,
+                onTap: () => openFriendDetailSheet(context, friendship),
+              ),
+          ],
+        ),
       ],
     ];
 
@@ -385,32 +391,38 @@ class _FriendCard extends StatelessWidget {
           fontWeight: FontWeight.w600,
         );
 
-    return SoftCard(
+    // No SoftCard wrapper: the row lives inside a joined CardColumn card, so it
+    // is an ink-splashing padded row (like the group-detail ledger rows) rather
+    // than its own gapped card.
+    return InkWell(
       onTap: onTap,
-      child: Row(
-        children: [
-          Expanded(child: _FriendIdentity(user: friendship.user)),
-          const SizedBox(width: 8),
-          Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(label, style: balanceStyle),
-              if (state != BalanceState.settled) ...[
-                const SizedBox(width: 6),
-                MoneyText(
-                  friendship.shareAmount.abs(),
-                  semantic: moneySemantic,
-                  style: balanceStyle,
-                ),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Row(
+          children: [
+            Expanded(child: _FriendIdentity(user: friendship.user)),
+            const SizedBox(width: 8),
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(label, style: balanceStyle),
+                if (state != BalanceState.settled) ...[
+                  const SizedBox(width: 6),
+                  MoneyText(
+                    friendship.shareAmount.abs(),
+                    semantic: moneySemantic,
+                    style: balanceStyle,
+                  ),
+                ],
               ],
-            ],
-          ),
-          const SizedBox(width: 4),
-          // v3 ends an accepted-friend row in a muted chevron to signal it opens
-          // the friend sheet (matches the group-list row pattern). `outline`
-          // resolves the warm muted-gray token and flips with brightness.
-          Icon(Icons.chevron_right, color: colorScheme.outline),
-        ],
+            ),
+            const SizedBox(width: 4),
+            // v3 ends an accepted-friend row in a muted chevron to signal it opens
+            // the friend sheet (matches the group-list row pattern). `outline`
+            // resolves the warm muted-gray token and flips with brightness.
+            Icon(Icons.chevron_right, color: colorScheme.outline),
+          ],
+        ),
       ),
     );
   }

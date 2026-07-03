@@ -4,7 +4,9 @@ import 'package:deun/pages/friends/data/friendship_model.dart';
 import 'package:deun/pages/friends/presentation/friend_list.dart';
 import 'package:deun/pages/friends/provider/friendship_list.dart';
 import 'package:deun/pages/users/user_model.dart';
+import 'package:deun/widgets/card_list_view_builder.dart';
 import 'package:deun/widgets/restyle/balance_pill.dart';
+import 'package:deun/widgets/restyle/soft_card.dart';
 import 'package:deun/widgets/restyle/deun_header.dart';
 import 'package:deun/widgets/restyle/member_avatar.dart';
 import 'package:deun/widgets/restyle/money_text.dart';
@@ -198,6 +200,61 @@ void main() {
     // V3: every accepted-friend row ends in a trailing chevron signalling it
     // opens the friend sheet (one per accepted row).
     expect(find.byIcon(Icons.chevron_right), findsNWidgets(3));
+  });
+
+  // -------------------------------------------------------------------------
+  // F143: two-list-types standardization. All-friends is the NON-SPACED
+  // joined-row preset (CardColumn, one card, no inter-row gap); the request
+  // sections stay on the SPACED preset (per-card SoftCard with gaps between).
+  // -------------------------------------------------------------------------
+
+  testWidgets('all-friends uses the NON-SPACED CardColumn preset (joined rows, no gap)',
+      (tester) async {
+    await _pumpFriendList(
+      tester,
+      FriendshipListState(
+        acceptedFriends: [
+          _friend('Alice', 'alice@x.com', shareAmount: 10),
+          _friend('Bob', 'bob@x.com', shareAmount: -5),
+        ],
+      ),
+    );
+
+    // All-friends renders through the shared non-spaced CardColumn...
+    expect(find.byType(CardColumn), findsOneWidget);
+    // ...and each row is NOT its own SoftCard (the SPACED preset) — the accepted
+    // rows live joined inside one CardColumn card, so no SoftCard appears for the
+    // all-friends section (no request sections present here).
+    expect(find.byType(SoftCard), findsNothing);
+
+    // Joined: consecutive friend rows sit flush (no inter-row gap between the
+    // name lines' rows). The bottom of Alice's row card touches the top of Bob's.
+    final aliceRow = tester.getRect(find.ancestor(
+      of: find.text('Alice'),
+      matching: find.byType(Card),
+    ));
+    final bobRow = tester.getRect(find.ancestor(
+      of: find.text('Bob'),
+      matching: find.byType(Card),
+    ));
+    expect((bobRow.top - aliceRow.bottom).abs(), lessThan(0.5),
+        reason: 'joined rows have no vertical gap between them');
+  });
+
+  testWidgets('friend requests use the SPACED SoftCard preset (gapped cards)',
+      (tester) async {
+    await _pumpFriendList(
+      tester,
+      FriendshipListState(
+        pendingIncomingRequests: [_friend('Req One', 'r1@x.com')],
+        pendingOutgoingRequests: [_friend('Req Two', 'r2@x.com')],
+      ),
+    );
+
+    // Requests are per-card SoftCards (the SPACED preset), not a joined column.
+    expect(find.byType(SoftCard), findsNWidgets(2));
+    // No accepted friends here → no non-spaced CardColumn.
+    expect(find.byType(CardColumn), findsNothing);
   });
 
   testWidgets('accepted friend row lays the balance RIGHT of the name, not beneath it (F95)',
