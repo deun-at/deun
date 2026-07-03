@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:deun/widgets/empty_list_widget.dart';
 import 'package:deun/widgets/restyle/member_avatar.dart';
 import 'package:deun/widgets/restyle/money_text.dart';
+import 'package:deun/widgets/restyle/primary_button.dart';
 import 'package:deun/widgets/restyle/section_label.dart';
 import 'package:deun/widgets/staggered_list.dart';
 import 'package:deun/widgets/theme_builder.dart';
@@ -74,14 +75,32 @@ class _GroupListState extends ConsumerState<GroupList> {
           AsyncData(:final value) => value.isEmpty
               ? RefreshIndicator(
                   onRefresh: updateGroupList,
+                  // Single scroll view: the empty content + create-first-group
+                  // CTA are laid out inline (not via EmptyListWidget's own inner
+                  // ListView, which would nest an unbounded viewport). With no
+                  // group list to head, the "+ New" section-header action isn't
+                  // rendered, so the empty state carries the create affordance
+                  // (F91: the standalone FAB was removed as redundant when
+                  // groups exist).
                   child: ListView(
                     children: [
                       _GreetingHeader(),
-                      const SizedBox(height: 8),
-                      EmptyListWidget(
-                        icon: Icons.group_outlined,
-                        label: l10n.groupNoEntries,
-                        onRefresh: updateGroupList,
+                      const SizedBox(height: 100),
+                      Icon(Icons.group_outlined,
+                          size: 48, color: Theme.of(context).colorScheme.outline),
+                      const SizedBox(height: 16),
+                      Text(
+                        l10n.groupNoEntries,
+                        style: Theme.of(context).textTheme.headlineMedium,
+                        textAlign: TextAlign.center,
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(16, 24, 16, 24),
+                        child: PrimaryButton(
+                          label: l10n.addNewGroup,
+                          icon: Icons.add,
+                          onPressed: () => GoRouter.of(context).push("/group/edit"),
+                        ),
                       ),
                     ],
                   ),
@@ -111,14 +130,6 @@ class _GroupListState extends ConsumerState<GroupList> {
               ],
             ),
         },
-      ),
-      floatingActionButton: FloatingActionButton.extended(
-        heroTag: "floating_action_button_main",
-        onPressed: () {
-          GoRouter.of(context).push("/group/edit");
-        },
-        label: Text(l10n.addNewGroup),
-        icon: const Icon(Icons.add),
       ),
     );
   }

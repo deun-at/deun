@@ -15,6 +15,7 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_staggered_animations/flutter_staggered_animations.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 const _myEmail = 'me@test.com';
@@ -112,6 +113,52 @@ Future<void> _pumpScreen(
 class _FakeUserNotifier extends UserDetailNotifier {
   @override
   Future<SupaUser> build() async => const SupaUser(email: _myEmail, displayName: 'Alex');
+}
+
+/// Pumps the groups home inside a GoRouter so `GoRouter.of(context).push` works.
+/// The `/group/edit` destination records that it was reached (F91: verifies the
+/// kept "+ New" header action and the empty-state CTA both create a group).
+Future<void> _pumpWithRouter(
+  WidgetTester tester, {
+  required List<Group> groups,
+}) async {
+  final router = GoRouter(
+    initialLocation: '/',
+    routes: [
+      GoRoute(
+        path: '/',
+        builder: (context, state) => Theme(
+          data: getThemeData(context, kBrandSeed, Brightness.light)
+              .copyWith(splashFactory: NoSplash.splashFactory),
+          child: const GroupList(),
+        ),
+      ),
+      GoRoute(
+        path: '/group/edit',
+        builder: (context, state) => const Scaffold(body: Text('EDIT ROUTE')),
+      ),
+    ],
+  );
+
+  await tester.pumpWidget(
+    ProviderScope(
+      overrides: [
+        groupListProvider.overrideWith(() => _FakeGroupListNotifier(groups, [])),
+        userDetailProvider.overrideWith(() => _FakeUserNotifier()),
+      ],
+      child: MaterialApp.router(
+        routerConfig: router,
+        localizationsDelegates: const [
+          AppLocalizations.delegate,
+          GlobalMaterialLocalizations.delegate,
+          GlobalWidgetsLocalizations.delegate,
+          GlobalCupertinoLocalizations.delegate,
+        ],
+        supportedLocales: AppLocalizations.supportedLocales,
+      ),
+    ),
+  );
+  await tester.pumpAndSettle();
 }
 
 void main() {
@@ -656,6 +703,41 @@ void main() {
     // card is still visible — no crash, no hidden items.
     expect(find.byType(AnimationLimiter), findsOneWidget);
     expect(find.byType(GroupListItem), findsOneWidget);
+  });
+
+  // -------------------------------------------------------------------------
+  // F91: the redundant standalone "New group" FAB is removed. Creation is done
+  // via the "+ New" section-header action (populated) and the empty-state CTA.
+  // -------------------------------------------------------------------------
+
+  testWidgets('no standalone New Group floating action button remains', (tester) async {
+    await _pumpScreen(tester, groups: [_group(id: 'a', name: 'A', totalShareAmount: 10)]);
+    expect(find.byType(FloatingActionButton), findsNothing);
+  });
+
+  testWidgets('the "+ New" section-header action creates a group', (tester) async {
+    await _pumpWithRouter(tester, groups: [_group(id: 'a', name: 'A', totalShareAmount: 10)]);
+
+    final l10n = await AppLocalizations.delegate.load(const Locale('en'));
+    // Tap the header "+ New" action (l10n.commonNew).
+    await tester.tap(find.text(l10n.commonNew));
+    await tester.pumpAndSettle();
+
+    expect(find.text('EDIT ROUTE'), findsOneWidget);
+  });
+
+  testWidgets('empty state offers a create-first-group CTA that navigates', (tester) async {
+    await _pumpWithRouter(tester, groups: const []);
+
+    final l10n = await AppLocalizations.delegate.load(const Locale('en'));
+    // Empty list -> the create CTA (l10n.addNewGroup) is present and works.
+    final cta = find.text(l10n.addNewGroup);
+    expect(cta, findsOneWidget);
+
+    await tester.tap(cta);
+    await tester.pumpAndSettle();
+
+    expect(find.text('EDIT ROUTE'), findsOneWidget);
   });
 }
 
