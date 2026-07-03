@@ -8,6 +8,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:deun/pages/auth/social_auth_buttons.dart';
+import 'package:deun/widgets/restyle/app_text_field.dart';
 import 'package:deun/widgets/restyle/primary_button.dart';
 
 /// Pragmatic email shape check (same intent as the package's email validator):
@@ -250,10 +251,10 @@ class _SignUpState extends State<SignUp> {
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
                       if (_mode.showsNameField) ...[
-                        _InsetField(
+                        AppTextField(
                           controller: _nameController,
                           label: l10n.authNameLabel,
-                          icon: Icons.person_outline,
+                          labelMode: AppTextFieldLabelMode.placeholder,
                           textInputAction: TextInputAction.next,
                           validator: (value) {
                             if (value == null || value.trim().isEmpty) {
@@ -264,11 +265,11 @@ class _SignUpState extends State<SignUp> {
                         ),
                         const SizedBox(height: 12),
                       ],
-                      _InsetField(
+                      AppTextField(
                         controller: _emailController,
                         focusNode: _emailFocusNode,
                         label: l10n.authEmailLabel,
-                        icon: Icons.alternate_email,
+                        labelMode: AppTextFieldLabelMode.placeholder,
                         keyboardType: TextInputType.emailAddress,
                         autofillHints: const [AutofillHints.email],
                         textInputAction: TextInputAction.next,
@@ -282,10 +283,10 @@ class _SignUpState extends State<SignUp> {
                         },
                       ),
                       const SizedBox(height: 12),
-                      _InsetField(
+                      AppTextField(
                         controller: _passwordController,
                         label: l10n.authPasswordLabel,
-                        icon: Icons.lock_outline,
+                        labelMode: AppTextFieldLabelMode.placeholder,
                         obscureText: _obscurePassword,
                         autofillHints: _mode.isSigningIn
                             ? const [AutofillHints.password]
@@ -404,68 +405,3 @@ class _OrDivider extends StatelessWidget {
   }
 }
 
-/// A restyled inset text field on the field-fill surface, matching the
-/// redesign's soft inputs (radius 16, no hard border, leading icon).
-class _InsetField extends StatelessWidget {
-  const _InsetField({
-    required this.controller,
-    required this.label,
-    required this.icon,
-    this.focusNode,
-    this.validator,
-    this.keyboardType,
-    this.textInputAction,
-    this.autofillHints,
-    this.obscureText = false,
-    this.suffix,
-    this.onFieldSubmitted,
-  });
-
-  final TextEditingController controller;
-  final String label;
-  final IconData icon;
-  final FocusNode? focusNode;
-  final String? Function(String?)? validator;
-  final TextInputType? keyboardType;
-  final TextInputAction? textInputAction;
-  final Iterable<String>? autofillHints;
-  final bool obscureText;
-  final Widget? suffix;
-  final void Function(String)? onFieldSubmitted;
-
-  @override
-  Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-    final radius = BorderRadius.circular(16);
-    return TextFormField(
-      controller: controller,
-      focusNode: focusNode,
-      validator: validator,
-      keyboardType: keyboardType,
-      textInputAction: textInputAction,
-      autofillHints: autofillHints,
-      obscureText: obscureText,
-      autovalidateMode: AutovalidateMode.onUserInteraction,
-      onFieldSubmitted: onFieldSubmitted,
-      decoration: InputDecoration(
-        labelText: label,
-        prefixIcon: Icon(icon, color: colorScheme.onSurfaceVariant),
-        suffixIcon: suffix,
-        filled: true,
-        fillColor: colorScheme.surfaceContainer,
-        border: OutlineInputBorder(
-          borderRadius: radius,
-          borderSide: BorderSide.none,
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: radius,
-          borderSide: BorderSide.none,
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: radius,
-          borderSide: BorderSide(color: colorScheme.primary, width: 1.5),
-        ),
-      ),
-    );
-  }
-}
