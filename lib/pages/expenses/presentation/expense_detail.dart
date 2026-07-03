@@ -913,16 +913,18 @@ class _ExpenseDetailState extends ConsumerState<ExpenseDetail> {
                         ),
                       ).toList()),
                       const SizedBox(height: spacing),
-                      Center(
-                        child: FilledButton.tonalIcon(
-                          icon: const Icon(Icons.add),
-                          label: Text(_isSingleEntry
-                              ? AppLocalizations.of(context)!.addNewExpenseEntry
-                              : AppLocalizations.of(context)!.addItemByHand),
-                          onPressed: () => _addNewEntry(),
-                        ),
-                      ),
+                      // F111: "Add item" is an Itemized-only concept — the Quick
+                      // split has a single expense-level amount, so no add-item
+                      // button here.
                       if (!_isSingleEntry) ...[
+                        Center(
+                          child: FilledButton.tonalIcon(
+                            icon: const Icon(Icons.add),
+                            label: Text(
+                                AppLocalizations.of(context)!.addItemByHand),
+                            onPressed: () => _addNewEntry(),
+                          ),
+                        ),
                         const SizedBox(height: spacing * 2),
                         Padding(
                           padding: const EdgeInsets.symmetric(horizontal: 16),

@@ -195,6 +195,24 @@ void main() {
     expect(find.text(l10n.save), findsNothing);
   });
 
+  testWidgets(
+      'Quick split has no add-item button; Itemized does (F111)',
+      (tester) async {
+    await _pump(tester);
+    final l10n = await _l10n();
+
+    // Quick split: no add-item button in either wording. "Add item" is an
+    // Itemized-only concept.
+    expect(find.text(l10n.addItemByHand), findsNothing);
+    expect(find.text(l10n.addNewExpenseEntry), findsNothing);
+
+    await tester.tap(find.text(l10n.editorModeItemized));
+    await tester.pumpAndSettle();
+
+    // Itemized still offers the add-item action.
+    expect(find.text(l10n.addItemByHand), findsOneWidget);
+  });
+
   testWidgets('Add item by hand appends an item card', (tester) async {
     await _pump(tester);
     final l10n = await _l10n();
