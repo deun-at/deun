@@ -2,6 +2,7 @@ import 'package:deun/constants.dart';
 import 'package:deun/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 
+import 'primary_button.dart';
 import 'sheet_scaffold.dart';
 
 /// Shows the restyled "Discard changes?" confirmation as a modal bottom sheet.
@@ -34,20 +35,16 @@ Future<bool?> showDiscardConfirmationSheet(BuildContext context) {
         footer: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            FilledButton(
-              style: FilledButton.styleFrom(
-                backgroundColor: colorScheme.error,
-                foregroundColor: colorScheme.onError,
-                minimumSize: const Size.fromHeight(48),
-              ),
+            PrimaryButton(
+              label: l10n.discardChangesConfirm,
+              background: colorScheme.error,
+              foreground: colorScheme.onError,
               onPressed: () => Navigator.of(sheetContext).pop(true),
-              child: Text(l10n.discardChangesConfirm),
             ),
             const SizedBox(height: 8),
-            TextButton(
-              style: TextButton.styleFrom(minimumSize: const Size.fromHeight(48)),
+            SecondaryButton(
+              label: l10n.discardChangesKeepEditing,
               onPressed: () => Navigator.of(sheetContext).pop(false),
-              child: Text(l10n.discardChangesKeepEditing),
             ),
           ],
         ),

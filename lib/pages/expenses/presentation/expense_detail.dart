@@ -241,12 +241,11 @@ class _ExpenseDetailState extends ConsumerState<ExpenseDetail> {
             child: Text(AppLocalizations.of(context)!.cancel),
             onPressed: () => Navigator.pop(context),
           ),
-          FilledButton(
-            style: FilledButton.styleFrom(
-              backgroundColor: Theme.of(context).colorScheme.error,
-              foregroundColor: Theme.of(context).colorScheme.onError,
-            ),
-            child: Text(AppLocalizations.of(context)!.delete),
+          PrimaryButton(
+            compact: true,
+            background: Theme.of(context).colorScheme.error,
+            foreground: Theme.of(context).colorScheme.onError,
+            label: AppLocalizations.of(context)!.delete,
             onPressed: () async {
               try {
                 await ExpenseRepository.delete(widget.expense!.id, widget.expense!.groupId);

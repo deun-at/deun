@@ -2,6 +2,7 @@ import 'package:deun/constants.dart';
 import 'package:deun/widgets/theme_builder.dart';
 import 'package:flutter/material.dart';
 
+import 'primary_button.dart';
 import 'sheet_scaffold.dart';
 
 /// Shows a warm destructive-confirmation bottom sheet (COMPONENTS §3).
@@ -64,20 +65,16 @@ Future<bool?> showDeleteConfirmationSheet(
         footer: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            FilledButton(
-              style: FilledButton.styleFrom(
-                backgroundColor: danger,
-                foregroundColor: colorScheme.onError,
-                minimumSize: const Size.fromHeight(48),
-              ),
+            PrimaryButton(
+              label: confirmLabel,
+              background: danger,
+              foreground: colorScheme.onError,
               onPressed: () => Navigator.of(sheetContext).pop(true),
-              child: Text(confirmLabel),
             ),
             const SizedBox(height: 8),
-            TextButton(
-              style: TextButton.styleFrom(minimumSize: const Size.fromHeight(48)),
+            SecondaryButton(
+              label: cancelLabel,
               onPressed: () => Navigator.of(sheetContext).pop(false),
-              child: Text(cancelLabel),
             ),
           ],
         ),

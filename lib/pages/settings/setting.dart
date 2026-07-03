@@ -6,6 +6,7 @@ import 'package:deun/provider.dart';
 import 'package:deun/widgets/initialization_helper.dart';
 import 'package:deun/widgets/restyle/deun_header.dart';
 import 'package:deun/widgets/restyle/member_avatar.dart';
+import 'package:deun/widgets/restyle/primary_button.dart';
 import 'package:deun/widgets/restyle/section_label.dart';
 import 'package:deun/widgets/restyle/soft_card.dart';
 import 'package:deun/widgets/theme_builder.dart';
@@ -211,12 +212,11 @@ class _SettingState extends ConsumerState<Setting> {
             child: Text(AppLocalizations.of(context)!.cancel),
             onPressed: () => Navigator.pop(context),
           ),
-          FilledButton(
-            style: FilledButton.styleFrom(
-              backgroundColor: Theme.of(context).colorScheme.error,
-              foregroundColor: Theme.of(context).colorScheme.onError,
-            ),
-            child: Text(AppLocalizations.of(context)!.settingsSignOut),
+          PrimaryButton(
+            compact: true,
+            background: Theme.of(context).colorScheme.error,
+            foreground: Theme.of(context).colorScheme.onError,
+            label: AppLocalizations.of(context)!.settingsSignOut,
             onPressed: () async {
               await supabase.auth.signOut();
             },

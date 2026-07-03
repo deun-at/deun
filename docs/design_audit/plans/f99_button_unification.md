@@ -7,10 +7,37 @@ presets in `lib/widgets/restyle/` (`PrimaryButton`, `SecondaryButton`,
 `Cancel`/`OK` actions stay as `TextButton`.
 
 **Status:** FULLY DONE — Slice 1 (receipt scanner) + Slice 2 (clean full-width /
-two-button rows) + Slice 3 (compact / danger / contextual-color variants) all
-landed. Every non-text-link primary/secondary action now uses a preset. The only
-remaining raw buttons are genuine text links + platform-dialog Cancel/OK actions,
-which stay `TextButton` by design.
+two-button rows) + Slice 3 (compact / danger / contextual-color variants) +
+Slice 4 (shared confirm sheets + remaining dialog danger confirms) all landed.
+Every primary/secondary/danger action now uses a preset. The only remaining raw
+buttons are genuine text-link / dialog *Cancel* `TextButton`s, which stay by design.
+
+### Slice 4 — Shared confirm sheets + dialog danger confirms — DONE
+
+An earlier "FULLY DONE" mis-claim missed six real primary/danger sites still on
+raw `FilledButton` + `styleFrom`. All now route through the presets:
+- `delete_confirm_sheet.dart` (SHARED delete-confirm sheet) footer → **P**-danger
+  (`background: danger`, `foreground: onError`) confirm + **S** cancel. Fixes
+  every delete flow that routes through this sheet at once.
+- `discard_sheet.dart` (SHARED discard sheet) footer → **P**-danger
+  (`background: colorScheme.error`) confirm + **S** keep-editing. Mirrors the
+  delete-sheet treatment.
+- `expense_detail.dart` delete-item dialog confirm → **P** compact danger.
+- `friend_detail_sheet.dart` remove-friend dialog confirm → **P** compact danger.
+- `group_detail_edit.dart` delete-group dialog confirm → **P** compact danger.
+- `setting.dart` sign-out dialog confirm → **P** compact danger.
+
+Dialog confirms use `compact: true` (intrinsic-width stadium pill) so they sit
+correctly in the `AlertDialog` action bar; the paired dialog *Cancel* stays a
+`TextButton` (genuine platform-dialog cancel). pop(true)/pop(false) resolve
+semantics preserved; existing `discard_sheet_test.dart` (finds actions by label,
+not widget type) stays green.
+
+Confirming grep: `FilledButton(`/`ElevatedButton(` now appear in `lib/` ONLY in
+`widget_gallery_page.dart` (dev showcase, exempt) and `theme_builder.dart` as
+`FilledButtonThemeData` / `FilledButton.styleFrom` inside the theme definition
+(legitimately the theme, not a call site). Zero raw primary/secondary/danger
+buttons remain in app code.
 
 ### Slice 3 — Preset variants + all SPECIAL sites — DONE
 
@@ -88,43 +115,50 @@ preset via the `compact` / `background` / `foreground` params.
 - `friend_accept_page.dart` — DONE (Slice 2).
 - `contact_suggestion_list.dart` open-settings → **S** compact — DONE.
 - `requested_friendship_list.dart` error-tinted cancel → **P** compact danger — DONE.
-- `friend_detail_sheet.dart` dialog cancel + error confirm → **KEEP** (platform dialog).
+- `friend_detail_sheet.dart` dialog cancel → **KEEP**; error confirm → **P** compact danger (Slice 4).
 - `friend_add_row.dart` request pill → **P** compact — DONE.
 - `friend_qr_page.dart` — retry DONE (Slice 2).
 - `friend_list.dart` accept → **P** compact; cancel (error) → **S** compact danger — DONE.
 
 **Groups**
 - `group_detail_payment.dart` pay → **P** compact; remind gray pill → **S** compact tonal — DONE.
-- `group_detail_edit.dart` dialog cancel + error confirm → **KEEP** (dialog).
+- `group_detail_edit.dart` dialog cancel → **KEEP**; error confirm → **P** compact danger (Slice 4).
 - `group_invite_page.dart` copy / show-hide QR → **KEEP** (links).
 - `group_list.dart` "New" section trailing → **KEEP** (compact link).
 - `group_detail.dart` on-hero settle-up → **P** (onHero/heroSurface) — DONE.
 - `group_join_page.dart` — join DONE (Slice 2).
 
 **Expenses**
-- `expense_detail.dart` dialog cancel + error confirm → **KEEP** (dialog); Scan pill → **P** compact ink — DONE.
+- `expense_detail.dart` dialog cancel → **KEEP**; error confirm → **P** compact danger (Slice 4); Scan pill → **P** compact ink — DONE.
 
 **Settings**
 - `settings_sheets.dart` delete-account footer: cancel → **S**, confirm → **P**-danger — DONE.
-- `setting.dart` dialog cancel + error sign-out → **KEEP** (dialog).
+- `setting.dart` dialog cancel → **KEEP**; error sign-out → **P** compact danger (Slice 4).
 - `contact.dart` — submit DONE (Slice 2).
 
 **Auth**
 - `sign_in.dart` — social buttons already SecondaryButton; "forgot password" → **KEEP** (link).
 
 **Shared/dev**
-- `helper.dart`, `theme_builder.dart`, `widget_gallery_page.dart`, restyle sheets — dev/gallery or already-preset; **KEEP**/out of scope.
+- `helper.dart`, `theme_builder.dart`, `widget_gallery_page.dart` — dev/gallery or
+  the theme definition itself; **KEEP**/out of scope.
+- `delete_confirm_sheet.dart`, `discard_sheet.dart` — SHARED confirm sheets; converted
+  to **P**-danger + **S** in Slice 4.
 
-## F99 overall: FULLY DONE
+## F99 overall: FULLY DONE (verified)
 
-Every non-text-link primary/secondary action across the app now routes through
+Every primary/secondary/danger action across the app now routes through
 `PrimaryButton` / `SecondaryButton` (with the small `compact` / `background` /
-`foreground` variant set). The only raw buttons left are, by design:
+`foreground` variant set), including the two shared confirm sheets and the four
+dialog danger confirms a prior slice had missed. The only raw buttons left are,
+by design:
 - **KEEP** — genuine text links (`group_invite_page` copy / QR, `group_list` "New")
-  and platform-dialog Cancel/OK actions (`friend_detail_sheet`, `group_detail_edit`,
-  `expense_detail`, `setting` sign-out). These are correct as `TextButton`.
+  and platform-dialog *Cancel* `TextButton`s (`friend_detail_sheet`,
+  `group_detail_edit`, `expense_detail`, `setting`). These are correct as `TextButton`.
 
-No holdouts. The preset set stayed small (2 widgets, 3 optional params) per
-COMPONENTS §1.
+Confirmed by grep: no `FilledButton(` / `ElevatedButton(` call sites remain in
+`lib/` outside `theme_builder.dart` (the `FilledButtonThemeData` theme definition)
+and `widget_gallery_page.dart` (dev showcase). No holdouts. The preset set stayed
+small (2 widgets, 3 optional params) per COMPONENTS §1.
 
 ## Live web sign-off: PENDING (browser harness unavailable).

@@ -178,12 +178,11 @@ class _GroupEditState extends ConsumerState<GroupEdit> {
             child: Text(AppLocalizations.of(context)!.cancel),
             onPressed: () => Navigator.pop(context),
           ),
-          FilledButton(
-            style: FilledButton.styleFrom(
-              backgroundColor: Theme.of(context).colorScheme.error,
-              foregroundColor: Theme.of(context).colorScheme.onError,
-            ),
-            child: Text(AppLocalizations.of(context)!.delete),
+          PrimaryButton(
+            compact: true,
+            background: Theme.of(context).colorScheme.error,
+            foreground: Theme.of(context).colorScheme.onError,
+            label: AppLocalizations.of(context)!.delete,
             onPressed: () async {
               try {
                 await GroupRepository.delete(widget.group!.id);

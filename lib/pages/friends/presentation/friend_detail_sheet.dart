@@ -6,6 +6,7 @@ import 'package:deun/pages/friends/presentation/friend_detail_view_model.dart';
 import 'package:deun/pages/groups/data/group_repository.dart';
 import 'package:deun/pages/users/user_model.dart';
 import 'package:deun/widgets/restyle/member_avatar.dart';
+import 'package:deun/widgets/restyle/primary_button.dart';
 import 'package:deun/widgets/restyle/money_text.dart';
 import 'package:deun/widgets/restyle/section_label.dart';
 import 'package:deun/widgets/restyle/sheet_scaffold.dart';
@@ -263,11 +264,11 @@ class _RemoveFriendCard extends StatelessWidget {
             onPressed: () => Navigator.pop(dialogContext),
             child: Text(AppLocalizations.of(dialogContext)!.cancel),
           ),
-          FilledButton(
-            style: FilledButton.styleFrom(
-              backgroundColor: Theme.of(dialogContext).colorScheme.error,
-              foregroundColor: Theme.of(dialogContext).colorScheme.onError,
-            ),
+          PrimaryButton(
+            compact: true,
+            background: Theme.of(dialogContext).colorScheme.error,
+            foreground: Theme.of(dialogContext).colorScheme.onError,
+            label: AppLocalizations.of(dialogContext)!.remove,
             onPressed: () async {
               try {
                 await FriendshipRepository.remove(user.email);
@@ -290,7 +291,6 @@ class _RemoveFriendCard extends StatelessWidget {
                 }
               }
             },
-            child: Text(AppLocalizations.of(dialogContext)!.remove),
           ),
         ],
       ),
