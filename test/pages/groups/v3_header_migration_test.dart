@@ -13,6 +13,7 @@ import 'package:deun/pages/expenses/data/expense_model.dart';
 import 'package:deun/pages/expenses/provider/expense_list.dart';
 import 'package:deun/pages/groups/provider/group_detail.dart';
 import 'package:deun/pages/expenses/presentation/expense_detail.dart';
+import 'package:deun/pages/expenses/presentation/receipt_scanner_sheet.dart';
 import 'package:deun/pages/expenses/presentation/expense_detail_read.dart';
 import 'package:deun/pages/groups/data/group_member_model.dart';
 import 'package:deun/pages/groups/data/group_model.dart';
@@ -357,6 +358,66 @@ void main() {
 
       expect(find.byType(AppBar), findsNothing);
       expect(find.byType(SliverAppBar), findsNothing);
+    });
+
+    // F141: Scan + Add expense sit in ONE row (white Scan, colored Add
+    // expense), not a stacked Column.
+    testWidgets('Scan and Add expense share a single row (not a Column)', (
+      tester,
+    ) async {
+      await pumpFrame(tester);
+      final l10n = await AppLocalizations.delegate.load(const Locale('en'));
+
+      final scanFab = find.byType(FloatingActionButton);
+      final extendedFab = find.byType(FloatingActionButton).last;
+      // Both FABs render.
+      expect(scanFab, findsNWidgets(2));
+
+      // They are laid out side by side: a common Row ancestor holds both, and
+      // no Column sits between the Row and either FAB.
+      final row = find.ancestor(
+        of: find.byIcon(Icons.document_scanner_outlined),
+        matching: find.byType(Row),
+      );
+      expect(row, findsWidgets);
+      expect(
+        find.descendant(of: row.first, matching: find.byIcon(Icons.add)),
+        findsOneWidget,
+      );
+
+      // Scan = white circle with an accent icon; Add expense = colored pill.
+      final scan = tester.widget<FloatingActionButton>(
+        find.widgetWithIcon(FloatingActionButton, Icons.document_scanner_outlined),
+      );
+      final scheme = Theme.of(tester.element(find.byType(GroupDetail)))
+          .colorScheme;
+      expect(scan.backgroundColor, scheme.surfaceContainerLowest);
+      expect(scan.foregroundColor, scheme.primary);
+
+      expect(find.text(l10n.addNewExpense), findsOneWidget);
+      expect(
+        tester.widget<FloatingActionButton>(extendedFab).backgroundColor,
+        scheme.primary,
+      );
+    });
+
+    testWidgets('tapping Scan opens the receipt scanner; Add expense is wired', (
+      tester,
+    ) async {
+      await pumpFrame(tester);
+
+      // Add expense keeps its navigation callback (still triggers an action).
+      final addFab = tester.widget<FloatingActionButton>(
+        find.widgetWithIcon(FloatingActionButton, Icons.add),
+      );
+      expect(addFab.onPressed, isNotNull);
+
+      // Tapping Scan opens the receipt-scanner bottom sheet.
+      await tester.tap(
+        find.widgetWithIcon(FloatingActionButton, Icons.document_scanner_outlined),
+      );
+      await tester.pumpAndSettle();
+      expect(find.byType(ReceiptScannerSheet), findsOneWidget);
     });
   });
 

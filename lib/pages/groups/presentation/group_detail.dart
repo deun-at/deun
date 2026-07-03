@@ -215,12 +215,17 @@ class _GroupDetailState extends ConsumerState<GroupDetail> {
               return false;
             },
           ),
-          floatingActionButton: Column(
-            mainAxisAlignment: MainAxisAlignment.end,
-            crossAxisAlignment: CrossAxisAlignment.end,
+          // v3 group detail (design_handoff, bottom action area): Scan and Add
+          // expense sit side by side in ONE row. Scan = white circular button
+          // with an accent icon; Add expense = full-color primary pill.
+          floatingActionButton: Row(
+            mainAxisSize: MainAxisSize.min,
             children: [
               FloatingActionButton.small(
                 heroTag: "floating_action_button_scan",
+                backgroundColor:
+                    Theme.of(context).colorScheme.surfaceContainerLowest,
+                foregroundColor: Theme.of(context).colorScheme.primary,
                 onPressed: () async {
                   final result = await showModalBottomSheet<ReceiptScanResult>(
                     context: context,
@@ -243,9 +248,11 @@ class _GroupDetailState extends ConsumerState<GroupDetail> {
                 },
                 child: const Icon(Icons.document_scanner_outlined),
               ),
-              const SizedBox(height: 8),
+              const SizedBox(width: 10),
               FloatingActionButton.extended(
                 heroTag: "floating_action_button_main",
+                backgroundColor: Theme.of(context).colorScheme.primary,
+                foregroundColor: Theme.of(context).colorScheme.onPrimary,
                 extendedIconLabelSpacing: _showText ? 10 : 0,
                 extendedPadding: _showText ? null : const EdgeInsets.all(16),
                 onPressed: () {
