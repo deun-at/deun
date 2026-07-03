@@ -1,3 +1,4 @@
+import 'package:deun/constants.dart';
 import 'package:deun/helper/helper.dart';
 import 'package:deun/main.dart';
 import 'package:deun/widgets/theme_builder.dart';
@@ -964,6 +965,56 @@ class _ExpenseEntryWidgetState extends State<ExpenseEntryWidget> {
     return preview.toStringAsFixed(2);
   }
 
+  /// Segmented split bar: one colored segment per INCLUDED member, colored with
+  /// that member's avatar color (same [memberAvatarColor] keyed by email that
+  /// [MemberAvatar] uses) and flex-weighted by their share amount — so Equal
+  /// gives equal widths and %/Shares/Exact scale with the per-row amounts.
+  /// Rebuilds with the parent [setState] as members toggle or amounts change.
+  Widget _buildSplitSegments() {
+    final colorScheme = Theme.of(context).colorScheme;
+    final youEmail = supabase.auth.currentUser?.email;
+
+    // Preserve the member-list order so segment order matches the rows/avatars.
+    final segments = <Widget>[];
+    for (final member in widget.groupMembers) {
+      if (!_enabledMembers.contains(member.email)) continue;
+      final amount = double.tryParse(_getAmountPreview(member.email)) ?? 0;
+      // Flex must be a positive int; a member with a zero share still gets a
+      // hairline segment so their color/presence stays visible.
+      final flex = (amount * 100).round().clamp(1, 1 << 30);
+      final color = member.email == youEmail
+          ? colorScheme.primary
+          : memberAvatarColor(member.email);
+      segments.add(Expanded(
+        flex: flex,
+        child: Container(
+          key: ValueKey('split_segment_${widget.index}_${member.email}'),
+          color: color,
+        ),
+      ));
+    }
+
+    if (segments.isEmpty) {
+      // No included members — nothing to segment. Keep the height so the layout
+      // doesn't jump when the last member is toggled back in.
+      return Container(
+        height: 8,
+        decoration: BoxDecoration(
+          color: colorScheme.surfaceContainerHighest,
+          borderRadius: BorderRadius.circular(4),
+        ),
+      );
+    }
+
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(4),
+      child: SizedBox(
+        height: 8,
+        child: Row(children: segments),
+      ),
+    );
+  }
+
   /// Allocation bar + live remaining indicator. Reads the same numbers the
   /// existing validation uses (via the pure [SplitAllocation] helper) so the
   /// progress fill, the semantic color, and the save-time validity stay in sync.
@@ -1004,6 +1055,8 @@ class _ExpenseEntryWidgetState extends State<ExpenseEntryWidget> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        _buildSplitSegments(),
+        const SizedBox(height: 6),
         ProgressBar(value: allocation.fraction, fillColor: statusColor),
         const SizedBox(height: 6),
         Row(

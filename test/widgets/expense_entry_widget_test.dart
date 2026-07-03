@@ -259,6 +259,41 @@ void main() {
     expect(find.byType(MemberAvatar), findsNWidgets(2));
   });
 
+  testWidgets(
+      'split section renders one segment per included member with the member\'s '
+      'avatar color, and toggling a member out removes its segment (F109)',
+      (tester) async {
+    final controller = TextEditingController(text: '12.00');
+    addTearDown(controller.dispose);
+    await _pump(
+      tester,
+      initialAmount: null,
+      isSingleEntry: true,
+      expenseLevelAmountController: controller,
+    );
+
+    final aliceSeg = find.byKey(const ValueKey('split_segment_0_a@test.com'));
+    final bobSeg = find.byKey(const ValueKey('split_segment_0_b@test.com'));
+
+    // Both members included: two segments, each in the member's avatar color.
+    expect(aliceSeg, findsOneWidget);
+    expect(bobSeg, findsOneWidget);
+    expect(
+      tester.widget<Container>(aliceSeg).color,
+      memberAvatarColor('a@test.com'),
+    );
+    expect(
+      tester.widget<Container>(bobSeg).color,
+      memberAvatarColor('b@test.com'),
+    );
+
+    // Toggle Alice out: her segment disappears, Bob's remains.
+    await tester.tap(find.byType(Checkbox).first);
+    await tester.pumpAndSettle();
+    expect(aliceSeg, findsNothing);
+    expect(bobSeg, findsOneWidget);
+  });
+
   testWidgets('switching to Shares mode shows steppers', (tester) async {
     final controller = TextEditingController(text: '12.00');
     addTearDown(controller.dispose);
