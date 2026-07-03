@@ -40,6 +40,24 @@ void main() {
       expect(summary.yourShare, 0.0);
     });
 
+    test('yourClaimedCount counts the persona\'s claimed units', () {
+      final units = [
+        u(5.0, ['sam@x']),
+        u(6.0, ['sam@x', 'priya@x']),
+        u(4.0, ['priya@x']),
+        u(3.0, []),
+      ];
+      expect(
+        buildClaimSummary(units: units, personaEmail: 'sam@x').yourClaimedCount,
+        2,
+      );
+      expect(
+        buildClaimSummary(units: units, personaEmail: 'nobody@x')
+            .yourClaimedCount,
+        0,
+      );
+    });
+
     test('progress is claimed / total, clamped and safe for an empty receipt', () {
       expect(
         buildClaimSummary(units: [u(4.0, ['a']), u(4.0, [])], personaEmail: 'a')

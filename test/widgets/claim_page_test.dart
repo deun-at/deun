@@ -6,6 +6,7 @@ import 'package:deun/pages/expenses/presentation/claim_page.dart';
 import 'package:deun/pages/expenses/provider/claim_notifier.dart';
 import 'package:deun/widgets/restyle/deun_header.dart';
 import 'package:deun/widgets/restyle/member_avatar.dart';
+import 'package:deun/widgets/restyle/progress_bar.dart';
 import 'package:deun/pages/groups/data/group_member_model.dart';
 import 'package:deun/pages/groups/data/group_model.dart';
 import 'package:deun/widgets/theme_builder.dart';
@@ -216,26 +217,71 @@ void main() {
     );
   });
 
-  testWidgets('summary card shows your share, progress, unclaimed and per-member',
+  testWidgets('summary card shows your share, progress, left and per-member',
       (tester) async {
     final l10n = await AppLocalizations.delegate.load(const Locale('en'));
     await _pump(tester, expense: _itemizedExpense());
 
-    // No signed-in user in tests → persona defaults to ''; "your share" is 0.
+    // F128: label reads "You, your share".
+    expect(l10n.claimYourShare, 'You, your share');
     expect(find.text(l10n.claimYourShare), findsOneWidget);
+    // F128: right-side header — no signed-in user → persona '' claimed nothing.
+    expect(find.text(l10n.claimYouClaimedItems(0)), findsOneWidget);
     // Progress caption: "€16.00 of €20.00 claimed".
     expect(
       find.text(l10n.claimProgressLabel(l10n.toCurrency(16), l10n.toCurrency(20))),
       findsOneWidget,
     );
-    // Unclaimed remainder €4 is surfaced.
-    expect(find.textContaining(l10n.toCurrency(4)), findsWidgets);
+    // F128: the €4 remainder is surfaced as "€4.00 left" (amber).
+    expect(find.text(l10n.claimLeftLabel(l10n.toCurrency(4))), findsOneWidget);
     // Per-member section + both claimers' totals.
     expect(find.text(l10n.claimPerMemberLabel), findsOneWidget);
     expect(find.text('Alice'), findsWidgets);
     expect(find.text('Bob'), findsWidgets);
     // Alice total = 10 + 3 = 13; Bob = 3.
     expect(find.text(l10n.toCurrency(13)), findsWidgets);
+  });
+
+  testWidgets('F128: summary progress bar uses the green success fill',
+      (tester) async {
+    await _pump(tester, expense: _itemizedExpense());
+
+    final context = tester.element(find.byType(ClaimPage));
+    final semantic = Theme.of(context).extension<SemanticColors>()!;
+
+    // The summary card's progress bar (the first ProgressBar on the screen).
+    final bar = tester.widget<ProgressBar>(find.byType(ProgressBar).first);
+    expect(bar.fillColor, semantic.success);
+  });
+
+  testWidgets('F128: the "left" figure is rendered in the amber warning tone',
+      (tester) async {
+    final l10n = await AppLocalizations.delegate.load(const Locale('en'));
+    await _pump(tester, expense: _itemizedExpense());
+
+    final context = tester.element(find.byType(ClaimPage));
+    final semantic = Theme.of(context).extension<SemanticColors>()!;
+
+    final left = tester.widget<Text>(
+      find.text(l10n.claimLeftLabel(l10n.toCurrency(4))),
+    );
+    expect(left.style?.color, semantic.warning);
+  });
+
+  testWidgets('F128: claimed-items count follows the selected persona',
+      (tester) async {
+    final l10n = await AppLocalizations.delegate.load(const Locale('en'));
+    await _pump(tester, expense: _itemizedExpense());
+
+    // Preview as Alice → she claims 2 units (Cheese + Wine).
+    await tester.tap(find.byKey(const ValueKey('persona:a@test.com')));
+    await tester.pumpAndSettle();
+    expect(find.text(l10n.claimYouClaimedItems(2)), findsOneWidget);
+
+    // Preview as Bob → he claims 1 unit (Wine).
+    await tester.tap(find.byKey(const ValueKey('persona:b@test.com')));
+    await tester.pumpAndSettle();
+    expect(find.text(l10n.claimYouClaimedItems(1)), findsOneWidget);
   });
 
   testWidgets('persona switcher renders one avatar with name per member',

@@ -505,9 +505,20 @@ class _SummaryCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            l10n.claimYourShare,
-            style: textTheme.labelLarge?.copyWith(color: onHeroMuted),
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  l10n.claimYourShare,
+                  style: textTheme.labelLarge?.copyWith(color: onHeroMuted),
+                ),
+              ),
+              // F128: how many items the current persona has claimed.
+              Text(
+                l10n.claimYouClaimedItems(summary.yourClaimedCount),
+                style: textTheme.bodySmall?.copyWith(color: onHeroMuted),
+              ),
+            ],
           ),
           const SizedBox(height: 6),
           MoneyText(
@@ -516,9 +527,10 @@ class _SummaryCard extends StatelessWidget {
             animate: true,
           ),
           const SizedBox(height: 18),
+          // F128: green success fill on the dark card (not the on-ink tone).
           ProgressBar(
             value: summary.progress,
-            fillColor: onHero,
+            fillColor: semantic.success,
             trackColor: onHero.withValues(alpha: 0.18),
           ),
           const SizedBox(height: 8),
@@ -532,12 +544,13 @@ class _SummaryCard extends StatelessWidget {
                 style: textTheme.bodySmall?.copyWith(color: onHeroMuted),
               ),
               const Spacer(),
+              // F128: remaining amount in amber "left" tone (or "all claimed").
               Text(
                 summary.isFullyClaimed
                     ? l10n.claimAllClaimed
-                    : '${l10n.claimUnclaimedLabel}: ${l10n.toCurrency(summary.unclaimed)}',
+                    : l10n.claimLeftLabel(l10n.toCurrency(summary.unclaimed)),
                 style: textTheme.bodySmall?.copyWith(
-                  color: onHeroMuted,
+                  color: summary.isFullyClaimed ? onHeroMuted : semantic.warning,
                   fontWeight: FontWeight.w600,
                 ),
               ),

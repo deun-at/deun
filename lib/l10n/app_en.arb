@@ -352,9 +352,23 @@
   "@claimPreviewAs": {
     "description": "Label above the persona switcher that previews the claim view as a chosen member."
   },
-  "claimYourShare": "Your share",
+  "claimYourShare": "You, your share",
   "@claimYourShare": {
     "description": "Label above the selected persona's claimed total on the dark summary card."
+  },
+  "claimYouClaimedItems": "{count, plural, =0{you claimed no items} one{you claimed {count} item} other{you claimed {count} items}}",
+  "@claimYouClaimedItems": {
+    "description": "Right-side header on the summary card: how many items the current persona has claimed.",
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "claimLeftLabel": "{amount} left",
+  "@claimLeftLabel": {
+    "description": "Right-side figure under the progress bar: the amount still unclaimed, in an amber tone.",
+    "placeholders": {
+      "amount": { "type": "String" }
+    }
   },
   "claimProgressLabel": "{claimed} of {total} claimed",
   "@claimProgressLabel": {

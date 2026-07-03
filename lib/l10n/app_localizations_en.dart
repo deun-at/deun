@@ -395,7 +395,24 @@ class AppLocalizationsEn extends AppLocalizations {
   String get claimPreviewAs => 'Preview as';
 
   @override
-  String get claimYourShare => 'Your share';
+  String get claimYourShare => 'You, your share';
+
+  @override
+  String claimYouClaimedItems(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'you claimed $count items',
+      one: 'you claimed $count item',
+      zero: 'you claimed no items',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String claimLeftLabel(String amount) {
+    return '$amount left';
+  }
 
   @override
   String claimProgressLabel(String claimed, String total) {

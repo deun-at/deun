@@ -809,8 +809,20 @@ abstract class AppLocalizations {
   /// Label above the selected persona's claimed total on the dark summary card.
   ///
   /// In en, this message translates to:
-  /// **'Your share'**
+  /// **'You, your share'**
   String get claimYourShare;
+
+  /// Right-side header on the summary card: how many items the current persona has claimed.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =0{you claimed no items} one{you claimed {count} item} other{you claimed {count} items}}'**
+  String claimYouClaimedItems(int count);
+
+  /// Right-side figure under the progress bar: the amount still unclaimed, in an amber tone.
+  ///
+  /// In en, this message translates to:
+  /// **'{amount} left'**
+  String claimLeftLabel(String amount);
 
   /// Progress caption under the claimed/total progress bar on the summary card.
   ///

@@ -17,6 +17,7 @@ class MemberTotal {
 class ClaimSummary {
   const ClaimSummary({
     required this.yourShare,
+    required this.yourClaimedCount,
     required this.claimed,
     required this.unclaimed,
     required this.total,
@@ -25,6 +26,9 @@ class ClaimSummary {
 
   /// The selected persona's claimed total across all units.
   final double yourShare;
+
+  /// How many units the selected persona has claimed (F128 header count).
+  final int yourClaimedCount;
 
   /// Sum of all unit costs that have at least one claimer.
   final double claimed;
@@ -71,6 +75,8 @@ ClaimSummary buildClaimSummary({
 
   return ClaimSummary(
     yourShare: totals[personaEmail] ?? 0.0,
+    yourClaimedCount:
+        units.where((u) => u.claimers.contains(personaEmail)).length,
     claimed: claimedTotal(units),
     unclaimed: unclaimedTotal(units),
     total: grandTotal(units),
