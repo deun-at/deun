@@ -1,5 +1,7 @@
 import 'package:deun/constants.dart';
 import 'package:deun/l10n/app_localizations.dart';
+import 'package:deun/pages/expenses/data/expense_model.dart';
+import 'package:deun/pages/expenses/data/expense_entry_model.dart';
 import 'package:deun/pages/expenses/presentation/expense_detail.dart';
 import 'package:deun/pages/groups/data/group_member_model.dart';
 import 'package:deun/pages/groups/data/group_model.dart';
@@ -39,9 +41,36 @@ Group _group() {
   return g;
 }
 
+ExpenseEntry _entry(int index) => ExpenseEntry(index: index)
+  ..id = 'entry$index'
+  ..splitMode = 'equal'
+  ..name = 'Dinner'
+  ..amount = 30
+  ..quantity = 1
+  ..itemGroupId = null;
+
+Expense _expense() {
+  final e = Expense();
+  e.id = 'e1';
+  e.groupId = 'g1';
+  e.name = 'Dinner';
+  e.amount = 30;
+  e.paidBy = 'a@test.com';
+  e.paidByDisplayName = 'Alice';
+  e.expenseDate = '2026-01-01';
+  e.createdAt = '';
+  e.isPaidBackRow = false;
+  e.category = null;
+  e.groupMemberShareStatistic = {};
+  e.expenseEntries = {'entry0': _entry(0)};
+  return e;
+}
+
 Future<void> _pump(
   WidgetTester tester, {
   Brightness brightness = Brightness.light,
+  Expense? expense,
+  bool dismissKeypad = true,
 }) async {
   await tester.pumpWidget(
     ProviderScope(
@@ -59,13 +88,20 @@ Future<void> _pump(
                 .copyWith(splashFactory: NoSplash.splashFactory),
             // ExpenseDetail wraps itself in a ThemeBuilder that inherits this
             // ambient brightness.
-            child: ExpenseDetail(group: _group()),
+            child: ExpenseDetail(group: _group(), expense: expense),
           ),
         ),
       ),
     ),
   );
   await tester.pumpAndSettle();
+  // A new expense auto-opens the amount keypad (F100). Dismiss it so the
+  // underlying editor assertions run against the visible page.
+  if (dismissKeypad && find.byType(AmountKeypadSheet).evaluate().isNotEmpty) {
+    final ctx = tester.element(find.byType(AmountKeypadSheet));
+    Navigator.of(ctx).pop();
+    await tester.pumpAndSettle();
+  }
 }
 
 void main() {
@@ -158,5 +194,17 @@ void main() {
   testWidgets('renders in dark mode without throwing', (tester) async {
     await _pump(tester, brightness: Brightness.dark);
     expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('new expense auto-opens the amount keypad sheet (F100)',
+      (tester) async {
+    await _pump(tester, dismissKeypad: false);
+    expect(find.byType(AmountKeypadSheet), findsOneWidget);
+  });
+
+  testWidgets('editing an existing expense does NOT auto-open the keypad',
+      (tester) async {
+    await _pump(tester, expense: _expense(), dismissKeypad: false);
+    expect(find.byType(AmountKeypadSheet), findsNothing);
   });
 }

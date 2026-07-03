@@ -170,6 +170,17 @@ class _ExpenseDetailState extends ConsumerState<ExpenseDetail> {
       _amountController.text = widget.receiptResult!.total!.toStringAsFixed(2);
     }
 
+    // New (non-receipt) expense opens on the Quick amount card — pop the amount
+    // keypad after the first frame so the amount can be typed immediately
+    // (F100). Editing an existing expense, or a scanned receipt (amount already
+    // filled), opens normally.
+    if (widget.expense == null && widget.receiptResult == null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        _openAmountKeypadForFirstEntry();
+      });
+    }
+
     // Apply receipt merchant name and date after first frame (form needs to be built)
     if (widget.receiptResult != null) {
       final receipt = widget.receiptResult!;
@@ -546,6 +557,18 @@ class _ExpenseDetailState extends ConsumerState<ExpenseDetail> {
       _amountController.text = text;
     });
     field.didChange(text);
+  }
+
+  /// Auto-open entry point for a new expense: resolves the Quick amount card's
+  /// form field and opens the keypad through the same [_openAmountKeypad] path
+  /// the tap uses. No-op if the form/field isn't ready.
+  void _openAmountKeypadForFirstEntry() {
+    if (_entries.isEmpty) return;
+    final firstIndex = _entries.first.index;
+    final field = _formKey.currentState?.fields["expense_entry[$firstIndex][amount]"];
+    if (field == null) return;
+    final amount = double.tryParse(_amountController.text) ?? 0;
+    _openAmountKeypad(field, amount);
   }
 
   void _addNewEntry() {

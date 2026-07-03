@@ -7,6 +7,7 @@ import 'package:deun/pages/expenses/presentation/expense_detail.dart';
 import 'package:deun/pages/groups/data/group_member_model.dart';
 import 'package:deun/pages/groups/data/group_model.dart';
 import 'package:deun/widgets/restyle/app_segmented_control.dart';
+import 'package:deun/widgets/restyle/expense_picker_sheets.dart';
 import 'package:deun/widgets/restyle/soft_card.dart';
 import 'package:deun/widgets/theme_builder.dart';
 import 'package:flutter/material.dart';
@@ -66,6 +67,12 @@ Future<void> _pump(
     ),
   );
   await tester.pumpAndSettle();
+  // A new expense auto-opens the amount keypad (F100); these tests exercise the
+  // Itemized flow, so dismiss it to reach the underlying editor.
+  if (find.byType(AmountKeypadSheet).evaluate().isNotEmpty) {
+    Navigator.of(tester.element(find.byType(AmountKeypadSheet))).pop();
+    await tester.pumpAndSettle();
+  }
 }
 
 /// A shared itemized expense as fetchDetail returns it: per-unit claim
