@@ -186,7 +186,11 @@ class _FriendListState extends ConsumerState<FriendList> {
               children: [
                 _FriendsHeader(),
                 const Expanded(
-                  child: ShimmerCardList(height: 70, listEntryLength: 12),
+                  child: ShimmerCardList(
+                    height: 70,
+                    listEntryLength: 12,
+                    shape: ShimmerShape.row,
+                  ),
                 ),
               ],
             ),

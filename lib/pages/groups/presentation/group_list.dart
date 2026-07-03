@@ -126,7 +126,11 @@ class _GroupListState extends ConsumerState<GroupList> {
               children: [
                 _GreetingHeader(),
                 const Expanded(
-                  child: ShimmerCardList(height: 100, listEntryLength: 8),
+                  child: ShimmerCardList(
+                    height: 100,
+                    listEntryLength: 8,
+                    shape: ShimmerShape.card,
+                  ),
                 ),
               ],
             ),

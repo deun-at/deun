@@ -43,7 +43,11 @@ class SearchResultList extends StatelessWidget {
 
     Widget body;
     if (isLoading) {
-      body = const ShimmerCardList(height: 64, listEntryLength: 2);
+      body = const ShimmerCardList(
+        height: 64,
+        listEntryLength: 2,
+        shape: ShimmerShape.row,
+      );
     } else if (isAmbiguousUsername) {
       body = _MessageCard(message: l10n.addFriendshipAmbiguousUsername);
     } else if (searchResults.isEmpty) {

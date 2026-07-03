@@ -49,7 +49,11 @@ class ContactSuggestionList extends StatelessWidget {
 
     Widget body;
     if (isLoading) {
-      body = const ShimmerCardList(height: 64, listEntryLength: 3);
+      body = const ShimmerCardList(
+        height: 64,
+        listEntryLength: 3,
+        shape: ShimmerShape.row,
+      );
     } else if (contactSuggestions.isEmpty) {
       body = _ContactEmptyCard(
         contactPermissionDenied: contactPermissionDenied,

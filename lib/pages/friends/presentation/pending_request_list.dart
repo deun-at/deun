@@ -37,7 +37,11 @@ class PendingRequestList extends StatelessWidget {
     if (isLoading) {
       return Column(children: [
         title,
-        const ShimmerCardList(height: 50, listEntryLength: 3),
+        const ShimmerCardList(
+          height: 50,
+          listEntryLength: 3,
+          shape: ShimmerShape.row,
+        ),
       ]);
     }
 
