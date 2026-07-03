@@ -171,14 +171,16 @@ void main() {
     await Supabase.instance.dispose();
   });
 
-  testWidgets('header shows merchant and live-presence label', (tester) async {
+  testWidgets('header shows merchant and live claiming count', (tester) async {
     final l10n = await AppLocalizations.delegate.load(const Locale('en'));
     await _pump(tester, expense: _itemizedExpense());
 
     // Merchant name appears in the DeunHeader title (may also appear elsewhere).
     expect(find.text('Supermarket'), findsWidgets);
-    // Presence live text in the DeunHeader subtitle.
-    expect(find.text(l10n.claimPresenceLive), findsOneWidget);
+    // F127: presence subtitle is the live claimer count (Alice + Bob = 2),
+    // not a static "Live" label.
+    expect(find.text(l10n.claimPresenceCount(2)), findsOneWidget);
+    expect(l10n.claimPresenceCount(2), '2 people claiming now');
     // No AppBar — the claim page uses DeunHeader exclusively.
     expect(find.byType(AppBar), findsNothing);
     // DeunHeader is rendered.
@@ -217,7 +219,7 @@ void main() {
     );
   });
 
-  testWidgets('summary card shows your share, progress, left and per-member',
+  testWidgets('summary card shows your share, progress, left and per-person',
       (tester) async {
     final l10n = await AppLocalizations.delegate.load(const Locale('en'));
     await _pump(tester, expense: _itemizedExpense());
@@ -234,12 +236,27 @@ void main() {
     );
     // F128: the €4 remainder is surfaced as "€4.00 left" (amber).
     expect(find.text(l10n.claimLeftLabel(l10n.toCurrency(4))), findsOneWidget);
-    // Per-member section + both claimers' totals.
-    expect(find.text(l10n.claimPerMemberLabel), findsOneWidget);
-    expect(find.text('Alice'), findsWidgets);
-    expect(find.text('Bob'), findsWidgets);
+    // F129: per-person totals still surface each claimer's amount as a chip.
     // Alice total = 10 + 3 = 13; Bob = 3.
     expect(find.text(l10n.toCurrency(13)), findsWidgets);
+    expect(find.text(l10n.toCurrency(3)), findsWidgets);
+  });
+
+  testWidgets('F129: per-person strip is compact avatar+amount, no label/names',
+      (tester) async {
+    final l10n = await AppLocalizations.delegate.load(const Locale('en'));
+    await _pump(tester, expense: _itemizedExpense());
+
+    // The "Per person" section label is gone.
+    expect(find.text(l10n.claimPerMemberLabel), findsNothing);
+
+    // The chip strip lives on the dark hero SummaryCard. Its chips carry an
+    // avatar + amount only — the claimer name does not appear inside the chip.
+    // Alice's total (€13) chip must not sit alongside her name in the same chip:
+    // MoneyText for €13 exists (chip amount), and there is no in-chip name Text.
+    expect(find.text(l10n.toCurrency(13)), findsWidgets);
+    // Each per-person chip renders a MemberAvatar (avatar-only, no name Text).
+    expect(find.byType(MemberAvatar), findsWidgets);
   });
 
   testWidgets('F128: summary progress bar uses the green success fill',
@@ -266,6 +283,35 @@ void main() {
       find.text(l10n.claimLeftLabel(l10n.toCurrency(4))),
     );
     expect(left.style?.color, semantic.warning);
+  });
+
+  testWidgets('F130: unclaimed callout shows payer copy + black Nudge pill',
+      (tester) async {
+    final l10n = await AppLocalizations.delegate.load(const Locale('en'));
+    await _pump(tester, expense: _itemizedExpense());
+
+    final context = tester.element(find.byType(ClaimPage));
+    final semantic = Theme.of(context).extension<SemanticColors>()!;
+
+    // Explanatory copy: "€4.00 still unclaimed. Alice paid, so they cover the
+    // rest unless the group claims it." (payer = Alice).
+    expect(
+      find.text(l10n.claimUnclaimedCallout(l10n.toCurrency(4), 'Alice')),
+      findsOneWidget,
+    );
+
+    // The Nudge action is a solid black (ink) pill, not a plain text link.
+    final nudge = find.ancestor(
+      of: find.text(l10n.claimNudge),
+      matching: find.byType(Material),
+    );
+    expect(nudge, findsWidgets);
+    final pill = tester.widget<Material>(nudge.first);
+    expect(pill.color, semantic.ink);
+    // Tapping the pill fires the nudge (snackbar confirmation).
+    await tester.tap(find.text(l10n.claimNudge));
+    await tester.pump();
+    expect(find.text(l10n.claimNudgeSent), findsOneWidget);
   });
 
   testWidgets('F128: claimed-items count follows the selected persona',

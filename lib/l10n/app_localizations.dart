@@ -788,11 +788,11 @@ abstract class AppLocalizations {
   /// **'Tap to claim'**
   String get claimTitle;
 
-  /// Label next to the live-presence pulse dot in the claim screen header.
+  /// Live-presence subtitle next to the pulse dot in the claim header: how many members are currently claiming.
   ///
   /// In en, this message translates to:
-  /// **'Live'**
-  String get claimPresenceLive;
+  /// **'{count, plural, =0{No one claiming yet} one{{count} person claiming now} other{{count} people claiming now}}'**
+  String claimPresenceCount(int count);
 
   /// Tooltip / label for the edit-items action that opens the itemized editor from the claim screen.
   ///
@@ -920,11 +920,11 @@ abstract class AppLocalizations {
   /// **'Apply split'**
   String get claimSplitApply;
 
-  /// Warning callout above the items when some units have no claimer.
+  /// Warning callout above the items when some units have no claimer: explains the payer covers the remainder.
   ///
   /// In en, this message translates to:
-  /// **'{amount} still unclaimed'**
-  String claimUnclaimedCallout(String amount);
+  /// **'{amount} still unclaimed. {payer} paid, so they cover the rest unless the group claims it.'**
+  String claimUnclaimedCallout(String amount, String payer);
 
   /// Action in the unclaimed callout that reminds members to claim their items.
   ///

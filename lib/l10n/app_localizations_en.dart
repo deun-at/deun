@@ -386,7 +386,16 @@ class AppLocalizationsEn extends AppLocalizations {
   String get claimTitle => 'Tap to claim';
 
   @override
-  String get claimPresenceLive => 'Live';
+  String claimPresenceCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count people claiming now',
+      one: '$count person claiming now',
+      zero: 'No one claiming yet',
+    );
+    return '$_temp0';
+  }
 
   @override
   String get claimEditItems => 'Edit items';
@@ -471,8 +480,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get claimSplitApply => 'Apply split';
 
   @override
-  String claimUnclaimedCallout(String amount) {
-    return '$amount still unclaimed';
+  String claimUnclaimedCallout(String amount, String payer) {
+    return '$amount still unclaimed. $payer paid, so they cover the rest unless the group claims it.';
   }
 
   @override

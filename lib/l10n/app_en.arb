@@ -340,9 +340,12 @@
   "@claimTitle": {
     "description": "App-bar / header title for the itemized claim screen (Screen 9)."
   },
-  "claimPresenceLive": "Live",
-  "@claimPresenceLive": {
-    "description": "Label next to the live-presence pulse dot in the claim screen header."
+  "claimPresenceCount": "{count, plural, =0{No one claiming yet} one{{count} person claiming now} other{{count} people claiming now}}",
+  "@claimPresenceCount": {
+    "description": "Live-presence subtitle next to the pulse dot in the claim header: how many members are currently claiming.",
+    "placeholders": {
+      "count": { "type": "int" }
+    }
   },
   "claimEditItems": "Edit items",
   "@claimEditItems": {
@@ -448,11 +451,12 @@
   "@claimSplitApply": {
     "description": "Confirm button in the split-one member picker."
   },
-  "claimUnclaimedCallout": "{amount} still unclaimed",
+  "claimUnclaimedCallout": "{amount} still unclaimed. {payer} paid, so they cover the rest unless the group claims it.",
   "@claimUnclaimedCallout": {
-    "description": "Warning callout above the items when some units have no claimer.",
+    "description": "Warning callout above the items when some units have no claimer: explains the payer covers the remainder.",
     "placeholders": {
-      "amount": { "type": "String" }
+      "amount": { "type": "String" },
+      "payer": { "type": "String" }
     }
   },
   "claimNudge": "Nudge",

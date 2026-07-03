@@ -389,7 +389,16 @@ class AppLocalizationsDe extends AppLocalizations {
   String get claimTitle => 'Zum Beanspruchen tippen';
 
   @override
-  String get claimPresenceLive => 'Live';
+  String claimPresenceCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count Personen beanspruchen gerade',
+      one: '$count Person beansprucht gerade',
+      zero: 'Noch niemand beansprucht',
+    );
+    return '$_temp0';
+  }
 
   @override
   String get claimEditItems => 'Positionen bearbeiten';
@@ -475,8 +484,8 @@ class AppLocalizationsDe extends AppLocalizations {
   String get claimSplitApply => 'Aufteilung übernehmen';
 
   @override
-  String claimUnclaimedCallout(String amount) {
-    return '$amount noch nicht zugeordnet';
+  String claimUnclaimedCallout(String amount, String payer) {
+    return '$amount noch nicht zugeordnet. $payer hat bezahlt und übernimmt den Rest, sofern die Gruppe ihn nicht beansprucht.';
   }
 
   @override

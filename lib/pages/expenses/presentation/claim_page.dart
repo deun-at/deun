@@ -72,6 +72,13 @@ class _ClaimPageState extends ConsumerState<ClaimPage> {
     return _memberFor(email)?.displayName ?? email;
   }
 
+  /// The expense payer's display name for the unclaimed callout (F130).
+  String _payerName(BuildContext context, Expense expense) {
+    final email = expense.paidBy;
+    if (email != null && email.isNotEmpty) return _displayName(context, email);
+    return expense.paidByDisplayName ?? '';
+  }
+
   ClaimNotifier get _notifier =>
       ref.read(claimProvider(widget.group.id, widget.expense.id).notifier);
 
@@ -183,7 +190,8 @@ class _ClaimPageState extends ConsumerState<ClaimPage> {
                 children: [
                   DeunHeader(
                     title: expense.name,
-                    subtitle: l10n.claimPresenceLive,
+                    subtitle:
+                        l10n.claimPresenceCount(summary.memberTotals.length),
                     subtitleLeading: const _PresencePulse(),
                     leadingIcon: Icons.arrow_back,
                     trailing: IconButton(
@@ -214,6 +222,7 @@ class _ClaimPageState extends ConsumerState<ClaimPage> {
                           const SizedBox(height: 16),
                           _UnclaimedCallout(
                             unclaimed: summary.unclaimed,
+                            payerName: _payerName(context, expense),
                             onNudge: _nudge,
                           ),
                         ],
@@ -560,13 +569,8 @@ class _SummaryCard extends StatelessWidget {
             const SizedBox(height: 18),
             Divider(height: 1, color: onHero.withValues(alpha: 0.18)),
             const SizedBox(height: 14),
-            Text(
-              l10n.claimPerMemberLabel,
-              style: textTheme.labelMedium?.copyWith(color: onHeroMuted),
-            ),
-            const SizedBox(height: 10),
-            // DESIGN_SPEC §9: per-member totals are a horizontal chip strip
-            // (avatar + name + total), not stacked rows — scrolls on overflow.
+            // F129: per-person totals are a compact avatar + amount chip strip
+            // (no "Per person" label, no name), matching the v3 handoff.
             SingleChildScrollView(
               scrollDirection: Axis.horizontal,
               clipBehavior: Clip.none,
@@ -593,10 +597,11 @@ class _SummaryCard extends StatelessWidget {
   }
 }
 
-/// One member's claim total as a compact chip in the horizontal per-member
-/// strip: avatar + name + total stacked, on a faint tinted background (the
-/// "you" accent for the current persona). Lives on the dark-ink hero card, so
-/// tints are keyed off [onHero] / primary and read correctly in both themes.
+/// One member's claim total as a compact chip in the horizontal per-person
+/// strip: avatar + amount only (no name/label, per the v3 handoff), on a faint
+/// tinted background (the "you" accent for the current persona). Lives on the
+/// dark-ink hero card, so tints are keyed off [onHero] / primary and read
+/// correctly in both themes.
 class _MemberTotalChip extends StatelessWidget {
   const _MemberTotalChip({
     required this.name,
@@ -620,25 +625,16 @@ class _MemberTotalChip extends StatelessWidget {
         ? primary.withValues(alpha: 0.22)
         : onHero.withValues(alpha: 0.08);
     return Container(
-      width: 92,
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
+      padding: const EdgeInsets.fromLTRB(6, 6, 12, 6),
       decoration: BoxDecoration(
         color: chipBg,
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(20),
       ),
-      child: Column(
+      child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          MemberAvatar(name: name, colorKey: colorKey, radius: 14, isYou: isYou),
-          const SizedBox(height: 7),
-          Text(
-            name,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            textAlign: TextAlign.center,
-            style: textTheme.bodySmall?.copyWith(color: onHero),
-          ),
-          const SizedBox(height: 2),
+          MemberAvatar(name: name, colorKey: colorKey, radius: 13, isYou: isYou),
+          const SizedBox(width: 7),
           MoneyText(
             amount,
             style: textTheme.titleSmall
@@ -1115,9 +1111,14 @@ class _DashedStadiumPainter extends CustomPainter {
 /// Warning-tinted callout shown above the items while some units are still
 /// unclaimed, with a Nudge action.
 class _UnclaimedCallout extends StatelessWidget {
-  const _UnclaimedCallout({required this.unclaimed, required this.onNudge});
+  const _UnclaimedCallout({
+    required this.unclaimed,
+    required this.payerName,
+    required this.onNudge,
+  });
 
   final double unclaimed;
+  final String payerName;
   final VoidCallback onNudge;
 
   @override
@@ -1127,30 +1128,74 @@ class _UnclaimedCallout extends StatelessWidget {
     final textTheme = Theme.of(context).textTheme;
 
     return Container(
-      padding: const EdgeInsets.fromLTRB(14, 12, 8, 12),
+      padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: semantic.warning.withValues(alpha: 0.14),
         borderRadius: BorderRadius.circular(16),
       ),
-      child: Row(
+      // F130: explanatory copy (amount + payer covers the rest) with a solid
+      // black (ink/onInk) "Nudge" pill instead of a plain text link.
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(Icons.error_outline, size: 20, color: semantic.warning),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Text(
-              l10n.claimUnclaimedCallout(l10n.toCurrency(unclaimed)),
-              style: textTheme.bodyMedium?.copyWith(
-                color: semantic.warning,
-                fontWeight: FontWeight.w600,
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Icon(Icons.error_outline, size: 20, color: semantic.warning),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  l10n.claimUnclaimedCallout(
+                    l10n.toCurrency(unclaimed),
+                    payerName,
+                  ),
+                  style: textTheme.bodyMedium?.copyWith(
+                    color: semantic.warning,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
               ),
-            ),
+            ],
           ),
-          TextButton(
-            onPressed: onNudge,
-            style: TextButton.styleFrom(foregroundColor: semantic.warning),
-            child: Text(l10n.claimNudge),
+          const SizedBox(height: 12),
+          Align(
+            alignment: Alignment.centerRight,
+            child: _NudgePill(onTap: onNudge, label: l10n.claimNudge),
           ),
         ],
+      ),
+    );
+  }
+}
+
+/// The solid black (ink/onInk) "Nudge" pill in the unclaimed callout (F130).
+class _NudgePill extends StatelessWidget {
+  const _NudgePill({required this.onTap, required this.label});
+
+  final VoidCallback onTap;
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    final semantic = Theme.of(context).extension<SemanticColors>()!;
+    final textTheme = Theme.of(context).textTheme;
+
+    return Material(
+      color: semantic.ink,
+      borderRadius: BorderRadius.circular(999),
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 9),
+          child: Text(
+            label,
+            style: textTheme.labelLarge?.copyWith(
+              color: semantic.onInk,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ),
       ),
     );
   }

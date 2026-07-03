@@ -432,8 +432,8 @@ void main() {
       (tester) async {
     final l10n = await _l10n();
     await _pump(tester, expense: _expense());
-    // u1 (€10) + u3 (€4) unclaimed = €14.
-    expect(find.text(l10n.claimUnclaimedCallout(l10n.toCurrency(14))),
+    // u1 (€10) + u3 (€4) unclaimed = €14; payer = Alice (F130 copy).
+    expect(find.text(l10n.claimUnclaimedCallout(l10n.toCurrency(14), 'Alice')),
         findsOneWidget);
     expect(find.text(l10n.claimNudge), findsOneWidget);
   });
