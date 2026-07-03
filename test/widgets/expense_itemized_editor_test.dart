@@ -275,6 +275,30 @@ void main() {
     expect(find.textContaining('€0.00'), findsNothing);
   });
 
+  testWidgets(
+      'itemized total block is unboxed (no SoftCard) and reads "Total · from N items" (F115)',
+      (tester) async {
+    await _pump(tester);
+    final l10n = await _l10n();
+
+    await tester.tap(find.text(l10n.editorModeItemized));
+    await tester.pumpAndSettle();
+
+    // Copy carries the dot separator and the live item count.
+    expect(find.text(l10n.itemizedTotalFromItems(1)), findsOneWidget);
+    expect(l10n.itemizedTotalFromItems(1), contains('·'));
+
+    // The total header (anchored on its Scan pill) is not wrapped in a
+    // SoftCard — it sits directly on the page background like F103.
+    expect(
+      find.ancestor(
+        of: find.text(l10n.expenseScanShort),
+        matching: find.byType(SoftCard),
+      ),
+      findsNothing,
+    );
+  });
+
   testWidgets('itemized editor renders in dark mode without throwing',
       (tester) async {
     await _pump(tester, brightness: Brightness.dark);

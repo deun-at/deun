@@ -301,8 +301,8 @@ class AppLocalizationsDe extends AppLocalizations {
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other: 'Summe aus $count Artikeln',
-      one: 'Summe aus 1 Artikel',
+      other: 'Summe · aus $count Artikeln',
+      one: 'Summe · aus 1 Artikel',
       zero: 'Noch keine Artikel',
     );
     return '$_temp0';

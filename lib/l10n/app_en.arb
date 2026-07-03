@@ -239,7 +239,7 @@
   "@editorModeItemized": {},
   "itemizedItemsLabel": "Items",
   "@itemizedItemsLabel": {},
-  "itemizedTotalFromItems": "{count, plural, =0{No items yet} =1{Total from 1 item} other{Total from {count} items}}",
+  "itemizedTotalFromItems": "{count, plural, =0{No items yet} =1{Total · from 1 item} other{Total · from {count} items}}",
   "@itemizedTotalFromItems": {
     "placeholders": {
       "count": { "type": "int" }

@@ -647,7 +647,7 @@ abstract class AppLocalizations {
   /// No description provided for @itemizedTotalFromItems.
   ///
   /// In en, this message translates to:
-  /// **'{count, plural, =0{No items yet} =1{Total from 1 item} other{Total from {count} items}}'**
+  /// **'{count, plural, =0{No items yet} =1{Total · from 1 item} other{Total · from {count} items}}'**
   String itemizedTotalFromItems(int count);
 
   /// No description provided for @addItemByHand.

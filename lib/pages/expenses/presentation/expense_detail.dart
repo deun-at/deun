@@ -317,45 +317,45 @@ class _ExpenseDetailState extends ConsumerState<ExpenseDetail> {
     final colorScheme = Theme.of(context).colorScheme;
     final ink = Theme.of(context).extension<SemanticColors>()!;
     final total = _itemizedTotalFromForm();
-    return SoftCard(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-      child: Row(
-        children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  l10n.itemizedTotalFromItems(_entries.length),
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: colorScheme.onSurfaceVariant,
-                      ),
-                ),
-                const SizedBox(height: 4),
-                MoneyText(
-                  total,
-                  style: Theme.of(context)
-                      .textTheme
-                      .displaySmall
-                      ?.copyWith(color: colorScheme.onSurface),
-                ),
-              ],
-            ),
+    // v3: unboxed total block — sits directly on the page background (no
+    // SoftCard), mirroring the F103 quick-header unboxing. Small grey label +
+    // big amount on the left, dark-ink Scan pill on the right.
+    return Row(
+      children: [
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                l10n.itemizedTotalFromItems(_entries.length),
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: colorScheme.onSurfaceVariant,
+                    ),
+              ),
+              const SizedBox(height: 4),
+              MoneyText(
+                total,
+                style: Theme.of(context)
+                    .textTheme
+                    .displaySmall
+                    ?.copyWith(color: colorScheme.onSurface),
+              ),
+            ],
           ),
-          // v3: dark-ink solid pill labeled "Scan" (not a light indigo tint).
-          FilledButton.icon(
-            onPressed: _scanReceipt,
-            style: FilledButton.styleFrom(
-              backgroundColor: ink.ink,
-              foregroundColor: ink.onInk,
-              shape: const StadiumBorder(),
-            ),
-            icon: const Icon(Icons.document_scanner_outlined),
-            label: Text(l10n.expenseScanShort),
+        ),
+        // v3: dark-ink solid pill labeled "Scan" (not a light indigo tint).
+        FilledButton.icon(
+          onPressed: _scanReceipt,
+          style: FilledButton.styleFrom(
+            backgroundColor: ink.ink,
+            foregroundColor: ink.onInk,
+            shape: const StadiumBorder(),
           ),
-        ],
-      ),
+          icon: const Icon(Icons.document_scanner_outlined),
+          label: Text(l10n.expenseScanShort),
+        ),
+      ],
     );
   }
 

@@ -91,7 +91,7 @@
   "editorModeQuick": "Schnell teilen",
   "editorModeItemized": "Nach Artikeln",
   "itemizedItemsLabel": "Artikel",
-  "itemizedTotalFromItems": "{count, plural, =0{Noch keine Artikel} =1{Summe aus 1 Artikel} other{Summe aus {count} Artikeln}}",
+  "itemizedTotalFromItems": "{count, plural, =0{Noch keine Artikel} =1{Summe · aus 1 Artikel} other{Summe · aus {count} Artikeln}}",
   "addItemByHand": "Artikel manuell hinzufügen",
   "itemizedInfoCallout": "Nach dem Teilen beanspruchen die Mitglieder ihre eigenen Artikel – allein oder aufgeteilt, pro Stück.",
   "expenseSaveAndShareForClaiming": "Hinzufügen & zum Beanspruchen teilen",
