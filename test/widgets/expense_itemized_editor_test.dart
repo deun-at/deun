@@ -7,6 +7,7 @@ import 'package:deun/pages/expenses/presentation/expense_detail.dart';
 import 'package:deun/pages/groups/data/group_member_model.dart';
 import 'package:deun/pages/groups/data/group_model.dart';
 import 'package:deun/widgets/restyle/app_segmented_control.dart';
+import 'package:deun/widgets/restyle/dashed_ghost_button.dart';
 import 'package:deun/widgets/restyle/expense_picker_sheets.dart';
 import 'package:deun/widgets/restyle/soft_card.dart';
 import 'package:deun/widgets/theme_builder.dart';
@@ -202,15 +203,18 @@ void main() {
     final l10n = await _l10n();
 
     // Quick split: no add-item button in either wording. "Add item" is an
-    // Itemized-only concept.
+    // Itemized-only concept. The dashed ghost button is absent too.
     expect(find.text(l10n.addItemByHand), findsNothing);
     expect(find.text(l10n.addNewExpenseEntry), findsNothing);
+    expect(find.byType(DashedGhostButton), findsNothing);
 
     await tester.tap(find.text(l10n.editorModeItemized));
     await tester.pumpAndSettle();
 
-    // Itemized still offers the add-item action.
+    // Itemized still offers the add-item action, rendered as the F119 dashed
+    // ghost button (not a tonal/filled button).
     expect(find.text(l10n.addItemByHand), findsOneWidget);
+    expect(find.byType(DashedGhostButton), findsOneWidget);
   });
 
   testWidgets('Add item by hand appends an item card', (tester) async {

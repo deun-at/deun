@@ -30,6 +30,7 @@ import '../../../widgets/restyle/soft_card.dart';
 import '../../../widgets/restyle/section_label.dart';
 import '../../../widgets/restyle/member_avatar.dart';
 import '../../../widgets/restyle/money_text.dart';
+import '../../../widgets/restyle/dashed_ghost_button.dart';
 import '../../../widgets/restyle/primary_button.dart';
 
 class ExpenseEntryData {
@@ -915,11 +916,15 @@ class _ExpenseDetailState extends ConsumerState<ExpenseDetail> {
                       // split has a single expense-level amount, so no add-item
                       // button here.
                       if (!_isSingleEntry) ...[
-                        Center(
-                          child: FilledButton.tonalIcon(
-                            icon: const Icon(Icons.add),
-                            label: Text(
-                                AppLocalizations.of(context)!.addItemByHand),
+                        // v3 handoff: full-width DASHED ghost button (not a
+                        // tonal/filled button). Muted-primary stroke, + icon.
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 16),
+                          child: DashedGhostButton(
+                            icon: Icons.add,
+                            color: colorScheme.primary,
+                            label:
+                                AppLocalizations.of(context)!.addItemByHand,
                             onPressed: () => _addNewEntry(),
                           ),
                         ),
