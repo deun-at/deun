@@ -1688,6 +1688,9 @@ class AppLocalizationsDe extends AppLocalizations {
   String get groupDetailAllClaimed => 'alles beansprucht';
 
   @override
+  String get groupDetailItemizedTag => 'aufgeschlüsselt';
+
+  @override
   String get groupDetailPaymentTag => 'ZAHLUNG';
 
   @override

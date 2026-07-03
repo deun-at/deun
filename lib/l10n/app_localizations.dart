@@ -2796,6 +2796,12 @@ abstract class AppLocalizations {
   /// **'all claimed'**
   String get groupDetailAllClaimed;
 
+  /// Indicator in the payer subline of an itemized ledger row (e.g. 'Sam paid · itemized').
+  ///
+  /// In en, this message translates to:
+  /// **'itemized'**
+  String get groupDetailItemizedTag;
+
   /// Trailing tag on a payback / settlement ledger row.
   ///
   /// In en, this message translates to:

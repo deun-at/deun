@@ -5,6 +5,7 @@ import 'package:deun/pages/groups/data/group_model.dart';
 import 'package:deun/pages/groups/presentation/group_ledger.dart';
 import 'package:deun/widgets/empty_list_widget.dart';
 import 'package:deun/widgets/restyle/avatar_stack.dart';
+import 'package:deun/widgets/restyle/deun_header.dart';
 import 'package:deun/widgets/restyle/money_text.dart';
 import 'package:deun/widgets/restyle/section_label.dart';
 import 'package:deun/widgets/restyle/soft_card.dart';
@@ -353,7 +354,17 @@ class _ItemizedRow extends StatelessWidget {
     final youClaimed =
         currentUserEmail != null && (shareStat[currentUserEmail] ?? 0) > 0.005;
 
+    final currentUserPaid = expense.paidBy == currentUserEmail;
+    // Handoff subline: "You paid · itemized" / "Sam paid · itemized".
+    final payerLabel = currentUserPaid
+        ? l10n.expensePaidByYou
+        : l10n.expensePaidByOther(expense.paidByDisplayName ?? "");
+
     final claimers = _claimerMembers(expense, currentUserEmail);
+
+    // Left accent bar marks a claimable row (handoff: only when unclaimed
+    // items remain).
+    final showAccentBar = hasUnclaimed;
 
     return _RowInk(
       onTap: onTap, // → /group/details/claim (Screen 9), via _openExpense.
@@ -362,20 +373,63 @@ class _ItemizedRow extends StatelessWidget {
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Container(width: 4, color: colorScheme.primary),
+            Container(
+              width: 4,
+              color: showAccentBar ? colorScheme.primary : Colors.transparent,
+            ),
             Expanded(
               child: Padding(
                 padding: const EdgeInsets.all(14),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    // Top row: category icon · title + payer/itemized subline · amount.
                     Row(
                       children: [
+                        Container(
+                          width: 42,
+                          height: 42,
+                          decoration: BoxDecoration(
+                            color: colorScheme.surfaceContainerHighest,
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Icon(
+                            expense.category?.getIcon() ?? Icons.receipt_long_outlined,
+                            size: 22,
+                            color: colorScheme.onSurfaceVariant,
+                          ),
+                        ),
+                        const SizedBox(width: 12),
                         Expanded(
-                          child: Text(
-                            expense.name,
-                            style: Theme.of(context).textTheme.titleMedium,
-                            overflow: TextOverflow.ellipsis,
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                expense.name,
+                                style: Theme.of(context).textTheme.titleMedium,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              const SizedBox(height: 2),
+                              Text.rich(
+                                TextSpan(
+                                  style: Theme.of(context)
+                                      .textTheme
+                                      .bodySmall
+                                      ?.copyWith(color: colorScheme.onSurfaceVariant),
+                                  children: [
+                                    TextSpan(text: "$payerLabel · "),
+                                    TextSpan(
+                                      text: l10n.groupDetailItemizedTag,
+                                      style: TextStyle(
+                                        color: colorScheme.primary,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ],
                           ),
                         ),
                         const SizedBox(width: 10),
@@ -385,39 +439,61 @@ class _ItemizedRow extends StatelessWidget {
                         ),
                       ],
                     ),
-                    const SizedBox(height: 8),
-                    Row(
-                      children: [
-                        if (youClaimed)
-                          _ClaimPill(
-                            label: l10n.groupDetailYouClaimed(shareStat[currentUserEmail] ?? 0),
-                            foreground: semantic.success,
-                            background: semantic.success.withValues(alpha: 0.14),
-                          )
-                        else
-                          _ClaimPill(
-                            label: l10n.groupDetailTapToClaim,
-                            foreground: colorScheme.primary,
-                            background: colorScheme.primary.withValues(alpha: 0.14),
+                    if (youClaimed) ...[
+                      const SizedBox(height: 8),
+                      Row(
+                        children: [
+                          Icon(Icons.check_circle, size: 16, color: semantic.success),
+                          const SizedBox(width: 5),
+                          Flexible(
+                            child: Text(
+                              l10n.groupDetailYouClaimed(shareStat[currentUserEmail] ?? 0),
+                              style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                                    color: semantic.success,
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                              overflow: TextOverflow.ellipsis,
+                            ),
                           ),
-                        const Spacer(),
-                        if (claimers.isNotEmpty)
-                          AvatarStack(
-                            members: claimers,
-                            radius: 11,
-                            ringColor: colorScheme.surfaceContainerLowest,
+                        ],
+                      ),
+                    ] else ...[
+                      const SizedBox(height: 10),
+                      Row(
+                        children: [
+                          // LEFT: overlapping claimer avatars + "€X unclaimed" meta.
+                          if (claimers.isNotEmpty) ...[
+                            AvatarStack(
+                              members: claimers,
+                              radius: 11,
+                              ringColor: colorScheme.surfaceContainerLowest,
+                            ),
+                            const SizedBox(width: 8),
+                          ],
+                          Flexible(
+                            child: Text(
+                              hasUnclaimed
+                                  ? l10n.groupDetailUnclaimed(unclaimed)
+                                  : l10n.groupDetailAllClaimed,
+                              style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                                    color: hasUnclaimed
+                                        ? semantic.warning
+                                        : colorScheme.onSurfaceVariant,
+                                  ),
+                              overflow: TextOverflow.ellipsis,
+                            ),
                           ),
-                      ],
-                    ),
-                    const SizedBox(height: 6),
-                    Text(
-                      hasUnclaimed
-                          ? l10n.groupDetailUnclaimed(unclaimed)
-                          : l10n.groupDetailAllClaimed,
-                      style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                            color: hasUnclaimed ? semantic.warning : colorScheme.onSurfaceVariant,
+                          const SizedBox(width: 10),
+                          // RIGHT: compact "Tap to claim" icon button.
+                          HeaderIconButton(
+                            icon: Icons.add,
+                            filled: true,
+                            tooltip: l10n.groupDetailTapToClaim,
+                            onTap: onTap,
                           ),
-                    ),
+                        ],
+                      ),
+                    ],
                   ],
                 ),
               ),
@@ -443,34 +519,6 @@ class _ItemizedRow extends StatelessWidget {
       }
     }
     return members;
-  }
-}
-
-/// A small stadium claim pill ("Tap to claim" / "You claimed €X").
-class _ClaimPill extends StatelessWidget {
-  const _ClaimPill({
-    required this.label,
-    required this.foreground,
-    required this.background,
-  });
-
-  final String label;
-  final Color foreground;
-  final Color background;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-      decoration: ShapeDecoration(color: background, shape: const StadiumBorder()),
-      child: Text(
-        label,
-        style: Theme.of(context).textTheme.labelMedium?.copyWith(
-              color: foreground,
-              fontWeight: FontWeight.w600,
-            ),
-      ),
-    );
   }
 }
 

@@ -6,6 +6,8 @@ import 'package:deun/pages/expenses/provider/expense_list.dart';
 import 'package:deun/pages/groups/data/group_member_model.dart';
 import 'package:deun/pages/groups/data/group_model.dart';
 import 'package:deun/pages/groups/presentation/group_detail_list.dart';
+import 'package:deun/widgets/restyle/avatar_stack.dart';
+import 'package:deun/widgets/restyle/deun_header.dart';
 import 'package:deun/widgets/restyle/soft_card.dart';
 import 'package:deun/widgets/theme_builder.dart';
 import 'package:flutter/material.dart';
@@ -197,13 +199,49 @@ void main() {
     expect(find.text('Quick 1'), findsOneWidget);
   });
 
-  testWidgets('itemized row shows the Tap-to-claim pill and unclaimed meta', (tester) async {
+  testWidgets('itemized row shows a Tap-to-claim icon button and unclaimed meta', (tester) async {
     final l10n = await AppLocalizations.delegate.load(const Locale('en'));
     await _pump(tester, expenses: [_itemized(id: '2', date: '2026-01-02T10:00:00')]);
 
-    expect(find.text(l10n.groupDetailTapToClaim), findsOneWidget);
+    // The claim affordance is an icon button (tooltip carries the label), not
+    // a text pill.
+    final claimButton = find.byWidgetPredicate(
+      (w) => w is HeaderIconButton && w.tooltip == l10n.groupDetailTapToClaim,
+    );
+    expect(claimButton, findsOneWidget);
+    expect(find.text(l10n.groupDetailTapToClaim), findsNothing);
+
     // €10 of the €30 total is still unclaimed.
     expect(find.text(l10n.groupDetailUnclaimed(10)), findsOneWidget);
+  });
+
+  testWidgets('itemized row shows the itemized indicator and payer subline', (tester) async {
+    final l10n = await AppLocalizations.delegate.load(const Locale('en'));
+    await _pump(tester, expenses: [_itemized(id: '2', date: '2026-01-02T10:00:00')]);
+
+    // Subline is "sam paid · itemized" (paidBy is sam, not the current user).
+    expect(find.textContaining(l10n.groupDetailItemizedTag), findsOneWidget);
+    expect(find.textContaining(l10n.expensePaidByOther('sam')), findsOneWidget);
+  });
+
+  testWidgets('itemized row stacks claimer avatars with AvatarStack', (tester) async {
+    await _pump(tester, expenses: [_itemized(id: '2', date: '2026-01-02T10:00:00')]);
+    // Claimers (sam) render via the overlapping AvatarStack, not a spaced Row.
+    expect(find.byType(AvatarStack), findsOneWidget);
+  });
+
+  testWidgets('unclaimed meta and claim button sit on opposite sides', (tester) async {
+    final l10n = await AppLocalizations.delegate.load(const Locale('en'));
+    await _pump(tester, expenses: [_itemized(id: '2', date: '2026-01-02T10:00:00')]);
+
+    final metaLeft = tester.getTopLeft(find.text(l10n.groupDetailUnclaimed(10))).dx;
+    final buttonLeft = tester
+        .getTopLeft(find.byWidgetPredicate(
+          (w) => w is HeaderIconButton && w.tooltip == l10n.groupDetailTapToClaim,
+        ))
+        .dx;
+    // Unclaimed meta on the LEFT, claim button on the RIGHT (handoff layout).
+    expect(metaLeft, lessThan(buttonLeft));
   });
 
   testWidgets('payback row shows the PAYMENT tag', (tester) async {

@@ -1505,6 +1505,10 @@
   "@groupDetailAllClaimed": {
     "description": "Meta line on an itemized ledger row when nothing is left unclaimed."
   },
+  "groupDetailItemizedTag": "itemized",
+  "@groupDetailItemizedTag": {
+    "description": "Indicator in the payer subline of an itemized ledger row (e.g. 'Sam paid · itemized')."
+  },
   "groupDetailPaymentTag": "PAYMENT",
   "@groupDetailPaymentTag": {
     "description": "Trailing tag on a payback / settlement ledger row."

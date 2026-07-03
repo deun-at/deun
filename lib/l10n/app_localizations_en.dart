@@ -1658,6 +1658,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get groupDetailAllClaimed => 'all claimed';
 
   @override
+  String get groupDetailItemizedTag => 'itemized';
+
+  @override
   String get groupDetailPaymentTag => 'PAYMENT';
 
   @override
