@@ -496,6 +496,25 @@ void main() {
     expect(find.text('Dark Group'), findsOneWidget);
   });
 
+  // F89: the per-group leading icon is the GROUP glyph (groups_rounded), not
+  // the expense glyph (receipt_long).
+  testWidgets('leading icon is the group glyph, not the expense glyph',
+      (tester) async {
+    await _pumpScreen(
+      tester,
+      groups: [_group(id: 'a', name: 'Trip', totalShareAmount: 10)],
+    );
+    final card = find.byType(GroupListItem);
+    expect(
+      find.descendant(of: card, matching: find.byIcon(Icons.groups_rounded)),
+      findsOneWidget,
+    );
+    expect(
+      find.descendant(of: card, matching: find.byIcon(Icons.receipt_long)),
+      findsNothing,
+    );
+  });
+
   // -------------------------------------------------------------------------
   // F05: balance footer hierarchy — muted caption lead label + heavier,
   // semantic-colored card-title amount (not one small flat block).

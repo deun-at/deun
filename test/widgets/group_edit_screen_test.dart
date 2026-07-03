@@ -296,8 +296,10 @@ void main() {
       reason: 'colour swatches must not sit inside a white card',
     );
 
-    // The retinted group-icon preview is UNBOXED too.
-    final iconPreview = find.byIcon(Icons.receipt_long);
+    // The retinted group-icon preview is UNBOXED too. F134: it is the group
+    // glyph (groups_rounded), not the expense glyph (receipt_long).
+    expect(find.byIcon(Icons.receipt_long), findsNothing);
+    final iconPreview = find.byIcon(Icons.groups_rounded);
     expect(iconPreview, findsOneWidget);
     expect(
       find.ancestor(of: iconPreview, matching: find.byType(SoftCard)),

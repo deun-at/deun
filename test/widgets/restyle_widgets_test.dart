@@ -308,6 +308,29 @@ void main() {
       expect(find.textContaining('+'), findsNothing);
       expect(find.byType(MemberAvatar), findsNWidgets(2));
     });
+
+    // F140: with a uniformColor, every avatar renders the SAME background,
+    // ignoring the per-member (colorKey) color and the "you" accent.
+    testWidgets('uniformColor paints all avatars one background', (tester) async {
+      const uniform = Color(0xFF123456);
+      await _pump(
+        tester,
+        const AvatarStack(
+          members: [
+            AvatarStackMember(name: 'A A', colorKey: 'a', isYou: true),
+            AvatarStackMember(name: 'B B', colorKey: 'b'),
+            AvatarStackMember(name: 'C C', colorKey: 'c'),
+          ],
+          uniformColor: uniform,
+        ),
+      );
+      final backgrounds = tester
+          .widgetList<CircleAvatar>(find.byType(CircleAvatar))
+          .map((a) => a.backgroundColor)
+          .toSet();
+      expect(backgrounds, {uniform},
+          reason: 'all hero avatars share one uniform tint (F140)');
+    });
   });
 
   group('AppSegmentedControl', () {

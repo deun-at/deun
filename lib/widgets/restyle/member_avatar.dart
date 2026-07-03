@@ -16,6 +16,7 @@ class MemberAvatar extends StatelessWidget {
     this.isYou = false,
     this.ringColor,
     this.ringWidth = 0,
+    this.backgroundColor,
   });
 
   /// Display name used to derive the initials.
@@ -40,6 +41,11 @@ class MemberAvatar extends StatelessWidget {
   /// Width of the optional ring.
   final double ringWidth;
 
+  /// Overrides the deterministic per-member background (and the [isYou] accent)
+  /// with a single fixed color. Used by the group-detail hero stack, which
+  /// renders all avatars uniformly (F140) rather than per-member.
+  final Color? backgroundColor;
+
   /// Up to two uppercase initials derived from [name] (first letters of the
   /// first two words).
   static String initialsFor(String name) {
@@ -52,7 +58,8 @@ class MemberAvatar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
-    final background = isYou ? colorScheme.primary : memberAvatarColor(colorKey);
+    final background = backgroundColor ??
+        (isYou ? colorScheme.primary : memberAvatarColor(colorKey));
     final hasImage = imageUrl != null && imageUrl!.isNotEmpty;
 
     Widget avatar = CircleAvatar(

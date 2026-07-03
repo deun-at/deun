@@ -337,9 +337,15 @@ void main() {
       // quick-action card (bar_chart lives there, not the header) and search
       // moved into the scroll body — so neither icon is inside the header.
       final header = find.byType(DeunHeader);
+      // F142: the handoff's group-detail edit affordance is the `tune` glyph,
+      // not a pencil (Icons.edit).
+      expect(
+        find.descendant(of: header, matching: find.byIcon(Icons.tune)),
+        findsOneWidget,
+      );
       expect(
         find.descendant(of: header, matching: find.byIcon(Icons.edit)),
-        findsOneWidget,
+        findsNothing,
       );
       expect(
         find.descendant(of: header, matching: find.byIcon(Icons.bar_chart)),

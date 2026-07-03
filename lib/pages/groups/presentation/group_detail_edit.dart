@@ -246,7 +246,7 @@ class _NameAndColorCard extends StatelessWidget {
                       borderRadius: BorderRadius.circular(20),
                     ),
                     alignment: Alignment.center,
-                    child: Icon(Icons.receipt_long, color: selectedColor, size: 32),
+                    child: Icon(Icons.groups_rounded, color: selectedColor, size: 32),
                   ),
                   const SizedBox(height: 14),
                   // Only the name field sits on white (its own input surface).

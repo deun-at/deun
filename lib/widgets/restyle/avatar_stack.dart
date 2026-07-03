@@ -28,6 +28,7 @@ class AvatarStack extends StatelessWidget {
     this.overlap = 10,
     this.ringWidth = 2,
     this.ringColor,
+    this.uniformColor,
   });
 
   /// Members to render, in display order.
@@ -47,6 +48,12 @@ class AvatarStack extends StatelessWidget {
 
   /// Ring color; defaults to the surface behind the stack.
   final Color? ringColor;
+
+  /// When set, every avatar is drawn with this single background color instead
+  /// of its per-member color (and the "you" accent is suppressed). Used by the
+  /// group-detail hero stack, which renders uniform avatars per the handoff
+  /// (F140).
+  final Color? uniformColor;
 
   @override
   Widget build(BuildContext context) {
@@ -69,6 +76,7 @@ class AvatarStack extends StatelessWidget {
           radius: radius,
           ringColor: ring,
           ringWidth: ringWidth,
+          backgroundColor: uniformColor,
         ),
       ));
     }

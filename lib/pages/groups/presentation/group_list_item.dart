@@ -82,7 +82,7 @@ class GroupListItem extends ConsumerWidget {
                       color: groupTintBg,
                       borderRadius: BorderRadius.circular(12),
                     ),
-                    child: Icon(Icons.receipt_long, color: groupColor, size: 22),
+                    child: Icon(Icons.groups_rounded, color: groupColor, size: 22),
                   ),
                   const SizedBox(width: 12),
                   Expanded(

@@ -103,7 +103,7 @@ class _GroupDetailState extends ConsumerState<GroupDetail> {
                   title: widget.group.name,
                   onLeading: () => GoRouter.of(context).pop(),
                   trailing: HeaderIconButton(
-                    icon: Icons.edit,
+                    icon: Icons.tune,
                     tooltip: AppLocalizations.of(context)!.editGroup,
                     onTap: () {
                       GoRouter.of(
@@ -463,7 +463,14 @@ class _GroupBalanceHero extends StatelessWidget {
           Row(
             children: [
               if (members.isNotEmpty)
-                AvatarStack(members: members, ringColor: heroSurface),
+                // Hero avatars render in ONE uniform tint (a translucent
+                // on-hero token), not per-member colors (F140) — matching the
+                // handoff's rgba(255,255,255,0.22) chips on the colored surface.
+                AvatarStack(
+                  members: members,
+                  ringColor: heroSurface,
+                  uniformColor: onHero.withValues(alpha: 0.22),
+                ),
               const Spacer(),
               PrimaryButton(
                 label: l10n.groupDetailSettleUp,
