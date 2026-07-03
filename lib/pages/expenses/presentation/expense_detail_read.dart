@@ -251,8 +251,6 @@ class _SummaryCard extends StatelessWidget {
             style: textTheme.displaySmall?.copyWith(color: colorScheme.onSurface),
           ),
           const SizedBox(height: 16),
-          Divider(height: 1, color: colorScheme.outlineVariant),
-          const SizedBox(height: 14),
           _PaidNetRow(
             expense: expense,
             payerName: payerName,

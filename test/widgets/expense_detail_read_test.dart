@@ -276,6 +276,29 @@ void main() {
     expect(find.text(l10n.expenseReviewClaimTitle), findsNothing);
   });
 
+  testWidgets(
+      'header card has no divider between the amount and the payer row (F121)',
+      (tester) async {
+    final l10n = await AppLocalizations.delegate.load(const Locale('en'));
+    await _pump(
+      tester,
+      _expense(
+        entryCount: 1,
+        shareStat: const {'a@test.com': 10, 'b@test.com': 10},
+        amount: 20,
+      ),
+    );
+
+    // The v3 handoff header card runs straight from the big amount into the
+    // "{payer} paid" row with no hairline between them. Removing the divider is
+    // F121; the breakdown card's non-spaced member rows (F122) never used a
+    // Divider, so there should be no Divider anywhere in this view.
+    expect(find.byType(Divider), findsNothing);
+    // Sanity: the amount and payer row both still render.
+    expect(find.text(l10n.toCurrency(20)), findsWidgets);
+    expect(find.text(l10n.expensePaidByOther('Alice')), findsOneWidget);
+  });
+
   testWidgets('renders in dark mode without throwing', (tester) async {
     await _pump(
       tester,
