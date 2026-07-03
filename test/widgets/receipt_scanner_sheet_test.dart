@@ -3,6 +3,7 @@ import 'package:deun/l10n/app_localizations.dart';
 import 'package:deun/pages/expenses/data/receipt_scan_result.dart';
 import 'package:deun/pages/expenses/presentation/receipt_scanner_sheet.dart';
 import 'package:deun/widgets/restyle/money_text.dart';
+import 'package:deun/widgets/restyle/primary_button.dart';
 import 'package:deun/widgets/restyle/sheet_scaffold.dart';
 import 'package:deun/widgets/theme_builder.dart';
 import 'package:flutter/material.dart';
@@ -98,6 +99,25 @@ void main() {
       expect(find.text('Cafe Central'), findsOneWidget);
     });
 
+    testWidgets('uses v3 button presets (not raw Material buttons)',
+        (tester) async {
+      await _pump(
+        tester,
+        ReceiptItemsPreview(
+          result: _result(),
+          onConfirm: () {},
+          onRetake: () {},
+        ),
+      );
+
+      // Confirm is the PrimaryButton preset; retake is the SecondaryButton
+      // preset — no stock Material buttons should remain in the footer.
+      expect(find.byType(PrimaryButton), findsOneWidget);
+      expect(find.byType(SecondaryButton), findsOneWidget);
+      expect(find.byType(FilledButton), findsNothing);
+      expect(find.byType(OutlinedButton), findsNothing);
+    });
+
     testWidgets('confirm invokes onConfirm', (tester) async {
       var confirmed = false;
       await _pump(
@@ -181,6 +201,10 @@ void main() {
       expect(find.byType(ReceiptScanViewport), findsOneWidget);
       expect(find.text(l10n.receiptScanTakePhoto), findsOneWidget);
       expect(find.text(l10n.receiptScanChooseGallery), findsOneWidget);
+      // Capture actions use the v3 presets, not raw Material buttons.
+      expect(find.byType(PrimaryButton), findsOneWidget);
+      expect(find.byType(SecondaryButton), findsOneWidget);
+      expect(find.byType(FilledButton), findsNothing);
     });
   });
 }

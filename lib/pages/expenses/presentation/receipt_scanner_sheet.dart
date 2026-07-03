@@ -6,6 +6,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:deun/l10n/app_localizations.dart';
 
 import 'package:deun/widgets/restyle/money_text.dart';
+import 'package:deun/widgets/restyle/primary_button.dart';
 import 'package:deun/widgets/restyle/section_label.dart';
 import 'package:deun/widgets/restyle/sheet_scaffold.dart';
 import 'package:deun/widgets/restyle/soft_card.dart';
@@ -158,18 +159,18 @@ class _CaptureActions extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        FilledButton.icon(
+        PrimaryButton(
           key: const ValueKey('receipt_take_photo'),
           onPressed: () => onPick(ImageSource.camera),
-          icon: const Icon(Icons.camera_alt_outlined),
-          label: Text(l10n.receiptScanTakePhoto),
+          icon: Icons.camera_alt_outlined,
+          label: l10n.receiptScanTakePhoto,
         ),
         const SizedBox(height: 12),
-        FilledButton.tonalIcon(
+        SecondaryButton(
           key: const ValueKey('receipt_choose_gallery'),
           onPressed: () => onPick(ImageSource.gallery),
-          icon: const Icon(Icons.photo_library_outlined),
-          label: Text(l10n.receiptScanChooseGallery),
+          icon: Icons.photo_library_outlined,
+          label: l10n.receiptScanChooseGallery,
         ),
       ],
     );
@@ -431,20 +432,22 @@ class ReceiptItemsPreview extends StatelessWidget {
       footer: Row(
         children: [
           Expanded(
-            child: OutlinedButton.icon(
+            child: SecondaryButton(
               key: const ValueKey('receipt_retake'),
               onPressed: onRetake,
-              icon: const Icon(Icons.refresh),
-              label: Text(l10n.receiptScanRetake),
+              icon: Icons.refresh,
+              label: l10n.receiptScanRetake,
+              fullWidth: false,
             ),
           ),
           const SizedBox(width: 12),
           Expanded(
             flex: 2,
-            child: FilledButton(
+            child: PrimaryButton(
               key: const ValueKey('receipt_confirm'),
               onPressed: onConfirm,
-              child: Text(l10n.receiptScanUseItems),
+              label: l10n.receiptScanUseItems,
+              fullWidth: false,
             ),
           ),
         ],
