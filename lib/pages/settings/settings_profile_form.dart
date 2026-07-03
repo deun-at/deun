@@ -156,13 +156,9 @@ class _SettingsProfileFormState extends ConsumerState<SettingsProfileForm> {
             ),
           ),
           const SizedBox(height: heightSpacing),
-          Align(
-            alignment: Alignment.centerRight,
-            child: PrimaryButton(
-              label: l10n.update,
-              onPressed: _onSave,
-              fullWidth: false,
-            ),
+          PrimaryButton(
+            label: l10n.update,
+            onPressed: _onSave,
           ),
         ],
       ),

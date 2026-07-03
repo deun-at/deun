@@ -125,10 +125,20 @@ class _SettingState extends ConsumerState<Setting> {
           _SettingsRow(
             icon: Icons.notifications_outlined,
             label: l10n.settingsNotifications,
-            trailing: Switch(
-              value: notificationsEnabled,
-              onChanged: (v) =>
-                  ref.read(notificationsEnabledProvider.notifier).setEnabled(v),
+            // shrinkWrap drops the Switch's 48dp tap-target padding and the
+            // FittedBox scales it down to the ~24dp icon-row height so this row
+            // matches the other preference rows instead of bloating (F148).
+            trailing: SizedBox(
+              height: 24,
+              child: FittedBox(
+                fit: BoxFit.contain,
+                child: Switch(
+                  value: notificationsEnabled,
+                  materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  onChanged: (v) =>
+                      ref.read(notificationsEnabledProvider.notifier).setEnabled(v),
+                ),
+              ),
             ),
           ),
           const _RowDivider(),

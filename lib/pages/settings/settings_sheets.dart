@@ -65,14 +65,12 @@ class _LanguageSheet extends ConsumerWidget {
               selected: currentTag == null,
               onTap: () => choose(null),
             ),
-            for (final tag in options) ...[
-              const Divider(height: 1),
+            for (final tag in options)
               _OptionRow(
                 label: l10n.localeSelector(tag),
                 selected: currentTag == tag,
                 onTap: () => choose(tag),
               ),
-            ],
           ],
         ),
       ),
@@ -124,14 +122,12 @@ class _AppearanceSheet extends ConsumerWidget {
                   selected: current == ThemeMode.system,
                   onTap: () => choose(ThemeMode.system),
                 ),
-                const Divider(height: 1),
                 _OptionRow(
                   label: l10n.settingsAppearanceLight,
                   leading: Icons.light_mode,
                   selected: current == ThemeMode.light,
                   onTap: () => choose(ThemeMode.light),
                 ),
-                const Divider(height: 1),
                 _OptionRow(
                   label: l10n.settingsAppearanceDark,
                   leading: Icons.dark_mode,

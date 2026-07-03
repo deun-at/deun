@@ -4,6 +4,7 @@ import 'package:deun/pages/settings/settings_profile_form.dart';
 import 'package:deun/pages/users/user_model.dart';
 import 'package:deun/provider.dart';
 import 'package:deun/widgets/restyle/app_text_field.dart';
+import 'package:deun/widgets/restyle/primary_button.dart';
 import 'package:deun/widgets/theme_builder.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_form_builder/flutter_form_builder.dart';
@@ -140,5 +141,19 @@ void main() {
     expect(formState.saveAndValidate(), isFalse);
     await tester.pumpAndSettle();
     expect(find.text(l10n.settingsDisplayNameValidationEmpty), findsOneWidget);
+  });
+
+  testWidgets('the Update button is full width (F150)', (tester) async {
+    await _pumpForm(tester);
+    final l10n = AppLocalizations.of(tester.element(find.byType(SettingsProfileForm)))!;
+
+    final update = find.widgetWithText(PrimaryButton, l10n.update);
+    expect(update, findsOneWidget);
+    // fullWidth (the default) rather than the old right-aligned intrinsic width.
+    expect(tester.widget<PrimaryButton>(update).fullWidth, isTrue);
+    // It spans the full form width, not shrink-wrapped to its label.
+    final buttonWidth = tester.getSize(update).width;
+    final formWidth = tester.getSize(find.byType(SettingsProfileForm)).width;
+    expect(buttonWidth, moreOrLessEquals(formWidth, epsilon: 1));
   });
 }
