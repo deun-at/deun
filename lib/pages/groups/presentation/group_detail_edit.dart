@@ -111,7 +111,7 @@ class _GroupEditState extends ConsumerState<GroupEdit> {
                               const SizedBox(height: 24),
                               SectionLabel(l10n.groupTrackingModeTitle),
                               const SizedBox(height: 8),
-                              const _TrackingModeField(),
+                              _TrackingModeField(group: widget.group),
                               if (_isEdit) ...[
                                 const SizedBox(height: 24),
                                 _buildGroupActions(context),
@@ -359,10 +359,17 @@ class _ColorSwatch extends StatelessWidget {
 }
 
 /// Simplified ↔ Detailed tracking-mode selector bound to the
-/// `simplified_expenses` form field. Two selectable cards with short
-/// descriptions.
+/// `simplified_expenses` form field. Two selectable cards sit SIDE BY SIDE
+/// (v3 prototype), each with a title + radio indicator and a short description.
+///
+/// The field-level [FormBuilderField.initialValue] always wins over the parent
+/// [FormBuilder.initialValue] map, so the create-vs-edit default MUST be
+/// resolved here: a NEW group defaults to Simplified (`true`); an EXISTING
+/// group initialises from its persisted `simplifiedExpenses`.
 class _TrackingModeField extends StatelessWidget {
-  const _TrackingModeField();
+  const _TrackingModeField({this.group});
+
+  final Group? group;
 
   @override
   Widget build(BuildContext context) {
@@ -370,27 +377,34 @@ class _TrackingModeField extends StatelessWidget {
 
     return FormBuilderField<bool>(
       name: "simplified_expenses",
-      initialValue: false,
+      initialValue: group?.simplifiedExpenses ?? true,
       builder: (FormFieldState<bool> field) {
-        final simplified = field.value ?? false;
-        return Column(
-          children: [
-            _TrackingModeOption(
-              icon: Icons.bolt,
-              title: l10n.groupTrackingModeSimplifiedTitle,
-              subtitle: l10n.groupTrackingModeSimplifiedSubtitle,
-              selected: simplified,
-              onTap: () => field.didChange(true),
-            ),
-            const SizedBox(height: 12),
-            _TrackingModeOption(
-              icon: Icons.list_alt,
-              title: l10n.groupTrackingModeDetailedTitle,
-              subtitle: l10n.groupTrackingModeDetailedSubtitle,
-              selected: !simplified,
-              onTap: () => field.didChange(false),
-            ),
-          ],
+        final simplified = field.value ?? true;
+        // IntrinsicHeight so both cards match the taller one; stretch alone
+        // would force unbounded height inside the ListView.
+        return IntrinsicHeight(
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Expanded(
+                child: _TrackingModeOption(
+                  title: l10n.groupTrackingModeSimplifiedTitle,
+                  subtitle: l10n.groupTrackingModeSimplifiedSubtitle,
+                  selected: simplified,
+                  onTap: () => field.didChange(true),
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: _TrackingModeOption(
+                  title: l10n.groupTrackingModeDetailedTitle,
+                  subtitle: l10n.groupTrackingModeDetailedSubtitle,
+                  selected: !simplified,
+                  onTap: () => field.didChange(false),
+                ),
+              ),
+            ],
+          ),
         );
       },
     );
@@ -399,14 +413,12 @@ class _TrackingModeField extends StatelessWidget {
 
 class _TrackingModeOption extends StatelessWidget {
   const _TrackingModeOption({
-    required this.icon,
     required this.title,
     required this.subtitle,
     required this.selected,
     required this.onTap,
   });
 
-  final IconData icon;
   final String title;
   final String subtitle;
   final bool selected;
@@ -428,34 +440,35 @@ class _TrackingModeOption extends StatelessWidget {
         onTap: onTap,
         child: Padding(
           padding: const EdgeInsets.all(14),
-          child: Row(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Icon(icon, color: selected ? accent : colorScheme.onSurfaceVariant),
-              const SizedBox(width: 14),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
+              Row(
+                children: [
+                  Expanded(
+                    child: Text(
                       title,
                       style: theme.textTheme.titleSmall?.copyWith(
                         fontWeight: FontWeight.w600,
                         color: selected ? accent : colorScheme.onSurface,
                       ),
                     ),
-                    const SizedBox(height: 2),
-                    Text(
-                      subtitle,
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        color: colorScheme.onSurfaceVariant,
-                      ),
-                    ),
-                  ],
-                ),
+                  ),
+                  Icon(
+                    selected
+                        ? Icons.radio_button_checked
+                        : Icons.radio_button_unchecked,
+                    size: 20,
+                    color: selected ? accent : colorScheme.onSurfaceVariant,
+                  ),
+                ],
               ),
-              Icon(
-                selected ? Icons.radio_button_checked : Icons.radio_button_unchecked,
-                color: selected ? accent : colorScheme.onSurfaceVariant,
+              const SizedBox(height: 4),
+              Text(
+                subtitle,
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: colorScheme.onSurfaceVariant,
+                ),
               ),
             ],
           ),

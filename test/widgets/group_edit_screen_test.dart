@@ -169,20 +169,108 @@ void main() {
       scrollable: find.byType(Scrollable).first,
     );
 
-    // Default (new group) is Detailed (simplified_expenses == false): the
-    // Detailed row shows the checked radio.
+    // Default (new group) is Simplified (simplified_expenses == true): exactly
+    // one row shows the checked radio.
     expect(find.byIcon(Icons.radio_button_checked), findsOneWidget);
 
-    // Tap Simplified. NoSplash (inherited via ThemeBuilder) avoids the ink
+    // Tap Detailed. NoSplash (inherited via ThemeBuilder) avoids the ink
     // fragment shader the test engine can't decode.
-    await tester.tap(find.text(l10n.groupTrackingModeSimplifiedTitle));
+    await tester.tap(find.text(l10n.groupTrackingModeDetailedTitle));
     await tester.pumpAndSettle();
 
-    // Still exactly one checked radio, but now the selection moved. Verify by
-    // checking the Simplified row's leading icon turned accent (selected) — the
-    // simplest robust assertion is that exactly one radio stays checked and the
-    // Simplified title is present.
+    // Still exactly one checked radio, but the selection moved to Detailed.
     expect(find.byIcon(Icons.radio_button_checked), findsOneWidget);
+  });
+
+  testWidgets('mode options render side by side (two Expanded cards in a Row)',
+      (tester) async {
+    await _pump(tester);
+
+    final l10n = await AppLocalizations.delegate.load(const Locale('en'));
+
+    await tester.scrollUntilVisible(
+      find.text(l10n.groupTrackingModeSimplifiedTitle),
+      120,
+      scrollable: find.byType(Scrollable).first,
+    );
+
+    // Both option titles share a common IntrinsicHeight ancestor (the
+    // side-by-side row), each wrapped in an Expanded so they split the width.
+    final simplified = find.text(l10n.groupTrackingModeSimplifiedTitle);
+    final detailed = find.text(l10n.groupTrackingModeDetailedTitle);
+    final sideBySide = find.ancestor(
+      of: simplified,
+      matching: find.byType(IntrinsicHeight),
+    );
+    expect(sideBySide, findsOneWidget);
+    expect(
+      find.descendant(of: sideBySide, matching: detailed),
+      findsOneWidget,
+      reason: 'Simplified and Detailed must sit in the same row (side by side)',
+    );
+    // Each option card is inside an Expanded.
+    expect(
+      find.ancestor(of: simplified, matching: find.byType(Expanded)),
+      findsWidgets,
+    );
+    expect(
+      find.ancestor(of: detailed, matching: find.byType(Expanded)),
+      findsWidgets,
+    );
+  });
+
+  testWidgets('new group defaults to Simplified selected', (tester) async {
+    await _pump(tester);
+
+    final l10n = await AppLocalizations.delegate.load(const Locale('en'));
+
+    await tester.scrollUntilVisible(
+      find.text(l10n.groupTrackingModeSimplifiedTitle),
+      120,
+      scrollable: find.byType(Scrollable).first,
+    );
+
+    // The checked radio must belong to the Simplified option's card.
+    final simplifiedCard = find.ancestor(
+      of: find.text(l10n.groupTrackingModeSimplifiedTitle),
+      matching: find.byType(SoftCard),
+    );
+    expect(
+      find.descendant(
+        of: simplifiedCard.first,
+        matching: find.byIcon(Icons.radio_button_checked),
+      ),
+      findsOneWidget,
+      reason: 'a NEW group must default to Simplified',
+    );
+  });
+
+  testWidgets('editing a Detailed group keeps Detailed selected (regression)',
+      (tester) async {
+    await _pump(tester, group: _group(simplifiedExpenses: false));
+
+    final l10n = await AppLocalizations.delegate.load(const Locale('en'));
+
+    await tester.scrollUntilVisible(
+      find.text(l10n.groupTrackingModeDetailedTitle),
+      120,
+      scrollable: find.byType(Scrollable).first,
+    );
+
+    // The persisted mode (Detailed) must survive the edit-form init and NOT be
+    // overwritten by the create-time Simplified default.
+    final detailedCard = find.ancestor(
+      of: find.text(l10n.groupTrackingModeDetailedTitle),
+      matching: find.byType(SoftCard),
+    );
+    expect(
+      find.descendant(
+        of: detailedCard.first,
+        matching: find.byIcon(Icons.radio_button_checked),
+      ),
+      findsOneWidget,
+      reason: 'editing a Detailed group must keep Detailed selected',
+    );
   });
 
   testWidgets(
