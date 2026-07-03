@@ -5,6 +5,7 @@ import 'package:deun/widgets/restyle/member_avatar.dart';
 import 'package:deun/widgets/restyle/money_text.dart';
 import 'package:deun/widgets/restyle/primary_button.dart';
 import 'package:deun/widgets/restyle/section_label.dart';
+import 'package:deun/widgets/restyle/spaced_card_list.dart';
 import 'package:deun/widgets/staggered_list.dart';
 import 'package:deun/widgets/theme_builder.dart';
 import 'package:flutter/foundation.dart' show kDebugMode, kIsWeb;
@@ -177,7 +178,8 @@ class _GroupListState extends ConsumerState<GroupList> {
       padding: const EdgeInsets.fromLTRB(16, 0, 16, 110),
       children: [
         ...prefixItems,
-        ...staggeredChildren(context, cardItems),
+        // SPACED list preset (F143): consistent inter-card gap owned by the list.
+        ...staggeredChildren(context, spacedCardItems(cardItems)),
       ],
     );
 

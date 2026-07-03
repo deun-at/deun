@@ -62,18 +62,17 @@ class GroupListItem extends ConsumerWidget {
         .map((m) => AvatarStackMember(name: m.displayName, colorKey: m.email))
         .toList();
 
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 5),
-      child: SoftCard(
-        padding: EdgeInsets.zero,
-        onTap: () {
-          GoRouter.of(context).push("/group/details", extra: {'group': group});
-        },
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(16, 14, 12, 14),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
+    // Gap between cards is owned by the SPACED list preset (F143), not the item.
+    return SoftCard(
+      padding: EdgeInsets.zero,
+      onTap: () {
+        GoRouter.of(context).push("/group/details", extra: {'group': group});
+      },
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(16, 14, 12, 14),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
               Row(
                 children: [
                   Container(
@@ -158,7 +157,7 @@ class GroupListItem extends ConsumerWidget {
             ],
           ),
         ),
-      ),
-    );
+      );
   }
 }
+

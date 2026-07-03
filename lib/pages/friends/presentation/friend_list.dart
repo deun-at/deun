@@ -12,6 +12,7 @@ import 'package:deun/widgets/restyle/money_text.dart';
 import 'package:deun/widgets/restyle/primary_button.dart';
 import 'package:deun/widgets/restyle/section_label.dart';
 import 'package:deun/widgets/restyle/soft_card.dart';
+import 'package:deun/widgets/restyle/spaced_card_list.dart';
 import 'package:deun/widgets/staggered_list.dart';
 import 'package:deun/widgets/theme_builder.dart';
 import 'package:flutter/material.dart';
@@ -77,47 +78,46 @@ class _FriendListState extends ConsumerState<FriendList> {
     final children = <Widget>[
       _FriendsHeader(),
       const SizedBox(height: 12),
+      // SPACED list preset (F143): sections render their cards through
+      // spacedCardItems so every card gap matches the group list's rhythm.
       if (value.pendingIncomingRequests.isNotEmpty) ...[
         SectionLabel(l10n.friendRequests(value.pendingIncomingRequests.length)),
         const SizedBox(height: 8),
-        for (final friendship in value.pendingIncomingRequests)
-          Padding(
-            padding: const EdgeInsets.only(bottom: 8),
-            child: _IncomingRequestCard(
+        ...spacedCardItems([
+          for (final friendship in value.pendingIncomingRequests)
+            _IncomingRequestCard(
               friendship: friendship,
               onAccept: () =>
                   _acceptFriendRequest(friendship.user.email, friendship.user.displayName),
               onDecline: () =>
                   _declineFriendRequest(friendship.user.email, friendship.user.displayName),
             ),
-          ),
+        ]),
         const SizedBox(height: 16),
       ],
       if (value.pendingOutgoingRequests.isNotEmpty) ...[
         SectionLabel(l10n.pendingRequests(value.pendingOutgoingRequests.length)),
         const SizedBox(height: 8),
-        for (final friendship in value.pendingOutgoingRequests)
-          Padding(
-            padding: const EdgeInsets.only(bottom: 8),
-            child: _OutgoingRequestCard(
+        ...spacedCardItems([
+          for (final friendship in value.pendingOutgoingRequests)
+            _OutgoingRequestCard(
               friendship: friendship,
               onCancel: () =>
                   _cancelFriendRequest(friendship.user.email, friendship.user.displayName),
             ),
-          ),
+        ]),
         const SizedBox(height: 16),
       ],
       if (value.acceptedFriends.isNotEmpty) ...[
         SectionLabel(l10n.friends),
         const SizedBox(height: 8),
-        for (final friendship in value.acceptedFriends)
-          Padding(
-            padding: const EdgeInsets.only(bottom: 8),
-            child: _FriendCard(
+        ...spacedCardItems([
+          for (final friendship in value.acceptedFriends)
+            _FriendCard(
               friendship: friendship,
               onTap: () => openFriendDetailSheet(context, friendship),
             ),
-          ),
+        ]),
       ],
     ];
 
