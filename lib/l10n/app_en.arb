@@ -239,6 +239,18 @@
   "@editorModeItemized": {},
   "itemizedItemsLabel": "Items",
   "@itemizedItemsLabel": {},
+  "itemNameHint": "Item name",
+  "@itemNameHint": {},
+  "itemPriceEachSuffix": "each",
+  "@itemPriceEachSuffix": {},
+  "itemQtyStepperValue": "{qty} qty",
+  "@itemQtyStepperValue": {
+    "placeholders": {
+      "qty": {
+        "type": "int"
+      }
+    }
+  },
   "itemizedTotalFromItems": "{count, plural, =0{No items yet} =1{Total · from 1 item} other{Total · from {count} items}}",
   "@itemizedTotalFromItems": {
     "placeholders": {

@@ -644,6 +644,24 @@ abstract class AppLocalizations {
   /// **'Items'**
   String get itemizedItemsLabel;
 
+  /// No description provided for @itemNameHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Item name'**
+  String get itemNameHint;
+
+  /// No description provided for @itemPriceEachSuffix.
+  ///
+  /// In en, this message translates to:
+  /// **'each'**
+  String get itemPriceEachSuffix;
+
+  /// No description provided for @itemQtyStepperValue.
+  ///
+  /// In en, this message translates to:
+  /// **'{qty} qty'**
+  String itemQtyStepperValue(int qty);
+
   /// No description provided for @itemizedTotalFromItems.
   ///
   /// In en, this message translates to:

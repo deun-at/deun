@@ -220,18 +220,19 @@ void main() {
     await tester.tap(find.text(l10n.editorModeItemized));
     await tester.pumpAndSettle();
 
-    // One item card to start (the seeded entry). The top-level expense
-    // name field now reuses the same description hint, so the count is
-    // entries + 1 (the top-level inset field).
-    expect(find.text(l10n.expenseDescriptionHint), findsNWidgets(2));
+    // One item card to start (the seeded entry). Item cards use the F117
+    // item-name hint; the top-level expense name field keeps its own
+    // description hint (asserted separately below).
+    expect(find.text(l10n.itemNameHint), findsOneWidget);
+    expect(find.text(l10n.expenseDescriptionHint), findsOneWidget);
 
     await tester.ensureVisible(find.text(l10n.addItemByHand));
     await tester.pumpAndSettle();
     await tester.tap(find.text(l10n.addItemByHand));
     await tester.pumpAndSettle();
 
-    // A second item card's name hint appears (2 entries + 1 top-level).
-    expect(find.text(l10n.expenseDescriptionHint), findsNWidgets(3));
+    // A second item card's name hint appears.
+    expect(find.text(l10n.itemNameHint), findsNWidgets(2));
   });
 
   testWidgets('switching back to Quick shows the Quick amount card',
@@ -260,7 +261,7 @@ void main() {
     expect(find.text(l10n.save), findsNothing);
 
     // One card, quantity 2 — not two qty-1 unit cards.
-    expect(find.text('2x'), findsOneWidget);
+    expect(find.text(l10n.itemQtyStepperValue(2)), findsOneWidget);
     expect(find.text(l10n.itemizedTotalFromItems(1)), findsOneWidget);
   });
 
@@ -268,10 +269,12 @@ void main() {
       'shared-expense item cards seed real line totals, not €0.00 (F146)',
       (tester) async {
     await _pump(tester, expense: _sharedClaimExpense());
+    final l10n = await _l10n();
 
-    // Unit price seeds the amount field; the line total is 2 × €2.50.
+    // Unit price seeds the amount field; the line total is 2 × €2.50 = €5.00,
+    // which appears twice: the item card's line total + the expense total.
     expect(find.text('2.50'), findsWidgets);
-    expect(find.text('= €5.00'), findsOneWidget);
+    expect(find.text(l10n.toCurrency(5)), findsNWidgets(2));
     expect(find.textContaining('€0.00'), findsNothing);
   });
 

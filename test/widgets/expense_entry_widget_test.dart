@@ -1,6 +1,7 @@
 import 'package:deun/constants.dart';
 import 'package:deun/l10n/app_localizations.dart';
 import 'package:deun/pages/expenses/data/expense_entry_model.dart';
+import 'package:deun/pages/expenses/data/item_icon.dart';
 import 'package:deun/pages/expenses/data/split_mode.dart';
 import 'package:deun/pages/expenses/presentation/expense_entry_widget.dart';
 import 'package:deun/pages/groups/data/group_member_model.dart';
@@ -113,8 +114,52 @@ void main() {
     expect(find.byType(ProgressBar), findsNothing);
     expect(find.text(l10n.splitSectionLabel), findsNothing);
     // The item card itself (name + amount/quantity) is still there.
-    expect(find.text(l10n.expenseDescriptionHint), findsOneWidget);
-    expect(find.text('1x'), findsOneWidget);
+    expect(find.text(l10n.itemNameHint), findsOneWidget);
+    expect(find.text(l10n.itemQtyStepperValue(1)), findsOneWidget);
+  });
+
+  testWidgets(
+      'itemized item card shows auto icon, "each" price, line total, trash '
+      'left + qty stepper right, and recomputes total on qty change (F117)',
+      (tester) async {
+    await _pump(tester);
+    final l10n = await AppLocalizations.delegate.load(const Locale('en'));
+
+    // Leading auto-icon from iconForItemName — empty name → generic receipt.
+    expect(find.byIcon(iconForItemName('')), findsOneWidget);
+    // Inline unit-price "each" suffix.
+    expect(find.text(l10n.itemPriceEachSuffix), findsOneWidget);
+    // Line total = unit price (12.00) × qty (1). initialAmount seeds 12.00.
+    expect(find.text(l10n.toCurrency(12)), findsOneWidget);
+    // Qty stepper on the right, trash on the left.
+    expect(find.byType(StepperControl), findsOneWidget);
+    expect(find.byIcon(Icons.delete_outline), findsOneWidget);
+
+    // Editing the name swaps the auto icon (pizza keyword).
+    await tester.enterText(
+        find.widgetWithText(TextField, l10n.itemNameHint), 'Margherita Pizza');
+    await tester.pumpAndSettle();
+    expect(find.byIcon(iconForItemName('Margherita Pizza')), findsOneWidget);
+
+    // Bumping qty to 2 recomputes the line total to 24.00.
+    await tester.tap(find.byIcon(Icons.add));
+    await tester.pumpAndSettle();
+    expect(find.text(l10n.itemQtyStepperValue(2)), findsOneWidget);
+    expect(find.text(l10n.toCurrency(24)), findsOneWidget);
+  });
+
+  testWidgets('itemized item card: editing unit price updates the line total',
+      (tester) async {
+    await _pump(tester);
+    final l10n = await AppLocalizations.delegate.load(const Locale('en'));
+
+    // Seeded unit price 12.00 → total 12.00.
+    expect(find.text(l10n.toCurrency(12)), findsOneWidget);
+
+    await tester.enterText(find.widgetWithText(TextField, '12.00'), '5.00');
+    await tester.pumpAndSettle();
+    // qty stays 1 → total tracks the new unit price.
+    expect(find.text(l10n.toCurrency(5)), findsOneWidget);
   });
 
   testWidgets('quick split renders the 4-way SplitMode segmented control',

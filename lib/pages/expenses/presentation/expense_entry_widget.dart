@@ -14,9 +14,11 @@ import '../../../widgets/restyle/member_avatar.dart';
 import '../../../widgets/restyle/money_text.dart';
 import '../../../widgets/restyle/progress_bar.dart';
 import '../../../widgets/restyle/section_label.dart';
+import '../../../widgets/restyle/soft_card.dart';
 import '../../../widgets/restyle/stepper_control.dart';
 import '../../groups/data/group_member_model.dart';
 import '../data/expense_entry_model.dart';
+import '../data/item_icon.dart';
 import '../data/split_allocation.dart';
 import '../data/split_mode.dart';
 
@@ -54,6 +56,10 @@ class _ExpenseEntryWidgetState extends State<ExpenseEntryWidget> {
   late SplitMode _splitMode;
   late int _quantity;
   late double _unitPrice;
+  // Item name mirrored into state so the leading auto-icon (iconForItemName)
+  // updates live as the user types (F117). The FormBuilderField below stays
+  // the source of truth for saving.
+  late String _itemName;
   late Set<String> _enabledMembers;
   late Map<String, double> _memberAmounts;
   late Map<String, double> _memberPercentages;
@@ -95,6 +101,11 @@ class _ExpenseEntryWidgetState extends State<ExpenseEntryWidget> {
             // split previews are correct before the first keystroke.
             : (widget.expenseLevelAmountController?.text ?? "0"));
     _unitPrice = double.tryParse(amountStr) ?? 0;
+
+    _itemName = widget.initialName ??
+        (widget.expenseEntry.expenseEntryShares.isNotEmpty
+            ? (widget.expenseEntry.name ?? '')
+            : '');
 
     // Initialize enabled members
     if (widget.expenseEntry.expenseEntryShares.isNotEmpty) {
@@ -283,12 +294,12 @@ class _ExpenseEntryWidgetState extends State<ExpenseEntryWidget> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           if (!widget.isSingleEntry) ...[
-            // Itemized item card: name + amount/quantity only. Items are
-            // shared for claiming (F118) — no per-item split UI; members
-            // claim their own units on the claim page instead.
-            _buildNameRow(spacing, l10n),
-            const SizedBox(height: spacing),
-            _buildAmountQuantityRow(l10n),
+            // Itemized item card (F117): auto icon tile + inline-editable
+            // name + "€ [price] each" + line total right; bottom row =
+            // trash left, qty stepper right. Items are shared for claiming
+            // (F118) — no per-item split UI; members claim their own units
+            // on the claim page instead.
+            _buildItemCard(spacing, l10n),
           ] else ...[
             // Quick split keeps the full split section — label + 4-way mode
             // selector (Equal/Shares/%/Exact), per DESIGN_SPEC §8 (F105).
@@ -315,46 +326,114 @@ class _ExpenseEntryWidgetState extends State<ExpenseEntryWidget> {
     );
   }
 
-  Widget _buildNameRow(double spacing, AppLocalizations l10n) {
+  /// F117 item card: leading auto-icon tile, inline-editable name +
+  /// "€ [price] each", line total right; bottom row = trash left, qty
+  /// stepper right. Wraps the same FormBuilderFields (name / amount /
+  /// quantity) so saving, the itemized total, and the claim explosion
+  /// (F118/F146) stay wired to unchanged state.
+  Widget _buildItemCard(double spacing, AppLocalizations l10n) {
     final colorScheme = Theme.of(context).colorScheme;
-    final radius = BorderRadius.circular(12);
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Flexible(
-          child: FormBuilderField(
-            key: ValueKey("${widget.index}_name"),
-            name: "expense_entry[${widget.index}][name]",
-            initialValue: widget.initialName,
-            builder: (FormFieldState<dynamic> field) => TextFormField(
-              initialValue: field.value,
-              decoration: InputDecoration(
-                hintText: l10n.expenseDescriptionHint,
-                filled: true,
-                fillColor: colorScheme.surfaceContainer,
-                border: OutlineInputBorder(
-                    borderRadius: radius, borderSide: BorderSide.none),
-                enabledBorder: OutlineInputBorder(
-                    borderRadius: radius, borderSide: BorderSide.none),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: radius,
-                  borderSide: BorderSide(color: colorScheme.primary, width: 1.5),
+    final textTheme = Theme.of(context).textTheme;
+
+    return SoftCard(
+      padding: const EdgeInsets.all(13),
+      borderRadius: 16,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Leading auto-icon tile (iconForItemName, F116) in a small
+              // rounded tinted square.
+              Container(
+                width: 36,
+                height: 36,
+                decoration: BoxDecoration(
+                  color: colorScheme.primary.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(11),
+                ),
+                child: Icon(
+                  iconForItemName(_itemName),
+                  size: 20,
+                  color: colorScheme.primary,
                 ),
               ),
-              onChanged: (value) => field.didChange(value),
-            ),
+              const SizedBox(width: 10),
+              // Name (inline field) + "€ [price] each" (inline field).
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _buildNameField(l10n),
+                    const SizedBox(height: 3),
+                    _buildUnitPriceField(l10n),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 8),
+              // Line total (price × qty), right-aligned.
+              Padding(
+                padding: const EdgeInsets.only(top: 6),
+                child: Text(
+                  l10n.toCurrency(_entryTotal),
+                  style: textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w700,
+                    fontFeatures: const [FontFeature.tabularFigures()],
+                  ),
+                ),
+              ),
+            ],
           ),
-        ),
-        const SizedBox(width: 8),
-        IconButton.filledTonal(
-          onPressed: () => widget.onRemove(),
-          icon: const Icon(Icons.delete_outline),
-        ),
-      ],
+          const SizedBox(height: 10),
+          // Bottom row: trash left, qty stepper right.
+          Row(
+            children: [
+              IconButton(
+                onPressed: () => widget.onRemove(),
+                icon: const Icon(Icons.delete_outline),
+                color: Theme.of(context).extension<SemanticColors>()!.danger,
+                visualDensity: VisualDensity.compact,
+                tooltip: MaterialLocalizations.of(context).deleteButtonTooltip,
+              ),
+              const Spacer(),
+              _buildQuantityStepper(l10n),
+            ],
+          ),
+        ],
+      ),
     );
   }
 
-  Widget _buildAmountQuantityRow(AppLocalizations l10n) {
+  Widget _buildNameField(AppLocalizations l10n) {
+    return FormBuilderField(
+      key: ValueKey("${widget.index}_name"),
+      name: "expense_entry[${widget.index}][name]",
+      initialValue: widget.initialName,
+      builder: (FormFieldState<dynamic> field) => TextFormField(
+        initialValue: field.value,
+        style: Theme.of(context)
+            .textTheme
+            .bodyLarge
+            ?.copyWith(fontWeight: FontWeight.w700),
+        decoration: InputDecoration(
+          isDense: true,
+          hintText: l10n.itemNameHint,
+          contentPadding: EdgeInsets.zero,
+          border: InputBorder.none,
+          enabledBorder: InputBorder.none,
+          focusedBorder: InputBorder.none,
+        ),
+        onChanged: (value) {
+          field.didChange(value);
+          setState(() => _itemName = value);
+        },
+      ),
+    );
+  }
+
+  Widget _buildUnitPriceField(AppLocalizations l10n) {
+    final colorScheme = Theme.of(context).colorScheme;
     return FormBuilderField(
       key: ValueKey("${widget.index}_amount"),
       name: "expense_entry[${widget.index}][amount]",
@@ -380,101 +459,95 @@ class _ExpenseEntryWidgetState extends State<ExpenseEntryWidget> {
           decoration: InputDecoration(
             errorText: field.errorText,
             border: InputBorder.none,
-            contentPadding: const EdgeInsets.all(0),
+            isDense: true,
+            contentPadding: EdgeInsets.zero,
           ),
-          child: Column(
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  // Unit price
-                  Text("€", style: Theme.of(context).textTheme.headlineMedium),
-                  IntrinsicWidth(
-                    child: ConstrainedBox(
-                      constraints: BoxConstraints(
-                        minWidth: 0,
-                        maxWidth: MediaQuery.of(context).size.width * 0.35,
-                      ),
-                      child: TextFormField(
-                        initialValue: field.value ?? "0",
-                        onChanged: (value) {
-                          field.didChange(value);
-                          setState(() {
-                            double oldTotal = _entryTotal;
-                            _unitPrice = double.tryParse(value) ?? 0;
-                            _onTotalChanged(oldTotal);
-                          });
-                        },
-                        keyboardType:
-                            const TextInputType.numberWithOptions(decimal: true),
-                        inputFormatters: [DecimalTextInputFormatter(decimalRange: 2)],
-                        style: Theme.of(context).textTheme.headlineMedium,
-                        decoration: const InputDecoration(
-                          contentPadding: EdgeInsets.only(right: 10, left: 10),
-                          border: InputBorder.none,
+              Text(
+                "€",
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: colorScheme.onSurfaceVariant,
+                      fontWeight: FontWeight.w700,
+                    ),
+              ),
+              const SizedBox(width: 4),
+              // Inline-editable unit price, tinted pill to read as editable.
+              IntrinsicWidth(
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(minWidth: 40, maxWidth: 90),
+                  child: TextFormField(
+                    initialValue: field.value ?? "0",
+                    onChanged: (value) {
+                      field.didChange(value);
+                      setState(() {
+                        double oldTotal = _entryTotal;
+                        _unitPrice = double.tryParse(value) ?? 0;
+                        _onTotalChanged(oldTotal);
+                      });
+                    },
+                    keyboardType:
+                        const TextInputType.numberWithOptions(decimal: true),
+                    inputFormatters: [DecimalTextInputFormatter(decimalRange: 2)],
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          fontWeight: FontWeight.w700,
+                          fontFeatures: const [FontFeature.tabularFigures()],
                         ),
+                    decoration: InputDecoration(
+                      hintText: "0.00",
+                      isDense: true,
+                      filled: true,
+                      fillColor: colorScheme.surfaceContainerHighest,
+                      contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 8, vertical: 4),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                        borderSide: BorderSide.none,
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                        borderSide: BorderSide.none,
                       ),
                     ),
                   ),
-                  const SizedBox(width: 12),
-                  // Quantity with +/- buttons
-                  FormBuilderField(
-                    key: ValueKey("${widget.index}_quantity"),
-                    name: "expense_entry[${widget.index}][quantity]",
-                    initialValue: _quantity.toString(),
-                    builder: (FormFieldState<dynamic> qtyField) {
-                      void updateQty(int newQty) {
-                        if (newQty < 1) newQty = 1;
-                        qtyField.didChange(newQty.toString());
-                        setState(() {
-                          double oldTotal = _entryTotal;
-                          _quantity = newQty;
-                          _onTotalChanged(oldTotal);
-                        });
-                      }
-
-                      return Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          IconButton.filledTonal(
-                            onPressed: _quantity > 1 ? () => updateQty(_quantity - 1) : null,
-                            icon: const Icon(Icons.remove, size: 18),
-                            constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
-                            padding: EdgeInsets.zero,
-                            visualDensity: VisualDensity.compact,
-                          ),
-                          Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 8),
-                            child: Text(
-                              "${_quantity}x",
-                              style: Theme.of(context).textTheme.titleLarge,
-                            ),
-                          ),
-                          IconButton.filledTonal(
-                            onPressed: () => updateQty(_quantity + 1),
-                            icon: const Icon(Icons.add, size: 18),
-                            constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
-                            padding: EdgeInsets.zero,
-                            visualDensity: VisualDensity.compact,
-                          ),
-                        ],
-                      );
-                    },
-                  ),
-                ],
-              ),
-              // Total always visible on its own line
-              Padding(
-                padding: const EdgeInsets.only(top: 4),
-                child: Text(
-                  "= €${_entryTotal.toStringAsFixed(2)}",
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        color: Theme.of(context).colorScheme.outline,
-                      ),
                 ),
+              ),
+              const SizedBox(width: 6),
+              Text(
+                l10n.itemPriceEachSuffix,
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: colorScheme.onSurfaceVariant,
+                    ),
               ),
             ],
           ),
+        );
+      },
+    );
+  }
+
+  Widget _buildQuantityStepper(AppLocalizations l10n) {
+    return FormBuilderField(
+      key: ValueKey("${widget.index}_quantity"),
+      name: "expense_entry[${widget.index}][quantity]",
+      initialValue: _quantity.toString(),
+      builder: (FormFieldState<dynamic> qtyField) {
+        void updateQty(int newQty) {
+          if (newQty < 1) newQty = 1;
+          qtyField.didChange(newQty.toString());
+          setState(() {
+            double oldTotal = _entryTotal;
+            _quantity = newQty;
+            _onTotalChanged(oldTotal);
+          });
+        }
+
+        return StepperControl(
+          value: l10n.itemQtyStepperValue(_quantity),
+          canDecrement: _quantity > 1,
+          onDecrement: () => updateQty(_quantity - 1),
+          onIncrement: () => updateQty(_quantity + 1),
         );
       },
     );

@@ -295,6 +295,17 @@ class AppLocalizationsEn extends AppLocalizations {
   String get itemizedItemsLabel => 'Items';
 
   @override
+  String get itemNameHint => 'Item name';
+
+  @override
+  String get itemPriceEachSuffix => 'each';
+
+  @override
+  String itemQtyStepperValue(int qty) {
+    return '$qty qty';
+  }
+
+  @override
   String itemizedTotalFromItems(int count) {
     String _temp0 = intl.Intl.pluralLogic(
       count,
