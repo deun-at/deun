@@ -40,8 +40,10 @@ Future<ExpenseCategory?> showCategoryGridSheet(
   );
 }
 
-/// An icon grid of every [ExpenseCategory] (icon in the category color tint +
-/// name). Tapping a tile pops it as the sheet result.
+/// An icon grid of every [ExpenseCategory] (monochrome icon tile + name).
+/// Tapping a tile pops it as the sheet result. Tiles are colorless: the
+/// selected one uses the theme's primary fill, the rest a neutral surface
+/// (matching the v3 handoff category sheet — no per-category color).
 class CategoryGridSheet extends StatelessWidget {
   const CategoryGridSheet({super.key, required this.selected});
 
@@ -89,7 +91,6 @@ class _CategoryGridTile extends StatelessWidget {
     final l10n = AppLocalizations.of(context)!;
     final colorScheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
-    final color = category.getColor(context);
 
     return InkWell(
       onTap: onTap,
@@ -98,23 +99,37 @@ class _CategoryGridTile extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           Container(
-            width: 52,
-            height: 52,
+            width: 54,
+            height: 54,
             decoration: BoxDecoration(
-              color: color.withValues(alpha: isSelected ? 0.30 : 0.16),
-              borderRadius: BorderRadius.circular(16),
-              border: isSelected
-                  ? Border.all(color: color, width: 2)
-                  : null,
+              color: isSelected
+                  ? colorScheme.primary
+                  : colorScheme.surfaceContainerLowest,
+              borderRadius: BorderRadius.circular(18),
+              boxShadow: isSelected
+                  ? null
+                  : [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.05),
+                        blurRadius: 2,
+                        offset: const Offset(0, 1),
+                      ),
+                    ],
             ),
-            child: Icon(category.getIcon(), color: color, size: 24),
+            child: Icon(
+              category.getIcon(),
+              color: isSelected
+                  ? colorScheme.onPrimary
+                  : colorScheme.onSurfaceVariant,
+              size: 25,
+            ),
           ),
           const SizedBox(height: 6),
           Text(
             category.getDisplayName(l10n),
             style: textTheme.labelSmall?.copyWith(
-              color: isSelected ? colorScheme.onSurface : colorScheme.onSurfaceVariant,
-              fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+              color: colorScheme.onSurfaceVariant,
+              fontWeight: FontWeight.w600,
             ),
             textAlign: TextAlign.center,
             maxLines: 2,

@@ -141,7 +141,9 @@ class _CategoryTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
-    final color = category.getColor(context);
+    // Colorless: uniform primary tint for every category (v3 handoff), not the
+    // per-category color.
+    final color = colorScheme.primary;
     return Center(
       child: GestureDetector(
         onTap: onTap,
@@ -198,7 +200,8 @@ class _CategoryIcon extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = category.getColor(context);
+    // Colorless: uniform primary tint (v3 handoff), not the per-category color.
+    final color = Theme.of(context).colorScheme.primary;
     return Container(
       width: 36,
       height: 36,

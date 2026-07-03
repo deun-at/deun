@@ -95,6 +95,47 @@ void main() {
       expect(result, ExpenseCategory.travel);
     });
 
+    testWidgets('chips are colorless: selected uses primary, unselected a '
+        'neutral surface (no per-category color)', (tester) async {
+      final l10n = await AppLocalizations.delegate.load(const Locale('en'));
+      late ColorScheme scheme;
+      await _pump(
+        tester,
+        Builder(
+          builder: (context) {
+            scheme = Theme.of(context).colorScheme;
+            return const CategoryGridSheet(selected: ExpenseCategory.food);
+          },
+        ),
+      );
+
+      // The decorated container wrapping each category's icon.
+      Color fillOf(ExpenseCategory c) {
+        final containerFinder = find.ancestor(
+          of: find.byIcon(c.getIcon()),
+          matching: find.byWidgetPredicate(
+            (w) => w is Container && w.decoration is BoxDecoration,
+          ),
+        );
+        final container = tester.widget<Container>(containerFinder.first);
+        return (container.decoration as BoxDecoration).color!;
+      }
+      // Keep l10n referenced (labels are asserted in sibling tests).
+      expect(ExpenseCategory.food.getDisplayName(l10n), isNotEmpty);
+
+      // Selected tile uses the theme's primary fill (standard selected
+      // treatment) — not the per-category color.
+      expect(fillOf(ExpenseCategory.food), scheme.primary);
+
+      // Two different unselected categories share the SAME neutral fill,
+      // proving there is no per-category tinting.
+      final a = fillOf(ExpenseCategory.travel);
+      final b = fillOf(ExpenseCategory.other);
+      expect(a, scheme.surfaceContainerLowest);
+      expect(a, b);
+      expect(a, isNot(scheme.primary));
+    });
+
     testWidgets('renders in dark mode without throwing', (tester) async {
       await _pump(
         tester,
