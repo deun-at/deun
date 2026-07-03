@@ -4,6 +4,7 @@ import 'package:deun/pages/groups/data/group_member_model.dart';
 import 'package:deun/pages/groups/data/group_model.dart';
 import 'package:deun/pages/groups/presentation/group_detail_edit.dart';
 import 'package:deun/widgets/restyle/primary_button.dart';
+import 'package:deun/widgets/restyle/soft_card.dart';
 import 'package:deun/widgets/theme_builder.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -182,6 +183,39 @@ void main() {
     // simplest robust assertion is that exactly one radio stays checked and the
     // Simplified title is present.
     expect(find.byIcon(Icons.radio_button_checked), findsOneWidget);
+  });
+
+  testWidgets(
+      'name field sits on white; icon + colour pickers are NOT boxed in a card (F133)',
+      (tester) async {
+    await _pump(tester);
+
+    final l10n = await AppLocalizations.delegate.load(const Locale('en'));
+
+    // The group-name field carries its own white SoftCard surface.
+    final nameField = find.widgetWithText(TextFormField, l10n.groupNameHint);
+    expect(nameField, findsOneWidget);
+    expect(
+      find.ancestor(of: nameField, matching: find.byType(SoftCard)),
+      findsOneWidget,
+      reason: 'the name field should sit on its own white SoftCard surface',
+    );
+
+    // The colour swatches are UNBOXED: no SoftCard wraps them.
+    expect(
+      find.ancestor(of: _swatchFinder().first, matching: find.byType(SoftCard)),
+      findsNothing,
+      reason: 'colour swatches must not sit inside a white card',
+    );
+
+    // The retinted group-icon preview is UNBOXED too.
+    final iconPreview = find.byIcon(Icons.receipt_long);
+    expect(iconPreview, findsOneWidget);
+    expect(
+      find.ancestor(of: iconPreview, matching: find.byType(SoftCard)),
+      findsNothing,
+      reason: 'the group-icon preview must not sit inside a white card',
+    );
   });
 
   testWidgets('renders in dark mode without throwing', (tester) async {

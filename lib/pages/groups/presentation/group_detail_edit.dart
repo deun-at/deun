@@ -229,28 +229,32 @@ class _NameAndColorCard extends StatelessWidget {
         final selectedIndex = selectedGroupSwatchIndex(colorField.value as int?);
         final selectedColor = kGroupColorPalette[selectedIndex];
 
-        return SoftCard(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // v3: centered icon tile above a full-width group-name field.
-              Center(
-                child: Column(
-                  children: [
-                    // Retinted group-icon preview reflecting the chosen color.
-                    Container(
-                      width: 66,
-                      height: 66,
-                      decoration: BoxDecoration(
-                        color: selectedColor.withValues(alpha: 0.16),
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      alignment: Alignment.center,
-                      child: Icon(Icons.receipt_long, color: selectedColor, size: 32),
+        // v3: icon tile + name field + colour picker sit UNBOXED on the page
+        // background. Only the group-name field carries its own white surface.
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // v3: centered icon tile above a full-width group-name field.
+            Center(
+              child: Column(
+                children: [
+                  // Retinted group-icon preview reflecting the chosen color.
+                  Container(
+                    width: 66,
+                    height: 66,
+                    decoration: BoxDecoration(
+                      color: selectedColor.withValues(alpha: 0.16),
+                      borderRadius: BorderRadius.circular(20),
                     ),
-                    const SizedBox(height: 14),
-                    FormBuilderField(
+                    alignment: Alignment.center,
+                    child: Icon(Icons.receipt_long, color: selectedColor, size: 32),
+                  ),
+                  const SizedBox(height: 14),
+                  // Only the name field sits on white (its own input surface).
+                  SoftCard(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                    borderRadius: 16,
+                    child: FormBuilderField(
                       name: "name",
                       validator: FormBuilderValidators.required(
                         errorText: l10n.groupNameValidationEmpty,
@@ -272,30 +276,30 @@ class _NameAndColorCard extends StatelessWidget {
                         onChanged: (value) => field.didChange(value),
                       ),
                     ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 16),
-              Text(
-                l10n.groupColorLabel,
-                style: theme.textTheme.labelMedium?.copyWith(
-                  color: colorScheme.onSurfaceVariant,
-                ),
-              ),
-              const SizedBox(height: 10),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  for (var i = 0; i < kGroupColorPalette.length; i++)
-                    _ColorSwatch(
-                      color: kGroupColorPalette[i],
-                      selected: i == selectedIndex,
-                      onTap: () => colorField.didChange(kGroupColorPalette[i].toARGB32()),
-                    ),
+                  ),
                 ],
               ),
-            ],
-          ),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              l10n.groupColorLabel,
+              style: theme.textTheme.labelMedium?.copyWith(
+                color: colorScheme.onSurfaceVariant,
+              ),
+            ),
+            const SizedBox(height: 10),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                for (var i = 0; i < kGroupColorPalette.length; i++)
+                  _ColorSwatch(
+                    color: kGroupColorPalette[i],
+                    selected: i == selectedIndex,
+                    onTap: () => colorField.didChange(kGroupColorPalette[i].toARGB32()),
+                  ),
+              ],
+            ),
+          ],
         );
       },
     );
