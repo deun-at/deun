@@ -1548,6 +1548,11 @@ class AppLocalizationsDe extends AppLocalizations {
   String get splitSectionLabel => 'Aufteilung';
 
   @override
+  String splitPeopleCount(int count, int total) {
+    return '$count von $total Personen';
+  }
+
+  @override
   String get splitAllocatedLabel => 'Passt';
 
   @override

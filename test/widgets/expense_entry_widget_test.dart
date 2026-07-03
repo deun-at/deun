@@ -279,6 +279,29 @@ void main() {
     expect(find.byType(StepperControl), findsNWidgets(2));
   });
 
+  testWidgets(
+      'split header shows "N of N people" count that decrements on toggle-out (F104)',
+      (tester) async {
+    final controller = TextEditingController(text: '12.00');
+    addTearDown(controller.dispose);
+    await _pump(
+      tester,
+      initialAmount: null,
+      isSingleEntry: true,
+      expenseLevelAmountController: controller,
+    );
+    final l10n = await AppLocalizations.delegate.load(const Locale('en'));
+
+    // Both members included initially: "2 of 2 people".
+    expect(find.text(l10n.splitPeopleCount(2, 2)), findsOneWidget);
+
+    // Toggle Alice out (reuses the F108 include toggle): "1 of 2 people".
+    await tester.tap(find.byType(Checkbox).first);
+    await tester.pumpAndSettle();
+    expect(find.text(l10n.splitPeopleCount(1, 2)), findsOneWidget);
+    expect(find.text(l10n.splitPeopleCount(2, 2)), findsNothing);
+  });
+
   testWidgets('renders in dark mode without throwing', (tester) async {
     await _pump(tester, brightness: Brightness.dark);
     expect(tester.takeException(), isNull);

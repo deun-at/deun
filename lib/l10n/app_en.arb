@@ -1391,6 +1391,17 @@
   "@categoryLabel": {},
   "splitSectionLabel": "Split",
   "@splitSectionLabel": {},
+  "splitPeopleCount": "{count} of {total} people",
+  "@splitPeopleCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
   "splitAllocatedLabel": "All set",
   "@splitAllocatedLabel": {},
   "splitRemainingLabel": "{amount} left",

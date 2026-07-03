@@ -2592,6 +2592,12 @@ abstract class AppLocalizations {
   /// **'Split'**
   String get splitSectionLabel;
 
+  /// No description provided for @splitPeopleCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} of {total} people'**
+  String splitPeopleCount(int count, int total);
+
   /// No description provided for @splitAllocatedLabel.
   ///
   /// In en, this message translates to:

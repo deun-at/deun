@@ -1518,6 +1518,11 @@ class AppLocalizationsEn extends AppLocalizations {
   String get splitSectionLabel => 'Split';
 
   @override
+  String splitPeopleCount(int count, int total) {
+    return '$count of $total people';
+  }
+
+  @override
   String get splitAllocatedLabel => 'All set';
 
   @override

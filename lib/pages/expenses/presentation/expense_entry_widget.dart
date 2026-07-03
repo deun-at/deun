@@ -291,7 +291,18 @@ class _ExpenseEntryWidgetState extends State<ExpenseEntryWidget> {
           ] else ...[
             // Quick split keeps the full split section — label + 4-way mode
             // selector (Equal/Shares/%/Exact), per DESIGN_SPEC §8 (F105).
-            SectionLabel(l10n.splitSectionLabel),
+            SectionLabel(
+              l10n.splitSectionLabel,
+              trailing: Text(
+                l10n.splitPeopleCount(
+                  _enabledMembers.length,
+                  widget.groupMembers.length,
+                ),
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    ),
+              ),
+            ),
             const SizedBox(height: spacing),
             _buildSplitModeSelector(l10n),
             const SizedBox(height: spacing),

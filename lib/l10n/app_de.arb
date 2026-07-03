@@ -417,6 +417,7 @@
   "expenseDetailsLabel": "Details",
   "categoryLabel": "Kategorie",
   "splitSectionLabel": "Aufteilung",
+  "splitPeopleCount": "{count} von {total} Personen",
   "splitAllocatedLabel": "Passt",
   "splitRemainingLabel": "{amount} übrig",
   "splitOverLabel": "{amount} zu viel",
