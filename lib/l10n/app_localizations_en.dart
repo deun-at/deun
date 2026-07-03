@@ -733,7 +733,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get authContinueWithGithub => 'Continue with GitHub';
 
   @override
-  String get authDividerOr => 'or';
+  String get authDividerOr => 'or with email';
 
   @override
   String get authEmailLabel => 'Email';

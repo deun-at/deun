@@ -1238,7 +1238,7 @@ abstract class AppLocalizations {
   /// Label centered on the divider between social and email sign-in.
   ///
   /// In en, this message translates to:
-  /// **'or'**
+  /// **'or with email'**
   String get authDividerOr;
 
   /// Label for the email field on the login / sign-up screen.

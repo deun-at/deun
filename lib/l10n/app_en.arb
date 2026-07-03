@@ -716,7 +716,7 @@
   "@authContinueWithGoogle": {"description": "Google social sign-in button label."},
   "authContinueWithGithub": "Continue with GitHub",
   "@authContinueWithGithub": {"description": "GitHub social sign-in button label."},
-  "authDividerOr": "or",
+  "authDividerOr": "or with email",
   "@authDividerOr": {"description": "Label centered on the divider between social and email sign-in."},
   "authEmailLabel": "Email",
   "@authEmailLabel": {"description": "Label for the email field on the login / sign-up screen."},

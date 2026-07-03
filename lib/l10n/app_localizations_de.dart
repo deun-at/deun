@@ -739,7 +739,7 @@ class AppLocalizationsDe extends AppLocalizations {
   String get authSignupTitle => 'Konto erstellen';
 
   @override
-  String get authSubtitle => 'Teile fair mit deiner Gruppe.';
+  String get authSubtitle => 'Simply Split Fairly';
 
   @override
   String get authContinueWithApple => 'Weiter mit Apple';
@@ -751,7 +751,7 @@ class AppLocalizationsDe extends AppLocalizations {
   String get authContinueWithGithub => 'Weiter mit GitHub';
 
   @override
-  String get authDividerOr => 'oder';
+  String get authDividerOr => 'oder mit E-Mail';
 
   @override
   String get authEmailLabel => 'E-Mail';
