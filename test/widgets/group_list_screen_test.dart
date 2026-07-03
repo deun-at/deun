@@ -220,10 +220,42 @@ void main() {
 
     // Net owed = 15. The € formatting includes the digits.
     expect(find.textContaining('15'), findsWidgets);
-    // The "you're owed" hero lead label appears (also used as a card label, so
-    // there may be more than one on screen).
+    // Net positive -> the hero lead label is the "owed" ("Overall, you're
+    // owed") copy, and NOT the "owe" copy.
     final l10n = await AppLocalizations.delegate.load(const Locale('en'));
-    expect(find.text(l10n.homeOverallOwed), findsWidgets);
+    expect(find.text(l10n.homeOverallOwed), findsOneWidget);
+    expect(find.text(l10n.homeOverallOwe), findsNothing);
+  });
+
+  testWidgets('hero owe/owed labels map to the sign of the net balance', (tester) async {
+    final l10n = await AppLocalizations.delegate.load(const Locale('en'));
+
+    // Net negative (owe > owed) -> the "owe" lead label, never the "owed" one.
+    await _pumpScreen(tester, groups: [
+      _group(id: 'a', name: 'A', totalShareAmount: 10),
+      _group(id: 'b', name: 'B', totalShareAmount: -40),
+    ]);
+    expect(find.text(l10n.homeOverallOwe), findsOneWidget);
+    expect(find.text(l10n.homeOverallOwed), findsNothing);
+
+    // Both stat chips carry the full "You're owed" / "You owe" copy from the
+    // handoff (findsWidgets: the same phrasing is reused on group-card footers).
+    expect(find.text(l10n.homeStatOwed), findsWidgets);
+    expect(find.text(l10n.homeStatOwe), findsWidgets);
+  });
+
+  testWidgets('hero shows the settled lead when the net balance is zero', (tester) async {
+    final l10n = await AppLocalizations.delegate.load(const Locale('en'));
+
+    // Net zero (owed == owe) -> the neutral settled lead, neither directional
+    // label. Two offsetting groups so the card list (and thus the hero) renders.
+    await _pumpScreen(tester, groups: [
+      _group(id: 'c', name: 'C', totalShareAmount: 30),
+      _group(id: 'd', name: 'D', totalShareAmount: -30),
+    ]);
+    expect(find.text(l10n.homeOverallSettled), findsOneWidget);
+    expect(find.text(l10n.homeOverallOwe), findsNothing);
+    expect(find.text(l10n.homeOverallOwed), findsNothing);
   });
 
   for (final brightness in Brightness.values) {

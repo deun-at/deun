@@ -539,6 +539,18 @@ void main() {
       expect(find.text('Your groups'), findsOneWidget);
       expect(find.text('New'), findsOneWidget);
     });
+
+    testWidgets('emphasized renders the larger 18px/w700 header tier', (tester) async {
+      await _pump(tester, const SectionLabel('Your groups', emphasized: true));
+      final style = tester.widget<Text>(find.text('Your groups')).style!;
+      expect(style.fontSize, 18);
+      expect(style.fontWeight, FontWeight.w700);
+
+      // The default (non-emphasized) label is smaller than the emphasized one.
+      await _pump(tester, const SectionLabel('Preferences'));
+      final defaultStyle = tester.widget<Text>(find.text('Preferences')).style!;
+      expect(defaultStyle.fontSize, lessThan(18));
+    });
   });
 
   group('SoftCard', () {

@@ -161,13 +161,13 @@ abstract class AppLocalizations {
   /// Lead label on the overall-balance hero when the user has a net positive balance.
   ///
   /// In en, this message translates to:
-  /// **'You\'re owed'**
+  /// **'Overall, you\'re owed'**
   String get homeOverallOwed;
 
   /// Lead label on the overall-balance hero when the user has a net negative balance.
   ///
   /// In en, this message translates to:
-  /// **'You owe'**
+  /// **'Overall, you owe'**
   String get homeOverallOwe;
 
   /// Lead label on the overall-balance hero when nothing is owed in either direction.
@@ -179,13 +179,13 @@ abstract class AppLocalizations {
   /// Stat-chip label on the hero for the total the user is owed.
   ///
   /// In en, this message translates to:
-  /// **'Owed'**
+  /// **'You\'re owed'**
   String get homeStatOwed;
 
   /// Stat-chip label on the hero for the total the user owes.
   ///
   /// In en, this message translates to:
-  /// **'Owe'**
+  /// **'You owe'**
   String get homeStatOwe;
 
   /// Section header above the group cards.

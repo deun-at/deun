@@ -41,19 +41,19 @@ class AppLocalizationsEn extends AppLocalizations {
   String get homeGreetingNight => 'Good night';
 
   @override
-  String get homeOverallOwed => 'You\'re owed';
+  String get homeOverallOwed => 'Overall, you\'re owed';
 
   @override
-  String get homeOverallOwe => 'You owe';
+  String get homeOverallOwe => 'Overall, you owe';
 
   @override
   String get homeOverallSettled => 'You\'re all settled up';
 
   @override
-  String get homeStatOwed => 'Owed';
+  String get homeStatOwed => 'You\'re owed';
 
   @override
-  String get homeStatOwe => 'Owe';
+  String get homeStatOwe => 'You owe';
 
   @override
   String get homeYourGroups => 'Your groups';

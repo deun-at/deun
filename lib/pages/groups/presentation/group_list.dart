@@ -137,6 +137,7 @@ class _GroupListState extends ConsumerState<GroupList> {
       const SizedBox(height: 24),
       SectionLabel(
         l10n.homeYourGroups,
+        emphasized: true,
         trailing: TextButton.icon(
           onPressed: () => GoRouter.of(context).push("/group/edit"),
           icon: const Icon(Icons.add, size: 18),
@@ -328,7 +329,12 @@ class _OverallBalanceHero extends StatelessWidget {
         children: [
           Text(
             leadLabel,
-            style: Theme.of(context).textTheme.labelLarge?.copyWith(color: onHeroMuted),
+            // v3 hero lead: 13px / w600 muted (handoff Groups home). labelLarge
+            // defaults to w500 which read too light against the hero amount.
+            style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                  color: onHeroMuted,
+                  fontWeight: FontWeight.w600,
+                ),
           ),
           const SizedBox(height: 6),
           if (settled)
@@ -409,7 +415,15 @@ class _HeroStat extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(label, style: textTheme.labelMedium?.copyWith(color: onHeroMuted)),
+          // v3 stat-chip label: 11px / w600 muted (handoff Groups home). The
+          // default labelMedium w500 read too light next to the w700 amount.
+          Text(
+            label,
+            style: textTheme.labelMedium?.copyWith(
+              color: onHeroMuted,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
           const SizedBox(height: 4),
           MoneyText(
             amount,

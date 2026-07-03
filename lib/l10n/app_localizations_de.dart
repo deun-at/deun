@@ -41,19 +41,19 @@ class AppLocalizationsDe extends AppLocalizations {
   String get homeGreetingNight => 'Gute Nacht';
 
   @override
-  String get homeOverallOwed => 'Dir wird geschuldet';
+  String get homeOverallOwed => 'Insgesamt bekommst du';
 
   @override
-  String get homeOverallOwe => 'Du schuldest';
+  String get homeOverallOwe => 'Insgesamt schuldest du';
 
   @override
   String get homeOverallSettled => 'Alles ausgeglichen';
 
   @override
-  String get homeStatOwed => 'Geschuldet';
+  String get homeStatOwed => 'Dir wird geschuldet';
 
   @override
-  String get homeStatOwe => 'Schuldest';
+  String get homeStatOwe => 'Du schuldest';
 
   @override
   String get homeYourGroups => 'Deine Gruppen';

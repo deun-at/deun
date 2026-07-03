@@ -35,11 +35,11 @@
   "@homeGreetingNight": {
     "description": "Time-of-day greeting line on the groups home header (22:00-04:59)."
   },
-  "homeOverallOwed": "You're owed",
+  "homeOverallOwed": "Overall, you're owed",
   "@homeOverallOwed": {
     "description": "Lead label on the overall-balance hero when the user has a net positive balance."
   },
-  "homeOverallOwe": "You owe",
+  "homeOverallOwe": "Overall, you owe",
   "@homeOverallOwe": {
     "description": "Lead label on the overall-balance hero when the user has a net negative balance."
   },
@@ -47,11 +47,11 @@
   "@homeOverallSettled": {
     "description": "Lead label on the overall-balance hero when nothing is owed in either direction."
   },
-  "homeStatOwed": "Owed",
+  "homeStatOwed": "You're owed",
   "@homeStatOwed": {
     "description": "Stat-chip label on the hero for the total the user is owed."
   },
-  "homeStatOwe": "Owe",
+  "homeStatOwe": "You owe",
   "@homeStatOwe": {
     "description": "Stat-chip label on the hero for the total the user owes."
   },
