@@ -938,29 +938,11 @@ abstract class AppLocalizations {
   /// **'Nudge sent to remind everyone to claim.'**
   String get claimNudgeSent;
 
-  /// Sticky CTA that confirms the persona's claimed total.
+  /// Non-actionable hint in the sticky bottom bar; claiming happens instantly per tap, so there is no explicit confirm step.
   ///
   /// In en, this message translates to:
-  /// **'Confirm — I had {amount}'**
-  String claimConfirm(String amount);
-
-  /// Title of the success sheet shown after confirming a claim.
-  ///
-  /// In en, this message translates to:
-  /// **'You\'re all set'**
-  String get claimConfirmedTitle;
-
-  /// Body of the claim success sheet, showing the confirmed share.
-  ///
-  /// In en, this message translates to:
-  /// **'Your share of {amount} is saved. We\'ll keep the totals up to date as others claim.'**
-  String claimConfirmedBody(String amount);
-
-  /// Dismiss button on the claim success sheet.
-  ///
-  /// In en, this message translates to:
-  /// **'Done'**
-  String get claimConfirmedDone;
+  /// **'Tap the items you had'**
+  String get claimTapItemsHint;
 
   /// Sub-label for the current user's own row in the per-member breakdown.
   ///

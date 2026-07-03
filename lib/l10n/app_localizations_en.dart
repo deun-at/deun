@@ -491,20 +491,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get claimNudgeSent => 'Nudge sent to remind everyone to claim.';
 
   @override
-  String claimConfirm(String amount) {
-    return 'Confirm — I had $amount';
-  }
-
-  @override
-  String get claimConfirmedTitle => 'You\'re all set';
-
-  @override
-  String claimConfirmedBody(String amount) {
-    return 'Your share of $amount is saved. We\'ll keep the totals up to date as others claim.';
-  }
-
-  @override
-  String get claimConfirmedDone => 'Done';
+  String get claimTapItemsHint => 'Tap the items you had';
 
   @override
   String get expenseMemberYourShare => 'your share';

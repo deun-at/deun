@@ -17,7 +17,6 @@ import 'package:deun/widgets/restyle/progress_bar.dart';
 import 'package:deun/widgets/restyle/sheet_scaffold.dart';
 import 'package:deun/widgets/restyle/soft_card.dart';
 import 'package:deun/widgets/restyle/primary_button.dart';
-import 'package:deun/widgets/restyle/success_badge.dart';
 import 'package:deun/widgets/theme_builder.dart';
 import 'package:deun/helper/helper.dart';
 import 'package:flutter/material.dart';
@@ -146,21 +145,6 @@ class _ClaimPageState extends ConsumerState<ClaimPage> {
     showSnackBar(context, AppLocalizations.of(context)!.claimNudgeSent);
   }
 
-  /// v0 Confirm: per-tap claims are already saved, so Confirm is an
-  /// acknowledgement that shows the success sheet, then pops the screen.
-  Future<void> _confirm(double yourTotal) async {
-    await showModalBottomSheet<void>(
-      context: context,
-      isScrollControlled: true,
-      sheetAnimationStyle: kSheetAnimationStyle,
-      barrierColor: kSheetBarrierColor,
-      backgroundColor: Colors.transparent,
-      builder: (sheetContext) => _ClaimSuccessSheet(amount: yourTotal),
-    );
-    if (!mounted) return;
-    if (Navigator.of(context).canPop()) Navigator.of(context).pop();
-  }
-
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
@@ -184,7 +168,6 @@ class _ClaimPageState extends ConsumerState<ClaimPage> {
                 units: rows.map((r) => r.unit).toList(),
                 personaEmail: _persona,
               );
-              final yourTotal = confirmTotalForPersona(rows, _persona);
 
               return Column(
                 children: [
@@ -244,11 +227,7 @@ class _ClaimPageState extends ConsumerState<ClaimPage> {
                       ],
                     ),
                   ),
-                  if (rows.isNotEmpty)
-                    _ConfirmBar(
-                      yourTotal: yourTotal,
-                      onConfirm: () => _confirm(yourTotal),
-                    ),
+                  if (rows.isNotEmpty) const _TapItemsHintBar(),
                 ],
               );
             },
@@ -1201,17 +1180,17 @@ class _NudgePill extends StatelessWidget {
   }
 }
 
-/// Sticky bottom bar with the "Confirm — I had €X" CTA.
-class _ConfirmBar extends StatelessWidget {
-  const _ConfirmBar({required this.yourTotal, required this.onConfirm});
-
-  final double yourTotal;
-  final VoidCallback onConfirm;
+/// Sticky bottom bar with a non-actionable hint (F132): claiming happens
+/// instantly per tap, so there is no explicit confirm step — this just reads
+/// "Tap the items you had".
+class _TapItemsHintBar extends StatelessWidget {
+  const _TapItemsHintBar();
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     final colorScheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
 
     return Container(
       decoration: BoxDecoration(
@@ -1223,10 +1202,27 @@ class _ConfirmBar extends StatelessWidget {
       child: SafeArea(
         top: false,
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
-          child: PrimaryButton(
-            onPressed: onConfirm,
-            label: l10n.claimConfirm(l10n.toCurrency(yourTotal)),
+          padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                Icons.touch_app_outlined,
+                size: 18,
+                color: colorScheme.onSurfaceVariant,
+              ),
+              const SizedBox(width: 8),
+              Flexible(
+                child: Text(
+                  l10n.claimTapItemsHint,
+                  textAlign: TextAlign.center,
+                  style: textTheme.bodyMedium?.copyWith(
+                    color: colorScheme.onSurfaceVariant,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ],
           ),
         ),
       ),
@@ -1300,47 +1296,6 @@ class _SplitPickerSheetState extends State<_SplitPickerSheet> {
                 m.email == widget.currentUserEmail ? l10n.you : m.displayName,
               ),
             ),
-        ],
-      ),
-    );
-  }
-}
-
-/// Success sheet shown after Confirm, echoing the persona's confirmed share.
-class _ClaimSuccessSheet extends StatelessWidget {
-  const _ClaimSuccessSheet({required this.amount});
-
-  final double amount;
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
-    final semantic = Theme.of(context).extension<SemanticColors>()!;
-    final textTheme = Theme.of(context).textTheme;
-
-    return SheetScaffold(
-      footer: PrimaryButton(
-        onPressed: () => Navigator.of(context).pop(),
-        label: l10n.claimConfirmedDone,
-      ),
-      body: Column(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          SuccessBadge(icon: Icons.check_circle, size: 56, color: semantic.success),
-          const SizedBox(height: 16),
-          Text(
-            l10n.claimConfirmedTitle,
-            style: textTheme.headlineSmall,
-            textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: 8),
-          Text(
-            l10n.claimConfirmedBody(l10n.toCurrency(amount)),
-            style: textTheme.bodyMedium?.copyWith(
-              color: Theme.of(context).colorScheme.onSurfaceVariant,
-            ),
-            textAlign: TextAlign.center,
-          ),
         ],
       ),
     );

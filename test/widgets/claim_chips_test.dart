@@ -193,7 +193,7 @@ Future<void> _pump(
   Brightness brightness = Brightness.light,
 }) async {
   _fake = _FakeClaimNotifier(expense);
-  // Tall surface so the whole claim screen (summary + items + confirm bar) is
+  // Tall surface so the whole claim screen (summary + items + hint bar) is
   // laid out at once — the body is a lazily-built ListView.
   tester.view.physicalSize = const Size(1000, 2400);
   tester.view.devicePixelRatio = 1.0;
@@ -445,18 +445,24 @@ void main() {
     expect(find.text(l10n.claimNudge), findsNothing);
   });
 
-  testWidgets('Confirm opens the success sheet', (tester) async {
+  testWidgets(
+      'bottom bar is the non-actionable "Tap the items you had" hint '
+      '(F132: no explicit confirm step)', (tester) async {
     final l10n = await _l10n();
     await _pump(tester, expense: _expense());
 
-    final confirm = find.textContaining('Confirm');
-    expect(confirm, findsOneWidget);
-    await tester.ensureVisible(confirm);
-    await tester.tap(confirm);
-    await tester.pumpAndSettle();
+    // The hint is present...
+    expect(find.text(l10n.claimTapItemsHint), findsOneWidget);
+    // ...and there is no actionable confirm button in a button role.
+    expect(find.widgetWithText(ElevatedButton, l10n.claimTapItemsHint),
+        findsNothing);
 
-    expect(find.text(l10n.claimConfirmedTitle), findsOneWidget);
-    expect(find.text(l10n.claimConfirmedDone), findsOneWidget);
+    // Tapping a slot commits per tap without any separate confirm press.
+    await _pickPersona(tester, 'a@test.com');
+    expect(_fake.claimCalls, isEmpty);
+    await tester.tap(find.text(l10n.claimTakeOne).first);
+    await tester.pumpAndSettle();
+    expect(_fake.claimCalls.length, 1);
   });
 
   testWidgets('chips render in dark mode without throwing', (tester) async {

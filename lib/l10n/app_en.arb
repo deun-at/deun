@@ -467,27 +467,9 @@
   "@claimNudgeSent": {
     "description": "Snackbar confirmation shown after tapping Nudge."
   },
-  "claimConfirm": "Confirm — I had {amount}",
-  "@claimConfirm": {
-    "description": "Sticky CTA that confirms the persona's claimed total.",
-    "placeholders": {
-      "amount": { "type": "String" }
-    }
-  },
-  "claimConfirmedTitle": "You're all set",
-  "@claimConfirmedTitle": {
-    "description": "Title of the success sheet shown after confirming a claim."
-  },
-  "claimConfirmedBody": "Your share of {amount} is saved. We'll keep the totals up to date as others claim.",
-  "@claimConfirmedBody": {
-    "description": "Body of the claim success sheet, showing the confirmed share.",
-    "placeholders": {
-      "amount": { "type": "String" }
-    }
-  },
-  "claimConfirmedDone": "Done",
-  "@claimConfirmedDone": {
-    "description": "Dismiss button on the claim success sheet."
+  "claimTapItemsHint": "Tap the items you had",
+  "@claimTapItemsHint": {
+    "description": "Non-actionable hint in the sticky bottom bar; claiming happens instantly per tap, so there is no explicit confirm step."
   },
   "expenseMemberYourShare": "your share",
   "@expenseMemberYourShare": {

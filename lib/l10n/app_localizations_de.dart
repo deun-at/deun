@@ -496,20 +496,7 @@ class AppLocalizationsDe extends AppLocalizations {
       'Erinnerung gesendet, damit alle ihre Posten zuordnen.';
 
   @override
-  String claimConfirm(String amount) {
-    return 'Bestätigen – ich hatte $amount';
-  }
-
-  @override
-  String get claimConfirmedTitle => 'Alles erledigt';
-
-  @override
-  String claimConfirmedBody(String amount) {
-    return 'Dein Anteil von $amount ist gespeichert. Wir halten die Summen aktuell, sobald andere zuordnen.';
-  }
-
-  @override
-  String get claimConfirmedDone => 'Fertig';
+  String get claimTapItemsHint => 'Tippe die Posten an, die du hattest';
 
   @override
   String get expenseMemberYourShare => 'dein Anteil';
