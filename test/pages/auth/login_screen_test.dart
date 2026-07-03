@@ -69,8 +69,17 @@ void main() {
     final l10n = await AppLocalizations.delegate.load(const Locale('en'));
     await _pump(tester);
 
-    // App icon per spec.
-    expect(find.byIcon(Icons.call_split), findsOneWidget);
+    // App logo (the shared icon-512 asset), not the old fork glyph.
+    expect(
+      find.byWidgetPredicate(
+        (w) =>
+            w is Image &&
+            w.image is AssetImage &&
+            (w.image as AssetImage).assetName == 'assets/icon/icon-512.png',
+      ),
+      findsOneWidget,
+    );
+    expect(find.byIcon(Icons.call_split), findsNothing);
     // Login title.
     expect(find.text(l10n.authLoginTitle), findsOneWidget);
     // Email + password fields.
@@ -125,7 +134,7 @@ void main() {
     final l10n = await AppLocalizations.delegate.load(const Locale('en'));
     await _pump(tester, brightness: Brightness.dark);
 
-    expect(find.byIcon(Icons.call_split), findsOneWidget);
+    expect(find.byIcon(Icons.call_split), findsNothing);
     expect(find.text(l10n.authLoginTitle), findsOneWidget);
     expect(find.widgetWithText(PrimaryButton, l10n.authLoginCta), findsOneWidget);
   });

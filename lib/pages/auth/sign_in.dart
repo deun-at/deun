@@ -193,18 +193,15 @@ class _SignUpState extends State<SignUp> {
               keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
               padding: const EdgeInsets.fromLTRB(24, 32, 24, 32),
               children: [
-                // App icon: call_split per spec.
-                Container(
-                  height: 72,
-                  width: 72,
-                  decoration: BoxDecoration(
-                    color: colorScheme.primary,
-                    borderRadius: BorderRadius.circular(22),
-                  ),
-                  child: Icon(
-                    Icons.call_split,
-                    size: 36,
-                    color: colorScheme.onPrimary,
+                // App logo — same asset the splash screen uses so the login
+                // brand mark matches the rest of the app. The logo is a
+                // full-color rounded tile itself, so it needs no primary fill.
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(22),
+                  child: Image.asset(
+                    'assets/icon/icon-512.png',
+                    height: 72,
+                    width: 72,
                   ),
                 ),
                 const SizedBox(height: 24),
