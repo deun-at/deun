@@ -114,7 +114,8 @@ enum ExpenseCategory {
       case ExpenseCategory.home:
         return Icons.home;
       case ExpenseCategory.other:
-        return Icons.more_horiz;
+        // F101: shapes glyph (square/circle/triangle) per v3 handoff, not "...".
+        return Icons.category;
     }
   }
 

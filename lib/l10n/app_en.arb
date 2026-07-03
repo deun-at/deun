@@ -263,6 +263,8 @@
   "@itemizedInfoCallout": {},
   "expenseSaveAndShareForClaiming": "Add & share for claiming",
   "@expenseSaveAndShareForClaiming": {},
+  "expenseAddButton": "Add expense",
+  "@expenseAddButton": {},
   "expenseDetailTitle": "Expense",
   "@expenseDetailTitle": {
     "description": "App-bar title for the expense detail (read) screen."

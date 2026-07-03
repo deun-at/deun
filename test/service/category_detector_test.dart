@@ -1,7 +1,15 @@
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:deun/pages/expenses/data/expense_category.dart';
 
 void main() {
+  group('ExpenseCategory.getIcon', () {
+    test('other uses the shapes glyph, not the "..." glyph (F101)', () {
+      expect(ExpenseCategory.other.getIcon(), Icons.category);
+      expect(ExpenseCategory.other.getIcon(), isNot(Icons.more_horiz));
+    });
+  });
+
   group('ExpenseCategory.fromString', () {
     test('valid category name', () {
       expect(ExpenseCategory.fromString('food'), ExpenseCategory.food);

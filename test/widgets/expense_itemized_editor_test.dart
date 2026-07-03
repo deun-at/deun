@@ -176,8 +176,8 @@ void main() {
     await _pump(tester);
     final l10n = await _l10n();
 
-    // Quick mode: footer Save present, split UI present.
-    expect(find.text(l10n.save), findsOneWidget);
+    // Quick mode: footer "Add expense" CTA present, split UI present (F112).
+    expect(find.text(l10n.expenseAddButton), findsOneWidget);
     expect(find.byType(AppSegmentedControl<SplitMode>), findsOneWidget);
 
     await tester.tap(find.text(l10n.editorModeItemized));
@@ -191,9 +191,21 @@ void main() {
     // Info note explaining the share-then-claim model is present.
     expect(find.text(l10n.itemizedInfoCallout), findsOneWidget);
 
-    // Single CTA: the share-for-claiming button — the footer Save is gone.
+    // Single CTA: the share-for-claiming button — the footer quick CTA is gone.
     expect(find.text(l10n.expenseSaveAndShareForClaiming), findsOneWidget);
-    expect(find.text(l10n.save), findsNothing);
+    expect(find.text(l10n.expenseAddButton), findsNothing);
+  });
+
+  testWidgets('Quick split allocation summary shows no "All set" label (F110)',
+      (tester) async {
+    await _pump(tester);
+    final l10n = await _l10n();
+
+    // Quick mode with the seeded equal split is fully allocated, but the
+    // "All set" status label is intentionally not shown here (F110). The
+    // numeric split-mode selector still renders, confirming we're on quick.
+    expect(find.byType(AppSegmentedControl<SplitMode>), findsOneWidget);
+    expect(find.text(l10n.splitAllocatedLabel), findsNothing);
   });
 
   testWidgets(
@@ -262,7 +274,7 @@ void main() {
 
     // Opens directly in the itemized layout (no toggle tap needed).
     expect(find.text(l10n.expenseSaveAndShareForClaiming), findsOneWidget);
-    expect(find.text(l10n.save), findsNothing);
+    expect(find.text(l10n.expenseAddButton), findsNothing);
 
     // One card, quantity 2 — not two qty-1 unit cards.
     expect(find.text(l10n.itemQtyStepperValue(2)), findsOneWidget);

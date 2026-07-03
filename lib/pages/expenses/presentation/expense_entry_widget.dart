@@ -1105,11 +1105,13 @@ class _ExpenseEntryWidgetState extends State<ExpenseEntryWidget> {
     );
 
     final Color statusColor;
-    final String statusLabel;
+    // F110: quick split shows no "All set" label — only the numeric detail on
+    // the left. Under/over keep their meaningful remaining/over label.
+    final String? statusLabel;
     switch (allocation.status) {
       case AllocationStatus.ok:
         statusColor = semantic.success;
-        statusLabel = l10n.splitAllocatedLabel;
+        statusLabel = null;
         break;
       case AllocationStatus.under:
         statusColor = semantic.warning;
@@ -1142,21 +1144,21 @@ class _ExpenseEntryWidgetState extends State<ExpenseEntryWidget> {
                     ),
               ),
             ),
-            Icon(
-              allocation.status == AllocationStatus.ok
-                  ? Icons.check_circle_outline
-                  : Icons.error_outline,
-              size: 16,
-              color: statusColor,
-            ),
-            const SizedBox(width: 4),
-            Text(
-              statusLabel,
-              style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                    color: statusColor,
-                    fontWeight: FontWeight.w600,
-                  ),
-            ),
+            if (statusLabel != null) ...[
+              Icon(
+                Icons.error_outline,
+                size: 16,
+                color: statusColor,
+              ),
+              const SizedBox(width: 4),
+              Text(
+                statusLabel,
+                style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                      color: statusColor,
+                      fontWeight: FontWeight.w600,
+                    ),
+              ),
+            ],
           ],
         ),
       ],

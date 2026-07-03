@@ -331,6 +331,9 @@ class AppLocalizationsDe extends AppLocalizations {
       'Hinzufügen & zum Beanspruchen teilen';
 
   @override
+  String get expenseAddButton => 'Ausgabe hinzufügen';
+
+  @override
   String get expenseDetailTitle => 'Ausgabe';
 
   @override

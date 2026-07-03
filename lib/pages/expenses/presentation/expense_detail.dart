@@ -959,7 +959,8 @@ class _ExpenseDetailState extends ConsumerState<ExpenseDetail> {
                       padding: const EdgeInsets.fromLTRB(20, 14, 20, 20),
                       child: PrimaryButton(
                         onPressed: () => _saveExpense(context),
-                        label: AppLocalizations.of(context)!.save,
+                        // F112: quick CTA reads "Add expense" (create + edit).
+                        label: AppLocalizations.of(context)!.expenseAddButton,
                       ),
                     ),
                   ),

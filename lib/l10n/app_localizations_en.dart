@@ -328,6 +328,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get expenseSaveAndShareForClaiming => 'Add & share for claiming';
 
   @override
+  String get expenseAddButton => 'Add expense';
+
+  @override
   String get expenseDetailTitle => 'Expense';
 
   @override

@@ -686,6 +686,12 @@ abstract class AppLocalizations {
   /// **'Add & share for claiming'**
   String get expenseSaveAndShareForClaiming;
 
+  /// No description provided for @expenseAddButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Add expense'**
+  String get expenseAddButton;
+
   /// App-bar title for the expense detail (read) screen.
   ///
   /// In en, this message translates to:

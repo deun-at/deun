@@ -98,6 +98,7 @@
   "addItemByHand": "Artikel manuell hinzufügen",
   "itemizedInfoCallout": "Nach dem Teilen beanspruchen die Mitglieder ihre eigenen Artikel – allein oder aufgeteilt, pro Stück.",
   "expenseSaveAndShareForClaiming": "Hinzufügen & zum Beanspruchen teilen",
+  "expenseAddButton": "Ausgabe hinzufügen",
   "expenseDetailTitle": "Ausgabe",
   "expenseDetailTitleNew": "Neue Ausgabe",
   "expenseDetailTitleEdit": "Ausgabe bearbeiten",
