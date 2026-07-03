@@ -812,6 +812,18 @@ abstract class AppLocalizations {
   /// **'Take one'**
   String get claimTakeOne;
 
+  /// Subline on a multi-unit item card: per-unit price and number of ordered units.
+  ///
+  /// In en, this message translates to:
+  /// **'{price} each · {count} ordered'**
+  String claimEachOrdered(String price, int count);
+
+  /// Hint on an item card while free unit slots remain and the persona holds none.
+  ///
+  /// In en, this message translates to:
+  /// **'Tap a slot to take one'**
+  String get claimTapSlotHint;
+
   /// Chip label on a unit split between several people, showing the per-person cost.
   ///
   /// In en, this message translates to:

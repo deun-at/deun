@@ -357,6 +357,18 @@
   "@claimTakeOne": {
     "description": "Dashed open chip on an unclaimed unit; tap to claim it."
   },
+  "claimEachOrdered": "{price} each · {count} ordered",
+  "@claimEachOrdered": {
+    "description": "Subline on a multi-unit item card: per-unit price and number of ordered units.",
+    "placeholders": {
+      "price": { "type": "String" },
+      "count": { "type": "int" }
+    }
+  },
+  "claimTapSlotHint": "Tap a slot to take one",
+  "@claimTapSlotHint": {
+    "description": "Hint on an item card while free unit slots remain and the persona holds none."
+  },
   "claimSplitLabel": "split · {amount}",
   "@claimSplitLabel": {
     "description": "Chip label on a unit split between several people, showing the per-person cost.",

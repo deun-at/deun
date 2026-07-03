@@ -396,6 +396,14 @@ class AppLocalizationsEn extends AppLocalizations {
   String get claimTakeOne => 'Take one';
 
   @override
+  String claimEachOrdered(String price, int count) {
+    return '$price each · $count ordered';
+  }
+
+  @override
+  String get claimTapSlotHint => 'Tap a slot to take one';
+
+  @override
   String claimSplitLabel(String amount) {
     return 'split · $amount';
   }

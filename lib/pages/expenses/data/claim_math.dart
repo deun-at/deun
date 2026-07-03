@@ -32,6 +32,45 @@ class ClaimUnitRow {
   final Map<String, String> claimerNames;
 }
 
+/// One item card on the claim screen (F131): all claim units that share an
+/// item_group_id (a standalone unit forms a group of one), in stable unit
+/// order. [unitCost] is the per-unit price ("€X each"); [quantity] the number
+/// of ordered units — one tappable slot chip each.
+class ClaimItemGroup {
+  const ClaimItemGroup({
+    required this.name,
+    required this.unitCost,
+    required this.units,
+  });
+
+  final String? name;
+  final double unitCost;
+  final List<ClaimUnitRow> units;
+
+  int get quantity => units.length;
+
+  /// The first unit nobody has claimed yet — target of "Split one" — or null
+  /// when every slot is taken (the button dims).
+  ClaimUnitRow? get firstFree {
+    for (final row in units) {
+      if (!row.unit.isClaimed) return row;
+    }
+    return null;
+  }
+
+  bool get hasFree => firstFree != null;
+
+  /// The persona's cost across this item's units (their share of every unit
+  /// they claim) — shown on the card's trailing edge when > 0.
+  double costForPersona(String email) {
+    double sum = 0;
+    for (final row in units) {
+      if (row.unit.claimers.contains(email)) sum += row.unit.perClaimerCost;
+    }
+    return sum;
+  }
+}
+
 /// The per-persona view-state for one claim unit's chip on the claim screen
 /// (Screen 9). Derived purely from a [ClaimUnitRow] for the current persona:
 /// whether the persona claims it, how many members share it, the per-claimer

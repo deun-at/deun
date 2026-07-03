@@ -400,6 +400,14 @@ class AppLocalizationsDe extends AppLocalizations {
   String get claimTakeOne => 'Nehmen';
 
   @override
+  String claimEachOrdered(String price, int count) {
+    return '$price pro Stück · $count bestellt';
+  }
+
+  @override
+  String get claimTapSlotHint => 'Tippe auf einen Platz, um einen zu nehmen';
+
+  @override
   String claimSplitLabel(String amount) {
     return 'geteilt · $amount';
   }

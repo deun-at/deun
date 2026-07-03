@@ -339,21 +339,31 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('item list renders a row per claim unit', (tester) async {
+  testWidgets('item list renders one card per item with its slot chips',
+      (tester) async {
     final l10n = await AppLocalizations.delegate.load(const Locale('en'));
     await _pump(tester, expense: _itemizedExpense());
 
     // The item area is below the fold of the lazily-built list — scroll it in.
     // The per-member strip adds its own horizontal Scrollable, so target the
     // outer vertical ListView explicitly.
+    final scrollable = find.byType(Scrollable).first;
+
+    // The eyebrow caption sits directly above the item cards. It shares the
+    // vertical viewport with them but scrolls off the top once the last card
+    // (Bread) is dragged into view, so assert it at its own scroll position
+    // before scrolling further down — a scrolled-past row is disposed by the
+    // lazy ListView and would no longer be findable.
     await tester.scrollUntilVisible(
-      find.text('Bread'),
+      find.text(l10n.claimItemsCaption.toUpperCase()),
       200,
-      scrollable: find.byType(Scrollable).first,
+      scrollable: scrollable,
     );
     await tester.pumpAndSettle();
-
     expect(find.text(l10n.claimItemsCaption.toUpperCase()), findsOneWidget);
+
+    await tester.scrollUntilVisible(find.text('Bread'), 200, scrollable: scrollable);
+    await tester.pumpAndSettle();
     expect(find.text('Cheese'), findsOneWidget);
     expect(find.text('Wine'), findsOneWidget);
     expect(find.text('Bread'), findsOneWidget);

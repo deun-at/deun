@@ -45,8 +45,9 @@ ExpenseEntry _unit(
   String id,
   String name,
   double amount,
-  List<MapEntry<String, String>> claimers,
-) {
+  List<MapEntry<String, String>> claimers, {
+  String? itemGroupId,
+}) {
   final e = ExpenseEntry(index: index);
   e.id = id;
   e.expenseId = 'e1';
@@ -55,7 +56,7 @@ ExpenseEntry _unit(
   e.quantity = 1;
   e.splitMode = 'claim';
   e.createdAt = '';
-  e.itemGroupId = null;
+  e.itemGroupId = itemGroupId;
   e.expenseEntryShares = [
     for (final c in claimers)
       (ExpenseEntryShare()
@@ -100,6 +101,29 @@ Expense _fullyClaimed() {
   e.expenseEntries = {
     'u1': _unit(0, 'u1', 'Cheese', 10, [const MapEntry('b@test.com', 'Bob')]),
     'u2': _unit(1, 'u2', 'Wine', 6, [const MapEntry('b@test.com', 'Bob')]),
+  };
+  return e;
+}
+
+/// One qty-3 item (Cola, €2 each, item_group_id 'ig-cola'): unit c1 claimed
+/// solo by Alice, unit c2 split Alice+Bob (€1 each), unit c3 free.
+Expense _grouped() {
+  final e = _expense();
+  e.amount = 6;
+  e.expenseEntries = {
+    'c1': _unit(0, 'c1', 'Cola', 2, [const MapEntry('a@test.com', 'Alice')],
+        itemGroupId: 'ig-cola'),
+    'c2': _unit(
+        1,
+        'c2',
+        'Cola',
+        2,
+        [
+          const MapEntry('a@test.com', 'Alice'),
+          const MapEntry('b@test.com', 'Bob'),
+        ],
+        itemGroupId: 'ig-cola'),
+    'c3': _unit(2, 'c3', 'Cola', 2, const [], itemGroupId: 'ig-cola'),
   };
   return e;
 }
@@ -244,7 +268,7 @@ void main() {
     expect(find.text(l10n.claimTakeOne), findsWidgets);
   });
 
-  testWidgets('tapping a "take one" chip claims the unit for the persona',
+  testWidgets('tapping a free slot claims the unit solo via the RPC path',
       (tester) async {
     final l10n = await _l10n();
     await _pump(tester, expense: _expense());
@@ -254,37 +278,99 @@ void main() {
     await tester.tap(find.text(l10n.claimTakeOne).first);
     await tester.pumpAndSettle();
 
-    // First open unit is u1 (Cheese); persona is Alice.
+    // First open unit is u1 (Cheese); persona is Alice → claimUnit (solo).
     expect(_fake.claimCalls.length, 1);
     expect(_fake.claimCalls.first.$1, 'u1');
     expect(_fake.claimCalls.first.$2, 'a@test.com');
+    expect(_fake.splitCalls, isEmpty);
   });
 
-  testWidgets('tapping a chip claimed by you unclaims it', (tester) async {
+  testWidgets(
+      'grouped item card shows ×N, "each · ordered" subline, and one chip '
+      'per unit (solo / split / free)', (tester) async {
     final l10n = await _l10n();
-    await _pump(tester, expense: _expense());
-    await _pickPersona(tester, 'a@test.com');
+    await _pump(tester, expense: _grouped());
 
-    // Claim the first open unit, then tap its (now claimed-by-you) chip.
-    await tester.tap(find.text(l10n.claimTakeOne).first);
-    await tester.pumpAndSettle();
-    // u2 (Wine) is split between Alice+Bob → its chip is claimed-by-you.
-    // Tap the avatar pill for u1 (Cheese), now claimed solely by Alice.
-    await tester.tap(find.byType(AvatarStack).first);
-    await tester.pumpAndSettle();
+    // One card: name + ×3 in the title, "€2.00 each · 3 ordered" subline.
+    expect(find.textContaining('Cola'), findsOneWidget);
+    expect(find.textContaining('×3'), findsOneWidget);
+    expect(
+      find.text(l10n.claimEachOrdered(l10n.toCurrency(2), 3)),
+      findsOneWidget,
+    );
 
-    expect(_fake.unclaimCalls, isNotEmpty);
-    expect(_fake.unclaimCalls.last.$2, 'a@test.com');
+    // Solo slot → claimer name chip.
+    final solo = find.byKey(const ValueKey('slot:c1'));
+    expect(solo, findsOneWidget);
+    expect(find.descendant(of: solo, matching: find.text('Alice')),
+        findsOneWidget);
+
+    // Split slot → stacked avatars + "split · €1.00".
+    final split = find.byKey(const ValueKey('slot:c2'));
+    expect(split, findsOneWidget);
+    expect(
+      find.descendant(
+        of: split,
+        matching: find.text(l10n.claimSplitLabel(l10n.toCurrency(1))),
+      ),
+      findsOneWidget,
+    );
+    expect(find.descendant(of: split, matching: find.byType(AvatarStack)),
+        findsOneWidget);
+
+    // Free slot → dashed "take one".
+    final free = find.byKey(const ValueKey('slot:c3'));
+    expect(free, findsOneWidget);
+    expect(find.descendant(of: free, matching: find.text(l10n.claimTakeOne)),
+        findsOneWidget);
   });
 
-  testWidgets('Split one picker calls splitUnit with chosen members',
+  testWidgets('single-unit item card shows the plain unit price subline',
       (tester) async {
     final l10n = await _l10n();
     await _pump(tester, expense: _expense());
+    // Wine (€6, split Alice+Bob) is a single-slot card: no ×N, plain price,
+    // one split chip with the €3 per-person cost.
+    expect(find.textContaining('×'), findsNothing);
+    expect(find.text(l10n.toCurrency(6)), findsWidgets);
+    expect(
+      find.descendant(
+        of: find.byKey(const ValueKey('slot:u2')),
+        matching: find.text(l10n.claimSplitLabel(l10n.toCurrency(3))),
+      ),
+      findsOneWidget,
+    );
+  });
 
-    // Open the split picker on the first open unit (the "Split one" button is
-    // an icon button with a tooltip).
-    await tester.tap(find.byTooltip(l10n.claimSplitOne).first);
+  testWidgets('tapping a claimed chip opens the modal; unchecking yourself '
+      'unclaims via splitUnit', (tester) async {
+    final l10n = await _l10n();
+    await _pump(tester, expense: _grouped());
+    await _pickPersona(tester, 'a@test.com');
+
+    // Tap Alice's solo slot → the solo/split modal opens (no mutation yet).
+    await tester.tap(find.byKey(const ValueKey('slot:c1')));
+    await tester.pumpAndSettle();
+    expect(find.byType(SheetScaffold), findsOneWidget);
+    expect(_fake.splitCalls, isEmpty);
+
+    // Uncheck Alice (the sheet's member row) and apply → unit is unclaimed.
+    await tester.tap(find.text('Alice').last);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text(l10n.claimSplitApply));
+    await tester.pumpAndSettle();
+
+    expect(_fake.splitCalls.length, 1);
+    expect(_fake.splitCalls.first.$1, 'c1');
+    expect(_fake.splitCalls.first.$2, isEmpty);
+  });
+
+  testWidgets('"Split one" opens the modal on the first free unit and applies '
+      'the chosen members', (tester) async {
+    final l10n = await _l10n();
+    await _pump(tester, expense: _expense());
+
+    await tester.tap(find.text(l10n.claimSplitOne).first);
     await tester.pumpAndSettle();
     expect(find.byType(SheetScaffold), findsOneWidget);
 
@@ -300,6 +386,46 @@ void main() {
     expect(_fake.splitCalls.first.$1, 'u1');
     expect(_fake.splitCalls.first.$2.toSet(),
         {'a@test.com', 'b@test.com'});
+  });
+
+  testWidgets('"Split one" preselects the persona in the modal',
+      (tester) async {
+    final l10n = await _l10n();
+    await _pump(tester, expense: _grouped());
+    await _pickPersona(tester, 'b@test.com');
+
+    // First (only) free unit on the Cola card is c3.
+    await tester.tap(find.text(l10n.claimSplitOne).first);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text(l10n.claimSplitApply));
+    await tester.pumpAndSettle();
+
+    expect(_fake.splitCalls.length, 1);
+    expect(_fake.splitCalls.first.$1, 'c3');
+    expect(_fake.splitCalls.first.$2, ['b@test.com']);
+  });
+
+  testWidgets('"Split one" is dimmed and inert when nothing is free',
+      (tester) async {
+    final l10n = await _l10n();
+    await _pump(tester, expense: _fullyClaimed());
+
+    await tester.tap(find.text(l10n.claimSplitOne).first);
+    await tester.pumpAndSettle();
+    expect(find.byType(SheetScaffold), findsNothing);
+    expect(_fake.splitCalls, isEmpty);
+  });
+
+  testWidgets('"Tap a slot to take one" hint shows only while the persona '
+      'holds nothing and free slots remain', (tester) async {
+    final l10n = await _l10n();
+    await _pump(tester, expense: _grouped());
+    // No persona claims yet (default persona is '') → hint on the Cola card.
+    expect(find.text(l10n.claimTapSlotHint), findsOneWidget);
+
+    // Alice already holds unit c1 → previewing as her hides the hint.
+    await _pickPersona(tester, 'a@test.com');
+    expect(find.text(l10n.claimTapSlotHint), findsNothing);
   });
 
   testWidgets('unclaimed callout shows when units remain unclaimed',

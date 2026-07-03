@@ -119,6 +119,8 @@
   "claimNoItems": "Diese Ausgabe hat keine beanspruchbaren Positionen.",
   "claimLoadError": "Diese Ausgabe konnte nicht geladen werden.",
   "claimTakeOne": "Nehmen",
+  "claimEachOrdered": "{price} pro Stück · {count} bestellt",
+  "claimTapSlotHint": "Tippe auf einen Platz, um einen zu nehmen",
   "claimSplitLabel": "geteilt · {amount}",
   "claimSplitOne": "Aufteilen",
   "claimSplitSheetTitle": "Diesen Posten aufteilen",

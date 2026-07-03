@@ -3,6 +3,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../helper/realtime_mixin.dart';
 import '../data/claim_math.dart';
+import '../data/expense_entry_model.dart';
 import '../data/expense_model.dart';
 import '../data/expense_repository.dart';
 
@@ -58,27 +59,40 @@ class ClaimNotifier extends _$ClaimNotifier with RealtimeNotifierMixin {
         .toList();
   }
 
-  /// Claim units paired with their DB identity + name, in stable order. The
-  /// read-only item area on the claim screen (E3-T2) binds to this; the
-  /// interactive chips (E3-T3) reuse the [ClaimUnitRow.entryId] to mutate.
-  List<ClaimUnitRow> get unitRows {
+  /// Item cards for the claim screen (F131): claim units grouped per item via
+  /// the same [Expense.entriesByItem] grouping the editor's regrouping uses
+  /// (item_group_id; standalone units group with themselves), one
+  /// [ClaimUnitRow] slot per unit in stable order.
+  List<ClaimItemGroup> get itemGroups {
     final expense = state.value;
     if (expense == null) return const [];
-    return expense.expenseEntries.values
-        .where((e) => e.isClaimUnit)
-        .map((e) => ClaimUnitRow(
-              entryId: e.id,
-              name: e.name,
-              unit: ClaimUnit(
-                unitCost: e.amount,
-                claimers: e.expenseEntryShares.map((s) => s.email).toList(),
-              ),
-              claimerNames: {
-                for (final s in e.expenseEntryShares) s.email: s.displayName,
-              },
-            ))
-        .toList();
+    return [
+      for (final group in expense.entriesByItem.values)
+        if (group.first.isClaimUnit)
+          ClaimItemGroup(
+            name: group.first.name,
+            unitCost: group.first.amount,
+            units: [for (final e in group) _rowOf(e)],
+          ),
+    ];
   }
+
+  /// All claim-unit rows, flattened across [itemGroups]. The summary math and
+  /// the confirm total bind to this; chips mutate via [ClaimUnitRow.entryId].
+  List<ClaimUnitRow> get unitRows =>
+      [for (final g in itemGroups) ...g.units];
+
+  ClaimUnitRow _rowOf(ExpenseEntry e) => ClaimUnitRow(
+        entryId: e.id,
+        name: e.name,
+        unit: ClaimUnit(
+          unitCost: e.amount,
+          claimers: e.expenseEntryShares.map((s) => s.email).toList(),
+        ),
+        claimerNames: {
+          for (final s in e.expenseEntryShares) s.email: s.displayName,
+        },
+      );
 
   Map<String, double> get memberTotals => memberShareTotals(units);
   double get claimed => claimedTotal(units);

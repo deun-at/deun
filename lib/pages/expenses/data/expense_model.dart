@@ -60,45 +60,49 @@ class Expense {
     }
   }
 
-  /// Entries as the editor shows them: per-unit claim entries (split_mode
-  /// 'claim', quantity 1) produced by the itemized share-for-claiming save
-  /// are regrouped by item_group_id into one synthetic qty-N entry (amount =
-  /// group total, unitClaims = each unit's claimer emails in unit order).
-  /// Non-claim entries pass through unchanged. Indices are reassigned
-  /// sequentially so form field names stay dense.
-  List<ExpenseEntry> get editorEntries {
-    final grouped = <String, ExpenseEntry>{};
+  /// Entries grouped per item card, insertion-ordered: per-unit claim entries
+  /// (split_mode 'claim', quantity 1) group by item_group_id — a standalone
+  /// unit (no group id) forms a group of one — and every other entry passes
+  /// through as its own single-entry group (keyed by id, so they never merge).
+  /// Shared by the editor's qty-N regrouping ([editorEntries], F146) and the
+  /// claim screen's per-unit item cards (F131).
+  Map<String, List<ExpenseEntry>> get entriesByItem {
+    final grouped = <String, List<ExpenseEntry>>{};
     for (final entry in expenseEntries.values) {
-      if (!entry.isClaimUnit) {
-        // ponytail: key by id — pass-through entries never merge.
-        grouped[entry.id] = entry;
-        continue;
-      }
-      // Standalone claim unit (no group id) groups with itself only.
-      final key = entry.itemGroupId ?? entry.id;
-      final existing = grouped[key];
-      final claims =
-          entry.expenseEntryShares.map((s) => s.email).toList(growable: false);
-      if (existing == null) {
-        final synthetic = ExpenseEntry(index: 0)
-          ..id = entry.id
-          ..expenseId = entry.expenseId
-          ..name = entry.name
-          ..amount = entry.amount
-          ..quantity = 1
-          ..splitMode = entry.splitMode
-          ..createdAt = entry.createdAt
-          ..itemGroupId = entry.itemGroupId
-          ..unitClaims = [claims];
-        grouped[key] = synthetic;
+      final key =
+          entry.isClaimUnit ? (entry.itemGroupId ?? entry.id) : entry.id;
+      (grouped[key] ??= []).add(entry);
+    }
+    return grouped;
+  }
+
+  /// Entries as the editor shows them: each [entriesByItem] claim group
+  /// collapses into one synthetic qty-N entry (amount = group total,
+  /// unitClaims = each unit's claimer emails in unit order). Non-claim
+  /// entries pass through unchanged. Indices are reassigned sequentially so
+  /// form field names stay dense.
+  List<ExpenseEntry> get editorEntries {
+    final result = <ExpenseEntry>[];
+    for (final group in entriesByItem.values) {
+      final first = group.first;
+      if (!first.isClaimUnit) {
+        result.add(first);
       } else {
-        existing
-          ..amount += entry.amount
-          ..quantity += 1
-          ..unitClaims = [...existing.unitClaims, claims];
+        result.add(ExpenseEntry(index: 0)
+          ..id = first.id
+          ..expenseId = first.expenseId
+          ..name = first.name
+          ..amount = group.fold(0.0, (sum, e) => sum + e.amount)
+          ..quantity = group.length
+          ..splitMode = first.splitMode
+          ..createdAt = first.createdAt
+          ..itemGroupId = first.itemGroupId
+          ..unitClaims = [
+            for (final e in group)
+              e.expenseEntryShares.map((s) => s.email).toList(growable: false),
+          ]);
       }
     }
-    final result = grouped.values.toList();
     for (var i = 0; i < result.length; i++) {
       result[i].index = i;
     }
