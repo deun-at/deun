@@ -195,11 +195,39 @@ class _GroupListState extends ConsumerState<GroupList> {
   }
 }
 
-/// Greeting line ("Hi, {name}") with the current user's avatar on the right.
+/// Time-of-day greeting buckets used on the groups home header.
+enum GreetingBucket { morning, afternoon, evening, night }
+
+/// Pure hour->bucket mapping (device local time). Boundaries:
+/// morning 05-11, afternoon 12-16, evening 17-21, night 22-04.
+/// Exposed for tests so the choice doesn't depend on wall-clock.
+GreetingBucket greetingBucketForHour(int hour) {
+  if (hour >= 5 && hour < 12) return GreetingBucket.morning;
+  if (hour >= 12 && hour < 17) return GreetingBucket.afternoon;
+  if (hour >= 17 && hour < 22) return GreetingBucket.evening;
+  return GreetingBucket.night;
+}
+
+String greetingLabel(AppLocalizations l10n, GreetingBucket bucket) {
+  switch (bucket) {
+    case GreetingBucket.morning:
+      return l10n.homeGreetingMorning;
+    case GreetingBucket.afternoon:
+      return l10n.homeGreetingAfternoon;
+    case GreetingBucket.evening:
+      return l10n.homeGreetingEvening;
+    case GreetingBucket.night:
+      return l10n.homeGreetingNight;
+  }
+}
+
+/// Time-aware greeting ("Good evening" over the user's name), multi-line,
+/// with the current user's avatar on the right.
 class _GreetingHeader extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final textTheme = Theme.of(context).textTheme;
+    final colorScheme = Theme.of(context).colorScheme;
     final l10n = AppLocalizations.of(context)!;
     final userAsync = ref.watch(userDetailProvider);
 
@@ -208,15 +236,34 @@ class _GreetingHeader extends ConsumerWidget {
         ? user!.displayName
         : (user?.firstName ?? '');
 
+    final greeting = greetingLabel(l10n, greetingBucketForHour(DateTime.now().hour));
+
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 14, 16, 0),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           Expanded(
-            child: Text(
-              name.isEmpty ? l10n.groups : l10n.homeGreeting(name),
-              style: textTheme.headlineMedium,
-              overflow: TextOverflow.ellipsis,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Muted secondary greeting line (DESIGN_SPEC "Text secondary").
+                Text(
+                  greeting,
+                  style: textTheme.labelMedium?.copyWith(
+                    color: colorScheme.onSurfaceVariant,
+                    fontWeight: FontWeight.w600,
+                  ),
+                  overflow: TextOverflow.ellipsis,
+                ),
+                // Name line: Bricolage display tier (v3 hero-style header).
+                Text(
+                  name.isEmpty ? l10n.groups : name,
+                  style: textTheme.headlineMedium,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
             ),
           ),
           if (user != null)

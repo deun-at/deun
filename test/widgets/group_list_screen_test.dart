@@ -147,9 +147,69 @@ void main() {
   testWidgets('renders greeting, group name and a card', (tester) async {
     await _pumpScreen(tester, groups: [_group(id: 'a', name: 'Trip to Rome', totalShareAmount: 25)]);
 
-    expect(find.textContaining('Alex'), findsOneWidget); // greeting "Hi, Alex"
+    expect(find.text('Alex'), findsOneWidget); // name line of the greeting header
     expect(find.text('Trip to Rome'), findsOneWidget);
     expect(find.byType(GroupListItem), findsOneWidget);
+  });
+
+  // -------------------------------------------------------------------------
+  // F87: time-aware, multi-line greeting header
+  // -------------------------------------------------------------------------
+
+  test('greetingBucketForHour pins each bucket to its hour range', () {
+    // morning 05-11, afternoon 12-16, evening 17-21, night 22-04.
+    for (var h = 0; h < 24; h++) {
+      final GreetingBucket expected;
+      if (h >= 5 && h < 12) {
+        expected = GreetingBucket.morning;
+      } else if (h >= 12 && h < 17) {
+        expected = GreetingBucket.afternoon;
+      } else if (h >= 17 && h < 22) {
+        expected = GreetingBucket.evening;
+      } else {
+        expected = GreetingBucket.night;
+      }
+      expect(greetingBucketForHour(h), expected, reason: 'hour $h');
+    }
+    // Boundary spot-checks.
+    expect(greetingBucketForHour(4), GreetingBucket.night);
+    expect(greetingBucketForHour(5), GreetingBucket.morning);
+    expect(greetingBucketForHour(11), GreetingBucket.morning);
+    expect(greetingBucketForHour(12), GreetingBucket.afternoon);
+    expect(greetingBucketForHour(17), GreetingBucket.evening);
+    expect(greetingBucketForHour(22), GreetingBucket.night);
+  });
+
+  testWidgets('greeting header renders a muted greeting line above the name line', (tester) async {
+    await _pumpScreen(tester, groups: [_group(id: 'a', name: 'A', totalShareAmount: 10)]);
+
+    final l10n = await AppLocalizations.delegate.load(const Locale('en'));
+
+    // The greeting label for the current wall-clock hour is one of the four
+    // localized time-of-day variants, rendered above the name line.
+    final bucket = greetingBucketForHour(DateTime.now().hour);
+    final expectedGreeting = {
+      GreetingBucket.morning: l10n.homeGreetingMorning,
+      GreetingBucket.afternoon: l10n.homeGreetingAfternoon,
+      GreetingBucket.evening: l10n.homeGreetingEvening,
+      GreetingBucket.night: l10n.homeGreetingNight,
+    }[bucket]!;
+
+    final greetingFinder = find.text(expectedGreeting);
+    expect(greetingFinder, findsOneWidget);
+    // Name line present too -> two lines.
+    expect(find.text('Alex'), findsOneWidget);
+
+    // Greeting line is the muted secondary token (not the name's headline).
+    final ctx = tester.element(greetingFinder);
+    final theme = Theme.of(ctx);
+    final greetingStyle = tester.widget<Text>(greetingFinder).style!;
+    expect(greetingStyle.color, theme.colorScheme.onSurfaceVariant);
+
+    // The name line sits below the greeting line (multi-line, stacked).
+    final greetingY = tester.getTopLeft(greetingFinder).dy;
+    final nameY = tester.getTopLeft(find.text('Alex')).dy;
+    expect(nameY, greaterThan(greetingY));
   });
 
   testWidgets('hero shows the aggregated owed amount', (tester) async {

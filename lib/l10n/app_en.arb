@@ -19,6 +19,22 @@
       "name": { "type": "String" }
     }
   },
+  "homeGreetingMorning": "Good morning",
+  "@homeGreetingMorning": {
+    "description": "Time-of-day greeting line on the groups home header (05:00-11:59)."
+  },
+  "homeGreetingAfternoon": "Good afternoon",
+  "@homeGreetingAfternoon": {
+    "description": "Time-of-day greeting line on the groups home header (12:00-16:59)."
+  },
+  "homeGreetingEvening": "Good evening",
+  "@homeGreetingEvening": {
+    "description": "Time-of-day greeting line on the groups home header (17:00-21:59)."
+  },
+  "homeGreetingNight": "Good night",
+  "@homeGreetingNight": {
+    "description": "Time-of-day greeting line on the groups home header (22:00-04:59)."
+  },
   "homeOverallOwed": "You're owed",
   "@homeOverallOwed": {
     "description": "Lead label on the overall-balance hero when the user has a net positive balance."

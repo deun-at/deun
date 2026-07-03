@@ -29,6 +29,18 @@ class AppLocalizationsDe extends AppLocalizations {
   }
 
   @override
+  String get homeGreetingMorning => 'Guten Morgen';
+
+  @override
+  String get homeGreetingAfternoon => 'Guten Tag';
+
+  @override
+  String get homeGreetingEvening => 'Guten Abend';
+
+  @override
+  String get homeGreetingNight => 'Gute Nacht';
+
+  @override
   String get homeOverallOwed => 'Dir wird geschuldet';
 
   @override

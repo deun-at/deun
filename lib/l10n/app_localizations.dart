@@ -134,6 +134,30 @@ abstract class AppLocalizations {
   /// **'Hi, {name}'**
   String homeGreeting(String name);
 
+  /// Time-of-day greeting line on the groups home header (05:00-11:59).
+  ///
+  /// In en, this message translates to:
+  /// **'Good morning'**
+  String get homeGreetingMorning;
+
+  /// Time-of-day greeting line on the groups home header (12:00-16:59).
+  ///
+  /// In en, this message translates to:
+  /// **'Good afternoon'**
+  String get homeGreetingAfternoon;
+
+  /// Time-of-day greeting line on the groups home header (17:00-21:59).
+  ///
+  /// In en, this message translates to:
+  /// **'Good evening'**
+  String get homeGreetingEvening;
+
+  /// Time-of-day greeting line on the groups home header (22:00-04:59).
+  ///
+  /// In en, this message translates to:
+  /// **'Good night'**
+  String get homeGreetingNight;
+
   /// Lead label on the overall-balance hero when the user has a net positive balance.
   ///
   /// In en, this message translates to:
