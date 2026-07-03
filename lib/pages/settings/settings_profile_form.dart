@@ -3,6 +3,7 @@ import 'package:deun/pages/settings/settings_sheets.dart';
 import 'package:deun/pages/users/user_model.dart';
 import 'package:deun/pages/users/user_repository.dart';
 import 'package:deun/provider.dart';
+import 'package:deun/widgets/restyle/app_text_field.dart';
 import 'package:deun/widgets/restyle/primary_button.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -62,6 +63,7 @@ class _SettingsProfileFormState extends ConsumerState<SettingsProfileForm> {
                 child: _InsetFormField(
                   name: 'first_name',
                   label: l10n.settingsFirstName,
+                  initialValue: user.firstName,
                   validator: FormBuilderValidators.required(
                     errorText: l10n.settingsFirstNameValidationEmpty,
                   ),
@@ -72,6 +74,7 @@ class _SettingsProfileFormState extends ConsumerState<SettingsProfileForm> {
                 child: _InsetFormField(
                   name: 'last_name',
                   label: l10n.settingsLastName,
+                  initialValue: user.lastName,
                   validator: FormBuilderValidators.required(
                     errorText: l10n.settingsLastNameValidationEmpty,
                   ),
@@ -83,6 +86,7 @@ class _SettingsProfileFormState extends ConsumerState<SettingsProfileForm> {
           _InsetFormField(
             name: 'display_name',
             label: l10n.settingsDisplayName,
+            initialValue: user.displayName,
             validator: FormBuilderValidators.required(
               errorText: l10n.settingsDisplayNameValidationEmpty,
             ),
@@ -91,25 +95,50 @@ class _SettingsProfileFormState extends ConsumerState<SettingsProfileForm> {
           _InsetFormField(
             name: 'username',
             label: l10n.settingsUsername,
-            suffixText: user.usernameCode != null ? '#${user.usernameCode}' : null,
-            suffix: IconButton(
-              icon: const Icon(Icons.copy),
-              onPressed: () {
-                Clipboard.setData(ClipboardData(text: user.fullUsername));
-                showSnackBar(context, AppLocalizations.of(context)!.settingsUsernameCopied(user.fullUsername));
-              },
+            initialValue: user.username,
+            // #code discriminator + copy action ride together in the suffix so
+            // the label-above field keeps both affordances (AppTextField exposes
+            // a single suffix slot; no floating suffixText).
+            suffix: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (user.usernameCode != null)
+                  Padding(
+                    padding: const EdgeInsets.only(right: 4),
+                    child: Text(
+                      '#${user.usernameCode}',
+                      style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                            color: Theme.of(context).colorScheme.onSurfaceVariant,
+                            fontWeight: FontWeight.w600,
+                          ),
+                    ),
+                  ),
+                IconButton(
+                  icon: const Icon(Icons.copy),
+                  onPressed: () {
+                    Clipboard.setData(ClipboardData(text: user.fullUsername));
+                    showSnackBar(context,
+                        AppLocalizations.of(context)!.settingsUsernameCopied(user.fullUsername));
+                  },
+                ),
+              ],
             ),
           ),
           const SizedBox(height: heightSpacing),
+          // paypal.me/ was an in-field prefix on the old floating-label input;
+          // AppTextField has no prefix slot and must not be modified, so the
+          // "PayPal.me" label above now carries that meaning. ponytail: drop the
+          // inline prefix rather than fork AppTextField for one field.
           _InsetFormField(
             name: 'paypal_me',
             label: l10n.settingsPaypalMe,
-            prefixText: 'paypal.me/',
+            initialValue: user.paypalMe,
           ),
           const SizedBox(height: heightSpacing),
           _InsetFormField(
             name: 'iban',
             label: l10n.settingsIban,
+            initialValue: user.iban,
           ),
           const SizedBox(height: heightSpacing),
           // Language row → opens the picker sheet. The value is kept in a hidden
@@ -183,54 +212,74 @@ class _SettingsProfileFormState extends ConsumerState<SettingsProfileForm> {
   }
 }
 
-/// A soft inset [FormBuilderField] text input matching the redesign field look
-/// (filled `surfaceContainer`, radius 12, no hard border). Per the v3 profile
-/// form, fields carry no leading icon — they are label + value only, and sit
-/// as inset rows inside the one grouping [SoftCard].
-class _InsetFormField extends StatelessWidget {
+/// A profile text field: the shared [AppTextField] in
+/// [AppTextFieldLabelMode.above] (static label ABOVE the field, no floating
+/// Material label — design F146/F82), bridged into the surrounding [FormBuilder]
+/// so the existing keyed save path (`_formKey.currentState!.value`) is unchanged.
+///
+/// The field owns a [TextEditingController] seeded from the FormBuilder field's
+/// initial value and pushes edits back via `field.didChange`, so validation,
+/// submit and DB persistence behave exactly as before — only the label
+/// presentation changed from floating to label-above.
+class _InsetFormField extends StatefulWidget {
   const _InsetFormField({
     required this.name,
     required this.label,
+    this.initialValue,
     this.validator,
-    this.suffixText,
     this.suffix,
-    this.prefixText,
   });
 
   final String name;
   final String label;
+  final String? initialValue;
   final String? Function(String?)? validator;
-  final String? suffixText;
   final Widget? suffix;
-  final String? prefixText;
+
+  @override
+  State<_InsetFormField> createState() => _InsetFormFieldState();
+}
+
+class _InsetFormFieldState extends State<_InsetFormField> {
+  late final TextEditingController _controller;
+  FormFieldState<String>? _field;
+
+  @override
+  void initState() {
+    super.initState();
+    // Seed from the same initial value the parent hands FormBuilder, so the
+    // displayed text and the FormBuilder field agree from frame one without
+    // touching the field during its build (which would re-enter didChange).
+    _controller = TextEditingController(text: widget.initialValue ?? '');
+    // Push every keystroke back into the bound FormBuilder field so the keyed
+    // save path (`_formKey.currentState!.value`) sees live text — the same
+    // contract the old TextFormField(onChanged: field.didChange) provided. The
+    // listener only fires on real edits (after build), so no re-entrancy.
+    _controller.addListener(() => _field?.didChange(_controller.text));
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-    final radius = BorderRadius.circular(12);
-
     return FormBuilderField<String>(
-      name: name,
-      validator: validator,
-      builder: (field) => TextFormField(
-        initialValue: field.value,
-        onChanged: field.didChange,
-        decoration: InputDecoration(
-          labelText: label,
-          errorText: field.errorText,
-          prefixText: prefixText,
-          suffixText: suffixText,
-          suffixIcon: suffix,
-          filled: true,
-          fillColor: colorScheme.surfaceContainer,
-          border: OutlineInputBorder(borderRadius: radius, borderSide: BorderSide.none),
-          enabledBorder: OutlineInputBorder(borderRadius: radius, borderSide: BorderSide.none),
-          focusedBorder: OutlineInputBorder(
-            borderRadius: radius,
-            borderSide: BorderSide(color: colorScheme.primary, width: 1.5),
-          ),
-        ),
-      ),
+      name: widget.name,
+      initialValue: widget.initialValue,
+      validator: widget.validator,
+      builder: (field) {
+        _field = field;
+        return AppTextField(
+          controller: _controller,
+          label: widget.label,
+          labelMode: AppTextFieldLabelMode.above,
+          validator: widget.validator,
+          suffix: widget.suffix,
+        );
+      },
     );
   }
 }
