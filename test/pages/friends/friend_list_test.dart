@@ -200,6 +200,37 @@ void main() {
     expect(find.byIcon(Icons.chevron_right), findsNWidgets(3));
   });
 
+  testWidgets('accepted friend row lays the balance RIGHT of the name, not beneath it (F95)',
+      (tester) async {
+    await _pumpFriendList(
+      tester,
+      FriendshipListState(
+        acceptedFriends: [_friend('Owed Friend', 'owed@x.com', shareAmount: 20)],
+      ),
+    );
+
+    final l10n = await AppLocalizations.delegate.load(const Locale('en'));
+
+    final nameRect = tester.getRect(find.text('Owed Friend'));
+    final labelRect = tester.getRect(find.text(l10n.balanceOwed));
+    final amountRect = tester.getRect(find.byType(MoneyText));
+
+    // Balance label + amount sit to the RIGHT of the name (trailing edge of the
+    // row), NOT stacked beneath it in a subtitle column.
+    expect(labelRect.left, greaterThan(nameRect.right),
+        reason: 'balance label must be right of the name, not beneath it');
+    expect(amountRect.left, greaterThan(labelRect.left),
+        reason: 'amount trails the label on the right');
+
+    // Same-row placement: their vertical centers align (not stacked vertically).
+    expect((labelRect.center.dy - nameRect.center.dy).abs(), lessThan(nameRect.height),
+        reason: 'balance shares the row baseline with the name');
+
+    // The trailing chevron is the right-most element (balance is left of it).
+    final chevronRect = tester.getRect(find.byIcon(Icons.chevron_right));
+    expect(amountRect.right, lessThan(chevronRect.left));
+  });
+
   testWidgets('empty state shows the no-friends message', (tester) async {
     await _pumpFriendList(tester, const FriendshipListState());
     final l10n = await AppLocalizations.delegate.load(const Locale('en'));
