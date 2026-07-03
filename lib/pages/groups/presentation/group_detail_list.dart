@@ -122,23 +122,33 @@ class _DaySection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Padding(
-          padding: const EdgeInsets.fromLTRB(4, 8, 4, 8),
-          child: SectionLabel(formatDate(section.day.toIso8601String(), context)),
-        ),
-        for (final expense in section.expenses)
+    // v3: a date group is ONE card holding its rows joined (no intra-group
+    // gaps); spacing lives only BETWEEN date groups (the bottom margin below).
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
           Padding(
-            padding: const EdgeInsets.only(bottom: 10),
-            child: _LedgerRow(
-              expense: expense,
-              group: group,
-              onOpenExpense: onOpenExpense,
+            padding: const EdgeInsets.fromLTRB(4, 0, 4, 8),
+            child: SectionLabel(formatDate(section.day.toIso8601String(), context)),
+          ),
+          SoftCard(
+            padding: const EdgeInsets.symmetric(vertical: 4),
+            borderRadius: 20,
+            child: Column(
+              children: [
+                for (final expense in section.expenses)
+                  _LedgerRow(
+                    expense: expense,
+                    group: group,
+                    onOpenExpense: onOpenExpense,
+                  ),
+              ],
             ),
           ),
-      ],
+        ],
+      ),
     );
   }
 }
@@ -255,7 +265,7 @@ class _QuickRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
 
-    return SoftCard(
+    return _RowInk(
       onTap: onTap,
       padding: const EdgeInsets.all(14),
       child: Row(
@@ -299,6 +309,25 @@ class _QuickRow extends StatelessWidget {
   }
 }
 
+/// A tappable, ink-splashing padded row used inside a joined date-group card.
+/// Replaces the per-row [SoftCard] so consecutive rows share one card surface
+/// with no gaps between them (v3 date-group list).
+class _RowInk extends StatelessWidget {
+  const _RowInk({required this.child, required this.padding, this.onTap});
+
+  final Widget child;
+  final EdgeInsetsGeometry padding;
+  final VoidCallback? onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      child: Padding(padding: padding, child: child),
+    );
+  }
+}
+
 /// Itemized expense: accent left bar, claim pill / claimed state, claimer
 /// avatars and unclaimed meta.
 class _ItemizedRow extends StatelessWidget {
@@ -326,7 +355,7 @@ class _ItemizedRow extends StatelessWidget {
 
     final claimers = _claimerMembers(expense, currentUserEmail);
 
-    return SoftCard(
+    return _RowInk(
       onTap: onTap, // → /group/details/claim (Screen 9), via _openExpense.
       padding: EdgeInsets.zero,
       child: IntrinsicHeight(
@@ -467,8 +496,11 @@ class _PaybackRow extends StatelessWidget {
     final paidToDisplayName =
         paidBackEntryShare.email == currentUserEmail ? l10n.you : paidBackEntryShare.displayName;
 
+    // v3 inset payback chip: sits inside the joined date-group card with a
+    // small margin, so its green surface floats within the row stack.
     return Container(
       width: double.infinity,
+      margin: const EdgeInsets.fromLTRB(10, 4, 10, 4),
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       decoration: BoxDecoration(
         color: semantic.paybackBackground,

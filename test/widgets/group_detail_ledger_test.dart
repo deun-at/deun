@@ -6,6 +6,7 @@ import 'package:deun/pages/expenses/provider/expense_list.dart';
 import 'package:deun/pages/groups/data/group_member_model.dart';
 import 'package:deun/pages/groups/data/group_model.dart';
 import 'package:deun/pages/groups/presentation/group_detail_list.dart';
+import 'package:deun/widgets/restyle/soft_card.dart';
 import 'package:deun/widgets/theme_builder.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -276,6 +277,26 @@ void main() {
     expect(tester.takeException(), isNull);
     expect(find.text('Quick 1'), findsOneWidget);
     expect(find.text('Itemized 2'), findsOneWidget);
+  });
+
+  testWidgets('rows within a date group share one card; date groups are separated', (tester) async {
+    await _pump(
+      tester,
+      expenses: [
+        // Two expenses on the same day → one joined card.
+        _quick(id: '1', date: '2026-01-02T10:00:00'),
+        _itemized(id: '2', date: '2026-01-02T09:00:00'),
+        // A third on a different day → its own card.
+        _quick(id: '3', date: '2026-01-01T10:00:00'),
+      ],
+    );
+
+    // Two date groups → exactly two SoftCards (not one per expense row).
+    expect(find.byType(SoftCard), findsNWidgets(2));
+    // Both same-day rows are present inside the first card.
+    expect(find.text('Quick 1'), findsOneWidget);
+    expect(find.text('Itemized 2'), findsOneWidget);
+    expect(find.text('Quick 3'), findsOneWidget);
   });
 
   testWidgets('shows the empty state when there are no expenses', (tester) async {
