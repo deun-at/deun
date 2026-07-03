@@ -30,6 +30,9 @@ class PrimaryButton extends StatefulWidget {
     this.icon,
     this.fullWidth = true,
     this.loading = false,
+    this.compact = false,
+    this.background,
+    this.foreground,
   });
 
   /// Callback fired on tap. `null` disables the button.
@@ -48,6 +51,21 @@ class PrimaryButton extends StatefulWidget {
   /// disabled. Allows the caller to show in-progress state without managing
   /// `onPressed: null` separately.
   final bool loading;
+
+  /// Compact variant: a smaller inline pill (StadiumBorder, tighter padding,
+  /// no drop-shadow, intrinsic width) for list-tile / trailing-row actions.
+  /// Implies `fullWidth: false`.
+  final bool compact;
+
+  /// Optional fill-color override for contextual treatments — danger
+  /// (`colorScheme.error`), on-hero (`onHero`), or ink pills. Must be a theme
+  /// token / semantic color, never an inline hex. Defaults to
+  /// `colorScheme.primary` when null.
+  final Color? background;
+
+  /// Optional label/icon color override, paired with [background] (e.g.
+  /// `colorScheme.onError`). Defaults to `colorScheme.onPrimary` when null.
+  final Color? foreground;
 
   @override
   State<PrimaryButton> createState() => _PrimaryButtonState();
@@ -76,20 +94,25 @@ class _PrimaryButtonState extends State<PrimaryButton> {
     final textTheme = Theme.of(context).textTheme;
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
+    // Base fill / foreground: caller override (contextual: danger / hero / ink)
+    // or the default primary accent.
+    final baseBg = widget.background ?? colorScheme.primary;
+    final baseFg = widget.foreground ?? colorScheme.onPrimary;
+
     // Colors
-    final bgColor = _enabled
-        ? colorScheme.primary
-        : colorScheme.primary.withValues(alpha: 0.4);
+    final bgColor = _enabled ? baseBg : baseBg.withValues(alpha: 0.4);
 
-    final fgColor = colorScheme.onPrimary.withValues(alpha: _enabled ? 1.0 : 0.6);
+    final fgColor = baseFg.withValues(alpha: _enabled ? 1.0 : 0.6);
 
-    // Shadow: colored in light; softened in dark; omitted when disabled.
-    // Dark choice: lower alpha (0.25 vs 0.5) — a saturated purple drop-shadow
-    // bleeds heavily on near-black surfaces and reads as glow rather than depth.
-    final List<BoxShadow> shadows = _enabled
+    // Shadow: colored in light; softened in dark; omitted when disabled or
+    // compact. The shadow tint tracks the (possibly overridden) fill so a
+    // danger/hero button casts a matching glow, not a stray purple one.
+    // Dark choice: lower alpha (0.25 vs 0.5) — a saturated drop-shadow bleeds
+    // heavily on near-black surfaces and reads as glow rather than depth.
+    final List<BoxShadow> shadows = (_enabled && !widget.compact)
         ? [
             BoxShadow(
-              color: colorScheme.primary.withValues(alpha: isDark ? 0.25 : 0.5),
+              color: baseBg.withValues(alpha: isDark ? 0.25 : 0.5),
               offset: const Offset(0, 12),
               blurRadius: 22,
               spreadRadius: -10,
@@ -109,7 +132,7 @@ class _PrimaryButtonState extends State<PrimaryButton> {
         height: 20,
         child: CircularProgressIndicator(
           strokeWidth: 2,
-          color: colorScheme.onPrimary,
+          color: baseFg,
         ),
       );
     } else if (widget.icon != null) {
@@ -117,7 +140,7 @@ class _PrimaryButtonState extends State<PrimaryButton> {
         mainAxisSize: MainAxisSize.min,
         children: [
           Icon(widget.icon, size: 18, color: fgColor),
-          const SizedBox(width: 8),
+          SizedBox(width: widget.compact ? 5 : 8),
           Text(widget.label, style: labelStyle),
         ],
       );
@@ -125,16 +148,21 @@ class _PrimaryButtonState extends State<PrimaryButton> {
       content = Text(widget.label, style: labelStyle);
     }
 
+    // Compact: a tighter stadium pill (COMPONENTS §"Stadium pills") without the
+    // colored drop-shadow; default: the full 15-radius CTA with padding 15.
     final inner = AnimatedScale(
       scale: _pressed ? 0.98 : 1.0,
       duration: const Duration(milliseconds: 80),
       child: Container(
         decoration: BoxDecoration(
           color: bgColor,
-          borderRadius: BorderRadius.circular(15),
+          borderRadius:
+              widget.compact ? BorderRadius.circular(999) : BorderRadius.circular(15),
           boxShadow: shadows,
         ),
-        padding: const EdgeInsets.symmetric(vertical: 15),
+        padding: widget.compact
+            ? const EdgeInsets.symmetric(vertical: 9, horizontal: 16)
+            : const EdgeInsets.symmetric(vertical: 15),
         child: Center(child: content),
       ),
     );
@@ -148,7 +176,7 @@ class _PrimaryButtonState extends State<PrimaryButton> {
       child: inner,
     );
 
-    if (widget.fullWidth) {
+    if (widget.fullWidth && !widget.compact) {
       return SizedBox(width: double.infinity, child: button);
     }
     return button;
@@ -186,6 +214,9 @@ class SecondaryButton extends StatefulWidget {
     this.leading,
     this.alignStart = false,
     this.fullWidth = true,
+    this.compact = false,
+    this.foreground,
+    this.background,
   });
 
   /// Callback fired on tap. `null` disables the button.
@@ -209,6 +240,22 @@ class SecondaryButton extends StatefulWidget {
 
   /// When `true` (the default), the button expands to fill its parent's width.
   final bool fullWidth;
+
+  /// Compact variant: a smaller inline pill (StadiumBorder, tighter padding,
+  /// intrinsic width) for list-tile / trailing-row actions. Implies
+  /// `fullWidth: false`.
+  final bool compact;
+
+  /// Optional label/icon color override for a contextual tint (e.g.
+  /// `colorScheme.error` on a destructive cancel). Must be a theme token,
+  /// never an inline hex. Defaults to the standard onSurface pair when null.
+  final Color? foreground;
+
+  /// Optional fill override for a neutral tonal variant (e.g.
+  /// `colorScheme.surfaceContainer` for the gray "Remind" pill). When set the
+  /// hairline border is dropped so it reads as a tonal fill, not an outline.
+  /// Must be a theme token, never an inline hex.
+  final Color? background;
 
   @override
   State<SecondaryButton> createState() => _SecondaryButtonState();
@@ -237,10 +284,18 @@ class _SecondaryButtonState extends State<SecondaryButton> {
     final textTheme = Theme.of(context).textTheme;
 
     final opacity = _enabled ? 1.0 : 0.5;
-    final bgColor = colorScheme.surfaceContainerLowest;
-    final borderColor = colorScheme.outlineVariant.withValues(alpha: opacity);
-    final fgColor = colorScheme.onSurface.withValues(alpha: opacity);
-    final iconColor = colorScheme.onSurfaceVariant.withValues(alpha: opacity);
+    // A tonal fill override drops the hairline; otherwise the white card
+    // surface with an outlineVariant border.
+    final bool tonal = widget.background != null;
+    final bgColor = widget.background ?? colorScheme.surfaceContainerLowest;
+    // A foreground override (e.g. danger) tints border, label AND icon so the
+    // whole outlined pill reads in the contextual color.
+    final baseFg = widget.foreground ?? colorScheme.onSurface;
+    final borderColor =
+        (widget.foreground ?? colorScheme.outlineVariant).withValues(alpha: opacity);
+    final fgColor = baseFg.withValues(alpha: opacity);
+    final iconColor =
+        (widget.foreground ?? colorScheme.onSurfaceVariant).withValues(alpha: opacity);
 
     final labelStyle = (textTheme.bodyLarge ?? const TextStyle()).copyWith(
       fontWeight: FontWeight.w700,
@@ -282,10 +337,13 @@ class _SecondaryButtonState extends State<SecondaryButton> {
       child: Container(
         decoration: BoxDecoration(
           color: bgColor,
-          borderRadius: BorderRadius.circular(15),
-          border: Border.all(color: borderColor, width: 1.5),
+          borderRadius:
+              widget.compact ? BorderRadius.circular(999) : BorderRadius.circular(15),
+          border: tonal ? null : Border.all(color: borderColor, width: 1.5),
         ),
-        padding: const EdgeInsets.symmetric(vertical: 15, horizontal: 16),
+        padding: widget.compact
+            ? const EdgeInsets.symmetric(vertical: 8, horizontal: 16)
+            : const EdgeInsets.symmetric(vertical: 15, horizontal: 16),
         child: widget.alignStart
             ? Align(alignment: Alignment.centerLeft, child: content)
             : Center(child: content),
@@ -301,7 +359,7 @@ class _SecondaryButtonState extends State<SecondaryButton> {
       child: inner,
     );
 
-    if (widget.fullWidth) {
+    if (widget.fullWidth && !widget.compact) {
       return SizedBox(width: double.infinity, child: button);
     }
     return button;

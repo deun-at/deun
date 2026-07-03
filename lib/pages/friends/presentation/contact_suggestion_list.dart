@@ -1,6 +1,7 @@
 import 'package:deun/l10n/app_localizations.dart';
 import 'package:deun/pages/friends/presentation/friend_add_row.dart';
 import 'package:deun/pages/users/user_model.dart';
+import 'package:deun/widgets/restyle/primary_button.dart';
 import 'package:deun/widgets/restyle/section_label.dart';
 import 'package:deun/widgets/restyle/soft_card.dart';
 import 'package:deun/widgets/shimmer_card_list.dart';
@@ -115,9 +116,10 @@ class _ContactEmptyCard extends StatelessWidget {
             const SizedBox(height: 12),
             Align(
               alignment: Alignment.centerLeft,
-              child: FilledButton.tonal(
+              child: SecondaryButton(
+                label: l10n.addFriendshipContactOpenSettings,
                 onPressed: onRequestPermission,
-                child: Text(l10n.addFriendshipContactOpenSettings),
+                compact: true,
               ),
             ),
           ],

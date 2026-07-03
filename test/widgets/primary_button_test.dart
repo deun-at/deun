@@ -213,6 +213,92 @@ void main() {
         reason: 'Primary button must be a 15-radius rectangle',
       );
     });
+
+    // -------------------------------------------------------------------------
+    // Danger / contextual color override (background + foreground)
+    // -------------------------------------------------------------------------
+
+    /// Returns the fill of the button's colored container (shadow-bearing when
+    /// enabled; else the first colored Container).
+    Color? fillColor(WidgetTester tester) {
+      final containers =
+          tester.widgetList<Container>(find.byType(Container)).toList();
+      for (final c in containers) {
+        final deco = c.decoration;
+        if (deco is BoxDecoration && deco.color != null) return deco.color;
+      }
+      return null;
+    }
+
+    testWidgets('background override tints the fill with the danger color',
+        (tester) async {
+      late Color error;
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: ThemeData(brightness: Brightness.light, splashFactory: NoSplash.splashFactory),
+          home: Builder(builder: (context) {
+            final theme = getThemeData(context, kBrandSeed, Brightness.light);
+            error = theme.colorScheme.error;
+            return Theme(
+              data: theme.copyWith(splashFactory: NoSplash.splashFactory),
+              child: Scaffold(
+                body: Center(
+                  child: PrimaryButton(
+                    label: 'Delete',
+                    onPressed: () {},
+                    background: error,
+                    foreground: theme.colorScheme.onError,
+                  ),
+                ),
+              ),
+            );
+          }),
+        ),
+      );
+      await tester.pumpAndSettle();
+      expect(fillColor(tester), error,
+          reason: 'background override must drive the fill (danger = error)');
+      // Shadow tint must track the danger fill, not the default primary.
+      final deco = _buttonDecoration(tester);
+      expect(deco!.boxShadow!.first.color.r, closeTo(error.r, 0.01));
+    });
+
+    // -------------------------------------------------------------------------
+    // Compact variant: smaller pill, no shadow, intrinsic width
+    // -------------------------------------------------------------------------
+
+    testWidgets('compact renders a stadium pill with no drop-shadow',
+        (tester) async {
+      await _pump(
+        tester,
+        PrimaryButton(label: 'Add', onPressed: () {}, compact: true),
+      );
+      // No shadow-bearing container.
+      expect(_buttonDecoration(tester), isNull,
+          reason: 'compact PrimaryButton must not carry a drop-shadow');
+    });
+
+    testWidgets('compact is shorter than the default full CTA', (tester) async {
+      await _pump(
+        tester,
+        Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            PrimaryButton(
+                key: const Key('full'), label: 'Add', onPressed: () {}, fullWidth: false),
+            PrimaryButton(
+                key: const Key('compact'),
+                label: 'Add',
+                onPressed: () {},
+                compact: true),
+          ],
+        ),
+      );
+      final full = tester.getSize(find.byKey(const Key('full'))).height;
+      final compact = tester.getSize(find.byKey(const Key('compact'))).height;
+      expect(compact, lessThan(full),
+          reason: 'compact PrimaryButton must be shorter than the default CTA');
+    });
   });
 
   group('SecondaryButton', () {
@@ -321,6 +407,81 @@ void main() {
       await _pump(tester, SecondaryButton(label: 'Copy', onPressed: () {}));
       final size = tester.getSize(find.byType(SecondaryButton));
       expect(size.height, greaterThanOrEqualTo(48.0));
+    });
+
+    testWidgets('foreground override tints the border + label (danger)',
+        (tester) async {
+      late Color error;
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: ThemeData(brightness: Brightness.light, splashFactory: NoSplash.splashFactory),
+          home: Builder(builder: (context) {
+            final theme = getThemeData(context, kBrandSeed, Brightness.light);
+            error = theme.colorScheme.error;
+            return Theme(
+              data: theme.copyWith(splashFactory: NoSplash.splashFactory),
+              child: Scaffold(
+                body: Center(
+                  child: SecondaryButton(
+                      label: 'Cancel', onPressed: () {}, foreground: error),
+                ),
+              ),
+            );
+          }),
+        ),
+      );
+      await tester.pumpAndSettle();
+      final deco = secondaryDecoration(tester);
+      expect((deco.border! as Border).top.color, error,
+          reason: 'foreground override must tint the hairline border');
+    });
+
+    testWidgets('background override drops the border (tonal fill)',
+        (tester) async {
+      late Color fill;
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: ThemeData(brightness: Brightness.light, splashFactory: NoSplash.splashFactory),
+          home: Builder(builder: (context) {
+            final theme = getThemeData(context, kBrandSeed, Brightness.light);
+            fill = theme.colorScheme.surfaceContainer;
+            return Theme(
+              data: theme.copyWith(splashFactory: NoSplash.splashFactory),
+              child: Scaffold(
+                body: Center(
+                  child: SecondaryButton(
+                      label: 'Remind', onPressed: () {}, background: fill, compact: true),
+                ),
+              ),
+            );
+          }),
+        ),
+      );
+      await tester.pumpAndSettle();
+      final deco = secondaryDecoration(tester);
+      expect(deco.color, fill,
+          reason: 'background override must drive the tonal fill');
+      expect(deco.border, isNull,
+          reason: 'a tonal SecondaryButton drops the hairline border');
+    });
+
+    testWidgets('compact is shorter than the default secondary', (tester) async {
+      await _pump(
+        tester,
+        Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            SecondaryButton(
+                key: const Key('sfull'), label: 'Copy', onPressed: () {}, fullWidth: false),
+            SecondaryButton(
+                key: const Key('scompact'), label: 'Copy', onPressed: () {}, compact: true),
+          ],
+        ),
+      );
+      final full = tester.getSize(find.byKey(const Key('sfull'))).height;
+      final compact = tester.getSize(find.byKey(const Key('scompact'))).height;
+      expect(compact, lessThan(full),
+          reason: 'compact SecondaryButton must be shorter than the default');
     });
   });
 }

@@ -198,10 +198,11 @@ class _PayRow extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 8),
-          FilledButton.icon(
+          PrimaryButton(
+            label: l10n.paymentPay,
+            icon: Icons.payments_outlined,
             onPressed: () => _openMethodSheet(context),
-            icon: const Icon(Icons.payments_outlined, size: 18),
-            label: Text(l10n.paymentPay),
+            compact: true,
           ),
         ],
       ),
@@ -274,13 +275,12 @@ class _OwesRowState extends State<_OwesRow> {
           const SizedBox(width: 8),
           // v3 (F59): plain gray tonal pill, no icon. surfaceContainer/onSurface
           // map to the prototype's #F1EFE9 / #16181A and adapt in dark mode.
-          FilledButton(
+          SecondaryButton(
+            label: l10n.paymentRemind,
             onPressed: _sending ? null : _remind,
-            style: FilledButton.styleFrom(
-              backgroundColor: Theme.of(context).colorScheme.surfaceContainer,
-              foregroundColor: Theme.of(context).colorScheme.onSurface,
-            ),
-            child: Text(l10n.paymentRemind),
+            background: Theme.of(context).colorScheme.surfaceContainer,
+            foreground: Theme.of(context).colorScheme.onSurface,
+            compact: true,
           ),
         ],
       ),

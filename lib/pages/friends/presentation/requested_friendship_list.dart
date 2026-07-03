@@ -1,5 +1,6 @@
 import 'package:deun/l10n/app_localizations.dart';
 import 'package:deun/pages/users/user_model.dart';
+import 'package:deun/widgets/restyle/primary_button.dart';
 import 'package:deun/widgets/shimmer_card_list.dart';
 import 'package:flutter/material.dart';
 
@@ -54,22 +55,13 @@ class RequestedFriendshipList extends StatelessWidget {
               leading: UserAvatar(displayName: user.displayName, radius: 18),
               title: Text(user.displayName),
               subtitle: Text(user.fullUsername),
-              trailing: FilledButton(
-                style: FilledButton.styleFrom(
-                  backgroundColor: Theme.of(context).colorScheme.error,
-                  foregroundColor: Theme.of(context).colorScheme.onError,
-                ),
+              trailing: PrimaryButton(
+                label: AppLocalizations.of(context)!.cancel,
+                icon: Icons.person_add_disabled,
+                background: Theme.of(context).colorScheme.error,
+                foreground: Theme.of(context).colorScheme.onError,
                 onPressed: () => onCancel(user.email, user.displayName),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(Icons.person_add_disabled,
-                        color: Theme.of(context).colorScheme.onError),
-                    const SizedBox(width: 5),
-                    Text(AppLocalizations.of(context)!.cancel),
-                  ],
-                ),
+                compact: true,
               ),
             );
           },

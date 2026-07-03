@@ -9,6 +9,7 @@ import 'package:deun/widgets/restyle/balance_pill.dart' show BalanceState;
 import 'package:deun/widgets/restyle/deun_header.dart' show HeaderIconButton;
 import 'package:deun/widgets/restyle/member_avatar.dart';
 import 'package:deun/widgets/restyle/money_text.dart';
+import 'package:deun/widgets/restyle/primary_button.dart';
 import 'package:deun/widgets/restyle/section_label.dart';
 import 'package:deun/widgets/restyle/soft_card.dart';
 import 'package:deun/widgets/staggered_list.dart';
@@ -284,16 +285,11 @@ class _IncomingRequestCard extends StatelessWidget {
         children: [
           Expanded(child: _FriendIdentity(user: friendship.user)),
           const SizedBox(width: 8),
-          FilledButton(
+          PrimaryButton(
+            label: l10n.accept,
+            icon: Icons.person_add_outlined,
             onPressed: onAccept,
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Icon(Icons.person_add_outlined, size: 18),
-                const SizedBox(width: 5),
-                Text(l10n.accept),
-              ],
-            ),
+            compact: true,
           ),
           const SizedBox(width: 4),
           IconButton.filledTonal(
@@ -327,17 +323,12 @@ class _OutgoingRequestCard extends StatelessWidget {
         children: [
           Expanded(child: _FriendIdentity(user: friendship.user)),
           const SizedBox(width: 8),
-          OutlinedButton(
+          SecondaryButton(
+            label: l10n.cancel,
+            icon: Icons.person_add_disabled,
+            foreground: colorScheme.error,
             onPressed: onCancel,
-            style: OutlinedButton.styleFrom(foregroundColor: colorScheme.error),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Icon(Icons.person_add_disabled, size: 18),
-                const SizedBox(width: 5),
-                Text(l10n.cancel),
-              ],
-            ),
+            compact: true,
           ),
         ],
       ),

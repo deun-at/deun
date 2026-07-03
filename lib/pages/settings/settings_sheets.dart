@@ -3,6 +3,7 @@ import 'package:deun/helper/helper.dart';
 import 'package:deun/l10n/app_localizations.dart';
 import 'package:deun/main.dart';
 import 'package:deun/provider.dart';
+import 'package:deun/widgets/restyle/primary_button.dart';
 import 'package:deun/widgets/restyle/sheet_scaffold.dart';
 import 'package:deun/widgets/restyle/soft_card.dart';
 import 'package:flutter/material.dart';
@@ -299,20 +300,18 @@ class _DeleteAccountSheetState extends State<_DeleteAccountSheet> {
       footer: Row(
         children: [
           Expanded(
-            child: OutlinedButton(
+            child: SecondaryButton(
+              label: l10n.cancel,
               onPressed: () => Navigator.pop(context),
-              child: Text(l10n.cancel),
             ),
           ),
           const SizedBox(width: 12),
           Expanded(
-            child: FilledButton(
-              style: FilledButton.styleFrom(
-                backgroundColor: colorScheme.error,
-                foregroundColor: colorScheme.onError,
-              ),
+            child: PrimaryButton(
+              label: l10n.settingsDeleteAccountConfirmButton,
+              background: colorScheme.error,
+              foreground: colorScheme.onError,
               onPressed: !isConfirmed ? null : () => _deleteAccount(context),
-              child: Text(l10n.settingsDeleteAccountConfirmButton),
             ),
           ),
         ],

@@ -346,15 +346,13 @@ class _ExpenseDetailState extends ConsumerState<ExpenseDetail> {
           ),
         ),
         // v3: dark-ink solid pill labeled "Scan" (not a light indigo tint).
-        FilledButton.icon(
+        PrimaryButton(
+          label: l10n.expenseScanShort,
+          icon: Icons.document_scanner_outlined,
+          background: ink.ink,
+          foreground: ink.onInk,
           onPressed: _scanReceipt,
-          style: FilledButton.styleFrom(
-            backgroundColor: ink.ink,
-            foregroundColor: ink.onInk,
-            shape: const StadiumBorder(),
-          ),
-          icon: const Icon(Icons.document_scanner_outlined),
-          label: Text(l10n.expenseScanShort),
+          compact: true,
         ),
       ],
     );

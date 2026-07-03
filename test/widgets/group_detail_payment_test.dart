@@ -4,6 +4,7 @@ import 'package:deun/pages/groups/data/group_member_model.dart';
 import 'package:deun/pages/groups/data/group_model.dart';
 import 'package:deun/pages/groups/presentation/group_detail_payment.dart';
 import 'package:deun/pages/groups/provider/group_detail.dart';
+import 'package:deun/widgets/restyle/primary_button.dart';
 import 'package:deun/widgets/restyle/sheet_scaffold.dart';
 import 'package:deun/widgets/theme_builder.dart';
 import 'package:flutter/material.dart';
@@ -137,7 +138,7 @@ void main() {
 
     expect(find.text(l10n.paymentYouPay), findsOneWidget);
     expect(find.text('Sam'), findsOneWidget);
-    expect(find.widgetWithText(FilledButton, l10n.paymentPay), findsOneWidget);
+    expect(find.widgetWithText(PrimaryButton, l10n.paymentPay), findsOneWidget);
   });
 
   testWidgets('owes-you row renders with a Remind action', (tester) async {
@@ -146,8 +147,9 @@ void main() {
 
     expect(find.text(l10n.paymentOwesYou), findsOneWidget);
     expect(find.text('Priya'), findsOneWidget);
-    // F59: Remind is a gray tonal FilledButton (no icon), not an outlined pill.
-    expect(find.widgetWithText(FilledButton, l10n.paymentRemind), findsOneWidget);
+    // F59: Remind is a gray tonal pill (no icon), now on the SecondaryButton
+    // preset with a surfaceContainer background override.
+    expect(find.widgetWithText(SecondaryButton, l10n.paymentRemind), findsOneWidget);
   });
 
   testWidgets('method-detail sheet shows only methods the payee has (PayPal present, IBAN absent)',
@@ -155,7 +157,7 @@ void main() {
     final l10n = await AppLocalizations.delegate.load(const Locale('en'));
     await _pump(tester, group: _group());
 
-    await tester.tap(find.widgetWithText(FilledButton, l10n.paymentPay));
+    await tester.tap(find.widgetWithText(PrimaryButton, l10n.paymentPay));
     await tester.pumpAndSettle();
 
     // Sam has PayPal but no IBAN → PayPal + Cash cards, no IBAN card.

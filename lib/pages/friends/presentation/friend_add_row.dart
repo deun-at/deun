@@ -1,6 +1,7 @@
 import 'package:deun/l10n/app_localizations.dart';
 import 'package:deun/pages/users/user_model.dart';
 import 'package:deun/widgets/restyle/member_avatar.dart';
+import 'package:deun/widgets/restyle/primary_button.dart';
 import 'package:flutter/material.dart';
 
 /// One result/contact row on the Add friend screen (Screen 15a): a
@@ -97,16 +98,10 @@ class _AddPill extends StatelessWidget {
       );
     }
 
-    return FilledButton(
+    return PrimaryButton(
+      label: l10n.add,
       onPressed: onRequest,
-      style: FilledButton.styleFrom(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 9),
-        minimumSize: Size.zero,
-        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-        shape: const StadiumBorder(),
-        textStyle: textTheme.labelLarge?.copyWith(fontWeight: FontWeight.w700),
-      ),
-      child: Text(l10n.add),
+      compact: true,
     );
   }
 }

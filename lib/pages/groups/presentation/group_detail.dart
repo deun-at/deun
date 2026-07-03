@@ -15,6 +15,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../constants.dart';
 import '../../../widgets/restyle/deun_header.dart';
+import '../../../widgets/restyle/primary_button.dart';
 import '../../../widgets/native_ad_block.dart';
 import '../../expenses/data/receipt_scan_result.dart';
 import '../../expenses/presentation/receipt_scanner_sheet.dart';
@@ -464,17 +465,16 @@ class _GroupBalanceHero extends StatelessWidget {
               if (members.isNotEmpty)
                 AvatarStack(members: members, ringColor: heroSurface),
               const Spacer(),
-              FilledButton(
+              PrimaryButton(
+                label: l10n.groupDetailSettleUp,
+                background: onHero,
+                foreground: heroSurface,
+                fullWidth: false,
                 onPressed: () {
                   GoRouter.of(
                     context,
                   ).push("/group/details/payment", extra: {'group': group});
                 },
-                style: FilledButton.styleFrom(
-                  backgroundColor: onHero,
-                  foregroundColor: heroSurface,
-                ),
-                child: Text(l10n.groupDetailSettleUp),
               ),
             ],
           ),

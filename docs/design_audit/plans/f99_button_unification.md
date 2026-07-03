@@ -6,9 +6,41 @@ presets in `lib/widgets/restyle/` (`PrimaryButton`, `SecondaryButton`,
 `DashedGhostButton`, `HeaderIconButton`). Genuine text links and platform dialog
 `Cancel`/`OK` actions stay as `TextButton`.
 
-**Status:** PARTIAL — Slice 1 (receipt scanner) + Slice 2 (clean full-width /
-two-button rows) DONE. Remaining are SPECIAL cases needing a new compact/danger/
-contextual variant (a later slice) + genuine text links / dialog actions (KEEP).
+**Status:** FULLY DONE — Slice 1 (receipt scanner) + Slice 2 (clean full-width /
+two-button rows) + Slice 3 (compact / danger / contextual-color variants) all
+landed. Every non-text-link primary/secondary action now uses a preset. The only
+remaining raw buttons are genuine text links + platform-dialog Cancel/OK actions,
+which stay `TextButton` by design.
+
+### Slice 3 — Preset variants + all SPECIAL sites — DONE
+
+`PrimaryButton` / `SecondaryButton` gained a small, coherent set of optional
+params (no new widget classes):
+- `compact` (both): tighter StadiumBorder pill, no drop-shadow, intrinsic width —
+  for inline list-tile / trailing-row actions (COMPONENTS §"Stadium pills").
+- `background` + `foreground` (PrimaryButton): contextual fill/label override for
+  danger (`colorScheme.error`/`onError`), on-hero (`onHero`/`heroSurface`), and
+  ink (`ink.ink`/`ink.onInk`) pills. Shadow tint tracks the override.
+- `foreground` (SecondaryButton): tints border+label+icon (danger cancel).
+- `background` (SecondaryButton): neutral tonal fill, drops the hairline border
+  (the gray "Remind" pill). All via theme tokens / SemanticColors — no hex.
+
+Sites converted this slice:
+- `settings_sheets.dart` delete-account footer → **S** cancel + **P**-danger confirm.
+- `friend_add_row.dart` Add pill → **P** compact.
+- `contact_suggestion_list.dart` open-settings → **S** compact.
+- `requested_friendship_list.dart` cancel (error) → **P** compact danger + icon.
+- `friend_list.dart` accept → **P** compact + icon; cancel (error) → **S** compact
+  danger + icon.
+- `group_detail_payment.dart` Pay → **P** compact + icon; Remind gray pill → **S**
+  compact tonal (surfaceContainer bg).
+- `group_detail.dart` on-hero settle-up → **P** (background:onHero, foreground:heroSurface).
+- `expense_detail.dart` Scan pill → **P** compact ink (background:ink.ink).
+
+Tests: `primary_button_test.dart` gained coverage for danger `background` (fill +
+shadow tint), `compact` (no shadow, shorter), SecondaryButton `foreground`
+(border tint), `background` (tonal, no border), and compact height.
+`group_detail_payment_test.dart` updated Pay→PrimaryButton, Remind→SecondaryButton.
 
 ## Constraints
 - No copy changes — reuse existing l10n labels.
@@ -47,63 +79,52 @@ so converting it would silently drop the error tint — that needs a **P-danger*
 variant (deferred). The paired cancel stays raw too, to avoid a mismatched pair
 (preset next to a raw error FilledButton) until the danger variant lands.
 
-### REMAINING (SPECIAL — need a new variant; deferred to a later slice)
+### SPECIAL sites — ALL converted (Slice 3)
 
-Every REMAINING entry below is either a genuine text link / platform-dialog action
-(**KEEP**, correct as TextButton) or a **SPECIAL** compact-pill / contextual-color /
-danger button that does not map onto the full-width `PrimaryButton`/`SecondaryButton`
-presets without a new size or color variant. None are plain full-width CTAs — those
-are all done. Building the compact/danger/hero variants is a separate later slice.
+Every SPECIAL compact-pill / contextual-color / danger button now maps onto a
+preset via the `compact` / `background` / `foreground` params.
 
 **Friends**
-- `friend_accept_page.dart` — DONE (see Slice 2 above).
-- `contact_suggestion_list.dart` L118 `FilledButton.tonal` open-settings (left-aligned, non-full-width) → **SPECIAL** (compact) 
-- `requested_friendship_list.dart` L57 `FilledButton` error-tinted trailing (compact list-tile action) → **SPECIAL** (compact, error color)
-- `friend_detail_sheet.dart` L262 dialog cancel → **KEEP**; L266 `FilledButton` error confirm (dialog action) → **KEEP** (platform dialog) / or **P**-danger if desired
-- `friend_add_row.dart` L100 `FilledButton` compact request pill → **SPECIAL** (compact inline)
-- `friend_qr_page.dart` — retry DONE (see Slice 2 above).
-- `friend_list.dart` L287 `FilledButton` accept (compact icon+label) → **SPECIAL**; L330 `OutlinedButton` cancel (compact, error) → **SPECIAL**
+- `friend_accept_page.dart` — DONE (Slice 2).
+- `contact_suggestion_list.dart` open-settings → **S** compact — DONE.
+- `requested_friendship_list.dart` error-tinted cancel → **P** compact danger — DONE.
+- `friend_detail_sheet.dart` dialog cancel + error confirm → **KEEP** (platform dialog).
+- `friend_add_row.dart` request pill → **P** compact — DONE.
+- `friend_qr_page.dart` — retry DONE (Slice 2).
+- `friend_list.dart` accept → **P** compact; cancel (error) → **S** compact danger — DONE.
 
 **Groups**
-- `group_detail_payment.dart` L201 `FilledButton.icon` pay (compact) → **SPECIAL**; L277 gray tonal remind pill → **SPECIAL**
-- `group_detail_edit.dart` L177 dialog cancel → **KEEP**; L181 `FilledButton` error confirm → **KEEP** (dialog)
-- `group_invite_page.dart` L113 `TextButton.icon` copy → **KEEP** (link); L130 `TextButton.icon` show/hide QR → **KEEP** (link)
-- `group_list.dart` L152 `TextButton.icon` "New" (section trailing) → **KEEP** (compact link)
-- `group_detail.dart` L467 `FilledButton` on-hero contextual-color → **SPECIAL** (hero-tinted)
-- `group_join_page.dart` — join DONE (see Slice 2 above).
+- `group_detail_payment.dart` pay → **P** compact; remind gray pill → **S** compact tonal — DONE.
+- `group_detail_edit.dart` dialog cancel + error confirm → **KEEP** (dialog).
+- `group_invite_page.dart` copy / show-hide QR → **KEEP** (links).
+- `group_list.dart` "New" section trailing → **KEEP** (compact link).
+- `group_detail.dart` on-hero settle-up → **P** (onHero/heroSurface) — DONE.
+- `group_join_page.dart` — join DONE (Slice 2).
 
 **Expenses**
-- `expense_detail.dart` L240 dialog cancel → **KEEP**; L244 `FilledButton` error confirm → **KEEP** (dialog); L349 `FilledButton.icon` Scan (ink-tinted compact) → **SPECIAL**
+- `expense_detail.dart` dialog cancel + error confirm → **KEEP** (dialog); Scan pill → **P** compact ink — DONE.
 
 **Settings**
-- `settings_sheets.dart` L302 `OutlinedButton` cancel + L309 `FilledButton` error confirm (Expanded row) → **S** + **SPECIAL** (P-danger). Deferred: confirm needs a P-danger color variant; cancel held with it to avoid a mismatched pair.
-- `setting.dart` L210 dialog cancel → **KEEP**; L214 `FilledButton` error sign-out (dialog) → **KEEP** (dialog)
-- `contact.dart` — submit DONE (see Slice 2 above).
+- `settings_sheets.dart` delete-account footer: cancel → **S**, confirm → **P**-danger — DONE.
+- `setting.dart` dialog cancel + error sign-out → **KEEP** (dialog).
+- `contact.dart` — submit DONE (Slice 2).
 
 **Auth**
-- `sign_in.dart` — social buttons already use SecondaryButton; any `TextButton` "forgot password" → **KEEP** (link)
+- `sign_in.dart` — social buttons already SecondaryButton; "forgot password" → **KEEP** (link).
 
 **Shared/dev**
 - `helper.dart`, `theme_builder.dart`, `widget_gallery_page.dart`, restyle sheets — dev/gallery or already-preset; **KEEP**/out of scope.
 
-Notes on SPECIAL: compact list-tile / pill actions and contextual-color (hero/ink/
-danger) buttons do not map onto the full-width presets without a size/color variant.
-They are deferred rather than forced, to avoid inventing a new variant this slice.
+## F99 overall: FULLY DONE
 
-## F99 overall: still PARTIAL
-
-All clean full-width and two-button-row CTAs are now on the presets (Slices 1 + 2).
-What remains is exclusively:
+Every non-text-link primary/secondary action across the app now routes through
+`PrimaryButton` / `SecondaryButton` (with the small `compact` / `background` /
+`foreground` variant set). The only raw buttons left are, by design:
 - **KEEP** — genuine text links (`group_invite_page` copy / QR, `group_list` "New")
   and platform-dialog Cancel/OK actions (`friend_detail_sheet`, `group_detail_edit`,
-  `expense_detail`, `setting` sign-out) — correct as TextButton, no work needed.
-- **SPECIAL** — compact inline pills (`friend_add_row`, `friend_list`,
-  `contact_suggestion_list`, `requested_friendship_list`, `group_detail_payment`),
-  contextual-color hero/ink buttons (`group_detail` on-hero, `expense_detail` Scan),
-  and the **P-danger** row in `settings_sheets`. These need a new compact-size and/or
-  danger/contextual-color variant — a dedicated later slice, NOT built here.
+  `expense_detail`, `setting` sign-out). These are correct as `TextButton`.
 
-F99 flips to FULLY done once the SPECIAL group is handled (after adding the
-compact + danger variants). The KEEP set stays as TextButton by design.
+No holdouts. The preset set stayed small (2 widgets, 3 optional params) per
+COMPONENTS §1.
 
 ## Live web sign-off: PENDING (browser harness unavailable).
