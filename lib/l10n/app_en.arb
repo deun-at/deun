@@ -212,8 +212,19 @@
   "@expenseAmountValidationEmpty": {},
   "expenseDate": "Date",
   "@expenseDate": {},
+  "expenseWhen": "When",
+  "@expenseWhen": {
+    "description": "Label for the date row in the expense editor's Paid by / When list."
+  },
   "expensePaidBy": "Paid by",
   "@expensePaidBy": {},
+  "expenseSplitEach": "Split {amount} each",
+  "@expenseSplitEach": {
+    "description": "Per-person preview under the quick-split amount (total divided equally among group members).",
+    "placeholders": {
+      "amount": { "type": "String" }
+    }
+  },
   "expenseEntryTitle": "Add item title",
   "@expenseEntryTitle": {},
   "expenseDescriptionHint": "Add a description",

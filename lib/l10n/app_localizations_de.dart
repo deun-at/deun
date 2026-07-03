@@ -268,7 +268,15 @@ class AppLocalizationsDe extends AppLocalizations {
   String get expenseDate => 'Datum';
 
   @override
+  String get expenseWhen => 'Wann';
+
+  @override
   String get expensePaidBy => 'Bezahlt von';
+
+  @override
+  String expenseSplitEach(String amount) {
+    return '$amount pro Person';
+  }
 
   @override
   String get expenseEntryTitle => 'Eintrag Titel hinzufügen';

@@ -401,7 +401,8 @@ class _ExpenseDetailState extends ConsumerState<ExpenseDetail> {
         decoration: InputDecoration(
           hintText: l10n.expenseDescriptionHint,
           filled: true,
-          fillColor: colorScheme.surfaceContainer,
+          // v3: description sits on a white card surface (not the grey field).
+          fillColor: colorScheme.surfaceContainerLowest,
           border: OutlineInputBorder(
               borderRadius: radius, borderSide: BorderSide.none),
           enabledBorder: OutlineInputBorder(
@@ -421,7 +422,31 @@ class _ExpenseDetailState extends ConsumerState<ExpenseDetail> {
     );
   }
 
-  Widget _buildDateSelector() {
+  /// v3 quick block: a single white card holding the Paid-by and When rows with
+  /// no spacing between them (a hairline divider separates the two), replacing
+  /// the two separate boxed cards.
+  Widget _buildPaidWhenList() {
+    final colorScheme = Theme.of(context).colorScheme;
+    return SoftCard(
+      padding: EdgeInsets.zero,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          _buildPaidByRow(),
+          Divider(
+            height: 1,
+            thickness: 1,
+            indent: 16,
+            endIndent: 16,
+            color: colorScheme.outlineVariant.withValues(alpha: 0.5),
+          ),
+          _buildDateRow(),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDateRow() {
     final l10n = AppLocalizations.of(context)!;
     final initial = widget.expense?.expenseDate != null
         ? DateTime.parse(widget.expense!.expenseDate)
@@ -431,9 +456,9 @@ class _ExpenseDetailState extends ConsumerState<ExpenseDetail> {
       initialValue: initial,
       builder: (FormFieldState<DateTime?> field) {
         final value = field.value ?? initial;
-        return _EditorTile(
-          icon: Icons.calendar_month_outlined,
-          label: l10n.expenseDate,
+        return _PaidWhenRow(
+          icon: Icons.calendar_today_outlined,
+          label: l10n.expenseWhen,
           value: formatDate(value.toIso8601String(), context),
           onTap: () async {
             final picked = await showDateOptionsSheet(context, current: value);
@@ -444,7 +469,7 @@ class _ExpenseDetailState extends ConsumerState<ExpenseDetail> {
     );
   }
 
-  Widget _buildPaidBySelector() {
+  Widget _buildPaidByRow() {
     final initialEmail = widget.expense?.paidBy ?? supabase.auth.currentUser?.email;
 
     return FormBuilderField<String>(
@@ -454,17 +479,15 @@ class _ExpenseDetailState extends ConsumerState<ExpenseDetail> {
         final l10n = AppLocalizations.of(context)!;
         final selectedMember = _findMember(field.value);
         final isYou = selectedMember?.email == supabase.auth.currentUser?.email;
-        return _EditorTile(
-          icon: Icons.account_circle_outlined,
+        return _PaidWhenRow(
+          icon: Icons.account_balance_wallet_outlined,
           label: l10n.expensePaidBy,
-          value: selectedMember != null
-              ? _memberDisplayName(selectedMember)
-              : l10n.expensePaidBy,
-          leading: selectedMember != null
+          value: selectedMember != null ? _memberDisplayName(selectedMember) : "",
+          trailingLeading: selectedMember != null
               ? MemberAvatar(
                   name: selectedMember.displayName,
                   colorKey: selectedMember.email,
-                  radius: 18,
+                  radius: 12,
                   isYou: isYou,
                 )
               : null,
@@ -508,34 +531,58 @@ class _ExpenseDetailState extends ConsumerState<ExpenseDetail> {
             .displayMedium
             ?.copyWith(color: colorScheme.onSurface);
         final amount = double.tryParse(_amountController.text) ?? 0;
-        return SoftCard(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
-          onTap: () => _openAmountKeypad(field, amount),
-          child: InputDecorator(
-            decoration: InputDecoration(
-              errorText: field.errorText,
-              border: InputBorder.none,
-              isDense: true,
-              contentPadding: const EdgeInsets.all(0),
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.baseline,
-              textBaseline: TextBaseline.alphabetic,
-              children: [
-                Text(
-                  "€",
-                  style: amountStyle?.copyWith(color: colorScheme.onSurfaceVariant),
+        // v3 quick block: unboxed icon+amount sit directly on the page
+        // background (no SoftCard), tap opens the keypad (F100), and a
+        // per-person split preview sits directly below the amount.
+        final memberCount = groupMembers.isNotEmpty ? groupMembers.length : 1;
+        final perHead = amount / memberCount;
+        final l10n = AppLocalizations.of(context)!;
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            InkWell(
+              onTap: () => _openAmountKeypad(field, amount),
+              borderRadius: BorderRadius.circular(12),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                child: InputDecorator(
+                  decoration: InputDecoration(
+                    errorText: field.errorText,
+                    errorMaxLines: 2,
+                    border: InputBorder.none,
+                    isDense: true,
+                    contentPadding: EdgeInsets.zero,
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.baseline,
+                    textBaseline: TextBaseline.alphabetic,
+                    children: [
+                      Text(
+                        "€",
+                        style: amountStyle?.copyWith(
+                            color: colorScheme.onSurfaceVariant),
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        amount.toStringAsFixed(2),
+                        textAlign: TextAlign.center,
+                        style: amountStyle,
+                      ),
+                    ],
+                  ),
                 ),
-                const SizedBox(width: 4),
-                Text(
-                  amount.toStringAsFixed(2),
-                  textAlign: TextAlign.center,
-                  style: amountStyle,
-                ),
-              ],
+              ),
             ),
-          ),
+            const SizedBox(height: 8),
+            Text(
+              l10n.expenseSplitEach(l10n.toCurrency(perHead)),
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: colorScheme.onSurfaceVariant,
+                    fontWeight: FontWeight.w600,
+                  ),
+            ),
+          ],
         );
       },
     );
@@ -821,12 +868,23 @@ class _ExpenseDetailState extends ConsumerState<ExpenseDetail> {
                             const SizedBox(height: spacing * 2),
                             _buildNameField(),
                             const SizedBox(height: spacing * 2),
-                            SectionLabel(AppLocalizations.of(context)!.expenseDetailsLabel),
-                            const SizedBox(height: spacing),
-                            _buildPaidBySelector(),
-                            const SizedBox(height: spacing),
-                            _buildDateSelector(),
-                            if (!_isSingleEntry) ...[
+                            if (_isSingleEntry) ...[
+                              // Quick block (F103): no "Details" header; a single
+                              // non-spaced Paid-by / When card.
+                              _buildPaidWhenList(),
+                            ] else ...[
+                              SectionLabel(AppLocalizations.of(context)!
+                                  .expenseDetailsLabel),
+                              const SizedBox(height: spacing),
+                              SoftCard(
+                                padding: EdgeInsets.zero,
+                                child: _buildPaidByRow(),
+                              ),
+                              const SizedBox(height: spacing),
+                              SoftCard(
+                                padding: EdgeInsets.zero,
+                                child: _buildDateRow(),
+                              ),
                               const SizedBox(height: spacing),
                               CategorySelector(
                                 name: "category",
@@ -916,13 +974,16 @@ class _ExpenseDetailState extends ConsumerState<ExpenseDetail> {
 /// with a leading icon chip (or custom [leading]), a small [label], the current
 /// [value], and a trailing chevron. Tapping fires [onTap] — which opens the
 /// existing picker/sheet unchanged.
-class _EditorTile extends StatelessWidget {
-  const _EditorTile({
+/// A single-line row for the quick editor's Paid-by / When list: leading icon,
+/// grey label, right-aligned value (optionally preceded by a small avatar),
+/// then a chevron. Rows sit inside a shared card with no spacing between them.
+class _PaidWhenRow extends StatelessWidget {
+  const _PaidWhenRow({
     required this.icon,
     required this.label,
     required this.value,
     required this.onTap,
-    this.leading,
+    this.trailingLeading,
   });
 
   final IconData icon;
@@ -930,57 +991,47 @@ class _EditorTile extends StatelessWidget {
   final String value;
   final VoidCallback onTap;
 
-  /// Optional leading widget (e.g. a member avatar) replacing the icon chip.
-  final Widget? leading;
+  /// Optional small widget shown just before the value (e.g. a member avatar).
+  final Widget? trailingLeading;
 
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
-
-    final Widget leadingWidget = leading ??
-        Container(
-          width: 36,
-          height: 36,
-          decoration: BoxDecoration(
-            color: colorScheme.surfaceContainerHighest,
-            borderRadius: BorderRadius.circular(10),
-          ),
-          child: Icon(icon, color: colorScheme.onSurfaceVariant, size: 20),
-        );
-
-    return SoftCard(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+    return InkWell(
       onTap: onTap,
-      child: Row(
-        children: [
-          leadingWidget,
-          const SizedBox(width: 14),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  label,
-                  style: textTheme.bodySmall?.copyWith(
-                    color: colorScheme.onSurfaceVariant,
-                  ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        child: Row(
+          children: [
+            Icon(icon, color: colorScheme.onSurfaceVariant, size: 21),
+            const SizedBox(width: 13),
+            Expanded(
+              child: Text(
+                label,
+                style: textTheme.bodyMedium?.copyWith(
+                  color: colorScheme.onSurfaceVariant,
+                  fontWeight: FontWeight.w600,
                 ),
-                const SizedBox(height: 2),
-                Text(
-                  value,
-                  style: textTheme.titleMedium?.copyWith(
-                    color: colorScheme.onSurface,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ],
+              ),
             ),
-          ),
-          Icon(Icons.chevron_right, color: colorScheme.onSurfaceVariant),
-        ],
+            if (trailingLeading != null) ...[
+              trailingLeading!,
+              const SizedBox(width: 8),
+            ],
+            Text(
+              value,
+              style: textTheme.bodyMedium?.copyWith(
+                color: colorScheme.onSurface,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+            const SizedBox(width: 4),
+            Icon(Icons.chevron_right, color: colorScheme.outline, size: 20),
+          ],
+        ),
       ),
     );
   }
 }
+

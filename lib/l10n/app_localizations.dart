@@ -590,11 +590,23 @@ abstract class AppLocalizations {
   /// **'Date'**
   String get expenseDate;
 
+  /// Label for the date row in the expense editor's Paid by / When list.
+  ///
+  /// In en, this message translates to:
+  /// **'When'**
+  String get expenseWhen;
+
   /// No description provided for @expensePaidBy.
   ///
   /// In en, this message translates to:
   /// **'Paid by'**
   String get expensePaidBy;
+
+  /// Per-person preview under the quick-split amount (total divided equally among group members).
+  ///
+  /// In en, this message translates to:
+  /// **'Split {amount} each'**
+  String expenseSplitEach(String amount);
 
   /// No description provided for @expenseEntryTitle.
   ///

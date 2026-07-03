@@ -7,7 +7,6 @@ import 'package:deun/pages/groups/data/group_member_model.dart';
 import 'package:deun/pages/groups/data/group_model.dart';
 import 'package:deun/widgets/category_selector.dart';
 import 'package:deun/widgets/restyle/expense_picker_sheets.dart';
-import 'package:deun/widgets/restyle/section_label.dart';
 import 'package:deun/widgets/restyle/soft_card.dart';
 import 'package:deun/widgets/theme_builder.dart';
 import 'package:flutter/material.dart';
@@ -134,14 +133,38 @@ void main() {
     // Description / title field hint (v3: inset field, reuses description hint).
     expect(find.text(l10n.expenseDescriptionHint), findsWidgets);
 
-    // Tiles are SoftCard panels now (amount + paid-by + date + category).
-    expect(find.byType(SoftCard), findsWidgets);
+    // F103: the amount is unboxed — no SoftCard wraps the € amount text.
+    final amountText = find.text('0.00');
+    expect(amountText, findsOneWidget);
+    expect(
+      find.ancestor(of: amountText, matching: find.byType(SoftCard)),
+      findsNothing,
+      reason: 'the quick-split amount must sit directly on the page background',
+    );
 
-    // Details section label + the three input rows.
-    expect(find.text(l10n.expenseDetailsLabel), findsOneWidget);
-    expect(find.byType(SectionLabel), findsWidgets);
+    // F103: a per-person split preview sits under the amount.
+    expect(find.text(l10n.expenseSplitEach(l10n.toCurrency(0))), findsOneWidget);
+
+    // F103/F113: no "Details" section header in the quick block.
+    expect(find.text(l10n.expenseDetailsLabel), findsNothing);
+
+    // F103/F114: the date row is labelled "When", and Paid by / When live in a
+    // single card (one SoftCard around both rows).
     expect(find.text(l10n.expensePaidBy), findsWidgets);
-    expect(find.text(l10n.expenseDate), findsOneWidget);
+    expect(find.text(l10n.expenseWhen), findsOneWidget);
+    final paidByLabel = find.text(l10n.expensePaidBy).first;
+    final whenLabel = find.text(l10n.expenseWhen);
+    final sharedCard = find.ancestor(
+      of: paidByLabel,
+      matching: find.byType(SoftCard),
+    );
+    expect(sharedCard, findsWidgets);
+    expect(
+      find.descendant(of: sharedCard.first, matching: whenLabel),
+      findsOneWidget,
+      reason: 'Paid by and When must share one non-spaced list card',
+    );
+
     // Quick mode surfaces the category as a centered compact tile above the
     // amount (v3 design_08/09), not a labelled details row.
     expect(find.byType(CategorySelector), findsOneWidget);
@@ -153,12 +176,12 @@ void main() {
     final l10n = await AppLocalizations.delegate.load(const Locale('en'));
 
     await tester.dragUntilVisible(
-      find.text(l10n.expenseDate),
+      find.text(l10n.expenseWhen),
       find.byType(Scrollable).first,
       const Offset(0, -120),
     );
     await tester.pumpAndSettle();
-    await tester.tap(find.text(l10n.expenseDate));
+    await tester.tap(find.text(l10n.expenseWhen));
     await tester.pumpAndSettle();
 
     // The restyled date sheet shows quick options, not the platform picker yet.
@@ -178,12 +201,12 @@ void main() {
     final l10n = await AppLocalizations.delegate.load(const Locale('en'));
 
     await tester.dragUntilVisible(
-      find.text(l10n.expenseDate),
+      find.text(l10n.expenseWhen),
       find.byType(Scrollable).first,
       const Offset(0, -120),
     );
     await tester.pumpAndSettle();
-    await tester.tap(find.text(l10n.expenseDate));
+    await tester.tap(find.text(l10n.expenseWhen));
     await tester.pumpAndSettle();
     await tester.tap(find.text(l10n.datePickCustom));
     await tester.pumpAndSettle();
