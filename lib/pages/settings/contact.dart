@@ -1,4 +1,5 @@
 import 'package:deun/helper/helper.dart';
+import 'package:deun/widgets/restyle/primary_button.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_form_builder/flutter_form_builder.dart';
 import 'package:form_builder_validators/form_builder_validators.dart';
@@ -105,7 +106,8 @@ class _ContactState extends State<StatefulWidget> {
                         const SizedBox(height: heightSpacing),
                         Align(
                           alignment: Alignment.centerRight,
-                          child: FilledButton(
+                          child: PrimaryButton(
+                            fullWidth: false,
                             onPressed: () async {
                               if (_formKey.currentState!.saveAndValidate()) {
                                 try {
@@ -128,7 +130,7 @@ class _ContactState extends State<StatefulWidget> {
                                 }
                               }
                             },
-                            child: Text(AppLocalizations.of(context)!.contactUs),
+                            label: AppLocalizations.of(context)!.contactUs,
                           ),
                         ),
                       ],

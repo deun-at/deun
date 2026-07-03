@@ -3,6 +3,7 @@ import 'package:deun/pages/friends/data/friendship_repository.dart';
 import 'package:deun/pages/users/user_model.dart';
 import 'package:deun/pages/users/user_repository.dart';
 import 'package:deun/widgets/restyle/deun_header.dart';
+import 'package:deun/widgets/restyle/primary_button.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:deun/l10n/app_localizations.dart';
@@ -121,9 +122,10 @@ class _FriendAcceptPageState extends State<FriendAcceptPage> {
                     child: Text(_error!, textAlign: TextAlign.center),
                   ),
                   const SizedBox(height: 12),
-                  FilledButton(
+                  PrimaryButton(
+                    fullWidth: false,
                     onPressed: () => GoRouter.of(context).go('/friend'),
-                    child: Text(AppLocalizations.of(context)!.close),
+                    label: AppLocalizations.of(context)!.close,
                   )
                 ],
               )
@@ -165,22 +167,19 @@ class _FriendAcceptPageState extends State<FriendAcceptPage> {
                         Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            OutlinedButton(
+                            SecondaryButton(
+                              fullWidth: false,
                               onPressed: _accepting
                                   ? null
                                   : () => GoRouter.of(context).go('/friend'),
-                              child: Text(AppLocalizations.of(context)!.cancel),
+                              label: AppLocalizations.of(context)!.cancel,
                             ),
                             const SizedBox(width: 12),
-                            FilledButton(
+                            PrimaryButton(
+                              fullWidth: false,
+                              loading: _accepting,
                               onPressed: _accepting ? null : _accept,
-                              child: _accepting
-                                  ? const SizedBox(
-                                      width: 16,
-                                      height: 16,
-                                      child: CircularProgressIndicator(strokeWidth: 2),
-                                    )
-                                  : Text(AppLocalizations.of(context)!.accept),
+                              label: AppLocalizations.of(context)!.accept,
                             ),
                           ],
                         ),

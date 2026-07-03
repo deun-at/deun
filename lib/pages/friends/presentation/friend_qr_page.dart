@@ -532,9 +532,10 @@ class _ErrorState extends StatelessWidget {
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 12),
-              FilledButton.tonal(
+              SecondaryButton(
+                fullWidth: false,
                 onPressed: onRetry,
-                child: Text(l10n.retry),
+                label: l10n.retry,
               ),
             ],
           ),

@@ -2,6 +2,7 @@ import 'package:deun/helper/helper.dart';
 import 'package:deun/main.dart';
 import 'package:deun/pages/groups/data/group_repository.dart';
 import 'package:deun/widgets/restyle/deun_header.dart';
+import 'package:deun/widgets/restyle/primary_button.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:deun/l10n/app_localizations.dart';
@@ -212,12 +213,12 @@ class _GroupJoinPageState extends State<GroupJoinPage> {
                   ),
                 ),
               const SizedBox(height: 20),
-              FilledButton.icon(
+              PrimaryButton(
+                fullWidth: false,
+                loading: _joining,
+                icon: Icons.login,
                 onPressed: _joining ? null : _joinGroup,
-                icon: _joining
-                    ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2))
-                    : const Icon(Icons.login),
-                label: Text(t.groupInviteTransferButton),
+                label: t.groupInviteTransferButton,
               ),
             ],
                   ),
