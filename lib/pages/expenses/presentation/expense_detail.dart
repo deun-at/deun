@@ -885,12 +885,10 @@ class _ExpenseDetailState extends ConsumerState<ExpenseDetail> {
                                 padding: EdgeInsets.zero,
                                 child: _buildDateRow(),
                               ),
-                              const SizedBox(height: spacing),
-                              CategorySelector(
-                                name: "category",
-                                initialValue:
-                                    _detectedCategory ?? widget.expense?.category,
-                              ),
+                              // F116: no expense-level Category row on itemized —
+                              // items carry auto-derived per-item icons instead
+                              // (iconForItemName). Category saves as null → reads
+                              // back as ExpenseCategory.other.
                               const SizedBox(height: spacing * 2),
                               SectionLabel(AppLocalizations.of(context)!.itemizedItemsLabel),
                             ],
