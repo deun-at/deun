@@ -481,10 +481,20 @@ class AppLocalizationsEn extends AppLocalizations {
   String get claimConfirmedDone => 'Done';
 
   @override
-  String get expenseMemberLent => 'lent';
+  String get expenseMemberYourShare => 'your share';
 
   @override
-  String get expenseMemberOwes => 'owes';
+  String expenseMemberPaidAmount(String amount) {
+    return 'paid $amount';
+  }
+
+  @override
+  String expenseMemberOwesName(String name) {
+    return 'owes $name';
+  }
+
+  @override
+  String get youObjectPronoun => 'you';
 
   @override
   String get expenseEntryName => 'Name';

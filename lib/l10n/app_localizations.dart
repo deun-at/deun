@@ -950,17 +950,29 @@ abstract class AppLocalizations {
   /// **'Done'**
   String get claimConfirmedDone;
 
-  /// Trailing label for a member who is owed in the per-member breakdown.
+  /// Sub-label for the current user's own row in the per-member breakdown.
   ///
   /// In en, this message translates to:
-  /// **'lent'**
-  String get expenseMemberLent;
+  /// **'your share'**
+  String get expenseMemberYourShare;
 
-  /// Trailing label for a member who owes in the per-member breakdown.
+  /// Sub-label for the payer's row in the per-member breakdown; {amount} is the expense total.
   ///
   /// In en, this message translates to:
-  /// **'owes'**
-  String get expenseMemberOwes;
+  /// **'paid {amount}'**
+  String expenseMemberPaidAmount(String amount);
+
+  /// Sub-label for a debtor's row in the per-member breakdown; {name} is the payer's display name (or the 'you' pronoun).
+  ///
+  /// In en, this message translates to:
+  /// **'owes {name}'**
+  String expenseMemberOwesName(String name);
+
+  /// Lowercase object pronoun for the current user, used inside phrases like 'owes you'.
+  ///
+  /// In en, this message translates to:
+  /// **'you'**
+  String get youObjectPronoun;
 
   /// No description provided for @expenseEntryName.
   ///

@@ -175,6 +175,77 @@ void main() {
     expect(find.text('Bob'), findsOneWidget);
   });
 
+  testWidgets('breakdown is ONE card with non-spaced joined rows (F122)',
+      (tester) async {
+    await _pump(
+      tester,
+      _expense(
+        entryCount: 1,
+        shareStat: const {'a@test.com': 10, 'b@test.com': 10},
+        amount: 20,
+      ),
+    );
+
+    // The screen has exactly two SoftCards: the summary card and the single
+    // breakdown card. If the breakdown reverted to one card per member there
+    // would be three or more (F122: not one SoftCard per member).
+    expect(find.byType(SoftCard), findsNWidgets(2));
+  });
+
+  testWidgets(
+      'sub-labels map to role: payer "paid €X" / debtor "owes <payer>" (F123)',
+      (tester) async {
+    final l10n = await AppLocalizations.delegate.load(const Locale('en'));
+    await _pump(
+      tester,
+      _expense(
+        entryCount: 1,
+        shareStat: const {'a@test.com': 10, 'b@test.com': 10},
+        amount: 20,
+        paidBy: 'a@test.com',
+      ),
+    );
+
+    // Alice paid → "paid €20.00" sub-label (rendered green via success token).
+    expect(
+      find.text(l10n.expenseMemberPaidAmount(l10n.toCurrency(20))),
+      findsOneWidget,
+    );
+    // Bob owes the payer Alice → "owes Alice".
+    expect(find.text(l10n.expenseMemberOwesName('Alice')), findsOneWidget);
+    // Old wording is gone.
+    expect(find.text('lent'), findsNothing);
+    expect(find.text('owes'), findsNothing);
+    expect(find.text(l10n.expensePaidBy), findsNothing);
+  });
+
+  testWidgets(
+      'trailing amount is the plain single-line share, not two-line colored net (F124)',
+      (tester) async {
+    final l10n = await AppLocalizations.delegate.load(const Locale('en'));
+    await _pump(
+      tester,
+      _expense(
+        entryCount: 1,
+        shareStat: const {'a@test.com': 10, 'b@test.com': 10},
+        amount: 20,
+      ),
+    );
+
+    // Each row's trailing amount shows the member's SHARE (€10.00), a single
+    // plain figure — one per member. The old treatment rendered a grey
+    // "lent"/"owes" label ABOVE a colored net; those labels are asserted gone
+    // above. The trailing MoneyText carries no MoneySemantic tint here.
+    final tenText = find.text(l10n.toCurrency(10));
+    expect(tenText, findsNWidgets(2));
+    for (final e in tenText.evaluate()) {
+      final color = (e.widget as Text).style?.color;
+      final scheme = Theme.of(e).colorScheme;
+      // Plain onSurface, never the success/danger semantic colors.
+      expect(color, scheme.onSurface);
+    }
+  });
+
   testWidgets('Review & claim banner shows for an itemized expense',
       (tester) async {
     final l10n = await AppLocalizations.delegate.load(const Locale('en'));

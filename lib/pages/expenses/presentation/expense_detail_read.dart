@@ -388,8 +388,9 @@ class _ReviewClaimBanner extends StatelessWidget {
   }
 }
 
-/// Per-member breakdown: one [SoftCard] row per involved member with avatar,
-/// name, their share and their net (lent/owes). Bound to the pre-computed
+/// Per-member breakdown (F122): a SINGLE [SoftCard] holding the member rows
+/// joined with no intra-card gaps — the same non-spaced-list pattern as the
+/// group-detail date-group card (F138). Bound to the pre-computed
 /// [Expense.groupMemberShareStatistic] via [buildMemberBreakdown].
 class _MemberBreakdown extends StatelessWidget {
   const _MemberBreakdown({
@@ -412,19 +413,29 @@ class _MemberBreakdown extends StatelessWidget {
       expense: expense,
       memberEmails: memberEmails,
     );
+    if (rows.isEmpty) return const SizedBox.shrink();
 
-    return Column(
-      children: [
-        for (final entry in rows) ...[
-          _MemberRow(
-            entry: entry,
-            member: memberFor(entry.email),
-            displayName: displayName,
-            isYou: entry.email == currentUserEmail,
-          ),
-          if (entry != rows.last) const SizedBox(height: 8),
+    // The payer's display name, used verbatim in debtor rows ("owes <payer>").
+    final payerName = displayName(memberFor(expense.paidBy));
+    final payerIsYou = expense.paidBy == currentUserEmail;
+
+    return SoftCard(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      borderRadius: 20,
+      child: Column(
+        children: [
+          for (final entry in rows)
+            _MemberRow(
+              entry: entry,
+              member: memberFor(entry.email),
+              displayName: displayName,
+              isYou: entry.email == currentUserEmail,
+              payerName: payerName,
+              payerIsYou: payerIsYou,
+              total: expense.amount,
+            ),
         ],
-      ],
+      ),
     );
   }
 }
@@ -435,12 +446,18 @@ class _MemberRow extends StatelessWidget {
     required this.member,
     required this.displayName,
     required this.isYou,
+    required this.payerName,
+    required this.payerIsYou,
+    required this.total,
   });
 
   final MemberBreakdownEntry entry;
   final GroupMember? member;
   final String Function(GroupMember?) displayName;
   final bool isYou;
+  final String payerName;
+  final bool payerIsYou;
+  final double total;
 
   @override
   Widget build(BuildContext context) {
@@ -449,21 +466,26 @@ class _MemberRow extends StatelessWidget {
     final textTheme = Theme.of(context).textTheme;
     final name = displayName(member);
 
-    final bool lent = entry.net > 0.005;
-    final bool owes = entry.net < -0.005;
-    final MoneySemantic semantic = lent
-        ? MoneySemantic.positive
-        : owes
-            ? MoneySemantic.negative
-            : MoneySemantic.neutral;
-    final String netLabel = lent
-        ? l10n.expenseMemberLent
-        : owes
-            ? l10n.expenseMemberOwes
-            : l10n.expenseNetSettled;
+    // F123 sub-label wording, mapped to role exactly as the v3 prototype:
+    //  - payer  → "paid €X.XX" (success/green)
+    //  - you    → "your share"
+    //  - debtor → "owes <payer>" (or "owes you" when you paid)
+    final String subLabel;
+    final Color subLabelColor;
+    if (entry.isPayer) {
+      subLabel = l10n.expenseMemberPaidAmount(l10n.toCurrency(total));
+      subLabelColor = Theme.of(context).extension<SemanticColors>()!.success;
+    } else if (isYou) {
+      subLabel = l10n.expenseMemberYourShare;
+      subLabelColor = colorScheme.onSurfaceVariant;
+    } else {
+      subLabel = l10n.expenseMemberOwesName(
+          payerIsYou ? l10n.youObjectPronoun : payerName);
+      subLabelColor = colorScheme.onSurfaceVariant;
+    }
 
-    return SoftCard(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 11),
       child: Row(
         children: [
           MemberAvatar(
@@ -483,32 +505,23 @@ class _MemberRow extends StatelessWidget {
                       ?.copyWith(fontWeight: FontWeight.w600),
                   overflow: TextOverflow.ellipsis,
                 ),
-                if (entry.isPayer)
-                  Text(
-                    l10n.expensePaidBy,
-                    style: textTheme.bodySmall
-                        ?.copyWith(color: colorScheme.onSurfaceVariant),
-                  ),
+                Text(
+                  subLabel,
+                  style: textTheme.bodySmall?.copyWith(color: subLabelColor),
+                  overflow: TextOverflow.ellipsis,
+                ),
               ],
             ),
           ),
           const SizedBox(width: 10),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              Text(
-                netLabel,
-                style: textTheme.bodySmall
-                    ?.copyWith(color: colorScheme.onSurfaceVariant),
-              ),
-              const SizedBox(height: 2),
-              MoneyText(
-                entry.net.abs(),
-                semantic: semantic,
-                style: textTheme.titleSmall
-                    ?.copyWith(fontWeight: FontWeight.w700),
-              ),
-            ],
+          // F124: trailing amount is the member's SHARE — plain onSurface,
+          // single line, right-aligned. No semantic color, no two-line label.
+          MoneyText(
+            entry.share,
+            style: textTheme.titleSmall?.copyWith(
+              color: colorScheme.onSurface,
+              fontWeight: FontWeight.w700,
+            ),
           ),
         ],
       ),

@@ -486,10 +486,20 @@ class AppLocalizationsDe extends AppLocalizations {
   String get claimConfirmedDone => 'Fertig';
 
   @override
-  String get expenseMemberLent => 'ausgelegt';
+  String get expenseMemberYourShare => 'dein Anteil';
 
   @override
-  String get expenseMemberOwes => 'schuldet';
+  String expenseMemberPaidAmount(String amount) {
+    return 'hat $amount bezahlt';
+  }
+
+  @override
+  String expenseMemberOwesName(String name) {
+    return 'schuldet $name';
+  }
+
+  @override
+  String get youObjectPronoun => 'dir';
 
   @override
   String get expenseEntryName => 'Name';
