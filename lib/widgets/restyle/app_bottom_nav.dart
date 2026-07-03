@@ -40,6 +40,10 @@ class AppBottomNavItem {
 ///
 /// Geometry constants (52×34 pill, 78px bar, 10px label) are layout values
 /// from the spec and are safe as literals.
+///
+/// The pill hugs ONLY the icon: content is top-aligned (10px top pad, matching
+/// the v3 prototype tab bar) and the pill sits at `top:6px`, so it sits behind
+/// the 24px icon (y≈10–34) but ABOVE the label (y≈37+). See finding F98.
 class AppBottomNav extends StatelessWidget {
   const AppBottomNav({
     super.key,
@@ -57,6 +61,10 @@ class AppBottomNav extends StatelessWidget {
   static const double _pillWidth = 52;
   static const double _pillHeight = 34;
   static const double _labelSize = 10;
+  // Top pad before tab content + pill offset, from the v3 prototype tab bar
+  // (`padding:10px 8px 0`, pill `top:6px`). Keeps the pill hugging the icon.
+  static const double _contentTopPad = 10;
+  static const double _pillTop = 6;
 
   @override
   Widget build(BuildContext context) {
@@ -82,19 +90,21 @@ class AppBottomNav extends StatelessWidget {
         builder: (context, constraints) {
           final slotWidth = constraints.maxWidth / items.length;
           final pillLeft = slotWidth * selectedIndex + (slotWidth - _pillWidth) / 2;
-          const pillTop = (_barHeight - _pillHeight) / 2;
 
           return Stack(
             children: [
               // Sliding pill — animated Positioned inside a Stack is valid here.
+              // Pinned near the top of the bar so it hugs only the icon; the
+              // label renders below the pill (see F98).
               AnimatedPositioned(
                 duration: pillDuration,
                 curve: Motion.tabPill,
                 left: pillLeft,
-                top: pillTop,
+                top: _pillTop,
                 width: _pillWidth,
                 height: _pillHeight,
                 child: DecoratedBox(
+                  key: const Key('nav-active-pill'),
                   decoration: BoxDecoration(
                     color: colorScheme.primaryContainer,
                     borderRadius: BorderRadius.circular(_pillHeight / 2),
@@ -114,6 +124,7 @@ class AppBottomNav extends StatelessWidget {
                         inactiveColor: colorScheme.onSurfaceVariant,
                         labelSize: _labelSize,
                         barHeight: _barHeight,
+                        topPad: _contentTopPad,
                       ),
                     ),
                 ],
@@ -139,6 +150,7 @@ class _NavTab extends StatelessWidget {
     required this.inactiveColor,
     required this.labelSize,
     required this.barHeight,
+    required this.topPad,
   });
 
   final AppBottomNavItem item;
@@ -148,6 +160,7 @@ class _NavTab extends StatelessWidget {
   final Color inactiveColor;
   final double labelSize;
   final double barHeight;
+  final double topPad;
 
   @override
   Widget build(BuildContext context) {
@@ -173,9 +186,13 @@ class _NavTab extends StatelessWidget {
         behavior: HitTestBehavior.opaque,
         child: SizedBox(
           height: barHeight,
+          // Top-aligned (like the v3 prototype's `align-items:flex-start`) so
+          // the icon sits inside the icon-only pill and the label falls below
+          // it, un-pilled. See F98.
           child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
+            mainAxisAlignment: MainAxisAlignment.start,
             children: [
+              SizedBox(height: topPad),
               iconWidget,
               const SizedBox(height: 2),
               Text(

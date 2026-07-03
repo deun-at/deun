@@ -426,4 +426,56 @@ void main() {
       expect(barSize.height, 78.0);
     });
   });
+
+  // -------------------------------------------------------------------------
+  // Active indicator (pill) hugs ONLY the icon, not the icon+label (F98)
+  // -------------------------------------------------------------------------
+  group('AppBottomNav — active pill hugs icon only', () {
+    testWidgets('pill is icon-sized (52x34), not item-width', (tester) async {
+      await _pump(
+        tester,
+        AppBottomNav(
+          items: _items(),
+          selectedIndex: 0,
+          onSelect: (_) {},
+        ),
+      );
+
+      final barWidth = tester.getSize(find.byType(AppBottomNav)).width;
+      final slotWidth = barWidth / 3;
+
+      // The pill is the DecoratedBox with a fully-rounded (stadium) fill.
+      final pillSize = tester.getSize(
+        find.byKey(const Key('nav-active-pill')),
+      );
+      // Pill stays the fixed 52x34 icon pill — much narrower than a tab slot,
+      // so it cannot be spanning the whole icon+label item.
+      expect(pillSize.width, 52.0);
+      expect(pillSize.height, 34.0);
+      expect(pillSize.width, lessThan(slotWidth));
+    });
+
+    testWidgets('pill sits behind the icon and the label is BELOW the pill', (tester) async {
+      await _pump(
+        tester,
+        AppBottomNav(
+          items: _items(),
+          selectedIndex: 0,
+          onSelect: (_) {},
+        ),
+      );
+
+      final pillRect = tester.getRect(find.byKey(const Key('nav-active-pill')));
+      final activeIconRect = tester.getRect(find.byIcon(Icons.receipt_long));
+      final labelRect = tester.getRect(find.text('Groups'));
+
+      // Icon center is vertically within the pill (pill hugs the icon).
+      expect(activeIconRect.center.dy, greaterThanOrEqualTo(pillRect.top));
+      expect(activeIconRect.center.dy, lessThanOrEqualTo(pillRect.bottom));
+
+      // The label sits below the pill: its center is beneath the pill's
+      // bottom edge, so the highlight does NOT span the label.
+      expect(labelRect.center.dy, greaterThan(pillRect.bottom));
+    });
+  });
 }
