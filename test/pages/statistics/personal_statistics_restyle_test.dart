@@ -117,6 +117,26 @@ void main() {
       expect(find.byType(SectionLabel), findsOneWidget);
       expect(find.byType(BarChart), findsOneWidget);
     });
+
+    // F177: mirror the F64 group-trend rule — only the latest month rod is
+    // tinted the accent color; every other rod is the neutral track token.
+    testWidgets('only the latest rod is primary; the rest are neutral track',
+        (tester) async {
+      await _pump(tester, const PersonalTrendSection(range: StatsRange.sixMonths));
+
+      final ctx = tester.element(find.byType(PersonalTrendSection));
+      final scheme = Theme.of(ctx).colorScheme;
+
+      final chart = tester.widget<BarChart>(find.byType(BarChart));
+      final rodColors = chart.data.barGroups
+          .map((g) => g.barRods.single.color)
+          .toList();
+
+      // _months has 3 entries; the last (index 2) is the latest.
+      expect(rodColors[0], scheme.surfaceContainerHighest);
+      expect(rodColors[1], scheme.surfaceContainerHighest);
+      expect(rodColors[2], scheme.primary, reason: 'exactly the latest rod is tinted');
+    });
   });
 
   group('PersonalGroupsSection (by-group list)', () {

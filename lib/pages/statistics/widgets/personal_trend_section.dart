@@ -57,6 +57,9 @@ class PersonalTrendSection extends ConsumerWidget {
                   ),
                   barGroups: [
                     for (int i = 0; i < months.length; i++)
+                      // Only the latest (last) month is tinted the accent color;
+                      // every other rod uses a neutral track token, mirroring the
+                      // group trend (F64 / v3 monthly-trend).
                       BarChartGroupData(
                         x: i,
                         barRods: [
@@ -64,7 +67,9 @@ class PersonalTrendSection extends ConsumerWidget {
                             toY: months[i].total,
                             width: 10,
                             borderRadius: BorderRadius.circular(4),
-                            color: theme.colorScheme.primary,
+                            color: i == months.length - 1
+                                ? theme.colorScheme.primary
+                                : theme.colorScheme.surfaceContainerHighest,
                           ),
                         ],
                       ),
@@ -83,12 +88,15 @@ Widget _bottomLabel(double value, TitleMeta meta, List<MonthBucket> months, Them
   final idx = value.toInt();
   if (idx < 0 || idx >= months.length) return const SizedBox.shrink();
   final step = labelStep(months.length);
-  if (idx % step != 0 && idx != months.length - 1) return const SizedBox.shrink();
+  final isLatest = idx == months.length - 1;
+  if (idx % step != 0 && !isLatest) return const SizedBox.shrink();
   return SideTitleWidget(
     meta: meta,
     child: Text(
       DateFormat('MMM').format(months[idx].start),
-      style: theme.textTheme.labelSmall?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+      style: theme.textTheme.labelSmall?.copyWith(
+        color: isLatest ? theme.colorScheme.onSurface : theme.colorScheme.onSurfaceVariant,
+      ),
     ),
   );
 }
