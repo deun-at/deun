@@ -160,7 +160,15 @@ void main() {
     // Seeded unit price 12.00 → total 12.00.
     expect(find.text(l10n.toCurrency(12)), findsOneWidget);
 
-    await tester.enterText(find.widgetWithText(TextField, '12.00'), '5.00');
+    // F158: the unit price now opens the shared amount keypad on tap, not a
+    // raw inline field. Tap the price tile → clear the "12" seed → type 5.
+    await tester.tap(find.text('12.00'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('keypad_backspace')));
+    await tester.tap(find.byKey(const ValueKey('keypad_backspace')));
+    await tester.tap(find.byKey(const ValueKey('keypad_5')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('keypad_confirm')));
     await tester.pumpAndSettle();
     // qty stays 1 → total tracks the new unit price.
     expect(find.text(l10n.toCurrency(5)), findsOneWidget);
@@ -300,13 +308,20 @@ void main() {
     await tester.tap(find.text(l10n.splitModeExact));
     await tester.pumpAndSettle();
 
-    // Exact seeds each member with an equal share, editable per member.
-    expect(find.widgetWithText(TextFormField, '6.00'), findsNWidgets(2));
+    // F158: Exact seeds each member with an equal share, each editable via the
+    // shared amount keypad (tap the tile → keypad), not a raw inline field.
+    expect(find.text('6.00'), findsNWidgets(2));
 
-    // Editing one member locks it and rebalances the other.
-    await tester.enterText(find.widgetWithText(TextFormField, '6.00').first, '9.00');
+    // Editing one member (via keypad) locks it and rebalances the other: tap
+    // the first tile → clear the "6" seed → type 9 → confirm.
+    await tester.tap(find.text('6.00').first);
     await tester.pumpAndSettle();
-    expect(find.widgetWithText(TextFormField, '3.00'), findsOneWidget);
+    await tester.tap(find.byKey(const ValueKey('keypad_backspace')));
+    await tester.tap(find.byKey(const ValueKey('keypad_9')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('keypad_confirm')));
+    await tester.pumpAndSettle();
+    expect(find.text('3.00'), findsOneWidget);
   });
 
   testWidgets(

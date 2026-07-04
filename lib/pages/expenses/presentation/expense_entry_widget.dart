@@ -10,6 +10,7 @@ import 'package:deun/l10n/app_localizations.dart';
 
 import '../../../widgets/decimal_text_input_formatter.dart';
 import '../../../widgets/restyle/app_segmented_control.dart';
+import '../../../widgets/restyle/expense_picker_sheets.dart';
 import '../../../widgets/restyle/member_avatar.dart';
 import '../../../widgets/restyle/money_text.dart';
 import '../../../widgets/restyle/section_label.dart';
@@ -435,6 +436,23 @@ class _ExpenseEntryWidgetState extends State<ExpenseEntryWidget> {
     );
   }
 
+  /// F158: opens the shared amount keypad for the itemized unit price. On
+  /// confirm it writes back through the same channels the old inline field
+  /// used — the FormBuilderField (validated/saved) plus the same _unitPrice /
+  /// _onTotalChanged split-recalc — so the persisted value and split math are
+  /// unchanged. Format matches the old field (toStringAsFixed(2)).
+  Future<void> _openUnitPriceKeypad(FormFieldState<dynamic> field) async {
+    final picked = await showAmountKeypadSheet(context, initialAmount: _unitPrice);
+    if (picked == null || !mounted) return;
+    final text = picked.toStringAsFixed(2);
+    field.didChange(text);
+    setState(() {
+      double oldTotal = _entryTotal;
+      _unitPrice = picked;
+      _onTotalChanged(oldTotal);
+    });
+  }
+
   Widget _buildUnitPriceField(AppLocalizations l10n) {
     final colorScheme = Theme.of(context).colorScheme;
     return FormBuilderField(
@@ -476,43 +494,25 @@ class _ExpenseEntryWidgetState extends State<ExpenseEntryWidget> {
                     ),
               ),
               const SizedBox(width: 4),
-              // Inline-editable unit price, tinted pill to read as editable.
-              IntrinsicWidth(
-                child: ConstrainedBox(
+              // Tap-to-open keypad (F158): the unit price is money, so it routes
+              // through showAmountKeypadSheet like the quick-split amount, not a
+              // raw system-keyboard field. Tinted pill reads as editable.
+              InkWell(
+                onTap: () => _openUnitPriceKeypad(field),
+                borderRadius: BorderRadius.circular(8),
+                child: Container(
                   constraints: const BoxConstraints(minWidth: 40, maxWidth: 90),
-                  child: TextFormField(
-                    initialValue: field.value ?? "0",
-                    onChanged: (value) {
-                      field.didChange(value);
-                      setState(() {
-                        double oldTotal = _entryTotal;
-                        _unitPrice = double.tryParse(value) ?? 0;
-                        _onTotalChanged(oldTotal);
-                      });
-                    },
-                    keyboardType:
-                        const TextInputType.numberWithOptions(decimal: true),
-                    inputFormatters: [DecimalTextInputFormatter(decimalRange: 2)],
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: colorScheme.surfaceContainerHighest,
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Text(
+                    _unitPrice.toStringAsFixed(2),
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                           fontWeight: FontWeight.w700,
                           fontFeatures: const [FontFeature.tabularFigures()],
                         ),
-                    decoration: InputDecoration(
-                      hintText: "0.00",
-                      isDense: true,
-                      filled: true,
-                      fillColor: colorScheme.surfaceContainerHighest,
-                      contentPadding: const EdgeInsets.symmetric(
-                          horizontal: 8, vertical: 4),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8),
-                        borderSide: BorderSide.none,
-                      ),
-                      enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8),
-                        borderSide: BorderSide.none,
-                      ),
-                    ),
                   ),
                 ),
               ),
@@ -944,6 +944,25 @@ class _ExpenseEntryWidgetState extends State<ExpenseEntryWidget> {
     }
   }
 
+  /// F158: opens the shared amount keypad for a per-member exact amount. Runs
+  /// the same mutation the old inline onChanged did (set _memberAmounts, lock
+  /// the member, recalc) so the persisted fixed_amount and split math are
+  /// unchanged; also writes the controller text so the tile display refreshes.
+  Future<void> _openMemberAmountKeypad(
+    String email,
+    TextEditingController controller,
+  ) async {
+    final current = _memberAmounts[email] ?? 0;
+    final picked = await showAmountKeypadSheet(context, initialAmount: current);
+    if (picked == null || !mounted) return;
+    controller.text = picked.toStringAsFixed(2);
+    setState(() {
+      _memberAmounts[email] = picked;
+      _lockedMembers.add(email);
+      _updateSplitState();
+    });
+  }
+
   Widget _buildMemberInput(String email) {
     switch (_splitMode) {
       case SplitMode.equal:
@@ -959,27 +978,26 @@ class _ExpenseEntryWidgetState extends State<ExpenseEntryWidget> {
           mainAxisSize: MainAxisSize.min,
           children: [
             Text("€", style: Theme.of(context).textTheme.bodyLarge),
-            IntrinsicWidth(
-              child: ConstrainedBox(
-                constraints: const BoxConstraints(minWidth: 40, maxWidth: 80),
-                child: TextFormField(
-                  key: ValueKey(ctrlKey),
-                  controller: controller,
-                  onChanged: (value) {
-                    setState(() {
-                      _memberAmounts[email] = double.tryParse(value) ?? 0;
-                      _lockedMembers.add(email);
-                      _updateSplitState();
-                    });
-                  },
-                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                  inputFormatters: [DecimalTextInputFormatter(decimalRange: 2)],
-                  style: Theme.of(context).textTheme.bodyLarge,
-                  textAlign: TextAlign.end,
-                  decoration: const InputDecoration(
-                    isDense: true,
-                    contentPadding: EdgeInsets.symmetric(horizontal: 4, vertical: 8),
-                    border: InputBorder.none,
+            // Tap-to-open keypad (F158): per-member exact amount is money, so it
+            // routes through showAmountKeypadSheet instead of a raw system-keyboard
+            // field. The controller stays the source of truth (so
+            // _updateUnlockedControllers still syncs it); confirm runs the same
+            // mutation the old onChanged did (lock member + recalc).
+            ListenableBuilder(
+              listenable: controller,
+              builder: (context, _) => InkWell(
+                key: ValueKey(ctrlKey),
+                onTap: () => _openMemberAmountKeypad(email, controller),
+                borderRadius: BorderRadius.circular(8),
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(minWidth: 40, maxWidth: 80),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
+                    child: Text(
+                      controller.text.isEmpty ? "0.00" : controller.text,
+                      style: Theme.of(context).textTheme.bodyLarge,
+                      textAlign: TextAlign.end,
+                    ),
                   ),
                 ),
               ),
