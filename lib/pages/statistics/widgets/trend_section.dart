@@ -5,13 +5,13 @@ import 'package:deun/pages/statistics/widgets/stats_chart_math.dart';
 import 'package:deun/widgets/motion.dart';
 import 'package:deun/widgets/restyle/section_label.dart';
 import 'package:deun/widgets/restyle/soft_card.dart';
-import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
-/// Monthly trend: themed bars (or a smooth line for shorter spans). Tapping a
-/// month opens the month detail sheet via [onMonthTap].
+/// Monthly trend: always themed bars, with only the latest month tinted the
+/// group color and the rest neutral. Tapping a month opens the month detail
+/// sheet via [onMonthTap].
 class StatsTrendSection extends ConsumerWidget {
   const StatsTrendSection({super.key, required this.args, required this.onMonthTap});
   final StatsRangeArgs args;
@@ -44,91 +44,8 @@ class StatsTrendSection extends ConsumerWidget {
                           style: theme.textTheme.bodyMedium?.copyWith(color: theme.hintColor)),
                     );
                   }
-                  return months.length > 12
-                      ? _TrendBars(months: months, onMonthTap: onMonthTap)
-                      : _TrendLine(months: months, onMonthTap: onMonthTap);
+                  return _TrendBars(months: months, onMonthTap: onMonthTap);
                 },
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _TrendLine extends StatelessWidget {
-  const _TrendLine({required this.months, required this.onMonthTap});
-  final List<MonthBucket> months;
-  final ValueChanged<MonthBucket> onMonthTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final spots = [for (int i = 0; i < months.length; i++) FlSpot(i.toDouble(), months[i].total)];
-
-    return LineChart(
-      LineChartData(
-        gridData: const FlGridData(show: false),
-        borderData: FlBorderData(show: false),
-        minY: 0,
-        titlesData: FlTitlesData(
-          topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-          rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-          leftTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-          bottomTitles: AxisTitles(
-            sideTitles: SideTitles(
-              showTitles: true,
-              reservedSize: 26,
-              interval: 1,
-              getTitlesWidget: (value, meta) => _bottomLabel(value, meta, months, theme),
-            ),
-          ),
-        ),
-        lineTouchData: LineTouchData(
-          touchTooltipData: LineTouchTooltipData(
-            getTooltipItems: (touchedSpots) => touchedSpots.map((s) {
-              final bucket = months[s.x.toInt()];
-              return LineTooltipItem(
-                '${DateFormat('MMM yyyy').format(bucket.start)}\n${AppLocalizations.of(context)!.toCurrency(bucket.total)}',
-                theme.textTheme.labelMedium!.copyWith(color: theme.colorScheme.onInverseSurface),
-              );
-            }).toList(),
-          ),
-          touchCallback: (event, response) {
-            if (!(event is FlTapUpEvent || event is FlLongPressEnd)) return;
-            final spots = response?.lineBarSpots;
-            if (spots == null || spots.isEmpty) return;
-            final idx = spots.first.x.toInt();
-            if (idx >= 0 && idx < months.length) onMonthTap(months[idx]);
-          },
-        ),
-        lineBarsData: [
-          LineChartBarData(
-            spots: spots,
-            isCurved: true,
-            curveSmoothness: 0.25,
-            color: theme.colorScheme.primary,
-            barWidth: 3,
-            isStrokeCapRound: true,
-            dotData: FlDotData(
-              show: true,
-              getDotPainter: (spot, percent, barData, index) => FlDotCirclePainter(
-                radius: 3.5,
-                color: theme.colorScheme.primary,
-                strokeWidth: 2,
-                strokeColor: theme.colorScheme.surface,
-              ),
-            ),
-            belowBarData: BarAreaData(
-              show: true,
-              gradient: LinearGradient(
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-                colors: [
-                  theme.colorScheme.primary.withValues(alpha: 0.35),
-                  theme.colorScheme.primary.withValues(alpha: 0.0),
-                ],
               ),
             ),
           ),
@@ -196,65 +113,60 @@ class _TrendBarsState extends State<_TrendBars> with SingleTickerProviderStateMi
           crossAxisAlignment: CrossAxisAlignment.end,
           children: [
             for (int i = 0; i < months.length; i++)
-              Expanded(
-                child: GestureDetector(
-                  onTap: () => widget.onMonthTap(months[i]),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.end,
-                    children: [
-                      // Animated bar fill growing from bottom.
-                      Expanded(
-                        child: Align(
-                          alignment: Alignment.bottomCenter,
-                          child: FractionallySizedBox(
-                            heightFactor: _animation.value,
+              // Only the latest (last) month is tinted the group color; every
+              // other bar uses a neutral track token (F64 / v3 monthly-trend).
+              Builder(builder: (context) {
+                final isLatest = i == months.length - 1;
+                final barColor = isLatest
+                    ? theme.colorScheme.primary
+                    : theme.colorScheme.surfaceContainerHighest;
+                final labelColor = isLatest
+                    ? theme.colorScheme.onSurface
+                    : theme.colorScheme.onSurfaceVariant;
+                return Expanded(
+                  child: GestureDetector(
+                    onTap: () => widget.onMonthTap(months[i]),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        // Animated bar fill growing from bottom.
+                        Expanded(
+                          child: Align(
+                            alignment: Alignment.bottomCenter,
                             child: FractionallySizedBox(
-                              heightFactor: maxTotal > 0 ? months[i].total / maxTotal : 0,
-                              child: Container(
-                                margin: const EdgeInsets.symmetric(horizontal: 2),
-                                decoration: BoxDecoration(
-                                  color: theme.colorScheme.primary,
-                                  borderRadius: BorderRadius.circular(4),
+                              heightFactor: _animation.value,
+                              child: FractionallySizedBox(
+                                heightFactor: maxTotal > 0 ? months[i].total / maxTotal : 0,
+                                child: Container(
+                                  margin: const EdgeInsets.symmetric(horizontal: 2),
+                                  decoration: BoxDecoration(
+                                    color: barColor,
+                                    borderRadius: BorderRadius.circular(4),
+                                  ),
                                 ),
                               ),
                             ),
                           ),
                         ),
-                      ),
-                      // Month label (shown for every nth bar).
-                      SizedBox(
-                        height: 26,
-                        child: (i % step == 0 || i == months.length - 1)
-                            ? Text(
-                                DateFormat('MMM yy').format(months[i].start),
-                                style: theme.textTheme.labelSmall
-                                    ?.copyWith(color: theme.colorScheme.onSurfaceVariant),
-                                overflow: TextOverflow.ellipsis,
-                              )
-                            : const SizedBox.shrink(),
-                      ),
-                    ],
+                        // Month label (shown for every nth bar).
+                        SizedBox(
+                          height: 26,
+                          child: (i % step == 0 || i == months.length - 1)
+                              ? Text(
+                                  DateFormat('MMM yy').format(months[i].start),
+                                  style: theme.textTheme.labelSmall?.copyWith(color: labelColor),
+                                  overflow: TextOverflow.ellipsis,
+                                )
+                              : const SizedBox.shrink(),
+                        ),
+                      ],
+                    ),
                   ),
-                ),
-              ),
+                );
+              }),
           ],
         );
       },
     );
   }
-}
-
-Widget _bottomLabel(double value, TitleMeta meta, List<MonthBucket> months, ThemeData theme,
-    {bool withYear = false}) {
-  final idx = value.toInt();
-  if (idx < 0 || idx >= months.length) return const SizedBox.shrink();
-  final step = labelStep(months.length);
-  if (idx % step != 0 && idx != months.length - 1) return const SizedBox.shrink();
-  return SideTitleWidget(
-    meta: meta,
-    child: Text(
-      DateFormat(withYear ? 'MMM yy' : 'MMM').format(months[idx].start),
-      style: theme.textTheme.labelSmall?.copyWith(color: theme.colorScheme.onSurfaceVariant),
-    ),
-  );
 }

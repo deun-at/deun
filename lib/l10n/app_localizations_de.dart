@@ -1449,7 +1449,7 @@ class AppLocalizationsDe extends AppLocalizations {
   String get statisticsVsPreviousPeriod => 'ggü. Vorperiode';
 
   @override
-  String get statisticsTrend => 'Verlauf';
+  String get statisticsTrend => 'Monatlicher Trend';
 
   @override
   String get statisticsMembers => 'Mitglieder';

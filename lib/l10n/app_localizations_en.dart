@@ -1419,7 +1419,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get statisticsVsPreviousPeriod => 'vs previous period';
 
   @override
-  String get statisticsTrend => 'Trend';
+  String get statisticsTrend => 'Monthly trend';
 
   @override
   String get statisticsMembers => 'Members';

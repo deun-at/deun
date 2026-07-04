@@ -2385,7 +2385,7 @@ abstract class AppLocalizations {
   /// No description provided for @statisticsTrend.
   ///
   /// In en, this message translates to:
-  /// **'Trend'**
+  /// **'Monthly trend'**
   String get statisticsTrend;
 
   /// No description provided for @statisticsMembers.

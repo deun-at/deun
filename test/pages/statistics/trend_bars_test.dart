@@ -137,4 +137,41 @@ void main() {
       );
     });
   });
+
+  // F64: always bars (no LineChart), only the latest month tinted the group
+  // color, the rest a neutral track token.
+  group('_TrendBars monthly styling (F64)', () {
+    testWidgets('renders bars for a <=12-month range (no LineChart branch)',
+        (tester) async {
+      final months = _makeMonths(6); // <= 12 used to render a LineChart
+      await _pumpTrend(tester, months: months);
+      await tester.pumpAndSettle();
+
+      // 6 tappable bars, each a GestureDetector; no line chart involved.
+      expect(find.byType(GestureDetector), findsNWidgets(6));
+    });
+
+    testWidgets('only the latest bar is primary; the rest are neutral track',
+        (tester) async {
+      final months = _makeMonths(4);
+      await _pumpTrend(tester, months: months);
+      await tester.pumpAndSettle();
+
+      final ctx = tester.element(find.byType(StatsTrendSection));
+      final scheme = Theme.of(ctx).colorScheme;
+
+      final barColors = tester
+          .widgetList<Container>(find.byType(Container))
+          .map((c) => (c.decoration as BoxDecoration?)?.color)
+          .whereType<Color>()
+          .toList();
+
+      final primaryCount =
+          barColors.where((c) => c == scheme.primary).length;
+      final neutralCount =
+          barColors.where((c) => c == scheme.surfaceContainerHighest).length;
+      expect(primaryCount, 1, reason: 'exactly the latest bar is tinted');
+      expect(neutralCount, 3, reason: 'the other three bars are neutral');
+    });
+  });
 }
