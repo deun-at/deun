@@ -149,8 +149,8 @@ class _CategoryTile extends StatelessWidget {
         onTap: onTap,
         behavior: HitTestBehavior.opaque,
         child: SizedBox(
-          width: 70,
-          height: 70,
+          width: 62,
+          height: 62,
           child: Stack(
             clipBehavior: Clip.none,
             children: [

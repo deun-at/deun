@@ -855,7 +855,7 @@ class _ExpenseDetailState extends ConsumerState<ExpenseDetail> {
                                 initialValue:
                                     _detectedCategory ?? widget.expense?.category,
                               ),
-                              const SizedBox(height: spacing * 2),
+                              const SizedBox(height: spacing),
                               _buildExpenseLevelAmount(),
                             ] else ...[
                               const SizedBox(height: spacing * 2),
