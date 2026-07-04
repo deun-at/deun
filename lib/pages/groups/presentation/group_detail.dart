@@ -283,6 +283,7 @@ class _GroupDetailState extends ConsumerState<GroupDetail> {
   /// existing expense-search feature alive as a slim search bar above the list.
   Widget _buildExpenseSearch(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
+    final colorScheme = Theme.of(context).colorScheme;
     return SearchAnchor(
       searchController: _searchController,
       builder: (context, controller) {
@@ -290,6 +291,15 @@ class _GroupDetailState extends ConsumerState<GroupDetail> {
           controller: controller,
           hintText: l10n.expensesSearchTitle,
           leading: const Icon(Icons.search),
+          // White card surface to match the quick-action cards above (F154):
+          // SoftCard's surfaceContainerLowest token + radius 14 (mockup L724),
+          // flat (elevation 0). Dark mode flips free via the token.
+          backgroundColor: WidgetStatePropertyAll(
+            colorScheme.surfaceContainerLowest,
+          ),
+          shape: WidgetStatePropertyAll(
+            RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+          ),
           elevation: const WidgetStatePropertyAll(0),
           onTap: controller.openView,
           onChanged: (_) => controller.openView(),
