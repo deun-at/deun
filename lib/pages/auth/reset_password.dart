@@ -12,9 +12,10 @@ final _emailRegex = RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$');
 
 /// Dedicated "Reset your password" screen (design F36).
 ///
-/// Reached from the login screen's "Forgot password?" link. Mirrors
-/// [UpdatePassword]'s scaffold (header + title + subtitle + one field +
-/// primary button). The Supabase call is the same
+/// Reached from the login screen's "Forgot password?" link. Matches the v3
+/// "Reset password" pane: a bare back arrow (no header-bar title), then a
+/// single LEFT-aligned title + subtitle, the email field and the primary
+/// "Send reset link" button — no icon panel. The Supabase call is the same
 /// `supabase.auth.resetPasswordForEmail` that lived inline in
 /// `sign_in.dart`'s `_recoverPassword`; it is unchanged, just relocated here so
 /// the flow is a full screen instead of a snackbar depending on the login
@@ -90,7 +91,9 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
       backgroundColor: colorScheme.surface,
       body: Column(
         children: [
-          DeunHeader(title: l10n.resetPasswordTitle),
+          // Bare back arrow, no header-bar title (v3 pane L166-168): the
+          // page's own left-aligned title carries the heading instead.
+          const DeunHeader(title: ''),
           Expanded(
             child: SafeArea(
               top: false,
@@ -102,31 +105,15 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                         ScrollViewKeyboardDismissBehavior.onDrag,
                     padding: const EdgeInsets.fromLTRB(24, 8, 24, 32),
                     children: [
-                      Container(
-                        height: 72,
-                        width: 72,
-                        decoration: BoxDecoration(
-                          color: colorScheme.primaryContainer,
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                        child: Icon(
-                          Icons.lock_reset_outlined,
-                          size: 34,
-                          color: colorScheme.primary,
-                        ),
-                      ),
-                      const SizedBox(height: 24),
                       Text(
                         l10n.resetPasswordTitle,
                         style: theme.textTheme.headlineMedium,
-                        textAlign: TextAlign.center,
                       ),
                       const SizedBox(height: 8),
                       Text(
                         l10n.resetPasswordInstructions,
                         style: theme.textTheme.bodyLarge
                             ?.copyWith(color: colorScheme.onSurfaceVariant),
-                        textAlign: TextAlign.center,
                       ),
                       const SizedBox(height: 28),
                       Form(
