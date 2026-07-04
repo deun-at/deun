@@ -38,6 +38,7 @@ class AppTextField extends StatelessWidget {
     this.autofillHints,
     this.obscureText = false,
     this.suffix,
+    this.prefixText,
     this.onFieldSubmitted,
   });
 
@@ -56,6 +57,12 @@ class AppTextField extends StatelessWidget {
   final Iterable<String>? autofillHints;
   final bool obscureText;
   final Widget? suffix;
+
+  /// Optional muted inline prefix (e.g. `paypal.me/`). Only meaningful in
+  /// [AppTextFieldLabelMode.above]; rendered via [InputDecoration.prefixText]
+  /// in the muted [ColorScheme.onSurfaceVariant] token (spec placeholder tone).
+  final String? prefixText;
+
   final void Function(String)? onFieldSubmitted;
 
   @override
@@ -64,14 +71,20 @@ class AppTextField extends StatelessWidget {
     final colorScheme = theme.colorScheme;
     final isDark = theme.brightness == Brightness.dark;
     final isPlaceholder = labelMode == AppTextFieldLabelMode.placeholder;
-    final radius = BorderRadius.circular(14);
+    // Placeholder (login) inputs are white cards: radius 14, soft shadow
+    // (mockup L830). Label-above (profile) inputs are flat beige inset boxes:
+    // fill surfaceContainer (#F4F3EF), radius 12, NO shadow (mockup L353/369/377).
+    final radius = BorderRadius.circular(isPlaceholder ? 14 : 12);
+    final fillColor =
+        isPlaceholder ? colorScheme.surfaceContainerLowest : colorScheme.surfaceContainer;
 
     final field = DecoratedBox(
-      // Spec input shadow (0 2px 4px rgba(20,18,12,.04)); omitted in dark where
-      // the lighter card surface carries elevation instead — mirrors SoftCard.
+      // Spec input shadow (0 2px 4px rgba(20,18,12,.04)); placeholder-mode only,
+      // and omitted in dark where the lighter card surface carries elevation
+      // instead — mirrors SoftCard. Above-mode is flat (no shadow).
       decoration: BoxDecoration(
         borderRadius: radius,
-        boxShadow: isDark ? null : kSoftCardShadow,
+        boxShadow: isPlaceholder && !isDark ? kSoftCardShadow : null,
       ),
       child: TextFormField(
         controller: controller,
@@ -91,9 +104,20 @@ class AppTextField extends StatelessWidget {
           // Neither mode ever sets labelText (the floating Material label).
           hintText: isPlaceholder ? label : null,
           suffixIcon: suffix,
+          // Muted inline prefix (above-mode only), spec placeholder tone.
+          prefixText: isPlaceholder ? null : prefixText,
+          prefixStyle: theme.textTheme.bodyLarge?.copyWith(
+            fontWeight: FontWeight.w600,
+            color: colorScheme.onSurfaceVariant,
+          ),
+          // Above-mode uses the spec inset padding (11×13); placeholder-mode
+          // keeps Material's default so the login cards stay their taller size.
+          contentPadding: isPlaceholder
+              ? null
+              : const EdgeInsets.symmetric(horizontal: 13, vertical: 11),
           filled: true,
-          // White card surface (DESIGN_SPEC "Card surface" = inputs).
-          fillColor: colorScheme.surfaceContainerLowest,
+          // Placeholder: white card surface. Above: flat beige inset surface.
+          fillColor: fillColor,
           border: OutlineInputBorder(
             borderRadius: radius,
             borderSide: BorderSide.none,

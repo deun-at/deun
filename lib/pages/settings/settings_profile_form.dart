@@ -125,14 +125,14 @@ class _SettingsProfileFormState extends ConsumerState<SettingsProfileForm> {
             ),
           ),
           const SizedBox(height: heightSpacing),
-          // paypal.me/ was an in-field prefix on the old floating-label input;
-          // AppTextField has no prefix slot and must not be modified, so the
-          // "PayPal.me" label above now carries that meaning. ponytail: drop the
-          // inline prefix rather than fork AppTextField for one field.
+          // Muted `paypal.me/` inline prefix + username inside the field
+          // (mockup L369, prefix ≈ #B6B2A8 → onSurfaceVariant). Fixed brand
+          // literal, not localized.
           _InsetFormField(
             name: 'paypal_me',
             label: l10n.settingsPaypalMe,
             initialValue: user.paypalMe,
+            prefixText: 'paypal.me/',
           ),
           const SizedBox(height: heightSpacing),
           _InsetFormField(
@@ -224,6 +224,7 @@ class _InsetFormField extends StatefulWidget {
     this.initialValue,
     this.validator,
     this.suffix,
+    this.prefixText,
   });
 
   final String name;
@@ -231,6 +232,7 @@ class _InsetFormField extends StatefulWidget {
   final String? initialValue;
   final String? Function(String?)? validator;
   final Widget? suffix;
+  final String? prefixText;
 
   @override
   State<_InsetFormField> createState() => _InsetFormFieldState();
@@ -274,6 +276,7 @@ class _InsetFormFieldState extends State<_InsetFormField> {
           labelMode: AppTextFieldLabelMode.above,
           validator: widget.validator,
           suffix: widget.suffix,
+          prefixText: widget.prefixText,
         );
       },
     );
@@ -282,10 +285,11 @@ class _InsetFormFieldState extends State<_InsetFormField> {
 
 /// The tappable Language row. Per v3 (and consistent with the iconless
 /// [_InsetFormField] styling that F09/F11 established), this carries no leading
-/// translate icon: it is a floating label + current value with a trailing
-/// dropdown chevron ([Icons.expand_more], v3 `chevron_down`) so it reads as a
-/// dropdown selector rather than a navigate-forward row. Tapping still opens
-/// the language sheet — only the icon/chevron presentation changed.
+/// translate icon: it is a label-above + current value with a trailing dropdown
+/// chevron ([Icons.expand_more], v3 `chevron_down`) so it reads as a dropdown
+/// selector rather than a navigate-forward row. F171 moved the label above the
+/// box (matching the text fields) so the value box is a pixel-identical sibling
+/// of the [_InsetFormField] inputs. Tapping still opens the language sheet.
 class _LanguageRow extends StatelessWidget {
   const _LanguageRow({required this.value, required this.onTap});
 
@@ -294,27 +298,51 @@ class _LanguageRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
     final radius = BorderRadius.circular(12);
 
-    return Material(
-      color: colorScheme.surfaceContainer,
-      borderRadius: radius,
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: radius,
-        child: InputDecorator(
-          decoration: InputDecoration(
-            labelText: AppLocalizations.of(context)!.settingsLocale,
-            filled: true,
-            fillColor: colorScheme.surfaceContainer,
-            border: OutlineInputBorder(borderRadius: radius, borderSide: BorderSide.none),
-            enabledBorder: OutlineInputBorder(borderRadius: radius, borderSide: BorderSide.none),
-            suffixIcon: Icon(Icons.expand_more, color: colorScheme.onSurfaceVariant),
+    // Label-above, matching the text fields (F171): static titleSmall w600
+    // onSurfaceVariant label + 6px gap over a surfaceContainer r12 value box.
+    // After F169 the box is a pixel-identical sibling of the text-field inputs.
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.only(left: 4, bottom: 6),
+          child: Text(
+            AppLocalizations.of(context)!.settingsLocale,
+            style: theme.textTheme.titleSmall?.copyWith(
+              color: colorScheme.onSurfaceVariant,
+              fontWeight: FontWeight.w600,
+              letterSpacing: 0.2,
+            ),
           ),
-          child: Text(value, style: Theme.of(context).textTheme.bodyLarge),
         ),
-      ),
+        Material(
+          color: colorScheme.surfaceContainer,
+          borderRadius: radius,
+          child: InkWell(
+            onTap: onTap,
+            borderRadius: radius,
+            child: Padding(
+              // Match AppTextField above-mode inset padding (13×11).
+              padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 11),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      value,
+                      style: theme.textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w600),
+                    ),
+                  ),
+                  Icon(Icons.expand_more, color: colorScheme.onSurfaceVariant),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ],
     );
   }
 }
