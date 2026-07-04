@@ -1,4 +1,3 @@
-import 'package:deun/constants.dart';
 import 'package:deun/l10n/app_localizations.dart';
 import 'package:deun/main.dart';
 import 'package:deun/pages/expenses/data/claim_math.dart';
@@ -14,9 +13,7 @@ import 'package:deun/widgets/restyle/deun_header.dart';
 import 'package:deun/widgets/restyle/member_avatar.dart';
 import 'package:deun/widgets/restyle/money_text.dart';
 import 'package:deun/widgets/restyle/progress_bar.dart';
-import 'package:deun/widgets/restyle/sheet_scaffold.dart';
 import 'package:deun/widgets/restyle/soft_card.dart';
-import 'package:deun/widgets/restyle/primary_button.dart';
 import 'package:deun/widgets/theme_builder.dart';
 import 'package:deun/helper/helper.dart';
 import 'package:flutter/material.dart';
@@ -46,6 +43,11 @@ class _ClaimPageState extends ConsumerState<ClaimPage> {
   /// member (drives `claim_math` "your share" for the selected persona only —
   /// it does not change who actually claims anything, that stays E3-T3).
   String? _personaEmail;
+
+  /// The entry id of the unit whose inline split editor is currently expanded,
+  /// or null when every item card is collapsed. Only one editor is open at a
+  /// time (F163: the modal bottom sheet is replaced by an in-card editor).
+  String? _expandedUnit;
 
   String? get _currentUserEmail => supabase.auth.currentUser?.email;
 
@@ -96,30 +98,21 @@ class _ClaimPageState extends ConsumerState<ClaimPage> {
     }
   }
 
-  /// The tap-to-claim modal (solo/split choice) for one unit slot: opens the
-  /// member picker seeded with [initialClaimers] and applies the chosen set
-  /// via the notifier. Solo = one member; split = several; unchecking
-  /// yourself unclaims.
-  Future<void> _openUnitSheet(
-    ClaimUnitRow row, {
-    required Set<String> initialClaimers,
-  }) async {
-    final result = await showModalBottomSheet<List<String>>(
-      context: context,
-      isScrollControlled: true,
-      sheetAnimationStyle: kSheetAnimationStyle,
-      barrierColor: kSheetBarrierColor,
-      backgroundColor: Colors.transparent,
-      builder: (sheetContext) => _SplitPickerSheet(
-        unitCost: row.unit.unitCost,
-        members: widget.group.groupMembers,
-        currentUserEmail: _currentUserEmail,
-        initialClaimers: initialClaimers,
-      ),
-    );
-    if (result == null || !mounted) return;
+  /// Toggles the inline split editor for [row] open/closed (F163: replaces the
+  /// modal bottom sheet). Tapping an already-open unit collapses it.
+  void _toggleUnit(ClaimUnitRow row) {
+    setState(() {
+      _expandedUnit = _expandedUnit == row.entryId ? null : row.entryId;
+    });
+  }
+
+  /// Applies the chosen claimer set for [entryId] via the notifier and collapses
+  /// the editor. Solo = one member; split = several; empty = unclaimed. The
+  /// claim RPC / data flow is unchanged — only the container is inline now.
+  Future<void> _applySplit(String entryId, List<String> claimers) async {
+    setState(() => _expandedUnit = null);
     try {
-      await _notifier.splitUnit(row.entryId, result);
+      await _notifier.splitUnit(entryId, claimers);
     } catch (_) {
       if (mounted) {
         showSnackBar(context, AppLocalizations.of(context)!.claimLoadError);
@@ -127,15 +120,12 @@ class _ClaimPageState extends ConsumerState<ClaimPage> {
     }
   }
 
-  /// "Split one" on an item card: opens the modal on the first free unit with
-  /// the persona preselected. Nothing persists until the sheet is applied.
-  Future<void> _splitOne(ClaimItemGroup group) async {
+  /// "Split one" on an item card: opens the inline editor on the first free
+  /// unit. Nothing persists until the editor is applied.
+  void _splitOne(ClaimItemGroup group) {
     final row = group.firstFree;
     if (row == null) return;
-    await _openUnitSheet(
-      row,
-      initialClaimers: {if (_persona.isNotEmpty) _persona},
-    );
+    _toggleUnit(row);
   }
 
   /// v0 Nudge: claims are already persisted per-tap, so there is no dedicated
@@ -216,13 +206,13 @@ class _ClaimPageState extends ConsumerState<ClaimPage> {
                           groups: groups,
                           persona: _persona,
                           currentUserEmail: _currentUserEmail,
+                          members: widget.group.groupMembers,
+                          expandedUnit: _expandedUnit,
                           displayName: (e) => _displayName(context, e),
                           onTakeOne: _takeOne,
-                          onTapUnit: (row) => _openUnitSheet(
-                            row,
-                            initialClaimers: row.unit.claimers.toSet(),
-                          ),
+                          onTapUnit: _toggleUnit,
                           onSplitOne: _splitOne,
+                          onApplySplit: _applySplit,
                         ),
                       ],
                     ),
@@ -656,19 +646,25 @@ class _ItemList extends StatelessWidget {
     required this.groups,
     required this.persona,
     required this.currentUserEmail,
+    required this.members,
+    required this.expandedUnit,
     required this.displayName,
     required this.onTakeOne,
     required this.onTapUnit,
     required this.onSplitOne,
+    required this.onApplySplit,
   });
 
   final List<ClaimItemGroup> groups;
   final String persona;
   final String? currentUserEmail;
+  final List<GroupMember> members;
+  final String? expandedUnit;
   final String Function(String email) displayName;
   final ValueChanged<ClaimUnitRow> onTakeOne;
   final ValueChanged<ClaimUnitRow> onTapUnit;
   final ValueChanged<ClaimItemGroup> onSplitOne;
+  final void Function(String entryId, List<String> claimers) onApplySplit;
 
   @override
   Widget build(BuildContext context) {
@@ -693,10 +689,13 @@ class _ItemList extends StatelessWidget {
             group: group,
             persona: persona,
             currentUserEmail: currentUserEmail,
+            members: members,
+            expandedUnit: expandedUnit,
             displayName: displayName,
             onTakeOne: onTakeOne,
             onTapUnit: onTapUnit,
             onSplitOne: () => onSplitOne(group),
+            onApplySplit: onApplySplit,
           ),
           if (group != groups.last) const SizedBox(height: 10),
         ],
@@ -713,19 +712,25 @@ class _ItemCard extends StatelessWidget {
     required this.group,
     required this.persona,
     required this.currentUserEmail,
+    required this.members,
+    required this.expandedUnit,
     required this.displayName,
     required this.onTakeOne,
     required this.onTapUnit,
     required this.onSplitOne,
+    required this.onApplySplit,
   });
 
   final ClaimItemGroup group;
   final String persona;
   final String? currentUserEmail;
+  final List<GroupMember> members;
+  final String? expandedUnit;
   final String Function(String email) displayName;
   final ValueChanged<ClaimUnitRow> onTakeOne;
   final ValueChanged<ClaimUnitRow> onTapUnit;
   final VoidCallback onSplitOne;
+  final void Function(String entryId, List<String> claimers) onApplySplit;
 
   @override
   Widget build(BuildContext context) {
@@ -739,9 +744,28 @@ class _ItemCard extends StatelessWidget {
     final categoryColor = category.getColor(context);
     final yourCost = persona.isEmpty ? 0.0 : group.costForPersona(persona);
     final personaHoldsNone = yourCost <= 0.005;
+    // F163 taken-highlight: tint the whole card + add a faint primary border
+    // when the persona holds any part of this item.
+    final taken = yourCost > 0.005;
+
+    // F163 inline editor: the expanded unit for this item (if any).
+    ClaimUnitRow? expandedRow;
+    for (final row in group.units) {
+      if (row.entryId == expandedUnit) {
+        expandedRow = row;
+        break;
+      }
+    }
 
     return SoftCard(
       padding: const EdgeInsets.fromLTRB(14, 13, 14, 13),
+      color: taken ? colorScheme.primary.withValues(alpha: 0.05) : null,
+      border: taken
+          ? Border.all(
+              color: colorScheme.primary.withValues(alpha: 0.20),
+              width: 1.5,
+            )
+          : null,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -827,6 +851,31 @@ class _ItemCard extends StatelessWidget {
                   ),
             ],
           ),
+          // F163: the inline split editor expands in place of the old modal.
+          AnimatedSize(
+            duration: Motion.sheetRiseDuration,
+            curve: Motion.sheetRise,
+            alignment: Alignment.topCenter,
+            child: expandedRow == null
+                ? const SizedBox(width: double.infinity)
+                : Padding(
+                    padding: const EdgeInsets.only(top: 11),
+                    child: _SplitEditorCard(
+                      key: ValueKey('editor:${expandedRow.entryId}'),
+                      unitCost: expandedRow.unit.unitCost,
+                      members: members,
+                      currentUserEmail: currentUserEmail,
+                      // Seed with the unit's claimers; for a still-free unit
+                      // (opened via "Split one") preselect the current persona,
+                      // matching the old modal's behaviour.
+                      initialClaimers: expandedRow.unit.claimers.isNotEmpty
+                          ? expandedRow.unit.claimers.toSet()
+                          : {if (persona.isNotEmpty) persona},
+                      onDone: (claimers) =>
+                          onApplySplit(expandedRow!.entryId, claimers),
+                    ),
+                  ),
+          ),
           const SizedBox(height: 11),
           Row(
             children: [
@@ -907,6 +956,11 @@ class _ClaimedUnitChip extends StatelessWidget {
     final Color bg = chipState.claimedByYou
         ? colorScheme.primary.withValues(alpha: 0.14)
         : colorScheme.surfaceContainerHighest;
+    // F163 selected-state: a 1.5px accent border when the unit is yours,
+    // otherwise a faint outline so every claimed chip reads as a bounded slot.
+    final Color borderColor = chipState.claimedByYou
+        ? colorScheme.primary.withValues(alpha: 0.35)
+        : colorScheme.outlineVariant;
     final label = chipState.splitCount > 1
         ? l10n.claimSplitLabel(l10n.toCurrency(chipState.perUnitCost))
         : displayName(claimers.first);
@@ -916,7 +970,12 @@ class _ClaimedUnitChip extends StatelessWidget {
       borderRadius: BorderRadius.circular(40),
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-        decoration: ShapeDecoration(color: bg, shape: const StadiumBorder()),
+        decoration: ShapeDecoration(
+          color: bg,
+          shape: StadiumBorder(
+            side: BorderSide(color: borderColor, width: 1.5),
+          ),
+        ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -1230,26 +1289,32 @@ class _TapItemsHintBar extends StatelessWidget {
   }
 }
 
-/// Inline member picker for "Split one": choose who shares a single unit, with
-/// the live per-person cost (unit / selected). Applies via [splitUnit].
-class _SplitPickerSheet extends StatefulWidget {
-  const _SplitPickerSheet({
+/// Inline split editor (F163): the grey in-card box that replaces the old
+/// modal bottom sheet. Choose who shares a single unit via toggleable member
+/// pills, with the live per-person cost (unit / selected) in the title. "Done"
+/// applies the selection through [onDone]. The claim RPC is unchanged — this is
+/// only a sheet→inline container swap.
+class _SplitEditorCard extends StatefulWidget {
+  const _SplitEditorCard({
+    super.key,
     required this.unitCost,
     required this.members,
     required this.currentUserEmail,
     required this.initialClaimers,
+    required this.onDone,
   });
 
   final double unitCost;
   final List<GroupMember> members;
   final String? currentUserEmail;
   final Set<String> initialClaimers;
+  final ValueChanged<List<String>> onDone;
 
   @override
-  State<_SplitPickerSheet> createState() => _SplitPickerSheetState();
+  State<_SplitEditorCard> createState() => _SplitEditorCardState();
 }
 
-class _SplitPickerSheetState extends State<_SplitPickerSheet> {
+class _SplitEditorCardState extends State<_SplitEditorCard> {
   late final Set<String> _selected = {...widget.initialClaimers};
 
   @override
@@ -1260,43 +1325,166 @@ class _SplitPickerSheetState extends State<_SplitPickerSheet> {
     final perPerson =
         _selected.isEmpty ? 0.0 : widget.unitCost / _selected.length;
 
-    return SheetScaffold(
-      title: l10n.claimSplitSheetTitle,
-      footer: PrimaryButton(
-        onPressed: () => Navigator.of(context).pop(_selected.toList()),
-        label: l10n.claimSplitApply,
+    return Container(
+      width: double.infinity,
+      // Grey surface box, radius14 (mockup L1276-1293) — surface is the warm
+      // #F4F3EF token, distinct from the white item card it nests in.
+      padding: const EdgeInsets.fromLTRB(12, 11, 12, 11),
+      decoration: BoxDecoration(
+        color: colorScheme.surface,
+        borderRadius: BorderRadius.circular(14),
       ),
-      body: Column(
+      child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            l10n.claimSplitPerPerson(l10n.toCurrency(perPerson)),
-            style: textTheme.titleMedium?.copyWith(color: colorScheme.primary),
+            l10n.claimSplitEditorTitle(l10n.toCurrency(perPerson)),
+            style: textTheme.labelMedium?.copyWith(
+              color: colorScheme.onSurfaceVariant,
+              fontWeight: FontWeight.w700,
+            ),
           ),
-          const SizedBox(height: 8),
-          for (final m in widget.members)
-            CheckboxListTile(
-              contentPadding: EdgeInsets.zero,
-              controlAffinity: ListTileControlAffinity.leading,
-              value: _selected.contains(m.email),
-              onChanged: (checked) => setState(() {
-                if (checked == true) {
-                  _selected.add(m.email);
-                } else {
-                  _selected.remove(m.email);
-                }
-              }),
-              secondary: MemberAvatar(
-                name: m.displayName,
-                colorKey: m.email,
-                radius: 16,
-                isYou: m.email == widget.currentUserEmail,
-              ),
-              title: Text(
-                m.email == widget.currentUserEmail ? l10n.you : m.displayName,
+          const SizedBox(height: 3),
+          Text(
+            l10n.claimSplitEditorHint,
+            style: textTheme.labelSmall?.copyWith(
+              color: colorScheme.onSurfaceVariant,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          const SizedBox(height: 9),
+          Wrap(
+            spacing: 7,
+            runSpacing: 7,
+            children: [
+              for (final m in widget.members)
+                _SplitMemberPill(
+                  key: ValueKey('editor-member:${m.email}'),
+                  name: m.email == widget.currentUserEmail
+                      ? l10n.you
+                      : m.displayName,
+                  colorKey: m.email,
+                  isYou: m.email == widget.currentUserEmail,
+                  selected: _selected.contains(m.email),
+                  onTap: () => setState(() {
+                    if (!_selected.remove(m.email)) _selected.add(m.email);
+                  }),
+                ),
+            ],
+          ),
+          const SizedBox(height: 11),
+          _SplitDoneButton(
+            label: l10n.claimSplitDone,
+            onTap: () => widget.onDone(_selected.toList()),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// A toggleable member pill in the inline split editor: avatar + name, tinted
+/// with the primary accent and a solid border when selected, faint outline when
+/// not (mockup L1281-1286).
+class _SplitMemberPill extends StatelessWidget {
+  const _SplitMemberPill({
+    super.key,
+    required this.name,
+    required this.colorKey,
+    required this.isYou,
+    required this.selected,
+    required this.onTap,
+  });
+
+  final String name;
+  final String colorKey;
+  final bool isYou;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final textTheme = Theme.of(context).textTheme;
+    final colorScheme = Theme.of(context).colorScheme;
+    final bg = selected
+        ? colorScheme.primary.withValues(alpha: 0.14)
+        : colorScheme.surfaceContainerLowest;
+    final borderColor = selected
+        ? colorScheme.primary.withValues(alpha: 0.35)
+        : colorScheme.outlineVariant;
+
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(999),
+      child: Container(
+        padding: const EdgeInsets.fromLTRB(6, 5, 11, 5),
+        decoration: ShapeDecoration(
+          color: bg,
+          shape: StadiumBorder(
+            side: BorderSide(color: borderColor, width: 1.5),
+          ),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Opacity(
+              opacity: selected ? 1 : 0.55,
+              child: MemberAvatar(
+                name: name,
+                colorKey: colorKey,
+                radius: 11,
+                isYou: isYou,
               ),
             ),
-        ],
+            const SizedBox(width: 6),
+            Text(
+              name,
+              style: textTheme.labelMedium?.copyWith(
+                fontWeight: FontWeight.w700,
+                color: selected
+                    ? colorScheme.primary
+                    : colorScheme.onSurface,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// The solid-ink "Done" button that applies the inline split editor selection.
+class _SplitDoneButton extends StatelessWidget {
+  const _SplitDoneButton({required this.label, required this.onTap});
+
+  final String label;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final semantic = Theme.of(context).extension<SemanticColors>()!;
+    final textTheme = Theme.of(context).textTheme;
+
+    return Material(
+      color: semantic.ink,
+      borderRadius: BorderRadius.circular(11),
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: onTap,
+        child: SizedBox(
+          width: double.infinity,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 10),
+            child: Text(
+              label,
+              textAlign: TextAlign.center,
+              style: textTheme.labelLarge?.copyWith(
+                color: semantic.onInk,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ),
+        ),
       ),
     );
   }

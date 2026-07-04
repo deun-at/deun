@@ -487,6 +487,18 @@ class AppLocalizationsDe extends AppLocalizations {
   String get claimSplitApply => 'Aufteilung übernehmen';
 
   @override
+  String claimSplitEditorTitle(String amount) {
+    return 'Wer teilt sich das? · $amount pro Person';
+  }
+
+  @override
+  String get claimSplitEditorHint =>
+      'Tippe einen Namen zum Hinzufügen — tippe deinen weg, um die Zuordnung zu lösen.';
+
+  @override
+  String get claimSplitDone => 'Fertig';
+
+  @override
   String claimUnclaimedCallout(String amount, String payer) {
     return '$amount noch nicht zugeordnet. $payer hat bezahlt und übernimmt den Rest, sofern die Gruppe ihn nicht beansprucht.';
   }

@@ -7,7 +7,6 @@ import 'package:deun/pages/expenses/provider/claim_notifier.dart';
 import 'package:deun/pages/groups/data/group_member_model.dart';
 import 'package:deun/pages/groups/data/group_model.dart';
 import 'package:deun/widgets/restyle/avatar_stack.dart';
-import 'package:deun/widgets/restyle/sheet_scaffold.dart';
 import 'package:deun/widgets/theme_builder.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -342,22 +341,24 @@ void main() {
     );
   });
 
-  testWidgets('tapping a claimed chip opens the modal; unchecking yourself '
-      'unclaims via splitUnit', (tester) async {
+  testWidgets('tapping a claimed chip opens the inline editor; toggling '
+      'yourself off unclaims via splitUnit (F163)', (tester) async {
     final l10n = await _l10n();
     await _pump(tester, expense: _grouped());
     await _pickPersona(tester, 'a@test.com');
 
-    // Tap Alice's solo slot → the solo/split modal opens (no mutation yet).
+    // Tap Alice's solo slot → the inline editor expands (no mutation yet, no
+    // modal sheet pushed).
     await tester.tap(find.byKey(const ValueKey('slot:c1')));
     await tester.pumpAndSettle();
-    expect(find.byType(SheetScaffold), findsOneWidget);
+    expect(find.byKey(const ValueKey('editor:c1')), findsOneWidget);
+    expect(find.byType(BottomSheet), findsNothing);
     expect(_fake.splitCalls, isEmpty);
 
-    // Uncheck Alice (the sheet's member row) and apply → unit is unclaimed.
-    await tester.tap(find.text('Alice').last);
+    // Toggle Alice's pill off and apply via "Done" → unit is unclaimed.
+    await tester.tap(find.byKey(const ValueKey('editor-member:a@test.com')));
     await tester.pumpAndSettle();
-    await tester.tap(find.text(l10n.claimSplitApply));
+    await tester.tap(find.text(l10n.claimSplitDone));
     await tester.pumpAndSettle();
 
     expect(_fake.splitCalls.length, 1);
@@ -365,21 +366,22 @@ void main() {
     expect(_fake.splitCalls.first.$2, isEmpty);
   });
 
-  testWidgets('"Split one" opens the modal on the first free unit and applies '
-      'the chosen members', (tester) async {
+  testWidgets('"Split one" opens the inline editor on the first free unit and '
+      'applies the chosen members (F163)', (tester) async {
     final l10n = await _l10n();
     await _pump(tester, expense: _expense());
 
     await tester.tap(find.text(l10n.claimSplitOne).first);
     await tester.pumpAndSettle();
-    expect(find.byType(SheetScaffold), findsOneWidget);
+    expect(find.byKey(const ValueKey('editor:u1')), findsOneWidget);
+    expect(find.byType(BottomSheet), findsNothing);
 
-    // Pick Alice and Bob, then apply.
-    await tester.tap(find.text('Alice').last);
+    // Pick Alice and Bob (editor pills), then apply via "Done".
+    await tester.tap(find.byKey(const ValueKey('editor-member:a@test.com')));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Bob').last);
+    await tester.tap(find.byKey(const ValueKey('editor-member:b@test.com')));
     await tester.pumpAndSettle();
-    await tester.tap(find.text(l10n.claimSplitApply));
+    await tester.tap(find.text(l10n.claimSplitDone));
     await tester.pumpAndSettle();
 
     expect(_fake.splitCalls.length, 1);
@@ -388,7 +390,7 @@ void main() {
         {'a@test.com', 'b@test.com'});
   });
 
-  testWidgets('"Split one" preselects the persona in the modal',
+  testWidgets('"Split one" preselects the persona in the inline editor (F163)',
       (tester) async {
     final l10n = await _l10n();
     await _pump(tester, expense: _grouped());
@@ -397,7 +399,7 @@ void main() {
     // First (only) free unit on the Cola card is c3.
     await tester.tap(find.text(l10n.claimSplitOne).first);
     await tester.pumpAndSettle();
-    await tester.tap(find.text(l10n.claimSplitApply));
+    await tester.tap(find.text(l10n.claimSplitDone));
     await tester.pumpAndSettle();
 
     expect(_fake.splitCalls.length, 1);
@@ -412,7 +414,8 @@ void main() {
 
     await tester.tap(find.text(l10n.claimSplitOne).first);
     await tester.pumpAndSettle();
-    expect(find.byType(SheetScaffold), findsNothing);
+    expect(find.byKey(const ValueKey('editor:u1')), findsNothing);
+    expect(find.byType(BottomSheet), findsNothing);
     expect(_fake.splitCalls, isEmpty);
   });
 

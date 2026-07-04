@@ -7,6 +7,7 @@ import 'package:deun/pages/expenses/provider/claim_notifier.dart';
 import 'package:deun/widgets/restyle/deun_header.dart';
 import 'package:deun/widgets/restyle/member_avatar.dart';
 import 'package:deun/widgets/restyle/progress_bar.dart';
+import 'package:deun/widgets/restyle/soft_card.dart';
 import 'package:deun/pages/groups/data/group_member_model.dart';
 import 'package:deun/pages/groups/data/group_model.dart';
 import 'package:deun/widgets/theme_builder.dart';
@@ -461,6 +462,82 @@ void main() {
     expect(find.text('Bread'), findsOneWidget);
     // The unclaimed unit (Bread) shows the dashed "take one" chip (E3-T3).
     expect(find.text(l10n.claimTakeOne), findsWidgets);
+  });
+
+  testWidgets(
+      'F163: tapping a claimed chip opens the inline editor, not a modal sheet',
+      (tester) async {
+    final l10n = await AppLocalizations.delegate.load(const Locale('en'));
+    await _pump(tester, expense: _itemizedExpense());
+
+    final scrollable = find.byType(Scrollable).first;
+    await tester.scrollUntilVisible(find.text('Cheese'), 200,
+        scrollable: scrollable);
+    await tester.pumpAndSettle();
+
+    // The Cheese unit (u1) is claimed by Alice — tap its chip.
+    await tester.tap(find.byKey(const ValueKey('slot:u1')));
+    await tester.pumpAndSettle();
+
+    // The inline editor for u1 is now in the tree …
+    expect(find.byKey(const ValueKey('editor:u1')), findsOneWidget);
+    // … carrying the editor hint copy, and no modal bottom sheet was pushed.
+    expect(find.text(l10n.claimSplitEditorHint), findsOneWidget);
+    expect(find.byType(BottomSheet), findsNothing);
+
+    // Tapping the same chip again collapses the editor (toggle).
+    await tester.tap(find.byKey(const ValueKey('slot:u1')));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const ValueKey('editor:u1')), findsNothing);
+  });
+
+  testWidgets('F163: "Split one" opens the inline editor on a free unit',
+      (tester) async {
+    final l10n = await AppLocalizations.delegate.load(const Locale('en'));
+    await _pump(tester, expense: _itemizedExpense());
+
+    final scrollable = find.byType(Scrollable).first;
+    // Bread (u3) is the unclaimed unit; scroll its card into view.
+    await tester.scrollUntilVisible(find.text('Bread'), 200,
+        scrollable: scrollable);
+    await tester.pumpAndSettle();
+
+    // Its "Split one" button opens the editor on the first free unit (u3).
+    await tester.tap(find.descendant(
+      of: find.ancestor(
+        of: find.text('Bread'),
+        matching: find.byType(SoftCard),
+      ),
+      matching: find.text(l10n.claimSplitOne),
+    ));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const ValueKey('editor:u3')), findsOneWidget);
+    expect(find.byType(BottomSheet), findsNothing);
+  });
+
+  testWidgets('F163: an item the persona holds gets the taken-highlight tint',
+      (tester) async {
+    await _pump(tester, expense: _itemizedExpense());
+
+    // Preview as Alice, who holds Cheese (u1) and half of Wine (u2).
+    await tester.tap(find.byKey(const ValueKey('persona:a@test.com')));
+    await tester.pumpAndSettle();
+
+    final scrollable = find.byType(Scrollable).first;
+    await tester.scrollUntilVisible(find.text('Cheese'), 200,
+        scrollable: scrollable);
+    await tester.pumpAndSettle();
+
+    final context = tester.element(find.byType(ClaimPage));
+    final primary = Theme.of(context).colorScheme.primary;
+
+    // The Cheese card (Alice holds it) carries the primary-tinted fill + border.
+    final cheeseCard = tester.widget<SoftCard>(find.ancestor(
+      of: find.text('Cheese'),
+      matching: find.byType(SoftCard),
+    ));
+    expect(cheeseCard.color, primary.withValues(alpha: 0.05));
+    expect(cheeseCard.border, isNotNull);
   });
 
   testWidgets('renders in dark mode without throwing', (tester) async {

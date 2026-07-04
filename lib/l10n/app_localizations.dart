@@ -926,6 +926,24 @@ abstract class AppLocalizations {
   /// **'Apply split'**
   String get claimSplitApply;
 
+  /// Title of the inline split editor card, with the live per-person cost.
+  ///
+  /// In en, this message translates to:
+  /// **'Who\'s splitting this one? · {amount} each'**
+  String claimSplitEditorTitle(String amount);
+
+  /// Sub-label under the inline split editor title explaining the toggle behaviour.
+  ///
+  /// In en, this message translates to:
+  /// **'Tap a name to add — tap yours off to unclaim.'**
+  String get claimSplitEditorHint;
+
+  /// Button that applies the selection and closes the inline split editor.
+  ///
+  /// In en, this message translates to:
+  /// **'Done'**
+  String get claimSplitDone;
+
   /// Warning callout above the items when some units have no claimer: explains the payer covers the remainder.
   ///
   /// In en, this message translates to:

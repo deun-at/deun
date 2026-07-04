@@ -483,6 +483,18 @@ class AppLocalizationsEn extends AppLocalizations {
   String get claimSplitApply => 'Apply split';
 
   @override
+  String claimSplitEditorTitle(String amount) {
+    return 'Who\'s splitting this one? · $amount each';
+  }
+
+  @override
+  String get claimSplitEditorHint =>
+      'Tap a name to add — tap yours off to unclaim.';
+
+  @override
+  String get claimSplitDone => 'Done';
+
+  @override
   String claimUnclaimedCallout(String amount, String payer) {
     return '$amount still unclaimed. $payer paid, so they cover the rest unless the group claims it.';
   }

@@ -15,6 +15,7 @@ class SoftCard extends StatelessWidget {
     this.padding = const EdgeInsets.all(16),
     this.borderRadius = 18,
     this.color,
+    this.border,
     this.onTap,
   });
 
@@ -24,6 +25,9 @@ class SoftCard extends StatelessWidget {
 
   /// Optional override for the card surface color.
   final Color? color;
+
+  /// Optional border (e.g. the F163 taken-highlight around a claimed item card).
+  final BoxBorder? border;
 
   /// Optional tap handler; when set the card becomes an ink-splashing button.
   final VoidCallback? onTap;
@@ -46,6 +50,7 @@ class SoftCard extends StatelessWidget {
     return DecoratedBox(
       decoration: BoxDecoration(
         color: color ?? colorScheme.surfaceContainerLowest,
+        border: border,
         borderRadius: radius,
         // Spec card shadow: 0 2px 4px rgba(20,18,12,.04). Omitted in dark.
         boxShadow: isDark ? null : kSoftCardShadow,
