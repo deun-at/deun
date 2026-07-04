@@ -27,11 +27,30 @@ import 'package:go_router/go_router.dart';
 /// unclaimed / per-member totals) and the per-unit item cards (F131): one card
 /// per item group with a slot chip per unit — tap a free slot to take it solo,
 /// tap a claimed slot or "Split one" for the solo/split modal (see [_ItemCard]).
+/// Signature of the push sender used by the Nudge action. Defaults to the real
+/// [sendNotification] helper; tests inject a spy so they never hit the live
+/// `push` Edge Function.
+typedef ClaimNotificationSender = Future<void> Function(
+  String type,
+  String objectId,
+  Set<String> notificationReceiver,
+  String title,
+  String body,
+);
+
 class ClaimPage extends ConsumerStatefulWidget {
-  const ClaimPage({super.key, required this.group, required this.expense});
+  const ClaimPage({
+    super.key,
+    required this.group,
+    required this.expense,
+    this.sendNotificationOverride,
+  });
 
   final Group group;
   final Expense expense;
+
+  /// Test seam for the Nudge push. Null in production → [sendNotification].
+  final ClaimNotificationSender? sendNotificationOverride;
 
   @override
   ConsumerState<ClaimPage> createState() => _ClaimPageState();
@@ -128,11 +147,25 @@ class _ClaimPageState extends ConsumerState<ClaimPage> {
     _toggleUnit(row);
   }
 
-  /// v0 Nudge: claims are already persisted per-tap, so there is no dedicated
-  /// reminder backend on this branch. Surfaces a localized confirmation
-  /// snackbar (the reminder path is a follow-up).
+  /// Nudge: fires an "expense" push to every other group member reminding them
+  /// to claim their items (F175), then shows the local confirmation snackbar.
+  /// Unclaimed units have no owner, so the receiver set is the whole group —
+  /// `sendNotification` auto-strips the current user. Copy is built sender-side
+  /// (same convention as [sendExpenseNotification]).
   void _nudge() {
-    showSnackBar(context, AppLocalizations.of(context)!.claimNudgeSent);
+    final l10n = AppLocalizations.of(context)!;
+    final senderName =
+        _memberFor(_currentUserEmail ?? '')?.displayName ?? l10n.you;
+    final receivers =
+        widget.group.groupMembers.map((m) => m.email).toSet();
+    (widget.sendNotificationOverride ?? sendNotification)(
+      'expense',
+      widget.expense.id,
+      receivers,
+      l10n.claimNudgeNotificationTitle(senderName),
+      l10n.claimNudgeNotificationBody(widget.expense.name, widget.group.name),
+    );
+    showSnackBar(context, l10n.claimNudgeSent);
   }
 
   @override

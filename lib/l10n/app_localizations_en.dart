@@ -515,6 +515,16 @@ class AppLocalizationsEn extends AppLocalizations {
   String get claimNudgeSent => 'Nudge sent to remind everyone to claim.';
 
   @override
+  String claimNudgeNotificationTitle(String userDisplayName) {
+    return '$userDisplayName nudged you';
+  }
+
+  @override
+  String claimNudgeNotificationBody(String expenseName, String groupName) {
+    return 'Claim your items in \"$expenseName\" ($groupName).';
+  }
+
+  @override
   String get claimTapItemsHint => 'Tap the items you had';
 
   @override

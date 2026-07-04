@@ -520,6 +520,16 @@ class AppLocalizationsDe extends AppLocalizations {
       'Erinnerung gesendet, damit alle ihre Posten zuordnen.';
 
   @override
+  String claimNudgeNotificationTitle(String userDisplayName) {
+    return '$userDisplayName erinnert dich';
+  }
+
+  @override
+  String claimNudgeNotificationBody(String expenseName, String groupName) {
+    return 'Ordne deine Posten in \"$expenseName\" ($groupName) zu.';
+  }
+
+  @override
   String get claimTapItemsHint => 'Tippe die Posten an, die du hattest';
 
   @override

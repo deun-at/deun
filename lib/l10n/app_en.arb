@@ -492,6 +492,30 @@
   "@claimNudgeSent": {
     "description": "Snackbar confirmation shown after tapping Nudge."
   },
+  "claimNudgeNotificationTitle": "{userDisplayName} nudged you",
+  "@claimNudgeNotificationTitle": {
+    "description": "Push notification title sent to other members when someone taps Nudge on the claim screen.",
+    "placeholders": {
+      "userDisplayName": {
+        "type": "String",
+        "example": "Max Muster"
+      }
+    }
+  },
+  "claimNudgeNotificationBody": "Claim your items in \"{expenseName}\" ({groupName}).",
+  "@claimNudgeNotificationBody": {
+    "description": "Push notification body sent to other members when someone taps Nudge on the claim screen.",
+    "placeholders": {
+      "expenseName": {
+        "type": "String",
+        "example": "Dinner"
+      },
+      "groupName": {
+        "type": "String",
+        "example": "Shoppingfriends"
+      }
+    }
+  },
   "claimTapItemsHint": "Tap the items you had",
   "@claimTapItemsHint": {
     "description": "Non-actionable hint in the sticky bottom bar; claiming happens instantly per tap, so there is no explicit confirm step."

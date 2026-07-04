@@ -147,6 +147,8 @@
   "claimUnclaimedCallout": "{amount} noch nicht zugeordnet. {payer} hat bezahlt und übernimmt den Rest, sofern die Gruppe ihn nicht beansprucht.",
   "claimNudge": "Anstupsen",
   "claimNudgeSent": "Erinnerung gesendet, damit alle ihre Posten zuordnen.",
+  "claimNudgeNotificationTitle": "{userDisplayName} erinnert dich",
+  "claimNudgeNotificationBody": "Ordne deine Posten in \"{expenseName}\" ({groupName}) zu.",
   "claimTapItemsHint": "Tippe die Posten an, die du hattest",
   "expenseMemberYourShare": "dein Anteil",
   "expenseMemberPaidAmount": "hat {amount} bezahlt",

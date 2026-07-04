@@ -980,6 +980,18 @@ abstract class AppLocalizations {
   /// **'Nudge sent to remind everyone to claim.'**
   String get claimNudgeSent;
 
+  /// Push notification title sent to other members when someone taps Nudge on the claim screen.
+  ///
+  /// In en, this message translates to:
+  /// **'{userDisplayName} nudged you'**
+  String claimNudgeNotificationTitle(String userDisplayName);
+
+  /// Push notification body sent to other members when someone taps Nudge on the claim screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Claim your items in \"{expenseName}\" ({groupName}).'**
+  String claimNudgeNotificationBody(String expenseName, String groupName);
+
   /// Non-actionable hint in the sticky bottom bar; claiming happens instantly per tap, so there is no explicit confirm step.
   ///
   /// In en, this message translates to:
