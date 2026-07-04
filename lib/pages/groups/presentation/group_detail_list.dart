@@ -193,14 +193,10 @@ class _ExpenseNetLine extends StatelessWidget {
     final currentUserPaid = expense.paidBy == currentUserEmail;
     final shareStat = expense.groupMemberShareStatistic;
 
-    final payerName =
-        currentUserPaid ? l10n.you : (expense.paidByDisplayName ?? "");
-    final paidPart = l10n.expenseDisplayAmount(
-      currentUserPaid ? 'yes' : '',
-      payerName,
-      "paid",
-      expense.amount,
-    );
+    // Paid clause without the amount — the row's trailing total already shows it.
+    final paidPart = currentUserPaid
+        ? l10n.expensePaidByYou
+        : l10n.expensePaidByOther(expense.paidByDisplayName ?? "");
 
     Widget? netWidget;
     if (shareStat.containsKey(currentUserEmail)) {
