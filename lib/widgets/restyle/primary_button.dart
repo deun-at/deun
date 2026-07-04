@@ -125,6 +125,18 @@ class _PrimaryButtonState extends State<PrimaryButton> {
       color: fgColor,
     );
 
+    // Labels stay on a single line and ellipsize so localized strings (e.g.
+    // "Begleichen" for "Settle up") don't overflow a tight inline pill —
+    // mirrors [SecondaryButton]. Flexible in the icon Row lets the label
+    // shrink instead of forcing the Row past its bounds.
+    final Widget label = Text(
+      widget.label,
+      style: labelStyle,
+      maxLines: 1,
+      softWrap: false,
+      overflow: TextOverflow.ellipsis,
+    );
+
     Widget content;
     if (widget.loading) {
       content = SizedBox(
@@ -141,11 +153,11 @@ class _PrimaryButtonState extends State<PrimaryButton> {
         children: [
           Icon(widget.icon, size: 18, color: fgColor),
           SizedBox(width: widget.compact ? 5 : 8),
-          Text(widget.label, style: labelStyle),
+          Flexible(child: label),
         ],
       );
     } else {
-      content = Text(widget.label, style: labelStyle);
+      content = label;
     }
 
     // Compact: a tighter stadium pill (COMPONENTS §"Stadium pills") without the

@@ -472,16 +472,21 @@ class _GroupBalanceHero extends StatelessWidget {
                   uniformColor: onHero.withValues(alpha: 0.22),
                 ),
               const Spacer(),
-              PrimaryButton(
-                label: l10n.groupDetailSettleUp,
-                background: onHero,
-                foreground: heroSurface,
-                fullWidth: false,
-                onPressed: () {
-                  GoRouter.of(
-                    context,
-                  ).push("/group/details/payment", extra: {'group': group});
-                },
+              // Compact 999-radius pill (mockup L470: 9/18 pad), wrapped in
+              // Flexible so a long localized label ("Begleichen") ellipsizes
+              // instead of overflowing the hero Row.
+              Flexible(
+                child: PrimaryButton(
+                  label: l10n.groupDetailSettleUp,
+                  background: onHero,
+                  foreground: heroSurface,
+                  compact: true,
+                  onPressed: () {
+                    GoRouter.of(
+                      context,
+                    ).push("/group/details/payment", extra: {'group': group});
+                  },
+                ),
               ),
             ],
           ),

@@ -168,6 +168,25 @@ void main() {
       expect(find.text('Share'), findsOneWidget);
     });
 
+    testWidgets('label stays single-line + ellipsizes so it cannot overflow (F153)',
+        (tester) async {
+      // "Begleichen" (DE "Settle up") in the tight hero pill previously
+      // overflowed because the label was a bare Text with no maxLines.
+      await _pump(
+        tester,
+        const SizedBox(
+          width: 90,
+          child: PrimaryButton(label: 'Begleichen', onPressed: null, compact: true),
+        ),
+      );
+      expect(tester.takeException(), isNull,
+          reason: 'compact PrimaryButton must not overflow at a tight width');
+      final text = tester.widget<Text>(find.text('Begleichen'));
+      expect(text.maxLines, 1);
+      expect(text.softWrap, isFalse);
+      expect(text.overflow, TextOverflow.ellipsis);
+    });
+
     // -------------------------------------------------------------------------
     // Builds in dark mode
     // -------------------------------------------------------------------------
