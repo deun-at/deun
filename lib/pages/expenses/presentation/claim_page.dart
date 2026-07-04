@@ -474,7 +474,8 @@ class _SummaryCard extends StatelessWidget {
 
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(20),
+      // F174(a): mockup padding is 18×20 (vertical × horizontal), not all(20).
+      padding: const EdgeInsets.symmetric(vertical: 18, horizontal: 20),
       decoration: BoxDecoration(
         color: heroSurface,
         borderRadius: BorderRadius.circular(24),
@@ -482,35 +483,60 @@ class _SummaryCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // F174(a): the header baseline-aligns the big amount (left) with a
+          // stacked right column ("you claimed" over the item count).
           Row(
+            crossAxisAlignment: CrossAxisAlignment.end,
             children: [
               Expanded(
-                child: Text(
-                  l10n.claimYourShare,
-                  style: textTheme.labelLarge?.copyWith(color: onHeroMuted),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      l10n.claimYourShare,
+                      style:
+                          textTheme.labelLarge?.copyWith(color: onHeroMuted),
+                    ),
+                    const SizedBox(height: 6),
+                    MoneyText(
+                      summary.yourShare,
+                      style: textTheme.displaySmall?.copyWith(color: onHero),
+                      animate: true,
+                    ),
+                  ],
                 ),
               ),
-              // F128: how many items the current persona has claimed.
-              Text(
-                l10n.claimYouClaimedItems(summary.yourClaimedCount),
-                style: textTheme.bodySmall?.copyWith(color: onHeroMuted),
+              const SizedBox(width: 12),
+              // F174(a): stacked right column — muted "you claimed" label over
+              // the bold white item count, bottom-aligned with the amount.
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Text(
+                    l10n.claimYouClaimedLabel,
+                    style: textTheme.bodySmall?.copyWith(color: onHeroMuted),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    l10n.claimYouClaimedItems(summary.yourClaimedCount),
+                    style: textTheme.titleSmall?.copyWith(
+                      color: onHero,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ],
               ),
             ],
           ),
-          const SizedBox(height: 6),
-          MoneyText(
-            summary.yourShare,
-            style: textTheme.displaySmall?.copyWith(color: onHero),
-            animate: true,
-          ),
-          const SizedBox(height: 18),
+          // F174(a): track rgba(white,0.12) with 16/7 margins.
+          const SizedBox(height: 16),
           // F128: green success fill on the dark card (not the on-ink tone).
           ProgressBar(
             value: summary.progress,
             fillColor: semantic.success,
-            trackColor: onHero.withValues(alpha: 0.18),
+            trackColor: onHero.withValues(alpha: 0.12),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 7),
           Row(
             children: [
               Text(
@@ -521,42 +547,44 @@ class _SummaryCard extends StatelessWidget {
                 style: textTheme.bodySmall?.copyWith(color: onHeroMuted),
               ),
               const Spacer(),
-              // F128: remaining amount in amber "left" tone (or "all claimed").
+              // F128/F174(a): remaining amount in amber "left" tone; once fully
+              // claimed the figure flips to the green success tone (not muted).
               Text(
                 summary.isFullyClaimed
                     ? l10n.claimAllClaimed
                     : l10n.claimLeftLabel(l10n.toCurrency(summary.unclaimed)),
                 style: textTheme.bodySmall?.copyWith(
-                  color: summary.isFullyClaimed ? onHeroMuted : semantic.warning,
+                  color:
+                      summary.isFullyClaimed ? semantic.success : semantic.warning,
                   fontWeight: FontWeight.w600,
                 ),
               ),
             ],
           ),
           if (summary.memberTotals.isNotEmpty) ...[
-            const SizedBox(height: 18),
-            Divider(height: 1, color: onHero.withValues(alpha: 0.18)),
+            // F174(a): divider rgba(white,0.1) with 14/12 margins.
             const SizedBox(height: 14),
-            // F129: per-person totals are a compact avatar + amount chip strip
-            // (no "Per person" label, no name), matching the v3 handoff.
-            SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              clipBehavior: Clip.none,
-              child: Row(
-                children: [
-                  for (final m in summary.memberTotals) ...[
-                    _MemberTotalChip(
+            Divider(height: 1, color: onHero.withValues(alpha: 0.1)),
+            const SizedBox(height: 12),
+            // F129/F174(c): per-person totals are equal-width chips that always
+            // fit the card (flex:1, 6px gaps) — no horizontal scroll, so nothing
+            // paints past the rounded edge.
+            Row(
+              children: [
+                for (final m in summary.memberTotals) ...[
+                  Expanded(
+                    child: _MemberTotalChip(
                       name: displayName(m.email),
                       colorKey: m.email,
                       amount: m.amount,
                       isYou: m.email == currentUserEmail,
                       onHero: onHero,
                     ),
-                    if (m != summary.memberTotals.last)
-                      const SizedBox(width: 8),
-                  ],
+                  ),
+                  if (m != summary.memberTotals.last)
+                    const SizedBox(width: 6),
                 ],
-              ),
+              ],
             ),
           ],
         ],
@@ -592,20 +620,22 @@ class _MemberTotalChip extends StatelessWidget {
     final chipBg = isYou
         ? primary.withValues(alpha: 0.22)
         : onHero.withValues(alpha: 0.08);
+    // F174(b): the chip is a vertical stack — 28px avatar on top, then the
+    // amount underneath — with a 13px radius and 9×4 padding (mockup L1224-1227).
     return Container(
-      padding: const EdgeInsets.fromLTRB(6, 6, 12, 6),
+      padding: const EdgeInsets.symmetric(vertical: 9, horizontal: 4),
       decoration: BoxDecoration(
         color: chipBg,
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(13),
       ),
-      child: Row(
+      child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          MemberAvatar(name: name, colorKey: colorKey, radius: 13, isYou: isYou),
-          const SizedBox(width: 7),
+          MemberAvatar(name: name, colorKey: colorKey, radius: 14, isYou: isYou),
+          const SizedBox(height: 5),
           MoneyText(
             amount,
-            style: textTheme.titleSmall
+            style: textTheme.bodySmall
                 ?.copyWith(color: onHero, fontWeight: FontWeight.w700),
           ),
         ],

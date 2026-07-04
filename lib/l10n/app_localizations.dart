@@ -818,10 +818,16 @@ abstract class AppLocalizations {
   /// **'You, your share'**
   String get claimYourShare;
 
-  /// Right-side header on the summary card: how many items the current persona has claimed.
+  /// Small muted label on the summary card's right column, above the claimed-item count.
   ///
   /// In en, this message translates to:
-  /// **'{count, plural, =0{you claimed no items} one{you claimed {count} item} other{you claimed {count} items}}'**
+  /// **'you claimed'**
+  String get claimYouClaimedLabel;
+
+  /// Right column of the summary card: the claimed-item count ("2 items") shown large under the "you claimed" label.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =0{no items} one{{count} item} other{{count} items}}'**
   String claimYouClaimedItems(int count);
 
   /// Right-side figure under the progress bar: the amount still unclaimed, in an amber tone.

@@ -413,13 +413,16 @@ class AppLocalizationsDe extends AppLocalizations {
   String get claimYourShare => 'Du, dein Anteil';
 
   @override
+  String get claimYouClaimedLabel => 'beansprucht';
+
+  @override
   String claimYouClaimedItems(int count) {
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other: 'du hast $count Positionen beansprucht',
-      one: 'du hast $count Position beansprucht',
-      zero: 'du hast keine Positionen beansprucht',
+      other: '$count Positionen',
+      one: '$count Position',
+      zero: 'keine Positionen',
     );
     return '$_temp0';
   }

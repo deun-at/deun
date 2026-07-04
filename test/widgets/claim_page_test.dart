@@ -322,6 +322,25 @@ void main() {
     expect(left.style?.color, semantic.warning);
   });
 
+  testWidgets(
+      'F174: once fully claimed, the status flips to the green success tone',
+      (tester) async {
+    final l10n = await AppLocalizations.delegate.load(const Locale('en'));
+    // Everything claimed → unclaimed == 0 → "All claimed" in success green,
+    // not the muted on-ink tone (regression from the earlier restyle).
+    final e = _itemizedExpense();
+    // Claim the last free unit so nothing is left unclaimed.
+    e.expenseEntries['u3'] =
+        _unit(2, 'u3', 'Bread', 4, [const MapEntry('a@test.com', 'Alice')]);
+    await _pump(tester, expense: e);
+
+    final context = tester.element(find.byType(ClaimPage));
+    final semantic = Theme.of(context).extension<SemanticColors>()!;
+
+    final status = tester.widget<Text>(find.text(l10n.claimAllClaimed));
+    expect(status.style?.color, semantic.success);
+  });
+
   testWidgets('F130: unclaimed callout shows payer copy + black Nudge pill',
       (tester) async {
     final l10n = await AppLocalizations.delegate.load(const Locale('en'));

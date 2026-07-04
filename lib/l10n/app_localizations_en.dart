@@ -410,13 +410,16 @@ class AppLocalizationsEn extends AppLocalizations {
   String get claimYourShare => 'You, your share';
 
   @override
+  String get claimYouClaimedLabel => 'you claimed';
+
+  @override
   String claimYouClaimedItems(int count) {
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other: 'you claimed $count items',
-      one: 'you claimed $count item',
-      zero: 'you claimed no items',
+      other: '$count items',
+      one: '$count item',
+      zero: 'no items',
     );
     return '$_temp0';
   }
