@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'dart:io';
 
-import 'package:deun/helper/helper.dart';
 import 'package:deun/main.dart';
 import 'package:deun/pages/expenses/data/expense_model.dart';
 import 'package:deun/pages/expenses/data/expense_repository.dart';
@@ -21,7 +20,6 @@ import '../../expenses/data/receipt_scan_result.dart';
 import '../../expenses/presentation/receipt_scanner_sheet.dart';
 import '../provider/group_detail.dart';
 
-import '../../../widgets/card_list_view_builder.dart';
 import '../../../widgets/restyle/avatar_stack.dart';
 import '../../../widgets/restyle/soft_card.dart';
 import '../../../widgets/restyle/money_text.dart';
@@ -307,16 +305,34 @@ class _GroupDetailState extends ConsumerState<GroupDetail> {
       },
       suggestionsBuilder: (context, controller) {
         if (controller.text.isEmpty) {
-          return <Widget>[
-            CardListTile(
-              isTop: true,
-              isBottom: true,
-              child: ListTile(title: Text(l10n.expensesSearchDescription)),
-            ),
-          ];
+          return <Widget>[_searchHint(l10n.expensesSearchDescription)];
         }
         return getExpenseSuggestions(controller, widget.group);
       },
+    );
+  }
+
+  /// Empty/hint row styled to match the ledger surface: one [SoftCard] holding a
+  /// single muted line (radius 20, padding v4 — same as a joined day card).
+  /// Resolves its own theme from the row's build context (no captured context).
+  Widget _searchHint(String text) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
+      child: SoftCard(
+        padding: const EdgeInsets.symmetric(vertical: 4),
+        borderRadius: 20,
+        child: LedgerRowInk(
+          padding: const EdgeInsets.all(14),
+          child: Builder(
+            builder: (context) => Text(
+              text,
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  ),
+            ),
+          ),
+        ),
+      ),
     );
   }
 
@@ -339,55 +355,38 @@ class _GroupDetailState extends ConsumerState<GroupDetail> {
       input,
     );
     if (result.isEmpty) {
-      return [
-        CardListTile(
-          isTop: true,
-          isBottom: true,
-          child: ListTile(title: Text(l10n.expensesSearchEmpty)),
-        ),
-      ];
+      return [_searchHint(l10n.expensesSearchEmpty)];
     }
 
-    int resultLength = result.length;
-    int index = 0;
-
-    return result.map((expense) {
-      double expenseSum = expense.expenseEntries.values.fold<double>(
-        0,
-        (sum, expense) => sum + expense.amount,
-      );
-
-      bool isTop = false;
-      bool isBottom = false;
-      if (index == 0) {
-        isTop = true;
-      }
-
-      if (index == resultLength - 1) {
-        isBottom = true;
-      }
-
-      index++;
-
-      return CardListTile(
-        isTop: isTop,
-        isBottom: isBottom,
-        child: ListTile(
-          title: Text(expense.name),
-          subtitle: Text(AppLocalizations.of(context)!.toCurrency(expenseSum)),
-          trailing: Text(formatDate(expense.expenseDate, context)),
-          onTap: () async {
-            controller.closeView("");
-            unawaited(
-              GoRouter.of(context).push(
-                "/group/details/expense",
-                extra: {'group': group, 'expense': expense},
-              ),
-            );
-          },
+    // Render results with the SAME ledger quick-row, joined in one SoftCard
+    // (radius 20, padding v4) — matching the signed-off main ledger. Tapping a
+    // result routes exactly like a ledger tap (detail / claim) via
+    // openLedgerExpense, instead of the old edit modal.
+    return [
+      Padding(
+        padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
+        child: SoftCard(
+          padding: const EdgeInsets.symmetric(vertical: 4),
+          borderRadius: 20,
+          // Builder gives each row a live context for tap-routing, avoiding the
+          // captured post-await context from this async suggestions callback.
+          child: Builder(
+            builder: (context) => Column(
+              children: [
+                for (final expense in result)
+                  LedgerQuickRow(
+                    expense: expense,
+                    onTap: () {
+                      controller.closeView("");
+                      openLedgerExpense(context, group, expense);
+                    },
+                  ),
+              ],
+            ),
+          ),
         ),
-      );
-    });
+      ),
+    ];
   }
 }
 

@@ -19,6 +19,17 @@ import 'package:go_router/go_router.dart';
 import '../../expenses/data/expense_model.dart';
 import '../../expenses/provider/expense_list.dart';
 
+/// Opens an expense the same way the ledger does: quick expenses go to the read
+/// detail (Screen 11), itemized expenses go to Tap-to-Claim (Screen 9). Shared
+/// so the expense search routes identically to a ledger tap.
+void openLedgerExpense(BuildContext context, Group group, Expense expense) {
+  final isItemized = classifyLedgerRow(expense) == LedgerRowType.itemized;
+  GoRouter.of(context).push(
+    isItemized ? "/group/details/claim" : "/group/details/expense-detail",
+    extra: {'group': group, 'expense': expense},
+  );
+}
+
 class GroupDetailList extends ConsumerStatefulWidget {
   const GroupDetailList({super.key, required this.group, this.adBlock});
 
@@ -36,16 +47,8 @@ class _GroupDetailListState extends ConsumerState<GroupDetailList> {
     return ref.read(expenseListProvider(widget.group.id).notifier).reload(widget.group.id);
   }
 
-  void _openExpense(Expense expense) {
-    // Quick expenses open the read detail (Screen 11); itemized expenses open
-    // the Tap-to-Claim screen (Screen 9).
-    final isItemized =
-        classifyLedgerRow(expense) == LedgerRowType.itemized;
-    GoRouter.of(context).push(
-      isItemized ? "/group/details/claim" : "/group/details/expense-detail",
-      extra: {'group': widget.group, 'expense': expense},
-    );
-  }
+  void _openExpense(Expense expense) =>
+      openLedgerExpense(context, widget.group, expense);
 
   @override
   Widget build(BuildContext context) {
@@ -58,7 +61,7 @@ class _GroupDetailListState extends ConsumerState<GroupDetailList> {
 
         if (isLoading) {
           // Mirror the real day-grouped ledger (section header + joined
-          // _QuickRow cards) rather than flat bars (F166).
+          // LedgerQuickRow cards) rather than flat bars (F166).
           return const ShimmerCardList(
             height: 80,
             listEntryLength: 12,
@@ -180,14 +183,14 @@ class _LedgerRow extends StatelessWidget {
       case LedgerRowType.itemized:
         return _ItemizedRow(expense: expense, onTap: () => onOpenExpense(expense));
       case LedgerRowType.quick:
-        return _QuickRow(expense: expense, onTap: () => onOpenExpense(expense));
+        return LedgerQuickRow(expense: expense, onTap: () => onOpenExpense(expense));
     }
   }
 }
 
 /// Shared "{payer} paid · you lent/owe €X" net summary line.
-class _ExpenseNetLine extends StatelessWidget {
-  const _ExpenseNetLine({required this.expense});
+class ExpenseNetLine extends StatelessWidget {
+  const ExpenseNetLine({super.key, required this.expense});
 
   final Expense expense;
 
@@ -258,8 +261,8 @@ class _ExpenseNetLine extends StatelessWidget {
 }
 
 /// Quick expense: category icon, title, payer/net line, trailing total.
-class _QuickRow extends StatelessWidget {
-  const _QuickRow({required this.expense, required this.onTap});
+class LedgerQuickRow extends StatelessWidget {
+  const LedgerQuickRow({super.key, required this.expense, required this.onTap});
 
   final Expense expense;
   final VoidCallback onTap;
@@ -268,7 +271,7 @@ class _QuickRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
 
-    return _RowInk(
+    return LedgerRowInk(
       onTap: onTap,
       padding: const EdgeInsets.all(14),
       child: Row(
@@ -297,7 +300,7 @@ class _QuickRow extends StatelessWidget {
                   overflow: TextOverflow.ellipsis,
                 ),
                 const SizedBox(height: 2),
-                _ExpenseNetLine(expense: expense),
+                ExpenseNetLine(expense: expense),
               ],
             ),
           ),
@@ -315,8 +318,8 @@ class _QuickRow extends StatelessWidget {
 /// A tappable, ink-splashing padded row used inside a joined date-group card.
 /// Replaces the per-row [SoftCard] so consecutive rows share one card surface
 /// with no gaps between them (v3 date-group list).
-class _RowInk extends StatelessWidget {
-  const _RowInk({required this.child, required this.padding, this.onTap});
+class LedgerRowInk extends StatelessWidget {
+  const LedgerRowInk({super.key, required this.child, required this.padding, this.onTap});
 
   final Widget child;
   final EdgeInsetsGeometry padding;
@@ -368,7 +371,7 @@ class _ItemizedRow extends StatelessWidget {
     // items remain).
     final showAccentBar = hasUnclaimed;
 
-    return _RowInk(
+    return LedgerRowInk(
       onTap: onTap, // → /group/details/claim (Screen 9), via _openExpense.
       padding: EdgeInsets.zero,
       child: IntrinsicHeight(

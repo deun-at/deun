@@ -342,4 +342,90 @@ void main() {
     await _pump(tester, expenses: []);
     expect(find.text(l10n.groupExpenseNoEntries), findsOneWidget);
   });
+
+  // The expense search reuses LedgerQuickRow and routes via openLedgerExpense,
+  // so a searched expense behaves identically to a ledger tap (F168). These
+  // guard the shared route helper directly (row rendering is already covered
+  // by the ledger tests above).
+  testWidgets('openLedgerExpense sends a quick expense to the read detail', (tester) async {
+    await _expectOpenRoute(
+      tester,
+      expense: _quick(id: '1', date: '2026-01-02T10:00:00'),
+      expectedRoute: '/group/details/expense-detail',
+    );
+  });
+
+  testWidgets('openLedgerExpense sends an itemized expense to claim', (tester) async {
+    await _expectOpenRoute(
+      tester,
+      expense: _itemized(id: '2', date: '2026-01-02T10:00:00'),
+      expectedRoute: '/group/details/claim',
+    );
+  });
+}
+
+/// Pumps a button that calls [openLedgerExpense] and asserts the route hit.
+Future<void> _expectOpenRoute(
+  WidgetTester tester, {
+  required Expense expense,
+  required String expectedRoute,
+}) async {
+  final group = _group();
+  String? visited;
+
+  Widget dest(String route) => Scaffold(body: Text(route));
+
+  final router = GoRouter(
+    initialLocation: '/',
+    routes: [
+      GoRoute(
+        path: '/',
+        builder: (context, state) => Theme(
+          data: getThemeData(context, kBrandSeed, Brightness.light)
+              .copyWith(splashFactory: NoSplash.splashFactory),
+          child: Scaffold(
+            body: Center(
+              child: TextButton(
+                onPressed: () => openLedgerExpense(context, group, expense),
+                child: const Text('go'),
+              ),
+            ),
+          ),
+        ),
+      ),
+      GoRoute(
+        path: '/group/details/expense-detail',
+        builder: (context, state) {
+          visited = '/group/details/expense-detail';
+          return dest(visited!);
+        },
+      ),
+      GoRoute(
+        path: '/group/details/claim',
+        builder: (context, state) {
+          visited = '/group/details/claim';
+          return dest(visited!);
+        },
+      ),
+    ],
+  );
+
+  await tester.pumpWidget(
+    MaterialApp.router(
+      routerConfig: router,
+      localizationsDelegates: const [
+        AppLocalizations.delegate,
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
+      supportedLocales: AppLocalizations.supportedLocales,
+    ),
+  );
+  await tester.pumpAndSettle();
+
+  await tester.tap(find.text('go'));
+  await tester.pumpAndSettle();
+
+  expect(visited, expectedRoute);
 }
