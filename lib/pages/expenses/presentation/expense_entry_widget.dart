@@ -12,7 +12,6 @@ import '../../../widgets/decimal_text_input_formatter.dart';
 import '../../../widgets/restyle/app_segmented_control.dart';
 import '../../../widgets/restyle/member_avatar.dart';
 import '../../../widgets/restyle/money_text.dart';
-import '../../../widgets/restyle/progress_bar.dart';
 import '../../../widgets/restyle/section_label.dart';
 import '../../../widgets/restyle/soft_card.dart';
 import '../../../widgets/restyle/stepper_control.dart';
@@ -317,6 +316,10 @@ class _ExpenseEntryWidgetState extends State<ExpenseEntryWidget> {
             ),
             const SizedBox(height: spacing),
             _buildSplitModeSelector(l10n),
+            const SizedBox(height: spacing),
+            // F161 D2/D3/D5: ONE colored bar + a single right-aligned
+            // status-aware remain label, ABOVE the member-row card.
+            _buildAllocationSummary(l10n),
             const SizedBox(height: spacing),
             _buildMemberList(spacing, l10n),
             _buildHiddenFormFields(),
@@ -644,23 +647,35 @@ class _ExpenseEntryWidgetState extends State<ExpenseEntryWidget> {
             return null;
           },
           builder: (FormFieldState<dynamic> sharesField) {
-            return InputDecorator(
-              decoration: InputDecoration(
-                label: Text(l10n.expenseEntrySharesLable),
-                errorText: sharesField.errorText,
-                border: InputBorder.none,
-                contentPadding: const EdgeInsets.all(0),
-              ),
-              child: Column(
-                children: [
-                  ...widget.groupMembers.map((member) {
-                    bool isEnabled = _enabledMembers.contains(member.email);
-                    return _buildMemberRow(member, isEnabled, sharesField);
-                  }),
-                  const SizedBox(height: 8),
-                  _buildAllocationSummary(l10n),
-                ],
-              ),
+            // F161 D1: only the member rows sit in a white SoftCard (radius 18,
+            // padding v6/h4). No "Split between" InputDecorator label — the
+            // section heading above already names it. errorText kept below.
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                SoftCard(
+                  borderRadius: 18,
+                  padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 4),
+                  child: Column(
+                    children: [
+                      ...widget.groupMembers.map((member) {
+                        bool isEnabled = _enabledMembers.contains(member.email);
+                        return _buildMemberRow(member, isEnabled, sharesField);
+                      }),
+                    ],
+                  ),
+                ),
+                if (sharesField.errorText != null)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 8, left: 4),
+                    child: Text(
+                      sharesField.errorText!,
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            color: Theme.of(context).colorScheme.error,
+                          ),
+                    ),
+                  ),
+              ],
             );
           },
         ),
@@ -693,6 +708,59 @@ class _ExpenseEntryWidgetState extends State<ExpenseEntryWidget> {
     );
   }
 
+  /// Toggle a member in/out of the split. Reuses the exact body the old
+  /// Material Checkbox.onChanged ran, so the split math is unchanged.
+  void _toggleMember(GroupMember member, bool include) {
+    setState(() {
+      if (include) {
+        _enabledMembers.add(member.email);
+        if (_splitMode == SplitMode.shares) {
+          _memberParts[member.email] = 1;
+        }
+      } else {
+        _enabledMembers.remove(member.email);
+        _lockedMembers.remove(member.email);
+      }
+      _updateSplitState();
+    });
+  }
+
+  /// F161 D4: custom 26px round include toggle (mockup L982-988).
+  /// Included = filled primary circle + white check(17); excluded = empty
+  /// circle with a 2px outlineVariant border. The gesture box is padded out to
+  /// a ≥48px hit target while the visual stays 26px.
+  Widget _buildIncludeToggle(GroupMember member, bool isEnabled) {
+    final colorScheme = Theme.of(context).colorScheme;
+    return Semantics(
+      checked: isEnabled,
+      label: _getDisplayName(member.email),
+      child: GestureDetector(
+        key: ValueKey('split_toggle_${widget.index}_${member.email}'),
+        behavior: HitTestBehavior.opaque,
+        onTap: () => _toggleMember(member, !isEnabled),
+        child: Container(
+          width: 48,
+          height: 48,
+          alignment: Alignment.center,
+          child: Container(
+            width: 26,
+            height: 26,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: isEnabled ? colorScheme.primary : Colors.transparent,
+              border: isEnabled
+                  ? null
+                  : Border.all(color: colorScheme.outlineVariant, width: 2),
+            ),
+            child: isEnabled
+                ? Icon(Icons.check, size: 17, color: colorScheme.onPrimary)
+                : null,
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget _buildMemberRow(
     GroupMember member,
     bool isEnabled,
@@ -705,29 +773,10 @@ class _ExpenseEntryWidgetState extends State<ExpenseEntryWidget> {
       padding: const EdgeInsets.symmetric(vertical: 2),
       child: Row(
         children: [
-          // Round include-toggle: unchecked = empty circle (prototype
-          // "not in" state, F108). Full theme-level round checkbox is F107.
-          SizedBox(
-            width: 32,
-            child: Checkbox(
-              shape: const CircleBorder(),
-              value: isEnabled,
-              onChanged: (bool? value) {
-                setState(() {
-                  if (value == true) {
-                    _enabledMembers.add(member.email);
-                    if (_splitMode == SplitMode.shares) {
-                      _memberParts[member.email] = 1;
-                    }
-                  } else {
-                    _enabledMembers.remove(member.email);
-                    _lockedMembers.remove(member.email);
-                  }
-                  _updateSplitState();
-                });
-              },
-            ),
-          ),
+          // F161 D4: 26px round include-toggle. Included = filled primary
+          // circle + white check(17); excluded = empty circle with a 2px
+          // outlineVariant border. ≥48px tap target via the padded gesture box.
+          _buildIncludeToggle(member, isEnabled),
           // Avatar
           Opacity(
             opacity: isEnabled ? 1 : 0.4,
@@ -1038,27 +1087,35 @@ class _ExpenseEntryWidgetState extends State<ExpenseEntryWidget> {
     return preview.toStringAsFixed(2);
   }
 
-  /// Segmented split bar: one colored segment per INCLUDED member, colored with
-  /// that member's avatar color (same [memberAvatarColor] keyed by email that
-  /// [MemberAvatar] uses) and flex-weighted by their share amount — so Equal
-  /// gives equal widths and %/Shares/Exact scale with the per-row amounts.
-  /// Rebuilds with the parent [setState] as members toggle or amounts change.
-  Widget _buildSplitSegments() {
+  /// F161 D3: ONE 10px / radius-6 segmented bar on a [surfaceContainerHighest]
+  /// track. Each INCLUDED member gets a segment sized as their share OF THE
+  /// TOTAL (not of the allocated sum), colored with their avatar color (same
+  /// [memberAvatarColor] the [MemberAvatar] uses; "you" uses primary). When the
+  /// split under-allocates, the segments don't fill the track — the leftover
+  /// track shows through as a visible empty remainder. Rebuilds with the parent
+  /// [setState] as members toggle or amounts change.
+  Widget _buildSplitSegments(SplitAllocation allocation) {
     final colorScheme = Theme.of(context).colorScheme;
     final youEmail = supabase.auth.currentUser?.email;
 
-    // Preserve the member-list order so segment order matches the rows/avatars.
-    final segments = <Widget>[];
+    // Fraction of the total each segment occupies. For amount mode this is the
+    // per-member amount / total (so an under-allocation leaves empty track); for
+    // the other modes SplitAllocation.fraction is 1.0 (equal/shares/percent-ok)
+    // or <1 (percent under), and each member's slice is their share of that.
+    final children = <Widget>[];
     for (final member in widget.groupMembers) {
       if (!_enabledMembers.contains(member.email)) continue;
       final amount = double.tryParse(_getAmountPreview(member.email)) ?? 0;
-      // Flex must be a positive int; a member with a zero share still gets a
-      // hairline segment so their color/presence stays visible.
-      final flex = (amount * 100).round().clamp(1, 1 << 30);
+      final double flexOfTotal = _entryTotal > 0
+          ? (amount / _entryTotal).clamp(0.0, 1.0).toDouble()
+          : 0.0;
+      // Positive int flex; a zero-share included member keeps a hairline so
+      // their color/presence stays visible.
+      final flex = (flexOfTotal * 10000).round().clamp(1, 1 << 30);
       final color = member.email == youEmail
           ? colorScheme.primary
           : memberAvatarColor(member.email);
-      segments.add(Expanded(
+      children.add(Expanded(
         flex: flex,
         child: Container(
           key: ValueKey('split_segment_${widget.index}_${member.email}'),
@@ -1067,30 +1124,28 @@ class _ExpenseEntryWidgetState extends State<ExpenseEntryWidget> {
       ));
     }
 
-    if (segments.isEmpty) {
-      // No included members — nothing to segment. Keep the height so the layout
-      // doesn't jump when the last member is toggled back in.
-      return Container(
-        height: 8,
-        decoration: BoxDecoration(
-          color: colorScheme.surfaceContainerHighest,
-          borderRadius: BorderRadius.circular(4),
-        ),
-      );
+    // Empty remainder: the unallocated slice of the track (visible when the
+    // split under-allocates). Over-allocation clamps to a full bar.
+    final remainderFlex =
+        ((1.0 - allocation.fraction).clamp(0.0, 1.0) * 10000).round();
+    if (remainderFlex > 0) {
+      children.add(Expanded(flex: remainderFlex, child: const SizedBox()));
     }
 
     return ClipRRect(
-      borderRadius: BorderRadius.circular(4),
-      child: SizedBox(
-        height: 8,
-        child: Row(children: segments),
+      borderRadius: BorderRadius.circular(6),
+      child: Container(
+        height: 10,
+        color: colorScheme.surfaceContainerHighest,
+        child: children.isEmpty ? null : Row(children: children),
       ),
     );
   }
 
-  /// Allocation bar + live remaining indicator. Reads the same numbers the
-  /// existing validation uses (via the pure [SplitAllocation] helper) so the
-  /// progress fill, the semantic color, and the save-time validity stay in sync.
+  /// F161 D3/D5: one colored bar + a single right-aligned, status-aware remain
+  /// label. Reads the same numbers the save-time validation uses (via the pure
+  /// [SplitAllocation] helper) so the bar, the label color, and validity stay in
+  /// sync. No ProgressBar and no left-aligned detail — matches the v3 mockup.
   Widget _buildAllocationSummary(AppLocalizations l10n) {
     final semantic = Theme.of(context).extension<SemanticColors>()!;
     final colorScheme = Theme.of(context).colorScheme;
@@ -1104,62 +1159,50 @@ class _ExpenseEntryWidgetState extends State<ExpenseEntryWidget> {
       enabled: _enabledMembers,
     );
 
-    final Color statusColor;
-    // F110: quick split shows no "All set" label — only the numeric detail on
-    // the left. Under/over keep their meaningful remaining/over label.
-    final String? statusLabel;
+    // Single right-aligned label: grey default (fully-allocated equal/shares
+    // show their per-head / parts detail), success when explicitly all set,
+    // warning when under, danger when over.
+    final Color labelColor;
+    final String label;
     switch (allocation.status) {
       case AllocationStatus.ok:
-        statusColor = semantic.success;
-        statusLabel = null;
+        // Equal/shares are structurally always ok — keep their neutral detail
+        // (grey) rather than a redundant "All set". Amount/percentage reaching
+        // exactly 100% earn the success confirmation.
+        if (_splitMode == SplitMode.equal || _splitMode == SplitMode.shares) {
+          labelColor = colorScheme.onSurfaceVariant;
+          label = _allocationDetail(l10n);
+        } else {
+          labelColor = semantic.success;
+          label = l10n.splitAllocatedLabel;
+        }
         break;
       case AllocationStatus.under:
-        statusColor = semantic.warning;
-        statusLabel = _splitMode == SplitMode.amount
+        labelColor = semantic.warning;
+        label = _splitMode == SplitMode.amount
             ? l10n.splitRemainingLabel(l10n.toCurrency(allocation.remaining))
             : _underLabel(l10n);
         break;
       case AllocationStatus.over:
-        statusColor = semantic.danger;
-        statusLabel = _splitMode == SplitMode.amount
+        labelColor = semantic.danger;
+        label = _splitMode == SplitMode.amount
             ? l10n.splitOverLabel(l10n.toCurrency(allocation.remaining.abs()))
             : _overLabel(l10n);
         break;
     }
 
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        _buildSplitSegments(),
-        const SizedBox(height: 6),
-        ProgressBar(value: allocation.fraction, fillColor: statusColor),
-        const SizedBox(height: 6),
-        Row(
-          children: [
-            Expanded(
-              child: Text(
-                _allocationDetail(l10n),
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: colorScheme.onSurfaceVariant,
-                    ),
+        _buildSplitSegments(allocation),
+        const SizedBox(height: 4),
+        Text(
+          label,
+          textAlign: TextAlign.end,
+          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color: labelColor,
+                fontWeight: FontWeight.w600,
               ),
-            ),
-            if (statusLabel != null) ...[
-              Icon(
-                Icons.error_outline,
-                size: 16,
-                color: statusColor,
-              ),
-              const SizedBox(width: 4),
-              Text(
-                statusLabel,
-                style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                      color: statusColor,
-                      fontWeight: FontWeight.w600,
-                    ),
-              ),
-            ],
-          ],
         ),
       ],
     );

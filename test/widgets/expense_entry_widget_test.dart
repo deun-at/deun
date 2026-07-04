@@ -7,7 +7,6 @@ import 'package:deun/pages/expenses/presentation/expense_entry_widget.dart';
 import 'package:deun/pages/groups/data/group_member_model.dart';
 import 'package:deun/widgets/restyle/app_segmented_control.dart';
 import 'package:deun/widgets/restyle/member_avatar.dart';
-import 'package:deun/widgets/restyle/progress_bar.dart';
 import 'package:deun/widgets/restyle/stepper_control.dart';
 import 'package:deun/widgets/theme_builder.dart';
 import 'package:flutter/material.dart';
@@ -17,6 +16,11 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+
+// F161 D4: the include toggle is a keyed GestureDetector (index 0), not a
+// Material Checkbox anymore.
+Finder _toggleFinder(String email) =>
+    find.byKey(ValueKey('split_toggle_0_$email'));
 
 GroupMember _member(String email, String name) {
   final m = GroupMember();
@@ -107,11 +111,11 @@ void main() {
     await _pump(tester);
     final l10n = await AppLocalizations.delegate.load(const Locale('en'));
 
-    // No split-mode selector, no member checkboxes/avatars, no allocation bar.
+    // No split-mode selector, no member toggles/avatars, no allocation bar.
     expect(find.byType(AppSegmentedControl<SplitMode>), findsNothing);
-    expect(find.byType(Checkbox), findsNothing);
+    expect(_toggleFinder('a@test.com'), findsNothing);
     expect(find.byType(MemberAvatar), findsNothing);
-    expect(find.byType(ProgressBar), findsNothing);
+    expect(find.byKey(const ValueKey('split_segment_0_a@test.com')), findsNothing);
     expect(find.text(l10n.splitSectionLabel), findsNothing);
     // The item card itself (name + amount/quantity) is still there.
     expect(find.text(l10n.itemNameHint), findsOneWidget);
@@ -216,7 +220,7 @@ void main() {
     expect(find.text(l10n.splitEqualSummary(l10n.toCurrency(6))), findsOneWidget);
 
     // Unchecking a member re-splits over the remaining one.
-    await tester.tap(find.byType(Checkbox).first);
+    await tester.tap(_toggleFinder('a@test.com'));
     await tester.pumpAndSettle();
     expect(find.text(l10n.toCurrency(12)), findsOneWidget);
   });
@@ -239,7 +243,7 @@ void main() {
 
     // Uncheck Alice: her row shows "Not in", no €6.00 remains, and Bob's
     // per-head amount recalculates to the full €12.00.
-    await tester.tap(find.byType(Checkbox).first);
+    await tester.tap(_toggleFinder('a@test.com'));
     await tester.pumpAndSettle();
 
     expect(find.text(l10n.splitNotInLabel), findsOneWidget);
@@ -247,13 +251,13 @@ void main() {
     expect(find.text(l10n.toCurrency(12)), findsOneWidget);
 
     // Re-check: back to two equal shares, "Not in" gone.
-    await tester.tap(find.byType(Checkbox).first);
+    await tester.tap(_toggleFinder('a@test.com'));
     await tester.pumpAndSettle();
     expect(find.text(l10n.splitNotInLabel), findsNothing);
     expect(find.text(l10n.toCurrency(6)), findsNWidgets(2));
   });
 
-  testWidgets('include toggle uses a round (circle) shape', (tester) async {
+  testWidgets('include toggle is a 26px round toggle (F161 D4)', (tester) async {
     final controller = TextEditingController(text: '12.00');
     addTearDown(controller.dispose);
     await _pump(
@@ -262,8 +266,23 @@ void main() {
       isSingleEntry: true,
       expenseLevelAmountController: controller,
     );
-    final checkbox = tester.widget<Checkbox>(find.byType(Checkbox).first);
-    expect(checkbox.shape, isA<CircleBorder>());
+    // Included member: filled primary circle + white check(17). The toggle is
+    // a keyed GestureDetector wrapping a 26px circular Container.
+    final toggle = _toggleFinder('a@test.com');
+    expect(toggle, findsOneWidget);
+    final circle = tester.widget<Container>(
+      find.descendant(
+        of: toggle,
+        matching: find.byWidgetPredicate((w) =>
+            w is Container &&
+            w.decoration is BoxDecoration &&
+            (w.decoration as BoxDecoration).shape == BoxShape.circle),
+      ),
+    );
+    expect((circle.decoration as BoxDecoration).shape, BoxShape.circle);
+    // Check glyph shown when included.
+    expect(find.descendant(of: toggle, matching: find.byIcon(Icons.check)),
+        findsOneWidget);
   });
 
   testWidgets('Exact mode shows editable per-member amount fields on quick split',
@@ -290,8 +309,9 @@ void main() {
     expect(find.widgetWithText(TextFormField, '3.00'), findsOneWidget);
   });
 
-  testWidgets('quick split renders an allocation ProgressBar and member avatars',
-      (tester) async {
+  testWidgets(
+      'quick split renders the segmented allocation bar and member avatars '
+      '(F161 D3: no ProgressBar)', (tester) async {
     final controller = TextEditingController(text: '12.00');
     addTearDown(controller.dispose);
     await _pump(
@@ -300,7 +320,11 @@ void main() {
       isSingleEntry: true,
       expenseLevelAmountController: controller,
     );
-    expect(find.byType(ProgressBar), findsOneWidget);
+    // One colored segment per included member (the single bar), plus avatars.
+    expect(find.byKey(const ValueKey('split_segment_0_a@test.com')),
+        findsOneWidget);
+    expect(find.byKey(const ValueKey('split_segment_0_b@test.com')),
+        findsOneWidget);
     expect(find.byType(MemberAvatar), findsNWidgets(2));
   });
 
@@ -333,7 +357,7 @@ void main() {
     );
 
     // Toggle Alice out: her segment disappears, Bob's remains.
-    await tester.tap(find.byType(Checkbox).first);
+    await tester.tap(_toggleFinder('a@test.com'));
     await tester.pumpAndSettle();
     expect(aliceSeg, findsNothing);
     expect(bobSeg, findsOneWidget);
@@ -376,7 +400,7 @@ void main() {
     expect(find.text(l10n.splitPeopleCount(2, 2)), findsOneWidget);
 
     // Toggle Alice out (reuses the F108 include toggle): "1 of 2 people".
-    await tester.tap(find.byType(Checkbox).first);
+    await tester.tap(_toggleFinder('a@test.com'));
     await tester.pumpAndSettle();
     expect(find.text(l10n.splitPeopleCount(1, 2)), findsOneWidget);
     expect(find.text(l10n.splitPeopleCount(2, 2)), findsNothing);

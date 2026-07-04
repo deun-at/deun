@@ -894,20 +894,28 @@ class _ExpenseDetailState extends ConsumerState<ExpenseDetail> {
                         ),
                       ),
                       const SizedBox(height: spacing),
-                      CardColumn(children: _entries.map((data) =>
-                        ExpenseEntryWidget(
-                          key: ValueKey(data.index),
-                          expenseEntry: data.expenseEntry,
-                          index: data.index,
-                          onRemove: data.onRemove,
-                          groupMembers: data.groupMembers,
-                          initialName: data.initialName,
-                          initialAmount: _isSingleEntry ? null : data.initialAmount,
-                          initialQuantity: data.initialQuantity,
-                          isSingleEntry: _isSingleEntry,
-                          expenseLevelAmountController: _isSingleEntry ? _amountController : null,
-                        ),
-                      ).toList()),
+                      // F161 D1: quick split renders the entry on the page bg
+                      // (the split section owns its own SoftCard around only
+                      // the member rows). Itemized keeps the CardColumn wrap.
+                      Builder(builder: (context) {
+                        final entryWidgets = _entries.map((data) =>
+                          ExpenseEntryWidget(
+                            key: ValueKey(data.index),
+                            expenseEntry: data.expenseEntry,
+                            index: data.index,
+                            onRemove: data.onRemove,
+                            groupMembers: data.groupMembers,
+                            initialName: data.initialName,
+                            initialAmount: _isSingleEntry ? null : data.initialAmount,
+                            initialQuantity: data.initialQuantity,
+                            isSingleEntry: _isSingleEntry,
+                            expenseLevelAmountController: _isSingleEntry ? _amountController : null,
+                          ),
+                        ).toList();
+                        return _isSingleEntry
+                            ? Column(children: entryWidgets)
+                            : CardColumn(children: entryWidgets);
+                      }),
                       const SizedBox(height: spacing),
                       // F111: "Add item" is an Itemized-only concept — the Quick
                       // split has a single expense-level amount, so no add-item
