@@ -136,34 +136,10 @@ class _SignUpState extends State<SignUp> {
     }
   }
 
-  /// Forgot-password — mirrors `SupaEmailAuth._passwordRecovery`: validates the
-  /// email, calls `resetPasswordForEmail`, and confirms via a snackbar.
-  Future<void> _recoverPassword() async {
-    final l10n = AppLocalizations.of(context)!;
-    final email = _emailController.text.trim();
-    if (email.isEmpty || !_emailRegex.hasMatch(email)) {
-      _emailFocusNode.requestFocus();
-      _showError(l10n.authEmailInvalid);
-      return;
-    }
-
-    setState(() => _isLoading = true);
-    try {
-      await supabase.auth.resetPasswordForEmail(
-        email,
-        redirectTo: kIsWeb ? null : _nativeRedirect,
-      );
-      if (!mounted) return;
-      ScaffoldMessenger.of(context)
-        ..hideCurrentSnackBar()
-        ..showSnackBar(SnackBar(content: Text(l10n.authPasswordResetSent)));
-    } on AuthException catch (error) {
-      _showError(error.message);
-    } catch (error) {
-      _showError(l10n.authUnexpectedError);
-    } finally {
-      if (mounted) setState(() => _isLoading = false);
-    }
+  /// Forgot-password — navigate to the dedicated reset screen (F36). The
+  /// `resetPasswordForEmail` call now lives there (reset_password.dart).
+  void _recoverPassword() {
+    Navigator.of(context).pushNamed('/reset-password');
   }
 
   @override

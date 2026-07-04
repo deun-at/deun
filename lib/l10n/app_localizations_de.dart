@@ -850,6 +850,16 @@ class AppLocalizationsDe extends AppLocalizations {
       'Wähle ein neues Passwort für dein Konto.';
 
   @override
+  String get resetPasswordTitle => 'Passwort zurücksetzen';
+
+  @override
+  String get resetPasswordInstructions =>
+      'Gib die E-Mail-Adresse deines Kontos ein und wir senden dir einen Link zum Zurücksetzen.';
+
+  @override
+  String get resetPasswordSendLink => 'Link senden';
+
+  @override
   String get friends => 'Freunde';
 
   @override

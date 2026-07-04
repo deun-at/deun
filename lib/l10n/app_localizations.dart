@@ -1409,6 +1409,24 @@ abstract class AppLocalizations {
   /// **'Choose a new password for your account.'**
   String get updatePasswordInstructions;
 
+  /// Title of the dedicated reset-password screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Reset your password'**
+  String get resetPasswordTitle;
+
+  /// Subtitle of the reset-password screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter the email tied to your account and we\'ll send you a reset link.'**
+  String get resetPasswordInstructions;
+
+  /// Primary button on the reset-password screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Send reset link'**
+  String get resetPasswordSendLink;
+
   /// No description provided for @friends.
   ///
   /// In en, this message translates to:

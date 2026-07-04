@@ -828,6 +828,16 @@ class AppLocalizationsEn extends AppLocalizations {
       'Choose a new password for your account.';
 
   @override
+  String get resetPasswordTitle => 'Reset your password';
+
+  @override
+  String get resetPasswordInstructions =>
+      'Enter the email tied to your account and we\'ll send you a reset link.';
+
+  @override
+  String get resetPasswordSendLink => 'Send reset link';
+
+  @override
   String get friends => 'Friends';
 
   @override

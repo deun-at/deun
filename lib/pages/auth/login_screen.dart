@@ -4,6 +4,7 @@ import 'package:deun/pages/settings/privacy_policy.dart';
 import 'package:deun/widgets/deun_app.dart';
 import 'package:flutter/material.dart';
 
+import './reset_password.dart';
 import './sign_in.dart';
 
 class LoginScreen extends StatelessWidget {
@@ -14,6 +15,7 @@ class LoginScreen extends StatelessWidget {
     return DeunApp(
       routes: {
         '/': (context) => const SignUp(),
+        '/reset-password': (context) => const ResetPasswordScreen(),
         '/privacy-policy': (context) => const PrivacyPolicy(),
         '/contact': (context) => const Contact(),
       },
