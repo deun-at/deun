@@ -203,12 +203,13 @@ void main() {
   });
 
   // -------------------------------------------------------------------------
-  // F143: two-list-types standardization. All-friends is the NON-SPACED
-  // joined-row preset (CardColumn, one card, no inter-row gap); the request
-  // sections stay on the SPACED preset (per-card SoftCard with gaps between).
+  // F167: all-friends is ONE joined SoftCard (radius 22, no inter-row gap) —
+  // the same _DaySection pattern as the group-detail ledger, replacing the
+  // legacy CardColumn/CardListTile chrome (10px inset, 2px gaps, 28/8 radii).
+  // The request sections stay on the SPACED preset (per-card SoftCard w/ gaps).
   // -------------------------------------------------------------------------
 
-  testWidgets('all-friends uses the NON-SPACED CardColumn preset (joined rows, no gap)',
+  testWidgets('all-friends renders as ONE joined SoftCard (radius 22, no inter-row gap)',
       (tester) async {
     await _pumpFriendList(
       tester,
@@ -220,23 +221,21 @@ void main() {
       ),
     );
 
-    // All-friends renders through the shared non-spaced CardColumn...
-    expect(find.byType(CardColumn), findsOneWidget);
-    // ...and each row is NOT its own SoftCard (the SPACED preset) — the accepted
-    // rows live joined inside one CardColumn card, so no SoftCard appears for the
-    // all-friends section (no request sections present here).
-    expect(find.byType(SoftCard), findsNothing);
+    // The legacy CardColumn/Card chrome is gone; the section is a single SoftCard.
+    expect(find.byType(CardColumn), findsNothing);
+    final softCard = tester.widget<SoftCard>(find.byType(SoftCard));
+    expect(softCard.borderRadius, 22, reason: 'v3 all-friends radius');
 
-    // Joined: consecutive friend rows sit flush (no inter-row gap between the
-    // name lines' rows). The bottom of Alice's row card touches the top of Bob's.
+    // Joined: consecutive friend rows sit flush (no inter-row gap). The bottom of
+    // Alice's InkWell row touches the top of Bob's.
     final aliceRow = tester.getRect(find.ancestor(
       of: find.text('Alice'),
-      matching: find.byType(Card),
-    ));
+      matching: find.byType(InkWell),
+    ).first);
     final bobRow = tester.getRect(find.ancestor(
       of: find.text('Bob'),
-      matching: find.byType(Card),
-    ));
+      matching: find.byType(InkWell),
+    ).first);
     expect((bobRow.top - aliceRow.bottom).abs(), lessThan(0.5),
         reason: 'joined rows have no vertical gap between them');
   });
@@ -253,7 +252,7 @@ void main() {
 
     // Requests are per-card SoftCards (the SPACED preset), not a joined column.
     expect(find.byType(SoftCard), findsNWidgets(2));
-    // No accepted friends here → no non-spaced CardColumn.
+    // No accepted friends here → no all-friends card.
     expect(find.byType(CardColumn), findsNothing);
   });
 

@@ -4,7 +4,6 @@ import 'package:deun/pages/friends/data/friendship_repository.dart';
 import 'package:deun/pages/friends/presentation/friend_balance.dart';
 import 'package:deun/pages/friends/presentation/friend_detail_sheet.dart';
 import 'package:deun/pages/users/user_model.dart';
-import 'package:deun/widgets/card_list_view_builder.dart';
 import 'package:deun/widgets/empty_list_widget.dart';
 import 'package:deun/widgets/restyle/balance_pill.dart' show BalanceState;
 import 'package:deun/widgets/restyle/deun_header.dart' show HeaderIconButton;
@@ -112,17 +111,23 @@ class _FriendListState extends ConsumerState<FriendList> {
       if (value.acceptedFriends.isNotEmpty) ...[
         SectionLabel(l10n.friends),
         const SizedBox(height: 8),
-        // NON-SPACED joined-row preset (F143): all-friends is ONE card holding
-        // its rows joined (no inter-row gaps) — the CardColumn companion to the
-        // SPACED request lists above. Matches v3 "All friends".
-        CardColumn(
-          children: [
-            for (final friendship in value.acceptedFriends)
-              _FriendCard(
-                friendship: friendship,
-                onTap: () => openFriendDetailSheet(context, friendship),
-              ),
-          ],
+        // F167: all-friends is ONE SoftCard holding its rows joined (no inter-row
+        // gaps) — same _DaySection pattern as the group-detail ledger, and the
+        // SPACED-request SoftCards above. v3 "All friends" tokens: radius 22,
+        // card padding 6×4 (rows carry their own 13×14). Replaces the legacy
+        // CardColumn/CardListTile chrome (10px theme inset, 2px gaps, 28/8 radii).
+        SoftCard(
+          borderRadius: 22,
+          padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 4),
+          child: Column(
+            children: [
+              for (final friendship in value.acceptedFriends)
+                _FriendCard(
+                  friendship: friendship,
+                  onTap: () => openFriendDetailSheet(context, friendship),
+                ),
+            ],
+          ),
         ),
       ],
     ];
@@ -398,13 +403,13 @@ class _FriendCard extends StatelessWidget {
           fontWeight: FontWeight.w600,
         );
 
-    // No SoftCard wrapper: the row lives inside a joined CardColumn card, so it
-    // is an ink-splashing padded row (like the group-detail ledger rows) rather
-    // than its own gapped card.
+    // No SoftCard wrapper: the row lives inside the joined all-friends SoftCard,
+    // so it is an ink-splashing padded row (like the group-detail ledger rows)
+    // rather than its own gapped card. v3 row padding: 13×14 (L321).
     return InkWell(
       onTap: onTap,
       child: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.symmetric(vertical: 13, horizontal: 14),
         child: Row(
           children: [
             Expanded(child: _FriendIdentity(user: friendship.user)),
