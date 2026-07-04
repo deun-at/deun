@@ -114,11 +114,15 @@ class GroupListItem extends ConsumerWidget {
               Row(
                 children: [
                   if (members.isNotEmpty) ...[
-                    AvatarStack(members: members, radius: 13, maxVisible: 4),
-                    const SizedBox(width: 12),
+                    AvatarStack(members: members, radius: 13, maxVisible: 3),
+                    const SizedBox(width: 8),
                   ],
-                  const Spacer(),
-                  Column(
+                  // Flexible so the balance block yields before the amount
+                  // clips: when a wide member stack + long German lead label
+                  // ("Dir wird geschuldet") won't fit, the LABEL ellipsizes
+                  // (maxLines:1 below) while the amount stays whole (F152).
+                  Flexible(
+                    child: Column(
                     crossAxisAlignment: CrossAxisAlignment.end,
                     mainAxisSize: MainAxisSize.min,
                     children: [
@@ -130,6 +134,8 @@ class GroupListItem extends ConsumerWidget {
                       // read too weak versus the v3 lead/amount weight contrast.
                       Text(
                         balanceLabel,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                         style: textTheme.labelMedium?.copyWith(
                           color: colorScheme.onSurfaceVariant,
                         ),
@@ -151,6 +157,7 @@ class GroupListItem extends ConsumerWidget {
                         ),
                       ],
                     ],
+                    ),
                   ),
                 ],
               ),

@@ -7,6 +7,7 @@ import 'package:deun/pages/groups/presentation/group_list_item.dart';
 import 'package:deun/pages/groups/provider/group_list.dart';
 import 'package:deun/pages/users/user_model.dart';
 import 'package:deun/provider.dart';
+import 'package:deun/widgets/restyle/avatar_stack.dart';
 import 'package:deun/widgets/restyle/money_text.dart';
 import 'package:deun/widgets/theme_builder.dart';
 import 'package:flutter/material.dart';
@@ -619,6 +620,74 @@ void main() {
       find.descendant(of: find.byType(GroupListItem), matching: find.byType(MoneyText)),
       findsNothing,
     );
+  });
+
+  // -------------------------------------------------------------------------
+  // F152: a many-member group with the long German lead label must not clip /
+  // overflow the balance amount. Root cause was AvatarStack laying avatars in a
+  // Row with a +16px GAP (never overlapping) + a non-Flexible footer, so 5+
+  // members pushed the amount off the card. Fixed by real avatar overlap +
+  // a Flexible balance block whose LABEL ellipsizes before the amount clips.
+  // -------------------------------------------------------------------------
+
+  testWidgets('many-member group + long German label keeps the amount inside the card (F152)',
+      (tester) async {
+    // Real phone width so the footer has the same tight budget as the device.
+    tester.view.physicalSize = const Size(390 * 3, 844 * 3);
+    tester.view.devicePixelRatio = 3.0;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    final members = [
+      for (var i = 0; i < 7; i++) _member('member$i@test.com'),
+    ];
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          groupListProvider.overrideWith(() => _FakeGroupListNotifier(
+                [_group(id: 'a', name: 'Wochenendtrip', totalShareAmount: 1234.56, members: members)],
+                [],
+              )),
+          userDetailProvider.overrideWith(() => _FakeUserNotifier()),
+        ],
+        child: MaterialApp(
+          locale: const Locale('de'), // long "Dir wird geschuldet" lead label
+          localizationsDelegates: const [
+            AppLocalizations.delegate,
+            GlobalMaterialLocalizations.delegate,
+            GlobalWidgetsLocalizations.delegate,
+            GlobalCupertinoLocalizations.delegate,
+          ],
+          supportedLocales: AppLocalizations.supportedLocales,
+          home: Builder(
+            builder: (context) => Theme(
+              data: getThemeData(context, kBrandSeed, Brightness.light)
+                  .copyWith(splashFactory: NoSplash.splashFactory),
+              child: const GroupList(),
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    // Root-cause invariants (F152):
+    // 1) The avatar stack truly overlaps, so 7 members (3 shown + "+4" chip)
+    //    stay narrow — far under the old ~214px non-overlapping Row width.
+    final stackWidth = tester.getSize(find.byType(AvatarStack)).width;
+    expect(stackWidth, lessThan(120),
+        reason: '4 overlapped tokens must be far narrower than the old +16px-gap Row');
+
+    // 2) The balance amount is not clipped: its right edge stays within the
+    //    card's right padding (12px). Before the fix, the wide stack + non-Flexible
+    //    footer pushed the amount off the card edge.
+    final cardRight = tester.getBottomRight(find.byType(GroupListItem)).dx;
+    final amountRight = tester.getBottomRight(
+      find.descendant(of: find.byType(GroupListItem), matching: find.byType(MoneyText)),
+    ).dx;
+    expect(amountRight, lessThanOrEqualTo(cardRight),
+        reason: 'the balance amount must never spill past the card edge');
   });
 
   // -------------------------------------------------------------------------

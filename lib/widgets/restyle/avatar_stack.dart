@@ -61,14 +61,17 @@ class AvatarStack extends StatelessWidget {
     final ring = ringColor ?? colorScheme.surface;
     final overflow = members.length - maxVisible;
     final visible = overflow > 0 ? members.take(maxVisible).toList() : members;
-    final step = (radius * 2) - overlap;
 
-    final children = <Widget>[];
-    for (var i = 0; i < visible.length; i++) {
-      final m = visible[i];
-      children.add(Padding(
-        padding: EdgeInsets.only(left: i == 0 ? 0 : step),
-        child: MemberAvatar(
+    // Each token (avatar or "+N" chip) is a full circle of diameter
+    // (radius + ringWidth) * 2. Successive tokens are pulled back by [overlap]
+    // so they truly overlap (F152) — earlier tokens sit UNDER later ones, per
+    // the prototype's negative-margin stack. `step` is the left offset per token.
+    final tokenDiameter = (radius + ringWidth) * 2;
+    final step = tokenDiameter - overlap;
+
+    final tokens = <Widget>[
+      for (final m in visible)
+        MemberAvatar(
           name: m.name,
           colorKey: m.colorKey,
           imageUrl: m.imageUrl,
@@ -78,13 +81,8 @@ class AvatarStack extends StatelessWidget {
           ringWidth: ringWidth,
           backgroundColor: uniformColor,
         ),
-      ));
-    }
-
-    if (overflow > 0) {
-      children.add(Padding(
-        padding: EdgeInsets.only(left: visible.isEmpty ? 0 : step),
-        child: Container(
+      if (overflow > 0)
+        Container(
           padding: EdgeInsets.all(ringWidth),
           decoration: BoxDecoration(shape: BoxShape.circle, color: ring),
           child: CircleAvatar(
@@ -100,9 +98,25 @@ class AvatarStack extends StatelessWidget {
             ),
           ),
         ),
-      ));
-    }
+    ];
 
-    return Row(mainAxisSize: MainAxisSize.min, children: children);
+    if (tokens.isEmpty) return const SizedBox.shrink();
+
+    // Explicit width so the stack claims exactly its overlapped extent — the
+    // Row/Positioned layout can't size itself, and an unbounded width is what
+    // let long footers clip the balance amount (F152).
+    final width = step * (tokens.length - 1) + tokenDiameter;
+
+    return SizedBox(
+      width: width,
+      height: tokenDiameter,
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          for (var i = 0; i < tokens.length; i++)
+            Positioned(left: i * step, child: tokens[i]),
+        ],
+      ),
+    );
   }
 }
