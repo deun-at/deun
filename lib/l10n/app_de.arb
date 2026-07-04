@@ -47,6 +47,8 @@
   "groupMemberResultEmpty": "Keine Freunde gefunden!",
   "groupMemberAddGuestOption": "{name} als Gast hinzufügen",
   "groupMemberIsGuest": "Gast",
+  "groupMemberOwnerTag": "Eigentümer",
+  "groupMemberAddGuestLink": "Gast hinzufügen",
   "groupExpenseNoEntries": "Füge eine Ausgabe hinzu, um zu starten.",
   "groupDeleteError": "Fehler beim Löschen der Gruppe!",
   "groupDeleteSuccess": "Gruppe gelöscht!",

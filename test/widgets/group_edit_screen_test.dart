@@ -1,8 +1,11 @@
 import 'package:deun/constants.dart';
 import 'package:deun/l10n/app_localizations.dart';
+import 'package:deun/pages/friends/data/friendship_model.dart';
+import 'package:deun/pages/friends/provider/friendship_list.dart';
 import 'package:deun/pages/groups/data/group_member_model.dart';
 import 'package:deun/pages/groups/data/group_model.dart';
 import 'package:deun/pages/groups/presentation/group_detail_edit.dart';
+import 'package:deun/pages/users/user_model.dart';
 import 'package:deun/widgets/restyle/primary_button.dart';
 import 'package:deun/widgets/restyle/soft_card.dart';
 import 'package:deun/widgets/theme_builder.dart';
@@ -12,6 +15,26 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+
+/// Fake friends notifier that returns a fixed accepted-friends list without the
+/// real notifier's Supabase channel subscription (F71 inline roster tests).
+class _FakeFriendshipListNotifier extends FriendshipListNotifier {
+  _FakeFriendshipListNotifier(this._friends);
+  final List<Friendship> _friends;
+
+  @override
+  Future<FriendshipListState> build() async =>
+      FriendshipListState(acceptedFriends: _friends);
+}
+
+Friendship _friend(String email, String display, String username) {
+  final f = Friendship();
+  f.user = SupaUser(email: email, displayName: display, username: username, usernameCode: '0001');
+  f.status = 'accepted';
+  f.isIncomingRequest = false;
+  f.shareAmount = 0;
+  return f;
+}
 
 Group _group({
   int? colorValue,
@@ -42,9 +65,11 @@ Future<void> _pump(
   WidgetTester tester, {
   Group? group,
   Brightness brightness = Brightness.light,
+  List<dynamic> overrides = const [],
 }) async {
   await tester.pumpWidget(
     ProviderScope(
+      overrides: overrides.cast(),
       child: MaterialApp(
         localizationsDelegates: const [
           AppLocalizations.delegate,
@@ -311,5 +336,68 @@ void main() {
   testWidgets('renders in dark mode without throwing', (tester) async {
     await _pump(tester, group: _group(), brightness: Brightness.dark);
     expect(tester.takeException(), isNull);
+  });
+
+  // F71: hybrid inline roster — You(Owner) row, greyed candidate toggle rows
+  // from the friends provider, and an "Add guest" section-header link.
+  testWidgets('members section shows Owner tag, Add guest link and inline greyed friend rows (F71)',
+      (tester) async {
+    await _pump(
+      tester,
+      overrides: [
+        friendshipListProvider.overrideWith(
+          () => _FakeFriendshipListNotifier([_friend('sam@test.com', 'Sam', 'sam')]),
+        ),
+      ],
+    );
+
+    final l10n = await AppLocalizations.delegate.load(const Locale('en'));
+
+    // "You" row with an "Owner" trailing tag.
+    expect(find.text(l10n.you), findsOneWidget);
+    expect(find.text(l10n.groupMemberOwnerTag), findsOneWidget);
+
+    // "Add guest" section-header link.
+    expect(find.text(l10n.groupMemberAddGuestLink), findsOneWidget);
+
+    // The friend from the provider renders inline as a greyed toggle row: an
+    // Opacity(0.45) ancestor wrapping the row, with an add-circle affordance.
+    final samRow = find.text('Sam');
+    expect(samRow, findsOneWidget);
+    final greyed = find.ancestor(
+      of: samRow,
+      matching: find.byWidgetPredicate((w) => w is Opacity && w.opacity == 0.45),
+    );
+    expect(greyed, findsOneWidget, reason: 'not-added friend must be greyed at .45 opacity');
+    expect(find.byIcon(Icons.add_circle_outline), findsOneWidget);
+  });
+
+  testWidgets('tapping an inline friend row adds them (removes from candidates) (F71)',
+      (tester) async {
+    await _pump(
+      tester,
+      overrides: [
+        friendshipListProvider.overrideWith(
+          () => _FakeFriendshipListNotifier([_friend('sam@test.com', 'Sam', 'sam')]),
+        ),
+      ],
+    );
+
+    // Tapping the greyed candidate routes through the same add path the
+    // SearchAnchor uses: Sam becomes a selected member (check_circle remove
+    // action) and is no longer offered as a greyed add candidate.
+    await tester.tap(find.text('Sam'));
+    await tester.pumpAndSettle();
+
+    // Sam is no longer offered as a greyed add candidate...
+    expect(find.byIcon(Icons.add_circle_outline), findsNothing);
+    // ...and now renders as a selected member row carrying a check_circle
+    // remove action.
+    expect(find.text('Sam'), findsOneWidget);
+    final samCheck = find.descendant(
+      of: find.ancestor(of: find.text('Sam'), matching: find.byType(ListTile)),
+      matching: find.byIcon(Icons.check_circle),
+    );
+    expect(samCheck, findsOneWidget, reason: 'added friend shows a check_circle remove action');
   });
 }

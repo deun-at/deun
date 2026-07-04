@@ -156,6 +156,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get groupMemberIsGuest => 'Guest';
 
   @override
+  String get groupMemberOwnerTag => 'Owner';
+
+  @override
+  String get groupMemberAddGuestLink => 'Add guest';
+
+  @override
   String get groupExpenseNoEntries => 'Add an expense to get started';
 
   @override

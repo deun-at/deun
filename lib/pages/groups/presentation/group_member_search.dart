@@ -7,18 +7,21 @@ import 'package:deun/pages/groups/data/group_repository.dart';
 import 'package:deun/pages/users/user_repository.dart';
 import 'package:deun/widgets/card_list_view_builder.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:deun/l10n/app_localizations.dart';
 
 import '../../../main.dart';
 import '../../../widgets/user_avatar.dart';
 import '../../../widgets/search_view.dart';
+import '../../../widgets/restyle/section_label.dart';
+import '../../friends/provider/friendship_list.dart';
 import '../../users/user_model.dart';
 
 /// Widget that wraps a SearchAnchor for adding/removing group members.
 ///
 /// Renders the current member list inline and opens a search view
 /// for finding friends/users/guests to add.
-class GroupMemberSearch extends StatefulWidget {
+class GroupMemberSearch extends ConsumerStatefulWidget {
   const GroupMemberSearch({
     super.key,
     required this.field,
@@ -27,10 +30,15 @@ class GroupMemberSearch extends StatefulWidget {
   final FormFieldState<dynamic> field;
 
   @override
-  State<GroupMemberSearch> createState() => _GroupMemberSearchState();
+  ConsumerState<GroupMemberSearch> createState() => _GroupMemberSearchState();
 }
 
-class _GroupMemberSearchState extends State<GroupMemberSearch> {
+class _GroupMemberSearchState extends ConsumerState<GroupMemberSearch> {
+  /// How many top/recent friends to surface inline as toggle rows (F71). The v3
+  /// mockup roster is a 5-friend demo prop; the SearchAnchor stays for the long
+  /// tail (r8 = HYBRID). ponytail: fixed N, reads first N from the already-loaded
+  /// friends provider — no extra query.
+  static const int _inlineFriendLimit = 5;
   final SearchController _searchAnchorController = SearchController();
   final ValueNotifier<String> _searchQueryNotifier = ValueNotifier<String>("");
 
@@ -211,6 +219,15 @@ class _GroupMemberSearchState extends State<GroupMemberSearch> {
     return tiles;
   }
 
+  /// Reuse the SAME add path the SearchAnchor suggestions use: append the
+  /// user's JSON to the member list and push it into the form field.
+  void _addMember(Map<String, dynamic> user) {
+    final nbs = GroupRepository.decodeGroupMembersString(widget.field.value);
+    nbs.add(user);
+    widget.field.didChange(jsonEncode(nbs));
+    _searchQueryNotifier.value = jsonEncode(nbs);
+  }
+
   @override
   Widget build(BuildContext context) {
     return SearchAnchor(
@@ -223,39 +240,81 @@ class _GroupMemberSearchState extends State<GroupMemberSearch> {
         },
       ),
       builder: (context, controller) {
+        final l10n = AppLocalizations.of(context)!;
+        final colorScheme = Theme.of(context).colorScheme;
+        final currentEmail = supabase.auth.currentUser?.email;
+
         List<Map<String, dynamic>> groupMembers =
             GroupRepository.decodeGroupMembersString(widget.field.value);
+        final Set<String> selectedEmails =
+            groupMembers.map((m) => m['email'] as String? ?? '').toSet()..add(currentEmail ?? '');
 
         List<Widget> listTiles = [];
 
-        if (groupMembers.isNotEmpty &&
-            !(groupMembers.length == 1 && groupMembers.first['email'] == supabase.auth.currentUser?.email)) {
-          listTiles.addAll(groupMembers.map((groupMember) {
-            String displayName = groupMember["display_name"];
-            String subtitleText = fullUsernameFromJson(groupMember);
+        // You (Owner) row always first.
+        listTiles.add(ListTile(
+          leading: UserAvatar(displayName: l10n.you, radius: 18),
+          title: Text(l10n.you),
+          trailing: Text(
+            l10n.groupMemberOwnerTag,
+            style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                  color: colorScheme.onSurfaceVariant,
+                ),
+          ),
+        ));
 
-            if (groupMember["email"] == supabase.auth.currentUser?.email) {
-              displayName = AppLocalizations.of(context)!.you;
-            }
+        // Already-selected members (excluding You) with a remove action.
+        for (final groupMember in groupMembers) {
+          if (groupMember['email'] == currentEmail) continue;
 
-            if (groupMember['is_guest'] ?? false) {
-              subtitleText = AppLocalizations.of(context)!.groupMemberIsGuest;
-            }
+          String subtitleText = fullUsernameFromJson(groupMember);
+          if (groupMember['is_guest'] ?? false) {
+            subtitleText = l10n.groupMemberIsGuest;
+          }
 
-            return ListTile(
-              leading: UserAvatar(displayName: groupMember["display_name"] ?? "", radius: 18),
-              title: Text(displayName),
-              subtitle: Text(subtitleText),
-              onTap: () {
-                controller.openView();
+          listTiles.add(ListTile(
+            leading: UserAvatar(displayName: groupMember['display_name'] ?? '', radius: 18),
+            title: Text('${groupMember['display_name']}'),
+            subtitle: Text(subtitleText),
+            trailing: IconButton(
+              icon: Icon(Icons.check_circle, color: colorScheme.primary),
+              onPressed: () {
+                final nbs = GroupRepository.decodeGroupMembersString(widget.field.value);
+                nbs.removeWhere((m) => m['email'] == groupMember['email']);
+                widget.field.didChange(jsonEncode(nbs));
+                _searchQueryNotifier.value = jsonEncode(nbs);
               },
-            );
-          }));
+            ),
+          ));
+        }
+
+        // Inline recent/top-N friends as greyed toggle rows (F71 HYBRID). Sourced
+        // from the already-loaded friends provider — no new query. The long tail
+        // stays behind the "Add friends" SearchAnchor below.
+        final friends = ref.watch(friendshipListProvider).value?.acceptedFriends ?? const [];
+        final candidates = friends
+            .map((f) => f.user)
+            .where((u) => !selectedEmails.contains(u.email))
+            .take(_inlineFriendLimit)
+            .toList();
+
+        for (final user in candidates) {
+          listTiles.add(Opacity(
+            opacity: 0.45,
+            child: ListTile(
+              leading: UserAvatar(displayName: user.displayName, radius: 18),
+              title: Text(user.displayName),
+              subtitle: Text(user.fullUsername),
+              trailing: Icon(Icons.add_circle_outline, color: colorScheme.onSurfaceVariant),
+              onTap: () => _addMember(user.toJson()),
+            ),
+          ));
         }
 
         listTiles.add(ListTile(
           leading: const Icon(Icons.person_add),
-          title: Text(AppLocalizations.of(context)!.groupMemberAddFriends),
+          title: Text(l10n.groupMemberAddFriends),
+          onTap: () => controller.openView(),
         ));
 
         // F156: zero the inherited horizontal Card margin (theme default is
@@ -269,7 +328,40 @@ class _GroupMemberSearchState extends State<GroupMemberSearch> {
                   margin: const EdgeInsets.symmetric(vertical: 1),
                 ),
           ),
-          child: CardColumn(children: listTiles),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              // Section header with the "Add guest" link (F71 / F135). Tapping it
+              // opens the SearchAnchor view where guest-add already lives.
+              Padding(
+                padding: const EdgeInsets.only(bottom: 8),
+                child: SectionLabel(
+                  l10n.groupMemberSectionTitle,
+                  trailing: InkWell(
+                    onTap: () => controller.openView(),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 2),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Icons.person_add, size: 18, color: colorScheme.primary),
+                          const SizedBox(width: 4),
+                          Text(
+                            l10n.groupMemberAddGuestLink,
+                            style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                                  color: colorScheme.primary,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+              CardColumn(children: listTiles),
+            ],
+          ),
         );
       },
       suggestionsBuilder: (context, controller) {

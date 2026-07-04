@@ -100,8 +100,9 @@ class _GroupEditState extends ConsumerState<GroupEdit> {
                             children: <Widget>[
                               _NameAndColorCard(formKey: _formKey),
                               const SizedBox(height: 24),
-                              SectionLabel(l10n.groupMemberSectionTitle),
-                              const SizedBox(height: 8),
+                              // Members section header + roster live inside
+                              // GroupMemberSearch (F71): the header carries the
+                              // "Add guest" link that opens the search view.
                               FormBuilderField(
                                 name: "group_members",
                                 builder: (FormFieldState<dynamic> field) {

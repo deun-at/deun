@@ -380,6 +380,18 @@ abstract class AppLocalizations {
   /// **'Guest'**
   String get groupMemberIsGuest;
 
+  /// No description provided for @groupMemberOwnerTag.
+  ///
+  /// In en, this message translates to:
+  /// **'Owner'**
+  String get groupMemberOwnerTag;
+
+  /// No description provided for @groupMemberAddGuestLink.
+  ///
+  /// In en, this message translates to:
+  /// **'Add guest'**
+  String get groupMemberAddGuestLink;
+
   /// No description provided for @groupExpenseNoEntries.
   ///
   /// In en, this message translates to:

@@ -157,6 +157,12 @@ class AppLocalizationsDe extends AppLocalizations {
   String get groupMemberIsGuest => 'Gast';
 
   @override
+  String get groupMemberOwnerTag => 'Eigentümer';
+
+  @override
+  String get groupMemberAddGuestLink => 'Gast hinzufügen';
+
+  @override
   String get groupExpenseNoEntries => 'Füge eine Ausgabe hinzu, um zu starten.';
 
   @override
