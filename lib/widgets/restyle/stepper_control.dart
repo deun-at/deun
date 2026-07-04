@@ -37,7 +37,7 @@ class StepperControl extends StatelessWidget {
 
     return Container(
       decoration: BoxDecoration(
-        color: colorScheme.surfaceContainerHigh,
+        color: colorScheme.surfaceContainerLowest,
         borderRadius: BorderRadius.circular(999),
       ),
       child: Row(
