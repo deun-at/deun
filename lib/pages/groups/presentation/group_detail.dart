@@ -467,27 +467,36 @@ class _GroupBalanceHero extends StatelessWidget {
                 // Hero avatars render in ONE uniform tint (a translucent
                 // on-hero token), not per-member colors (F140) — matching the
                 // handoff's rgba(255,255,255,0.22) chips on the colored surface.
-                AvatarStack(
-                  members: members,
-                  ringColor: heroSurface,
-                  uniformColor: onHero.withValues(alpha: 0.22),
+                //
+                // The avatar stack takes the flexible slot (F176): with a wide
+                // stack (5+ members) it yields/clips rather than starving the
+                // Settle pill, which must always show its full label. The
+                // handoff row is `space-between` — an intrinsic-width pill on
+                // the right, the avatar cluster flexing on the left.
+                Flexible(
+                  child: Align(
+                    alignment: Alignment.centerLeft,
+                    child: AvatarStack(
+                      members: members,
+                      ringColor: heroSurface,
+                      uniformColor: onHero.withValues(alpha: 0.22),
+                    ),
+                  ),
                 ),
-              const Spacer(),
-              // Compact 999-radius pill (mockup L470: 9/18 pad), wrapped in
-              // Flexible so a long localized label ("Begleichen") ellipsizes
-              // instead of overflowing the hero Row.
-              Flexible(
-                child: PrimaryButton(
-                  label: l10n.groupDetailSettleUp,
-                  background: onHero,
-                  foreground: heroSurface,
-                  compact: true,
-                  onPressed: () {
-                    GoRouter.of(
-                      context,
-                    ).push("/group/details/payment", extra: {'group': group});
-                  },
-                ),
+              const SizedBox(width: 12),
+              // Compact 999-radius pill (mockup L470: 9/18 pad) at its intrinsic
+              // width so "Settle up" (and longer locales like "Begleichen")
+              // never clip — the avatar stack absorbs the squeeze instead.
+              PrimaryButton(
+                label: l10n.groupDetailSettleUp,
+                background: onHero,
+                foreground: heroSurface,
+                compact: true,
+                onPressed: () {
+                  GoRouter.of(
+                    context,
+                  ).push("/group/details/payment", extra: {'group': group});
+                },
               ),
             ],
           ),
