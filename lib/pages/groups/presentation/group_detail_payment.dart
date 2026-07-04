@@ -1,5 +1,6 @@
 import 'package:deun/constants.dart';
 import 'package:deun/helper/helper.dart';
+import 'package:deun/widgets/restyle/deun_header.dart';
 import 'package:deun/widgets/restyle/member_avatar.dart';
 import 'package:deun/widgets/restyle/money_text.dart';
 import 'package:deun/widgets/restyle/section_label.dart';
@@ -21,7 +22,7 @@ import '../data/group_model.dart';
 import '../data/group_repository.dart';
 import 'payment_view_model.dart';
 
-/// Screen 10 — Settle up / payment sheet (restyle).
+/// Screen 10 — Settle up / payment view (restyle).
 ///
 /// A group-tinted color hero summarizing the overall balance, a "You pay"
 /// section (members the user owes, each with a Pay action into a payment-method
@@ -29,6 +30,10 @@ import 'payment_view_model.dart';
 /// a Remind action). Settlement amounts come straight from
 /// [Group.groupSharesSummary] / [Group.totalShareAmount] computed in
 /// `group_model.dart`; nothing is recomputed here.
+///
+/// F155/F58: this is a full-page drill-down (routed via [sharedAxisPage] like
+/// the edit/statistics screens) with a [DeunHeader] back-arrow — not a routed
+/// bottom sheet — so there is no drag-to-close ambiguity.
 class GroupPaymentBottomSheet extends ConsumerWidget {
   const GroupPaymentBottomSheet({super.key, required this.group});
 
@@ -40,22 +45,30 @@ class GroupPaymentBottomSheet extends ConsumerWidget {
     return ThemeBuilder(
       colorValue: group.colorValue,
       builder: (context) {
-        return SheetScaffold(
-          title: l10n.paymentTitle,
-          titleTrailing: IconButton(
-            icon: const Icon(Icons.close),
-            onPressed: () => Navigator.of(context).maybePop(),
-          ),
-          body: Consumer(
-            builder: (context, ref, child) {
-              final Group? detail = ref.watch(groupDetailProvider(group.id)).value;
+        return Scaffold(
+          body: Column(
+            children: [
+              DeunHeader(title: l10n.paymentTitle),
+              Expanded(
+                child: SafeArea(
+                  top: false,
+                  child: Consumer(
+                    builder: (context, ref, child) {
+                      final Group? detail = ref.watch(groupDetailProvider(group.id)).value;
 
-              if (detail == null) {
-                return const ShimmerCardList(height: 50, listEntryLength: 8);
-              }
+                      if (detail == null) {
+                        return const ShimmerCardList(height: 50, listEntryLength: 8);
+                      }
 
-              return _PaymentBody(group: detail);
-            },
+                      return SingleChildScrollView(
+                        padding: const EdgeInsets.fromLTRB(20, 8, 20, 26),
+                        child: _PaymentBody(group: detail),
+                      );
+                    },
+                  ),
+                ),
+              ),
+            ],
           ),
         );
       },

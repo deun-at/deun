@@ -225,9 +225,14 @@ class _NavigationScreenState extends ConsumerState<NavigationScreen> with Widget
                                 var extra = state.extra as Map<String, dynamic>;
                                 var group = extra['group'] as Group;
 
-                                return ModalBottomSheetPage(
+                                // F155/F58: full-page settle-up view (not a
+                                // routed bottom sheet) so it drills in with a
+                                // back-arrow header instead of a non-draggable
+                                // modal sheet. Same shared-axis transition as
+                                // the edit/statistics routes.
+                                return sharedAxisPage(
                                   key: state.pageKey,
-                                  builder: (context) => GroupPaymentBottomSheet(
+                                  child: GroupPaymentBottomSheet(
                                     group: group,
                                   ),
                                 );

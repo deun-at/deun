@@ -4,6 +4,7 @@ import 'package:deun/pages/groups/data/group_member_model.dart';
 import 'package:deun/pages/groups/data/group_model.dart';
 import 'package:deun/pages/groups/presentation/group_detail_payment.dart';
 import 'package:deun/pages/groups/provider/group_detail.dart';
+import 'package:deun/widgets/restyle/deun_header.dart';
 import 'package:deun/widgets/restyle/primary_button.dart';
 import 'package:deun/widgets/restyle/sheet_scaffold.dart';
 import 'package:deun/widgets/theme_builder.dart';
@@ -99,7 +100,7 @@ Future<void> _pump(
         home: Builder(
           builder: (context) => Theme(
             data: getThemeData(context, kBrandSeed, brightness).copyWith(splashFactory: NoSplash.splashFactory),
-            child: Scaffold(body: GroupPaymentBottomSheet(group: group)),
+            child: GroupPaymentBottomSheet(group: group),
           ),
         ),
       ),
@@ -184,19 +185,26 @@ void main() {
     expect(find.text('Priya'), findsOneWidget);
   });
 
-  testWidgets('sheet uses SheetScaffold (no AppBar) and shows the paymentTitle', (tester) async {
+  testWidgets('F155/F58: full-page view uses a DeunHeader back-arrow, not sheet chrome', (tester) async {
     final l10n = await AppLocalizations.delegate.load(const Locale('en'));
     await _pump(tester, group: _group());
 
-    // SheetScaffold must be present; AppBar must NOT be present.
-    expect(find.byType(SheetScaffold), findsOneWidget);
+    // Full-page container: a DeunHeader with a back-arrow, no AppBar.
+    expect(find.byType(DeunHeader), findsOneWidget);
     expect(find.byType(AppBar), findsNothing);
-    // The title text from SheetScaffold's title row.
+    // The header carries the settle-up title.
     expect(find.text(l10n.paymentTitle), findsOneWidget);
+    // Back-arrow present; the old sheet close-X (Icons.close) must be gone.
+    expect(find.widgetWithIcon(HeaderIconButton, Icons.arrow_back), findsOneWidget);
+    expect(find.byIcon(Icons.close), findsNothing);
+    // No routed bottom-sheet chrome at rest: the top-level view is not a
+    // SheetScaffold (the payment-method detail sheet still is, but only after
+    // tapping Pay).
+    expect(find.byType(SheetScaffold), findsNothing);
   });
 
-  testWidgets('close button (Icons.close) is present and dismisses the bottom sheet', (tester) async {
-    bool dismissed = false;
+  testWidgets('back-arrow pops the full-page view', (tester) async {
+    bool popped = false;
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
@@ -217,11 +225,11 @@ void main() {
               child: Scaffold(
                 body: TextButton(
                   onPressed: () {
-                    showModalBottomSheet<void>(
-                      context: context,
-                      isScrollControlled: true,
-                      builder: (_) => GroupPaymentBottomSheet(group: _group()),
-                    ).then((_) => dismissed = true);
+                    Navigator.of(context)
+                        .push(MaterialPageRoute<void>(
+                          builder: (_) => GroupPaymentBottomSheet(group: _group()),
+                        ))
+                        .then((_) => popped = true);
                   },
                   child: const Text('Open'),
                 ),
@@ -233,20 +241,18 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    // Open the sheet.
     await tester.tap(find.text('Open'));
     await tester.pumpAndSettle();
 
-    // Close button must exist inside the sheet.
-    final closeBtn = find.widgetWithIcon(IconButton, Icons.close);
-    expect(closeBtn, findsOneWidget);
+    // Back-arrow must exist on the pushed page.
+    final backBtn = find.widgetWithIcon(HeaderIconButton, Icons.arrow_back);
+    expect(backBtn, findsOneWidget);
 
-    await tester.tap(closeBtn);
+    await tester.tap(backBtn);
     await tester.pumpAndSettle();
 
-    // Sheet is dismissed: the future resolves and dismissed flips to true.
-    expect(dismissed, isTrue);
-    // The sheet is gone.
-    expect(find.widgetWithIcon(IconButton, Icons.close), findsNothing);
+    // The page is popped: the future resolves and the page is gone.
+    expect(popped, isTrue);
+    expect(find.byType(DeunHeader), findsNothing);
   });
 }
