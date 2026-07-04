@@ -1,4 +1,5 @@
 import 'package:deun/helper/helper.dart';
+import 'package:deun/widgets/restyle/inset_form_field.dart';
 import 'package:deun/widgets/restyle/primary_button.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_form_builder/flutter_form_builder.dart';
@@ -48,60 +49,34 @@ class _ContactState extends State<StatefulWidget> {
                     clearValueOnUnregister: true,
                     child: Column(
                       children: [
-                        FormBuilderField(
+                        InsetFormField(
                           name: "name",
-                          builder: (FormFieldState<dynamic> field) => TextFormField(
-                            initialValue: field.value,
-                            validator: FormBuilderValidators.required(
-                                errorText: AppLocalizations.of(context)!.contactNameValidationEmpty),
-                            decoration: InputDecoration(
-                              labelText: AppLocalizations.of(context)!.contactName,
-                              border: OutlineInputBorder(borderRadius: BorderRadius.circular(16)),
-                            ),
-                            onChanged: (value) => field.didChange(value),
-                          ),
+                          label: AppLocalizations.of(context)!.contactName,
+                          validator: FormBuilderValidators.required(
+                              errorText: AppLocalizations.of(context)!.contactNameValidationEmpty),
                         ),
                         const SizedBox(height: heightSpacing),
-                        FormBuilderField(
+                        InsetFormField(
                           name: "company",
-                          builder: (FormFieldState<dynamic> field) => TextFormField(
-                            initialValue: field.value,
-                            decoration: InputDecoration(
-                              labelText: AppLocalizations.of(context)!.contactCompany,
-                              border: OutlineInputBorder(borderRadius: BorderRadius.circular(16)),
-                            ),
-                            onChanged: (value) => field.didChange(value),
-                          ),
+                          label: AppLocalizations.of(context)!.contactCompany,
                         ),
                         const SizedBox(height: heightSpacing),
-                        FormBuilderField(
+                        InsetFormField(
                           name: "email",
-                          builder: (FormFieldState<dynamic> field) => TextFormField(
-                            initialValue: field.value,
-                            validator: FormBuilderValidators.required(
-                                errorText: AppLocalizations.of(context)!.contactEmailValidationEmpty),
-                            decoration: InputDecoration(
-                              labelText: AppLocalizations.of(context)!.contactEmail,
-                              border: OutlineInputBorder(borderRadius: BorderRadius.circular(16)),
-                            ),
-                            onChanged: (value) => field.didChange(value),
-                          ),
+                          label: AppLocalizations.of(context)!.contactEmail,
+                          keyboardType: TextInputType.emailAddress,
+                          validator: FormBuilderValidators.required(
+                              errorText: AppLocalizations.of(context)!.contactEmailValidationEmpty),
                         ),
                         const SizedBox(height: heightSpacing),
-                        FormBuilderField(
+                        InsetFormField(
                           name: "description",
-                          builder: (FormFieldState<dynamic> field) => TextFormField(
-                            initialValue: field.value,
-                            keyboardType: TextInputType.multiline,
-                            maxLines: null,
-                            validator: FormBuilderValidators.required(
-                                errorText: AppLocalizations.of(context)!.contactDescriptionValidationEmpty),
-                            decoration: InputDecoration(
-                              labelText: AppLocalizations.of(context)!.contactDescription,
-                              border: OutlineInputBorder(borderRadius: BorderRadius.circular(16)),
-                            ),
-                            onChanged: (value) => field.didChange(value),
-                          ),
+                          label: AppLocalizations.of(context)!.contactDescription,
+                          keyboardType: TextInputType.multiline,
+                          minLines: 3,
+                          maxLines: null,
+                          validator: FormBuilderValidators.required(
+                              errorText: AppLocalizations.of(context)!.contactDescriptionValidationEmpty),
                         ),
                         const SizedBox(height: heightSpacing),
                         Align(

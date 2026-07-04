@@ -40,6 +40,8 @@ class AppTextField extends StatelessWidget {
     this.suffix,
     this.prefixText,
     this.onFieldSubmitted,
+    this.maxLines = 1,
+    this.minLines,
   });
 
   final TextEditingController controller;
@@ -64,6 +66,12 @@ class AppTextField extends StatelessWidget {
   final String? prefixText;
 
   final void Function(String)? onFieldSubmitted;
+
+  /// Max/min lines for multiline inputs (e.g. the Contact description). Defaults
+  /// to a single line; pass `maxLines: null` (with a [minLines]) for a growing
+  /// multiline field. Only meaningful in [AppTextFieldLabelMode.above].
+  final int? maxLines;
+  final int? minLines;
 
   @override
   Widget build(BuildContext context) {
@@ -94,6 +102,8 @@ class AppTextField extends StatelessWidget {
         textInputAction: textInputAction,
         autofillHints: autofillHints,
         obscureText: obscureText,
+        maxLines: obscureText ? 1 : maxLines,
+        minLines: minLines,
         autovalidateMode: AutovalidateMode.onUserInteraction,
         onFieldSubmitted: onFieldSubmitted,
         style: theme.textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w600),

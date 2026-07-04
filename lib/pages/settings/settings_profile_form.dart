@@ -3,7 +3,7 @@ import 'package:deun/pages/settings/settings_sheets.dart';
 import 'package:deun/pages/users/user_model.dart';
 import 'package:deun/pages/users/user_repository.dart';
 import 'package:deun/provider.dart';
-import 'package:deun/widgets/restyle/app_text_field.dart';
+import 'package:deun/widgets/restyle/inset_form_field.dart';
 import 'package:deun/widgets/restyle/primary_button.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -60,7 +60,7 @@ class _SettingsProfileFormState extends ConsumerState<SettingsProfileForm> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Expanded(
-                child: _InsetFormField(
+                child: InsetFormField(
                   name: 'first_name',
                   label: l10n.settingsFirstName,
                   initialValue: user.firstName,
@@ -71,7 +71,7 @@ class _SettingsProfileFormState extends ConsumerState<SettingsProfileForm> {
               ),
               const SizedBox(width: heightSpacing),
               Expanded(
-                child: _InsetFormField(
+                child: InsetFormField(
                   name: 'last_name',
                   label: l10n.settingsLastName,
                   initialValue: user.lastName,
@@ -83,7 +83,7 @@ class _SettingsProfileFormState extends ConsumerState<SettingsProfileForm> {
             ],
           ),
           const SizedBox(height: heightSpacing),
-          _InsetFormField(
+          InsetFormField(
             name: 'display_name',
             label: l10n.settingsDisplayName,
             initialValue: user.displayName,
@@ -92,7 +92,7 @@ class _SettingsProfileFormState extends ConsumerState<SettingsProfileForm> {
             ),
           ),
           const SizedBox(height: heightSpacing),
-          _InsetFormField(
+          InsetFormField(
             name: 'username',
             label: l10n.settingsUsername,
             initialValue: user.username,
@@ -128,14 +128,14 @@ class _SettingsProfileFormState extends ConsumerState<SettingsProfileForm> {
           // Muted `paypal.me/` inline prefix + username inside the field
           // (mockup L369, prefix ≈ #B6B2A8 → onSurfaceVariant). Fixed brand
           // literal, not localized.
-          _InsetFormField(
+          InsetFormField(
             name: 'paypal_me',
             label: l10n.settingsPaypalMe,
             initialValue: user.paypalMe,
             prefixText: 'paypal.me/',
           ),
           const SizedBox(height: heightSpacing),
-          _InsetFormField(
+          InsetFormField(
             name: 'iban',
             label: l10n.settingsIban,
             initialValue: user.iban,
@@ -208,88 +208,13 @@ class _SettingsProfileFormState extends ConsumerState<SettingsProfileForm> {
   }
 }
 
-/// A profile text field: the shared [AppTextField] in
-/// [AppTextFieldLabelMode.above] (static label ABOVE the field, no floating
-/// Material label — design F146/F82), bridged into the surrounding [FormBuilder]
-/// so the existing keyed save path (`_formKey.currentState!.value`) is unchanged.
-///
-/// The field owns a [TextEditingController] seeded from the FormBuilder field's
-/// initial value and pushes edits back via `field.didChange`, so validation,
-/// submit and DB persistence behave exactly as before — only the label
-/// presentation changed from floating to label-above.
-class _InsetFormField extends StatefulWidget {
-  const _InsetFormField({
-    required this.name,
-    required this.label,
-    this.initialValue,
-    this.validator,
-    this.suffix,
-    this.prefixText,
-  });
-
-  final String name;
-  final String label;
-  final String? initialValue;
-  final String? Function(String?)? validator;
-  final Widget? suffix;
-  final String? prefixText;
-
-  @override
-  State<_InsetFormField> createState() => _InsetFormFieldState();
-}
-
-class _InsetFormFieldState extends State<_InsetFormField> {
-  late final TextEditingController _controller;
-  FormFieldState<String>? _field;
-
-  @override
-  void initState() {
-    super.initState();
-    // Seed from the same initial value the parent hands FormBuilder, so the
-    // displayed text and the FormBuilder field agree from frame one without
-    // touching the field during its build (which would re-enter didChange).
-    _controller = TextEditingController(text: widget.initialValue ?? '');
-    // Push every keystroke back into the bound FormBuilder field so the keyed
-    // save path (`_formKey.currentState!.value`) sees live text — the same
-    // contract the old TextFormField(onChanged: field.didChange) provided. The
-    // listener only fires on real edits (after build), so no re-entrancy.
-    _controller.addListener(() => _field?.didChange(_controller.text));
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return FormBuilderField<String>(
-      name: widget.name,
-      initialValue: widget.initialValue,
-      validator: widget.validator,
-      builder: (field) {
-        _field = field;
-        return AppTextField(
-          controller: _controller,
-          label: widget.label,
-          labelMode: AppTextFieldLabelMode.above,
-          validator: widget.validator,
-          suffix: widget.suffix,
-          prefixText: widget.prefixText,
-        );
-      },
-    );
-  }
-}
-
 /// The tappable Language row. Per v3 (and consistent with the iconless
-/// [_InsetFormField] styling that F09/F11 established), this carries no leading
+/// [InsetFormField] styling that F09/F11 established), this carries no leading
 /// translate icon: it is a label-above + current value with a trailing dropdown
 /// chevron ([Icons.expand_more], v3 `chevron_down`) so it reads as a dropdown
 /// selector rather than a navigate-forward row. F171 moved the label above the
 /// box (matching the text fields) so the value box is a pixel-identical sibling
-/// of the [_InsetFormField] inputs. Tapping still opens the language sheet.
+/// of the [InsetFormField] inputs. Tapping still opens the language sheet.
 class _LanguageRow extends StatelessWidget {
   const _LanguageRow({required this.value, required this.onTap});
 
