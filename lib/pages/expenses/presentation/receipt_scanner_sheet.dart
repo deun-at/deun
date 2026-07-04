@@ -113,9 +113,10 @@ class _ReceiptScannerSheetState extends State<ReceiptScannerSheet> {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          ReceiptScanViewport(scanning: _stage == _ScanStage.scanning),
-          const SizedBox(height: 16),
           if (_stage == _ScanStage.scanning) ...[
+            const SizedBox(height: 24),
+            const Center(child: CircularProgressIndicator()),
+            const SizedBox(height: 16),
             Center(
               child: Text(
                 l10n.receiptScanProcessing,
@@ -124,6 +125,7 @@ class _ReceiptScannerSheetState extends State<ReceiptScannerSheet> {
                     ),
               ),
             ),
+            const SizedBox(height: 24),
           ] else if (_stage == _ScanStage.error) ...[
             _ErrorBanner(message: l10n.receiptScanNoData),
             const SizedBox(height: 16),
@@ -203,153 +205,6 @@ class _ErrorBanner extends StatelessWidget {
       ),
     );
   }
-}
-
-/// The styled scan viewport: a dark camera scrim with white corner brackets and,
-/// while [scanning], a primary scan line that sweeps top→bottom on a ~2.4s loop
-/// (DESIGN_SPEC "Motion"). The scrim is a deliberate dark surface (camera chrome)
-/// — a v0 stand-in until a live camera preview is wired underneath.
-class ReceiptScanViewport extends StatefulWidget {
-  const ReceiptScanViewport({super.key, required this.scanning});
-
-  final bool scanning;
-
-  @override
-  State<ReceiptScanViewport> createState() => _ReceiptScanViewportState();
-}
-
-class _ReceiptScanViewportState extends State<ReceiptScanViewport>
-    with SingleTickerProviderStateMixin {
-  late final AnimationController _controller;
-
-  @override
-  void initState() {
-    super.initState();
-    _controller = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 2400),
-    );
-    if (widget.scanning) _controller.repeat();
-  }
-
-  @override
-  void didUpdateWidget(covariant ReceiptScanViewport oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (widget.scanning && !_controller.isAnimating) {
-      _controller.repeat();
-    } else if (!widget.scanning && _controller.isAnimating) {
-      _controller.stop();
-      _controller.value = 0;
-    }
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-    // Respect the platform "reduce motion" accessibility setting: when on, hold
-    // the scan line static rather than sweeping. (v0: no in-app toggle.)
-    final reduceMotion = MediaQuery.maybeOf(context)?.disableAnimations ?? false;
-
-    return AspectRatio(
-      aspectRatio: 3 / 4,
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(22),
-        child: Stack(
-          fit: StackFit.expand,
-          children: [
-            // Deliberate dark camera scrim (UI chrome, not themed surface).
-            const ColoredBox(color: Color(0xFF16181A)),
-            // Faint centered receipt glyph so the empty viewport reads as a
-            // camera target.
-            Center(
-              child: Icon(
-                Icons.receipt_long_outlined,
-                size: 56,
-                color: Colors.white.withValues(alpha: 0.18),
-              ),
-            ),
-            // Corner brackets.
-            CustomPaint(
-              painter: _CornerBracketsPainter(color: Colors.white),
-            ),
-            // Sweeping scan line (only while scanning).
-            if (widget.scanning)
-              AnimatedBuilder(
-                animation: _controller,
-                builder: (context, _) {
-                  final t = reduceMotion ? 0.5 : _controller.value;
-                  return Align(
-                    alignment: Alignment(0, (t * 2) - 1),
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 24),
-                      child: Container(
-                        height: 2.5,
-                        decoration: BoxDecoration(
-                          color: colorScheme.primary,
-                          borderRadius: BorderRadius.circular(2),
-                          boxShadow: [
-                            BoxShadow(
-                              color: colorScheme.primary.withValues(alpha: 0.6),
-                              blurRadius: 10,
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  );
-                },
-              ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-/// Paints four L-shaped corner brackets just inside the viewport edges.
-class _CornerBracketsPainter extends CustomPainter {
-  _CornerBracketsPainter({required this.color});
-
-  final Color color;
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    const inset = 18.0;
-    const len = 28.0;
-    final paint = Paint()
-      ..color = color
-      ..strokeWidth = 3
-      ..strokeCap = StrokeCap.round
-      ..style = PaintingStyle.stroke;
-
-    const left = inset;
-    const top = inset;
-    final right = size.width - inset;
-    final bottom = size.height - inset;
-
-    // Top-left.
-    canvas.drawLine(const Offset(left, top + len), const Offset(left, top), paint);
-    canvas.drawLine(const Offset(left, top), const Offset(left + len, top), paint);
-    // Top-right.
-    canvas.drawLine(Offset(right - len, top), Offset(right, top), paint);
-    canvas.drawLine(Offset(right, top), Offset(right, top + len), paint);
-    // Bottom-left.
-    canvas.drawLine(Offset(left, bottom - len), Offset(left, bottom), paint);
-    canvas.drawLine(Offset(left, bottom), Offset(left + len, bottom), paint);
-    // Bottom-right.
-    canvas.drawLine(Offset(right - len, bottom), Offset(right, bottom), paint);
-    canvas.drawLine(Offset(right, bottom), Offset(right, bottom - len), paint);
-  }
-
-  @override
-  bool shouldRepaint(covariant _CornerBracketsPainter oldDelegate) =>
-      oldDelegate.color != color;
 }
 
 /// The detected-items preview: merchant header, a [SoftCard] list of parsed line

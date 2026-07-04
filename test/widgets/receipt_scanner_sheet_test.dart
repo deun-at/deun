@@ -148,57 +148,14 @@ void main() {
     });
   });
 
-  group('ReceiptScanViewport', () {
-    testWidgets('renders the corner-bracket viewport (light + dark)',
-        (tester) async {
-      for (final b in Brightness.values) {
-        await _pump(
-          tester,
-          const ReceiptScanViewport(scanning: false),
-          brightness: b,
-        );
-        expect(find.byType(ReceiptScanViewport), findsOneWidget);
-        expect(tester.takeException(), isNull);
-      }
-    });
-
-    testWidgets('renders the scanning state without throwing', (tester) async {
-      // The scan line repeats forever, so pumpAndSettle would time out; pump
-      // explicit frames instead.
-      await tester.pumpWidget(
-        MaterialApp(
-          localizationsDelegates: const [
-            AppLocalizations.delegate,
-            GlobalMaterialLocalizations.delegate,
-            GlobalWidgetsLocalizations.delegate,
-            GlobalCupertinoLocalizations.delegate,
-          ],
-          supportedLocales: AppLocalizations.supportedLocales,
-          home: Builder(
-            builder: (context) => Theme(
-              data: getThemeData(context, kBrandSeed, Brightness.light)
-                  .copyWith(splashFactory: NoSplash.splashFactory),
-              child: const Scaffold(body: ReceiptScanViewport(scanning: true)),
-            ),
-          ),
-        ),
-      );
-      // Pump a couple frames of the scan-line animation.
-      await tester.pump(const Duration(milliseconds: 100));
-      await tester.pump(const Duration(milliseconds: 100));
-      expect(find.byType(ReceiptScanViewport), findsOneWidget);
-      expect(tester.takeException(), isNull);
-    });
-  });
-
   group('ReceiptScannerSheet', () {
-    testWidgets('idle state shows the scan viewport and capture actions',
+    testWidgets('idle state shows the instructions and capture actions',
         (tester) async {
       final l10n = await AppLocalizations.delegate.load(const Locale('en'));
       await _pump(tester, const ReceiptScannerSheet());
 
       expect(find.byType(SheetScaffold), findsOneWidget);
-      expect(find.byType(ReceiptScanViewport), findsOneWidget);
+      expect(find.text(l10n.receiptScanInstructions), findsOneWidget);
       expect(find.text(l10n.receiptScanTakePhoto), findsOneWidget);
       expect(find.text(l10n.receiptScanChooseGallery), findsOneWidget);
       // Capture actions use the v3 presets, not raw Material buttons.
