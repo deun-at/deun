@@ -2412,6 +2412,36 @@ abstract class AppLocalizations {
   /// **'Paid'**
   String get statisticsMemberPaid;
 
+  /// Personal-stats hero eyebrow, first half. Followed by the period label.
+  ///
+  /// In en, this message translates to:
+  /// **'Across all groups'**
+  String get statisticsAcrossAllGroups;
+
+  /// Personal-stats hero eyebrow period label for a bounded range.
+  ///
+  /// In en, this message translates to:
+  /// **'last {count} months'**
+  String statisticsPeriodLastMonths(int count);
+
+  /// Personal-stats hero eyebrow period label for the all-time range.
+  ///
+  /// In en, this message translates to:
+  /// **'all time'**
+  String get statisticsPeriodAllTime;
+
+  /// Label over the total you paid in the personal-stats hero.
+  ///
+  /// In en, this message translates to:
+  /// **'You paid'**
+  String get statisticsYouPaid;
+
+  /// Label over your fair share (accent-tinted) in the personal-stats hero.
+  ///
+  /// In en, this message translates to:
+  /// **'Your share'**
+  String get statisticsYourShare;
+
   /// No description provided for @statisticsMemberFairShare.
   ///
   /// In en, this message translates to:
@@ -2969,6 +2999,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Owes you'**
   String get paymentOwesYou;
+
+  /// Inline lowercase prefix on an owes-you row, before the green amount ("owes you €12.00").
+  ///
+  /// In en, this message translates to:
+  /// **'owes you'**
+  String get paymentOwesYouInline;
 
   /// Action on a you-pay row that opens the payment-method detail sheet.
   ///

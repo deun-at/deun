@@ -277,10 +277,22 @@ class _OwesRowState extends State<_OwesRow> {
                   overflow: TextOverflow.ellipsis,
                 ),
                 const SizedBox(height: 2),
-                MoneyText(
-                  widget.entry.amount,
-                  semantic: MoneySemantic.positive,
-                  style: Theme.of(context).textTheme.bodyMedium,
+                // F181: lead with muted "owes you" copy, amount stays semantic
+                // green (v3 mockup L1092, design_10).
+                Row(
+                  children: [
+                    Text(
+                      '${l10n.paymentOwesYouInline} ',
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                            color: Theme.of(context).colorScheme.onSurfaceVariant,
+                          ),
+                    ),
+                    MoneyText(
+                      widget.entry.amount,
+                      semantic: MoneySemantic.positive,
+                      style: Theme.of(context).textTheme.bodyMedium,
+                    ),
+                  ],
                 ),
               ],
             ),

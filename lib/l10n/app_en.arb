@@ -1355,6 +1355,29 @@
   "@statisticsMembers": {},
   "statisticsMemberPaid": "Paid",
   "@statisticsMemberPaid": {},
+  "statisticsAcrossAllGroups": "Across all groups",
+  "@statisticsAcrossAllGroups": {
+    "description": "Personal-stats hero eyebrow, first half. Followed by the period label."
+  },
+  "statisticsPeriodLastMonths": "last {count} months",
+  "@statisticsPeriodLastMonths": {
+    "description": "Personal-stats hero eyebrow period label for a bounded range.",
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "statisticsPeriodAllTime": "all time",
+  "@statisticsPeriodAllTime": {
+    "description": "Personal-stats hero eyebrow period label for the all-time range."
+  },
+  "statisticsYouPaid": "You paid",
+  "@statisticsYouPaid": {
+    "description": "Label over the total you paid in the personal-stats hero."
+  },
+  "statisticsYourShare": "Your share",
+  "@statisticsYourShare": {
+    "description": "Label over your fair share (accent-tinted) in the personal-stats hero."
+  },
   "statisticsMemberFairShare": "Fair share",
   "@statisticsMemberFairShare": {},
   "statisticsMemberDelta": "Balance",
@@ -1651,6 +1674,10 @@
   "paymentOwesYou": "Owes you",
   "@paymentOwesYou": {
     "description": "Section label over the members who owe the current user."
+  },
+  "paymentOwesYouInline": "owes you",
+  "@paymentOwesYouInline": {
+    "description": "Inline lowercase prefix on an owes-you row, before the green amount (\"owes you €12.00\")."
   },
   "paymentPay": "Pay",
   "@paymentPay": {

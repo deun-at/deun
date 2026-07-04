@@ -1468,6 +1468,23 @@ class AppLocalizationsDe extends AppLocalizations {
   String get statisticsMemberPaid => 'Bezahlt';
 
   @override
+  String get statisticsAcrossAllGroups => 'Über alle Gruppen';
+
+  @override
+  String statisticsPeriodLastMonths(int count) {
+    return 'letzte $count Monate';
+  }
+
+  @override
+  String get statisticsPeriodAllTime => 'gesamter Zeitraum';
+
+  @override
+  String get statisticsYouPaid => 'Du hast bezahlt';
+
+  @override
+  String get statisticsYourShare => 'Dein Anteil';
+
+  @override
   String get statisticsMemberFairShare => 'Fairer Anteil';
 
   @override
@@ -1813,6 +1830,9 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get paymentOwesYou => 'Schuldet dir';
+
+  @override
+  String get paymentOwesYouInline => 'schuldet dir';
 
   @override
   String get paymentPay => 'Zahlen';

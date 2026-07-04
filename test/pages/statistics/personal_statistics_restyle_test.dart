@@ -96,14 +96,32 @@ void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
   group('PersonalSummarySection (dark hero)', () {
-    testWidgets('shows the share total and paid via MoneyText in light and dark',
+    testWidgets('F180: eyebrow + dual You-paid/Your-share amounts, share accent-tinted',
         (tester) async {
       final l10n = await AppLocalizations.delegate.load(const Locale('en'));
       await _pump(tester, const PersonalSummarySection(range: StatsRange.sixMonths));
-      expect(find.byType(MoneyText), findsWidgets);
-      expect(find.text(l10n.toCurrency(440)), findsWidgets); // total share (hero amount)
-      expect(find.text(l10n.toCurrency(600)), findsWidgets); // total paid (sub-stat)
-      expect(find.text('9'), findsOneWidget); // expense count
+
+      // Eyebrow: "Across all groups · last 6 months" (period reflects the range).
+      expect(
+        find.text('${l10n.statisticsAcrossAllGroups} · ${l10n.statisticsPeriodLastMonths(6)}'),
+        findsOneWidget,
+      );
+      // Dual labels + amounts.
+      expect(find.text(l10n.statisticsYouPaid), findsOneWidget);
+      expect(find.text(l10n.statisticsYourShare), findsOneWidget);
+      expect(find.text(l10n.toCurrency(600)), findsWidgets); // you paid
+      expect(find.text(l10n.toCurrency(440)), findsWidgets); // your share
+
+      // The share amount is tinted the accent (inversePrimary in light theme).
+      final ctx = tester.element(find.byType(PersonalSummarySection));
+      final scheme = Theme.of(ctx).colorScheme;
+      final shareText = tester.widget<Text>(
+        find.descendant(
+          of: find.byType(MoneyText),
+          matching: find.text(l10n.toCurrency(440)),
+        ),
+      );
+      expect(shareText.style?.color, scheme.inversePrimary);
 
       await _pump(tester, const PersonalSummarySection(range: StatsRange.sixMonths),
           brightness: Brightness.dark);

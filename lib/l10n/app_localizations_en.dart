@@ -1438,6 +1438,23 @@ class AppLocalizationsEn extends AppLocalizations {
   String get statisticsMemberPaid => 'Paid';
 
   @override
+  String get statisticsAcrossAllGroups => 'Across all groups';
+
+  @override
+  String statisticsPeriodLastMonths(int count) {
+    return 'last $count months';
+  }
+
+  @override
+  String get statisticsPeriodAllTime => 'all time';
+
+  @override
+  String get statisticsYouPaid => 'You paid';
+
+  @override
+  String get statisticsYourShare => 'Your share';
+
+  @override
   String get statisticsMemberFairShare => 'Fair share';
 
   @override
@@ -1783,6 +1800,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get paymentOwesYou => 'Owes you';
+
+  @override
+  String get paymentOwesYouInline => 'owes you';
 
   @override
   String get paymentPay => 'Pay';

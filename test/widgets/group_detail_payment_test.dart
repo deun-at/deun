@@ -148,6 +148,8 @@ void main() {
 
     expect(find.text(l10n.paymentOwesYou), findsOneWidget);
     expect(find.text('Priya'), findsOneWidget);
+    // F181: the amount is prefixed with the muted "owes you" inline copy.
+    expect(find.text('${l10n.paymentOwesYouInline} '), findsOneWidget);
     // F59: Remind is a gray tonal pill (no icon), now on the SecondaryButton
     // preset with a surfaceContainer background override.
     expect(find.widgetWithText(SecondaryButton, l10n.paymentRemind), findsOneWidget);

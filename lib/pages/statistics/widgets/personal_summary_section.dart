@@ -7,8 +7,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 /// Personal "your spending" hero: a dark ink card (lighter raised card in dark
-/// mode) showing your total fair share (large) with paid / expense-count mini
-/// stats below.
+/// mode) leading with an "Across all groups" + period eyebrow, then a dual
+/// "You paid €X" / "Your share €Y" layout with the share tinted accent (v3
+/// mockup L669-681, design_14).
 ///
 /// Mirrors the overall-balance dark hero on the group list (DESIGN_SPEC "Dark
 /// hero card": #16181A light / #262824 dark) so the two read as one family.
@@ -16,6 +17,12 @@ class PersonalSummarySection extends ConsumerWidget {
   const PersonalSummarySection({super.key, required this.range});
 
   final StatsRange range;
+
+  /// Eyebrow period label reflecting the ACTUAL window the data covers, driven
+  /// by [range] (not a hard-coded "6 months").
+  String _period(AppLocalizations l10n) => range == StatsRange.allTime
+      ? l10n.statisticsPeriodAllTime
+      : l10n.statisticsPeriodLastMonths(range.months!);
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -28,6 +35,11 @@ class PersonalSummarySection extends ConsumerWidget {
     final Color heroSurface = isDark ? colorScheme.surfaceBright : colorScheme.onSurface;
     final Color onHero = isDark ? colorScheme.onSurface : colorScheme.surface;
     final Color onHeroMuted = onHero.withValues(alpha: 0.7);
+    // Share accent (mockup #C7B6F0): a light lavender that reads on the ink
+    // card. inversePrimary is the primary tint designed for inverse (dark)
+    // surfaces in the light theme; on the light-raised dark-theme card, primary
+    // is the readable accent.
+    final Color shareAccent = isDark ? colorScheme.primary : colorScheme.inversePrimary;
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
@@ -54,44 +66,38 @@ class PersonalSummarySection extends ConsumerWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                l10n.statisticsTotalSpend,
-                style: theme.textTheme.labelLarge?.copyWith(color: onHeroMuted),
+                '${l10n.statisticsAcrossAllGroups} · ${_period(l10n)}',
+                style: theme.textTheme.labelMedium?.copyWith(color: onHeroMuted),
               ),
-              const SizedBox(height: 6),
-              MoneyText(
-                s.totalShare,
-                style: theme.textTheme.displaySmall?.copyWith(
-                  fontWeight: FontWeight.w700,
-                  color: onHero,
-                ),
-                animate: true,
-              ),
-              const SizedBox(height: 18),
+              const SizedBox(height: 10),
               Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Expanded(
-                    child: _MiniStat(
-                      label: l10n.statisticsMemberPaid,
+                    child: _HeroAmount(
+                      label: l10n.statisticsYouPaid,
                       onHeroMuted: onHeroMuted,
                       child: MoneyText(
                         s.totalPaid,
-                        style: theme.textTheme.titleMedium?.copyWith(
-                          fontWeight: FontWeight.w600,
+                        style: theme.textTheme.headlineMedium?.copyWith(
+                          fontWeight: FontWeight.w700,
                           color: onHero,
                         ),
+                        animate: true,
                       ),
                     ),
                   ),
                   Expanded(
-                    child: _MiniStat(
-                      label: l10n.statisticsExpenseCount,
+                    child: _HeroAmount(
+                      label: l10n.statisticsYourShare,
                       onHeroMuted: onHeroMuted,
-                      child: Text(
-                        s.expenseCount.toString(),
-                        style: theme.textTheme.titleMedium?.copyWith(
-                          fontWeight: FontWeight.w600,
-                          color: onHero,
+                      child: MoneyText(
+                        s.totalShare,
+                        style: theme.textTheme.headlineMedium?.copyWith(
+                          fontWeight: FontWeight.w700,
+                          color: shareAccent,
                         ),
+                        animate: true,
                       ),
                     ),
                   ),
@@ -105,9 +111,9 @@ class PersonalSummarySection extends ConsumerWidget {
   }
 }
 
-/// One labelled mini stat inside the personal hero.
-class _MiniStat extends StatelessWidget {
-  const _MiniStat({required this.label, required this.onHeroMuted, required this.child});
+/// One labelled amount inside the personal hero (label above, amount below).
+class _HeroAmount extends StatelessWidget {
+  const _HeroAmount({required this.label, required this.onHeroMuted, required this.child});
 
   final String label;
   final Color onHeroMuted;
@@ -120,7 +126,7 @@ class _MiniStat extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(label, style: theme.textTheme.labelSmall?.copyWith(color: onHeroMuted)),
-        const SizedBox(height: 2),
+        const SizedBox(height: 4),
         child,
       ],
     );
