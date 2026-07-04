@@ -20,6 +20,16 @@ Settle up · Invite · **Tap to Claim** · Login · Reset password · Onboarding
 
 ---
 
+## Loop status — ⏹ STOPPED (round 10, 2026-07-04) — audit clean, no 🔥/⚠️ deltas remain
+**This session cleared every open item across rounds 8 + 9 (21 findings, all committed) and converged.**
+- **Round 8 FIX pass (16 findings):** F174 🔥 (claim summary card v3 restyle · 2e35d58); F36 ⚠️ (dedicated reset screen · 37d6c38), F71 ⚠️ (hybrid inline member roster · 9996671), F64 ⚠️ (always-monthly-bars group trend · 0db5ac4), F166 ⚠️ (shimmer silhouettes · b3f8705), F167 ⚠️ (friends joined SoftCard · 6cd8d1d), F168 ⚠️ (search rows → shared LedgerQuickRow · f325574), F169/F170/F171 ⚠️ (Settings/Profile input restyle · 96eb0ed), F172 ⚠️ (contact form label-above · f38f686), F173 ⚠️ (quick-editor header gap · 7cddd81), F175 ⚠️ (Nudge wired to real push · 1afd679); F90 💅 (white hero amount), F137 💅 (demote detail search to icon), F165 💅 (flush card balance) · 8817162.
+- **Round 9 AUDIT** (post-r8 regression audit, authenticated web capture): shared-component regression checks CLEAN. 6 raw → triage: 5 REAL, F179 dropped FALSE (profile form already in a white SoftCard).
+- **Round 9 FIX pass (5 findings):** F176 ⚠️ (settle pill no longer truncates · e7311f3), F177 ⚠️ (personal trend latest-only tint · 3f3999d), F178 ⚠️ (reset screen matches v3 pane — LIVE light+dark verified · 6cffa68); F180 💅 (personal-stats dual You-paid/Your-share header · 7d56d66), F181 💅 (settle-up "owes you" copy · 7d56d66).
+- **Round 10 AUDIT (convergence check):** authenticated live via `.web-creds` self-heal; re-captured all priority screens. **No new 🔥/⚠️/💅 deltas on reachable screens; nothing capture-pending.** All r9 fixes verified resolved vs v3, no regressions. → **STOP condition met.**
+- **Suite:** 867 tests green; `flutter analyze` clean. **Every in-scope design finding F01–F181 is now resolved.**
+- **Observed-but-unfiled (pre-existing, non-r9, 💅 — need a human decision, NOT auto-queued):** (1) personal-stats uses a "Monthly trend"/"Groups" progress-bar-by-amount list vs v3's "Monthly spend"/"By group" expense-count list; (2) friends request card uses inline Accept + outlined Cancel pill vs v3 stacked buttons (may already be settled by F93/F94). Flag on the phone if you want them chased.
+- **Still needs YOUR eyes on the physical device (`R5CY22DR0FK`), light+dark:** the OAuth-gated deep screens were verified via authenticated web + widget tests, but final pixel sign-off is device-only for: **Tap to Claim** (F174/F163/F164 — claim screen unreachable via the web itemized path), **Nudge** push delivery (F175 — multi-client), **shimmer** loading states (F166 — lists settle instantly on web), and native-only surfaces (Apple sign-in, share sheet, camera/QR scan, AdMob).
+
 ## Loop status — round 8 (2026-07-04) — REOPENED: 3rd walkthrough (German build)
 11 findings (F165–F175) from a live walkthrough. Every visual delta was investigated by **3 parallel Fable-5
 subagents** against `docs/design_handoff/Deun Redesign v3.dc.html` + `design_audit/screenshots/`, so each target
