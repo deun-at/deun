@@ -168,6 +168,19 @@ void main() {
     // Quick mode surfaces the category as a centered compact tile above the
     // amount (v3 design_08/09), not a labelled details row.
     expect(find.byType(CategorySelector), findsOneWidget);
+
+    // F173: the editor body ListView zeroes its padding so the status-bar
+    // inset (already consumed by DeunHeader's SafeArea) isn't double-applied
+    // as list top-padding; the inner top Padding is 6 → header→toggle ≈14px.
+    final bodyList = tester.widget<ListView>(find.byType(ListView).first);
+    expect(bodyList.padding, EdgeInsets.zero,
+        reason: 'ListView must not re-apply MediaQuery.padding.top (F173)');
+    final innerTopPad = tester.widgetList<Padding>(find.byType(Padding)).firstWhere(
+          (p) => p.padding == const EdgeInsets.only(top: 6, bottom: 0),
+          orElse: () => throw TestFailure(
+              'expected inner top Padding of 6 above the mode toggle (F173)'),
+        );
+    expect(innerTopPad.padding, const EdgeInsets.only(top: 6, bottom: 0));
   });
 
   testWidgets('tapping the date tile opens the date options sheet',

@@ -823,9 +823,15 @@ class _ExpenseDetailState extends ConsumerState<ExpenseDetail> {
                 ),
                 Expanded(
                   child: ListView(
+                    // F173: kill the double status-bar inset — DeunHeader's
+                    // SafeArea already consumed MediaQuery.padding.top for its
+                    // subtree; a null-padding ListView re-applies it as list
+                    // top-padding. Footer is a pinned sibling below, so the
+                    // list needs no bottom inset.
+                    padding: EdgeInsets.zero,
                     children: [
                       Padding(
-                        padding: const EdgeInsets.only(top: 10, bottom: 0),
+                        padding: const EdgeInsets.only(top: 6, bottom: 0),
                 child: FormBuilder(
                   key: _formKey,
                   clearValueOnUnregister: true,
