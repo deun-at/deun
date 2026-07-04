@@ -163,8 +163,7 @@ class _ClaimPageState extends ConsumerState<ClaimPage> {
                 children: [
                   DeunHeader(
                     title: expense.name,
-                    subtitle:
-                        l10n.claimPresenceCount(summary.memberTotals.length),
+                    subtitle: l10n.claimPresenceCount(notifier.claimingNow),
                     subtitleLeading: const _PresencePulse(),
                     leadingIcon: Icons.arrow_back,
                     trailing: IconButton(

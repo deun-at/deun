@@ -102,12 +102,20 @@ Expense _itemizedExpense() {
 }
 
 class _FakeClaimNotifier extends ClaimNotifier {
-  _FakeClaimNotifier(this._expense);
+  _FakeClaimNotifier(this._expense, {int presenceCount = 0})
+      : _presenceCount = presenceCount;
 
   final Expense _expense;
+  final int _presenceCount;
 
   @override
-  Future<Expense> build(String groupId, String expenseId) async => _expense;
+  Future<Expense> build(String groupId, String expenseId) async {
+    // Stand in for a live presence sync: the header's live-count reads
+    // [claimingNow], which the real notifier fills from the channel's
+    // presenceState() — here we inject it directly.
+    claimingNow = _presenceCount;
+    return _expense;
+  }
 }
 
 Future<void> _pump(
@@ -115,13 +123,14 @@ Future<void> _pump(
   required Expense expense,
   Brightness brightness = Brightness.light,
   List<GroupMember>? members,
+  int presenceCount = 0,
 }) async {
   final group = _group(members: members);
   await tester.pumpWidget(
     ProviderScope(
       overrides: [
-        claimProvider(group.id, expense.id)
-            .overrideWith(() => _FakeClaimNotifier(expense)),
+        claimProvider(group.id, expense.id).overrideWith(
+            () => _FakeClaimNotifier(expense, presenceCount: presenceCount)),
       ],
       child: MaterialApp(
         localizationsDelegates: const [
@@ -174,18 +183,45 @@ void main() {
 
   testWidgets('header shows merchant and live claiming count', (tester) async {
     final l10n = await AppLocalizations.delegate.load(const Locale('en'));
-    await _pump(tester, expense: _itemizedExpense());
+    // F164: the live count is Realtime *presence* — who is on the screen now —
+    // NOT how many members have claimed something. Inject 2 present clients.
+    await _pump(tester, expense: _itemizedExpense(), presenceCount: 2);
 
     // Merchant name appears in the DeunHeader title (may also appear elsewhere).
     expect(find.text('Supermarket'), findsWidgets);
-    // F127: presence subtitle is the live claimer count (Alice + Bob = 2),
-    // not a static "Live" label.
+    // F127/F164: presence subtitle reflects the injected presence count (2),
+    // not a static "Live" label and not the member-totals count.
     expect(find.text(l10n.claimPresenceCount(2)), findsOneWidget);
     expect(l10n.claimPresenceCount(2), '2 people claiming now');
     // No AppBar — the claim page uses DeunHeader exclusively.
     expect(find.byType(AppBar), findsNothing);
     // DeunHeader is rendered.
     expect(find.byType(DeunHeader), findsOneWidget);
+  });
+
+  testWidgets(
+      'F164: live count derives from presence, not member-totals length',
+      (tester) async {
+    final l10n = await AppLocalizations.delegate.load(const Locale('en'));
+    // The expense has 2 distinct claimers (Alice + Bob) in memberTotals, but
+    // only 1 client is actually present. The header must show the presence
+    // count (1), proving it is NOT fed summary.memberTotals.length.
+    await _pump(tester, expense: _itemizedExpense(), presenceCount: 1);
+
+    expect(find.text(l10n.claimPresenceCount(1)), findsOneWidget);
+    expect(l10n.claimPresenceCount(1), '1 person claiming now');
+    // The 2-member (memberTotals.length) string must NOT appear as the subtitle.
+    expect(find.text(l10n.claimPresenceCount(2)), findsNothing);
+  });
+
+  testWidgets('F164: zero presence shows the "No one claiming yet" branch',
+      (tester) async {
+    final l10n = await AppLocalizations.delegate.load(const Locale('en'));
+    // No clients tracked → presence count 0 → the =0 plural branch.
+    await _pump(tester, expense: _itemizedExpense(), presenceCount: 0);
+
+    expect(find.text(l10n.claimPresenceCount(0)), findsOneWidget);
+    expect(l10n.claimPresenceCount(0), 'No one claiming yet');
   });
 
   testWidgets('header has a single edit affordance (no duplicate)', (tester) async {

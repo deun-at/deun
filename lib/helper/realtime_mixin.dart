@@ -35,11 +35,21 @@ class _ChannelConfig {
   final PostgresChangeFilter? filter;
   final void Function(PostgresChangePayload payload) onEvent;
 
+  /// Optional presence hook. When set, the channel also registers
+  /// presence sync/join/leave listeners and `track`s [presencePayload] right
+  /// after it reaches `subscribed`; [onPresence] fires with the live distinct
+  /// presence-key count on every presence change. Omitted for every non-claim
+  /// consumer, leaving their postgres-changes behavior untouched.
+  final void Function(int presentCount)? onPresence;
+  final Map<String, dynamic>? presencePayload;
+
   _ChannelConfig({
     required this.channelName,
     required this.table,
     this.filter,
     required this.onEvent,
+    this.onPresence,
+    this.presencePayload,
   });
 }
 
@@ -68,12 +78,20 @@ mixin RealtimeNotifierMixin {
   /// - [table]: The Supabase table to listen to
   /// - [filter]: Optional column filter for scoped listening
   /// - [onEvent]: Callback for Postgres change events (insert/update/delete)
+  ///
+  /// [onPresence] + [presencePayload] opt into Realtime Presence on the same
+  /// channel: when both are set, the channel tracks [presencePayload] once
+  /// subscribed and calls [onPresence] with the live distinct presence-key
+  /// count on every sync/join/leave. Leave both null (the default) for a plain
+  /// postgres-changes channel.
   void subscribeToChannel({
     required Ref ref,
     required String channelName,
     required String table,
     PostgresChangeFilter? filter,
     required void Function(PostgresChangePayload payload) onEvent,
+    void Function(int presentCount)? onPresence,
+    Map<String, dynamic>? presencePayload,
   }) {
     _ref = ref;
     // Prevent duplicate configs for the same channel
@@ -84,6 +102,8 @@ mixin RealtimeNotifierMixin {
       table: table,
       filter: filter,
       onEvent: onEvent,
+      onPresence: onPresence,
+      presencePayload: presencePayload,
     );
     _configs.add(config);
     _createChannel(config);
@@ -91,9 +111,13 @@ mixin RealtimeNotifierMixin {
 
   void _createChannel(_ChannelConfig config, {int retryAttempt = 0}) {
     late final RealtimeChannel channel;
-    channel = supabase
-        .channel(config.channelName)
-        .onPostgresChanges(
+    void emitPresence() {
+      // Distinct present members = distinct presence keys (one key per member;
+      // a member open on two devices still counts once).
+      config.onPresence?.call(channel.presenceState().length);
+    }
+
+    var builder = supabase.channel(config.channelName).onPostgresChanges(
           event: PostgresChangeEvent.all,
           schema: 'public',
           table: config.table,
@@ -101,8 +125,14 @@ mixin RealtimeNotifierMixin {
           callback: (payload) {
             config.onEvent(payload);
           },
-        )
-        .subscribe((status, error) {
+        );
+    if (config.onPresence != null) {
+      builder = builder
+          .onPresenceSync((_) => emitPresence())
+          .onPresenceJoin((_) => emitPresence())
+          .onPresenceLeave((_) => emitPresence());
+    }
+    channel = builder.subscribe((status, error) {
           debugPrint('---subscribe--- ${config.channelName} $status');
           if (status == RealtimeSubscribeStatus.channelError ||
               status == RealtimeSubscribeStatus.timedOut) {
@@ -120,6 +150,8 @@ mixin RealtimeNotifierMixin {
             }
           } else if (status == RealtimeSubscribeStatus.subscribed) {
             _ref?.read(realtimeConnectionStatusProvider.notifier).markConnected();
+            final payload = config.presencePayload;
+            if (payload != null) channel.track(payload);
           } else if (status == RealtimeSubscribeStatus.closed) {
             debugPrint('---subscribe closed--- ${config.channelName}');
           }

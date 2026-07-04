@@ -1,6 +1,7 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../../../main.dart';
 import '../../../helper/realtime_mixin.dart';
 import '../data/claim_math.dart';
 import '../data/expense_entry_model.dart';
@@ -15,11 +16,20 @@ part 'claim_notifier.g.dart';
 class ClaimNotifier extends _$ClaimNotifier with RealtimeNotifierMixin {
   late String _groupId;
 
+  /// Distinct members currently on this claim screen, derived from Supabase
+  /// Realtime presence on the `claim:$expenseId` channel — NOT how many members
+  /// have claimed something. 0 until the first presence sync arrives (which
+  /// includes the current client's own `track`), so the header's =0 branch
+  /// ("No one claiming yet") shows only when presence is genuinely empty.
+  int claimingNow = 0;
+
   @override
   FutureOr<Expense> build(String groupId, String expenseId) async {
     _groupId = groupId;
     disposeChannels();
     ref.onDispose(() => disposeChannels());
+
+    final me = supabase.auth.currentUser;
 
     subscribeToChannel(
       ref: ref,
@@ -33,6 +43,16 @@ class ClaimNotifier extends _$ClaimNotifier with RealtimeNotifierMixin {
       onEvent: (_) async {
         final fresh = await ExpenseRepository.fetchDetail(expenseId);
         state = AsyncData(fresh);
+      },
+      // Presence: one key per member (a member on two devices still counts
+      // once). ref.notifyListeners rebuilds the header subtitle live.
+      presencePayload: {
+        'email': me?.email ?? me?.id ?? 'anon',
+        'ts': DateTime.now().toIso8601String(),
+      },
+      onPresence: (count) {
+        claimingNow = count;
+        ref.notifyListeners();
       },
     );
 
