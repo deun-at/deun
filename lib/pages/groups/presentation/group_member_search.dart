@@ -258,7 +258,19 @@ class _GroupMemberSearchState extends State<GroupMemberSearch> {
           title: Text(AppLocalizations.of(context)!.groupMemberAddFriends),
         ));
 
-        return CardColumn(children: listTiles);
+        // F156: zero the inherited horizontal Card margin (theme default is
+        // 10px) so this members block sits flush at the edit form's 20px
+        // ListView padding, matching its SoftCard siblings. Scoped here via a
+        // local Theme override — the global cardTheme and shared CardColumn are
+        // untouched (other consumers still get the 10px margin).
+        return Theme(
+          data: Theme.of(context).copyWith(
+            cardTheme: Theme.of(context).cardTheme.copyWith(
+                  margin: const EdgeInsets.symmetric(vertical: 1),
+                ),
+          ),
+          child: CardColumn(children: listTiles),
+        );
       },
       suggestionsBuilder: (context, controller) {
         if (controller.text.isEmpty) {
