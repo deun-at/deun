@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 
-import 'card_list_view_builder.dart';
 import 'restyle/soft_card.dart';
 import 'restyle/spaced_card_list.dart';
 
@@ -12,13 +11,19 @@ enum ShimmerShape {
   /// title bar, then a footer avatar row + a small balance bar.
   card,
 
-  /// Friend / member / contact / search rows: joined [CardColumn] rows, each an
-  /// avatar circle + name/subtitle bars and a trailing balance bar.
+  /// Friend / member / contact / search rows: joined rows in one [SoftCard],
+  /// each an avatar circle + name/subtitle bars and a trailing balance bar.
   row,
 
-  /// Plain stacked bars (expense list, payment, statistics category rows): a
-  /// leading dot + a couple of text bars in a joined card list.
+  /// Plain stacked bars (payment, statistics category rows): a leading dot + a
+  /// couple of text bars in one card.
   bars,
+
+  /// Expense-list ledger: day-section cards, each a [SectionLabel]-height header
+  /// bar + a [SoftCard] of `_QuickRow` silhouettes (42px rounded icon tile +
+  /// title/subtitle bars + trailing total bar). Mirrors the real day-grouped
+  /// ledger the shimmer stands in for (F166).
+  ledger,
 }
 
 class _SlidingGradientTransform extends GradientTransform {
@@ -75,14 +80,17 @@ class ShimmerCardListState extends State<ShimmerCardList>
     ThemeData themeData = Theme.of(context);
     ColorScheme colorScheme = themeData.colorScheme;
 
-    Color color = colorScheme.surfaceContainerLowest;
-    Color shimmerColor = themeData.colorScheme.surface;
+    // Translucent base so the bones show THROUGH the ShaderMask (BlendMode.srcATop
+    // replaces the painted RGB): an opaque base would overpaint every silhouette
+    // into a flat block (F166). Only the sweep highlight is (near-)opaque.
+    Color base = Colors.transparent;
+    Color shimmerColor = colorScheme.surface.withValues(alpha: 0.6);
 
     return LinearGradient(
       colors: [
-        color,
+        base,
         shimmerColor,
-        color,
+        base,
       ],
       stops: const [
         0,
@@ -122,6 +130,8 @@ class ShimmerCardListState extends State<ShimmerCardList>
           count: widget.listEntryLength,
           height: widget.height,
         );
+      case ShimmerShape.ledger:
+        return _LedgerSkeletonList(count: widget.listEntryLength);
     }
   }
 }
@@ -229,7 +239,7 @@ class _AvatarRow extends StatelessWidget {
 
 /// Friend / member / contact / search row skeleton: mirrors the identity row
 /// (avatar circle + name/username bars) with a trailing balance bar, joined
-/// into one card via [CardColumn].
+/// into one [SoftCard].
 class _RowSkeletonList extends StatelessWidget {
   const _RowSkeletonList({required this.count});
 
@@ -238,29 +248,35 @@ class _RowSkeletonList extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     // Clip-safe inside an Expanded: extra rows clip rather than overflow.
+    // One joined SoftCard (radius 20, v4 padding) — same chrome as the live
+    // friend list (F166), not the legacy CardColumn card/margin/28-8 radii.
     return _ClipSafe(
-      child: CardColumn(
-        children: List.generate(
-          count,
-          (_) => const Padding(
-            padding: EdgeInsets.all(16),
-            child: Row(
-              children: [
-                _Bone(width: 40, height: 40, shape: BoxShape.circle),
-                SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      _Bone(width: 110, height: 14),
-                      SizedBox(height: 6),
-                      _Bone(width: 70, height: 11),
-                    ],
+      child: SoftCard(
+        padding: const EdgeInsets.symmetric(vertical: 4),
+        borderRadius: 20,
+        child: Column(
+          children: List.generate(
+            count,
+            (_) => const Padding(
+              padding: EdgeInsets.all(14),
+              child: Row(
+                children: [
+                  _Bone(width: 40, height: 40, shape: BoxShape.circle),
+                  SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _Bone(width: 110, height: 14),
+                        SizedBox(height: 6),
+                        _Bone(width: 70, height: 11),
+                      ],
+                    ),
                   ),
-                ),
-                SizedBox(width: 8),
-                _Bone(width: 56, height: 14),
-              ],
+                  SizedBox(width: 8),
+                  _Bone(width: 56, height: 14),
+                ],
+              ),
             ),
           ),
         ),
@@ -269,8 +285,8 @@ class _RowSkeletonList extends StatelessWidget {
   }
 }
 
-/// Plain stacked-bar skeleton (the original behavior): a leading dot + a text
-/// bar per row, joined into one [CardColumn] card.
+/// Plain stacked-bar skeleton: a leading dot + a text bar per row, joined into
+/// one [SoftCard].
 class _BarsSkeletonList extends StatelessWidget {
   const _BarsSkeletonList({required this.count, required this.height});
 
@@ -281,25 +297,121 @@ class _BarsSkeletonList extends StatelessWidget {
   Widget build(BuildContext context) {
     // Keep bars proportional to the caller's requested row height.
     final barHeight = (height * 0.28).clamp(10.0, 20.0);
+    // One joined SoftCard (radius 20, v4 padding) — same chrome as the live
+    // joined lists (F166), not the legacy CardColumn card/margin/28-8 radii.
     return _ClipSafe(
-      padded: false,
-      child: CardColumn(
-        children: List.generate(
-          count,
-          (_) => Padding(
-            padding: EdgeInsets.symmetric(
-              horizontal: 16,
-              vertical: (height * 0.3).clamp(10.0, 22.0),
-            ),
-            child: Row(
-              children: [
-                _Bone(width: barHeight + 8, height: barHeight + 8, radius: 8),
-                const SizedBox(width: 12),
-                Expanded(child: _Bone(width: double.infinity, height: barHeight)),
-              ],
+      child: SoftCard(
+        padding: const EdgeInsets.symmetric(vertical: 4),
+        borderRadius: 20,
+        child: Column(
+          children: List.generate(
+            count,
+            (_) => Padding(
+              padding: EdgeInsets.symmetric(
+                horizontal: 14,
+                vertical: (height * 0.3).clamp(10.0, 22.0),
+              ),
+              child: Row(
+                children: [
+                  _Bone(width: barHeight + 8, height: barHeight + 8, radius: 8),
+                  const SizedBox(width: 12),
+                  Expanded(child: _Bone(width: double.infinity, height: barHeight)),
+                ],
+              ),
             ),
           ),
         ),
+      ),
+    );
+  }
+}
+
+/// Expense-list ledger skeleton (F166): mirrors the real day-grouped ledger —
+/// a short [SectionLabel]-height day header bar, then a [SoftCard] holding a few
+/// `_QuickRow` silhouettes (42px rounded icon tile + title/subtitle bars +
+/// trailing total bar). Repeated for a couple of day sections.
+class _LedgerSkeletonList extends StatelessWidget {
+  const _LedgerSkeletonList({required this.count});
+
+  /// Total row count to spread across day sections (mirrors the live ledger's
+  /// rows-per-day rhythm rather than one flat card).
+  final int count;
+
+  @override
+  Widget build(BuildContext context) {
+    // Spread rows across day sections of ~4 (matches the live day grouping).
+    const rowsPerSection = 4;
+    final sectionCount = (count / rowsPerSection).ceil().clamp(1, count);
+    var remaining = count;
+
+    final sections = <Widget>[];
+    for (var s = 0; s < sectionCount; s++) {
+      final rows = remaining < rowsPerSection ? remaining : rowsPerSection;
+      remaining -= rows;
+      sections.add(_DaySectionSkeleton(rows: rows));
+    }
+
+    return _ClipSafe(child: Column(children: sections));
+  }
+}
+
+/// One day section: a header bar + a joined [SoftCard] of `_QuickRow` bones.
+class _DaySectionSkeleton extends StatelessWidget {
+  const _DaySectionSkeleton({required this.rows});
+
+  final int rows;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // SectionLabel-height day header bar.
+          const Padding(
+            padding: EdgeInsets.fromLTRB(4, 0, 4, 8),
+            child: _Bone(width: 84, height: 12),
+          ),
+          SoftCard(
+            padding: const EdgeInsets.symmetric(vertical: 4),
+            borderRadius: 20,
+            child: Column(
+              children: List.generate(rows, (_) => const _QuickRowSkeleton()),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// One `_QuickRow` silhouette: 42px rounded icon tile, title + net-line bars,
+/// trailing total bar (padding v3 all-14 like the real row).
+class _QuickRowSkeleton extends StatelessWidget {
+  const _QuickRowSkeleton();
+
+  @override
+  Widget build(BuildContext context) {
+    return const Padding(
+      padding: EdgeInsets.all(14),
+      child: Row(
+        children: [
+          _Bone(width: 42, height: 42, radius: 12),
+          SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _Bone(width: 130, height: 15),
+                SizedBox(height: 6),
+                _Bone(width: 90, height: 12),
+              ],
+            ),
+          ),
+          SizedBox(width: 10),
+          _Bone(width: 58, height: 15),
+        ],
       ),
     );
   }
@@ -310,18 +422,15 @@ class _BarsSkeletonList extends StatelessWidget {
 /// the original [ShimmerCardList] scrolled via a ListView; the skeletons here
 /// are non-scrolling Columns, so this restores that clip-safety.
 class _ClipSafe extends StatelessWidget {
-  const _ClipSafe({required this.child, this.padded = true});
+  const _ClipSafe({required this.child});
 
   final Widget child;
-  final bool padded;
 
   @override
   Widget build(BuildContext context) {
     return SingleChildScrollView(
       physics: const NeverScrollableScrollPhysics(),
-      padding: padded
-          ? const EdgeInsets.symmetric(horizontal: 16)
-          : EdgeInsets.zero,
+      padding: const EdgeInsets.symmetric(horizontal: 16),
       child: child,
     );
   }

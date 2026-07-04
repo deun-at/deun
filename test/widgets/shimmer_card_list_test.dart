@@ -1,4 +1,3 @@
-import 'package:deun/widgets/card_list_view_builder.dart';
 import 'package:deun/widgets/restyle/soft_card.dart';
 import 'package:deun/widgets/shimmer_card_list.dart';
 import 'package:flutter/material.dart';
@@ -61,9 +60,9 @@ void main() {
     );
     await tester.pump(const Duration(milliseconds: 100));
 
-    // Rows are joined into a single CardColumn card (matches the live friend
-    // list's joined-row layout, F143).
-    expect(find.byType(CardColumn), findsOneWidget);
+    // Rows are joined into a single SoftCard (F166: the live friend-list chrome,
+    // not the retired CardColumn card/margin/28-8 radii).
+    expect(find.byType(SoftCard), findsOneWidget);
 
     // Each row has one avatar circle + a name bar + a username bar + a trailing
     // balance bar.
@@ -73,7 +72,7 @@ void main() {
         greaterThanOrEqualTo(4), reason: 'name/username/balance bars');
   });
 
-  testWidgets('bars skeleton (default) still renders without overflow',
+  testWidgets('bars skeleton (default) still renders without overflow, in a SoftCard',
       (tester) async {
     await tester.pumpWidget(
       _wrap(const ShimmerCardList(height: 80, listEntryLength: 5)),
@@ -81,6 +80,48 @@ void main() {
     await tester.pump(const Duration(milliseconds: 100));
 
     expect(find.byType(ShimmerCardList), findsOneWidget);
+    // F166: joined into one SoftCard, not the retired CardColumn chrome.
+    expect(find.byType(SoftCard), findsOneWidget);
     expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('ledger skeleton mirrors the day-sectioned _QuickRow ledger',
+      (tester) async {
+    await tester.pumpWidget(
+      _wrap(const ShimmerCardList(
+        height: 80,
+        listEntryLength: 12,
+        shape: ShimmerShape.ledger,
+      )),
+    );
+    await tester.pump(const Duration(milliseconds: 100));
+
+    // Rows spread across day sections, each section a real SoftCard (mirrors the
+    // live _DaySection: header + joined _QuickRow card, F166).
+    expect(find.byType(SoftCard), findsWidgets);
+    // 12 rows → each _QuickRow silhouette has a leading icon tile + 2 text bars
+    // + a trailing total bar, plus one day-header bar per section.
+    expect(_boneCount(tester, shape: BoxShape.rectangle),
+        greaterThanOrEqualTo(12), reason: 'icon tiles + text/total bars + day headers');
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('shimmer gradient base is translucent so bones show through (F166)',
+      (tester) async {
+    await tester.pumpWidget(
+      _wrap(const ShimmerCardList(
+        height: 80,
+        listEntryLength: 3,
+        shape: ShimmerShape.card,
+      )),
+    );
+    await tester.pump(const Duration(milliseconds: 100));
+
+    final state = tester.state<ShimmerCardListState>(find.byType(ShimmerCardList));
+    final colors = state.gradient.colors;
+    // An opaque base overpaints every bone into a flat block under
+    // BlendMode.srcATop (F166). The base (endpoints) must be translucent.
+    expect(colors.first.a, lessThan(1.0), reason: 'gradient base must be translucent');
+    expect(colors.last.a, lessThan(1.0), reason: 'gradient base must be translucent');
   });
 }

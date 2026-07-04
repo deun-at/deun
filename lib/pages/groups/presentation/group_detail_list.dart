@@ -57,7 +57,13 @@ class _GroupDetailListState extends ConsumerState<GroupDetailList> {
         oldOffset = ref.read(expenseListProvider(widget.group.id).notifier).offset;
 
         if (isLoading) {
-          return const ShimmerCardList(height: 80, listEntryLength: 15);
+          // Mirror the real day-grouped ledger (section header + joined
+          // _QuickRow cards) rather than flat bars (F166).
+          return const ShimmerCardList(
+            height: 80,
+            listEntryLength: 12,
+            shape: ShimmerShape.ledger,
+          );
         }
 
         if (expenses == null || expenses.isEmpty) {
