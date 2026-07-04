@@ -117,11 +117,13 @@ class GroupListItem extends ConsumerWidget {
                     AvatarStack(members: members, radius: 13, maxVisible: 3),
                     const SizedBox(width: 8),
                   ],
-                  // Flexible so the balance block yields before the amount
-                  // clips: when a wide member stack + long German lead label
-                  // ("Dir wird geschuldet") won't fit, the LABEL ellipsizes
-                  // (maxLines:1 below) while the amount stays whole (F152).
-                  Flexible(
+                  // Expanded so the balance column FILLS the remaining width and
+                  // pushes label+amount flush to the card's right edge (footer is
+                  // avatars-left / balance-right space-between, F165). The F152
+                  // guard still holds: when a wide member stack + long German lead
+                  // label ("Dir wird geschuldet") won't fit, the LABEL ellipsizes
+                  // (maxLines:1 below) while the amount stays whole.
+                  Expanded(
                     child: Column(
                     crossAxisAlignment: CrossAxisAlignment.end,
                     mainAxisSize: MainAxisSize.min,

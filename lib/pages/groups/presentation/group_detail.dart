@@ -276,31 +276,23 @@ class _GroupDetailState extends ConsumerState<GroupDetail> {
     );
   }
 
-  /// Expense search relocated out of the (now v3-faithful) header into the
-  /// scroll body. v3 group detail has no header search action — this keeps the
-  /// existing expense-search feature alive as a slim search bar above the list.
+  /// Expense search demoted from a full-width bar to a single right-aligned
+  /// 38px circular icon-button above the ledger (F137): v3 group detail has NO
+  /// search bar — the only mockup search is Add-friend. The SearchAnchor + its
+  /// F168 result rows stay; only the entry point shrinks. Tapping the icon opens
+  /// the existing overlay via [SearchController.openView].
   Widget _buildExpenseSearch(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
-    final colorScheme = Theme.of(context).colorScheme;
     return SearchAnchor(
       searchController: _searchController,
       builder: (context, controller) {
-        return SearchBar(
-          controller: controller,
-          hintText: l10n.expensesSearchTitle,
-          leading: const Icon(Icons.search),
-          // White card surface to match the quick-action cards above (F154):
-          // SoftCard's surfaceContainerLowest token + radius 14 (mockup L724),
-          // flat (elevation 0). Dark mode flips free via the token.
-          backgroundColor: WidgetStatePropertyAll(
-            colorScheme.surfaceContainerLowest,
+        return Align(
+          alignment: Alignment.centerRight,
+          child: HeaderIconButton(
+            icon: Icons.search,
+            tooltip: l10n.expensesSearchTitle,
+            onTap: controller.openView,
           ),
-          shape: WidgetStatePropertyAll(
-            RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-          ),
-          elevation: const WidgetStatePropertyAll(0),
-          onTap: controller.openView,
-          onChanged: (_) => controller.openView(),
         );
       },
       suggestionsBuilder: (context, controller) {

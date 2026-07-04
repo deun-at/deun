@@ -320,17 +320,15 @@ class _OverallBalanceHero extends StatelessWidget {
     final net = overall.net;
     final bool settled = net.abs() < 0.01;
 
+    // Lead label only — the hero amount is now always white-on-ink (F90), so the
+    // net sign drives just the wording, not a semantic color on the big number.
     final String leadLabel;
-    final MoneySemantic semanticMode;
     if (settled) {
       leadLabel = l10n.homeOverallSettled;
-      semanticMode = MoneySemantic.neutral;
     } else if (net > 0) {
       leadLabel = l10n.homeOverallOwed;
-      semanticMode = MoneySemantic.positive;
     } else {
       leadLabel = l10n.homeOverallOwe;
-      semanticMode = MoneySemantic.negative;
     }
 
     return Container(
@@ -364,10 +362,13 @@ class _OverallBalanceHero extends StatelessWidget {
               style: Theme.of(context).textTheme.displayMedium?.copyWith(color: onHero),
             )
           else
+            // Hero amount renders white-on-ink like the settled branch (F90):
+            // the big number is neutral onHero; only the _HeroStat chips below
+            // carry semantic green/red. semanticMode still drives the lead label.
             MoneyText(
               net.abs(),
-              semantic: semanticMode,
-              style: Theme.of(context).textTheme.displayMedium,
+              semantic: MoneySemantic.neutral,
+              style: Theme.of(context).textTheme.displayMedium?.copyWith(color: onHero),
               animate: true,
             ),
           const SizedBox(height: 18),
