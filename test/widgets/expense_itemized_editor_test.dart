@@ -9,6 +9,7 @@ import 'package:deun/pages/groups/data/group_model.dart';
 import 'package:deun/widgets/restyle/app_segmented_control.dart';
 import 'package:deun/widgets/restyle/dashed_ghost_button.dart';
 import 'package:deun/widgets/restyle/expense_picker_sheets.dart';
+import 'package:deun/widgets/restyle/primary_button.dart';
 import 'package:deun/widgets/restyle/soft_card.dart';
 import 'package:deun/widgets/theme_builder.dart';
 import 'package:flutter/material.dart';
@@ -325,5 +326,120 @@ void main() {
     await tester.tap(find.text(l10n.editorModeItemized));
     await tester.pumpAndSettle();
     expect(tester.takeException(), isNull);
+  });
+
+  // BUG A: the itemized "Add & share for claiming" CTA is the last child inside
+  // the scrollable body (only Quick has a pinned footer). The scroll body must
+  // keep a bottom inset so the CTA clears the safe area instead of sitting flush
+  // against the viewport bottom (regressed by F173's padding: EdgeInsets.zero).
+  testWidgets('itemized scroll body keeps a bottom inset so the CTA is reachable',
+      (tester) async {
+    await _pump(tester);
+    final l10n = await _l10n();
+
+    // Quick mode: the CTA is a pinned footer, so the list needs no bottom inset.
+    final quickList = tester.widget<ListView>(find.byType(ListView).first);
+    expect(quickList.padding, EdgeInsets.zero,
+        reason: 'Quick keeps the F173 zero padding (pinned footer below).');
+
+    await tester.tap(find.text(l10n.editorModeItemized));
+    await tester.pumpAndSettle();
+
+    // Itemized: CTA lives inside the list, so the list must reserve bottom space.
+    final itemizedList = tester.widget<ListView>(find.byType(ListView).first);
+    final bottomInset =
+        itemizedList.padding?.resolve(TextDirection.ltr).bottom ?? 0;
+    expect(bottomInset, greaterThan(0),
+        reason: 'Itemized CTA is the last scroll child — needs bottom clearance.');
+    // The top must stay 0 so the F173 header->toggle gap is not reintroduced.
+    expect(itemizedList.padding?.resolve(TextDirection.ltr).top, 0);
+  });
+
+  // BUG B: switching itemized -> Quick with 2+ items used to no-op silently —
+  // the toggle stayed on Itemized and read as a dead, unpressable control. Quick
+  // must always be honored (items collapse to a single entry).
+  testWidgets('Quick toggle is honored even with multiple items (collapses)',
+      (tester) async {
+    await _pump(tester);
+    final l10n = await _l10n();
+
+    await tester.tap(find.text(l10n.editorModeItemized));
+    await tester.pumpAndSettle();
+
+    // Add a second item so we are firmly in multi-entry itemized.
+    await tester.ensureVisible(find.text(l10n.addItemByHand));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text(l10n.addItemByHand));
+    await tester.pumpAndSettle();
+    expect(find.text(l10n.itemNameHint), findsNWidgets(2));
+
+    // Tap Quick — it must switch back, not silently ignore the request.
+    await tester.ensureVisible(find.text(l10n.editorModeQuick));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text(l10n.editorModeQuick));
+    await tester.pumpAndSettle();
+
+    // Quick layout is back: the quick footer CTA is present and pressable,
+    // the itemized CTA is gone, and the split UI (quick-only) is restored.
+    final addButton = find.text(l10n.expenseAddButton);
+    expect(addButton, findsOneWidget);
+    expect(find.text(l10n.expenseSaveAndShareForClaiming), findsNothing);
+    expect(find.byType(AppSegmentedControl<SplitMode>), findsOneWidget);
+    // The CTA is genuinely pressable (has an onPressed).
+    expect(
+      tester.widget<PrimaryButton>(
+        find.ancestor(of: addButton, matching: find.byType(PrimaryButton)),
+      ).onPressed,
+      isNotNull,
+    );
+  });
+
+  // BUG C: the itemized total header lives in the parent; a per-item price/qty
+  // edit must recompute it live (it used to only refresh on a mode toggle).
+  testWidgets('itemized total updates live when an item quantity changes',
+      (tester) async {
+    // Seeded shared expense: 1 item, qty 2, unit price 2.50 -> total €5.00.
+    await _pump(tester, expense: _sharedClaimExpense());
+    final l10n = await _l10n();
+
+    expect(find.text(l10n.toCurrency(5)), findsNWidgets(2)); // line + header
+
+    // Bump quantity 2 -> 3 via the item's qty stepper (no mode toggle).
+    await tester.tap(find.bySemanticsLabel(l10n.stepperIncrease).first);
+    await tester.pumpAndSettle();
+
+    // Header total recomputes immediately to 3 × €2.50 = €7.50.
+    expect(find.text(l10n.toCurrency(7.5)), findsNWidgets(2));
+    expect(find.text(l10n.toCurrency(5)), findsNothing);
+  });
+
+  // BUG D: itemized item rows must render inside ONE joined SoftCard, not a
+  // card-in-card (a per-row SoftCard nested inside an outer CardColumn/Card).
+  testWidgets('itemized items render in a single card, not nested cards',
+      (tester) async {
+    await _pump(tester);
+    final l10n = await _l10n();
+
+    await tester.tap(find.text(l10n.editorModeItemized));
+    await tester.pumpAndSettle();
+
+    // Add a second item so a nested outer/inner wrapper would be obvious.
+    await tester.ensureVisible(find.text(l10n.addItemByHand));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text(l10n.addItemByHand));
+    await tester.pumpAndSettle();
+    expect(find.text(l10n.itemNameHint), findsNWidgets(2));
+
+    // Each item's content sits under exactly ONE SoftCard — no card-in-card.
+    for (final field in find.text(l10n.itemNameHint).evaluate()) {
+      expect(
+        find.ancestor(
+          of: find.byWidget(field.widget),
+          matching: find.byType(SoftCard),
+        ),
+        findsOneWidget,
+        reason: 'An item row must have a single SoftCard ancestor, not nested.',
+      );
+    }
   });
 }

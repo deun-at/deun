@@ -34,6 +34,7 @@ class ExpenseEntryWidget extends StatefulWidget {
     this.initialQuantity,
     this.isSingleEntry = false,
     this.expenseLevelAmountController,
+    this.onLineTotalChanged,
   });
 
   final int index;
@@ -47,6 +48,12 @@ class ExpenseEntryWidget extends StatefulWidget {
   /// In single-entry mode, the amount is entered at the expense level.
   /// This controller lets the entry widget stay in sync with that amount.
   final TextEditingController? expenseLevelAmountController;
+
+  /// Fired whenever this item's line total (unit price × quantity) changes, so
+  /// the itemized total header in the parent can recompute. The parent form's
+  /// onChanged only fires once (it guards on its dirty flag), so it cannot drive
+  /// a live total on its own.
+  final VoidCallback? onLineTotalChanged;
 
   @override
   State<ExpenseEntryWidget> createState() => _ExpenseEntryWidgetState();
@@ -185,6 +192,8 @@ class _ExpenseEntryWidgetState extends State<ExpenseEntryWidget> {
   void _onTotalChanged(double oldTotal) {
     _scaleLockedMembers(oldTotal, _entryTotal);
     _updateSplitState();
+    // Let the parent recompute the itemized total header live (BUG C).
+    widget.onLineTotalChanged?.call();
   }
 
   void _recalculateAmounts() {
@@ -289,12 +298,17 @@ class _ExpenseEntryWidgetState extends State<ExpenseEntryWidget> {
     final l10n = AppLocalizations.of(context)!;
 
     return Padding(
-      padding: const EdgeInsetsDirectional.fromSTEB(16, 8, 8, 8),
+      // Itemized rows sit inside the parent's joined SoftCard and own their
+      // padding via _buildItemCard, so no outer inset (BUG D). Quick keeps the
+      // split-section inset.
+      padding: widget.isSingleEntry
+          ? const EdgeInsetsDirectional.fromSTEB(16, 8, 8, 8)
+          : EdgeInsets.zero,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           if (!widget.isSingleEntry) ...[
-            // Itemized item card (F117): auto icon tile + inline-editable
+            // Itemized item row (F117): auto icon tile + inline-editable
             // name + "€ [price] each" + line total right; bottom row =
             // trash left, qty stepper right. Items are shared for claiming
             // (F118) — no per-item split UI; members claim their own units
@@ -330,18 +344,20 @@ class _ExpenseEntryWidgetState extends State<ExpenseEntryWidget> {
     );
   }
 
-  /// F117 item card: leading auto-icon tile, inline-editable name +
+  /// F117 item row: leading auto-icon tile, inline-editable name +
   /// "€ [price] each", line total right; bottom row = trash left, qty
   /// stepper right. Wraps the same FormBuilderFields (name / amount /
   /// quantity) so saving, the itemized total, and the claim explosion
   /// (F118/F146) stay wired to unchanged state.
+  ///
+  /// BUG D: renders as a FLAT row (no own SoftCard) — the parent joins all item
+  /// rows inside ONE SoftCard, so wrapping here too produced a card-in-card.
   Widget _buildItemCard(double spacing, AppLocalizations l10n) {
     final colorScheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
 
-    return SoftCard(
+    return Padding(
       padding: const EdgeInsets.all(13),
-      borderRadius: 16,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [

@@ -1,6 +1,5 @@
 import 'package:deun/helper/helper.dart';
 import 'package:deun/pages/groups/data/group_member_model.dart';
-import 'package:deun/widgets/card_list_view_builder.dart';
 import 'package:deun/widgets/restyle/deun_header.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_form_builder/flutter_form_builder.dart';
@@ -653,19 +652,24 @@ class _ExpenseDetailState extends ConsumerState<ExpenseDetail> {
         }
         _itemizedOverride = true;
       } else {
-        // Back to Quick: only the single-entry case can collapse. Copy the
-        // entry amount back to the expense-level controller so it is preserved.
-        if (_entries.length == 1) {
-          final firstIndex = _entries.first.index;
-          final amount = _formKey.currentState
-              ?.fields["expense_entry[$firstIndex][amount]"]?.value
-              ?.toString();
-          if (amount != null && amount.isNotEmpty) {
-            _amountController.text = amount;
-            _entries.first.initialAmount = amount;
-          }
-          _itemizedOverride = false;
+        // Back to Quick. BUG B: with 2+ entries the toggle used to no-op
+        // silently — the tab snapped back to Itemized and read as a dead,
+        // unpressable control. Quick has a single expense-level amount, so
+        // collapse the itemized items into one entry: keep the first, drop the
+        // rest, and seed the expense amount from the first item's line total so
+        // no value is lost. Now the toggle is always honored.
+        if (_entries.length > 1) {
+          _entries.removeRange(1, _entries.length);
         }
+        final firstIndex = _entries.first.index;
+        final amount = _formKey.currentState
+            ?.fields["expense_entry[$firstIndex][amount]"]?.value
+            ?.toString();
+        if (amount != null && amount.isNotEmpty) {
+          _amountController.text = amount;
+          _entries.first.initialAmount = amount;
+        }
+        _itemizedOverride = false;
       }
     });
   }
@@ -823,12 +827,20 @@ class _ExpenseDetailState extends ConsumerState<ExpenseDetail> {
                 ),
                 Expanded(
                   child: ListView(
-                    // F173: kill the double status-bar inset — DeunHeader's
-                    // SafeArea already consumed MediaQuery.padding.top for its
-                    // subtree; a null-padding ListView re-applies it as list
-                    // top-padding. Footer is a pinned sibling below, so the
-                    // list needs no bottom inset.
-                    padding: EdgeInsets.zero,
+                    // F173: kill the double status-bar inset at the TOP —
+                    // DeunHeader's SafeArea already consumed MediaQuery.padding.top
+                    // for its subtree; a null-padding ListView would re-apply it as
+                    // list top-padding. So top stays 0.
+                    // BUG A: the itemized "Add & share for claiming" CTA is the
+                    // LAST child inside this list (only Quick mode has a pinned
+                    // footer), so the list DOES need a bottom inset — otherwise the
+                    // CTA sits flush against the safe-area bottom and is cut off.
+                    // Clear the safe area plus a small gap.
+                    padding: EdgeInsets.only(
+                      bottom: _isSingleEntry
+                          ? 0
+                          : MediaQuery.of(context).padding.bottom + 20,
+                    ),
                     children: [
                       Padding(
                         padding: const EdgeInsets.only(top: 6, bottom: 0),
@@ -902,7 +914,10 @@ class _ExpenseDetailState extends ConsumerState<ExpenseDetail> {
                       const SizedBox(height: spacing),
                       // F161 D1: quick split renders the entry on the page bg
                       // (the split section owns its own SoftCard around only
-                      // the member rows). Itemized keeps the CardColumn wrap.
+                      // the member rows). Itemized joins its item rows inside a
+                      // SINGLE SoftCard (the group_detail_list _DaySection
+                      // pattern) — the item rows render flat (no per-row card)
+                      // so there is no card-in-card nesting.
                       Builder(builder: (context) {
                         final entryWidgets = _entries.map((data) =>
                           ExpenseEntryWidget(
@@ -916,11 +931,40 @@ class _ExpenseDetailState extends ConsumerState<ExpenseDetail> {
                             initialQuantity: data.initialQuantity,
                             isSingleEntry: _isSingleEntry,
                             expenseLevelAmountController: _isSingleEntry ? _amountController : null,
+                            // Itemized total header lives in this parent; a child
+                            // price/qty edit must rebuild it. FormBuilder.onChanged
+                            // only fires the first time (it guards on _isDirty), so
+                            // wire an explicit per-edit rebuild here.
+                            onLineTotalChanged:
+                                _isSingleEntry ? null : () => setState(() {}),
                           ),
                         ).toList();
-                        return _isSingleEntry
-                            ? Column(children: entryWidgets)
-                            : CardColumn(children: entryWidgets);
+                        if (_isSingleEntry) {
+                          return Column(children: entryWidgets);
+                        }
+                        return Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 16),
+                          child: SoftCard(
+                            padding: EdgeInsets.zero,
+                            borderRadius: 16,
+                            child: Column(
+                              children: [
+                                for (int i = 0; i < entryWidgets.length; i++) ...[
+                                  if (i > 0)
+                                    Divider(
+                                      height: 1,
+                                      thickness: 1,
+                                      indent: 16,
+                                      endIndent: 16,
+                                      color: colorScheme.outlineVariant
+                                          .withValues(alpha: 0.5),
+                                    ),
+                                  entryWidgets[i],
+                                ],
+                              ],
+                            ),
+                          ),
+                        );
                       }),
                       const SizedBox(height: spacing),
                       // F111: "Add item" is an Itemized-only concept — the Quick
