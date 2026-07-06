@@ -141,7 +141,10 @@ class ExpenseDetailRead extends ConsumerWidget {
                 payerIsYou: expense.paidBy == _currentUserEmail,
                 currentUserEmail: _currentUserEmail,
               ),
-              if (isItemizedExpense(expense)) ...[
+              // Only real claim expenses get the "Review & claim" banner. Old
+              // itemized expenses (manual splits, no claim units) would land on
+              // an empty claim screen, so they show just the breakdown below.
+              if (expense.hasClaimUnits) ...[
                 const SizedBox(height: 16),
                 _ReviewClaimBanner(
                   onTap: () {

@@ -40,7 +40,9 @@ Group _group() {
 }
 
 ExpenseEntry _entry(int index, {String splitMode = 'equal'}) =>
-    ExpenseEntry(index: index)..splitMode = splitMode;
+    ExpenseEntry(index: index)
+      ..splitMode = splitMode
+      ..quantity = 1;
 
 Expense _expense({
   required int entryCount,
@@ -48,6 +50,7 @@ Expense _expense({
   double amount = 30,
   String paidBy = 'a@test.com',
   ExpenseCategory? category = ExpenseCategory.food,
+  String entrySplitMode = 'equal',
 }) {
   final e = Expense();
   e.id = 'e1';
@@ -62,7 +65,8 @@ Expense _expense({
   e.category = category;
   e.groupMemberShareStatistic = shareStat;
   e.expenseEntries = {
-    for (var i = 0; i < entryCount; i++) 'entry$i': _entry(i),
+    for (var i = 0; i < entryCount; i++)
+      'entry$i': _entry(i, splitMode: entrySplitMode),
   };
   return e;
 }
@@ -246,7 +250,7 @@ void main() {
     }
   });
 
-  testWidgets('Review & claim banner shows for an itemized expense',
+  testWidgets('Review & claim banner shows for a claim expense',
       (tester) async {
     final l10n = await AppLocalizations.delegate.load(const Locale('en'));
     await _pump(
@@ -255,6 +259,7 @@ void main() {
         entryCount: 3,
         shareStat: const {'a@test.com': 10, 'b@test.com': 10},
         amount: 30,
+        entrySplitMode: 'claim',
       ),
     );
 
@@ -270,6 +275,22 @@ void main() {
         entryCount: 1,
         shareStat: const {'a@test.com': 10, 'b@test.com': 10},
         amount: 20,
+      ),
+    );
+
+    expect(find.text(l10n.expenseReviewClaimTitle), findsNothing);
+  });
+
+  testWidgets(
+      'Review & claim banner is absent for an old itemized expense (no claim units)',
+      (tester) async {
+    final l10n = await AppLocalizations.delegate.load(const Locale('en'));
+    await _pump(
+      tester,
+      _expense(
+        entryCount: 3,
+        shareStat: const {'a@test.com': 10, 'b@test.com': 10},
+        amount: 30,
       ),
     );
 

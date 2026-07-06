@@ -59,14 +59,15 @@ ExpenseEntryShare _share(String email, double percentage) {
   return s;
 }
 
-ExpenseEntry _entry(int index, double amount, List<ExpenseEntryShare> shares) {
+ExpenseEntry _entry(int index, double amount, List<ExpenseEntryShare> shares,
+    {String splitMode = 'equal'}) {
   final e = ExpenseEntry(index: index);
   e.id = 'entry$index';
   e.expenseId = 'x';
   e.name = 'item$index';
   e.amount = amount;
   e.quantity = 1;
-  e.splitMode = 'equal';
+  e.splitMode = splitMode;
   e.createdAt = '';
   e.expenseEntryShares = shares;
   return e;
@@ -102,8 +103,11 @@ Expense _itemized({required String id, required String date}) {
   e.category = null;
   e.paidByDisplayName = 'sam';
   e.expenseEntries = {
-    'e0': _entry(0, 20, [_share('sam@test.com', 100)]),
-    'e1': _entry(1, 10, [_share('sam@test.com', 100)]),
+    // Real per-unit claim entries (split_mode 'claim') so this routes to the
+    // claim screen — an itemized expense with no claim units is an old manual
+    // split and now opens the read detail instead.
+    'e0': _entry(0, 20, [_share('sam@test.com', 100)], splitMode: 'claim'),
+    'e1': _entry(1, 10, [_share('sam@test.com', 100)], splitMode: 'claim'),
   };
   // Only sam has claimed → €10 unclaimed for the €30 total.
   e.groupMemberShareStatistic = {'sam@test.com': 20};

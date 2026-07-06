@@ -19,13 +19,16 @@ import 'package:go_router/go_router.dart';
 import '../../expenses/data/expense_model.dart';
 import '../../expenses/provider/expense_list.dart';
 
-/// Opens an expense the same way the ledger does: quick expenses go to the read
-/// detail (Screen 11), itemized expenses go to Tap-to-Claim (Screen 9). Shared
-/// so the expense search routes identically to a ledger tap.
+/// Opens an expense the same way the ledger does: expenses with per-unit claim
+/// items go to Tap-to-Claim (Screen 9); everything else — quick expenses AND
+/// old itemized expenses with manual splits (no claim units) — goes to the read
+/// detail (Screen 11), which shows the real per-member breakdown. Routing on
+/// claim units (not entry count) keeps old itemized expenses off the claim
+/// screen, where they'd read as €0.00 / "no claimable items". Shared so the
+/// expense search routes identically to a ledger tap.
 void openLedgerExpense(BuildContext context, Group group, Expense expense) {
-  final isItemized = classifyLedgerRow(expense) == LedgerRowType.itemized;
   GoRouter.of(context).push(
-    isItemized ? "/group/details/claim" : "/group/details/expense-detail",
+    expense.hasClaimUnits ? "/group/details/claim" : "/group/details/expense-detail",
     extra: {'group': group, 'expense': expense},
   );
 }

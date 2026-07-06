@@ -100,15 +100,22 @@ class _GroupDetailState extends ConsumerState<GroupDetail> {
                 DeunHeader(
                   title: widget.group.name,
                   onLeading: () => GoRouter.of(context).pop(),
-                  trailing: HeaderIconButton(
-                    icon: Icons.tune,
-                    tooltip: AppLocalizations.of(context)!.editGroup,
-                    onTap: () {
-                      GoRouter.of(
-                        context,
-                      ).push("/group/edit", extra: {'group': widget.group});
-                    },
-                  ),
+                  // Search + edit sit side by side in the header. The search was
+                  // a lone right-aligned icon in the scroll body where it read
+                  // as cramped; the header row gives it a natural home next to
+                  // the edit action.
+                  trailingActions: [
+                    _buildExpenseSearch(context),
+                    HeaderIconButton(
+                      icon: Icons.tune,
+                      tooltip: AppLocalizations.of(context)!.editGroup,
+                      onTap: () {
+                        GoRouter.of(
+                          context,
+                        ).push("/group/edit", extra: {'group': widget.group});
+                      },
+                    ),
+                  ],
                 ),
                 Expanded(
                   child: NestedScrollView(
@@ -182,8 +189,6 @@ class _GroupDetailState extends ConsumerState<GroupDetail> {
                                       _GroupBalanceHero(group: groupDetail),
                                       const SizedBox(height: 14),
                                       _GroupQuickActions(group: groupDetail),
-                                      const SizedBox(height: 14),
-                                      _buildExpenseSearch(context),
                                     ],
                                   ),
                                 );
@@ -286,13 +291,10 @@ class _GroupDetailState extends ConsumerState<GroupDetail> {
     return SearchAnchor(
       searchController: _searchController,
       builder: (context, controller) {
-        return Align(
-          alignment: Alignment.centerRight,
-          child: HeaderIconButton(
-            icon: Icons.search,
-            tooltip: l10n.expensesSearchTitle,
-            onTap: controller.openView,
-          ),
+        return HeaderIconButton(
+          icon: Icons.search,
+          tooltip: l10n.expensesSearchTitle,
+          onTap: controller.openView,
         );
       },
       suggestionsBuilder: (context, controller) {

@@ -305,7 +305,15 @@ class _GroupMemberSearchState extends ConsumerState<GroupMemberSearch> {
               leading: UserAvatar(displayName: user.displayName, radius: 18),
               title: Text(user.displayName),
               subtitle: Text(user.fullUsername),
-              trailing: Icon(Icons.add_circle_outline, color: colorScheme.onSurfaceVariant),
+              // Wrapped in an IconButton (like the selected-member check row)
+              // so both trailing icons share the same footprint and line up —
+              // a bare Icon sat flush-right and read as misaligned. The whole
+              // row stays tappable via onTap below.
+              trailing: IconButton(
+                icon: Icon(Icons.add_circle_outline,
+                    color: colorScheme.onSurfaceVariant),
+                onPressed: () => _addMember(user.toJson()),
+              ),
               onTap: () => _addMember(user.toJson()),
             ),
           ));

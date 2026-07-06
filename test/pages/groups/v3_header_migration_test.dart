@@ -328,14 +328,13 @@ void main() {
       expect(find.byIcon(Icons.arrow_back), findsOneWidget);
     });
 
-    testWidgets('header has ONE trailing edit, no search/stats header actions', (
+    testWidgets('header carries the search + edit trailing actions', (
       tester,
     ) async {
       await pumpFrame(tester);
 
-      // v3: the header carries a single trailing edit. Statistics is a
-      // quick-action card (bar_chart lives there, not the header) and search
-      // moved into the scroll body — so neither icon is inside the header.
+      // The header carries search + edit side by side. Statistics stays a
+      // quick-action card (bar_chart lives there, not the header).
       final header = find.byType(DeunHeader);
       // F142: the handoff's group-detail edit affordance is the `tune` glyph,
       // not a pencil (Icons.edit).
@@ -351,9 +350,10 @@ void main() {
         find.descendant(of: header, matching: find.byIcon(Icons.bar_chart)),
         findsNothing,
       );
+      // Search moved back into the header (next to edit).
       expect(
         find.descendant(of: header, matching: find.byIcon(Icons.search)),
-        findsNothing,
+        findsOneWidget,
       );
     });
 

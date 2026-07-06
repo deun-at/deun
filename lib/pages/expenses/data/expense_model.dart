@@ -60,6 +60,12 @@ class Expense {
     }
   }
 
+  /// True when this expense carries per-unit claim entries (the new claim
+  /// model). Old itemized expenses (manual multi-entry splits from before the
+  /// claim feature) have none — the claim screen can't show them, so routing
+  /// gates on this to send them to the read view instead.
+  bool get hasClaimUnits => expenseEntries.values.any((e) => e.isClaimUnit);
+
   /// Entries grouped per item card, insertion-ordered: per-unit claim entries
   /// (split_mode 'claim', quantity 1) group by item_group_id — a standalone
   /// unit (no group id) forms a group of one — and every other entry passes
