@@ -106,6 +106,50 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
+  testWidgets('groupHome skeleton mirrors the loaded prefix (hero card + label + group cards)',
+      (tester) async {
+    await tester.pumpWidget(
+      _wrap(const ShimmerCardList(
+        height: 100,
+        listEntryLength: 3,
+        shape: ShimmerShape.groupHome,
+      )),
+    );
+    await tester.pump(const Duration(milliseconds: 100));
+
+    // Group cards are real SoftCards (same as the plain `card` shape).
+    expect(find.byType(SoftCard), findsNWidgets(3));
+
+    // Rectangles: overall-balance hero bone + "Your groups" label bar + each
+    // card's icon tile/title/balance bars (>= 3 per card). The hero + label are
+    // what the plain `card` shape omitted, causing the pop-in this fixes.
+    expect(_boneCount(tester, shape: BoxShape.rectangle),
+        greaterThanOrEqualTo(2 + 3 * 3),
+        reason: 'hero + label + per-card bars');
+    // Avatar-stack circles: 4 per card.
+    expect(_boneCount(tester, shape: BoxShape.circle),
+        greaterThanOrEqualTo(3 * 4), reason: 'avatar circles per card');
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('groupDetailHeader skeleton mirrors the hero card + quick-action row',
+      (tester) async {
+    await tester.pumpWidget(
+      _wrap(const ShimmerCardList(
+        height: 100,
+        listEntryLength: 1,
+        shape: ShimmerShape.groupDetailHeader,
+      )),
+    );
+    await tester.pump(const Duration(milliseconds: 100));
+
+    // Hero card bone + two quick-action bones = >= 3 rectangles, and no overflow
+    // (the loaded header this stands in for is a hero card + Statistics/Invite).
+    expect(_boneCount(tester, shape: BoxShape.rectangle),
+        greaterThanOrEqualTo(3), reason: 'hero + two quick-action bones');
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('shimmer gradient base is translucent so bones show through (F166)',
       (tester) async {
     await tester.pumpWidget(

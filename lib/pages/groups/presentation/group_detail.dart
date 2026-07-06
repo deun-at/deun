@@ -48,8 +48,8 @@ class _GroupDetailState extends ConsumerState<GroupDetail> {
     super.initState();
     _scrollController.addListener(_handleScroll);
 
-    if (kIsWeb) {
-      _adBlock = const SizedBox();
+    if (kIsWeb || kDebugMode) {
+      _adBlock = null;
     } else {
       _adBlock = NativeAdBlock(
         adUnitId: Platform.isAndroid
@@ -136,41 +136,16 @@ class _GroupDetailState extends ConsumerState<GroupDetail> {
 
                                 if (isLoading || groupDetail == null) {
                                   return const Padding(
-                                    padding: EdgeInsets.only(
-                                      bottom: 5.0,
-                                      top: 5.0,
+                                    padding: EdgeInsets.fromLTRB(
+                                      16.0,
+                                      6.0,
+                                      16.0,
+                                      6.0,
                                     ),
-                                    child: Column(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.start,
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        SizedBox(
-                                          height: 30,
-                                          width: 250,
-                                          child: ShimmerCardList(
-                                            height: 20,
-                                            listEntryLength: 1,
-                                          ),
-                                        ),
-                                        SizedBox(
-                                          height: 16,
-                                          width: 250,
-                                          child: ShimmerCardList(
-                                            height: 10,
-                                            listEntryLength: 1,
-                                          ),
-                                        ),
-                                        SizedBox(
-                                          height: 16,
-                                          width: 250,
-                                          child: ShimmerCardList(
-                                            height: 10,
-                                            listEntryLength: 1,
-                                          ),
-                                        ),
-                                      ],
+                                    child: ShimmerCardList(
+                                      height: 100,
+                                      listEntryLength: 1,
+                                      shape: ShimmerShape.groupDetailHeader,
                                     ),
                                   );
                                 }

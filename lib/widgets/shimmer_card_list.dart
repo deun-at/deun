@@ -24,6 +24,18 @@ enum ShimmerShape {
   /// title/subtitle bars + trailing total bar). Mirrors the real day-grouped
   /// ledger the shimmer stands in for (F166).
   ledger,
+
+  /// Group home: the overall-balance hero card + "Your groups" section-label bar
+  /// then group cards. Mirrors the loaded `group_list` prefix (hero + label)
+  /// which the plain [card] shape omitted, so the hero/label no longer pop in on
+  /// load and shove the cards down.
+  groupHome,
+
+  /// Group-detail header: the group-balance hero card + the Statistics/Invite
+  /// quick-action row. Mirrors the loaded `group_detail` header, whose loading
+  /// placeholder was three thin bars — so the hero + quick actions no longer pop
+  /// in on load and shove the ledger down.
+  groupDetailHeader,
 }
 
 class _SlidingGradientTransform extends GradientTransform {
@@ -132,6 +144,10 @@ class ShimmerCardListState extends State<ShimmerCardList>
         );
       case ShimmerShape.ledger:
         return _LedgerSkeletonList(count: widget.listEntryLength);
+      case ShimmerShape.groupHome:
+        return _GroupHomeSkeletonList(count: widget.listEntryLength);
+      case ShimmerShape.groupDetailHeader:
+        return const _GroupDetailHeaderSkeleton();
     }
   }
 }
@@ -179,34 +195,107 @@ class _CardSkeletonList extends StatelessWidget {
     // Clip-safe inside an Expanded: extra cards clip rather than overflow.
     return _ClipSafe(
       child: SpacedCardList(
-        children: List.generate(
-          count,
-          (_) => const SoftCard(
-            padding: EdgeInsets.fromLTRB(16, 14, 12, 14),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    _Bone(width: 40, height: 40, radius: 12),
-                    SizedBox(width: 12),
-                    _Bone(width: 120, height: 16),
-                  ],
-                ),
-                SizedBox(height: 18),
-                Row(
-                  children: [
-                    // Avatar-stack silhouette (four overlapping circles).
-                    _AvatarRow(),
-                    Spacer(),
-                    _Bone(width: 64, height: 14),
-                  ],
-                ),
-              ],
-            ),
-          ),
-        ),
+        children: List.generate(count, (_) => const _GroupCardBone()),
       ),
+    );
+  }
+}
+
+/// One group-list card silhouette (leading rounded icon tile + title bar, then
+/// a footer avatar-stack row + a small balance bar). Shared by the plain [card]
+/// skeleton and the [groupHome] skeleton.
+class _GroupCardBone extends StatelessWidget {
+  const _GroupCardBone();
+
+  @override
+  Widget build(BuildContext context) {
+    return const SoftCard(
+      padding: EdgeInsets.fromLTRB(16, 14, 12, 14),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              _Bone(width: 40, height: 40, radius: 12),
+              SizedBox(width: 12),
+              _Bone(width: 120, height: 16),
+            ],
+          ),
+          SizedBox(height: 18),
+          Row(
+            children: [
+              // Avatar-stack silhouette (four overlapping circles).
+              _AvatarRow(),
+              Spacer(),
+              _Bone(width: 64, height: 14),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Group-home skeleton (F145): overall-balance hero card + "Your groups"
+/// section-label bar, then group cards — mirroring the loaded `group_list`
+/// prefix so nothing pops in on load. One shimmer instance keeps the sweep
+/// synced across the hero and the cards.
+class _GroupHomeSkeletonList extends StatelessWidget {
+  const _GroupHomeSkeletonList({required this.count});
+
+  final int count;
+
+  @override
+  Widget build(BuildContext context) {
+    return _ClipSafe(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          // Overall-balance hero card placeholder (mirrors _OverallBalanceHero:
+          // full-width, radius 24).
+          const _Bone(width: double.infinity, height: 160, radius: 24),
+          const SizedBox(height: 24),
+          // "Your groups" section-label bar.
+          const Align(
+            alignment: Alignment.centerLeft,
+            child: _Bone(width: 120, height: 16),
+          ),
+          const SizedBox(height: 12),
+          for (var i = 0; i < count; i++) ...[
+            if (i > 0) const SizedBox(height: kSpacedCardGap),
+            const _GroupCardBone(),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+/// Group-detail header skeleton (F145): the group-balance hero card + the
+/// Statistics/Invite quick-action row — mirroring the loaded `group_detail`
+/// header so neither pops in on load. The caller supplies the surrounding
+/// padding (matches the live header's 16/6 inset).
+class _GroupDetailHeaderSkeleton extends StatelessWidget {
+  const _GroupDetailHeaderSkeleton();
+
+  @override
+  Widget build(BuildContext context) {
+    return const Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        // Group-balance hero card (mirrors _GroupBalanceHero: full-width,
+        // radius 24, ~lead + amount + avatar/settle rows).
+        _Bone(width: double.infinity, height: 172, radius: 24),
+        SizedBox(height: 14),
+        // Statistics / Invite quick-action cards (two equal SoftCards, radius 16).
+        Row(
+          children: [
+            Expanded(child: _Bone(width: double.infinity, height: 48, radius: 16)),
+            SizedBox(width: 10),
+            Expanded(child: _Bone(width: double.infinity, height: 48, radius: 16)),
+          ],
+        ),
+      ],
     );
   }
 }

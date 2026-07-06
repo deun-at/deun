@@ -48,7 +48,7 @@ class _GroupListState extends ConsumerState<GroupList> {
     // never appear on the home — while production (release, real fill) keeps
     // the ad feature unchanged.
     if (kIsWeb || kDebugMode) {
-      _adBlock = const SizedBox();
+      _adBlock = null;
     } else {
       _adBlock = NativeAdBlock(
         adUnitId: Platform.isAndroid ? MobileAdMobs.androidGroupList.value : MobileAdMobs.iosGroupList.value,
@@ -125,11 +125,12 @@ class _GroupListState extends ConsumerState<GroupList> {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 _GreetingHeader(),
+                const SizedBox(height: 12),
                 const Expanded(
                   child: ShimmerCardList(
                     height: 100,
-                    listEntryLength: 8,
-                    shape: ShimmerShape.card,
+                    listEntryLength: 6,
+                    shape: ShimmerShape.groupHome,
                   ),
                 ),
               ],
@@ -177,38 +178,43 @@ class _GroupListState extends ConsumerState<GroupList> {
         ),
     ];
 
+    final List<Widget> listChildren = [
+      ...prefixItems,
+      // SPACED list preset (F143): consistent inter-card gap owned by the list.
+      ...staggeredChildren(context, spacedCardItems(cardItems)),
+    ];
+
+    // Splice the native ad inline AFTER staggering — after the 5th group card,
+    // or after the last when there are fewer than 5 — so it sits BETWEEN cards
+    // instead of pinned above the navbar where it covered the bottom of the list.
+    // It must NOT be wrapped in the stagger's FadeInAnimation/SlideAnimation: an
+    // Android platform view (the AdMob AdWidget) renders blank inside
+    // Opacity/Transform, so a staggered ad loaded but never painted (the
+    // expense-list ad works precisely because it has no stagger wrapper). As a
+    // plain child it paints normally; NativeAdBlock still self-collapses to zero
+    // and clips its platform-view to its own slot, so it can't cover cards (F01).
+    if (_adBlock != null && cardItems.isNotEmpty) {
+      final cardsBeforeAd = cardItems.length < 5 ? cardItems.length : 5;
+      // In spacedCardItems, card i sits at flat index 2*i (gaps between); the ad
+      // goes right after card (cardsBeforeAd-1) — flat 2*cardsBeforeAd-1 — offset
+      // by the non-card prefix. Insert the ad, then a leading gap before it.
+      final at = (prefixItems.length + 2 * cardsBeforeAd - 1)
+          .clamp(0, listChildren.length);
+      listChildren.insert(at, _adBlock!);
+      listChildren.insert(at, const SizedBox(height: kSpacedCardGap));
+    }
+
     final listView = ListView(
       controller: _scrollController,
       padding: const EdgeInsets.fromLTRB(16, 0, 16, 110),
-      children: [
-        ...prefixItems,
-        // SPACED list preset (F143): consistent inter-card gap owned by the list.
-        ...staggeredChildren(context, spacedCardItems(cardItems)),
-      ],
+      children: listChildren,
     );
 
-    final refreshable = RefreshIndicator(
+    return RefreshIndicator(
       onRefresh: updateGroupList,
       child: MediaQuery.of(context).disableAnimations
           ? listView
           : AnimationLimiter(child: listView),
-    );
-
-    // The native ad lives in its OWN sibling region BELOW the scrolling card
-    // list — never inside it. The AdMob AdWidget mounts an opaque platform-view
-    // (PlatformViewHitTestBehavior.opaque); a failed/disposed ad would otherwise
-    // sit in the card list's gesture arena and swallow taps meant for the group
-    // cards (design-audit F01). Isolating it here means its hit-test region can
-    // only ever cover its own footer box, and when the ad is not loaded the
-    // NativeAdBlock collapses to a zero-size, non-hit-testing box (so this
-    // footer occupies nothing).
-    if (_adBlock == null) return refreshable;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        Expanded(child: refreshable),
-        _adBlock!,
-      ],
     );
   }
 }

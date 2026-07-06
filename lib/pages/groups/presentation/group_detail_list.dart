@@ -53,6 +53,20 @@ class _GroupDetailListState extends ConsumerState<GroupDetailList> {
   void _openExpense(Expense expense) =>
       openLedgerExpense(context, widget.group, expense);
 
+  /// Combined-list index for the inline ad: right after the day section that
+  /// contains the 5th expense, so it appears near the top regardless of how the
+  /// expenses cluster into days. Falls back to after the last section when there
+  /// are fewer than 5 expenses total (matching the "or last" behaviour).
+  int _adSlotIndex(List<LedgerDaySection> sections) {
+    const target = 5;
+    var running = 0;
+    for (var i = 0; i < sections.length; i++) {
+      running += sections[i].expenses.length;
+      if (running >= target) return i + 1;
+    }
+    return sections.length;
+  }
+
   @override
   Widget build(BuildContext context) {
     return Consumer(
@@ -82,21 +96,28 @@ class _GroupDetailListState extends ConsumerState<GroupDetailList> {
 
         final sections = groupExpensesByDay(expenses);
 
+        // Inline ad slot: sit right after the day-section holding the 5th
+        // expense (or after the last section when there are fewer), so it's
+        // visible without scrolling to the very bottom — which, with many
+        // expenses, it never reached (the old placement was a trailing footer).
+        final bool hasAd = widget.adBlock != null;
+        final int adPos = hasAd ? _adSlotIndex(sections) : -1;
+
         return RefreshIndicator(
           onRefresh: () => updateExpenseList(),
           child: NotificationListener<ScrollNotification>(
             child: ListView.builder(
               padding: const EdgeInsets.fromLTRB(16, 8, 16, 110),
-              itemCount: sections.length + (widget.adBlock != null ? 1 : 0),
+              itemCount: sections.length + (hasAd ? 1 : 0),
               itemBuilder: (context, index) {
-                if (index >= sections.length) {
+                if (hasAd && index == adPos) {
                   return Padding(
-                    padding: const EdgeInsets.only(top: 8),
+                    padding: const EdgeInsets.only(bottom: 16),
                     child: widget.adBlock,
                   );
                 }
 
-                final section = sections[index];
+                final section = sections[hasAd && index > adPos ? index - 1 : index];
                 return _DaySection(
                   section: section,
                   group: widget.group,
