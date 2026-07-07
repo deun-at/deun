@@ -175,7 +175,6 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                               const SizedBox(height: 8),
                               _InsetField(
                                 controller: _displayNameController,
-                                label: l10n.onboardingDisplayNameLabel,
                                 icon: Icons.person_outline,
                                 textInputAction: TextInputAction.done,
                                 onFieldSubmitted: (_) => _submit(ctx),
@@ -332,7 +331,6 @@ class _HandlePreview extends StatelessWidget {
 class _InsetField extends StatelessWidget {
   const _InsetField({
     required this.controller,
-    required this.label,
     required this.icon,
     this.validator,
     this.textInputAction,
@@ -340,7 +338,6 @@ class _InsetField extends StatelessWidget {
   });
 
   final TextEditingController controller;
-  final String label;
   final IconData icon;
   final String? Function(String?)? validator;
   final TextInputAction? textInputAction;
@@ -357,7 +354,10 @@ class _InsetField extends StatelessWidget {
       autovalidateMode: AutovalidateMode.onUserInteraction,
       onFieldSubmitted: onFieldSubmitted,
       decoration: InputDecoration(
-        labelText: label,
+        // No in-field label: the SectionLabel above already names this field.
+        // Material's floating labelText is banned app-wide (F82, see
+        // AppTextField) — it duplicated the section label as a doubled
+        // "Display Name" here.
         prefixIcon: Icon(icon, color: colorScheme.onSurfaceVariant),
         filled: true,
         fillColor: colorScheme.surfaceContainer,

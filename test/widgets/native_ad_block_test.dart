@@ -1,3 +1,4 @@
+import 'package:deun/widgets/initialization_helper.dart';
 import 'package:deun/widgets/native_ad_block.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -112,6 +113,11 @@ ByteData _encodeLoadedEvent({required int adId}) {
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
+
+  // NativeAdBlock now waits for the AdMob SDK to be initialized before loading
+  // (see InitializationHelper.adsReady). Tests don't boot the real consent/init
+  // flow, so mark it ready up front to exercise the load path.
+  InitializationHelper.debugMarkAdsReady();
 
   /// Installs a mock handler for the outgoing ads channel that swallows every
   /// call with a "success: null" reply, and (when [onLoadNativeAd] is provided)

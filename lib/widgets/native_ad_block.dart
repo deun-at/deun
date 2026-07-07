@@ -1,6 +1,10 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart' show kDebugMode;
 import 'package:flutter/material.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
+
+import 'initialization_helper.dart';
 
 class NativeAdBlock extends StatefulWidget {
   const NativeAdBlock({super.key, required this.adUnitId, bool? requestInDebug})
@@ -42,7 +46,12 @@ class _NativeAdBlockState extends State<NativeAdBlock> {
       child: ClipRect(
         child: SizedBox(
           width: double.infinity,
-          height: 100,
+          // The AdMob `small` native template has a fixed intrinsic height of
+          // ~92dp (measured on-device). A taller box left dead space below the
+          // top-aligned template, so the gap under the ad looked bigger than
+          // the gap above it. Match the template height so both splice gaps
+          // (kSpacedCardGap above and below) read as equal.
+          height: 92,
           child: AdWidget(ad: _nativeAd!),
         ),
       ),
@@ -61,13 +70,26 @@ class _NativeAdBlockState extends State<NativeAdBlock> {
   /// `requestInDebug`.
   bool get _shouldRequestAd => widget._requestInDebug ?? !kDebugMode;
 
-  void _loadAd() {
+  Future<void> _loadAd() async {
     // Never request or mount a native ad in debug/test builds: the ad unit IDs
     // are empty in those builds and the AdMob SDK would paint its own red
     // "Ad with the following id could not be found: 0" debug platform-view
     // (design-audit F33). Defense-in-depth alongside the caller's !kDebugMode
     // gate so this widget is safe even if mounted directly in a debug build.
     if (!_shouldRequestAd) return;
+
+    // The AdMob SDK must be initialized before a NativeAd can load. On a cold
+    // start the group list mounts before InitializationHelper finishes
+    // MobileAds.instance.initialize(); loading here would race that init, the
+    // request would be silently dropped, and the slot stayed blank until the
+    // app was relaunched. If the SDK isn't up yet, wait for the shared
+    // readiness signal first (no deferral once it's ready).
+    if (!InitializationHelper.isAdsReady) {
+      await InitializationHelper.adsReady;
+      // A second didChangeDependencies (e.g. theme change) may have already
+      // kicked off a load while we awaited — don't create a duplicate ad.
+      if (!mounted || _nativeAd != null) return;
+    }
 
     _nativeAd = NativeAd(
       adUnitId: widget.adUnitId,
@@ -120,7 +142,9 @@ class _NativeAdBlockState extends State<NativeAdBlock> {
           backgroundColor: Theme.of(context).colorScheme.surfaceContainerLowest,
         ),
       ),
-    )..load();
+    );
+    // Fire-and-forget: load results arrive via the NativeAdListener callbacks.
+    unawaited(_nativeAd!.load());
   }
 
   @override
