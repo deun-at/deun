@@ -22,5 +22,22 @@ void main() {
       ]);
       expect(total, closeTo(29.97, 0.0001));
     });
+
+    test('nets a negative discount line ("Aktion") against the items', () {
+      final total = itemizedTotal([
+        const ItemLine(unitPrice: 4.99, quantity: 1), // 4.99
+        const ItemLine(unitPrice: -0.80, quantity: 1), // -0.80 discount
+      ]);
+      expect(total, closeTo(4.19, 0.0001));
+      expect(total > 0, isTrue, reason: 'save guard must accept this');
+    });
+
+    test('a discount that outweighs the items yields a non-positive total', () {
+      final total = itemizedTotal([
+        const ItemLine(unitPrice: 0.50, quantity: 1),
+        const ItemLine(unitPrice: -0.80, quantity: 1),
+      ]);
+      expect(total <= 0, isTrue, reason: 'save guard must reject this');
+    });
   });
 }

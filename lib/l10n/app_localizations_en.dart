@@ -560,6 +560,9 @@ class AppLocalizationsEn extends AppLocalizations {
       'Amount must be greater than zero!';
 
   @override
+  String get expenseEntryAmountValidationNonZero => 'Amount can\'t be zero!';
+
+  @override
   String get expenseEntrySharesLable => 'Split between';
 
   @override

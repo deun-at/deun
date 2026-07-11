@@ -159,6 +159,7 @@
   "expenseEntryAmount": "Betrag",
   "expenseEntryAmountValidationEmpty": "Bitte gib einen Betrag ein!",
   "expenseEntryAmountValidationZero": "Der Betrag muss größer als 0 sein!",
+  "expenseEntryAmountValidationNonZero": "Der Betrag darf nicht 0 sein!",
   "expenseEntrySharesLable": "Aufgeteilt zwischen",
   "expenseEntrySharesValidationEmpty": "Bitte wähle mindestens eine Person aus!",
   "expenseDeleteItemTitle": "Diese Ausgabe löschen?",

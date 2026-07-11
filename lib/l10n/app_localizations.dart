@@ -1052,6 +1052,12 @@ abstract class AppLocalizations {
   /// **'Amount must be greater than zero!'**
   String get expenseEntryAmountValidationZero;
 
+  /// No description provided for @expenseEntryAmountValidationNonZero.
+  ///
+  /// In en, this message translates to:
+  /// **'Amount can\'t be zero!'**
+  String get expenseEntryAmountValidationNonZero;
+
   /// No description provided for @expenseEntrySharesLable.
   ///
   /// In en, this message translates to:

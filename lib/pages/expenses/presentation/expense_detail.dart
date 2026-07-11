@@ -744,6 +744,13 @@ class _ExpenseDetailState extends ConsumerState<ExpenseDetail> {
   /// entries; a plain save leaves the manual-split path untouched.
   Future<void> _saveExpense(BuildContext context, {bool claimable = false}) async {
     if (_formKey.currentState!.saveAndValidate()) {
+      // Individual lines may be negative (discounts), but the expense total
+      // must stay positive — a non-positive total collapses every member's
+      // percentage share to 0% in ExpenseRepository.saveAll.
+      if (_itemizedTotalFromForm() <= 0) {
+        showSnackBar(context, AppLocalizations.of(context)!.expenseEntryAmountValidationZero);
+        return;
+      }
       try {
         final formValue = claimable
             ? markEntriesClaimable(

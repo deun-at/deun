@@ -485,8 +485,11 @@ class _ExpenseEntryWidgetState extends State<ExpenseEntryWidget> {
         ),
         (value) {
           final amount = double.tryParse(value?.toString() ?? '');
-          if (amount != null && amount <= 0) {
-            return l10n.expenseEntryAmountValidationZero;
+          // Negative lines are legal: receipt discounts ("Aktion", deposit
+          // returns) come through the scanner as -0.80 etc. Only the expense
+          // total has to stay positive — guarded in ExpenseDetail._saveExpense.
+          if (amount != null && amount == 0) {
+            return l10n.expenseEntryAmountValidationNonZero;
           }
           return null;
         },
