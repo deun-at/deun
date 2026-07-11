@@ -30,14 +30,14 @@ jobs:
           MOBILE_AD_MOB_IOS_EXPENSE_LIST: ${{ secrets.MOBILE_AD_MOB_IOS_EXPENSE_LIST }}
         run: |
           mkdir -p .env_flutter
-          cat > .env_flutter/production.env << EOF
+          cat > .env_flutter/production.env <<EOF
           SUPABASE_URL=$SUPABASE_URL
           SUPABASE_ANON_KEY=$SUPABASE_ANON_KEY
           MOBILE_AD_MOB_IOS_GROUP_LIST=$MOBILE_AD_MOB_IOS_GROUP_LIST
           MOBILE_AD_MOB_IOS_EXPENSE_LIST=$MOBILE_AD_MOB_IOS_EXPENSE_LIST
           EOF
 
-      - name: Install Apple Certificate
+      - name: Install Apple Certificate and Provisioning Profile
         env:
           CERTIFICATE_BASE64: ${{ secrets.IOS_CERTIFICATE_BASE64 }}
           CERTIFICATE_PASSWORD: ${{ secrets.IOS_CERTIFICATE_PASSWORD }}
@@ -56,10 +56,17 @@ jobs:
 
           security import $CERTIFICATE_PATH -P "$CERTIFICATE_PASSWORD" -A -t cert -f pkcs12 -k $KEYCHAIN_PATH
           security set-key-partition-list -S apple-tool:,apple: -k "" $KEYCHAIN_PATH
-          security list-keychains -d user -s $KEYCHAIN_PATH
+          security list-keychains -d user -s $KEYCHAIN_PATH login.keychain-db
 
           mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
-          cp $PP_PATH ~/Library/MobileDevice/Provisioning\ Profiles/
+          PP_UUID=$(/usr/libexec/PlistBuddy -c "Print UUID" /dev/stdin <<< $(/usr/bin/security cms -D -i $PP_PATH))
+          cp $PP_PATH ~/Library/MobileDevice/Provisioning\ Profiles/$PP_UUID.mobileprovision
+
+      - name: Set Manual Signing
+        run: |
+          sed -i '' 's/CODE_SIGN_STYLE = Automatic/CODE_SIGN_STYLE = Manual/g' ios/Runner.xcodeproj/project.pbxproj
+          sed -i '' 's/DEVELOPMENT_TEAM = FV69D33482;/DEVELOPMENT_TEAM = FV69D33482;\n\t\t\t\tPROVISIONING_PROFILE_SPECIFIER = "deun";/g' ios/Runner.xcodeproj/project.pbxproj
+          sed -i '' 's/CODE_SIGN_IDENTITY = "Apple Development"/CODE_SIGN_IDENTITY = "Apple Distribution"/g' ios/Runner.xcodeproj/project.pbxproj
 
       - name: Build iOS
         run: flutter build ipa --release --dart-define-from-file .env_flutter/production.env --export-options-plist ios/ExportOptions.plist
