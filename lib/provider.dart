@@ -1,9 +1,12 @@
 import 'package:async_preferences/async_preferences.dart';
 import 'package:deun/main.dart';
+import 'package:deun/pages/friends/provider/friendship_list.dart';
+import 'package:deun/pages/groups/provider/group_list.dart';
 import 'package:deun/pages/settings/theme_mode_pref.dart';
 import 'package:deun/pages/users/user_repository.dart';
 import 'package:flutter/material.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'pages/users/user_model.dart';
 
@@ -17,6 +20,64 @@ const String kThemeModePrefKey = 'theme_mode';
 /// stores the user's preference; does not yet gate FCM).
 const String kNotificationsEnabledPrefKey = 'notifications_enabled';
 
+/// The Supabase auth-state change stream. Isolated behind a provider so the
+/// central user-switch listener ([AuthUserSwitchListener]) can be driven with a
+/// controllable stream in tests.
+@riverpod
+Stream<AuthState> authStateChanges(Ref ref) => supabase.auth.onAuthStateChange;
+
+/// Invalidates every user-scoped `keepAlive` provider so a new session never
+/// inherits the previous account's cached data. This is the single choke point
+/// referenced by [AuthUserSwitchListener].
+///
+/// Device-scoped preference providers ([ThemeModeNotifier],
+/// [NotificationsEnabledNotifier]) are intentionally excluded: they survive a
+/// user switch on the same device.
+void invalidateUserScopedProviders(Ref ref) {
+  ref.invalidate(userDetailProvider);
+  ref.invalidate(groupListProvider);
+  ref.invalidate(friendshipListProvider);
+}
+
+/// Watches Supabase auth-state changes and invalidates the user-scoped providers
+/// on sign-out (and on sign-in as a *different* user). Mounted once near the app
+/// root; centralizing the invalidation here means new sign-out surfaces cannot
+/// silently reintroduce the stale-previous-user-data bug.
+@Riverpod(keepAlive: true)
+class AuthUserSwitchListener extends _$AuthUserSwitchListener {
+  String? _lastUserId;
+
+  @override
+  void build() {
+    _lastUserId = supabase.auth.currentUser?.id;
+    ref.listen(authStateChangesProvider, (previous, next) {
+      final state = next.value;
+      if (state == null) return;
+      _onAuthState(state);
+    });
+  }
+
+  void _onAuthState(AuthState state) {
+    final userId = state.session?.user.id;
+    switch (state.event) {
+      case AuthChangeEvent.signedOut:
+        // Always refresh on sign-out so the next session builds fresh,
+        // regardless of who signs in next.
+        invalidateUserScopedProviders(ref);
+        _lastUserId = null;
+      case AuthChangeEvent.signedIn:
+        // A same-user token refresh / re-emit must not needlessly refetch;
+        // only a genuine account change invalidates.
+        if (_lastUserId != null && _lastUserId != userId) {
+          invalidateUserScopedProviders(ref);
+        }
+        _lastUserId = userId;
+      default:
+        break;
+    }
+  }
+}
+
 @Riverpod(keepAlive: true)
 class UserDetailNotifier extends _$UserDetailNotifier {
   @override
@@ -25,7 +86,9 @@ class UserDetailNotifier extends _$UserDetailNotifier {
   }
 
   Future<SupaUser> fetchUserDetail() async {
-    return await UserRepository.fetchDetail(supabase.auth.currentUser!.email ?? '');
+    return await UserRepository.fetchDetail(
+      supabase.auth.currentUser!.email ?? '',
+    );
   }
 }
 
@@ -62,7 +125,10 @@ class ThemeModeNotifier extends _$ThemeModeNotifier {
 
   Future<void> setThemeMode(ThemeMode mode) async {
     state = mode;
-    await _preferences.setString(kThemeModePrefKey, themeModeToPrefString(mode));
+    await _preferences.setString(
+      kThemeModePrefKey,
+      themeModeToPrefString(mode),
+    );
   }
 }
 

@@ -8,6 +8,121 @@ part of 'provider.dart';
 
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // ignore_for_file: type=lint, type=warning
+/// The Supabase auth-state change stream. Isolated behind a provider so the
+/// central user-switch listener ([AuthUserSwitchListener]) can be driven with a
+/// controllable stream in tests.
+
+@ProviderFor(authStateChanges)
+final authStateChangesProvider = AuthStateChangesProvider._();
+
+/// The Supabase auth-state change stream. Isolated behind a provider so the
+/// central user-switch listener ([AuthUserSwitchListener]) can be driven with a
+/// controllable stream in tests.
+
+final class AuthStateChangesProvider
+    extends
+        $FunctionalProvider<AsyncValue<AuthState>, AuthState, Stream<AuthState>>
+    with $FutureModifier<AuthState>, $StreamProvider<AuthState> {
+  /// The Supabase auth-state change stream. Isolated behind a provider so the
+  /// central user-switch listener ([AuthUserSwitchListener]) can be driven with a
+  /// controllable stream in tests.
+  AuthStateChangesProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'authStateChangesProvider',
+        isAutoDispose: true,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$authStateChangesHash();
+
+  @$internal
+  @override
+  $StreamProviderElement<AuthState> $createElement($ProviderPointer pointer) =>
+      $StreamProviderElement(pointer);
+
+  @override
+  Stream<AuthState> create(Ref ref) {
+    return authStateChanges(ref);
+  }
+}
+
+String _$authStateChangesHash() => r'9fa2fe817507b5e89bc3fdcd940ed567253f90d0';
+
+/// Watches Supabase auth-state changes and invalidates the user-scoped providers
+/// on sign-out (and on sign-in as a *different* user). Mounted once near the app
+/// root; centralizing the invalidation here means new sign-out surfaces cannot
+/// silently reintroduce the stale-previous-user-data bug.
+
+@ProviderFor(AuthUserSwitchListener)
+final authUserSwitchListenerProvider = AuthUserSwitchListenerProvider._();
+
+/// Watches Supabase auth-state changes and invalidates the user-scoped providers
+/// on sign-out (and on sign-in as a *different* user). Mounted once near the app
+/// root; centralizing the invalidation here means new sign-out surfaces cannot
+/// silently reintroduce the stale-previous-user-data bug.
+final class AuthUserSwitchListenerProvider
+    extends $NotifierProvider<AuthUserSwitchListener, void> {
+  /// Watches Supabase auth-state changes and invalidates the user-scoped providers
+  /// on sign-out (and on sign-in as a *different* user). Mounted once near the app
+  /// root; centralizing the invalidation here means new sign-out surfaces cannot
+  /// silently reintroduce the stale-previous-user-data bug.
+  AuthUserSwitchListenerProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'authUserSwitchListenerProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$authUserSwitchListenerHash();
+
+  @$internal
+  @override
+  AuthUserSwitchListener create() => AuthUserSwitchListener();
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(void value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<void>(value),
+    );
+  }
+}
+
+String _$authUserSwitchListenerHash() =>
+    r'9794e6d466c6a93c447de8da73361541e6c1dc9e';
+
+/// Watches Supabase auth-state changes and invalidates the user-scoped providers
+/// on sign-out (and on sign-in as a *different* user). Mounted once near the app
+/// root; centralizing the invalidation here means new sign-out surfaces cannot
+/// silently reintroduce the stale-previous-user-data bug.
+
+abstract class _$AuthUserSwitchListener extends $Notifier<void> {
+  void build();
+  @$mustCallSuper
+  @override
+  void runBuild() {
+    final ref = this.ref as $Ref<void, void>;
+    final element =
+        ref.element
+            as $ClassProviderElement<
+              AnyNotifier<void, void>,
+              void,
+              Object?,
+              Object?
+            >;
+    element.handleCreate(ref, build);
+  }
+}
 
 @ProviderFor(UserDetailNotifier)
 final userDetailProvider = UserDetailNotifierProvider._();

@@ -1,15 +1,16 @@
 import 'package:deun/firebase_options.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
-import 'package:flutter/foundation.dart' show kIsWeb, LicenseRegistry, LicenseEntryWithLineBreaks;
+import 'package:flutter/foundation.dart'
+    show kIsWeb, LicenseRegistry, LicenseEntryWithLineBreaks;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'auth_gate.dart';
+import 'provider.dart';
 import 'package:universal_html/html.dart' as html;
-
 
 @pragma('vm:entry-point')
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
@@ -27,7 +28,9 @@ Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
 
 void main() async {
   LicenseRegistry.addLicense(() async* {
-    final String license = await rootBundle.loadString('assets/google_fonts/OFL.txt');
+    final String license = await rootBundle.loadString(
+      'assets/google_fonts/OFL.txt',
+    );
     yield LicenseEntryWithLineBreaks(<String>['google_fonts'], license);
   });
 
@@ -71,8 +74,17 @@ class _MyAppState extends State<MyApp> {
   // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
-    return const ProviderScope(
-      child: AuthGate(),
+    return ProviderScope(
+      child: Consumer(
+        // Mount the central auth-switch listener for the whole app lifetime so
+        // signing out (or into a different account) invalidates all user-scoped
+        // providers before the next screen reads them.
+        builder: (context, ref, child) {
+          ref.watch(authUserSwitchListenerProvider);
+          return child!;
+        },
+        child: const AuthGate(),
+      ),
     );
   }
 }
