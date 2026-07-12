@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:deun/constants.dart';
 import 'package:deun/l10n/app_localizations.dart';
+import 'package:deun/helper/helper.dart';
 import 'package:deun/pages/statistics/provider/personal_statistics_notifiers.dart';
 import 'package:deun/pages/statistics/statistics_models.dart';
 import 'package:deun/pages/statistics/widgets/personal_groups_section.dart';
@@ -18,9 +19,21 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 final _months = [
-  MonthBucket(start: DateTime(2026, 1, 1), end: DateTime(2026, 2, 1), total: 120),
-  MonthBucket(start: DateTime(2026, 2, 1), end: DateTime(2026, 3, 1), total: 240),
-  MonthBucket(start: DateTime(2026, 3, 1), end: DateTime(2026, 4, 1), total: 80),
+  MonthBucket(
+    start: DateTime(2026, 1, 1),
+    end: DateTime(2026, 2, 1),
+    total: 120,
+  ),
+  MonthBucket(
+    start: DateTime(2026, 2, 1),
+    end: DateTime(2026, 3, 1),
+    total: 240,
+  ),
+  MonthBucket(
+    start: DateTime(2026, 3, 1),
+    end: DateTime(2026, 4, 1),
+    total: 80,
+  ),
 ];
 
 const _groups = [
@@ -59,8 +72,9 @@ class _FakePersonalStatisticsNotifier extends PersonalStatisticsNotifier {
 }
 
 final _overrides = [
-  personalStatisticsProvider(StatsRange.sixMonths)
-      .overrideWith(() => _FakePersonalStatisticsNotifier(_state)),
+  personalStatisticsProvider(
+    StatsRange.sixMonths,
+  ).overrideWith(() => _FakePersonalStatisticsNotifier(_state)),
 ];
 
 Future<void> _pump(
@@ -81,8 +95,11 @@ Future<void> _pump(
         supportedLocales: AppLocalizations.supportedLocales,
         home: Builder(
           builder: (context) => Theme(
-            data: getThemeData(context, kBrandSeed, brightness)
-                .copyWith(splashFactory: NoSplash.splashFactory),
+            data: getThemeData(
+              context,
+              kBrandSeed,
+              brightness,
+            ).copyWith(splashFactory: NoSplash.splashFactory),
             child: Scaffold(body: child),
           ),
         ),
@@ -96,51 +113,68 @@ void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
   group('PersonalSummarySection (dark hero)', () {
-    testWidgets('F180: eyebrow + dual You-paid/Your-share amounts, share accent-tinted',
-        (tester) async {
-      final l10n = await AppLocalizations.delegate.load(const Locale('en'));
-      await _pump(tester, const PersonalSummarySection(range: StatsRange.sixMonths));
+    testWidgets(
+      'F180: eyebrow + dual You-paid/Your-share amounts, share accent-tinted',
+      (tester) async {
+        final l10n = await AppLocalizations.delegate.load(const Locale('en'));
+        await _pump(
+          tester,
+          const PersonalSummarySection(range: StatsRange.sixMonths),
+        );
 
-      // Eyebrow: "Across all groups · last 6 months" (period reflects the range).
-      expect(
-        find.text('${l10n.statisticsAcrossAllGroups} · ${l10n.statisticsPeriodLastMonths(6)}'),
-        findsOneWidget,
-      );
-      // Dual labels + amounts.
-      expect(find.text(l10n.statisticsYouPaid), findsOneWidget);
-      expect(find.text(l10n.statisticsYourShare), findsOneWidget);
-      expect(find.text(l10n.toCurrency(600)), findsWidgets); // you paid
-      expect(find.text(l10n.toCurrency(440)), findsWidgets); // your share
+        // Eyebrow: "Across all groups · last 6 months" (period reflects the range).
+        expect(
+          find.text(
+            '${l10n.statisticsAcrossAllGroups} · ${l10n.statisticsPeriodLastMonths(6)}',
+          ),
+          findsOneWidget,
+        );
+        // Dual labels + amounts.
+        expect(find.text(l10n.statisticsYouPaid), findsOneWidget);
+        expect(find.text(l10n.statisticsYourShare), findsOneWidget);
+        expect(find.text(l10n.toCurrency(600)), findsWidgets); // you paid
+        expect(find.text(l10n.toCurrency(440)), findsWidgets); // your share
 
-      // The share amount is tinted the accent (inversePrimary in light theme).
-      final ctx = tester.element(find.byType(PersonalSummarySection));
-      final scheme = Theme.of(ctx).colorScheme;
-      final shareText = tester.widget<Text>(
-        find.descendant(
-          of: find.byType(MoneyText),
-          matching: find.text(l10n.toCurrency(440)),
-        ),
-      );
-      expect(shareText.style?.color, scheme.inversePrimary);
+        // The share amount is tinted the accent (inversePrimary in light theme).
+        final ctx = tester.element(find.byType(PersonalSummarySection));
+        final scheme = Theme.of(ctx).colorScheme;
+        final shareText = tester.widget<Text>(
+          find.descendant(
+            of: find.byType(MoneyText),
+            matching: find.text(l10n.toCurrency(440)),
+          ),
+        );
+        expect(shareText.style?.color, scheme.inversePrimary);
 
-      await _pump(tester, const PersonalSummarySection(range: StatsRange.sixMonths),
-          brightness: Brightness.dark);
-      expect(find.byType(MoneyText), findsWidgets);
-    });
+        await _pump(
+          tester,
+          const PersonalSummarySection(range: StatsRange.sixMonths),
+          brightness: Brightness.dark,
+        );
+        expect(find.byType(MoneyText), findsWidgets);
+      },
+    );
   });
 
   group('PersonalTrendSection (monthly bars)', () {
     testWidgets('renders a SectionLabel and a BarChart', (tester) async {
-      await _pump(tester, const PersonalTrendSection(range: StatsRange.sixMonths));
+      await _pump(
+        tester,
+        const PersonalTrendSection(range: StatsRange.sixMonths),
+      );
       expect(find.byType(SectionLabel), findsOneWidget);
       expect(find.byType(BarChart), findsOneWidget);
     });
 
     // F177: mirror the F64 group-trend rule — only the latest month rod is
     // tinted the accent color; every other rod is the neutral track token.
-    testWidgets('only the latest rod is primary; the rest are neutral track',
-        (tester) async {
-      await _pump(tester, const PersonalTrendSection(range: StatsRange.sixMonths));
+    testWidgets('only the latest rod is primary; the rest are neutral track', (
+      tester,
+    ) async {
+      await _pump(
+        tester,
+        const PersonalTrendSection(range: StatsRange.sixMonths),
+      );
 
       final ctx = tester.element(find.byType(PersonalTrendSection));
       final scheme = Theme.of(ctx).colorScheme;
@@ -153,15 +187,23 @@ void main() {
       // _months has 3 entries; the last (index 2) is the latest.
       expect(rodColors[0], scheme.surfaceContainerHighest);
       expect(rodColors[1], scheme.surfaceContainerHighest);
-      expect(rodColors[2], scheme.primary, reason: 'exactly the latest rod is tinted');
+      expect(
+        rodColors[2],
+        scheme.primary,
+        reason: 'exactly the latest rod is tinted',
+      );
     });
   });
 
   group('PersonalGroupsSection (by-group list)', () {
-    testWidgets('renders each group name, its share, and a ProgressBar',
-        (tester) async {
+    testWidgets('renders each group name, its share, and a ProgressBar', (
+      tester,
+    ) async {
       final l10n = await AppLocalizations.delegate.load(const Locale('en'));
-      await _pump(tester, const PersonalGroupsSection(range: StatsRange.sixMonths));
+      await _pump(
+        tester,
+        const PersonalGroupsSection(range: StatsRange.sixMonths),
+      );
       expect(find.byType(SectionLabel), findsOneWidget);
       expect(find.text('Flat share'), findsOneWidget);
       expect(find.text('Ski trip'), findsOneWidget);

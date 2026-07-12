@@ -104,6 +104,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get groupColorLabel => 'Color';
 
   @override
+  String get groupCurrencyLabel => 'Currency';
+
+  @override
+  String get groupCurrencyRelabelNote =>
+      'Changing the currency relabels existing amounts. It does not convert values.';
+
+  @override
   String get groupMemberSectionTitle => 'Members';
 
   @override
@@ -596,22 +603,15 @@ class AppLocalizationsEn extends AppLocalizations {
     String displayNameYourself,
     String displayName,
     String expenseType,
-    double amount,
+    String amount,
   ) {
-    final intl.NumberFormat amountNumberFormat = intl.NumberFormat.currency(
-      locale: localeName,
-      decimalDigits: 2,
-      name: '€',
-    );
-    final String amountString = amountNumberFormat.format(amount);
-
     String _temp0 = intl.Intl.selectLogic(expenseType, {
       'paid': 'paid',
       'lent': 'lent',
       'borrowed': 'borrowed',
       'other': '',
     });
-    return '$displayName $_temp0 $amountString';
+    return '$displayName $_temp0 $amount';
   }
 
   @override
@@ -621,48 +621,27 @@ class AppLocalizationsEn extends AppLocalizations {
   String groupDisplayAmount(
     String displayName,
     String paidByYourself,
-    double amount,
+    String amount,
   ) {
-    final intl.NumberFormat amountNumberFormat = intl.NumberFormat.currency(
-      locale: localeName,
-      decimalDigits: 2,
-      name: '€',
-    );
-    final String amountString = amountNumberFormat.format(amount);
-
     String _temp0 = intl.Intl.selectLogic(paidByYourself, {
       'yes': '$displayName owes you',
       'other': 'You owe $displayName',
     });
-    return '$_temp0 $amountString';
+    return '$_temp0 $amount';
   }
 
   @override
-  String groupDisplaySumAmount(String paidByYourself, double amount) {
-    final intl.NumberFormat amountNumberFormat = intl.NumberFormat.currency(
-      locale: localeName,
-      decimalDigits: 2,
-      name: '€',
-    );
-    final String amountString = amountNumberFormat.format(amount);
-
+  String groupDisplaySumAmount(String paidByYourself, String amount) {
     String _temp0 = intl.Intl.selectLogic(paidByYourself, {
       'yes': 'You are owed',
       'other': 'You owe',
     });
-    return '$_temp0 $amountString';
+    return '$_temp0 $amount';
   }
 
   @override
-  String totalExpensesAmount(double amount) {
-    final intl.NumberFormat amountNumberFormat = intl.NumberFormat.currency(
-      locale: localeName,
-      decimalDigits: 2,
-      name: '€',
-    );
-    final String amountString = amountNumberFormat.format(amount);
-
-    return 'Total expenses $amountString';
+  String totalExpensesAmount(String amount) {
+    return 'Total expenses $amount';
   }
 
   @override
@@ -678,15 +657,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get payBackDialogTitle => 'Pay back!';
 
   @override
-  String payBackDialog(String displayName, double amount) {
-    final intl.NumberFormat amountNumberFormat = intl.NumberFormat.currency(
-      locale: localeName,
-      decimalDigits: 2,
-      name: '€',
-    );
-    final String amountString = amountNumberFormat.format(amount);
-
-    return 'You owe $displayName $amountString';
+  String payBackDialog(String displayName, String amount) {
+    return 'You owe $displayName $amount';
   }
 
   @override
@@ -706,15 +678,8 @@ class AppLocalizationsEn extends AppLocalizations {
       'There was an error with paying back the amount. Please try again later!';
 
   @override
-  String payBackSuccess(String displayName, double amount) {
-    final intl.NumberFormat amountNumberFormat = intl.NumberFormat.currency(
-      locale: localeName,
-      decimalDigits: 2,
-      name: '€',
-    );
-    final String amountString = amountNumberFormat.format(amount);
-
-    return 'You paid back $amountString to $displayName';
+  String payBackSuccess(String displayName, String amount) {
+    return 'You paid back $amount to $displayName';
   }
 
   @override
@@ -723,16 +688,9 @@ class AppLocalizationsEn extends AppLocalizations {
     String paidBy,
     String paidForYourself,
     String paidFor,
-    double amount,
+    String amount,
   ) {
-    final intl.NumberFormat amountNumberFormat = intl.NumberFormat.currency(
-      locale: localeName,
-      decimalDigits: 2,
-      name: '€',
-    );
-    final String amountString = amountNumberFormat.format(amount);
-
-    return '$paidBy paid back $amountString to $paidFor';
+    return '$paidBy paid back $amount to $paidFor';
   }
 
   @override
@@ -986,29 +944,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get friendshipDialogRemoveAsFriend => 'Remove as friend';
 
   @override
-  String toCurrency(double amount) {
-    final intl.NumberFormat amountNumberFormat = intl.NumberFormat.currency(
-      locale: localeName,
-      decimalDigits: 2,
-      name: '€',
-    );
-    final String amountString = amountNumberFormat.format(amount);
-
-    return '$amountString';
-  }
-
-  @override
-  String toCurrencyNoPrefix(double amount) {
-    final intl.NumberFormat amountNumberFormat = intl.NumberFormat.currency(
-      locale: localeName,
-      decimalDigits: 2,
-    );
-    final String amountString = amountNumberFormat.format(amount);
-
-    return '$amountString';
-  }
-
-  @override
   String groupNotificationTitle(String userDisplayName) {
     return '$userDisplayName added you to a new group!';
   }
@@ -1027,15 +962,8 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String groupPayBackNotificationBody(double amount) {
-    final intl.NumberFormat amountNumberFormat = intl.NumberFormat.currency(
-      locale: localeName,
-      decimalDigits: 2,
-      name: '€',
-    );
-    final String amountString = amountNumberFormat.format(amount);
-
-    return 'You should receive $amountString in the next days.';
+  String groupPayBackNotificationBody(String amount) {
+    return 'You should receive $amount in the next days.';
   }
 
   @override
@@ -1047,16 +975,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String expenseNotificationBody(
     String expenseName,
     String groupName,
-    double amount,
+    String amount,
   ) {
-    final intl.NumberFormat amountNumberFormat = intl.NumberFormat.currency(
-      locale: localeName,
-      decimalDigits: 2,
-      name: '€',
-    );
-    final String amountString = amountNumberFormat.format(amount);
-
-    return '\"$expenseName\" has been added to \"$groupName\" with a total of $amountString.';
+    return '\"$expenseName\" has been added to \"$groupName\" with a total of $amount.';
   }
 
   @override
@@ -1724,15 +1645,8 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String reminderNotificationBody(double amount, String groupName) {
-    final intl.NumberFormat amountNumberFormat = intl.NumberFormat.currency(
-      locale: localeName,
-      symbol: '€',
-      decimalDigits: 2,
-    );
-    final String amountString = amountNumberFormat.format(amount);
-
-    return 'You owe $amountString in $groupName';
+  String reminderNotificationBody(String amount, String groupName) {
+    return 'You owe $amount in $groupName';
   }
 
   @override
@@ -1748,27 +1662,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get groupDetailTapToClaim => 'Tap to claim';
 
   @override
-  String groupDetailYouClaimed(double amount) {
-    final intl.NumberFormat amountNumberFormat = intl.NumberFormat.currency(
-      locale: localeName,
-      decimalDigits: 2,
-      name: '€',
-    );
-    final String amountString = amountNumberFormat.format(amount);
-
-    return 'You claimed $amountString';
+  String groupDetailYouClaimed(String amount) {
+    return 'You claimed $amount';
   }
 
   @override
-  String groupDetailUnclaimed(double amount) {
-    final intl.NumberFormat amountNumberFormat = intl.NumberFormat.currency(
-      locale: localeName,
-      decimalDigits: 2,
-      name: '€',
-    );
-    final String amountString = amountNumberFormat.format(amount);
-
-    return '$amountString unclaimed';
+  String groupDetailUnclaimed(String amount) {
+    return '$amount unclaimed';
   }
 
   @override
@@ -1838,15 +1738,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get paymentIbanCopied => 'IBAN copied to clipboard';
 
   @override
-  String paymentPayAmount(double amount) {
-    final intl.NumberFormat amountNumberFormat = intl.NumberFormat.currency(
-      locale: localeName,
-      decimalDigits: 2,
-      name: '€',
-    );
-    final String amountString = amountNumberFormat.format(amount);
-
-    return 'Pay $amountString';
+  String paymentPayAmount(String amount) {
+    return 'Pay $amount';
   }
 
   @override

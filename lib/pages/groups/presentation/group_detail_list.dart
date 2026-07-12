@@ -28,7 +28,9 @@ import '../../expenses/provider/expense_list.dart';
 /// expense search routes identically to a ledger tap.
 void openLedgerExpense(BuildContext context, Group group, Expense expense) {
   GoRouter.of(context).push(
-    expense.hasClaimUnits ? "/group/details/claim" : "/group/details/expense-detail",
+    expense.hasClaimUnits
+        ? "/group/details/claim"
+        : "/group/details/expense-detail",
     extra: {'group': group, 'expense': expense},
   );
 }
@@ -47,7 +49,9 @@ class _GroupDetailListState extends ConsumerState<GroupDetailList> {
   int oldOffset = 0;
 
   Future<void> updateExpenseList() async {
-    return ref.read(expenseListProvider(widget.group.id).notifier).reload(widget.group.id);
+    return ref
+        .read(expenseListProvider(widget.group.id).notifier)
+        .reload(widget.group.id);
   }
 
   void _openExpense(Expense expense) =>
@@ -71,10 +75,14 @@ class _GroupDetailListState extends ConsumerState<GroupDetailList> {
   Widget build(BuildContext context) {
     return Consumer(
       builder: (context, ref, child) {
-        final expenseListState = ref.watch(expenseListProvider(widget.group.id));
+        final expenseListState = ref.watch(
+          expenseListProvider(widget.group.id),
+        );
         final isLoading = expenseListState.isLoading;
         final expenses = expenseListState.value;
-        oldOffset = ref.read(expenseListProvider(widget.group.id).notifier).offset;
+        oldOffset = ref
+            .read(expenseListProvider(widget.group.id).notifier)
+            .offset;
 
         if (isLoading) {
           // Mirror the real day-grouped ledger (section header + joined
@@ -117,7 +125,8 @@ class _GroupDetailListState extends ConsumerState<GroupDetailList> {
                   );
                 }
 
-                final section = sections[hasAd && index > adPos ? index - 1 : index];
+                final section =
+                    sections[hasAd && index > adPos ? index - 1 : index];
                 return _DaySection(
                   section: section,
                   group: widget.group,
@@ -127,10 +136,16 @@ class _GroupDetailListState extends ConsumerState<GroupDetailList> {
             ),
             onNotification: (ScrollNotification scrollInfo) {
               if (scrollInfo.metrics.pixels >
-                  scrollInfo.metrics.maxScrollExtent - MediaQuery.of(context).size.height) {
-                if (oldOffset == ref.read(expenseListProvider(widget.group.id).notifier).offset) {
+                  scrollInfo.metrics.maxScrollExtent -
+                      MediaQuery.of(context).size.height) {
+                if (oldOffset ==
+                    ref
+                        .read(expenseListProvider(widget.group.id).notifier)
+                        .offset) {
                   // make sure ListView has newest data after previous loadMore
-                  ref.read(expenseListProvider(widget.group.id).notifier).loadMoreEntries(widget.group.id);
+                  ref
+                      .read(expenseListProvider(widget.group.id).notifier)
+                      .loadMoreEntries(widget.group.id);
                 }
               }
               return false;
@@ -165,7 +180,9 @@ class _DaySection extends StatelessWidget {
         children: [
           Padding(
             padding: const EdgeInsets.fromLTRB(4, 0, 4, 8),
-            child: SectionLabel(formatDate(section.day.toIso8601String(), context)),
+            child: SectionLabel(
+              formatDate(section.day.toIso8601String(), context),
+            ),
           ),
           SoftCard(
             padding: const EdgeInsets.symmetric(vertical: 4),
@@ -205,9 +222,15 @@ class _LedgerRow extends StatelessWidget {
       case LedgerRowType.payback:
         return _PaybackRow(expense: expense);
       case LedgerRowType.itemized:
-        return _ItemizedRow(expense: expense, onTap: () => onOpenExpense(expense));
+        return _ItemizedRow(
+          expense: expense,
+          onTap: () => onOpenExpense(expense),
+        );
       case LedgerRowType.quick:
-        return LedgerQuickRow(expense: expense, onTap: () => onOpenExpense(expense));
+        return LedgerQuickRow(
+          expense: expense,
+          onTap: () => onOpenExpense(expense),
+        );
     }
   }
 }
@@ -241,25 +264,35 @@ class ExpenseNetLine extends StatelessWidget {
           'yes',
           l10n.you,
           "lent",
-          expense.amount - currentUserShares,
+          l10n.toCurrency(
+            expense.amount - currentUserShares,
+            expense.group.currencyCode,
+          ),
         );
         semantic = MoneySemantic.positive;
       } else {
-        netLabel = l10n.expenseDisplayAmount('yes', l10n.you, "borrowed", currentUserShares);
+        netLabel = l10n.expenseDisplayAmount(
+          'yes',
+          l10n.you,
+          "borrowed",
+          l10n.toCurrency(currentUserShares, expense.group.currencyCode),
+        );
         semantic = MoneySemantic.negative;
       }
       netWidget = Text(
         netLabel,
         style: Theme.of(context).textTheme.labelMedium?.copyWith(
-              color: semantic == MoneySemantic.positive
-                  ? Theme.of(context).extension<SemanticColors>()!.success
-                  : Theme.of(context).extension<SemanticColors>()!.danger,
-            ),
+          color: semantic == MoneySemantic.positive
+              ? Theme.of(context).extension<SemanticColors>()!.success
+              : Theme.of(context).extension<SemanticColors>()!.danger,
+        ),
       );
     } else if (!currentUserPaid) {
       netWidget = Text(
         l10n.expenseNoShares,
-        style: Theme.of(context).textTheme.labelMedium?.copyWith(color: colorScheme.onSurfaceVariant),
+        style: Theme.of(
+          context,
+        ).textTheme.labelMedium?.copyWith(color: colorScheme.onSurfaceVariant),
       );
     }
 
@@ -268,14 +301,18 @@ class ExpenseNetLine extends StatelessWidget {
         Flexible(
           child: Text(
             paidPart,
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(color: colorScheme.onSurfaceVariant),
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+              color: colorScheme.onSurfaceVariant,
+            ),
             overflow: TextOverflow.ellipsis,
           ),
         ),
         if (netWidget != null) ...[
           Text(
             "  ·  ",
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(color: colorScheme.onSurfaceVariant),
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+              color: colorScheme.onSurfaceVariant,
+            ),
           ),
           Flexible(child: netWidget),
         ],
@@ -331,6 +368,7 @@ class LedgerQuickRow extends StatelessWidget {
           const SizedBox(width: 10),
           MoneyText(
             expense.amount,
+            currencyCode: expense.group.currencyCode,
             style: Theme.of(context).textTheme.titleMedium,
           ),
         ],
@@ -343,7 +381,12 @@ class LedgerQuickRow extends StatelessWidget {
 /// Replaces the per-row [SoftCard] so consecutive rows share one card surface
 /// with no gaps between them (v3 date-group list).
 class LedgerRowInk extends StatelessWidget {
-  const LedgerRowInk({super.key, required this.child, required this.padding, this.onTap});
+  const LedgerRowInk({
+    super.key,
+    required this.child,
+    required this.padding,
+    this.onTap,
+  });
 
   final Widget child;
   final EdgeInsetsGeometry padding;
@@ -423,7 +466,8 @@ class _ItemizedRow extends StatelessWidget {
                             borderRadius: BorderRadius.circular(12),
                           ),
                           child: Icon(
-                            expense.category?.getIcon() ?? Icons.receipt_long_outlined,
+                            expense.category?.getIcon() ??
+                                Icons.receipt_long_outlined,
                             size: 22,
                             color: colorScheme.onSurfaceVariant,
                           ),
@@ -441,10 +485,10 @@ class _ItemizedRow extends StatelessWidget {
                               const SizedBox(height: 2),
                               Text.rich(
                                 TextSpan(
-                                  style: Theme.of(context)
-                                      .textTheme
-                                      .bodySmall
-                                      ?.copyWith(color: colorScheme.onSurfaceVariant),
+                                  style: Theme.of(context).textTheme.bodySmall
+                                      ?.copyWith(
+                                        color: colorScheme.onSurfaceVariant,
+                                      ),
                                   children: [
                                     TextSpan(text: "$payerLabel · "),
                                     TextSpan(
@@ -464,6 +508,7 @@ class _ItemizedRow extends StatelessWidget {
                         const SizedBox(width: 10),
                         MoneyText(
                           expense.amount,
+                          currencyCode: expense.group.currencyCode,
                           style: Theme.of(context).textTheme.titleMedium,
                         ),
                       ],
@@ -472,12 +517,22 @@ class _ItemizedRow extends StatelessWidget {
                       const SizedBox(height: 8),
                       Row(
                         children: [
-                          Icon(Icons.check_circle, size: 16, color: semantic.success),
+                          Icon(
+                            Icons.check_circle,
+                            size: 16,
+                            color: semantic.success,
+                          ),
                           const SizedBox(width: 5),
                           Flexible(
                             child: Text(
-                              l10n.groupDetailYouClaimed(shareStat[currentUserEmail] ?? 0),
-                              style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                              l10n.groupDetailYouClaimed(
+                                l10n.toCurrency(
+                                  shareStat[currentUserEmail] ?? 0.0,
+                                  expense.group.currencyCode,
+                                ),
+                              ),
+                              style: Theme.of(context).textTheme.labelMedium
+                                  ?.copyWith(
                                     color: semantic.success,
                                     fontWeight: FontWeight.w700,
                                   ),
@@ -502,9 +557,15 @@ class _ItemizedRow extends StatelessWidget {
                           Flexible(
                             child: Text(
                               hasUnclaimed
-                                  ? l10n.groupDetailUnclaimed(unclaimed)
+                                  ? l10n.groupDetailUnclaimed(
+                                      l10n.toCurrency(
+                                        unclaimed,
+                                        expense.group.currencyCode,
+                                      ),
+                                    )
                                   : l10n.groupDetailAllClaimed,
-                              style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                              style: Theme.of(context).textTheme.labelMedium
+                                  ?.copyWith(
                                     color: hasUnclaimed
                                         ? semantic.warning
                                         : colorScheme.onSurfaceVariant,
@@ -533,17 +594,22 @@ class _ItemizedRow extends StatelessWidget {
     );
   }
 
-  List<AvatarStackMember> _claimerMembers(Expense expense, String? currentUserEmail) {
+  List<AvatarStackMember> _claimerMembers(
+    Expense expense,
+    String? currentUserEmail,
+  ) {
     final seen = <String>{};
     final members = <AvatarStackMember>[];
     for (final entry in expense.expenseEntries.values) {
       for (final share in entry.expenseEntryShares) {
         if (seen.add(share.email)) {
-          members.add(AvatarStackMember(
-            name: share.displayName,
-            colorKey: share.email,
-            isYou: share.email == currentUserEmail,
-          ));
+          members.add(
+            AvatarStackMember(
+              name: share.displayName,
+              colorKey: share.email,
+              isYou: share.email == currentUserEmail,
+            ),
+          );
         }
       }
     }
@@ -567,11 +633,15 @@ class _PaybackRow extends StatelessWidget {
         expense.expenseEntries.entries.first.value.expenseEntryShares.first;
 
     final paidByYourself = expense.paidBy == currentUserEmail ? 'yes' : '';
-    final paidByDisplayName =
-        expense.paidBy == currentUserEmail ? l10n.you : (expense.paidByDisplayName ?? "");
-    final paidToYourself = paidBackEntryShare.email == currentUserEmail ? 'yes' : '';
-    final paidToDisplayName =
-        paidBackEntryShare.email == currentUserEmail ? l10n.you : paidBackEntryShare.displayName;
+    final paidByDisplayName = expense.paidBy == currentUserEmail
+        ? l10n.you
+        : (expense.paidByDisplayName ?? "");
+    final paidToYourself = paidBackEntryShare.email == currentUserEmail
+        ? 'yes'
+        : '';
+    final paidToDisplayName = paidBackEntryShare.email == currentUserEmail
+        ? l10n.you
+        : paidBackEntryShare.displayName;
 
     // v3 inset payback chip: sits inside the joined date-group card with a
     // small margin, so its green surface floats within the row stack.
@@ -594,19 +664,21 @@ class _PaybackRow extends StatelessWidget {
                 paidByDisplayName,
                 paidToYourself,
                 paidToDisplayName,
-                expense.amount,
+                l10n.toCurrency(expense.amount, expense.group.currencyCode),
               ),
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: semantic.paybackText),
+              style: Theme.of(
+                context,
+              ).textTheme.bodyMedium?.copyWith(color: semantic.paybackText),
             ),
           ),
           const SizedBox(width: 10),
           Text(
             l10n.groupDetailPaymentTag,
             style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                  color: semantic.paybackText,
-                  fontWeight: FontWeight.w700,
-                  letterSpacing: 0.6,
-                ),
+              color: semantic.paybackText,
+              fontWeight: FontWeight.w700,
+              letterSpacing: 0.6,
+            ),
           ),
         ],
       ),

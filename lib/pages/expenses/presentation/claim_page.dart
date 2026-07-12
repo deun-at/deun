@@ -30,13 +30,14 @@ import 'package:go_router/go_router.dart';
 /// Signature of the push sender used by the Nudge action. Defaults to the real
 /// [sendNotification] helper; tests inject a spy so they never hit the live
 /// `push` Edge Function.
-typedef ClaimNotificationSender = Future<void> Function(
-  String type,
-  String objectId,
-  Set<String> notificationReceiver,
-  String title,
-  String body,
-);
+typedef ClaimNotificationSender =
+    Future<void> Function(
+      String type,
+      String objectId,
+      Set<String> notificationReceiver,
+      String title,
+      String body,
+    );
 
 class ClaimPage extends ConsumerStatefulWidget {
   const ClaimPage({
@@ -156,8 +157,7 @@ class _ClaimPageState extends ConsumerState<ClaimPage> {
     final l10n = AppLocalizations.of(context)!;
     final senderName =
         _memberFor(_currentUserEmail ?? '')?.displayName ?? l10n.you;
-    final receivers =
-        widget.group.groupMembers.map((m) => m.email).toSet();
+    final receivers = widget.group.groupMembers.map((m) => m.email).toSet();
     (widget.sendNotificationOverride ?? sendNotification)(
       'expense',
       widget.expense.id,
@@ -174,8 +174,9 @@ class _ClaimPageState extends ConsumerState<ClaimPage> {
     final claimState = ref.watch(
       claimProvider(widget.group.id, widget.expense.id),
     );
-    final notifier =
-        ref.read(claimProvider(widget.group.id, widget.expense.id).notifier);
+    final notifier = ref.read(
+      claimProvider(widget.group.id, widget.expense.id).notifier,
+    );
 
     return ThemeBuilder(
       colorValue: widget.group.colorValue,
@@ -221,6 +222,7 @@ class _ClaimPageState extends ConsumerState<ClaimPage> {
                           summary: summary,
                           displayName: (e) => _displayName(context, e),
                           currentUserEmail: _currentUserEmail,
+                          currencyCode: widget.group.currencyCode,
                         ),
                         if (!summary.isFullyClaimed &&
                             summary.unclaimed > 0.005) ...[
@@ -229,6 +231,7 @@ class _ClaimPageState extends ConsumerState<ClaimPage> {
                             unclaimed: summary.unclaimed,
                             payerName: _payerName(context, expense),
                             onNudge: _nudge,
+                            currencyCode: widget.group.currencyCode,
                           ),
                         ],
                         const SizedBox(height: 24),
@@ -245,6 +248,7 @@ class _ClaimPageState extends ConsumerState<ClaimPage> {
                           onTapUnit: _toggleUnit,
                           onSplitOne: _splitOne,
                           onApplySplit: _applySplit,
+                          currencyCode: widget.group.currencyCode,
                         ),
                       ],
                     ),
@@ -285,7 +289,8 @@ class _PresencePulseState extends State<_PresencePulse>
   @override
   Widget build(BuildContext context) {
     final semantic = Theme.of(context).extension<SemanticColors>()!;
-    final reduceMotion = MediaQuery.maybeOf(context)?.disableAnimations ?? false;
+    final reduceMotion =
+        MediaQuery.maybeOf(context)?.disableAnimations ?? false;
     final color = semantic.success;
 
     // Start/stop the loop in build so it reacts to a live reduce-motion change.
@@ -362,7 +367,8 @@ class _PersonaSwitcher extends StatelessWidget {
     final textTheme = Theme.of(context).textTheme;
     final colorScheme = Theme.of(context).colorScheme;
 
-    final ordered = [...members]..sort((a, b) {
+    final ordered = [...members]
+      ..sort((a, b) {
         if (a.email == currentUserEmail) return -1;
         if (b.email == currentUserEmail) return 1;
         return a.displayName.compareTo(b.displayName);
@@ -487,11 +493,13 @@ class _SummaryCard extends StatelessWidget {
     required this.summary,
     required this.displayName,
     required this.currentUserEmail,
+    required this.currencyCode,
   });
 
   final ClaimSummary summary;
   final String Function(String email) displayName;
   final String? currentUserEmail;
+  final String currencyCode;
 
   @override
   Widget build(BuildContext context) {
@@ -527,12 +535,12 @@ class _SummaryCard extends StatelessWidget {
                   children: [
                     Text(
                       l10n.claimYourShare,
-                      style:
-                          textTheme.labelLarge?.copyWith(color: onHeroMuted),
+                      style: textTheme.labelLarge?.copyWith(color: onHeroMuted),
                     ),
                     const SizedBox(height: 6),
                     MoneyText(
                       summary.yourShare,
+                      currencyCode: currencyCode,
                       style: textTheme.displaySmall?.copyWith(color: onHero),
                       animate: true,
                     ),
@@ -574,8 +582,8 @@ class _SummaryCard extends StatelessWidget {
             children: [
               Text(
                 l10n.claimProgressLabel(
-                  l10n.toCurrency(summary.claimed),
-                  l10n.toCurrency(summary.total),
+                  l10n.toCurrency(summary.claimed, currencyCode),
+                  l10n.toCurrency(summary.total, currencyCode),
                 ),
                 style: textTheme.bodySmall?.copyWith(color: onHeroMuted),
               ),
@@ -585,10 +593,13 @@ class _SummaryCard extends StatelessWidget {
               Text(
                 summary.isFullyClaimed
                     ? l10n.claimAllClaimed
-                    : l10n.claimLeftLabel(l10n.toCurrency(summary.unclaimed)),
+                    : l10n.claimLeftLabel(
+                        l10n.toCurrency(summary.unclaimed, currencyCode),
+                      ),
                 style: textTheme.bodySmall?.copyWith(
-                  color:
-                      summary.isFullyClaimed ? semantic.success : semantic.warning,
+                  color: summary.isFullyClaimed
+                      ? semantic.success
+                      : semantic.warning,
                   fontWeight: FontWeight.w600,
                 ),
               ),
@@ -612,10 +623,10 @@ class _SummaryCard extends StatelessWidget {
                       amount: m.amount,
                       isYou: m.email == currentUserEmail,
                       onHero: onHero,
+                      currencyCode: currencyCode,
                     ),
                   ),
-                  if (m != summary.memberTotals.last)
-                    const SizedBox(width: 6),
+                  if (m != summary.memberTotals.last) const SizedBox(width: 6),
                 ],
               ],
             ),
@@ -638,6 +649,7 @@ class _MemberTotalChip extends StatelessWidget {
     required this.amount,
     required this.isYou,
     required this.onHero,
+    required this.currencyCode,
   });
 
   final String name;
@@ -645,6 +657,7 @@ class _MemberTotalChip extends StatelessWidget {
   final double amount;
   final bool isYou;
   final Color onHero;
+  final String currencyCode;
 
   @override
   Widget build(BuildContext context) {
@@ -664,12 +677,20 @@ class _MemberTotalChip extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          MemberAvatar(name: name, colorKey: colorKey, radius: 14, isYou: isYou),
+          MemberAvatar(
+            name: name,
+            colorKey: colorKey,
+            radius: 14,
+            isYou: isYou,
+          ),
           const SizedBox(height: 5),
           MoneyText(
             amount,
-            style: textTheme.bodySmall
-                ?.copyWith(color: onHero, fontWeight: FontWeight.w700),
+            currencyCode: currencyCode,
+            style: textTheme.bodySmall?.copyWith(
+              color: onHero,
+              fontWeight: FontWeight.w700,
+            ),
           ),
         ],
       ),
@@ -715,6 +736,7 @@ class _ItemList extends StatelessWidget {
     required this.onTapUnit,
     required this.onSplitOne,
     required this.onApplySplit,
+    required this.currencyCode,
   });
 
   final List<ClaimItemGroup> groups;
@@ -727,6 +749,7 @@ class _ItemList extends StatelessWidget {
   final ValueChanged<ClaimUnitRow> onTapUnit;
   final ValueChanged<ClaimItemGroup> onSplitOne;
   final void Function(String entryId, List<String> claimers) onApplySplit;
+  final String currencyCode;
 
   @override
   Widget build(BuildContext context) {
@@ -738,8 +761,8 @@ class _ItemList extends StatelessWidget {
         child: Text(
           l10n.claimNoItems,
           style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: Theme.of(context).colorScheme.onSurfaceVariant,
-              ),
+            color: Theme.of(context).colorScheme.onSurfaceVariant,
+          ),
         ),
       );
     }
@@ -758,6 +781,7 @@ class _ItemList extends StatelessWidget {
             onTapUnit: onTapUnit,
             onSplitOne: () => onSplitOne(group),
             onApplySplit: onApplySplit,
+            currencyCode: currencyCode,
           ),
           if (group != groups.last) const SizedBox(height: 10),
         ],
@@ -781,6 +805,7 @@ class _ItemCard extends StatelessWidget {
     required this.onTapUnit,
     required this.onSplitOne,
     required this.onApplySplit,
+    required this.currencyCode,
   });
 
   final ClaimItemGroup group;
@@ -793,6 +818,7 @@ class _ItemCard extends StatelessWidget {
   final ValueChanged<ClaimUnitRow> onTapUnit;
   final VoidCallback onSplitOne;
   final void Function(String entryId, List<String> claimers) onApplySplit;
+  final String currencyCode;
 
   @override
   Widget build(BuildContext context) {
@@ -851,8 +877,9 @@ class _ItemCard extends StatelessWidget {
                     Text.rich(
                       TextSpan(
                         text: name,
-                        style: textTheme.titleSmall
-                            ?.copyWith(fontWeight: FontWeight.w700),
+                        style: textTheme.titleSmall?.copyWith(
+                          fontWeight: FontWeight.w700,
+                        ),
                         children: [
                           if (group.quantity > 1)
                             TextSpan(
@@ -871,10 +898,13 @@ class _ItemCard extends StatelessWidget {
                     Text(
                       group.quantity > 1
                           ? l10n.claimEachOrdered(
-                              l10n.toCurrency(group.unitCost), group.quantity)
-                          : l10n.toCurrency(group.unitCost),
-                      style: textTheme.bodySmall
-                          ?.copyWith(color: colorScheme.onSurfaceVariant),
+                              l10n.toCurrency(group.unitCost, currencyCode),
+                              group.quantity,
+                            )
+                          : l10n.toCurrency(group.unitCost, currencyCode),
+                      style: textTheme.bodySmall?.copyWith(
+                        color: colorScheme.onSurfaceVariant,
+                      ),
                     ),
                   ],
                 ),
@@ -883,6 +913,7 @@ class _ItemCard extends StatelessWidget {
                 const SizedBox(width: 8),
                 MoneyText(
                   yourCost,
+                  currencyCode: currencyCode,
                   style: textTheme.titleSmall?.copyWith(
                     color: colorScheme.primary,
                     fontWeight: FontWeight.w700,
@@ -905,6 +936,7 @@ class _ItemCard extends StatelessWidget {
                     currentUserEmail: currentUserEmail,
                     displayName: displayName,
                     onTap: () => onTapUnit(row),
+                    currencyCode: currencyCode,
                   )
                 else
                   _TakeOneChip(
@@ -927,6 +959,7 @@ class _ItemCard extends StatelessWidget {
                       unitCost: expandedRow.unit.unitCost,
                       members: members,
                       currentUserEmail: currentUserEmail,
+                      currencyCode: currencyCode,
                       // Seed with the unit's claimers; for a still-free unit
                       // (opened via "Split one") preselect the current persona,
                       // matching the old modal's behaviour.
@@ -941,10 +974,7 @@ class _ItemCard extends StatelessWidget {
           const SizedBox(height: 11),
           Row(
             children: [
-              _SplitOneButton(
-                enabled: group.hasFree,
-                onTap: onSplitOne,
-              ),
+              _SplitOneButton(enabled: group.hasFree, onTap: onSplitOne),
               const Spacer(),
               if (group.hasFree && personaHoldsNone)
                 Flexible(
@@ -990,6 +1020,7 @@ class _ClaimedUnitChip extends StatelessWidget {
     required this.currentUserEmail,
     required this.displayName,
     required this.onTap,
+    required this.currencyCode,
   });
 
   final ClaimUnitRow row;
@@ -997,6 +1028,7 @@ class _ClaimedUnitChip extends StatelessWidget {
   final String? currentUserEmail;
   final String Function(String email) displayName;
   final VoidCallback onTap;
+  final String currencyCode;
 
   @override
   Widget build(BuildContext context) {
@@ -1024,7 +1056,9 @@ class _ClaimedUnitChip extends StatelessWidget {
         ? colorScheme.primary.withValues(alpha: 0.35)
         : colorScheme.outlineVariant;
     final label = chipState.splitCount > 1
-        ? l10n.claimSplitLabel(l10n.toCurrency(chipState.perUnitCost))
+        ? l10n.claimSplitLabel(
+            l10n.toCurrency(chipState.perUnitCost, currencyCode),
+          )
         : displayName(claimers.first);
 
     return InkWell(
@@ -1194,10 +1228,7 @@ class _DashedStadiumPainter extends CustomPainter {
     for (final metric in path.computeMetrics()) {
       double distance = 0;
       while (distance < metric.length) {
-        canvas.drawPath(
-          metric.extractPath(distance, distance + dash),
-          paint,
-        );
+        canvas.drawPath(metric.extractPath(distance, distance + dash), paint);
         distance += dash + gap;
       }
     }
@@ -1215,11 +1246,13 @@ class _UnclaimedCallout extends StatelessWidget {
     required this.unclaimed,
     required this.payerName,
     required this.onNudge,
+    required this.currencyCode,
   });
 
   final double unclaimed;
   final String payerName;
   final VoidCallback onNudge;
+  final String currencyCode;
 
   @override
   Widget build(BuildContext context) {
@@ -1246,7 +1279,7 @@ class _UnclaimedCallout extends StatelessWidget {
               Expanded(
                 child: Text(
                   l10n.claimUnclaimedCallout(
-                    l10n.toCurrency(unclaimed),
+                    l10n.toCurrency(unclaimed, currencyCode),
                     payerName,
                   ),
                   style: textTheme.bodyMedium?.copyWith(
@@ -1364,6 +1397,7 @@ class _SplitEditorCard extends StatefulWidget {
     required this.currentUserEmail,
     required this.initialClaimers,
     required this.onDone,
+    required this.currencyCode,
   });
 
   final double unitCost;
@@ -1371,6 +1405,7 @@ class _SplitEditorCard extends StatefulWidget {
   final String? currentUserEmail;
   final Set<String> initialClaimers;
   final ValueChanged<List<String>> onDone;
+  final String currencyCode;
 
   @override
   State<_SplitEditorCard> createState() => _SplitEditorCardState();
@@ -1384,8 +1419,9 @@ class _SplitEditorCardState extends State<_SplitEditorCard> {
     final l10n = AppLocalizations.of(context)!;
     final textTheme = Theme.of(context).textTheme;
     final colorScheme = Theme.of(context).colorScheme;
-    final perPerson =
-        _selected.isEmpty ? 0.0 : widget.unitCost / _selected.length;
+    final perPerson = _selected.isEmpty
+        ? 0.0
+        : widget.unitCost / _selected.length;
 
     return Container(
       width: double.infinity,
@@ -1400,7 +1436,9 @@ class _SplitEditorCardState extends State<_SplitEditorCard> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            l10n.claimSplitEditorTitle(l10n.toCurrency(perPerson)),
+            l10n.claimSplitEditorTitle(
+              l10n.toCurrency(perPerson, widget.currencyCode),
+            ),
             style: textTheme.labelMedium?.copyWith(
               color: colorScheme.onSurfaceVariant,
               fontWeight: FontWeight.w700,
@@ -1503,9 +1541,7 @@ class _SplitMemberPill extends StatelessWidget {
               name,
               style: textTheme.labelMedium?.copyWith(
                 fontWeight: FontWeight.w700,
-                color: selected
-                    ? colorScheme.primary
-                    : colorScheme.onSurface,
+                color: selected ? colorScheme.primary : colorScheme.onSurface,
               ),
             ),
           ],

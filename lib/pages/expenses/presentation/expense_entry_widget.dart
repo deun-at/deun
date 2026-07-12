@@ -29,6 +29,7 @@ class ExpenseEntryWidget extends StatefulWidget {
     required this.index,
     required this.onRemove,
     required this.groupMembers,
+    this.currencyCode = kDefaultCurrencyCode,
     this.initialName,
     this.initialAmount,
     this.initialQuantity,
@@ -41,10 +42,15 @@ class ExpenseEntryWidget extends StatefulWidget {
   final ExpenseEntry expenseEntry;
   final Function onRemove;
   final List<GroupMember> groupMembers;
+
+  /// ISO 4217 currency code of the enclosing group, used to format all amounts
+  /// and the amount-input symbol in this itemized entry.
+  final String currencyCode;
   final String? initialName;
   final String? initialAmount;
   final String? initialQuantity;
   final bool isSingleEntry;
+
   /// In single-entry mode, the amount is entered at the expense level.
   /// This controller lets the entry widget stay in sync with that amount.
   final TextEditingController? expenseLevelAmountController;
@@ -78,7 +84,9 @@ class _ExpenseEntryWidgetState extends State<ExpenseEntryWidget> {
 
   @override
   void dispose() {
-    widget.expenseLevelAmountController?.removeListener(_onExpenseLevelAmountChanged);
+    widget.expenseLevelAmountController?.removeListener(
+      _onExpenseLevelAmountChanged,
+    );
     for (var controller in _memberControllers.values) {
       controller.dispose();
     }
@@ -98,10 +106,11 @@ class _ExpenseEntryWidgetState extends State<ExpenseEntryWidget> {
     _quantity = widget.initialQuantity != null
         ? (int.tryParse(widget.initialQuantity!) ?? 1)
         : (widget.expenseEntry.expenseEntryShares.isNotEmpty
-            ? widget.expenseEntry.quantity
-            : 1);
+              ? widget.expenseEntry.quantity
+              : 1);
 
-    String amountStr = widget.initialAmount ??
+    String amountStr =
+        widget.initialAmount ??
         (widget.expenseEntry.expenseEntryShares.isNotEmpty
             ? widget.expenseEntry.unitPrice.toStringAsFixed(2)
             // Single-entry mode: seed from the expense-level amount so the
@@ -109,15 +118,17 @@ class _ExpenseEntryWidgetState extends State<ExpenseEntryWidget> {
             : (widget.expenseLevelAmountController?.text ?? "0"));
     _unitPrice = double.tryParse(amountStr) ?? 0;
 
-    _itemName = widget.initialName ??
+    _itemName =
+        widget.initialName ??
         (widget.expenseEntry.expenseEntryShares.isNotEmpty
             ? (widget.expenseEntry.name ?? '')
             : '');
 
     // Initialize enabled members
     if (widget.expenseEntry.expenseEntryShares.isNotEmpty) {
-      _enabledMembers =
-          widget.expenseEntry.expenseEntryShares.map((e) => e.email).toSet();
+      _enabledMembers = widget.expenseEntry.expenseEntryShares
+          .map((e) => e.email)
+          .toSet();
     } else {
       _enabledMembers = widget.groupMembers.map((e) => e.email).toSet();
     }
@@ -144,13 +155,14 @@ class _ExpenseEntryWidgetState extends State<ExpenseEntryWidget> {
 
     // In single-entry mode, listen to the expense-level amount controller
     // so splits stay in sync when the user types the amount.
-    widget.expenseLevelAmountController?.addListener(_onExpenseLevelAmountChanged);
+    widget.expenseLevelAmountController?.addListener(
+      _onExpenseLevelAmountChanged,
+    );
   }
 
   void _onExpenseLevelAmountChanged() {
-    final newPrice = double.tryParse(
-      widget.expenseLevelAmountController?.text ?? '',
-    ) ?? 0;
+    final newPrice =
+        double.tryParse(widget.expenseLevelAmountController?.text ?? '') ?? 0;
     if (newPrice != _unitPrice) {
       setState(() {
         double oldTotal = _entryTotal;
@@ -286,7 +298,9 @@ class _ExpenseEntryWidgetState extends State<ExpenseEntryWidget> {
       return AppLocalizations.of(context)!.you;
     }
     try {
-      return widget.groupMembers.firstWhere((m) => m.email == email).displayName;
+      return widget.groupMembers
+          .firstWhere((m) => m.email == email)
+          .displayName;
     } catch (_) {
       return email;
     }
@@ -325,8 +339,8 @@ class _ExpenseEntryWidgetState extends State<ExpenseEntryWidget> {
                   widget.groupMembers.length,
                 ),
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: Theme.of(context).colorScheme.onSurfaceVariant,
-                    ),
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                ),
               ),
             ),
             const SizedBox(height: spacing),
@@ -396,7 +410,7 @@ class _ExpenseEntryWidgetState extends State<ExpenseEntryWidget> {
               Padding(
                 padding: const EdgeInsets.only(top: 6),
                 child: Text(
-                  l10n.toCurrency(_entryTotal),
+                  l10n.toCurrency(_entryTotal, widget.currencyCode),
                   style: textTheme.titleMedium?.copyWith(
                     fontWeight: FontWeight.w700,
                     fontFeatures: const [FontFeature.tabularFigures()],
@@ -432,10 +446,9 @@ class _ExpenseEntryWidgetState extends State<ExpenseEntryWidget> {
       initialValue: widget.initialName,
       builder: (FormFieldState<dynamic> field) => TextFormField(
         initialValue: field.value,
-        style: Theme.of(context)
-            .textTheme
-            .bodyLarge
-            ?.copyWith(fontWeight: FontWeight.w700),
+        style: Theme.of(
+          context,
+        ).textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w700),
         decoration: InputDecoration(
           isDense: true,
           hintText: l10n.itemNameHint,
@@ -458,7 +471,10 @@ class _ExpenseEntryWidgetState extends State<ExpenseEntryWidget> {
   /// _onTotalChanged split-recalc — so the persisted value and split math are
   /// unchanged. Format matches the old field (toStringAsFixed(2)).
   Future<void> _openUnitPriceKeypad(FormFieldState<dynamic> field) async {
-    final picked = await showAmountKeypadSheet(context, initialAmount: _unitPrice);
+    final picked = await showAmountKeypadSheet(
+      context,
+      initialAmount: _unitPrice,
+    );
     if (picked == null || !mounted) return;
     final text = picked.toStringAsFixed(2);
     field.didChange(text);
@@ -474,7 +490,8 @@ class _ExpenseEntryWidgetState extends State<ExpenseEntryWidget> {
     return FormBuilderField(
       key: ValueKey("${widget.index}_amount"),
       name: "expense_entry[${widget.index}][amount]",
-      initialValue: widget.initialAmount ??
+      initialValue:
+          widget.initialAmount ??
           (widget.expenseEntry.expenseEntryShares.isNotEmpty
               ? widget.expenseEntry.unitPrice.toStringAsFixed(2)
               : null),
@@ -506,11 +523,11 @@ class _ExpenseEntryWidgetState extends State<ExpenseEntryWidget> {
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               Text(
-                "€",
+                currencySymbolFor(l10n.localeName, widget.currencyCode),
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: colorScheme.onSurfaceVariant,
-                      fontWeight: FontWeight.w700,
-                    ),
+                  color: colorScheme.onSurfaceVariant,
+                  fontWeight: FontWeight.w700,
+                ),
               ),
               const SizedBox(width: 4),
               // Tap-to-open keypad (F158): the unit price is money, so it routes
@@ -521,7 +538,10 @@ class _ExpenseEntryWidgetState extends State<ExpenseEntryWidget> {
                 borderRadius: BorderRadius.circular(8),
                 child: Container(
                   constraints: const BoxConstraints(minWidth: 40, maxWidth: 90),
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 4,
+                  ),
                   decoration: BoxDecoration(
                     color: colorScheme.surfaceContainerHighest,
                     borderRadius: BorderRadius.circular(8),
@@ -529,9 +549,9 @@ class _ExpenseEntryWidgetState extends State<ExpenseEntryWidget> {
                   child: Text(
                     _unitPrice.toStringAsFixed(2),
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          fontWeight: FontWeight.w700,
-                          fontFeatures: const [FontFeature.tabularFigures()],
-                        ),
+                      fontWeight: FontWeight.w700,
+                      fontFeatures: const [FontFeature.tabularFigures()],
+                    ),
                   ),
                 ),
               ),
@@ -539,8 +559,8 @@ class _ExpenseEntryWidgetState extends State<ExpenseEntryWidget> {
               Text(
                 l10n.itemPriceEachSuffix,
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: colorScheme.onSurfaceVariant,
-                    ),
+                  color: colorScheme.onSurfaceVariant,
+                ),
               ),
             ],
           ),
@@ -581,7 +601,10 @@ class _ExpenseEntryWidgetState extends State<ExpenseEntryWidget> {
       segments: [
         AppSegment(value: SplitMode.equal, label: l10n.splitModeEqual),
         AppSegment(value: SplitMode.shares, label: l10n.splitModeShares),
-        AppSegment(value: SplitMode.percentage, label: l10n.splitModePercentage),
+        AppSegment(
+          value: SplitMode.percentage,
+          label: l10n.splitModePercentage,
+        ),
         AppSegment(value: SplitMode.amount, label: l10n.splitModeExact),
       ],
       onChanged: (SplitMode selected) {
@@ -613,17 +636,23 @@ class _ExpenseEntryWidgetState extends State<ExpenseEntryWidget> {
         return true;
       case SplitMode.amount:
         double sum = _enabledMembers.fold(
-            0.0, (s, email) => s + (_memberAmounts[email] ?? 0));
+          0.0,
+          (s, email) => s + (_memberAmounts[email] ?? 0),
+        );
         // Member amounts must add up to the entry total exactly at cent
         // level — anything looser silently creates or destroys money.
         return (roundCurrency(sum) - roundCurrency(_entryTotal)).abs() < 0.005;
       case SplitMode.percentage:
         double sum = _enabledMembers.fold(
-            0.0, (s, email) => s + (_memberPercentages[email] ?? 0));
+          0.0,
+          (s, email) => s + (_memberPercentages[email] ?? 0),
+        );
         return (sum - 100).abs() < 0.01;
       case SplitMode.shares:
         int totalParts = _enabledMembers.fold(
-            0, (sum, e) => sum + (_memberParts[e] ?? 1));
+          0,
+          (sum, e) => sum + (_memberParts[e] ?? 1),
+        );
         return totalParts > 0;
     }
   }
@@ -674,7 +703,10 @@ class _ExpenseEntryWidgetState extends State<ExpenseEntryWidget> {
               children: [
                 SoftCard(
                   borderRadius: 18,
-                  padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 4),
+                  padding: const EdgeInsets.symmetric(
+                    vertical: 6,
+                    horizontal: 4,
+                  ),
                   child: Column(
                     children: [
                       ...widget.groupMembers.map((member) {
@@ -690,8 +722,8 @@ class _ExpenseEntryWidgetState extends State<ExpenseEntryWidget> {
                     child: Text(
                       sharesField.errorText!,
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: Theme.of(context).colorScheme.error,
-                          ),
+                        color: Theme.of(context).colorScheme.error,
+                      ),
                     ),
                   ),
               ],
@@ -812,8 +844,8 @@ class _ExpenseEntryWidgetState extends State<ExpenseEntryWidget> {
             child: Text(
               displayName,
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: isEnabled ? null : Theme.of(context).disabledColor,
-                  ),
+                color: isEnabled ? null : Theme.of(context).disabledColor,
+              ),
               overflow: TextOverflow.ellipsis,
             ),
           ),
@@ -830,9 +862,11 @@ class _ExpenseEntryWidgetState extends State<ExpenseEntryWidget> {
                       if (isLocked)
                         Padding(
                           padding: const EdgeInsets.only(left: 2),
-                          child: Icon(Icons.lock_outline,
-                              size: 14,
-                              color: Theme.of(context).colorScheme.outline),
+                          child: Icon(
+                            Icons.lock_outline,
+                            size: 14,
+                            color: Theme.of(context).colorScheme.outline,
+                          ),
                         ),
                     ] else ...[
                       if (_splitMode != SplitMode.equal) ...[
@@ -844,9 +878,8 @@ class _ExpenseEntryWidgetState extends State<ExpenseEntryWidget> {
                         width: 52,
                         child: MoneyText(
                           double.parse(_getAmountPreview(member.email)),
-                          style: Theme.of(context)
-                              .textTheme
-                              .bodySmall
+                          currencyCode: widget.currencyCode,
+                          style: Theme.of(context).textTheme.bodySmall
                               ?.copyWith(
                                 color: Theme.of(context).colorScheme.outline,
                               ),
@@ -860,9 +893,9 @@ class _ExpenseEntryWidgetState extends State<ExpenseEntryWidget> {
               : Text(
                   AppLocalizations.of(context)!.splitNotInLabel,
                   style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                        color: Theme.of(context).colorScheme.outline,
-                        fontWeight: FontWeight.w600,
-                      ),
+                    color: Theme.of(context).colorScheme.outline,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
         ],
       ),
@@ -903,7 +936,9 @@ class _ExpenseEntryWidgetState extends State<ExpenseEntryWidget> {
       case SplitMode.amount:
         final amt = _memberAmounts[email] ?? 0;
         return StepperControl(
-          value: AppLocalizations.of(context)!.toCurrency(amt),
+          value: AppLocalizations.of(
+            context,
+          )!.toCurrency(amt, widget.currencyCode),
           canDecrement: amt > 0,
           onDecrement: () => _stepAmount(email, -0.50),
           onIncrement: () => _stepAmount(email, 0.50),
@@ -930,7 +965,9 @@ class _ExpenseEntryWidgetState extends State<ExpenseEntryWidget> {
   }
 
   TextEditingController _getOrCreateController(
-      String key, String initialValue) {
+    String key,
+    String initialValue,
+  ) {
     _memberControllers[key] ??= TextEditingController(text: initialValue);
     return _memberControllers[key]!;
   }
@@ -991,12 +1028,20 @@ class _ExpenseEntryWidgetState extends State<ExpenseEntryWidget> {
       case SplitMode.amount:
         double val = _memberAmounts[email] ?? 0;
         String ctrlKey = "amount_${widget.index}_$email";
-        TextEditingController controller =
-            _getOrCreateController(ctrlKey, val.toStringAsFixed(2));
+        TextEditingController controller = _getOrCreateController(
+          ctrlKey,
+          val.toStringAsFixed(2),
+        );
         return Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text("€", style: Theme.of(context).textTheme.bodyLarge),
+            Text(
+              currencySymbolFor(
+                AppLocalizations.of(context)!.localeName,
+                widget.currencyCode,
+              ),
+              style: Theme.of(context).textTheme.bodyLarge,
+            ),
             // Tap-to-open keypad (F158): per-member exact amount is money, so it
             // routes through showAmountKeypadSheet instead of a raw system-keyboard
             // field. The controller stays the source of truth (so
@@ -1011,7 +1056,10 @@ class _ExpenseEntryWidgetState extends State<ExpenseEntryWidget> {
                 child: ConstrainedBox(
                   constraints: const BoxConstraints(minWidth: 40, maxWidth: 80),
                   child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 4,
+                      vertical: 8,
+                    ),
                     child: Text(
                       controller.text.isEmpty ? "0.00" : controller.text,
                       style: Theme.of(context).textTheme.bodyLarge,
@@ -1027,8 +1075,10 @@ class _ExpenseEntryWidgetState extends State<ExpenseEntryWidget> {
       case SplitMode.percentage:
         double val = _memberPercentages[email] ?? 0;
         String ctrlKey = "pct_${widget.index}_$email";
-        TextEditingController controller =
-            _getOrCreateController(ctrlKey, val.toStringAsFixed(1));
+        TextEditingController controller = _getOrCreateController(
+          ctrlKey,
+          val.toStringAsFixed(1),
+        );
         return Row(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -1045,13 +1095,18 @@ class _ExpenseEntryWidgetState extends State<ExpenseEntryWidget> {
                       _updateSplitState();
                     });
                   },
-                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                  keyboardType: const TextInputType.numberWithOptions(
+                    decimal: true,
+                  ),
                   inputFormatters: [DecimalTextInputFormatter(decimalRange: 1)],
                   style: Theme.of(context).textTheme.bodyLarge,
                   textAlign: TextAlign.end,
                   decoration: const InputDecoration(
                     isDense: true,
-                    contentPadding: EdgeInsets.symmetric(horizontal: 4, vertical: 8),
+                    contentPadding: EdgeInsets.symmetric(
+                      horizontal: 4,
+                      vertical: 8,
+                    ),
                     border: InputBorder.none,
                   ),
                 ),
@@ -1064,8 +1119,10 @@ class _ExpenseEntryWidgetState extends State<ExpenseEntryWidget> {
       case SplitMode.shares:
         int val = _memberParts[email] ?? 1;
         String ctrlKey = "parts_${widget.index}_$email";
-        TextEditingController controller =
-            _getOrCreateController(ctrlKey, val.toString());
+        TextEditingController controller = _getOrCreateController(
+          ctrlKey,
+          val.toString(),
+        );
         return Row(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -1087,7 +1144,10 @@ class _ExpenseEntryWidgetState extends State<ExpenseEntryWidget> {
                   textAlign: TextAlign.end,
                   decoration: const InputDecoration(
                     isDense: true,
-                    contentPadding: EdgeInsets.symmetric(horizontal: 4, vertical: 8),
+                    contentPadding: EdgeInsets.symmetric(
+                      horizontal: 4,
+                      vertical: 8,
+                    ),
                     border: InputBorder.none,
                   ),
                 ),
@@ -1113,7 +1173,9 @@ class _ExpenseEntryWidgetState extends State<ExpenseEntryWidget> {
         break;
       case SplitMode.shares:
         int totalParts = _enabledMembers.fold(
-            0, (sum, e) => sum + (_memberParts[e] ?? 1));
+          0,
+          (sum, e) => sum + (_memberParts[e] ?? 1),
+        );
         int myParts = _memberParts[email] ?? 1;
         preview = totalParts > 0 ? _entryTotal * myParts / totalParts : 0;
         break;
@@ -1152,19 +1214,21 @@ class _ExpenseEntryWidgetState extends State<ExpenseEntryWidget> {
       final color = member.email == youEmail
           ? colorScheme.primary
           : memberAvatarColor(member.email);
-      children.add(Expanded(
-        flex: flex,
-        child: Container(
-          key: ValueKey('split_segment_${widget.index}_${member.email}'),
-          color: color,
+      children.add(
+        Expanded(
+          flex: flex,
+          child: Container(
+            key: ValueKey('split_segment_${widget.index}_${member.email}'),
+            color: color,
+          ),
         ),
-      ));
+      );
     }
 
     // Empty remainder: the unallocated slice of the track (visible when the
     // split under-allocates). Over-allocation clamps to a full bar.
-    final remainderFlex =
-        ((1.0 - allocation.fraction).clamp(0.0, 1.0) * 10000).round();
+    final remainderFlex = ((1.0 - allocation.fraction).clamp(0.0, 1.0) * 10000)
+        .round();
     if (remainderFlex > 0) {
       children.add(Expanded(flex: remainderFlex, child: const SizedBox()));
     }
@@ -1217,13 +1281,20 @@ class _ExpenseEntryWidgetState extends State<ExpenseEntryWidget> {
       case AllocationStatus.under:
         labelColor = semantic.warning;
         label = _splitMode == SplitMode.amount
-            ? l10n.splitRemainingLabel(l10n.toCurrency(allocation.remaining))
+            ? l10n.splitRemainingLabel(
+                l10n.toCurrency(allocation.remaining, widget.currencyCode),
+              )
             : _underLabel(l10n);
         break;
       case AllocationStatus.over:
         labelColor = semantic.danger;
         label = _splitMode == SplitMode.amount
-            ? l10n.splitOverLabel(l10n.toCurrency(allocation.remaining.abs()))
+            ? l10n.splitOverLabel(
+                l10n.toCurrency(
+                  allocation.remaining.abs(),
+                  widget.currencyCode,
+                ),
+              )
             : _overLabel(l10n);
         break;
     }
@@ -1237,9 +1308,9 @@ class _ExpenseEntryWidgetState extends State<ExpenseEntryWidget> {
           label,
           textAlign: TextAlign.end,
           style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: labelColor,
-                fontWeight: FontWeight.w600,
-              ),
+            color: labelColor,
+            fontWeight: FontWeight.w600,
+          ),
         ),
       ],
     );
@@ -1252,18 +1323,26 @@ class _ExpenseEntryWidgetState extends State<ExpenseEntryWidget> {
         final each = _enabledMembers.isNotEmpty
             ? _entryTotal / _enabledMembers.length
             : 0.0;
-        return l10n.splitEqualSummary(l10n.toCurrency(each));
+        return l10n.splitEqualSummary(
+          l10n.toCurrency(each, widget.currencyCode),
+        );
       case SplitMode.amount:
         final sum = _enabledMembers.fold<double>(
-            0, (s, e) => s + (_memberAmounts[e] ?? 0));
-        return "${l10n.toCurrency(sum)} / ${l10n.toCurrency(_entryTotal)}";
+          0,
+          (s, e) => s + (_memberAmounts[e] ?? 0),
+        );
+        return "${l10n.toCurrency(sum, widget.currencyCode)} / ${l10n.toCurrency(_entryTotal, widget.currencyCode)}";
       case SplitMode.percentage:
         final sum = _enabledMembers.fold<double>(
-            0, (s, e) => s + (_memberPercentages[e] ?? 0));
+          0,
+          (s, e) => s + (_memberPercentages[e] ?? 0),
+        );
         return "${sum.toStringAsFixed(1)}% / 100%";
       case SplitMode.shares:
         final totalParts = _enabledMembers.fold<int>(
-            0, (s, e) => s + (_memberParts[e] ?? 1));
+          0,
+          (s, e) => s + (_memberParts[e] ?? 1),
+        );
         return l10n.splitSharesSummary(totalParts);
     }
   }
@@ -1271,7 +1350,9 @@ class _ExpenseEntryWidgetState extends State<ExpenseEntryWidget> {
   String _underLabel(AppLocalizations l10n) {
     if (_splitMode == SplitMode.percentage) {
       final sum = _enabledMembers.fold<double>(
-          0, (s, e) => s + (_memberPercentages[e] ?? 0));
+        0,
+        (s, e) => s + (_memberPercentages[e] ?? 0),
+      );
       return "${(100 - sum).toStringAsFixed(1)}%";
     }
     return l10n.expenseEntrySharesValidationEmpty;
@@ -1279,7 +1360,9 @@ class _ExpenseEntryWidgetState extends State<ExpenseEntryWidget> {
 
   String _overLabel(AppLocalizations l10n) {
     final sum = _enabledMembers.fold<double>(
-        0, (s, e) => s + (_memberPercentages[e] ?? 0));
+      0,
+      (s, e) => s + (_memberPercentages[e] ?? 0),
+    );
     return "+${(sum - 100).toStringAsFixed(1)}%";
   }
 

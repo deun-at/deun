@@ -1,5 +1,6 @@
 import 'package:deun/constants.dart';
 import 'package:deun/l10n/app_localizations.dart';
+import 'package:deun/helper/helper.dart';
 import 'package:deun/pages/expenses/data/expense_category.dart';
 import 'package:deun/pages/expenses/data/expense_entry_model.dart';
 import 'package:deun/pages/expenses/data/expense_model.dart';
@@ -88,8 +89,11 @@ Future<void> _pump(
         supportedLocales: AppLocalizations.supportedLocales,
         home: Builder(
           builder: (context) => Theme(
-            data: getThemeData(context, kBrandSeed, brightness)
-                .copyWith(splashFactory: NoSplash.splashFactory),
+            data: getThemeData(
+              context,
+              kBrandSeed,
+              brightness,
+            ).copyWith(splashFactory: NoSplash.splashFactory),
             child: ExpenseDetailRead(group: _group(), expense: expense),
           ),
         ),
@@ -103,15 +107,14 @@ void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
   setUpAll(() async {
-    TestWidgetsFlutterBinding.ensureInitialized()
-        .defaultBinaryMessenger
+    TestWidgetsFlutterBinding.ensureInitialized().defaultBinaryMessenger
         .setMockMethodCallHandler(
-      const MethodChannel('plugins.flutter.io/shared_preferences'),
-      (call) async {
-        if (call.method == 'getAll') return <String, Object>{};
-        return null;
-      },
-    );
+          const MethodChannel('plugins.flutter.io/shared_preferences'),
+          (call) async {
+            if (call.method == 'getAll') return <String, Object>{};
+            return null;
+          },
+        );
     await Supabase.initialize(
       url: 'http://localhost:54321',
       anonKey: 'test-anon-key',
@@ -122,7 +125,9 @@ void main() {
     await Supabase.instance.dispose();
   });
 
-  testWidgets('summary card shows title, total, payer and category', (tester) async {
+  testWidgets('summary card shows title, total, payer and category', (
+    tester,
+  ) async {
     final l10n = await AppLocalizations.delegate.load(const Locale('en'));
     await _pump(
       tester,
@@ -164,8 +169,9 @@ void main() {
     expect(find.byIcon(Icons.delete_outline), findsOneWidget);
   });
 
-  testWidgets('per-member breakdown renders a row per involved member',
-      (tester) async {
+  testWidgets('per-member breakdown renders a row per involved member', (
+    tester,
+  ) async {
     await _pump(
       tester,
       _expense(
@@ -179,8 +185,9 @@ void main() {
     expect(find.text('Bob'), findsOneWidget);
   });
 
-  testWidgets('breakdown is ONE card with non-spaced joined rows (F122)',
-      (tester) async {
+  testWidgets('breakdown is ONE card with non-spaced joined rows (F122)', (
+    tester,
+  ) async {
     await _pump(
       tester,
       _expense(
@@ -197,61 +204,64 @@ void main() {
   });
 
   testWidgets(
-      'sub-labels map to role: payer "paid €X" / debtor "owes <payer>" (F123)',
-      (tester) async {
-    final l10n = await AppLocalizations.delegate.load(const Locale('en'));
-    await _pump(
-      tester,
-      _expense(
-        entryCount: 1,
-        shareStat: const {'a@test.com': 10, 'b@test.com': 10},
-        amount: 20,
-        paidBy: 'a@test.com',
-      ),
-    );
+    'sub-labels map to role: payer "paid €X" / debtor "owes <payer>" (F123)',
+    (tester) async {
+      final l10n = await AppLocalizations.delegate.load(const Locale('en'));
+      await _pump(
+        tester,
+        _expense(
+          entryCount: 1,
+          shareStat: const {'a@test.com': 10, 'b@test.com': 10},
+          amount: 20,
+          paidBy: 'a@test.com',
+        ),
+      );
 
-    // Alice paid → "paid €20.00" sub-label (rendered green via success token).
-    expect(
-      find.text(l10n.expenseMemberPaidAmount(l10n.toCurrency(20))),
-      findsOneWidget,
-    );
-    // Bob owes the payer Alice → "owes Alice".
-    expect(find.text(l10n.expenseMemberOwesName('Alice')), findsOneWidget);
-    // Old wording is gone.
-    expect(find.text('lent'), findsNothing);
-    expect(find.text('owes'), findsNothing);
-    expect(find.text(l10n.expensePaidBy), findsNothing);
-  });
+      // Alice paid → "paid €20.00" sub-label (rendered green via success token).
+      expect(
+        find.text(l10n.expenseMemberPaidAmount(l10n.toCurrency(20))),
+        findsOneWidget,
+      );
+      // Bob owes the payer Alice → "owes Alice".
+      expect(find.text(l10n.expenseMemberOwesName('Alice')), findsOneWidget);
+      // Old wording is gone.
+      expect(find.text('lent'), findsNothing);
+      expect(find.text('owes'), findsNothing);
+      expect(find.text(l10n.expensePaidBy), findsNothing);
+    },
+  );
 
   testWidgets(
-      'trailing amount is the plain single-line share, not two-line colored net (F124)',
-      (tester) async {
-    final l10n = await AppLocalizations.delegate.load(const Locale('en'));
-    await _pump(
-      tester,
-      _expense(
-        entryCount: 1,
-        shareStat: const {'a@test.com': 10, 'b@test.com': 10},
-        amount: 20,
-      ),
-    );
+    'trailing amount is the plain single-line share, not two-line colored net (F124)',
+    (tester) async {
+      final l10n = await AppLocalizations.delegate.load(const Locale('en'));
+      await _pump(
+        tester,
+        _expense(
+          entryCount: 1,
+          shareStat: const {'a@test.com': 10, 'b@test.com': 10},
+          amount: 20,
+        ),
+      );
 
-    // Each row's trailing amount shows the member's SHARE (€10.00), a single
-    // plain figure — one per member. The old treatment rendered a grey
-    // "lent"/"owes" label ABOVE a colored net; those labels are asserted gone
-    // above. The trailing MoneyText carries no MoneySemantic tint here.
-    final tenText = find.text(l10n.toCurrency(10));
-    expect(tenText, findsNWidgets(2));
-    for (final e in tenText.evaluate()) {
-      final color = (e.widget as Text).style?.color;
-      final scheme = Theme.of(e).colorScheme;
-      // Plain onSurface, never the success/danger semantic colors.
-      expect(color, scheme.onSurface);
-    }
-  });
+      // Each row's trailing amount shows the member's SHARE (€10.00), a single
+      // plain figure — one per member. The old treatment rendered a grey
+      // "lent"/"owes" label ABOVE a colored net; those labels are asserted gone
+      // above. The trailing MoneyText carries no MoneySemantic tint here.
+      final tenText = find.text(l10n.toCurrency(10));
+      expect(tenText, findsNWidgets(2));
+      for (final e in tenText.evaluate()) {
+        final color = (e.widget as Text).style?.color;
+        final scheme = Theme.of(e).colorScheme;
+        // Plain onSurface, never the success/danger semantic colors.
+        expect(color, scheme.onSurface);
+      }
+    },
+  );
 
-  testWidgets('Review & claim banner shows for a claim expense',
-      (tester) async {
+  testWidgets('Review & claim banner shows for a claim expense', (
+    tester,
+  ) async {
     final l10n = await AppLocalizations.delegate.load(const Locale('en'));
     await _pump(
       tester,
@@ -266,8 +276,9 @@ void main() {
     expect(find.text(l10n.expenseReviewClaimTitle), findsOneWidget);
   });
 
-  testWidgets('Review & claim banner is absent for a quick expense',
-      (tester) async {
+  testWidgets('Review & claim banner is absent for a quick expense', (
+    tester,
+  ) async {
     final l10n = await AppLocalizations.delegate.load(const Locale('en'));
     await _pump(
       tester,
@@ -282,43 +293,45 @@ void main() {
   });
 
   testWidgets(
-      'Review & claim banner is absent for an old itemized expense (no claim units)',
-      (tester) async {
-    final l10n = await AppLocalizations.delegate.load(const Locale('en'));
-    await _pump(
-      tester,
-      _expense(
-        entryCount: 3,
-        shareStat: const {'a@test.com': 10, 'b@test.com': 10},
-        amount: 30,
-      ),
-    );
+    'Review & claim banner is absent for an old itemized expense (no claim units)',
+    (tester) async {
+      final l10n = await AppLocalizations.delegate.load(const Locale('en'));
+      await _pump(
+        tester,
+        _expense(
+          entryCount: 3,
+          shareStat: const {'a@test.com': 10, 'b@test.com': 10},
+          amount: 30,
+        ),
+      );
 
-    expect(find.text(l10n.expenseReviewClaimTitle), findsNothing);
-  });
+      expect(find.text(l10n.expenseReviewClaimTitle), findsNothing);
+    },
+  );
 
   testWidgets(
-      'header card has no divider between the amount and the payer row (F121)',
-      (tester) async {
-    final l10n = await AppLocalizations.delegate.load(const Locale('en'));
-    await _pump(
-      tester,
-      _expense(
-        entryCount: 1,
-        shareStat: const {'a@test.com': 10, 'b@test.com': 10},
-        amount: 20,
-      ),
-    );
+    'header card has no divider between the amount and the payer row (F121)',
+    (tester) async {
+      final l10n = await AppLocalizations.delegate.load(const Locale('en'));
+      await _pump(
+        tester,
+        _expense(
+          entryCount: 1,
+          shareStat: const {'a@test.com': 10, 'b@test.com': 10},
+          amount: 20,
+        ),
+      );
 
-    // The v3 handoff header card runs straight from the big amount into the
-    // "{payer} paid" row with no hairline between them. Removing the divider is
-    // F121; the breakdown card's non-spaced member rows (F122) never used a
-    // Divider, so there should be no Divider anywhere in this view.
-    expect(find.byType(Divider), findsNothing);
-    // Sanity: the amount and payer row both still render.
-    expect(find.text(l10n.toCurrency(20)), findsWidgets);
-    expect(find.text(l10n.expensePaidByOther('Alice')), findsOneWidget);
-  });
+      // The v3 handoff header card runs straight from the big amount into the
+      // "{payer} paid" row with no hairline between them. Removing the divider is
+      // F121; the breakdown card's non-spaced member rows (F122) never used a
+      // Divider, so there should be no Divider anywhere in this view.
+      expect(find.byType(Divider), findsNothing);
+      // Sanity: the amount and payer row both still render.
+      expect(find.text(l10n.toCurrency(20)), findsWidgets);
+      expect(find.text(l10n.expensePaidByOther('Alice')), findsOneWidget);
+    },
+  );
 
   testWidgets('renders in dark mode without throwing', (tester) async {
     await _pump(

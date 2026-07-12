@@ -1,5 +1,6 @@
 import 'package:deun/constants.dart';
 import 'package:deun/l10n/app_localizations.dart';
+import 'package:deun/helper/helper.dart';
 import 'package:deun/widgets/restyle/app_segmented_control.dart';
 import 'package:deun/widgets/restyle/avatar_stack.dart';
 import 'package:deun/widgets/restyle/balance_pill.dart';
@@ -25,7 +26,10 @@ Future<void> _pumpWithMediaQuery(
 }) async {
   await tester.pumpWidget(
     MaterialApp(
-      theme: ThemeData(brightness: Brightness.light, splashFactory: NoSplash.splashFactory),
+      theme: ThemeData(
+        brightness: Brightness.light,
+        splashFactory: NoSplash.splashFactory,
+      ),
       localizationsDelegates: const [
         AppLocalizations.delegate,
         GlobalMaterialLocalizations.delegate,
@@ -55,7 +59,10 @@ Future<void> _pump(
 }) async {
   await tester.pumpWidget(
     MaterialApp(
-      theme: ThemeData(brightness: Brightness.light, splashFactory: NoSplash.splashFactory),
+      theme: ThemeData(
+        brightness: Brightness.light,
+        splashFactory: NoSplash.splashFactory,
+      ),
       localizationsDelegates: const [
         AppLocalizations.delegate,
         GlobalMaterialLocalizations.delegate,
@@ -108,8 +115,9 @@ void main() {
       expect(text.style!.color, _semantics(Brightness.light).danger);
     });
 
-    testWidgets('auto zero uses the default text color (not semantic)',
-        (tester) async {
+    testWidgets('auto zero uses the default text color (not semantic)', (
+      tester,
+    ) async {
       await _pump(tester, const MoneyText(0, semantic: MoneySemantic.auto));
       final text = tester.widget<Text>(find.byType(Text));
       expect(text.style!.color, isNot(_semantics(Brightness.light).success));
@@ -125,109 +133,134 @@ void main() {
     // V3-T6: count-up animation
     // -------------------------------------------------------------------------
 
-    testWidgets('animate defaults to false — same behavior as before', (tester) async {
+    testWidgets('animate defaults to false — same behavior as before', (
+      tester,
+    ) async {
       await _pump(tester, const MoneyText(99.0));
       // Default behavior: final amount shown immediately after pumpAndSettle.
       expect(find.textContaining('99'), findsOneWidget);
     });
 
     testWidgets(
-        'animate:true with animations enabled — mid-count text differs from final after first pump',
-        (tester) async {
-      const amount = 50.0;
-      // Use _pumpWithMediaQuery so MediaQuery includes disableAnimations:false
-      // (which is the default, so this is a normal environment).
-      await _pumpWithMediaQuery(
-        tester,
-        const MoneyText(amount, animate: true),
-      );
-      // After the first frame (before pumpAndSettle) the tween is still
-      // running, so the displayed value is less than the final amount.
-      // We deliberately do NOT call pumpAndSettle yet.
-      // Note: tester.pump() was already called once inside pumpWidget.
-      // We pump a small delta to advance the tween slightly but not finish it.
-      await tester.pump(const Duration(milliseconds: 50));
+      'animate:true with animations enabled — mid-count text differs from final after first pump',
+      (tester) async {
+        const amount = 50.0;
+        // Use _pumpWithMediaQuery so MediaQuery includes disableAnimations:false
+        // (which is the default, so this is a normal environment).
+        await _pumpWithMediaQuery(
+          tester,
+          const MoneyText(amount, animate: true),
+        );
+        // After the first frame (before pumpAndSettle) the tween is still
+        // running, so the displayed value is less than the final amount.
+        // We deliberately do NOT call pumpAndSettle yet.
+        // Note: tester.pump() was already called once inside pumpWidget.
+        // We pump a small delta to advance the tween slightly but not finish it.
+        await tester.pump(const Duration(milliseconds: 50));
 
-      final l10n = AppLocalizations.of(tester.element(find.byType(MoneyText)))!;
-      final finalText = l10n.toCurrency(amount);
+        final l10n = AppLocalizations.of(
+          tester.element(find.byType(MoneyText)),
+        )!;
+        final finalText = l10n.toCurrency(amount);
 
-      // The text shown is NOT yet the final formatted amount.
-      expect(find.text(finalText), findsNothing,
-          reason: 'count-up should still be in progress after 50ms (750ms total)');
+        // The text shown is NOT yet the final formatted amount.
+        expect(
+          find.text(finalText),
+          findsNothing,
+          reason:
+              'count-up should still be in progress after 50ms (750ms total)',
+        );
 
-      // After settle the count finishes and the final value is shown.
-      await tester.pumpAndSettle();
-      expect(find.text(finalText), findsOneWidget);
-    });
-
-    testWidgets(
-        'animate:true with disableAnimations:true — final amount shown immediately',
-        (tester) async {
-      const amount = 42.0;
-      // Inject MediaQuery with disableAnimations:true.
-      final mediaQuery = const MediaQueryData().copyWith(disableAnimations: true);
-      await _pumpWithMediaQuery(
-        tester,
-        const MoneyText(amount, animate: true),
-        mediaQuery: mediaQuery,
-      );
-      // Even before pumpAndSettle, reduced motion must show the final value.
-      await tester.pump(const Duration(milliseconds: 50));
-
-      final l10n = AppLocalizations.of(tester.element(find.byType(MoneyText)))!;
-      final finalText = l10n.toCurrency(amount);
-      expect(find.text(finalText), findsOneWidget,
-          reason: 'reduced motion must show the final amount immediately');
-    });
+        // After settle the count finishes and the final value is shown.
+        await tester.pumpAndSettle();
+        expect(find.text(finalText), findsOneWidget);
+      },
+    );
 
     testWidgets(
-        'animate:true — semantic color resolves from final amount, not mid-count value',
-        (tester) async {
-      // Use a positive amount with MoneySemantic.auto — should always be
-      // success color, even mid-count (when the intermediate value is near 0).
-      const amount = 25.0;
-      await _pumpWithMediaQuery(
-        tester,
-        const MoneyText(amount, animate: true, semantic: MoneySemantic.auto),
-      );
-      // Advance partway through the tween.
-      await tester.pump(const Duration(milliseconds: 100));
+      'animate:true with disableAnimations:true — final amount shown immediately',
+      (tester) async {
+        const amount = 42.0;
+        // Inject MediaQuery with disableAnimations:true.
+        final mediaQuery = const MediaQueryData().copyWith(
+          disableAnimations: true,
+        );
+        await _pumpWithMediaQuery(
+          tester,
+          const MoneyText(amount, animate: true),
+          mediaQuery: mediaQuery,
+        );
+        // Even before pumpAndSettle, reduced motion must show the final value.
+        await tester.pump(const Duration(milliseconds: 50));
 
-      // Color must still be success (resolved from the final amount, not the
-      // intermediate ~3.3 value which is still positive anyway — the real test
-      // is that it doesn't transiently show neutral for a near-zero mid value).
-      final text = tester.widget<Text>(find.byType(Text));
-      const semanticColors = SemanticColors.light;
-      expect(text.style!.color, semanticColors.success,
-          reason: 'color must be resolved from the final positive amount');
-
-      await tester.pumpAndSettle();
-    });
+        final l10n = AppLocalizations.of(
+          tester.element(find.byType(MoneyText)),
+        )!;
+        final finalText = l10n.toCurrency(amount);
+        expect(
+          find.text(finalText),
+          findsOneWidget,
+          reason: 'reduced motion must show the final amount immediately',
+        );
+      },
+    );
 
     testWidgets(
-        'animate:true — tabular figures feature is present during animation',
-        (tester) async {
-      const amount = 10.0;
-      await _pumpWithMediaQuery(
-        tester,
-        const MoneyText(amount, animate: true),
-      );
-      await tester.pump(const Duration(milliseconds: 100));
+      'animate:true — semantic color resolves from final amount, not mid-count value',
+      (tester) async {
+        // Use a positive amount with MoneySemantic.auto — should always be
+        // success color, even mid-count (when the intermediate value is near 0).
+        const amount = 25.0;
+        await _pumpWithMediaQuery(
+          tester,
+          const MoneyText(amount, animate: true, semantic: MoneySemantic.auto),
+        );
+        // Advance partway through the tween.
+        await tester.pump(const Duration(milliseconds: 100));
 
-      final text = tester.widget<Text>(find.byType(Text));
-      expect(
-        text.style?.fontFeatures,
-        contains(const FontFeature.tabularFigures()),
-        reason: 'tabular figures must be applied during count-up',
-      );
+        // Color must still be success (resolved from the final amount, not the
+        // intermediate ~3.3 value which is still positive anyway — the real test
+        // is that it doesn't transiently show neutral for a near-zero mid value).
+        final text = tester.widget<Text>(find.byType(Text));
+        const semanticColors = SemanticColors.light;
+        expect(
+          text.style!.color,
+          semanticColors.success,
+          reason: 'color must be resolved from the final positive amount',
+        );
 
-      await tester.pumpAndSettle();
-    });
+        await tester.pumpAndSettle();
+      },
+    );
+
+    testWidgets(
+      'animate:true — tabular figures feature is present during animation',
+      (tester) async {
+        const amount = 10.0;
+        await _pumpWithMediaQuery(
+          tester,
+          const MoneyText(amount, animate: true),
+        );
+        await tester.pump(const Duration(milliseconds: 100));
+
+        final text = tester.widget<Text>(find.byType(Text));
+        expect(
+          text.style?.fontFeatures,
+          contains(const FontFeature.tabularFigures()),
+          reason: 'tabular figures must be applied during count-up',
+        );
+
+        await tester.pumpAndSettle();
+      },
+    );
   });
 
   group('MemberAvatar', () {
     testWidgets('shows the derived initials', (tester) async {
-      await _pump(tester, const MemberAvatar(name: 'Priya Nair', colorKey: 'p@x'));
+      await _pump(
+        tester,
+        const MemberAvatar(name: 'Priya Nair', colorKey: 'p@x'),
+      );
       expect(find.text('PN'), findsOneWidget);
     });
 
@@ -236,7 +269,9 @@ void main() {
       expect(find.text('S'), findsOneWidget);
     });
 
-    testWidgets('background uses the deterministic member color', (tester) async {
+    testWidgets('background uses the deterministic member color', (
+      tester,
+    ) async {
       await _pump(tester, const MemberAvatar(name: 'Sam', colorKey: 's@x.com'));
       final avatar = tester.widget<CircleAvatar>(find.byType(CircleAvatar));
       expect(avatar.backgroundColor, memberAvatarColor('s@x.com'));
@@ -244,14 +279,19 @@ void main() {
 
     testWidgets('same colorKey yields the same background', (tester) async {
       await _pump(tester, const MemberAvatar(name: 'A', colorKey: 'k@x'));
-      final a = tester.widget<CircleAvatar>(find.byType(CircleAvatar)).backgroundColor;
+      final a = tester
+          .widget<CircleAvatar>(find.byType(CircleAvatar))
+          .backgroundColor;
       await _pump(tester, const MemberAvatar(name: 'B', colorKey: 'k@x'));
-      final b = tester.widget<CircleAvatar>(find.byType(CircleAvatar)).backgroundColor;
+      final b = tester
+          .widget<CircleAvatar>(find.byType(CircleAvatar))
+          .backgroundColor;
       expect(a, b);
     });
 
-    testWidgets('isYou tints the background with the primary color',
-        (tester) async {
+    testWidgets('isYou tints the background with the primary color', (
+      tester,
+    ) async {
       late Color primary;
       await tester.pumpWidget(
         MaterialApp(
@@ -262,7 +302,11 @@ void main() {
               return Theme(
                 data: theme,
                 child: const Scaffold(
-                  body: MemberAvatar(name: 'You', colorKey: 'you@x', isYou: true),
+                  body: MemberAvatar(
+                    name: 'You',
+                    colorKey: 'you@x',
+                    isYou: true,
+                  ),
                 ),
               );
             },
@@ -293,8 +337,9 @@ void main() {
       expect(find.text('+2'), findsOneWidget);
     });
 
-    testWidgets('shows all avatars and no chip when within the max',
-        (tester) async {
+    testWidgets('shows all avatars and no chip when within the max', (
+      tester,
+    ) async {
       await _pump(
         tester,
         const AvatarStack(
@@ -311,7 +356,9 @@ void main() {
 
     // F140: with a uniformColor, every avatar renders the SAME background,
     // ignoring the per-member (colorKey) color and the "you" accent.
-    testWidgets('uniformColor paints all avatars one background', (tester) async {
+    testWidgets('uniformColor paints all avatars one background', (
+      tester,
+    ) async {
       const uniform = Color(0xFF123456);
       await _pump(
         tester,
@@ -328,8 +375,9 @@ void main() {
           .widgetList<CircleAvatar>(find.byType(CircleAvatar))
           .map((a) => a.backgroundColor)
           .toSet();
-      expect(backgrounds, {uniform},
-          reason: 'all hero avatars share one uniform tint (F140)');
+      expect(backgrounds, {
+        uniform,
+      }, reason: 'all hero avatars share one uniform tint (F140)');
     });
   });
 
@@ -354,25 +402,31 @@ void main() {
       expect(changed, 'b');
     });
 
-    testWidgets('long labels in a narrow width ellipsize instead of overflowing', (tester) async {
-      // Regression: claim page feeds member display names as labels — 7 long
-      // names on a phone width overflowed the segment rows (F79).
-      await _pump(
-        tester,
-        SizedBox(
-          width: 400,
-          child: AppSegmentedControl<int>(
-            value: 0,
-            segments: [
-              for (var i = 0; i < 7; i++)
-                AppSegment(value: i, label: 'way tooooo long this name and so on $i'),
-            ],
-            onChanged: (_) {},
+    testWidgets(
+      'long labels in a narrow width ellipsize instead of overflowing',
+      (tester) async {
+        // Regression: claim page feeds member display names as labels — 7 long
+        // names on a phone width overflowed the segment rows (F79).
+        await _pump(
+          tester,
+          SizedBox(
+            width: 400,
+            child: AppSegmentedControl<int>(
+              value: 0,
+              segments: [
+                for (var i = 0; i < 7; i++)
+                  AppSegment(
+                    value: i,
+                    label: 'way tooooo long this name and so on $i',
+                  ),
+              ],
+              onChanged: (_) {},
+            ),
           ),
-        ),
-      );
-      expect(tester.takeException(), isNull);
-    });
+        );
+        expect(tester.takeException(), isNull);
+      },
+    );
   });
 
   group('StepperControl', () {
@@ -417,11 +471,7 @@ void main() {
     testWidgets('each step button has a >=48dp hit target', (tester) async {
       await _pump(
         tester,
-        StepperControl(
-          value: '1',
-          onIncrement: () {},
-          onDecrement: () {},
-        ),
+        StepperControl(value: '1', onIncrement: () {}, onDecrement: () {}),
       );
       for (final icon in [Icons.add, Icons.remove]) {
         final tapTarget = find.ancestor(
@@ -435,15 +485,12 @@ void main() {
       }
     });
 
-    testWidgets('step buttons expose localized increase/decrease labels',
-        (tester) async {
+    testWidgets('step buttons expose localized increase/decrease labels', (
+      tester,
+    ) async {
       await _pump(
         tester,
-        StepperControl(
-          value: '1',
-          onIncrement: () {},
-          onDecrement: () {},
-        ),
+        StepperControl(value: '1', onIncrement: () {}, onDecrement: () {}),
       );
       final l10n = AppLocalizations.of(
         tester.element(find.byType(StepperControl)),
@@ -471,78 +518,96 @@ void main() {
     // -------------------------------------------------------------------------
 
     testWidgets(
-        'after pumpAndSettle widthFactor equals clampedValue (animation finished)',
-        (tester) async {
-      const value = 0.6;
-      await _pumpWithMediaQuery(tester, const ProgressBar(value: value));
-      await tester.pumpAndSettle();
-      final box = tester.widget<FractionallySizedBox>(find.byType(FractionallySizedBox));
-      expect(box.widthFactor, closeTo(value, 0.001));
-    });
+      'after pumpAndSettle widthFactor equals clampedValue (animation finished)',
+      (tester) async {
+        const value = 0.6;
+        await _pumpWithMediaQuery(tester, const ProgressBar(value: value));
+        await tester.pumpAndSettle();
+        final box = tester.widget<FractionallySizedBox>(
+          find.byType(FractionallySizedBox),
+        );
+        expect(box.widthFactor, closeTo(value, 0.001));
+      },
+    );
 
     testWidgets(
-        'widthFactor is less than clampedValue 50ms after first pump (animating)',
-        (tester) async {
-      const value = 0.8;
-      // Use _pumpWithMediaQuery (animations enabled — default MediaQuery).
-      await _pumpWithMediaQuery(tester, const ProgressBar(value: value));
-      // At 50ms the 100ms delay has not yet elapsed, so widthFactor must be 0.
-      await tester.pump(const Duration(milliseconds: 50));
-      final box = tester.widget<FractionallySizedBox>(find.byType(FractionallySizedBox));
-      expect(
-        box.widthFactor! < value,
-        isTrue,
-        reason: 'progress bar should still be growing at 50ms (100ms delay + 720ms total)',
-      );
-    });
+      'widthFactor is less than clampedValue 50ms after first pump (animating)',
+      (tester) async {
+        const value = 0.8;
+        // Use _pumpWithMediaQuery (animations enabled — default MediaQuery).
+        await _pumpWithMediaQuery(tester, const ProgressBar(value: value));
+        // At 50ms the 100ms delay has not yet elapsed, so widthFactor must be 0.
+        await tester.pump(const Duration(milliseconds: 50));
+        final box = tester.widget<FractionallySizedBox>(
+          find.byType(FractionallySizedBox),
+        );
+        expect(
+          box.widthFactor! < value,
+          isTrue,
+          reason:
+              'progress bar should still be growing at 50ms (100ms delay + 720ms total)',
+        );
+      },
+    );
 
     testWidgets(
-        'with disableAnimations widthFactor equals clampedValue immediately',
-        (tester) async {
-      const value = 0.5;
-      final mediaQuery = const MediaQueryData().copyWith(disableAnimations: true);
-      await _pumpWithMediaQuery(
-        tester,
-        const ProgressBar(value: value),
-        mediaQuery: mediaQuery,
-      );
-      // No pumpAndSettle — reduced motion must show full value right away.
-      await tester.pump(const Duration(milliseconds: 1));
-      final box = tester.widget<FractionallySizedBox>(find.byType(FractionallySizedBox));
-      expect(box.widthFactor, closeTo(value, 0.001));
-    });
+      'with disableAnimations widthFactor equals clampedValue immediately',
+      (tester) async {
+        const value = 0.5;
+        final mediaQuery = const MediaQueryData().copyWith(
+          disableAnimations: true,
+        );
+        await _pumpWithMediaQuery(
+          tester,
+          const ProgressBar(value: value),
+          mediaQuery: mediaQuery,
+        );
+        // No pumpAndSettle — reduced motion must show full value right away.
+        await tester.pump(const Duration(milliseconds: 1));
+        final box = tester.widget<FractionallySizedBox>(
+          find.byType(FractionallySizedBox),
+        );
+        expect(box.widthFactor, closeTo(value, 0.001));
+      },
+    );
 
     testWidgets(
-        'value change animates to new clampedValue after pumpAndSettle',
-        (tester) async {
-      double currentValue = 0.4;
-      await _pumpWithMediaQuery(
-        tester,
-        StatefulBuilder(
-          builder: (context, setState) => Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              ProgressBar(value: currentValue),
-              TextButton(
-                onPressed: () => setState(() => currentValue = 0.9),
-                child: const Text('update'),
-              ),
-            ],
+      'value change animates to new clampedValue after pumpAndSettle',
+      (tester) async {
+        double currentValue = 0.4;
+        await _pumpWithMediaQuery(
+          tester,
+          StatefulBuilder(
+            builder: (context, setState) => Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                ProgressBar(value: currentValue),
+                TextButton(
+                  onPressed: () => setState(() => currentValue = 0.9),
+                  child: const Text('update'),
+                ),
+              ],
+            ),
           ),
-        ),
-      );
-      await tester.pumpAndSettle();
-      // Trigger the value change.
-      await tester.tap(find.text('update'));
-      await tester.pumpAndSettle();
-      final box = tester.widget<FractionallySizedBox>(find.byType(FractionallySizedBox));
-      expect(box.widthFactor, closeTo(0.9, 0.001));
-    });
+        );
+        await tester.pumpAndSettle();
+        // Trigger the value change.
+        await tester.tap(find.text('update'));
+        await tester.pumpAndSettle();
+        final box = tester.widget<FractionallySizedBox>(
+          find.byType(FractionallySizedBox),
+        );
+        expect(box.widthFactor, closeTo(0.9, 0.001));
+      },
+    );
   });
 
   group('BalancePill', () {
     testWidgets('builds in light and dark', (tester) async {
-      await _pump(tester, const BalancePill(label: 'You are owed', state: BalanceState.owed));
+      await _pump(
+        tester,
+        const BalancePill(label: 'You are owed', state: BalanceState.owed),
+      );
       expect(find.text('You are owed'), findsOneWidget);
       await _pump(
         tester,
@@ -557,13 +622,18 @@ void main() {
     testWidgets('renders the label and trailing action', (tester) async {
       await _pump(
         tester,
-        SectionLabel('Your groups', trailing: TextButton(onPressed: () {}, child: const Text('New'))),
+        SectionLabel(
+          'Your groups',
+          trailing: TextButton(onPressed: () {}, child: const Text('New')),
+        ),
       );
       expect(find.text('Your groups'), findsOneWidget);
       expect(find.text('New'), findsOneWidget);
     });
 
-    testWidgets('emphasized renders the larger 18px/w700 header tier', (tester) async {
+    testWidgets('emphasized renders the larger 18px/w700 header tier', (
+      tester,
+    ) async {
       await _pump(tester, const SectionLabel('Your groups', emphasized: true));
       final style = tester.widget<Text>(find.text('Your groups')).style!;
       expect(style.fontSize, 18);
@@ -590,8 +660,9 @@ void main() {
   });
 
   group('SheetScaffold', () {
-    testWidgets('renders title, body and footer in light and dark',
-        (tester) async {
+    testWidgets('renders title, body and footer in light and dark', (
+      tester,
+    ) async {
       await _pump(
         tester,
         const SheetScaffold(
@@ -616,100 +687,135 @@ void main() {
     // V3-T9a: §3 spec — radius 30, single 38×4 outlineVariant handle, title w700
     // -------------------------------------------------------------------------
 
-    testWidgets('surface uses surfaceContainerLow with top radius 30, square bottom',
-        (tester) async {
-      late ColorScheme colorScheme;
-      await tester.pumpWidget(
-        MaterialApp(
-          theme: ThemeData(brightness: Brightness.light, splashFactory: NoSplash.splashFactory),
-          localizationsDelegates: const [
-            AppLocalizations.delegate,
-            GlobalMaterialLocalizations.delegate,
-            GlobalWidgetsLocalizations.delegate,
-            GlobalCupertinoLocalizations.delegate,
-          ],
-          supportedLocales: AppLocalizations.supportedLocales,
-          home: Builder(
-            builder: (context) {
-              final theme = getThemeData(context, kBrandSeed, Brightness.light);
-              colorScheme = theme.colorScheme;
-              return Theme(
-                data: theme,
-                child: const Scaffold(
-                  body: Center(child: SheetScaffold(body: Text('body'))),
-                ),
-              );
-            },
+    testWidgets(
+      'surface uses surfaceContainerLow with top radius 30, square bottom',
+      (tester) async {
+        late ColorScheme colorScheme;
+        await tester.pumpWidget(
+          MaterialApp(
+            theme: ThemeData(
+              brightness: Brightness.light,
+              splashFactory: NoSplash.splashFactory,
+            ),
+            localizationsDelegates: const [
+              AppLocalizations.delegate,
+              GlobalMaterialLocalizations.delegate,
+              GlobalWidgetsLocalizations.delegate,
+              GlobalCupertinoLocalizations.delegate,
+            ],
+            supportedLocales: AppLocalizations.supportedLocales,
+            home: Builder(
+              builder: (context) {
+                final theme = getThemeData(
+                  context,
+                  kBrandSeed,
+                  Brightness.light,
+                );
+                colorScheme = theme.colorScheme;
+                return Theme(
+                  data: theme,
+                  child: const Scaffold(
+                    body: Center(child: SheetScaffold(body: Text('body'))),
+                  ),
+                );
+              },
+            ),
           ),
-        ),
-      );
-      await tester.pumpAndSettle();
+        );
+        await tester.pumpAndSettle();
 
-      // Surface is a Material (so ListTile ink paints on it, not a hidden
-      // ancestor) tinted surfaceContainerLow with a top-only radius of 30.
-      final material = tester.widget<Material>(
-        find.ancestor(of: find.text('body'), matching: find.byType(Material)).first,
-      );
-      expect(material.color, colorScheme.surfaceContainerLow,
-          reason: 'Sheet surface must use surfaceContainerLow');
-      // Top radius 30, bottom square.
-      expect(
-        material.borderRadius,
-        const BorderRadius.vertical(top: Radius.circular(30)),
-        reason: 'Top radius must be 30, bottom must be square (no radius)',
-      );
-    });
+        // Surface is a Material (so ListTile ink paints on it, not a hidden
+        // ancestor) tinted surfaceContainerLow with a top-only radius of 30.
+        final material = tester.widget<Material>(
+          find
+              .ancestor(of: find.text('body'), matching: find.byType(Material))
+              .first,
+        );
+        expect(
+          material.color,
+          colorScheme.surfaceContainerLow,
+          reason: 'Sheet surface must use surfaceContainerLow',
+        );
+        // Top radius 30, bottom square.
+        expect(
+          material.borderRadius,
+          const BorderRadius.vertical(top: Radius.circular(30)),
+          reason: 'Top radius must be 30, bottom must be square (no radius)',
+        );
+      },
+    );
 
-    testWidgets('exactly one drag handle rendered — sized 38×4 — colored outlineVariant',
-        (tester) async {
-      late ColorScheme colorScheme;
-      await tester.pumpWidget(
-        MaterialApp(
-          theme: ThemeData(brightness: Brightness.light, splashFactory: NoSplash.splashFactory),
-          localizationsDelegates: const [
-            AppLocalizations.delegate,
-            GlobalMaterialLocalizations.delegate,
-            GlobalWidgetsLocalizations.delegate,
-            GlobalCupertinoLocalizations.delegate,
-          ],
-          supportedLocales: AppLocalizations.supportedLocales,
-          home: Builder(
-            builder: (context) {
-              final theme = getThemeData(context, kBrandSeed, Brightness.light);
-              colorScheme = theme.colorScheme;
-              return Theme(
-                data: theme,
-                child: const Scaffold(
-                  body: Center(child: SheetScaffold(body: Text('body'))),
-                ),
-              );
-            },
+    testWidgets(
+      'exactly one drag handle rendered — sized 38×4 — colored outlineVariant',
+      (tester) async {
+        late ColorScheme colorScheme;
+        await tester.pumpWidget(
+          MaterialApp(
+            theme: ThemeData(
+              brightness: Brightness.light,
+              splashFactory: NoSplash.splashFactory,
+            ),
+            localizationsDelegates: const [
+              AppLocalizations.delegate,
+              GlobalMaterialLocalizations.delegate,
+              GlobalWidgetsLocalizations.delegate,
+              GlobalCupertinoLocalizations.delegate,
+            ],
+            supportedLocales: AppLocalizations.supportedLocales,
+            home: Builder(
+              builder: (context) {
+                final theme = getThemeData(
+                  context,
+                  kBrandSeed,
+                  Brightness.light,
+                );
+                colorScheme = theme.colorScheme;
+                return Theme(
+                  data: theme,
+                  child: const Scaffold(
+                    body: Center(child: SheetScaffold(body: Text('body'))),
+                  ),
+                );
+              },
+            ),
           ),
-        ),
-      );
-      await tester.pumpAndSettle();
+        );
+        await tester.pumpAndSettle();
 
-      // Find containers with the outlineVariant color — exactly one (the handle).
-      final containers = tester.widgetList<Container>(find.byType(Container)).toList();
-      final handles = containers.where((c) {
-        final deco = c.decoration;
-        if (deco is BoxDecoration && deco.color == colorScheme.outlineVariant) return true;
-        return false;
-      }).toList();
-      expect(handles.length, 1, reason: 'Exactly one drag handle must be rendered');
+        // Find containers with the outlineVariant color — exactly one (the handle).
+        final containers = tester
+            .widgetList<Container>(find.byType(Container))
+            .toList();
+        final handles = containers.where((c) {
+          final deco = c.decoration;
+          if (deco is BoxDecoration &&
+              deco.color == colorScheme.outlineVariant) {
+            return true;
+          }
+          return false;
+        }).toList();
+        expect(
+          handles.length,
+          1,
+          reason: 'Exactly one drag handle must be rendered',
+        );
 
-      // The handle container must be 38 wide and 4 tall.
-      final handleFinder = find.byWidgetPredicate((w) {
-        if (w is Container) {
-          final deco = w.decoration;
-          if (deco is BoxDecoration && deco.color == colorScheme.outlineVariant) return true;
-        }
-        return false;
-      });
-      final size = tester.getSize(handleFinder);
-      expect(size.width, 38.0, reason: 'Drag handle width must be 38');
-      expect(size.height, 4.0, reason: 'Drag handle height must be 4');
-    });
+        // The handle container must be 38 wide and 4 tall.
+        final handleFinder = find.byWidgetPredicate((w) {
+          if (w is Container) {
+            final deco = w.decoration;
+            if (deco is BoxDecoration &&
+                deco.color == colorScheme.outlineVariant) {
+              return true;
+            }
+          }
+          return false;
+        });
+        final size = tester.getSize(handleFinder);
+        expect(size.width, 38.0, reason: 'Drag handle width must be 38');
+        expect(size.height, 4.0, reason: 'Drag handle height must be 4');
+      },
+    );
 
     testWidgets('title renders with fontWeight w700', (tester) async {
       await _pump(
@@ -719,15 +825,23 @@ void main() {
       final titleText = tester.widget<Text>(find.text('My Sheet'));
       // Style may be resolved; check the effective weight.
       final weight = titleText.style?.fontWeight;
-      expect(weight, FontWeight.w700, reason: 'Sheet title must use fontWeight w700');
+      expect(
+        weight,
+        FontWeight.w700,
+        reason: 'Sheet title must use fontWeight w700',
+      );
     });
 
-    testWidgets('default padding is EdgeInsets.fromLTRB(20, 8, 20, 26)', (tester) async {
+    testWidgets('default padding is EdgeInsets.fromLTRB(20, 8, 20, 26)', (
+      tester,
+    ) async {
       const sheet = SheetScaffold(body: Text('content'));
       expect(sheet.padding, const EdgeInsets.fromLTRB(20, 8, 20, 26));
     });
 
-    testWidgets('kSheetBarrierColor has approximately 0.4 opacity', (tester) async {
+    testWidgets('kSheetBarrierColor has approximately 0.4 opacity', (
+      tester,
+    ) async {
       // 0x66 / 0xFF ≈ 0.400.
       expect(kSheetBarrierColor.a, closeTo(0.4, 0.01));
     });

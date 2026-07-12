@@ -52,8 +52,11 @@ class _GroupEditState extends ConsumerState<GroupEdit> {
 
     Group? newGroup;
     try {
-      String groupInsertId =
-          await GroupRepository.saveAll(context, widget.group?.id, _formKey.currentState!.value);
+      String groupInsertId = await GroupRepository.saveAll(
+        context,
+        widget.group?.id,
+        _formKey.currentState!.value,
+      );
       newGroup = await GroupRepository.fetchDetail(groupInsertId);
       showMessage(l10n.groupCreateSuccess);
     } catch (e) {
@@ -63,7 +66,11 @@ class _GroupEditState extends ConsumerState<GroupEdit> {
         setState(() => _isSaving = false);
         if (context.mounted && newGroup != null) {
           GoRouter.of(context).go("/group");
-          unawaited(GoRouter.of(context).push("/group/details", extra: {'group': newGroup}));
+          unawaited(
+            GoRouter.of(
+              context,
+            ).push("/group/details", extra: {'group': newGroup}),
+          );
         }
       }
     }
@@ -74,7 +81,8 @@ class _GroupEditState extends ConsumerState<GroupEdit> {
     final l10n = AppLocalizations.of(context)!;
 
     return ThemeBuilder(
-      colorValue: widget.group?.colorValue ?? kGroupColorPalette.first.toARGB32(),
+      colorValue:
+          widget.group?.colorValue ?? kGroupColorPalette.first.toARGB32(),
       builder: (context) {
         final colorScheme = Theme.of(context).colorScheme;
 
@@ -113,6 +121,10 @@ class _GroupEditState extends ConsumerState<GroupEdit> {
                               SectionLabel(l10n.groupTrackingModeTitle),
                               const SizedBox(height: 8),
                               _TrackingModeField(group: widget.group),
+                              const SizedBox(height: 24),
+                              SectionLabel(l10n.groupCurrencyLabel),
+                              const SizedBox(height: 8),
+                              _CurrencyField(group: widget.group),
                               if (_isEdit) ...[
                                 const SizedBox(height: 24),
                                 _buildGroupActions(context),
@@ -150,7 +162,9 @@ class _GroupEditState extends ConsumerState<GroupEdit> {
             leading: const Icon(Icons.ios_share),
             title: Text(l10n.groupInviteTitle),
             onTap: () {
-              GoRouter.of(context).push("/group/share", extra: {'group': widget.group});
+              GoRouter.of(
+                context,
+              ).push("/group/share", extra: {'group': widget.group});
             },
           ),
         ),
@@ -188,11 +202,17 @@ class _GroupEditState extends ConsumerState<GroupEdit> {
               try {
                 await GroupRepository.delete(widget.group!.id);
                 if (context.mounted) {
-                  showSnackBar(context, AppLocalizations.of(context)!.groupDeleteSuccess);
+                  showSnackBar(
+                    context,
+                    AppLocalizations.of(context)!.groupDeleteSuccess,
+                  );
                 }
               } catch (e) {
                 if (context.mounted) {
-                  showSnackBar(context, AppLocalizations.of(context)!.groupDeleteError);
+                  showSnackBar(
+                    context,
+                    AppLocalizations.of(context)!.groupDeleteError,
+                  );
                 }
               } finally {
                 if (context.mounted) {
@@ -226,7 +246,9 @@ class _NameAndColorCard extends StatelessWidget {
     return FormBuilderField(
       name: "color_value",
       builder: (FormFieldState<dynamic> colorField) {
-        final selectedIndex = selectedGroupSwatchIndex(colorField.value as int?);
+        final selectedIndex = selectedGroupSwatchIndex(
+          colorField.value as int?,
+        );
         final selectedColor = kGroupColorPalette[selectedIndex];
 
         // v3: icon tile + name field + colour picker sit UNBOXED on the page
@@ -247,12 +269,19 @@ class _NameAndColorCard extends StatelessWidget {
                       borderRadius: BorderRadius.circular(20),
                     ),
                     alignment: Alignment.center,
-                    child: Icon(Icons.groups_rounded, color: selectedColor, size: 32),
+                    child: Icon(
+                      Icons.groups_rounded,
+                      color: selectedColor,
+                      size: 32,
+                    ),
                   ),
                   const SizedBox(height: 14),
                   // Only the name field sits on white (its own input surface).
                   SoftCard(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 14,
+                    ),
                     borderRadius: 16,
                     child: FormBuilderField(
                       name: "name",
@@ -295,7 +324,8 @@ class _NameAndColorCard extends StatelessWidget {
                   _ColorSwatch(
                     color: kGroupColorPalette[i],
                     selected: i == selectedIndex,
-                    onTap: () => colorField.didChange(kGroupColorPalette[i].toARGB32()),
+                    onTap: () =>
+                        colorField.didChange(kGroupColorPalette[i].toARGB32()),
                   ),
               ],
             ),
@@ -337,7 +367,10 @@ class _ColorSwatch extends StatelessWidget {
             color: color,
             shape: BoxShape.circle,
             border: selected
-                ? Border.all(color: colorScheme.surfaceContainerLowest, width: 3)
+                ? Border.all(
+                    color: colorScheme.surfaceContainerLowest,
+                    width: 3,
+                  )
                 : null,
             boxShadow: selected
                 ? [
@@ -354,6 +387,67 @@ class _ColorSwatch extends StatelessWidget {
               : null,
         ),
       ),
+    );
+  }
+}
+
+/// Group currency picker bound to the `currency_code` form field. A new group
+/// defaults to [kDefaultCurrencyCode] (EUR); an existing group initialises from
+/// its persisted `currencyCode`. When editing, a note states that changing the
+/// currency relabels existing amounts without converting their values.
+class _CurrencyField extends StatelessWidget {
+  const _CurrencyField({this.group});
+
+  final Group? group;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    final theme = Theme.of(context);
+
+    return FormBuilderField<String>(
+      name: "currency_code",
+      initialValue: group?.currencyCode ?? kDefaultCurrencyCode,
+      builder: (FormFieldState<String> field) {
+        final selected = field.value ?? kDefaultCurrencyCode;
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            SoftCard(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 2),
+              borderRadius: 16,
+              child: DropdownButtonHideUnderline(
+                child: DropdownButton<String>(
+                  isExpanded: true,
+                  value: selected,
+                  items: [
+                    for (final code in kSupportedCurrencyCodes)
+                      DropdownMenuItem<String>(
+                        value: code,
+                        child: Text(
+                          '$code · ${currencySymbolFor(l10n.localeName, code)}',
+                          style: theme.textTheme.titleMedium,
+                        ),
+                      ),
+                  ],
+                  onChanged: (value) {
+                    if (value != null) field.didChange(value);
+                  },
+                ),
+              ),
+            ),
+            if (group != null) ...[
+              const SizedBox(height: 8),
+              Text(
+                l10n.groupCurrencyRelabelNote,
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
+              ),
+            ],
+          ],
+        );
+      },
     );
   }
 }

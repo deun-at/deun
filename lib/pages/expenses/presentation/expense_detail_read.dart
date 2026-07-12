@@ -52,7 +52,8 @@ class ExpenseDetailRead extends ConsumerWidget {
   /// Members in display order: "you" first, then alphabetical — matching the
   /// editor's sort so the breakdown reads consistently.
   List<String> get _orderedMemberEmails {
-    final members = [...group.groupMembers]..sort((a, b) {
+    final members = [...group.groupMembers]
+      ..sort((a, b) {
         if (a.email == _currentUserEmail) return -1;
         if (b.email == _currentUserEmail) return 1;
         return a.fullUsername.compareTo(b.fullUsername);
@@ -120,8 +121,9 @@ class ExpenseDetailRead extends ConsumerWidget {
                     icon: Icons.delete_outline,
                     tooltip: l10n.delete,
                     onTap: () => _confirmDelete(context),
-                    iconColor:
-                        Theme.of(context).extension<SemanticColors>()!.danger,
+                    iconColor: Theme.of(
+                      context,
+                    ).extension<SemanticColors>()!.danger,
                   ),
                   HeaderIconButton(
                     icon: Icons.edit_outlined,
@@ -134,39 +136,42 @@ class ExpenseDetailRead extends ConsumerWidget {
               Expanded(
                 child: ListView(
                   padding: const EdgeInsets.fromLTRB(16, 12, 16, 40),
-            children: [
-              _SummaryCard(
-                expense: expense,
-                payerName: _displayName(context, _findMember(expense.paidBy)),
-                payerIsYou: expense.paidBy == _currentUserEmail,
-                currentUserEmail: _currentUserEmail,
-              ),
-              // Only real claim expenses get the "Review & claim" banner. Old
-              // itemized expenses (manual splits, no claim units) would land on
-              // an empty claim screen, so they show just the breakdown below.
-              if (expense.hasClaimUnits) ...[
-                const SizedBox(height: 16),
-                _ReviewClaimBanner(
-                  onTap: () {
-                    // → Tap-to-Claim screen (Screen 9).
-                    GoRouter.of(context).push(
-                      '/group/details/claim',
-                      extra: {'group': group, 'expense': expense},
-                    );
-                  },
-                ),
-              ],
-              const SizedBox(height: 24),
-              SectionLabel(breakdownHeading(expense, l10n)),
-              const SizedBox(height: 8),
-              _MemberBreakdown(
-                expense: expense,
-                memberEmails: _orderedMemberEmails,
-                memberFor: _findMember,
-                displayName: (m) => _displayName(context, m),
-                currentUserEmail: _currentUserEmail,
-              ),
-            ],
+                  children: [
+                    _SummaryCard(
+                      expense: expense,
+                      payerName: _displayName(
+                        context,
+                        _findMember(expense.paidBy),
+                      ),
+                      payerIsYou: expense.paidBy == _currentUserEmail,
+                      currentUserEmail: _currentUserEmail,
+                    ),
+                    // Only real claim expenses get the "Review & claim" banner. Old
+                    // itemized expenses (manual splits, no claim units) would land on
+                    // an empty claim screen, so they show just the breakdown below.
+                    if (expense.hasClaimUnits) ...[
+                      const SizedBox(height: 16),
+                      _ReviewClaimBanner(
+                        onTap: () {
+                          // → Tap-to-Claim screen (Screen 9).
+                          GoRouter.of(context).push(
+                            '/group/details/claim',
+                            extra: {'group': group, 'expense': expense},
+                          );
+                        },
+                      ),
+                    ],
+                    const SizedBox(height: 24),
+                    SectionLabel(breakdownHeading(expense, l10n)),
+                    const SizedBox(height: 8),
+                    _MemberBreakdown(
+                      expense: expense,
+                      memberEmails: _orderedMemberEmails,
+                      memberFor: _findMember,
+                      displayName: (m) => _displayName(context, m),
+                      currentUserEmail: _currentUserEmail,
+                    ),
+                  ],
                 ),
               ),
             ],
@@ -232,10 +237,7 @@ class _SummaryCard extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      expense.name,
-                      style: textTheme.titleLarge,
-                    ),
+                    Text(expense.name, style: textTheme.titleLarge),
                     const SizedBox(height: 4),
                     Text(
                       subtitleParts.join('  ·  '),
@@ -251,7 +253,10 @@ class _SummaryCard extends StatelessWidget {
           const SizedBox(height: 18),
           MoneyText(
             expense.amount,
-            style: textTheme.displaySmall?.copyWith(color: colorScheme.onSurface),
+            currencyCode: expense.group.currencyCode,
+            style: textTheme.displaySmall?.copyWith(
+              color: colorScheme.onSurface,
+            ),
           ),
           const SizedBox(height: 16),
           _PaidNetRow(
@@ -302,10 +307,14 @@ class _PaidNetRow extends StatelessWidget {
       netLabel = l10n.expenseNoShares;
       netColor = colorScheme.onSurfaceVariant;
     } else if (net > 0.005) {
-      netLabel = l10n.expenseYouLentAmount(l10n.toCurrency(net.abs()));
+      netLabel = l10n.expenseYouLentAmount(
+        l10n.toCurrency(net.abs(), expense.group.currencyCode),
+      );
       netColor = Theme.of(context).extension<SemanticColors>()!.success;
     } else if (net < -0.005) {
-      netLabel = l10n.expenseYouOweAmount(l10n.toCurrency(net.abs()));
+      netLabel = l10n.expenseYouOweAmount(
+        l10n.toCurrency(net.abs(), expense.group.currencyCode),
+      );
       netColor = Theme.of(context).extension<SemanticColors>()!.danger;
     } else {
       netLabel = l10n.expenseNetSettled;
@@ -326,16 +335,19 @@ class _PaidNetRow extends StatelessWidget {
             payerIsYou
                 ? l10n.expensePaidByYou
                 : l10n.expensePaidByOther(payerName),
-            style: textTheme.bodyMedium
-                ?.copyWith(color: colorScheme.onSurfaceVariant),
+            style: textTheme.bodyMedium?.copyWith(
+              color: colorScheme.onSurfaceVariant,
+            ),
             overflow: TextOverflow.ellipsis,
           ),
         ),
         const Spacer(),
         Text(
           netLabel,
-          style: textTheme.titleSmall
-              ?.copyWith(color: netColor, fontWeight: FontWeight.w700),
+          style: textTheme.titleSmall?.copyWith(
+            color: netColor,
+            fontWeight: FontWeight.w700,
+          ),
         ),
       ],
     );
@@ -369,14 +381,16 @@ class _ReviewClaimBanner extends StatelessWidget {
               children: [
                 Text(
                   l10n.expenseReviewClaimTitle,
-                  style: textTheme.titleSmall
-                      ?.copyWith(fontWeight: FontWeight.w700),
+                  style: textTheme.titleSmall?.copyWith(
+                    fontWeight: FontWeight.w700,
+                  ),
                 ),
                 const SizedBox(height: 2),
                 Text(
                   l10n.expenseReviewClaimSubtitle,
-                  style: textTheme.bodySmall
-                      ?.copyWith(color: colorScheme.onSurfaceVariant),
+                  style: textTheme.bodySmall?.copyWith(
+                    color: colorScheme.onSurfaceVariant,
+                  ),
                 ),
               ],
             ),
@@ -434,6 +448,7 @@ class _MemberBreakdown extends StatelessWidget {
               payerName: payerName,
               payerIsYou: payerIsYou,
               total: expense.amount,
+              currencyCode: expense.group.currencyCode,
             ),
         ],
       ),
@@ -450,6 +465,7 @@ class _MemberRow extends StatelessWidget {
     required this.payerName,
     required this.payerIsYou,
     required this.total,
+    required this.currencyCode,
   });
 
   final MemberBreakdownEntry entry;
@@ -459,6 +475,7 @@ class _MemberRow extends StatelessWidget {
   final String payerName;
   final bool payerIsYou;
   final double total;
+  final String currencyCode;
 
   @override
   Widget build(BuildContext context) {
@@ -474,14 +491,17 @@ class _MemberRow extends StatelessWidget {
     final String subLabel;
     final Color subLabelColor;
     if (entry.isPayer) {
-      subLabel = l10n.expenseMemberPaidAmount(l10n.toCurrency(total));
+      subLabel = l10n.expenseMemberPaidAmount(
+        l10n.toCurrency(total, currencyCode),
+      );
       subLabelColor = Theme.of(context).extension<SemanticColors>()!.success;
     } else if (isYou) {
       subLabel = l10n.expenseMemberYourShare;
       subLabelColor = colorScheme.onSurfaceVariant;
     } else {
       subLabel = l10n.expenseMemberOwesName(
-          payerIsYou ? l10n.youObjectPronoun : payerName);
+        payerIsYou ? l10n.youObjectPronoun : payerName,
+      );
       subLabelColor = colorScheme.onSurfaceVariant;
     }
 
@@ -502,8 +522,9 @@ class _MemberRow extends StatelessWidget {
               children: [
                 Text(
                   name,
-                  style: textTheme.titleSmall
-                      ?.copyWith(fontWeight: FontWeight.w600),
+                  style: textTheme.titleSmall?.copyWith(
+                    fontWeight: FontWeight.w600,
+                  ),
                   overflow: TextOverflow.ellipsis,
                 ),
                 Text(
@@ -519,6 +540,7 @@ class _MemberRow extends StatelessWidget {
           // single line, right-aligned. No semantic color, no two-line label.
           MoneyText(
             entry.share,
+            currencyCode: currencyCode,
             style: textTheme.titleSmall?.copyWith(
               color: colorScheme.onSurface,
               fontWeight: FontWeight.w700,

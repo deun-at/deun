@@ -42,7 +42,9 @@ class FriendDetailSheet extends StatelessWidget {
 
     // Negative share = the current user owes the friend → pay-back options.
     final bool owesFriend = friendship.shareAmount < -0.01;
-    final methods = owesFriend ? friendPayBackMethods(user) : const <FriendPayBackMethod>[];
+    final methods = owesFriend
+        ? friendPayBackMethods(user)
+        : const <FriendPayBackMethod>[];
 
     return SheetScaffold(
       body: Column(
@@ -51,7 +53,11 @@ class FriendDetailSheet extends StatelessWidget {
           // Identity + balance hero.
           Row(
             children: [
-              MemberAvatar(name: user.displayName, colorKey: user.email, radius: 26),
+              MemberAvatar(
+                name: user.displayName,
+                colorKey: user.email,
+                radius: 26,
+              ),
               const SizedBox(width: 14),
               Expanded(
                 child: Column(
@@ -65,7 +71,9 @@ class FriendDetailSheet extends StatelessWidget {
                     ),
                     Text(
                       user.fullUsername,
-                      style: textTheme.bodySmall?.copyWith(color: colorScheme.onSurfaceVariant),
+                      style: textTheme.bodySmall?.copyWith(
+                        color: colorScheme.onSurfaceVariant,
+                      ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
@@ -82,7 +90,12 @@ class FriendDetailSheet extends StatelessWidget {
           ),
           if (owesFriend) ...[
             const SizedBox(height: 20),
-            SectionLabel(l10n.payBackDialog(user.displayName, friendship.shareAmount.abs())),
+            SectionLabel(
+              l10n.payBackDialog(
+                user.displayName,
+                l10n.toCurrency(friendship.shareAmount.abs()),
+              ),
+            ),
             const SizedBox(height: 10),
             for (final method in methods) ...[
               _PayBackCard(method: method, friendship: friendship),
@@ -155,10 +168,9 @@ class _PayBackCard extends StatelessWidget {
                 const SizedBox(height: 2),
                 Text(
                   subtitle,
-                  style: Theme.of(context)
-                      .textTheme
-                      .bodySmall
-                      ?.copyWith(color: colorScheme.onSurfaceVariant),
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: colorScheme.onSurfaceVariant,
+                  ),
                 ),
               ],
             ),
@@ -174,7 +186,9 @@ class _PayBackCard extends StatelessWidget {
   Future<void> _openPaypal(BuildContext context) async {
     final paypalMe = friendship.user.paypalMe;
     if (paypalMe == null || paypalMe.isEmpty) return;
-    final paypalUri = Uri.parse('https://www.paypal.me/$paypalMe/${friendship.shareAmount.abs()}');
+    final paypalUri = Uri.parse(
+      'https://www.paypal.me/$paypalMe/${friendship.shareAmount.abs()}',
+    );
     bool launched = false;
     try {
       launched = await launchUrl(paypalUri);
@@ -205,7 +219,13 @@ class _PayBackCard extends StatelessWidget {
     try {
       await GroupRepository.payBackAll(context, user.email);
       if (context.mounted) {
-        showSnackBar(context, l10n.payBackSuccess(user.fullUsername, friendship.shareAmount.abs()));
+        showSnackBar(
+          context,
+          l10n.payBackSuccess(
+            user.fullUsername,
+            l10n.toCurrency(friendship.shareAmount.abs()),
+          ),
+        );
       }
     } catch (e) {
       debugPrint(e.toString());
@@ -241,10 +261,9 @@ class _RemoveFriendCard extends StatelessWidget {
           Expanded(
             child: Text(
               l10n.friendshipDialogRemoveAsFriend,
-              style: Theme.of(context)
-                  .textTheme
-                  .titleSmall
-                  ?.copyWith(color: colorScheme.error),
+              style: Theme.of(
+                context,
+              ).textTheme.titleSmall?.copyWith(color: colorScheme.error),
             ),
           ),
         ],
@@ -258,7 +277,9 @@ class _RemoveFriendCard extends StatelessWidget {
     showDialog<void>(
       context: sheetContext,
       builder: (dialogContext) => AlertDialog(
-        content: Text(AppLocalizations.of(dialogContext)!.removeFriend(user.displayName)),
+        content: Text(
+          AppLocalizations.of(dialogContext)!.removeFriend(user.displayName),
+        ),
         actions: <Widget>[
           TextButton(
             onPressed: () => Navigator.pop(dialogContext),
@@ -275,12 +296,17 @@ class _RemoveFriendCard extends StatelessWidget {
                 if (dialogContext.mounted) {
                   showSnackBar(
                     dialogContext,
-                    AppLocalizations.of(dialogContext)!.friendRemoved(user.displayName),
+                    AppLocalizations.of(
+                      dialogContext,
+                    )!.friendRemoved(user.displayName),
                   );
                 }
               } catch (e) {
                 if (dialogContext.mounted) {
-                  showSnackBar(dialogContext, AppLocalizations.of(dialogContext)!.generalError);
+                  showSnackBar(
+                    dialogContext,
+                    AppLocalizations.of(dialogContext)!.generalError,
+                  );
                 }
               } finally {
                 if (dialogContext.mounted) {

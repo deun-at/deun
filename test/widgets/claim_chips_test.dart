@@ -1,5 +1,6 @@
 import 'package:deun/constants.dart';
 import 'package:deun/l10n/app_localizations.dart';
+import 'package:deun/helper/helper.dart';
 import 'package:deun/pages/expenses/data/expense_entry_model.dart';
 import 'package:deun/pages/expenses/data/expense_model.dart';
 import 'package:deun/pages/expenses/presentation/claim_page.dart';
@@ -110,18 +111,13 @@ Expense _grouped() {
   final e = _expense();
   e.amount = 6;
   e.expenseEntries = {
-    'c1': _unit(0, 'c1', 'Cola', 2, [const MapEntry('a@test.com', 'Alice')],
-        itemGroupId: 'ig-cola'),
-    'c2': _unit(
-        1,
-        'c2',
-        'Cola',
-        2,
-        [
-          const MapEntry('a@test.com', 'Alice'),
-          const MapEntry('b@test.com', 'Bob'),
-        ],
-        itemGroupId: 'ig-cola'),
+    'c1': _unit(0, 'c1', 'Cola', 2, [
+      const MapEntry('a@test.com', 'Alice'),
+    ], itemGroupId: 'ig-cola'),
+    'c2': _unit(1, 'c2', 'Cola', 2, [
+      const MapEntry('a@test.com', 'Alice'),
+      const MapEntry('b@test.com', 'Bob'),
+    ], itemGroupId: 'ig-cola'),
     'c3': _unit(2, 'c3', 'Cola', 2, const [], itemGroupId: 'ig-cola'),
   };
   return e;
@@ -215,8 +211,11 @@ Future<void> _pump(
           builder: (context) => MediaQuery(
             data: MediaQuery.of(context).copyWith(disableAnimations: true),
             child: Theme(
-              data: getThemeData(context, kBrandSeed, brightness)
-                  .copyWith(splashFactory: NoSplash.splashFactory),
+              data: getThemeData(
+                context,
+                kBrandSeed,
+                brightness,
+              ).copyWith(splashFactory: NoSplash.splashFactory),
               child: ClaimPage(group: group, expense: expense),
             ),
           ),
@@ -242,15 +241,14 @@ void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
   setUpAll(() async {
-    TestWidgetsFlutterBinding.ensureInitialized()
-        .defaultBinaryMessenger
+    TestWidgetsFlutterBinding.ensureInitialized().defaultBinaryMessenger
         .setMockMethodCallHandler(
-      const MethodChannel('plugins.flutter.io/shared_preferences'),
-      (call) async {
-        if (call.method == 'getAll') return <String, Object>{};
-        return null;
-      },
-    );
+          const MethodChannel('plugins.flutter.io/shared_preferences'),
+          (call) async {
+            if (call.method == 'getAll') return <String, Object>{};
+            return null;
+          },
+        );
     await Supabase.initialize(
       url: 'http://localhost:54321',
       anonKey: 'test-anon-key',
@@ -267,8 +265,9 @@ void main() {
     expect(find.text(l10n.claimTakeOne), findsWidgets);
   });
 
-  testWidgets('tapping a free slot claims the unit solo via the RPC path',
-      (tester) async {
+  testWidgets('tapping a free slot claims the unit solo via the RPC path', (
+    tester,
+  ) async {
     final l10n = await _l10n();
     await _pump(tester, expense: _expense());
     await _pickPersona(tester, 'a@test.com');
@@ -285,47 +284,56 @@ void main() {
   });
 
   testWidgets(
-      'grouped item card shows ×N, "each · ordered" subline, and one chip '
-      'per unit (solo / split / free)', (tester) async {
-    final l10n = await _l10n();
-    await _pump(tester, expense: _grouped());
+    'grouped item card shows ×N, "each · ordered" subline, and one chip '
+    'per unit (solo / split / free)',
+    (tester) async {
+      final l10n = await _l10n();
+      await _pump(tester, expense: _grouped());
 
-    // One card: name + ×3 in the title, "€2.00 each · 3 ordered" subline.
-    expect(find.textContaining('Cola'), findsOneWidget);
-    expect(find.textContaining('×3'), findsOneWidget);
-    expect(
-      find.text(l10n.claimEachOrdered(l10n.toCurrency(2), 3)),
-      findsOneWidget,
-    );
+      // One card: name + ×3 in the title, "€2.00 each · 3 ordered" subline.
+      expect(find.textContaining('Cola'), findsOneWidget);
+      expect(find.textContaining('×3'), findsOneWidget);
+      expect(
+        find.text(l10n.claimEachOrdered(l10n.toCurrency(2), 3)),
+        findsOneWidget,
+      );
 
-    // Solo slot → claimer name chip.
-    final solo = find.byKey(const ValueKey('slot:c1'));
-    expect(solo, findsOneWidget);
-    expect(find.descendant(of: solo, matching: find.text('Alice')),
-        findsOneWidget);
+      // Solo slot → claimer name chip.
+      final solo = find.byKey(const ValueKey('slot:c1'));
+      expect(solo, findsOneWidget);
+      expect(
+        find.descendant(of: solo, matching: find.text('Alice')),
+        findsOneWidget,
+      );
 
-    // Split slot → stacked avatars + "split · €1.00".
-    final split = find.byKey(const ValueKey('slot:c2'));
-    expect(split, findsOneWidget);
-    expect(
-      find.descendant(
-        of: split,
-        matching: find.text(l10n.claimSplitLabel(l10n.toCurrency(1))),
-      ),
-      findsOneWidget,
-    );
-    expect(find.descendant(of: split, matching: find.byType(AvatarStack)),
-        findsOneWidget);
+      // Split slot → stacked avatars + "split · €1.00".
+      final split = find.byKey(const ValueKey('slot:c2'));
+      expect(split, findsOneWidget);
+      expect(
+        find.descendant(
+          of: split,
+          matching: find.text(l10n.claimSplitLabel(l10n.toCurrency(1))),
+        ),
+        findsOneWidget,
+      );
+      expect(
+        find.descendant(of: split, matching: find.byType(AvatarStack)),
+        findsOneWidget,
+      );
 
-    // Free slot → dashed "take one".
-    final free = find.byKey(const ValueKey('slot:c3'));
-    expect(free, findsOneWidget);
-    expect(find.descendant(of: free, matching: find.text(l10n.claimTakeOne)),
-        findsOneWidget);
-  });
+      // Free slot → dashed "take one".
+      final free = find.byKey(const ValueKey('slot:c3'));
+      expect(free, findsOneWidget);
+      expect(
+        find.descendant(of: free, matching: find.text(l10n.claimTakeOne)),
+        findsOneWidget,
+      );
+    },
+  );
 
-  testWidgets('single-unit item card shows the plain unit price subline',
-      (tester) async {
+  testWidgets('single-unit item card shows the plain unit price subline', (
+    tester,
+  ) async {
     final l10n = await _l10n();
     await _pump(tester, expense: _expense());
     // Wine (€6, split Alice+Bob) is a single-slot card: no ×N, plain price,
@@ -386,29 +394,31 @@ void main() {
 
     expect(_fake.splitCalls.length, 1);
     expect(_fake.splitCalls.first.$1, 'u1');
-    expect(_fake.splitCalls.first.$2.toSet(),
-        {'a@test.com', 'b@test.com'});
+    expect(_fake.splitCalls.first.$2.toSet(), {'a@test.com', 'b@test.com'});
   });
 
-  testWidgets('"Split one" preselects the persona in the inline editor (F163)',
-      (tester) async {
-    final l10n = await _l10n();
-    await _pump(tester, expense: _grouped());
-    await _pickPersona(tester, 'b@test.com');
+  testWidgets(
+    '"Split one" preselects the persona in the inline editor (F163)',
+    (tester) async {
+      final l10n = await _l10n();
+      await _pump(tester, expense: _grouped());
+      await _pickPersona(tester, 'b@test.com');
 
-    // First (only) free unit on the Cola card is c3.
-    await tester.tap(find.text(l10n.claimSplitOne).first);
-    await tester.pumpAndSettle();
-    await tester.tap(find.text(l10n.claimSplitDone));
-    await tester.pumpAndSettle();
+      // First (only) free unit on the Cola card is c3.
+      await tester.tap(find.text(l10n.claimSplitOne).first);
+      await tester.pumpAndSettle();
+      await tester.tap(find.text(l10n.claimSplitDone));
+      await tester.pumpAndSettle();
 
-    expect(_fake.splitCalls.length, 1);
-    expect(_fake.splitCalls.first.$1, 'c3');
-    expect(_fake.splitCalls.first.$2, ['b@test.com']);
-  });
+      expect(_fake.splitCalls.length, 1);
+      expect(_fake.splitCalls.first.$1, 'c3');
+      expect(_fake.splitCalls.first.$2, ['b@test.com']);
+    },
+  );
 
-  testWidgets('"Split one" is dimmed and inert when nothing is free',
-      (tester) async {
+  testWidgets('"Split one" is dimmed and inert when nothing is free', (
+    tester,
+  ) async {
     final l10n = await _l10n();
     await _pump(tester, expense: _fullyClaimed());
 
@@ -431,13 +441,16 @@ void main() {
     expect(find.text(l10n.claimTapSlotHint), findsNothing);
   });
 
-  testWidgets('unclaimed callout shows when units remain unclaimed',
-      (tester) async {
+  testWidgets('unclaimed callout shows when units remain unclaimed', (
+    tester,
+  ) async {
     final l10n = await _l10n();
     await _pump(tester, expense: _expense());
     // u1 (€10) + u3 (€4) unclaimed = €14; payer = Alice (F130 copy).
-    expect(find.text(l10n.claimUnclaimedCallout(l10n.toCurrency(14), 'Alice')),
-        findsOneWidget);
+    expect(
+      find.text(l10n.claimUnclaimedCallout(l10n.toCurrency(14), 'Alice')),
+      findsOneWidget,
+    );
     expect(find.text(l10n.claimNudge), findsOneWidget);
   });
 
@@ -448,8 +461,7 @@ void main() {
     expect(find.text(l10n.claimNudge), findsNothing);
   });
 
-  testWidgets(
-      'bottom bar is the non-actionable "Tap the items you had" hint '
+  testWidgets('bottom bar is the non-actionable "Tap the items you had" hint '
       '(F132: no explicit confirm step)', (tester) async {
     final l10n = await _l10n();
     await _pump(tester, expense: _expense());
@@ -457,8 +469,10 @@ void main() {
     // The hint is present...
     expect(find.text(l10n.claimTapItemsHint), findsOneWidget);
     // ...and there is no actionable confirm button in a button role.
-    expect(find.widgetWithText(ElevatedButton, l10n.claimTapItemsHint),
-        findsNothing);
+    expect(
+      find.widgetWithText(ElevatedButton, l10n.claimTapItemsHint),
+      findsNothing,
+    );
 
     // Tapping a slot commits per tap without any separate confirm press.
     await _pickPersona(tester, 'a@test.com');

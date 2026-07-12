@@ -5,7 +5,11 @@ import 'expense_category.dart';
 class Expense {
   late String id;
   late String groupId;
-  late Group group;
+
+  /// The owning group. Default-initialized so that reading `group.currencyCode`
+  /// for amount formatting is safe even when an Expense is built without its
+  /// group loaded (e.g. in tests); production always loads it via the select.
+  Group group = Group();
   late String name;
   late double amount;
   late String? paidBy;
@@ -19,7 +23,8 @@ class Expense {
   late Map<String, double> groupMemberShareStatistic;
   late String? paidByDisplayName;
 
-  static const expenseSelectString = '*, ...paid_by(paid_by_display_name:display_name), expense_entry(*, expense_entry_share(*, ...email(display_name:display_name))), group!expense_group_id_fkey(*, group_shares_summary(*, ...paid_by(paid_by_display_name:display_name), ...paid_for(paid_for_display_name:display_name)), group_member(*, ...user(display_name:display_name, is_guest:is_guest)))';
+  static const expenseSelectString =
+      '*, ...paid_by(paid_by_display_name:display_name), expense_entry(*, expense_entry_share(*, ...email(display_name:display_name))), group!expense_group_id_fkey(*, group_shares_summary(*, ...paid_by(paid_by_display_name:display_name), ...paid_for(paid_for_display_name:display_name)), group_member(*, ...user(display_name:display_name, is_guest:is_guest)))';
 
   void loadDataFromJson(Map<String, dynamic> json) {
     id = json["id"];
@@ -53,7 +58,8 @@ class Expense {
         if (expenseEntry.expenseEntryShares.isNotEmpty) {
           for (var e in expenseEntry.expenseEntryShares) {
             groupMemberShareStatistic[e.email] =
-                (groupMemberShareStatistic[e.email] ?? 0) + (expenseEntry.amount * (e.percentage / 100));
+                (groupMemberShareStatistic[e.email] ?? 0) +
+                (expenseEntry.amount * (e.percentage / 100));
           }
         }
       }
@@ -75,8 +81,9 @@ class Expense {
   Map<String, List<ExpenseEntry>> get entriesByItem {
     final grouped = <String, List<ExpenseEntry>>{};
     for (final entry in expenseEntries.values) {
-      final key =
-          entry.isClaimUnit ? (entry.itemGroupId ?? entry.id) : entry.id;
+      final key = entry.isClaimUnit
+          ? (entry.itemGroupId ?? entry.id)
+          : entry.id;
       (grouped[key] ??= []).add(entry);
     }
     return grouped;
@@ -94,19 +101,23 @@ class Expense {
       if (!first.isClaimUnit) {
         result.add(first);
       } else {
-        result.add(ExpenseEntry(index: 0)
-          ..id = first.id
-          ..expenseId = first.expenseId
-          ..name = first.name
-          ..amount = group.fold(0.0, (sum, e) => sum + e.amount)
-          ..quantity = group.length
-          ..splitMode = first.splitMode
-          ..createdAt = first.createdAt
-          ..itemGroupId = first.itemGroupId
-          ..unitClaims = [
-            for (final e in group)
-              e.expenseEntryShares.map((s) => s.email).toList(growable: false),
-          ]);
+        result.add(
+          ExpenseEntry(index: 0)
+            ..id = first.id
+            ..expenseId = first.expenseId
+            ..name = first.name
+            ..amount = group.fold(0.0, (sum, e) => sum + e.amount)
+            ..quantity = group.length
+            ..splitMode = first.splitMode
+            ..createdAt = first.createdAt
+            ..itemGroupId = first.itemGroupId
+            ..unitClaims = [
+              for (final e in group)
+                e.expenseEntryShares
+                    .map((s) => s.email)
+                    .toList(growable: false),
+            ],
+        );
       }
     }
     for (var i = 0; i < result.length; i++) {
@@ -128,8 +139,15 @@ class Expense {
     // cards register.
     for (final value in editorEntries) {
       jsonValue.addAll({"expense_entry[${value.index}][name]": value.name});
-      jsonValue.addAll({"expense_entry[${value.index}][amount]": value.unitPrice.toStringAsFixed(2)});
-      jsonValue.addAll({"expense_entry[${value.index}][shares]": value.expenseEntryShares.map((e) => e.email).toSet()});
+      jsonValue.addAll({
+        "expense_entry[${value.index}][amount]": value.unitPrice
+            .toStringAsFixed(2),
+      });
+      jsonValue.addAll({
+        "expense_entry[${value.index}][shares]": value.expenseEntryShares
+            .map((e) => e.email)
+            .toSet(),
+      });
     }
 
     return jsonValue;

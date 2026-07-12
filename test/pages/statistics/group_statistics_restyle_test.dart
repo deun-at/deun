@@ -1,5 +1,6 @@
 import 'package:deun/constants.dart';
 import 'package:deun/l10n/app_localizations.dart';
+import 'package:deun/helper/helper.dart';
 import 'package:deun/pages/statistics/provider/statistics_notifiers.dart';
 import 'package:deun/pages/statistics/statistics_models.dart';
 import 'package:deun/pages/statistics/widgets/categories_section.dart';
@@ -27,21 +28,47 @@ const _summary = SpendingSummary(
 
 const _members = [
   MemberSpendingBreakdown(
-    email: 'a@x', displayName: 'Ann Lee', paid: 700, fairShare: 600, pctOfTotal: 58),
+    email: 'a@x',
+    displayName: 'Ann Lee',
+    paid: 700,
+    fairShare: 600,
+    pctOfTotal: 58,
+  ),
   MemberSpendingBreakdown(
-    email: 'b@x', displayName: 'Bob Roy', paid: 500, fairShare: 600, pctOfTotal: 42),
+    email: 'b@x',
+    displayName: 'Bob Roy',
+    paid: 500,
+    fairShare: 600,
+    pctOfTotal: 42,
+  ),
 ];
 
 const _categories = [
-  CategoryMonthTotal(categoryName: 'food', categoryDisplayName: 'food', total: 800),
-  CategoryMonthTotal(categoryName: 'travel', categoryDisplayName: 'travel', total: 400),
+  CategoryMonthTotal(
+    categoryName: 'food',
+    categoryDisplayName: 'food',
+    total: 800,
+  ),
+  CategoryMonthTotal(
+    categoryName: 'travel',
+    categoryDisplayName: 'travel',
+    total: 400,
+  ),
 ];
 
 final _overrides = [
-  groupSpendingSummaryProvider.overrideWith((ref, StatsRangeArgs args) async => _summary),
-  groupTrendProvider.overrideWith((ref, StatsRangeArgs args) async => const <MonthBucket>[]),
-  groupMemberBreakdownProvider.overrideWith((ref, StatsRangeArgs args) async => _members),
-  groupCategoryBreakdownProvider.overrideWith((ref, StatsRangeArgs args) async => _categories),
+  groupSpendingSummaryProvider.overrideWith(
+    (ref, StatsRangeArgs args) async => _summary,
+  ),
+  groupTrendProvider.overrideWith(
+    (ref, StatsRangeArgs args) async => const <MonthBucket>[],
+  ),
+  groupMemberBreakdownProvider.overrideWith(
+    (ref, StatsRangeArgs args) async => _members,
+  ),
+  groupCategoryBreakdownProvider.overrideWith(
+    (ref, StatsRangeArgs args) async => _categories,
+  ),
 ];
 
 Future<void> _pump(
@@ -62,8 +89,11 @@ Future<void> _pump(
         supportedLocales: AppLocalizations.supportedLocales,
         home: Builder(
           builder: (context) => Theme(
-            data: getThemeData(context, kBrandSeed, brightness)
-                .copyWith(splashFactory: NoSplash.splashFactory),
+            data: getThemeData(
+              context,
+              kBrandSeed,
+              brightness,
+            ).copyWith(splashFactory: NoSplash.splashFactory),
             child: Scaffold(body: child),
           ),
         ),
@@ -77,14 +107,19 @@ void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
   group('StatsSummarySection (restyle)', () {
-    testWidgets('renders the total via MoneyText in light and dark', (tester) async {
+    testWidgets('renders the total via MoneyText in light and dark', (
+      tester,
+    ) async {
       final l10n = await AppLocalizations.delegate.load(const Locale('en'));
       await _pump(tester, const StatsSummarySection(args: _args));
       expect(find.byType(MoneyText), findsWidgets);
       expect(find.text(l10n.toCurrency(1200)), findsWidgets);
 
-      await _pump(tester, const StatsSummarySection(args: _args),
-          brightness: Brightness.dark);
+      await _pump(
+        tester,
+        const StatsSummarySection(args: _args),
+        brightness: Brightness.dark,
+      );
       expect(find.byType(MoneyText), findsWidgets);
     });
 
@@ -108,8 +143,9 @@ void main() {
   });
 
   group('StatsCategoriesSection (restyle)', () {
-    testWidgets('tapping a category bar fires onCategoryTap with its name',
-        (tester) async {
+    testWidgets('tapping a category bar fires onCategoryTap with its name', (
+      tester,
+    ) async {
       String? tapped;
       await _pump(
         tester,
@@ -150,28 +186,36 @@ void main() {
             supportedLocales: AppLocalizations.supportedLocales,
             home: Builder(
               builder: (context) => Theme(
-                data: getThemeData(context, kBrandSeed, Brightness.light)
-                    .copyWith(splashFactory: NoSplash.splashFactory),
+                data: getThemeData(
+                  context,
+                  kBrandSeed,
+                  Brightness.light,
+                ).copyWith(splashFactory: NoSplash.splashFactory),
                 child: Scaffold(
                   body: StatefulBuilder(
-                    builder: (context, setState) => AppSegmentedControl<StatsRange>(
-                      value: selected,
-                      segments: [
-                        AppSegment(
-                            value: StatsRange.threeMonths,
-                            label: l10n.statisticsRangeThreeMonths),
-                        AppSegment(
-                            value: StatsRange.sixMonths,
-                            label: l10n.statisticsRangeSixMonths),
-                        AppSegment(
-                            value: StatsRange.twelveMonths,
-                            label: l10n.statisticsRangeTwelveMonths),
-                        AppSegment(
-                            value: StatsRange.allTime,
-                            label: l10n.statisticsRangeAllTime),
-                      ],
-                      onChanged: (v) => setState(() => selected = v),
-                    ),
+                    builder: (context, setState) =>
+                        AppSegmentedControl<StatsRange>(
+                          value: selected,
+                          segments: [
+                            AppSegment(
+                              value: StatsRange.threeMonths,
+                              label: l10n.statisticsRangeThreeMonths,
+                            ),
+                            AppSegment(
+                              value: StatsRange.sixMonths,
+                              label: l10n.statisticsRangeSixMonths,
+                            ),
+                            AppSegment(
+                              value: StatsRange.twelveMonths,
+                              label: l10n.statisticsRangeTwelveMonths,
+                            ),
+                            AppSegment(
+                              value: StatsRange.allTime,
+                              label: l10n.statisticsRangeAllTime,
+                            ),
+                          ],
+                          onChanged: (v) => setState(() => selected = v),
+                        ),
                   ),
                 ),
               ),

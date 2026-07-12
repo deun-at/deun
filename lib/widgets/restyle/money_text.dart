@@ -1,3 +1,4 @@
+import 'package:deun/helper/helper.dart';
 import 'package:deun/l10n/app_localizations.dart';
 import 'package:deun/widgets/motion.dart';
 import 'package:deun/widgets/theme_builder.dart';
@@ -32,6 +33,7 @@ class MoneyText extends StatelessWidget {
   const MoneyText(
     this.amount, {
     super.key,
+    this.currencyCode = kDefaultCurrencyCode,
     this.semantic = MoneySemantic.neutral,
     this.style,
     this.showSign = false,
@@ -41,6 +43,11 @@ class MoneyText extends StatelessWidget {
 
   /// The amount to display. Sign is taken from this value.
   final double amount;
+
+  /// ISO 4217 currency code the amount is formatted in (symbol + locale-aware
+  /// placement). Defaults to [kDefaultCurrencyCode] so cross-group/aggregate
+  /// call sites format via the default rather than a hardcoded symbol.
+  final String currencyCode;
 
   /// Color mode (see [MoneySemantic]).
   final MoneySemantic semantic;
@@ -81,7 +88,9 @@ class MoneyText extends StatelessWidget {
   }
 
   Text _buildText(BuildContext context, double displayAmount) {
-    final formatted = AppLocalizations.of(context)!.toCurrency(displayAmount);
+    final formatted = AppLocalizations.of(
+      context,
+    )!.toCurrency(displayAmount, currencyCode);
     // showSign uses the final amount (not intermediate) so the "+" appears
     // exactly when the final value is positive — color and sign are consistent.
     final text = (showSign && amount > 0) ? '+$formatted' : formatted;
