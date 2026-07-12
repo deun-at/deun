@@ -9,90 +9,148 @@ import 'package:flutter_test/flutter_test.dart';
 /// icon/avatar box + text bars) inside the real card containers.
 
 Widget _wrap(Widget child) => MaterialApp(
-      home: Scaffold(body: SizedBox(height: 800, child: child)),
-    );
+  home: Scaffold(body: SizedBox(height: 800, child: child)),
+);
 
 /// Bones are theme-tinted, rounded/circular DecoratedBoxes; count the ones of a
 /// given box shape so we can assert the skeleton's silhouette.
 int _boneCount(WidgetTester tester, {required BoxShape shape}) {
-  return tester
-      .widgetList<Container>(find.byType(Container))
-      .where((c) {
-        final d = c.decoration;
-        return d is BoxDecoration && d.shape == shape && d.color != null;
-      })
-      .length;
+  return tester.widgetList<Container>(find.byType(Container)).where((c) {
+    final d = c.decoration;
+    return d is BoxDecoration && d.shape == shape && d.color != null;
+  }).length;
 }
 
 void main() {
-  testWidgets('card skeleton mirrors the group-list card (SoftCard + icon tile + bars)',
-      (tester) async {
+  testWidgets(
+    'card skeleton mirrors the group-list card (SoftCard + icon tile + bars)',
+    (tester) async {
+      await tester.pumpWidget(
+        _wrap(
+          const ShimmerCardList(
+            height: 100,
+            listEntryLength: 3,
+            shape: ShimmerShape.card,
+          ),
+        ),
+      );
+      // pump one frame of the shimmer animation.
+      await tester.pump(const Duration(milliseconds: 100));
+
+      // Each card is a real SoftCard (shares radius/shadow with the live list).
+      expect(find.byType(SoftCard), findsWidgets);
+
+      // Each card carries a leading rounded icon tile + a title bar + a footer
+      // balance bar + an avatar-stack silhouette (circles). At least the icon
+      // tiles and avatar circles must be present.
+      expect(
+        _boneCount(tester, shape: BoxShape.rectangle),
+        greaterThanOrEqualTo(3),
+        reason: 'icon tile + title/balance bars',
+      );
+      expect(
+        _boneCount(tester, shape: BoxShape.circle),
+        greaterThanOrEqualTo(3),
+        reason: 'avatar-stack circles',
+      );
+    },
+  );
+
+  testWidgets(
+    'row skeleton mirrors the friend row (CardColumn + avatar circle + name bars)',
+    (tester) async {
+      await tester.pumpWidget(
+        _wrap(
+          const ShimmerCardList(
+            height: 70,
+            listEntryLength: 4,
+            shape: ShimmerShape.row,
+          ),
+        ),
+      );
+      await tester.pump(const Duration(milliseconds: 100));
+
+      // Rows are joined into a single SoftCard (F166: the live friend-list chrome,
+      // not the retired CardColumn card/margin/28-8 radii).
+      expect(find.byType(SoftCard), findsOneWidget);
+
+      // Each row has one avatar circle + a name bar + a username bar + a trailing
+      // balance bar.
+      expect(
+        _boneCount(tester, shape: BoxShape.circle),
+        greaterThanOrEqualTo(4),
+        reason: 'one avatar per row',
+      );
+      expect(
+        _boneCount(tester, shape: BoxShape.rectangle),
+        greaterThanOrEqualTo(4),
+        reason: 'name/username/balance bars',
+      );
+    },
+  );
+
+  // cosmetic-round-2026-07 (add-friends shimmer padding): the skeleton reserves
+  // a configurable horizontal inset. When the enclosing screen already pads the
+  // loaded content (add-friends), the skeleton passes 0 so it lines up with the
+  // loaded rows instead of sitting 16px further in and jumping on load.
+  testWidgets(
+    'horizontalPadding controls the skeleton inset (default 16, override 0)',
+    (tester) async {
+      await tester.pumpWidget(
+        _wrap(
+          const ShimmerCardList(
+            height: 64,
+            listEntryLength: 2,
+            shape: ShimmerShape.row,
+          ),
+        ),
+      );
+      await tester.pump(const Duration(milliseconds: 100));
+      final defaultLeft = tester.getRect(find.byType(SoftCard)).left;
+      expect(defaultLeft, moreOrLessEquals(16, epsilon: 0.5));
+
+      await tester.pumpWidget(
+        _wrap(
+          const ShimmerCardList(
+            height: 64,
+            listEntryLength: 2,
+            shape: ShimmerShape.row,
+            horizontalPadding: 0,
+          ),
+        ),
+      );
+      await tester.pump(const Duration(milliseconds: 100));
+      final zeroLeft = tester.getRect(find.byType(SoftCard)).left;
+      expect(zeroLeft, moreOrLessEquals(0, epsilon: 0.5));
+    },
+  );
+
+  testWidgets(
+    'bars skeleton (default) still renders without overflow, in a SoftCard',
+    (tester) async {
+      await tester.pumpWidget(
+        _wrap(const ShimmerCardList(height: 80, listEntryLength: 5)),
+      );
+      await tester.pump(const Duration(milliseconds: 100));
+
+      expect(find.byType(ShimmerCardList), findsOneWidget);
+      // F166: joined into one SoftCard, not the retired CardColumn chrome.
+      expect(find.byType(SoftCard), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    },
+  );
+
+  testWidgets('ledger skeleton mirrors the day-sectioned _QuickRow ledger', (
+    tester,
+  ) async {
     await tester.pumpWidget(
-      _wrap(const ShimmerCardList(
-        height: 100,
-        listEntryLength: 3,
-        shape: ShimmerShape.card,
-      )),
-    );
-    // pump one frame of the shimmer animation.
-    await tester.pump(const Duration(milliseconds: 100));
-
-    // Each card is a real SoftCard (shares radius/shadow with the live list).
-    expect(find.byType(SoftCard), findsWidgets);
-
-    // Each card carries a leading rounded icon tile + a title bar + a footer
-    // balance bar + an avatar-stack silhouette (circles). At least the icon
-    // tiles and avatar circles must be present.
-    expect(_boneCount(tester, shape: BoxShape.rectangle),
-        greaterThanOrEqualTo(3), reason: 'icon tile + title/balance bars');
-    expect(_boneCount(tester, shape: BoxShape.circle),
-        greaterThanOrEqualTo(3), reason: 'avatar-stack circles');
-  });
-
-  testWidgets('row skeleton mirrors the friend row (CardColumn + avatar circle + name bars)',
-      (tester) async {
-    await tester.pumpWidget(
-      _wrap(const ShimmerCardList(
-        height: 70,
-        listEntryLength: 4,
-        shape: ShimmerShape.row,
-      )),
-    );
-    await tester.pump(const Duration(milliseconds: 100));
-
-    // Rows are joined into a single SoftCard (F166: the live friend-list chrome,
-    // not the retired CardColumn card/margin/28-8 radii).
-    expect(find.byType(SoftCard), findsOneWidget);
-
-    // Each row has one avatar circle + a name bar + a username bar + a trailing
-    // balance bar.
-    expect(_boneCount(tester, shape: BoxShape.circle),
-        greaterThanOrEqualTo(4), reason: 'one avatar per row');
-    expect(_boneCount(tester, shape: BoxShape.rectangle),
-        greaterThanOrEqualTo(4), reason: 'name/username/balance bars');
-  });
-
-  testWidgets('bars skeleton (default) still renders without overflow, in a SoftCard',
-      (tester) async {
-    await tester.pumpWidget(
-      _wrap(const ShimmerCardList(height: 80, listEntryLength: 5)),
-    );
-    await tester.pump(const Duration(milliseconds: 100));
-
-    expect(find.byType(ShimmerCardList), findsOneWidget);
-    // F166: joined into one SoftCard, not the retired CardColumn chrome.
-    expect(find.byType(SoftCard), findsOneWidget);
-    expect(tester.takeException(), isNull);
-  });
-
-  testWidgets('ledger skeleton mirrors the day-sectioned _QuickRow ledger',
-      (tester) async {
-    await tester.pumpWidget(
-      _wrap(const ShimmerCardList(
-        height: 80,
-        listEntryLength: 12,
-        shape: ShimmerShape.ledger,
-      )),
+      _wrap(
+        const ShimmerCardList(
+          height: 80,
+          listEntryLength: 12,
+          shape: ShimmerShape.ledger,
+        ),
+      ),
     );
     await tester.pump(const Duration(milliseconds: 100));
 
@@ -101,71 +159,104 @@ void main() {
     expect(find.byType(SoftCard), findsWidgets);
     // 12 rows → each _QuickRow silhouette has a leading icon tile + 2 text bars
     // + a trailing total bar, plus one day-header bar per section.
-    expect(_boneCount(tester, shape: BoxShape.rectangle),
-        greaterThanOrEqualTo(12), reason: 'icon tiles + text/total bars + day headers');
+    expect(
+      _boneCount(tester, shape: BoxShape.rectangle),
+      greaterThanOrEqualTo(12),
+      reason: 'icon tiles + text/total bars + day headers',
+    );
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('groupHome skeleton mirrors the loaded prefix (hero card + label + group cards)',
-      (tester) async {
-    await tester.pumpWidget(
-      _wrap(const ShimmerCardList(
-        height: 100,
-        listEntryLength: 3,
-        shape: ShimmerShape.groupHome,
-      )),
-    );
-    await tester.pump(const Duration(milliseconds: 100));
+  testWidgets(
+    'groupHome skeleton mirrors the loaded prefix (hero card + label + group cards)',
+    (tester) async {
+      await tester.pumpWidget(
+        _wrap(
+          const ShimmerCardList(
+            height: 100,
+            listEntryLength: 3,
+            shape: ShimmerShape.groupHome,
+          ),
+        ),
+      );
+      await tester.pump(const Duration(milliseconds: 100));
 
-    // Group cards are real SoftCards (same as the plain `card` shape).
-    expect(find.byType(SoftCard), findsNWidgets(3));
+      // Group cards are real SoftCards (same as the plain `card` shape).
+      expect(find.byType(SoftCard), findsNWidgets(3));
 
-    // Rectangles: overall-balance hero bone + "Your groups" label bar + each
-    // card's icon tile/title/balance bars (>= 3 per card). The hero + label are
-    // what the plain `card` shape omitted, causing the pop-in this fixes.
-    expect(_boneCount(tester, shape: BoxShape.rectangle),
+      // Rectangles: overall-balance hero bone + "Your groups" label bar + each
+      // card's icon tile/title/balance bars (>= 3 per card). The hero + label are
+      // what the plain `card` shape omitted, causing the pop-in this fixes.
+      expect(
+        _boneCount(tester, shape: BoxShape.rectangle),
         greaterThanOrEqualTo(2 + 3 * 3),
-        reason: 'hero + label + per-card bars');
-    // Avatar-stack circles: 4 per card.
-    expect(_boneCount(tester, shape: BoxShape.circle),
-        greaterThanOrEqualTo(3 * 4), reason: 'avatar circles per card');
-    expect(tester.takeException(), isNull);
-  });
+        reason: 'hero + label + per-card bars',
+      );
+      // Avatar-stack circles: 4 per card.
+      expect(
+        _boneCount(tester, shape: BoxShape.circle),
+        greaterThanOrEqualTo(3 * 4),
+        reason: 'avatar circles per card',
+      );
+      expect(tester.takeException(), isNull);
+    },
+  );
 
-  testWidgets('groupDetailHeader skeleton mirrors the hero card + quick-action row',
-      (tester) async {
-    await tester.pumpWidget(
-      _wrap(const ShimmerCardList(
-        height: 100,
-        listEntryLength: 1,
-        shape: ShimmerShape.groupDetailHeader,
-      )),
-    );
-    await tester.pump(const Duration(milliseconds: 100));
+  testWidgets(
+    'groupDetailHeader skeleton mirrors the hero card + quick-action row',
+    (tester) async {
+      await tester.pumpWidget(
+        _wrap(
+          const ShimmerCardList(
+            height: 100,
+            listEntryLength: 1,
+            shape: ShimmerShape.groupDetailHeader,
+          ),
+        ),
+      );
+      await tester.pump(const Duration(milliseconds: 100));
 
-    // Hero card bone + two quick-action bones = >= 3 rectangles, and no overflow
-    // (the loaded header this stands in for is a hero card + Statistics/Invite).
-    expect(_boneCount(tester, shape: BoxShape.rectangle),
-        greaterThanOrEqualTo(3), reason: 'hero + two quick-action bones');
-    expect(tester.takeException(), isNull);
-  });
+      // Hero card bone + two quick-action bones = >= 3 rectangles, and no overflow
+      // (the loaded header this stands in for is a hero card + Statistics/Invite).
+      expect(
+        _boneCount(tester, shape: BoxShape.rectangle),
+        greaterThanOrEqualTo(3),
+        reason: 'hero + two quick-action bones',
+      );
+      expect(tester.takeException(), isNull);
+    },
+  );
 
-  testWidgets('shimmer gradient base is translucent so bones show through (F166)',
-      (tester) async {
-    await tester.pumpWidget(
-      _wrap(const ShimmerCardList(
-        height: 80,
-        listEntryLength: 3,
-        shape: ShimmerShape.card,
-      )),
-    );
-    await tester.pump(const Duration(milliseconds: 100));
+  testWidgets(
+    'shimmer gradient base is translucent so bones show through (F166)',
+    (tester) async {
+      await tester.pumpWidget(
+        _wrap(
+          const ShimmerCardList(
+            height: 80,
+            listEntryLength: 3,
+            shape: ShimmerShape.card,
+          ),
+        ),
+      );
+      await tester.pump(const Duration(milliseconds: 100));
 
-    final state = tester.state<ShimmerCardListState>(find.byType(ShimmerCardList));
-    final colors = state.gradient.colors;
-    // An opaque base overpaints every bone into a flat block under
-    // BlendMode.srcATop (F166). The base (endpoints) must be translucent.
-    expect(colors.first.a, lessThan(1.0), reason: 'gradient base must be translucent');
-    expect(colors.last.a, lessThan(1.0), reason: 'gradient base must be translucent');
-  });
+      final state = tester.state<ShimmerCardListState>(
+        find.byType(ShimmerCardList),
+      );
+      final colors = state.gradient.colors;
+      // An opaque base overpaints every bone into a flat block under
+      // BlendMode.srcATop (F166). The base (endpoints) must be translucent.
+      expect(
+        colors.first.a,
+        lessThan(1.0),
+        reason: 'gradient base must be translucent',
+      );
+      expect(
+        colors.last.a,
+        lessThan(1.0),
+        reason: 'gradient base must be translucent',
+      );
+    },
+  );
 }

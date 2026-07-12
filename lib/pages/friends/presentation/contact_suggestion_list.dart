@@ -53,6 +53,10 @@ class ContactSuggestionList extends StatelessWidget {
         height: 64,
         listEntryLength: 3,
         shape: ShimmerShape.row,
+        // The enclosing 20px page padding already insets the loaded SoftCard, so
+        // the skeleton reserves no extra horizontal space — otherwise it sits
+        // 16px further in than the rows and jumps left when content arrives.
+        horizontalPadding: 0,
       );
     } else if (contactSuggestions.isEmpty) {
       body = _ContactEmptyCard(
@@ -67,8 +71,9 @@ class ContactSuggestionList extends StatelessWidget {
             for (final user in contactSuggestions)
               FriendAddRow(
                 user: user,
-                isRequested: requestedEmails
-                    .any((e) => e.toLowerCase() == user.email.toLowerCase()),
+                isRequested: requestedEmails.any(
+                  (e) => e.toLowerCase() == user.email.toLowerCase(),
+                ),
                 onRequest: () => onRequest(user.email, user.displayName),
               ),
           ],
@@ -114,7 +119,9 @@ class _ContactEmptyCard extends StatelessWidget {
           const SizedBox(height: 4),
           Text(
             l10n.addFriendshipContactPermissionSubtitle,
-            style: textTheme.bodySmall?.copyWith(color: colorScheme.onSurfaceVariant),
+            style: textTheme.bodySmall?.copyWith(
+              color: colorScheme.onSurfaceVariant,
+            ),
           ),
           if (showAllow) ...[
             const SizedBox(height: 12),

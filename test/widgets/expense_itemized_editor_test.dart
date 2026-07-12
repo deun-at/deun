@@ -6,6 +6,7 @@ import 'package:deun/pages/expenses/data/split_mode.dart';
 import 'package:deun/pages/expenses/data/expense_category.dart';
 import 'package:deun/pages/expenses/data/expense_model.dart';
 import 'package:deun/pages/expenses/presentation/expense_detail.dart';
+import 'package:deun/pages/expenses/presentation/expense_entry_widget.dart';
 import 'package:deun/widgets/category_selector.dart';
 import 'package:flutter_form_builder/flutter_form_builder.dart';
 import 'package:deun/pages/groups/data/group_member_model.dart';
@@ -416,38 +417,123 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  // BUG A: the itemized "Add & share for claiming" CTA is the last child inside
-  // the scrollable body (only Quick has a pinned footer). The scroll body must
-  // keep a bottom inset so the CTA clears the safe area instead of sitting flush
-  // against the viewport bottom (regressed by F173's padding: EdgeInsets.zero).
-  testWidgets('itemized scroll body keeps a bottom inset so the CTA is reachable', (
+  // cosmetic-round-2026-07 (CTA bar): the itemized "Add & share for claiming"
+  // CTA is fixed to the bottom on an opaque surface bar — a sibling of the
+  // scrollable list, NOT the last scroll child — so it stays put instead of
+  // scrolling with the content, and the list content is not hidden behind it.
+  testWidgets('itemized CTA is pinned in the footer, not a scroll child', (
     tester,
   ) async {
     await _pump(tester);
     final l10n = await _l10n();
 
-    // Quick mode: the CTA is a pinned footer, so the list needs no bottom inset.
-    final quickList = tester.widget<ListView>(find.byType(ListView).first);
-    expect(
-      quickList.padding,
-      EdgeInsets.zero,
-      reason: 'Quick keeps the F173 zero padding (pinned footer below).',
-    );
-
     await tester.tap(find.text(l10n.editorModeItemized));
     await tester.pumpAndSettle();
 
-    // Itemized: CTA lives inside the list, so the list must reserve bottom space.
-    final itemizedList = tester.widget<ListView>(find.byType(ListView).first);
-    final bottomInset =
-        itemizedList.padding?.resolve(TextDirection.ltr).bottom ?? 0;
+    final ctaLabel = find.text(l10n.expenseSaveAndShareForClaiming);
+    // The CTA renders exactly once...
+    expect(ctaLabel, findsOneWidget);
+    // ...but NOT inside the scrolling ListView — it is pinned below it.
     expect(
-      bottomInset,
-      greaterThan(0),
-      reason: 'Itemized CTA is the last scroll child — needs bottom clearance.',
+      find.descendant(of: find.byType(ListView), matching: ctaLabel),
+      findsNothing,
+      reason: 'The claiming CTA must be the pinned footer, not a scroll child.',
     );
-    // The top must stay 0 so the F173 header->toggle gap is not reintroduced.
+
+    // The footer bar is opaque and surface-colored (per the design handoff).
+    // Walk the Container ancestors and pick the one painted with surface.
+    final scheme = Theme.of(tester.element(ctaLabel)).colorScheme;
+    final footerFinder = find.ancestor(
+      of: ctaLabel,
+      matching: find.byWidgetPredicate(
+        (w) => w is Container && w.color == scheme.surface,
+      ),
+    );
+    expect(
+      footerFinder,
+      findsOneWidget,
+      reason: 'The pinned CTA sits on an opaque surface-colored bar.',
+    );
+
+    // Because the footer is a Column sibling (not an overlay), the list is not
+    // hidden behind it — the list itself needs no bottom inset to clear a CTA.
+    // Top stays 0 so the header->toggle gap is not reintroduced (F173).
+    final itemizedList = tester.widget<ListView>(find.byType(ListView).first);
     expect(itemizedList.padding?.resolve(TextDirection.ltr).top, 0);
+
+    // The footer sits below the scroll list (its top edge is at/under the
+    // list's bottom edge) — i.e. it is genuinely pinned to the bottom.
+    final listBottom = tester.getRect(find.byType(ListView).first).bottom;
+    final footerTop = tester.getRect(footerFinder).top;
+    expect(footerTop, greaterThanOrEqualTo(listBottom - 0.5));
+  });
+
+  // cosmetic-round-2026-07 (paid-by/when block): in the itemized layout the
+  // "Paid by" and "When" fields render as ONE connected card with the hairline
+  // divider between them — the same block the quick layout uses — instead of
+  // two separate spaced cards.
+  testWidgets(
+    'itemized Paid-by and When are one connected card with a divider',
+    (tester) async {
+      await _pump(tester);
+      final l10n = await _l10n();
+
+      await tester.tap(find.text(l10n.editorModeItemized));
+      await tester.pumpAndSettle();
+
+      final paidByLabel = find.text(l10n.expensePaidBy);
+      final whenLabel = find.text(l10n.expenseWhen);
+      expect(paidByLabel, findsOneWidget);
+      expect(whenLabel, findsOneWidget);
+
+      // Both rows share a SINGLE SoftCard ancestor (one connected block).
+      final paidCard = find
+          .ancestor(of: paidByLabel, matching: find.byType(SoftCard))
+          .evaluate()
+          .first
+          .widget;
+      final whenCard = find
+          .ancestor(of: whenLabel, matching: find.byType(SoftCard))
+          .evaluate()
+          .first
+          .widget;
+      expect(
+        identical(paidCard, whenCard),
+        isTrue,
+        reason: 'Paid-by and When must live in the same connected card.',
+      );
+
+      // That shared card carries the small connecting hairline between the rows.
+      expect(
+        find.descendant(
+          of: find.byWidget(paidCard),
+          matching: find.byType(Divider),
+        ),
+        findsOneWidget,
+      );
+    },
+  );
+
+  // cosmetic-round-2026-07 (quick split grid): the quick-split section aligns to
+  // the same 16px horizontal grid as the other form sections — its trailing
+  // inset used to be 8, leaving the section offset 8px to the right.
+  testWidgets('quick split section aligns to the 16px content grid', (
+    tester,
+  ) async {
+    await _pump(tester);
+
+    // Quick mode by default renders the single-entry ExpenseEntryWidget.
+    final entryPadding = tester.widget<Padding>(
+      find
+          .descendant(
+            of: find.byType(ExpenseEntryWidget),
+            matching: find.byType(Padding),
+          )
+          .first,
+    );
+    final insets = entryPadding.padding.resolve(TextDirection.ltr);
+    expect(insets.left, 16);
+    expect(insets.right, 16);
   });
 
   // BUG B: switching itemized -> Quick with 2+ items used to no-op silently —

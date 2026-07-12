@@ -111,31 +111,44 @@ class DeunHeader extends StatelessWidget {
       trailingSlot = const SizedBox(width: 38, height: 38);
     }
 
+    // Reserve symmetric side space equal to the widest slot so a long, centered
+    // title truncates before it can paint under the leading or trailing actions.
+    // The Stack keeps the title centered across the FULL header width; a fixed
+    // 46px inset only cleared ONE 48px action, so a multi-action trailing Row
+    // (e.g. search + edit on group detail) sat under the title. Each action
+    // occupies a 48dp hit target, so reserve that per trailing action.
+    final int trailingActionCount =
+        (trailingActions != null && trailingActions!.isNotEmpty)
+        ? trailingActions!.length
+        : 1;
+    const double actionSlotWidth = 48;
+    final double titleSideInset = trailingActionCount * actionSlotWidth;
+
     // The title block is centered across the FULL header width using a Stack.
     // Leading and trailing are pinned to left/right; the title sits in the
     // center layer and spans the full width with overflow ellipsis.
     final subtitleWidget = subtitle != null
         ? (subtitleLeading != null
-            ? Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  subtitleLeading!,
-                  const SizedBox(width: 8),
-                  Text(
-                    subtitle!,
-                    style: subtitleStyle,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ],
-              )
-            : Text(
-                subtitle!,
-                style: subtitleStyle,
-                textAlign: TextAlign.center,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ))
+              ? Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    subtitleLeading!,
+                    const SizedBox(width: 8),
+                    Text(
+                      subtitle!,
+                      style: subtitleStyle,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
+                )
+              : Text(
+                  subtitle!,
+                  style: subtitleStyle,
+                  textAlign: TextAlign.center,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ))
         : null;
 
     final titleBlock = Column(
@@ -161,19 +174,13 @@ class DeunHeader extends StatelessWidget {
           children: [
             // Title centred across the full row width.
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 46),
+              padding: EdgeInsets.symmetric(horizontal: titleSideInset),
               child: titleBlock,
             ),
             // Leading pinned to the left.
-            Align(
-              alignment: Alignment.centerLeft,
-              child: leadingSlot,
-            ),
+            Align(alignment: Alignment.centerLeft, child: leadingSlot),
             // Trailing pinned to the right.
-            Align(
-              alignment: Alignment.centerRight,
-              child: trailingSlot,
-            ),
+            Align(alignment: Alignment.centerRight, child: trailingSlot),
           ],
         ),
       ),
@@ -277,11 +284,7 @@ class HeaderIconButton extends StatelessWidget {
             shape: BoxShape.circle,
             boxShadow: shadows,
           ),
-          child: Icon(
-            icon,
-            size: 22,
-            color: resolvedIconColor,
-          ),
+          child: Icon(icon, size: 22, color: resolvedIconColor),
         ),
       ),
     );

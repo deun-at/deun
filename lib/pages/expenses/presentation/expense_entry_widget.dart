@@ -314,9 +314,11 @@ class _ExpenseEntryWidgetState extends State<ExpenseEntryWidget> {
     return Padding(
       // Itemized rows sit inside the parent's joined SoftCard and own their
       // padding via _buildItemCard, so no outer inset (BUG D). Quick keeps the
-      // split-section inset.
+      // split-section inset, aligned to the same 16px horizontal grid as the
+      // other form sections (the end inset was 8, leaving the split section
+      // offset 8px past the cards above it).
       padding: widget.isSingleEntry
-          ? const EdgeInsetsDirectional.fromSTEB(16, 8, 8, 8)
+          ? const EdgeInsetsDirectional.fromSTEB(16, 8, 16, 8)
           : EdgeInsets.zero,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,

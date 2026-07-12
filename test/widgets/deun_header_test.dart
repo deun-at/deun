@@ -19,7 +19,10 @@ Future<void> _pump(
 }) async {
   await tester.pumpWidget(
     MaterialApp(
-      theme: ThemeData(brightness: Brightness.light, splashFactory: NoSplash.splashFactory),
+      theme: ThemeData(
+        brightness: Brightness.light,
+        splashFactory: NoSplash.splashFactory,
+      ),
       localizationsDelegates: const [
         AppLocalizations.delegate,
         GlobalMaterialLocalizations.delegate,
@@ -85,7 +88,9 @@ void main() {
       expect(tapped, isTrue);
     });
 
-    testWidgets('title text style is fontSize 16 and fontWeight w700', (tester) async {
+    testWidgets('title text style is fontSize 16 and fontWeight w700', (
+      tester,
+    ) async {
       await _pump(tester, const DeunHeader(title: 'Style Test'));
       final texts = tester
           .widgetList<Text>(find.byType(Text))
@@ -97,7 +102,9 @@ void main() {
       expect(style?.fontWeight, FontWeight.w700);
     });
 
-    testWidgets('with no trailing, a 38×38 spacer exists on the right side', (tester) async {
+    testWidgets('with no trailing, a 38×38 spacer exists on the right side', (
+      tester,
+    ) async {
       await _pump(tester, const DeunHeader(title: 'T'));
       // Both leading and trailing slots should be 38×38 SizedBox
       final sizedBoxes = tester
@@ -108,7 +115,9 @@ void main() {
       expect(sizedBoxes.length, greaterThanOrEqualTo(1));
     });
 
-    testWidgets('provided trailing widget renders and is tappable', (tester) async {
+    testWidgets('provided trailing widget renders and is tappable', (
+      tester,
+    ) async {
       var trailingTapped = false;
       await _pump(
         tester,
@@ -116,7 +125,11 @@ void main() {
           title: 'T',
           trailing: GestureDetector(
             onTap: () => trailingTapped = true,
-            child: const SizedBox(width: 38, height: 38, child: Icon(Icons.edit)),
+            child: const SizedBox(
+              width: 38,
+              height: 38,
+              child: Icon(Icons.edit),
+            ),
           ),
         ),
       );
@@ -126,7 +139,9 @@ void main() {
       expect(trailingTapped, isTrue);
     });
 
-    testWidgets('leading icon-button hit target is at least 48dp', (tester) async {
+    testWidgets('leading icon-button hit target is at least 48dp', (
+      tester,
+    ) async {
       await _pump(tester, const DeunHeader(title: 'T'));
       // The leading button should have a tappable area >= 48dp in both dimensions.
       // Find the InkWell wrapping the leading icon.
@@ -149,13 +164,13 @@ void main() {
       expect(find.text('Dark Mode'), findsOneWidget);
     });
 
-    testWidgets('showLeading false renders a 38x38 left spacer instead of back icon', (tester) async {
-      await _pump(
-        tester,
-        const DeunHeader(title: 'T', showLeading: false),
-      );
-      expect(find.byIcon(Icons.arrow_back), findsNothing);
-    });
+    testWidgets(
+      'showLeading false renders a 38x38 left spacer instead of back icon',
+      (tester) async {
+        await _pump(tester, const DeunHeader(title: 'T', showLeading: false));
+        expect(find.byIcon(Icons.arrow_back), findsNothing);
+      },
+    );
 
     // ── trailingActions tests (TDD: added before implementation) ──────────────
 
@@ -182,7 +197,9 @@ void main() {
       expect(find.byIcon(Icons.delete_outline), findsOneWidget);
     });
 
-    testWidgets('trailingActions: both actions are independently tappable', (tester) async {
+    testWidgets('trailingActions: both actions are independently tappable', (
+      tester,
+    ) async {
       var editTapped = false;
       var deleteTapped = false;
       await _pump(
@@ -212,55 +229,110 @@ void main() {
     });
 
     testWidgets(
-        'with long title + trailingActions, title is horizontally centered in the header',
-        (tester) async {
-      const headerKey = Key('header_centering_test');
-      await _pump(
-        tester,
-        DeunHeader(
-          key: headerKey,
-          title: 'A Very Long Expense Title That Could Overflow The Screen Width',
-          trailingActions: [
-            IconButton(
-              icon: const Icon(Icons.edit_outlined),
-              onPressed: () {},
-            ),
-            IconButton(
-              icon: const Icon(Icons.delete_outline),
-              onPressed: () {},
-            ),
-          ],
-        ),
-      );
+      'with long title + trailingActions, title is horizontally centered in the header',
+      (tester) async {
+        const headerKey = Key('header_centering_test');
+        await _pump(
+          tester,
+          DeunHeader(
+            key: headerKey,
+            title:
+                'A Very Long Expense Title That Could Overflow The Screen Width',
+            trailingActions: [
+              IconButton(
+                icon: const Icon(Icons.edit_outlined),
+                onPressed: () {},
+              ),
+              IconButton(
+                icon: const Icon(Icons.delete_outline),
+                onPressed: () {},
+              ),
+            ],
+          ),
+        );
 
-      // Get the header bounds
-      final headerBox = tester.renderObject(find.byKey(headerKey)) as RenderBox;
-      final headerOffset = headerBox.localToGlobal(Offset.zero);
-      final headerWidth = headerBox.size.width;
-      final headerCenterX = headerOffset.dx + headerWidth / 2;
+        // Get the header bounds
+        final headerBox =
+            tester.renderObject(find.byKey(headerKey)) as RenderBox;
+        final headerOffset = headerBox.localToGlobal(Offset.zero);
+        final headerWidth = headerBox.size.width;
+        final headerCenterX = headerOffset.dx + headerWidth / 2;
 
-      // Find the title Text widget and get its center
-      final titleFinder = find.text(
-        'A Very Long Expense Title That Could Overflow The Screen Width',
-      );
-      expect(titleFinder, findsOneWidget);
-      final titleBox = tester.renderObject(titleFinder) as RenderBox;
-      final titleOffset = titleBox.localToGlobal(Offset.zero);
-      final titleCenterX = titleOffset.dx + titleBox.size.width / 2;
+        // Find the title Text widget and get its center
+        final titleFinder = find.text(
+          'A Very Long Expense Title That Could Overflow The Screen Width',
+        );
+        expect(titleFinder, findsOneWidget);
+        final titleBox = tester.renderObject(titleFinder) as RenderBox;
+        final titleOffset = titleBox.localToGlobal(Offset.zero);
+        final titleCenterX = titleOffset.dx + titleBox.size.width / 2;
 
-      // Title center should be within 10px of header center — the Stack
-      // positions title across the full width so it should be very close.
-      expect(
-        (titleCenterX - headerCenterX).abs(),
-        lessThan(10.0),
-        reason:
-            'Title center ($titleCenterX) should be within 10px of header center ($headerCenterX)',
-      );
-    });
+        // Title center should be within 10px of header center — the Stack
+        // positions title across the full width so it should be very close.
+        expect(
+          (titleCenterX - headerCenterX).abs(),
+          lessThan(10.0),
+          reason:
+              'Title center ($titleCenterX) should be within 10px of header center ($headerCenterX)',
+        );
+      },
+    );
+
+    testWidgets(
+      'long title never paints under the trailing actions (truncates before them)',
+      (tester) async {
+        await _pump(
+          tester,
+          DeunHeader(
+            title:
+                'A Very Long Group Name That Would Otherwise Run Under The Buttons',
+            trailingActions: [
+              IconButton(icon: const Icon(Icons.search), onPressed: () {}),
+              IconButton(icon: const Icon(Icons.tune), onPressed: () {}),
+            ],
+          ),
+        );
+
+        final titleBox =
+            tester.renderObject(
+                  find.text(
+                    'A Very Long Group Name That Would Otherwise Run Under The Buttons',
+                  ),
+                )
+                as RenderBox;
+        final titleRight = titleBox
+            .localToGlobal(Offset(titleBox.size.width, 0))
+            .dx;
+
+        // The leftmost (first) trailing action marks where the trailing group
+        // begins. The centered title must truncate before reaching it.
+        final trailingBox =
+            tester.renderObject(
+                  find
+                      .ancestor(
+                        of: find.byIcon(Icons.search),
+                        matching: find.byType(IconButton),
+                      )
+                      .first,
+                )
+                as RenderBox;
+        final trailingLeft = trailingBox.localToGlobal(Offset.zero).dx;
+
+        expect(
+          titleRight,
+          lessThanOrEqualTo(trailingLeft + 0.5),
+          reason:
+              'Title right edge ($titleRight) must not cross into the trailing '
+              'actions ($trailingLeft).',
+        );
+      },
+    );
 
     // ── subtitleLeading tests (TDD: RED first) ─────────────────────────────────
 
-    testWidgets('subtitleLeading renders alongside subtitle text', (tester) async {
+    testWidgets('subtitleLeading renders alongside subtitle text', (
+      tester,
+    ) async {
       await _pump(
         tester,
         const DeunHeader(
@@ -279,19 +351,22 @@ void main() {
       expect(find.byKey(_subtitleLeadingKey), findsOneWidget);
     });
 
-    testWidgets('subtitleLeading is null by default — existing subtitle path unchanged',
-        (tester) async {
-      await _pump(
-        tester,
-        const DeunHeader(title: 'NoLeading', subtitle: 'Sub'),
-      );
-      // No key widget present — null path renders exactly as before.
-      expect(find.byKey(_subtitleLeadingKey), findsNothing);
-      expect(find.text('Sub'), findsOneWidget);
-    });
+    testWidgets(
+      'subtitleLeading is null by default — existing subtitle path unchanged',
+      (tester) async {
+        await _pump(
+          tester,
+          const DeunHeader(title: 'NoLeading', subtitle: 'Sub'),
+        );
+        // No key widget present — null path renders exactly as before.
+        expect(find.byKey(_subtitleLeadingKey), findsNothing);
+        expect(find.text('Sub'), findsOneWidget);
+      },
+    );
 
-    testWidgets('subtitleLeading is horizontally centered with subtitle text',
-        (tester) async {
+    testWidgets('subtitleLeading is horizontally centered with subtitle text', (
+      tester,
+    ) async {
       const subtitleText = 'Centered subtitle';
       await _pump(
         tester,
@@ -316,10 +391,12 @@ void main() {
       final subtitleBox =
           tester.renderObject(find.text(subtitleText)) as RenderBox;
 
-      final leadingCenter =
-          leadingBox.localToGlobal(Offset(0, leadingBox.size.height / 2)).dy;
-      final subtitleCenter =
-          subtitleBox.localToGlobal(Offset(0, subtitleBox.size.height / 2)).dy;
+      final leadingCenter = leadingBox
+          .localToGlobal(Offset(0, leadingBox.size.height / 2))
+          .dy;
+      final subtitleCenter = subtitleBox
+          .localToGlobal(Offset(0, subtitleBox.size.height / 2))
+          .dy;
 
       expect(
         (leadingCenter - subtitleCenter).abs(),
@@ -330,133 +407,141 @@ void main() {
   });
 
   group('HeaderIconButton', () {
-    testWidgets('tinted variant (default) uses the warm-tint surface + onSurface icon',
-        (tester) async {
-      await _pump(
-        tester,
-        HeaderIconButton(icon: Icons.qr_code, onTap: () {}),
-      );
+    testWidgets(
+      'tinted variant (default) uses the warm-tint surface + onSurface icon',
+      (tester) async {
+        await _pump(
+          tester,
+          HeaderIconButton(icon: Icons.qr_code, onTap: () {}),
+        );
 
-      final context = tester.element(find.byIcon(Icons.qr_code));
-      final colorScheme = Theme.of(context).colorScheme;
+        final context = tester.element(find.byIcon(Icons.qr_code));
+        final colorScheme = Theme.of(context).colorScheme;
 
-      final container = tester.widget<Container>(
-        find.ancestor(
-          of: find.byIcon(Icons.qr_code),
-          matching: find.byType(Container),
-        ).first,
-      );
-      expect(
-        (container.decoration as BoxDecoration).color,
-        colorScheme.onSurface.withValues(alpha: 0.04),
-      );
-      expect(
-        (container.decoration as BoxDecoration).boxShadow,
-        isEmpty,
-      );
+        final container = tester.widget<Container>(
+          find
+              .ancestor(
+                of: find.byIcon(Icons.qr_code),
+                matching: find.byType(Container),
+              )
+              .first,
+        );
+        expect(
+          (container.decoration as BoxDecoration).color,
+          colorScheme.onSurface.withValues(alpha: 0.04),
+        );
+        expect((container.decoration as BoxDecoration).boxShadow, isEmpty);
 
-      final icon = tester.widget<Icon>(find.byIcon(Icons.qr_code));
-      expect(icon.color, colorScheme.onSurface);
-    });
+        final icon = tester.widget<Icon>(find.byIcon(Icons.qr_code));
+        expect(icon.color, colorScheme.onSurface);
+      },
+    );
 
     testWidgets(
-        'iconColor override keeps the neutral circle but tints the glyph (danger logout)',
-        (tester) async {
-      await _pump(
-        tester,
-        Builder(
-          builder: (context) => HeaderIconButton(
-            icon: Icons.logout,
-            onTap: () {},
-            iconColor: Theme.of(context).extension<SemanticColors>()!.danger,
+      'iconColor override keeps the neutral circle but tints the glyph (danger logout)',
+      (tester) async {
+        await _pump(
+          tester,
+          Builder(
+            builder: (context) => HeaderIconButton(
+              icon: Icons.logout,
+              onTap: () {},
+              iconColor: Theme.of(context).extension<SemanticColors>()!.danger,
+            ),
           ),
-        ),
-      );
+        );
 
-      final context = tester.element(find.byIcon(Icons.logout));
-      final colorScheme = Theme.of(context).colorScheme;
-      final danger = Theme.of(context).extension<SemanticColors>()!.danger;
+        final context = tester.element(find.byIcon(Icons.logout));
+        final colorScheme = Theme.of(context).colorScheme;
+        final danger = Theme.of(context).extension<SemanticColors>()!.danger;
 
-      // Circle stays the neutral warm-white header-action surface (no error
-      // tint) and carries no shadow.
-      final container = tester.widget<Container>(
-        find.ancestor(
-          of: find.byIcon(Icons.logout),
-          matching: find.byType(Container),
-        ).first,
-      );
-      final decoration = container.decoration as BoxDecoration;
-      expect(decoration.color, colorScheme.onSurface.withValues(alpha: 0.04));
-      expect(decoration.boxShadow, isEmpty);
+        // Circle stays the neutral warm-white header-action surface (no error
+        // tint) and carries no shadow.
+        final container = tester.widget<Container>(
+          find
+              .ancestor(
+                of: find.byIcon(Icons.logout),
+                matching: find.byType(Container),
+              )
+              .first,
+        );
+        final decoration = container.decoration as BoxDecoration;
+        expect(decoration.color, colorScheme.onSurface.withValues(alpha: 0.04));
+        expect(decoration.boxShadow, isEmpty);
 
-      // Only the glyph takes the danger semantic.
-      final icon = tester.widget<Icon>(find.byIcon(Icons.logout));
-      expect(icon.color, danger);
-    });
+        // Only the glyph takes the danger semantic.
+        final icon = tester.widget<Icon>(find.byIcon(Icons.logout));
+        expect(icon.color, danger);
+      },
+    );
 
     testWidgets(
-        'iconColor override adapts the danger glyph in dark mode (circle still neutral)',
-        (tester) async {
-      await _pump(
-        tester,
-        Builder(
-          builder: (context) => HeaderIconButton(
-            icon: Icons.logout,
-            onTap: () {},
-            iconColor: Theme.of(context).extension<SemanticColors>()!.danger,
+      'iconColor override adapts the danger glyph in dark mode (circle still neutral)',
+      (tester) async {
+        await _pump(
+          tester,
+          Builder(
+            builder: (context) => HeaderIconButton(
+              icon: Icons.logout,
+              onTap: () {},
+              iconColor: Theme.of(context).extension<SemanticColors>()!.danger,
+            ),
           ),
-        ),
-        brightness: Brightness.dark,
-      );
+          brightness: Brightness.dark,
+        );
 
-      final context = tester.element(find.byIcon(Icons.logout));
-      final colorScheme = Theme.of(context).colorScheme;
-      final danger = Theme.of(context).extension<SemanticColors>()!.danger;
+        final context = tester.element(find.byIcon(Icons.logout));
+        final colorScheme = Theme.of(context).colorScheme;
+        final danger = Theme.of(context).extension<SemanticColors>()!.danger;
 
-      final container = tester.widget<Container>(
-        find.ancestor(
-          of: find.byIcon(Icons.logout),
-          matching: find.byType(Container),
-        ).first,
-      );
-      expect(
-        (container.decoration as BoxDecoration).color,
-        colorScheme.onSurface.withValues(alpha: 0.04),
-      );
+        final container = tester.widget<Container>(
+          find
+              .ancestor(
+                of: find.byIcon(Icons.logout),
+                matching: find.byType(Container),
+              )
+              .first,
+        );
+        expect(
+          (container.decoration as BoxDecoration).color,
+          colorScheme.onSurface.withValues(alpha: 0.04),
+        );
 
-      final icon = tester.widget<Icon>(find.byIcon(Icons.logout));
-      expect(icon.color, danger);
-    });
+        final icon = tester.widget<Icon>(find.byIcon(Icons.logout));
+        expect(icon.color, danger);
+      },
+    );
 
-    testWidgets('filled variant uses primary fill + legible onPrimary icon + soft shadow',
-        (tester) async {
-      await _pump(
-        tester,
-        HeaderIconButton(icon: Icons.person_add, onTap: () {}, filled: true),
-      );
+    testWidgets(
+      'filled variant uses primary fill + legible onPrimary icon + soft shadow',
+      (tester) async {
+        await _pump(
+          tester,
+          HeaderIconButton(icon: Icons.person_add, onTap: () {}, filled: true),
+        );
 
-      final context = tester.element(find.byIcon(Icons.person_add));
-      final colorScheme = Theme.of(context).colorScheme;
+        final context = tester.element(find.byIcon(Icons.person_add));
+        final colorScheme = Theme.of(context).colorScheme;
 
-      final container = tester.widget<Container>(
-        find.ancestor(
-          of: find.byIcon(Icons.person_add),
-          matching: find.byType(Container),
-        ).first,
-      );
-      final decoration = container.decoration as BoxDecoration;
-      expect(decoration.color, colorScheme.primary);
-      expect(decoration.boxShadow, isNotEmpty);
+        final container = tester.widget<Container>(
+          find
+              .ancestor(
+                of: find.byIcon(Icons.person_add),
+                matching: find.byType(Container),
+              )
+              .first,
+        );
+        final decoration = container.decoration as BoxDecoration;
+        expect(decoration.color, colorScheme.primary);
+        expect(decoration.boxShadow, isNotEmpty);
 
-      final icon = tester.widget<Icon>(find.byIcon(Icons.person_add));
-      expect(icon.color, colorScheme.onPrimary);
-    });
+        final icon = tester.widget<Icon>(find.byIcon(Icons.person_add));
+        expect(icon.color, colorScheme.onPrimary);
+      },
+    );
 
     testWidgets('hit target is at least 48dp', (tester) async {
-      await _pump(
-        tester,
-        HeaderIconButton(icon: Icons.qr_code, onTap: () {}),
-      );
+      await _pump(tester, HeaderIconButton(icon: Icons.qr_code, onTap: () {}));
       final inkWell = find.ancestor(
         of: find.byIcon(Icons.qr_code),
         matching: find.byType(InkWell),
@@ -478,7 +563,9 @@ void main() {
       expect(tapped, isTrue);
     });
 
-    testWidgets('renders correctly in dark mode (filled variant)', (tester) async {
+    testWidgets('renders correctly in dark mode (filled variant)', (
+      tester,
+    ) async {
       await _pump(
         tester,
         HeaderIconButton(icon: Icons.person_add, onTap: () {}, filled: true),
@@ -487,12 +574,17 @@ void main() {
       final context = tester.element(find.byIcon(Icons.person_add));
       final colorScheme = Theme.of(context).colorScheme;
       final container = tester.widget<Container>(
-        find.ancestor(
-          of: find.byIcon(Icons.person_add),
-          matching: find.byType(Container),
-        ).first,
+        find
+            .ancestor(
+              of: find.byIcon(Icons.person_add),
+              matching: find.byType(Container),
+            )
+            .first,
       );
-      expect((container.decoration as BoxDecoration).color, colorScheme.primary);
+      expect(
+        (container.decoration as BoxDecoration).color,
+        colorScheme.primary,
+      );
     });
   });
 }

@@ -47,6 +47,10 @@ class SearchResultList extends StatelessWidget {
         height: 64,
         listEntryLength: 2,
         shape: ShimmerShape.row,
+        // The enclosing 20px page padding already insets the loaded SoftCard, so
+        // the skeleton reserves no extra horizontal space — otherwise it sits
+        // 16px further in than the rows and jumps left when content arrives.
+        horizontalPadding: 0,
       );
     } else if (isAmbiguousUsername) {
       body = _MessageCard(message: l10n.addFriendshipAmbiguousUsername);
@@ -60,8 +64,9 @@ class SearchResultList extends StatelessWidget {
             for (final user in searchResults)
               FriendAddRow(
                 user: user,
-                isRequested: requestedEmails
-                    .any((e) => e.toLowerCase() == user.email.toLowerCase()),
+                isRequested: requestedEmails.any(
+                  (e) => e.toLowerCase() == user.email.toLowerCase(),
+                ),
                 onRequest: () => onRequest(user.email, user.displayName),
               ),
           ],
@@ -91,10 +96,9 @@ class _MessageCard extends StatelessWidget {
     return SoftCard(
       child: Text(
         message,
-        style: Theme.of(context)
-            .textTheme
-            .bodyMedium
-            ?.copyWith(color: colorScheme.onSurfaceVariant),
+        style: Theme.of(
+          context,
+        ).textTheme.bodyMedium?.copyWith(color: colorScheme.onSurfaceVariant),
       ),
     );
   }
