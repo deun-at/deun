@@ -4,7 +4,7 @@ import 'package:deun/constants.dart';
 import 'package:deun/l10n/app_localizations.dart';
 import 'package:deun/pages/expenses/data/date_option.dart';
 import 'package:deun/pages/expenses/data/expense_category.dart';
-import 'package:deun/pages/expenses/data/keypad_amount.dart';
+import 'package:deun/pages/expenses/data/keypad_calculator.dart';
 import 'package:deun/pages/groups/data/group_member_model.dart';
 
 import 'member_avatar.dart';
@@ -256,8 +256,12 @@ class DateOptionsSheet extends StatelessWidget {
     final colorScheme = Theme.of(context).colorScheme;
     final now = DateTime.now();
 
-    Widget tile(IconData icon, String label, DateOption option,
-        {bool selected = false}) {
+    Widget tile(
+      IconData icon,
+      String label,
+      DateOption option, {
+      bool selected = false,
+    }) {
       return ListTile(
         contentPadding: EdgeInsets.zero,
         leading: Icon(icon, color: colorScheme.onSurfaceVariant),
@@ -274,12 +278,23 @@ class DateOptionsSheet extends StatelessWidget {
       body: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          tile(Icons.today_outlined, l10n.dateToday, DateOption.today,
-              selected: DateOption.today.matches(current, now)),
-          tile(Icons.history, l10n.dateYesterday, DateOption.yesterday,
-              selected: DateOption.yesterday.matches(current, now)),
-          tile(Icons.calendar_month_outlined, l10n.datePickCustom,
-              DateOption.pick),
+          tile(
+            Icons.today_outlined,
+            l10n.dateToday,
+            DateOption.today,
+            selected: DateOption.today.matches(current, now),
+          ),
+          tile(
+            Icons.history,
+            l10n.dateYesterday,
+            DateOption.yesterday,
+            selected: DateOption.yesterday.matches(current, now),
+          ),
+          tile(
+            Icons.calendar_month_outlined,
+            l10n.datePickCustom,
+            DateOption.pick,
+          ),
         ],
       ),
     );
@@ -290,9 +305,10 @@ class DateOptionsSheet extends StatelessWidget {
 // Amount keypad sheet
 // ---------------------------------------------------------------------------
 
-/// Opens the amount keypad as a [SheetScaffold]. Enforces 2 decimals / 7
-/// integer digits / a single decimal point via [KeypadAmount]. Resolves to the
-/// confirmed amount (`double`), or `null` if dismissed.
+/// Opens the amount keypad as a [SheetScaffold]. Supports +, −, ×, ÷ via
+/// [KeypadCalculator] and enforces 2 decimals / 7 integer digits / a single
+/// decimal point per operand. Resolves to the confirmed amount (`double`), or
+/// `null` if dismissed.
 Future<double?> showAmountKeypadSheet(
   BuildContext context, {
   required double initialAmount,
@@ -315,7 +331,7 @@ class AmountKeypadSheet extends StatefulWidget {
 }
 
 class _AmountKeypadSheetState extends State<AmountKeypadSheet> {
-  late KeypadAmount _amount;
+  late KeypadCalculator _calc;
 
   @override
   void initState() {
@@ -323,7 +339,7 @@ class _AmountKeypadSheetState extends State<AmountKeypadSheet> {
     final seed = widget.initialAmount > 0
         ? _trimAmount(widget.initialAmount)
         : '0';
-    _amount = KeypadAmount.fromText(seed);
+    _calc = KeypadCalculator.fromText(seed);
   }
 
   /// Formats the seed value without forcing trailing zeros (e.g. 42 -> "42",
@@ -334,11 +350,14 @@ class _AmountKeypadSheetState extends State<AmountKeypadSheet> {
   }
 
   void _onDigit(String digit) =>
-      setState(() => _amount = _amount.appendDigit(digit));
+      setState(() => _calc = _calc.appendDigit(digit));
 
-  void _onDecimal() => setState(() => _amount = _amount.appendDecimal());
+  void _onDecimal() => setState(() => _calc = _calc.appendDecimal());
 
-  void _onBackspace() => setState(() => _amount = _amount.backspace());
+  void _onBackspace() => setState(() => _calc = _calc.backspace());
+
+  void _onOperator(KeypadOperator op) =>
+      setState(() => _calc = _calc.applyOperator(op));
 
   @override
   Widget build(BuildContext context) {
@@ -346,18 +365,39 @@ class _AmountKeypadSheetState extends State<AmountKeypadSheet> {
     final colorScheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
 
+    final hasError = _calc.hasError;
+    // During an invalid calculation the running result is undefined; show the
+    // last-good `0` placeholder rather than a bogus number.
+    final displayValue = hasError ? 0.0 : _calc.value;
+
     return SheetScaffold(
       title: l10n.amountSheetTitle,
       body: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          // Live amount display.
+          const SizedBox(height: 8),
+          // In-progress expression line (empty during plain entry) + inline
+          // error when the calculation can't be committed.
+          SizedBox(
+            height: 22,
+            child: Text(
+              hasError ? l10n.amountKeypadInvalid : _calc.expression,
+              key: const ValueKey('keypad_expression'),
+              style: textTheme.titleMedium?.copyWith(
+                color: hasError
+                    ? colorScheme.error
+                    : colorScheme.onSurfaceVariant,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+          // Live running result.
           Padding(
-            padding: const EdgeInsets.symmetric(vertical: 16),
+            padding: const EdgeInsets.only(top: 2, bottom: 16),
             child: MoneyText(
-              _amount.value,
+              displayValue,
               style: textTheme.displayMedium?.copyWith(
-                color: colorScheme.onSurface,
+                color: hasError ? colorScheme.error : colorScheme.onSurface,
               ),
             ),
           ),
@@ -366,12 +406,17 @@ class _AmountKeypadSheetState extends State<AmountKeypadSheet> {
             onDigit: _onDigit,
             onDecimal: _onDecimal,
             onBackspace: _onBackspace,
+            onOperator: _onOperator,
           ),
         ],
       ),
       footer: PrimaryButton(
         key: const ValueKey('keypad_confirm'),
-        onPressed: () => Navigator.of(context).pop(_amount.value),
+        // '=' semantics: resolve the final result. Blocked while invalid so a
+        // divide-by-zero / out-of-range result can never be committed.
+        onPressed: hasError
+            ? null
+            : () => Navigator.of(context).pop(_calc.value),
         label: l10n.save,
       ),
     );
@@ -383,30 +428,47 @@ class _KeypadGrid extends StatelessWidget {
     required this.onDigit,
     required this.onDecimal,
     required this.onBackspace,
+    required this.onOperator,
   });
 
   final ValueChanged<String> onDigit;
   final VoidCallback onDecimal;
   final VoidCallback onBackspace;
+  final ValueChanged<KeypadOperator> onOperator;
 
   @override
   Widget build(BuildContext context) {
+    // Digit rows paired with the operator column (classic calculator layout);
+    // '=' is the confirm/Save CTA in the sheet footer.
+    const digitRows = [
+      ['1', '2', '3'],
+      ['4', '5', '6'],
+      ['7', '8', '9'],
+    ];
+    const operatorColumn = [
+      KeypadOperator.divide,
+      KeypadOperator.multiply,
+      KeypadOperator.subtract,
+    ];
+
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        for (final row in const [
-          ['1', '2', '3'],
-          ['4', '5', '6'],
-          ['7', '8', '9'],
-        ])
+        for (var i = 0; i < digitRows.length; i++)
           Row(
             children: [
-              for (final d in row)
+              for (final d in digitRows[i])
                 _KeypadButton(
                   keyValue: 'keypad_$d',
                   label: d,
                   onTap: () => onDigit(d),
                 ),
+              _KeypadButton(
+                keyValue: 'keypad_op_${operatorColumn[i].name}',
+                label: operatorColumn[i].symbol,
+                accent: true,
+                onTap: () => onOperator(operatorColumn[i]),
+              ),
             ],
           ),
         Row(
@@ -426,6 +488,12 @@ class _KeypadGrid extends StatelessWidget {
               icon: Icons.backspace_outlined,
               onTap: onBackspace,
             ),
+            _KeypadButton(
+              keyValue: 'keypad_op_${KeypadOperator.add.name}',
+              label: KeypadOperator.add.symbol,
+              accent: true,
+              onTap: () => onOperator(KeypadOperator.add),
+            ),
           ],
         ),
       ],
@@ -439,6 +507,7 @@ class _KeypadButton extends StatelessWidget {
     required this.onTap,
     this.label,
     this.icon,
+    this.accent = false,
   });
 
   final String keyValue;
@@ -446,16 +515,27 @@ class _KeypadButton extends StatelessWidget {
   final String? label;
   final IconData? icon;
 
+  /// Operator keys use a primary-tinted fill/label so they read distinctly from
+  /// the neutral digit keys while keeping the sheet's established look.
+  final bool accent;
+
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
 
+    final fill = accent
+        ? colorScheme.primaryContainer
+        : colorScheme.surfaceContainerHighest;
+    final foreground = accent
+        ? colorScheme.onPrimaryContainer
+        : colorScheme.onSurface;
+
     return Expanded(
       child: Padding(
         padding: const EdgeInsets.all(6),
         child: Material(
-          color: colorScheme.surfaceContainerHighest,
+          color: fill,
           borderRadius: BorderRadius.circular(16),
           child: InkWell(
             key: ValueKey(keyValue),
@@ -465,11 +545,11 @@ class _KeypadButton extends StatelessWidget {
               height: 56,
               child: Center(
                 child: icon != null
-                    ? Icon(icon, color: colorScheme.onSurface)
+                    ? Icon(icon, color: foreground)
                     : Text(
                         label!,
                         style: textTheme.headlineSmall?.copyWith(
-                          color: colorScheme.onSurface,
+                          color: foreground,
                           fontWeight: FontWeight.w600,
                         ),
                       ),

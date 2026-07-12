@@ -1566,6 +1566,10 @@
   "@amountSheetTitle": {
     "description": "Title of the amount keypad bottom sheet."
   },
+  "amountKeypadInvalid": "Invalid calculation",
+  "@amountKeypadInvalid": {
+    "description": "Inline error shown in the amount keypad when the calculator expression cannot be committed (e.g. division by zero or an out-of-range result)."
+  },
   "paymentTitle": "Settle up",
   "@paymentTitle": {
     "description": "Title of the settle-up / payment sheet (Screen 10)."

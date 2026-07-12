@@ -483,6 +483,7 @@
   "dateSheetTitle": "Datum",
   "datePickCustom": "Datum wählen…",
   "amountSheetTitle": "Betrag",
+  "amountKeypadInvalid": "Ungültige Berechnung",
   "groupDetailAllClaimed": "alles beansprucht",
   "groupDetailItemizedTag": "aufgeschlüsselt",
   "groupDetailPaymentTag": "ZAHLUNG",
