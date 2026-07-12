@@ -1,0 +1,7 @@
+{
+  "gates": {
+    "format": "C:\\Users\\ASUS\\flutter\\bin\\dart.bat format {file}",
+    "lint": "C:\\Users\\ASUS\\flutter\\bin\\flutter.bat analyze",
+    "test": "C:\\Users\\ASUS\\flutter\\bin\\flutter.bat test"
+  }
+}
