@@ -157,6 +157,45 @@ Expense _itemizedExpenseWithCategory(String category) {
   return e;
 }
 
+/// A saved itemized expense with two distinct item groups (Beer €2.50 and
+/// Wine €4.00), so the editor opens with two item cards whose line totals sum
+/// to €6.50 — used to prove the Itemized → Quick collapse seeds the summed
+/// total, not the first item's amount (scan-split-even).
+Expense _twoItemExpense() {
+  Map<String, dynamic> unit(
+    String id,
+    String name,
+    double amount,
+    String grp,
+  ) => {
+    'id': id,
+    'expense_id': 'exp1',
+    'name': name,
+    'amount': amount,
+    'quantity': 1,
+    'split_mode': 'claim',
+    'item_group_id': grp,
+    'created_at': '2026-07-01T10:00:00',
+    'expense_entry_share': const [],
+  };
+
+  final e = Expense();
+  e.loadDataFromJson({
+    'id': 'exp1',
+    'group_id': 'g1',
+    'name': 'Kiosk',
+    'expense_date': '2026-07-01',
+    'paid_by': 'a@test.com',
+    'created_at': '2026-07-01T10:00:00',
+    'is_paid_back_row': false,
+    'expense_entry': [
+      unit('u1', 'Beer', 2.5, 'grp-1'),
+      unit('u2', 'Wine', 4.0, 'grp-2'),
+    ],
+  });
+  return e;
+}
+
 Future<AppLocalizations> _l10n() =>
     AppLocalizations.delegate.load(const Locale('en'));
 
@@ -591,4 +630,36 @@ void main() {
     expect(formState.value['category'], ExpenseCategory.groceries);
     expect(find.text(l10n.categoryGroceries), findsOneWidget);
   });
+
+  // scan-split-even: collapsing a multi-item itemized expense (as a scan
+  // produces) into Quick must seed the expense amount with the SUM of every
+  // item line total — €2.50 + €4.00 = €6.50 — not the first item's €2.50 that
+  // the old collapse kept while silently dropping the rest. The user is warned
+  // that per-item detail merged into one amount.
+  testWidgets(
+    'collapsing a multi-item itemized expense to Quick seeds the summed total',
+    (tester) async {
+      await _pump(tester, expense: _twoItemExpense());
+      final l10n = await _l10n();
+
+      // Opens itemized with two item cards; header already sums to €6.50.
+      expect(find.text(l10n.itemizedTotalFromItems(2)), findsOneWidget);
+      expect(find.text(l10n.toCurrency(6.5)), findsWidgets);
+
+      // Switch to Quick — the items collapse into one expense-level amount.
+      await tester.ensureVisible(find.text(l10n.editorModeQuick));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text(l10n.editorModeQuick));
+      await tester.pumpAndSettle();
+
+      // Quick layout is back, seeded with the SUMMED total (€6.50), not the
+      // first item's €2.50.
+      expect(find.text(l10n.expenseAddButton), findsOneWidget);
+      expect(find.text('6.50'), findsOneWidget);
+      expect(find.text('2.50'), findsNothing);
+
+      // The collapse warned the user that item detail merged into one amount.
+      expect(find.text(l10n.editorModeCollapseNotice), findsOneWidget);
+    },
+  );
 }

@@ -20,4 +20,34 @@
 - Parallel-with: — (touches the same editor file as itemized-expense-categories; pull sequentially)
 - Blockers: —
 
-status: planned
+status: done
+
+## Evidence
+
+Fix: `_onEditorModeChanged` (lib/pages/expenses/presentation/expense_detail.dart) now seeds
+the Quick amount on Itemized → Quick collapse from `_itemizedTotalFromForm()` — the live sum
+of every item line total — read *before* the extra entries are dropped, instead of keeping
+only the first item's amount. When 2+ items collapse it fires a `showSnackBar` with the new
+`editorModeCollapseNotice` string ("Items merged into one amount for an even split.", added to
+app_en.arb + app_de.arb) so the loss is announced as it happens. Switching back to Itemized is
+unchanged; scanned receipts still open itemized by default (`_scanReceipt` sets
+`_itemizedOverride = true`), so per-item claiming remains the default after a scan.
+
+How each acceptance criterion was proven:
+- Even split without retyping, amount = receipt total: new test
+  `collapsing a multi-item itemized expense to Quick seeds the summed total` builds a two-group
+  expense (Beer €2.50 + Wine €4.00), toggles to Quick, and asserts the Quick amount reads `6.50`
+  and `2.50` is gone — the summed total, not the first item's amount.
+- Produces a normal quick expense: after collapse the test asserts the Quick footer CTA
+  (`expenseAddButton`) is present — the standard quick-expense layout with equal shares.
+- Collapse seeds the summed total: same test; the itemized header already reads
+  `toCurrency(6.5)` before the toggle (proves the sum source), and Quick shows `6.50` after.
+- User told before/as detail drops: same test asserts `editorModeCollapseNotice` snackbar is
+  visible after the collapse.
+- Scanned/itemized claiming unchanged & default after scan: existing F146 / itemized-category /
+  "Quick toggle honored" tests still pass unchanged (20/20 in the editor suite).
+- Gates: `flutter analyze` → "No issues found!"; `flutter test` → All tests passed (915),
+  including the new collapse test.
+
+Gate summary (`.ristretto.json`): format (dart format, 0 changed) ✓ · lint (flutter analyze,
+no issues) ✓ · test (flutter test, 915 passed) ✓.

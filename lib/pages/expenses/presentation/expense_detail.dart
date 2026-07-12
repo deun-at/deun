@@ -693,11 +693,16 @@ class _ExpenseDetailState extends ConsumerState<ExpenseDetail> {
   /// as an item card, seeding the first item's amount from the quick amount —
   /// the same hand-off [_addNewEntry] already performs.
   ///
-  /// Itemized → Quick: only collapses cleanly when a single entry exists. With
-  /// multiple entries the layout is inherently itemized, so the toggle keeps the
-  /// override on (no data is dropped) — the user removes items to collapse.
+  /// Itemized → Quick: collapses the item list into one expense-level amount.
+  /// The Quick amount is seeded with the *summed* total of every item line
+  /// (scan-split-even), not just the first item's — so the receipt total is
+  /// preserved and can be split evenly. When 2+ items collapse into one, a
+  /// snackbar warns that per-item detail is dropped as it happens.
   void _onEditorModeChanged(EditorMode mode) {
     if (mode == _editorMode) return;
+    // Whether this Itemized → Quick switch drops per-item detail; the notice
+    // fires after setState so the messenger sees the settled tree.
+    var collapsedItems = false;
     setState(() {
       if (mode == EditorMode.itemized) {
         if (_entries.length == 1 &&
@@ -710,18 +715,23 @@ class _ExpenseDetailState extends ConsumerState<ExpenseDetail> {
         // Back to Quick. BUG B: with 2+ entries the toggle used to no-op
         // silently — the tab snapped back to Itemized and read as a dead,
         // unpressable control. Quick has a single expense-level amount, so
-        // collapse the itemized items into one entry: keep the first, drop the
-        // rest, and seed the expense amount from the first item's line total so
-        // no value is lost. Now the toggle is always honored.
+        // collapse the itemized items into one entry. scan-split-even: seed
+        // the Quick amount from the SUM of every item line total (read live
+        // before dropping the extras) so the full receipt value survives —
+        // the old code kept only the first item's amount and silently lost
+        // the rest. Now the toggle is always honored and value-preserving.
+        collapsedItems = _entries.length > 1;
+        final summedTotal = _itemizedTotalFromForm();
         if (_entries.length > 1) {
           _entries.removeRange(1, _entries.length);
         }
-        final firstIndex = _entries.first.index;
-        final amount = _formKey
-            .currentState
-            ?.fields["expense_entry[$firstIndex][amount]"]
-            ?.value
-            ?.toString();
+        final amount = summedTotal > 0
+            ? summedTotal.toStringAsFixed(2)
+            : _formKey
+                  .currentState
+                  ?.fields["expense_entry[${_entries.first.index}][amount]"]
+                  ?.value
+                  ?.toString();
         if (amount != null && amount.isNotEmpty) {
           _amountController.text = amount;
           _entries.first.initialAmount = amount;
@@ -729,6 +739,12 @@ class _ExpenseDetailState extends ConsumerState<ExpenseDetail> {
         _itemizedOverride = false;
       }
     });
+    if (collapsedItems && mounted) {
+      showSnackBar(
+        context,
+        AppLocalizations.of(context)!.editorModeCollapseNotice,
+      );
+    }
   }
 
   /// Sum of the current item line totals, read live from the form fields so the

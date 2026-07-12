@@ -338,6 +338,10 @@ class AppLocalizationsEn extends AppLocalizations {
       'After you share, members claim their own items — solo or split, per unit.';
 
   @override
+  String get editorModeCollapseNotice =>
+      'Items merged into one amount for an even split.';
+
+  @override
   String get expenseSaveAndShareForClaiming => 'Add & share for claiming';
 
   @override

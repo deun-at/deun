@@ -340,6 +340,10 @@ class AppLocalizationsDe extends AppLocalizations {
       'Nach dem Teilen beanspruchen die Mitglieder ihre eigenen Artikel – allein oder aufgeteilt, pro Stück.';
 
   @override
+  String get editorModeCollapseNotice =>
+      'Artikel zu einem Betrag für eine gleichmäßige Aufteilung zusammengeführt.';
+
+  @override
   String get expenseSaveAndShareForClaiming =>
       'Hinzufügen & zum Beanspruchen teilen';
 

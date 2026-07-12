@@ -101,6 +101,7 @@
   "itemizedTotalFromItems": "{count, plural, =0{Noch keine Artikel} =1{Summe · aus 1 Artikel} other{Summe · aus {count} Artikeln}}",
   "addItemByHand": "Artikel manuell hinzufügen",
   "itemizedInfoCallout": "Nach dem Teilen beanspruchen die Mitglieder ihre eigenen Artikel – allein oder aufgeteilt, pro Stück.",
+  "editorModeCollapseNotice": "Artikel zu einem Betrag für eine gleichmäßige Aufteilung zusammengeführt.",
   "expenseSaveAndShareForClaiming": "Hinzufügen & zum Beanspruchen teilen",
   "expenseAddButton": "Ausgabe hinzufügen",
   "expenseDetailTitle": "Ausgabe",
