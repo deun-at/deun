@@ -49,9 +49,15 @@ import 'widgets/page_transitions.dart';
 import 'widgets/restyle/app_bottom_nav.dart';
 
 final _rootNavigatorKey = GlobalKey<NavigatorState>(debugLabel: 'root');
-final _shellNavigatorGroupKey = GlobalKey<NavigatorState>(debugLabel: 'shellGroup');
-final _shellNavigatorFriendKey = GlobalKey<NavigatorState>(debugLabel: 'shellFriend');
-final _shellNavigatorSettingKey = GlobalKey<NavigatorState>(debugLabel: 'shellSetting');
+final _shellNavigatorGroupKey = GlobalKey<NavigatorState>(
+  debugLabel: 'shellGroup',
+);
+final _shellNavigatorFriendKey = GlobalKey<NavigatorState>(
+  debugLabel: 'shellFriend',
+);
+final _shellNavigatorSettingKey = GlobalKey<NavigatorState>(
+  debugLabel: 'shellSetting',
+);
 
 class NavigationScreen extends ConsumerStatefulWidget {
   const NavigationScreen({super.key, required this.isPasswordRecovery});
@@ -62,7 +68,8 @@ class NavigationScreen extends ConsumerStatefulWidget {
   ConsumerState<NavigationScreen> createState() => _NavigationScreenState();
 }
 
-class _NavigationScreenState extends ConsumerState<NavigationScreen> with WidgetsBindingObserver {
+class _NavigationScreenState extends ConsumerState<NavigationScreen>
+    with WidgetsBindingObserver {
   late RouterConfig<Object> _routerConfig;
   StreamSubscription<Uri>? _linkSubscription;
 
@@ -84,7 +91,9 @@ class _NavigationScreenState extends ConsumerState<NavigationScreen> with Widget
 
     // the one and only GoRouter instance
     _routerConfig = GoRouter(
-      initialLocation: widget.isPasswordRecovery ? '/update-password' : '/group',
+      initialLocation: widget.isPasswordRecovery
+          ? '/update-password'
+          : '/group',
       navigatorKey: _rootNavigatorKey,
       routes: [
         // Stateful nested navigation based on:
@@ -92,7 +101,9 @@ class _NavigationScreenState extends ConsumerState<NavigationScreen> with Widget
         StatefulShellRoute.indexedStack(
           builder: (context, state, navigationShell) {
             // the UI shell
-            return ScaffoldWithNestedNavigation(navigationShell: navigationShell);
+            return ScaffoldWithNestedNavigation(
+              navigationShell: navigationShell,
+            );
           },
           branches: [
             // first branch (Group)
@@ -102,175 +113,189 @@ class _NavigationScreenState extends ConsumerState<NavigationScreen> with Widget
                 // top route inside branch
                 GoRoute(
                   path: '/group',
-                  pageBuilder: (context, state) => const NoTransitionPage(
-                    child: GroupList(),
-                  ),
+                  pageBuilder: (context, state) =>
+                      const NoTransitionPage(child: GroupList()),
                   routes: [
                     // child route
                     GoRoute(
-                        path: 'details',
-                        parentNavigatorKey: _rootNavigatorKey,
-                        pageBuilder: (context, state) {
-                          var extra = state.extra as Map<String, dynamic>;
-                          var group = extra['group'] as Group;
+                      path: 'details',
+                      parentNavigatorKey: _rootNavigatorKey,
+                      pageBuilder: (context, state) {
+                        var extra = state.extra as Map<String, dynamic>;
+                        var group = extra['group'] as Group;
 
-                          return sharedAxisPage(
-                            key: state.pageKey,
-                            child: GroupDetail(group: group),
-                          );
-                        },
-                        routes: [
-                          GoRoute(
-                              path: 'expense',
+                        return sharedAxisPage(
+                          key: state.pageKey,
+                          child: GroupDetail(group: group),
+                        );
+                      },
+                      routes: [
+                        GoRoute(
+                          path: 'expense',
+                          parentNavigatorKey: _rootNavigatorKey,
+                          pageBuilder: (context, state) {
+                            var extra = state.extra as Map<String, dynamic>;
+                            var group = extra['group'] as Group;
+                            var expense = extra['expense'] as Expense?;
+                            var receiptResult =
+                                extra['receiptResult'] as ReceiptScanResult?;
+
+                            return sharedAxisPage(
+                              key: state.pageKey,
+                              child: ExpenseDetail(
+                                group: group,
+                                expense: expense,
+                                receiptResult: receiptResult,
+                              ),
+                            );
+                          },
+                        ),
+                        GoRoute(
+                          path: 'expense-detail',
+                          parentNavigatorKey: _rootNavigatorKey,
+                          pageBuilder: (context, state) {
+                            var extra = state.extra as Map<String, dynamic>;
+                            var group = extra['group'] as Group;
+                            var expense = extra['expense'] as Expense;
+
+                            return sharedAxisPage(
+                              key: state.pageKey,
+                              child: ExpenseDetailRead(
+                                group: group,
+                                expense: expense,
+                              ),
+                            );
+                          },
+                        ),
+                        GoRoute(
+                          path: 'claim',
+                          parentNavigatorKey: _rootNavigatorKey,
+                          pageBuilder: (context, state) {
+                            var extra = state.extra as Map<String, dynamic>;
+                            var group = extra['group'] as Group;
+                            var expense = extra['expense'] as Expense;
+
+                            return sharedAxisPage(
+                              key: state.pageKey,
+                              child: ClaimPage(group: group, expense: expense),
+                            );
+                          },
+                        ),
+                        GoRoute(
+                          path: 'statistics',
+                          parentNavigatorKey: _rootNavigatorKey,
+                          pageBuilder: (context, state) {
+                            var extra = state.extra as Map<String, dynamic>;
+                            var group = extra['group'] as Group;
+
+                            return sharedAxisPage(
+                              key: state.pageKey,
+                              child: GroupStatisticsPage(group: group),
+                            );
+                          },
+                          routes: [
+                            GoRoute(
+                              path: 'month',
                               parentNavigatorKey: _rootNavigatorKey,
                               pageBuilder: (context, state) {
                                 var extra = state.extra as Map<String, dynamic>;
                                 var group = extra['group'] as Group;
-                                var expense = extra['expense'] as Expense?;
-                                var receiptResult = extra['receiptResult'] as ReceiptScanResult?;
+                                var monthStart =
+                                    extra['monthStart'] as DateTime;
+                                var monthEnd = extra['monthEnd'] as DateTime;
 
-                                return sharedAxisPage(
+                                return ModalBottomSheetPage(
                                   key: state.pageKey,
-                                  child: ExpenseDetail(
-                                    group: group,
-                                    expense: expense,
-                                    receiptResult: receiptResult,
-                                  ),
-                                );
-                              }),
-                          GoRoute(
-                              path: 'expense-detail',
-                              parentNavigatorKey: _rootNavigatorKey,
-                              pageBuilder: (context, state) {
-                                var extra = state.extra as Map<String, dynamic>;
-                                var group = extra['group'] as Group;
-                                var expense = extra['expense'] as Expense;
-
-                                return sharedAxisPage(
-                                  key: state.pageKey,
-                                  child: ExpenseDetailRead(
-                                    group: group,
-                                    expense: expense,
-                                  ),
-                                );
-                              }),
-                          GoRoute(
-                              path: 'claim',
-                              parentNavigatorKey: _rootNavigatorKey,
-                              pageBuilder: (context, state) {
-                                var extra = state.extra as Map<String, dynamic>;
-                                var group = extra['group'] as Group;
-                                var expense = extra['expense'] as Expense;
-
-                                return sharedAxisPage(
-                                  key: state.pageKey,
-                                  child: ClaimPage(
-                                    group: group,
-                                    expense: expense,
-                                  ),
-                                );
-                              }),
-                          GoRoute(
-                              path: 'statistics',
-                              parentNavigatorKey: _rootNavigatorKey,
-                              pageBuilder: (context, state) {
-                                var extra = state.extra as Map<String, dynamic>;
-                                var group = extra['group'] as Group;
-
-                                return sharedAxisPage(
-                                  key: state.pageKey,
-                                  child: GroupStatisticsPage(group: group),
+                                  builder: (context) =>
+                                      StatisticsMonthDetailBottomSheet(
+                                        group: group,
+                                        monthStart: monthStart,
+                                        monthEnd: monthEnd,
+                                      ),
                                 );
                               },
-                              routes: [
-                                GoRoute(
-                                    path: 'month',
-                                    parentNavigatorKey: _rootNavigatorKey,
-                                    pageBuilder: (context, state) {
-                                      var extra = state.extra as Map<String, dynamic>;
-                                      var group = extra['group'] as Group;
-                                      var monthStart = extra['monthStart'] as DateTime;
-                                      var monthEnd = extra['monthEnd'] as DateTime;
-
-                                      return ModalBottomSheetPage(
-                                        key: state.pageKey,
-                                        builder: (context) =>
-                                            StatisticsMonthDetailBottomSheet(
-                                          group: group,
-                                          monthStart: monthStart,
-                                          monthEnd: monthEnd,
-                                        ),
-                                      );
-                                    }),
-                                GoRoute(
-                                    path: 'category',
-                                    parentNavigatorKey: _rootNavigatorKey,
-                                    pageBuilder: (context, state) {
-                                      var extra = state.extra as Map<String, dynamic>;
-                                      return ModalBottomSheetPage(
-                                        key: state.pageKey,
-                                        builder: (context) => CategoryDetailBottomSheet(
-                                          groupId: extra['groupId'] as String,
-                                          categoryName: extra['categoryName'] as String,
-                                          monthStart: extra['monthStart'] as DateTime,
-                                          monthEnd: extra['monthEnd'] as DateTime,
-                                        ),
-                                      );
-                                    }),
-                              ]),
-                          GoRoute(
-                              path: 'payment',
+                            ),
+                            GoRoute(
+                              path: 'category',
                               parentNavigatorKey: _rootNavigatorKey,
                               pageBuilder: (context, state) {
                                 var extra = state.extra as Map<String, dynamic>;
-                                var group = extra['group'] as Group;
-
-                                // F155/F58: full-page settle-up view (not a
-                                // routed bottom sheet) so it drills in with a
-                                // back-arrow header instead of a non-draggable
-                                // modal sheet. Same shared-axis transition as
-                                // the edit/statistics routes.
-                                return sharedAxisPage(
+                                return ModalBottomSheetPage(
                                   key: state.pageKey,
-                                  child: GroupPaymentBottomSheet(
-                                    group: group,
-                                  ),
+                                  builder: (context) =>
+                                      CategoryDetailBottomSheet(
+                                        groupId: extra['groupId'] as String,
+                                        categoryName:
+                                            extra['categoryName'] as String,
+                                        monthStart:
+                                            extra['monthStart'] as DateTime,
+                                        monthEnd: extra['monthEnd'] as DateTime,
+                                      ),
                                 );
-                              }),
-                        ]),
-                    GoRoute(
-                        path: 'edit',
-                        parentNavigatorKey: _rootNavigatorKey,
-                        pageBuilder: (context, state) {
-                          var extra = state.extra as Map<String, dynamic>?;
-                          var group = extra?['group'] as Group?;
+                              },
+                            ),
+                          ],
+                        ),
+                        GoRoute(
+                          path: 'payment',
+                          parentNavigatorKey: _rootNavigatorKey,
+                          pageBuilder: (context, state) {
+                            var extra = state.extra as Map<String, dynamic>;
+                            var group = extra['group'] as Group;
 
-                          return sharedAxisPage(
-                            key: state.pageKey,
-                            child: GroupEdit(group: group),
-                          );
-                        }),
-                    GoRoute(
-                        path: 'share',
-                        parentNavigatorKey: _rootNavigatorKey,
-                        pageBuilder: (context, state) {
-                          var extra = state.extra as Map<String, dynamic>;
-                          var group = extra['group'] as Group;
-                          return ModalBottomSheetPage(
+                            // F155/F58: full-page settle-up view (not a
+                            // routed bottom sheet) so it drills in with a
+                            // back-arrow header instead of a non-draggable
+                            // modal sheet. Same shared-axis transition as
+                            // the edit/statistics routes.
+                            return sharedAxisPage(
                               key: state.pageKey,
-                              builder: (context) => GroupInvitePage(group: group));
-                        }),
+                              child: GroupPaymentBottomSheet(group: group),
+                            );
+                          },
+                        ),
+                      ],
+                    ),
                     GoRoute(
-                        path: 'join',
-                        parentNavigatorKey: _rootNavigatorKey,
-                        pageBuilder: (context, state) {
-                          final groupId = state.uri.queryParameters['groupId'];
-                          final groupName = state.uri.queryParameters['name'];
-                          return sharedAxisPage(
-                            key: state.pageKey,
-                            child: GroupJoinPage(groupId: groupId ?? '', groupName: groupName),
-                          );
-                        }),
+                      path: 'edit',
+                      parentNavigatorKey: _rootNavigatorKey,
+                      pageBuilder: (context, state) {
+                        var extra = state.extra as Map<String, dynamic>?;
+                        var group = extra?['group'] as Group?;
+
+                        return sharedAxisPage(
+                          key: state.pageKey,
+                          child: GroupEdit(group: group),
+                        );
+                      },
+                    ),
+                    GoRoute(
+                      path: 'share',
+                      parentNavigatorKey: _rootNavigatorKey,
+                      pageBuilder: (context, state) {
+                        var extra = state.extra as Map<String, dynamic>;
+                        var group = extra['group'] as Group;
+                        return ModalBottomSheetPage(
+                          key: state.pageKey,
+                          builder: (context) => GroupInvitePage(group: group),
+                        );
+                      },
+                    ),
+                    GoRoute(
+                      path: 'join',
+                      parentNavigatorKey: _rootNavigatorKey,
+                      pageBuilder: (context, state) {
+                        final groupId = state.uri.queryParameters['groupId'];
+                        final groupName = state.uri.queryParameters['name'];
+                        return sharedAxisPage(
+                          key: state.pageKey,
+                          child: GroupJoinPage(
+                            groupId: groupId ?? '',
+                            groupName: groupName,
+                          ),
+                        );
+                      },
+                    ),
                   ],
                 ),
               ],
@@ -281,44 +306,45 @@ class _NavigationScreenState extends ConsumerState<NavigationScreen> with Widget
               routes: [
                 // top route inside branch
                 GoRoute(
-                    path: '/friend',
-                    pageBuilder: (context, state) =>
-                        const NoTransitionPage(child: FriendList()),
-                    routes: [
-                      GoRoute(
-                          path: 'add',
-                          parentNavigatorKey: _rootNavigatorKey,
-                          pageBuilder: (context, state) => sharedAxisPage(
-                            key: state.pageKey,
-                            child: const FriendAddPage(),
-                          ),
+                  path: '/friend',
+                  pageBuilder: (context, state) =>
+                      const NoTransitionPage(child: FriendList()),
+                  routes: [
+                    GoRoute(
+                      path: 'add',
+                      parentNavigatorKey: _rootNavigatorKey,
+                      pageBuilder: (context, state) => sharedAxisPage(
+                        key: state.pageKey,
+                        child: const FriendAddPage(),
                       ),
-                      GoRoute(
-                        path: 'qr',
-                        parentNavigatorKey: _rootNavigatorKey,
-                        pageBuilder: (context, state) => sharedAxisPage(
+                    ),
+                    GoRoute(
+                      path: 'qr',
+                      parentNavigatorKey: _rootNavigatorKey,
+                      pageBuilder: (context, state) => sharedAxisPage(
+                        key: state.pageKey,
+                        child: const FriendQrPage(),
+                      ),
+                    ),
+                    GoRoute(
+                      path: 'accept',
+                      parentNavigatorKey: _rootNavigatorKey,
+                      pageBuilder: (context, state) {
+                        final email = state.uri.queryParameters['email'];
+                        final username = state.uri.queryParameters['u'];
+                        final code = state.uri.queryParameters['c'];
+                        return sharedAxisPage(
                           key: state.pageKey,
-                          child: const FriendQrPage(),
-                        ),
-                      ),
-                      GoRoute(
-                        path: 'accept',
-                        parentNavigatorKey: _rootNavigatorKey,
-                        pageBuilder: (context, state) {
-                          final email = state.uri.queryParameters['email'];
-                          final username = state.uri.queryParameters['u'];
-                          final code = state.uri.queryParameters['c'];
-                          return sharedAxisPage(
-                            key: state.pageKey,
-                            child: FriendAcceptPage(
-                              email: email,
-                              username: username,
-                              usernameCode: code,
-                            ),
-                          );
-                        },
-                      ),
-                    ]),
+                          child: FriendAcceptPage(
+                            email: email,
+                            username: username,
+                            usernameCode: code,
+                          ),
+                        );
+                      },
+                    ),
+                  ],
+                ),
               ],
             ),
             // third branch (Setting)
@@ -327,77 +353,71 @@ class _NavigationScreenState extends ConsumerState<NavigationScreen> with Widget
               routes: [
                 // top route inside branch
                 GoRoute(
-                    path: '/setting',
-                    pageBuilder: (context, state) => const NoTransitionPage(
-                          child: Setting(),
-                        ),
-                    routes: [
-                      // child route
-                      GoRoute(
-                        path: 'privacy-policy',
-                        parentNavigatorKey: _rootNavigatorKey,
-                        pageBuilder: (context, state) => sharedAxisPage(
-                          key: state.pageKey,
-                          child: const PrivacyPolicy(),
-                        ),
+                  path: '/setting',
+                  pageBuilder: (context, state) =>
+                      const NoTransitionPage(child: Setting()),
+                  routes: [
+                    // child route
+                    GoRoute(
+                      path: 'privacy-policy',
+                      parentNavigatorKey: _rootNavigatorKey,
+                      pageBuilder: (context, state) => sharedAxisPage(
+                        key: state.pageKey,
+                        child: const PrivacyPolicy(),
                       ),
-                      GoRoute(
-                        path: 'statistics',
-                        parentNavigatorKey: _rootNavigatorKey,
-                        pageBuilder: (context, state) => sharedAxisPage(
-                          key: state.pageKey,
-                          child: const PersonalStatisticsPage(),
-                        ),
+                    ),
+                    GoRoute(
+                      path: 'statistics',
+                      parentNavigatorKey: _rootNavigatorKey,
+                      pageBuilder: (context, state) => sharedAxisPage(
+                        key: state.pageKey,
+                        child: const PersonalStatisticsPage(),
                       ),
-                      // child route
-                      GoRoute(
-                        path: 'contact',
-                        parentNavigatorKey: _rootNavigatorKey,
-                        pageBuilder: (context, state) => sharedAxisPage(
-                          key: state.pageKey,
-                          child: const Contact(),
-                        ),
+                    ),
+                    // child route
+                    GoRoute(
+                      path: 'contact',
+                      parentNavigatorKey: _rootNavigatorKey,
+                      pageBuilder: (context, state) => sharedAxisPage(
+                        key: state.pageKey,
+                        child: const Contact(),
                       ),
-                    ]),
+                    ),
+                  ],
+                ),
               ],
             ),
           ],
         ),
         GoRoute(
           path: '/privacy-policy',
-          pageBuilder: (context, state) => sharedAxisPage(
-            key: state.pageKey,
-            child: const PrivacyPolicy(),
-          ),
+          pageBuilder: (context, state) =>
+              sharedAxisPage(key: state.pageKey, child: const PrivacyPolicy()),
         ),
         GoRoute(
           path: '/contact',
-          pageBuilder: (context, state) => sharedAxisPage(
-            key: state.pageKey,
-            child: const Contact(),
-          ),
+          pageBuilder: (context, state) =>
+              sharedAxisPage(key: state.pageKey, child: const Contact()),
         ),
         GoRoute(
           path: '/update-password',
-          pageBuilder: (context, state) => sharedAxisPage(
-            key: state.pageKey,
-            child: const UpdatePassword(),
-          ),
+          pageBuilder: (context, state) =>
+              sharedAxisPage(key: state.pageKey, child: const UpdatePassword()),
         ),
         // Throwaway dev/QA route for the E0-T4 shared restyle widgets.
         GoRoute(
           path: '/dev/gallery',
-          pageBuilder: (context, state) => const NoTransitionPage(
-            child: WidgetGalleryPage(),
-          ),
+          pageBuilder: (context, state) =>
+              const NoTransitionPage(child: WidgetGalleryPage()),
         ),
       ],
       errorBuilder: (context, state) {
         return Scaffold(
-            appBar: AppBar(
-              title: Text(AppLocalizations.of(context)!.pageNotFound),
-            ),
-            body: Center(child: Text(AppLocalizations.of(context)!.pageNotFound)));
+          appBar: AppBar(
+            title: Text(AppLocalizations.of(context)!.pageNotFound),
+          ),
+          body: Center(child: Text(AppLocalizations.of(context)!.pageNotFound)),
+        );
       },
     );
   }
@@ -407,7 +427,11 @@ class _NavigationScreenState extends ConsumerState<NavigationScreen> with Widget
     final email = supabase.auth.currentUser?.email;
     if (email == null) return;
 
-    final user = await supabase.from("user").select("locale").eq("email", email).maybeSingle();
+    final user = await supabase
+        .from("user")
+        .select("locale")
+        .eq("email", email)
+        .maybeSingle();
 
     if (!mounted) return;
 
@@ -419,19 +443,21 @@ class _NavigationScreenState extends ConsumerState<NavigationScreen> with Widget
   Future<Null> _initFirebaseMessaging() async {
     // You may set the permission requests to "provisional" which allows the user to choose what type
     // of notifications they would like to receive once the user receives a notification.
-    final notificationSettings = await FirebaseMessaging.instance.requestPermission(
-      alert: true,
-      announcement: false,
-      badge: true,
-      carPlay: false,
-      criticalAlert: false,
-      provisional: false,
-      sound: true,
-    );
+    final notificationSettings = await FirebaseMessaging.instance
+        .requestPermission(
+          alert: true,
+          announcement: false,
+          badge: true,
+          carPlay: false,
+          criticalAlert: false,
+          provisional: false,
+          sound: true,
+        );
 
     // debugPrint('User granted permission: ${notificationSettings.authorizationStatus}');
 
-    if (notificationSettings.authorizationStatus == AuthorizationStatus.denied) {
+    if (notificationSettings.authorizationStatus ==
+        AuthorizationStatus.denied) {
       return null;
     }
 
@@ -451,7 +477,9 @@ class _NavigationScreenState extends ConsumerState<NavigationScreen> with Widget
   }
 
   Future<void> _handlePush() async {
-    final fcmToken = await FirebaseMessaging.instance.getToken(vapidKey: kFcmVapidKey);
+    final fcmToken = await FirebaseMessaging.instance.getToken(
+      vapidKey: kFcmVapidKey,
+    );
 
     final userId = supabase.auth.currentUser?.id;
     if (fcmToken != null && userId != null) {
@@ -469,7 +497,8 @@ class _NavigationScreenState extends ConsumerState<NavigationScreen> with Widget
 
     // Get any messages which caused the application to open from
     // a terminated state.
-    RemoteMessage? initialMessage = await FirebaseMessaging.instance.getInitialMessage();
+    RemoteMessage? initialMessage = await FirebaseMessaging.instance
+        .getInitialMessage();
 
     // If the message also contains a data property with a "type" of "chat",
     // navigate to a chat screen
@@ -481,33 +510,39 @@ class _NavigationScreenState extends ConsumerState<NavigationScreen> with Widget
     // Stream listener
     FirebaseMessaging.onMessageOpenedApp.listen(_handleMessage);
 
-    FirebaseMessaging.instance.onTokenRefresh.listen((fcmToken) {
-      final userId = supabase.auth.currentUser?.id;
-      if (userId == null) return;
-      supabase.from('device_tokens').upsert({
-        'user_id': userId,
-        'token': fcmToken,
-      }).catchError((e) {
-        debugPrint('Device token refresh upsert failed: $e');
-      });
-      // Note: This callback is fired at each app startup and whenever a new
-      // token is generated.
-    }).onError((err) {
-      debugPrint('FCM token refresh failed: $err');
-    });
+    FirebaseMessaging.instance.onTokenRefresh
+        .listen((fcmToken) {
+          final userId = supabase.auth.currentUser?.id;
+          if (userId == null) return;
+          supabase
+              .from('device_tokens')
+              .upsert({'user_id': userId, 'token': fcmToken})
+              .catchError((e) {
+                debugPrint('Device token refresh upsert failed: $e');
+              });
+          // Note: This callback is fired at each app startup and whenever a new
+          // token is generated.
+        })
+        .onError((err) {
+          debugPrint('FCM token refresh failed: $err');
+        });
   }
 
   Future<void> _handleMessage(RemoteMessage message) async {
     try {
       switch (message.data['type']) {
         case 'group':
-          Group group = await GroupRepository.fetchDetail(message.data['expense_id']);
+          Group group = await GroupRepository.fetchDetail(
+            message.data['expense_id'],
+          );
           final context = _rootNavigatorKey.currentContext;
           if (context == null || !context.mounted) return;
           navigateToGroup(context, group);
           break;
         case 'expense':
-          Expense expense = await ExpenseRepository.fetchDetail(message.data['expense_id']);
+          Expense expense = await ExpenseRepository.fetchDetail(
+            message.data['expense_id'],
+          );
           final context = _rootNavigatorKey.currentContext;
           if (context == null || !context.mounted) return;
           navigateToExpense(context, expense);
@@ -559,7 +594,11 @@ class _NavigationScreenState extends ConsumerState<NavigationScreen> with Widget
       final code = params['c'];
       // Accept either email or username+code
       final hasEmail = email != null && _emailRegExp.hasMatch(email);
-      final hasUsername = username != null && username.isNotEmpty && code != null && code.isNotEmpty;
+      final hasUsername =
+          username != null &&
+          username.isNotEmpty &&
+          code != null &&
+          code.isNotEmpty;
       if (!hasEmail && !hasUsername) return null;
       return fragment;
     }
@@ -631,10 +670,8 @@ class _NavigationScreenState extends ConsumerState<NavigationScreen> with Widget
 // Stateful nested navigation based on:
 // https://github.com/flutter/packages/blob/main/packages/go_router/example/lib/stateful_shell_route.dart
 class ScaffoldWithNestedNavigation extends ConsumerStatefulWidget {
-  const ScaffoldWithNestedNavigation({
-    Key? key,
-    required this.navigationShell,
-  }) : super(key: key ?? const ValueKey('ScaffoldWithNestedNavigation'));
+  const ScaffoldWithNestedNavigation({Key? key, required this.navigationShell})
+    : super(key: key ?? const ValueKey('ScaffoldWithNestedNavigation'));
   final StatefulNavigationShell navigationShell;
 
   @override
@@ -664,7 +701,10 @@ class _ScaffoldWithNestedNavigationState
     final l10n = AppLocalizations.of(context)!;
 
     return Scaffold(
-      body: widget.navigationShell,
+      body: TabSwitchTransition(
+        index: widget.navigationShell.currentIndex,
+        child: widget.navigationShell,
+      ),
       bottomNavigationBar: AppBottomNav(
         selectedIndex: widget.navigationShell.currentIndex,
         onSelect: _goBranch,

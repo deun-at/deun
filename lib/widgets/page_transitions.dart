@@ -51,3 +51,85 @@ CustomTransitionPage<T> sharedAxisPage<T>({
     },
   );
 }
+
+/// The vertical distance (px) the incoming home-tab view travels while fading
+/// in, per ANIMATIONS §1 (`translateY(8px)`).
+const double kTabSwitchOffset = 8.0;
+
+/// Plays the home-tab-switch motion (ANIMATIONS §1) whenever [index] changes.
+///
+/// The incoming view fades in while translating up from [kTabSwitchOffset] to
+/// rest over [Motion.tabSwitch] (0.26 s) with a [Curves.ease] curve — a gentle
+/// fade-up, **no horizontal slide**.
+///
+/// This widget *wraps* [child] (the `StatefulNavigationShell` / indexed stack);
+/// it never rebuilds or replaces it, so all branch state (scroll offsets,
+/// nested navigation) is preserved exactly as before. The animation only
+/// re-runs when [index] changes, not on every rebuild.
+///
+/// **Reduced motion:** when `MediaQuery.of(context).disableAnimations` is
+/// `true`, [child] is returned directly with no animation.
+class TabSwitchTransition extends StatefulWidget {
+  const TabSwitchTransition({
+    super.key,
+    required this.index,
+    required this.child,
+  });
+
+  /// The current branch index of the shell. A change re-runs the fade-up.
+  final int index;
+
+  /// The shell body to wrap (kept alive across switches).
+  final Widget child;
+
+  @override
+  State<TabSwitchTransition> createState() => _TabSwitchTransitionState();
+}
+
+class _TabSwitchTransitionState extends State<TabSwitchTransition>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _controller = AnimationController(
+    vsync: this,
+    duration: Motion.tabSwitch,
+    value: 1.0, // start settled — no entrance animation on first build
+  );
+  late final Animation<double> _curved = CurvedAnimation(
+    parent: _controller,
+    curve: Curves.ease,
+  );
+
+  @override
+  void didUpdateWidget(TabSwitchTransition oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.index != oldWidget.index) {
+      _controller.forward(from: 0.0);
+    }
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (MediaQuery.of(context).disableAnimations) {
+      return widget.child;
+    }
+    return AnimatedBuilder(
+      animation: _curved,
+      child: widget.child,
+      builder: (context, child) {
+        final t = _curved.value;
+        return Opacity(
+          opacity: t.clamp(0.0, 1.0),
+          child: Transform.translate(
+            offset: Offset(0, (1 - t) * kTabSwitchOffset),
+            child: child,
+          ),
+        );
+      },
+    );
+  }
+}
