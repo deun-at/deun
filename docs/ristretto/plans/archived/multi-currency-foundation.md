@@ -23,4 +23,45 @@
 - Parallel-with: —
 - Blockers: —
 
-status: planned
+status: done
+
+## Evidence
+
+Proven by `test/pages/groups/multi_currency_foundation_test.dart` (new, 12 tests) and
+additions to `test/widgets/group_edit_screen_test.dart` (+2 tests), each assertion restating a criterion:
+
+- **`group.currency_code` column, backfill to EUR, expenses have no own currency**
+  - Migration `supabase/migrations/20260712000000_add_group_currency_code.sql` adds
+    `currency_code text not null default 'EUR'` to `group` and backfills NULLs to EUR. No
+    expense-level column; `save_expense_all`/`pay_back*` untouched.
+  - Tests: "existing rows (no currency_code) backfill to EUR", "a group reads its persisted
+    currency_code", "a new Group defaults to EUR", "currency_code round-trips through toJson".
+- **Group create/edit currency picker from a curated list; new groups default to EUR**
+  - `_CurrencyField` in `group_detail_edit.dart` (DropdownButton over `kSupportedCurrencyCodes`),
+    persisted via `GroupRepository.saveAll` (`currency_code` in upsert).
+  - Tests: "offers a currency picker; new group defaults to EUR"; "curated currency list offers at
+    minimum EUR, USD, GBP, CHF".
+- **Changing currency relabels (no conversion) and the edit UI states it**
+  - Note `groupCurrencyRelabelNote` shown when editing.
+  - Tests: "editing a USD group preselects USD and states the relabel note"; "relabel-not-convert:
+    same amount, same digits, only the symbol changes".
+- **No hardcoded €; locale-aware symbol placement across surfaces**
+  - Removed all generated `NumberFormat.currency(name:'€')` sites: ARB currency placeholders became
+    plain-String (pre-formatted), and `toCurrency`/`toCurrencyNoPrefix` removed in favor of the
+    `AppLocalizationsCurrency.toCurrency(amount,[code])` extension (`simpleCurrency`). `MoneyText`
+    and `ExpenseEntryWidget` gained a `currencyCode`; group/expense/claim/payment/notification/
+    snackbar sites thread the group's code. Statistics/friends (cross-group aggregates) format via
+    the default code — real cross-group conversion is `multi-currency-home-aggregates`.
+  - Tests: "USD in en-US renders \"$1,234.56\"", "EUR in de-DE renders symbol after the amount",
+    "symbol differs by currency within the same locale (USD vs EUR)", "no amount is formatted with a
+    hardcoded € — default code drives the symbol".
+- **A USD group and an EUR group side by side show their own symbols**
+  - `group_list_item.dart` passes `group.currencyCode` to `MoneyText`.
+  - Test: "a USD group and an EUR group show their own symbols side by side"; "MoneyText defaults to
+    the EUR symbol when no code is given".
+
+### Gate summary (`.ristretto.json`)
+- `dart format` — all 32 changed Dart files already formatted (`--set-exit-if-changed` → 0 changed).
+- `flutter analyze` — "No issues found!".
+- `flutter test` — 893 passing (was 879; +14 new). Existing money-math tests unaffected
+  (formatting-only change).
