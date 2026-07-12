@@ -4,6 +4,7 @@ import 'package:deun/pages/friends/data/friendship_repository.dart';
 import 'package:deun/pages/friends/presentation/friend_balance.dart';
 import 'package:deun/pages/friends/presentation/friend_detail_sheet.dart';
 import 'package:deun/pages/users/user_model.dart';
+import 'package:deun/provider.dart';
 import 'package:deun/widgets/empty_list_widget.dart';
 import 'package:deun/widgets/restyle/balance_pill.dart' show BalanceState;
 import 'package:deun/widgets/restyle/deun_header.dart' show HeaderIconButton;
@@ -40,7 +41,10 @@ class _FriendListState extends ConsumerState<FriendList> {
     try {
       await FriendshipRepository.accepted(email);
       if (!mounted) return;
-      showSnackBar(context, AppLocalizations.of(context)!.friendshipAccept(displayName));
+      showSnackBar(
+        context,
+        AppLocalizations.of(context)!.friendshipAccept(displayName),
+      );
       sendFriendAcceptNotification(context, {email});
     } catch (e) {
       if (!mounted) return;
@@ -52,7 +56,10 @@ class _FriendListState extends ConsumerState<FriendList> {
     try {
       await FriendshipRepository.decline(email);
       if (!mounted) return;
-      showSnackBar(context, AppLocalizations.of(context)!.friendshipRequestDecline(displayName));
+      showSnackBar(
+        context,
+        AppLocalizations.of(context)!.friendshipRequestDecline(displayName),
+      );
     } catch (e) {
       if (!mounted) return;
       showSnackBar(context, AppLocalizations.of(context)!.generalError);
@@ -63,7 +70,10 @@ class _FriendListState extends ConsumerState<FriendList> {
     try {
       await FriendshipRepository.cancel(email);
       if (!mounted) return;
-      showSnackBar(context, AppLocalizations.of(context)!.friendshipRequestCancel(displayName));
+      showSnackBar(
+        context,
+        AppLocalizations.of(context)!.friendshipRequestCancel(displayName),
+      );
     } catch (e) {
       if (!mounted) return;
       showSnackBar(context, AppLocalizations.of(context)!.generalError);
@@ -74,6 +84,7 @@ class _FriendListState extends ConsumerState<FriendList> {
     BuildContext context,
     FriendshipListState value,
     AppLocalizations l10n,
+    String homeCurrency,
   ) {
     final children = <Widget>[
       _FriendsHeader(),
@@ -87,23 +98,31 @@ class _FriendListState extends ConsumerState<FriendList> {
           for (final friendship in value.pendingIncomingRequests)
             _IncomingRequestCard(
               friendship: friendship,
-              onAccept: () =>
-                  _acceptFriendRequest(friendship.user.email, friendship.user.displayName),
-              onDecline: () =>
-                  _declineFriendRequest(friendship.user.email, friendship.user.displayName),
+              onAccept: () => _acceptFriendRequest(
+                friendship.user.email,
+                friendship.user.displayName,
+              ),
+              onDecline: () => _declineFriendRequest(
+                friendship.user.email,
+                friendship.user.displayName,
+              ),
             ),
         ]),
         const SizedBox(height: 16),
       ],
       if (value.pendingOutgoingRequests.isNotEmpty) ...[
-        SectionLabel(l10n.pendingRequests(value.pendingOutgoingRequests.length)),
+        SectionLabel(
+          l10n.pendingRequests(value.pendingOutgoingRequests.length),
+        ),
         const SizedBox(height: 8),
         ...spacedCardItems([
           for (final friendship in value.pendingOutgoingRequests)
             _OutgoingRequestCard(
               friendship: friendship,
-              onCancel: () =>
-                  _cancelFriendRequest(friendship.user.email, friendship.user.displayName),
+              onCancel: () => _cancelFriendRequest(
+                friendship.user.email,
+                friendship.user.displayName,
+              ),
             ),
         ]),
         const SizedBox(height: 16),
@@ -124,6 +143,7 @@ class _FriendListState extends ConsumerState<FriendList> {
               for (final friendship in value.acceptedFriends)
                 _FriendCard(
                   friendship: friendship,
+                  homeCurrency: homeCurrency,
                   onTap: () => openFriendDetailSheet(context, friendship),
                 ),
             ],
@@ -150,58 +170,62 @@ class _FriendListState extends ConsumerState<FriendList> {
 
   @override
   Widget build(BuildContext context) {
-    final AsyncValue<FriendshipListState> friendshipProvider = ref.watch(friendshipListProvider);
+    final AsyncValue<FriendshipListState> friendshipProvider = ref.watch(
+      friendshipListProvider,
+    );
     final l10n = AppLocalizations.of(context)!;
+    final homeCurrency = ref.watch(homeCurrencyProvider);
 
     return Scaffold(
       body: SafeArea(
         bottom: false,
         child: switch (friendshipProvider) {
-          AsyncData(:final value) => value.acceptedFriends.isEmpty &&
-                  value.pendingIncomingRequests.isEmpty &&
-                  value.pendingOutgoingRequests.isEmpty
-              ? Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    _FriendsHeader(),
-                    const SizedBox(height: 8),
-                    Expanded(
-                      child: EmptyListWidget(
-                        icon: Icons.group_outlined,
-                        label: l10n.friendsNoEntries,
-                        onRefresh: updateFriendshipList,
+          AsyncData(:final value) =>
+            value.acceptedFriends.isEmpty &&
+                    value.pendingIncomingRequests.isEmpty &&
+                    value.pendingOutgoingRequests.isEmpty
+                ? Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      _FriendsHeader(),
+                      const SizedBox(height: 8),
+                      Expanded(
+                        child: EmptyListWidget(
+                          icon: Icons.group_outlined,
+                          label: l10n.friendsNoEntries,
+                          onRefresh: updateFriendshipList,
+                        ),
                       ),
-                    ),
-                  ],
-                )
-              : _buildFriendListView(context, value, l10n),
+                    ],
+                  )
+                : _buildFriendListView(context, value, l10n, homeCurrency),
           AsyncError() => Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                _FriendsHeader(),
-                const SizedBox(height: 8),
-                Expanded(
-                  child: EmptyListWidget(
-                    icon: Icons.group_outlined,
-                    label: l10n.friendsNoEntries,
-                    onRefresh: updateFriendshipList,
-                  ),
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              _FriendsHeader(),
+              const SizedBox(height: 8),
+              Expanded(
+                child: EmptyListWidget(
+                  icon: Icons.group_outlined,
+                  label: l10n.friendsNoEntries,
+                  onRefresh: updateFriendshipList,
                 ),
-              ],
-            ),
+              ),
+            ],
+          ),
           _ => Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                _FriendsHeader(),
-                const Expanded(
-                  child: ShimmerCardList(
-                    height: 70,
-                    listEntryLength: 12,
-                    shape: ShimmerShape.row,
-                  ),
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              _FriendsHeader(),
+              const Expanded(
+                child: ShimmerCardList(
+                  height: 70,
+                  listEntryLength: 12,
+                  shape: ShimmerShape.row,
                 ),
-              ],
-            ),
+              ),
+            ],
+          ),
         },
       ),
     );
@@ -271,7 +295,9 @@ class _FriendIdentity extends StatelessWidget {
               ),
               Text(
                 user.fullUsername,
-                style: textTheme.bodySmall?.copyWith(color: colorScheme.onSurfaceVariant),
+                style: textTheme.bodySmall?.copyWith(
+                  color: colorScheme.onSurfaceVariant,
+                ),
                 overflow: TextOverflow.ellipsis,
               ),
             ],
@@ -361,9 +387,16 @@ class _OutgoingRequestCard extends StatelessWidget {
 /// the friend owes you, red when you owe, neutral gray when settled — with no
 /// filled chip/pill background (matches `Deun Redesign v3.dc.html` "All friends").
 class _FriendCard extends StatelessWidget {
-  const _FriendCard({required this.friendship, required this.onTap});
+  const _FriendCard({
+    required this.friendship,
+    required this.homeCurrency,
+    required this.onTap,
+  });
 
   final Friendship friendship;
+
+  /// The home currency the friend's aggregated shared amount is expressed in.
+  final String homeCurrency;
   final VoidCallback onTap;
 
   @override
@@ -399,9 +432,9 @@ class _FriendCard extends StatelessWidget {
     // v3 balance text: 13px / w600, the whole label tinted by state. No chip
     // background, no pill padding — plain semantic-colored text.
     final balanceStyle = Theme.of(context).textTheme.labelMedium?.copyWith(
-          color: balanceColor,
-          fontWeight: FontWeight.w600,
-        );
+      color: balanceColor,
+      fontWeight: FontWeight.w600,
+    );
 
     // No SoftCard wrapper: the row lives inside the joined all-friends SoftCard,
     // so it is an ink-splashing padded row (like the group-detail ledger rows)
@@ -422,6 +455,8 @@ class _FriendCard extends StatelessWidget {
                   const SizedBox(width: 6),
                   MoneyText(
                     friendship.shareAmount.abs(),
+                    currencyCode: homeCurrency,
+                    approximate: friendship.approximate,
                     semantic: moneySemantic,
                     style: balanceStyle,
                   ),

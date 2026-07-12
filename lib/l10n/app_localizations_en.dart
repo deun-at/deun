@@ -1774,6 +1774,28 @@ class AppLocalizationsEn extends AppLocalizations {
   String get settingsLanguageSheetTitle => 'Language';
 
   @override
+  String get settingsHomeCurrency => 'Home currency';
+
+  @override
+  String get settingsHomeCurrencyInfo =>
+      'Balances and statistics that span groups are converted into this currency at current rates. Each group still uses its own currency.';
+
+  @override
+  String get homeAggregateApproxNote =>
+      'Cross-currency totals are approximate.';
+
+  @override
+  String homeAggregateExcluded(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count groups excluded (no rate)',
+      one: '$count group excluded (no rate)',
+    );
+    return '$_temp0';
+  }
+
+  @override
   String get settingsDeleteAccountTitle => 'Delete account?';
 
   @override

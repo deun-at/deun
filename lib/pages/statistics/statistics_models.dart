@@ -7,11 +7,11 @@ enum StatsRange {
   allTime;
 
   int? get months => switch (this) {
-        StatsRange.threeMonths => 3,
-        StatsRange.sixMonths => 6,
-        StatsRange.twelveMonths => 12,
-        StatsRange.allTime => null,
-      };
+    StatsRange.threeMonths => 3,
+    StatsRange.sixMonths => 6,
+    StatsRange.twelveMonths => 12,
+    StatsRange.allTime => null,
+  };
 }
 
 class StatsRangeArgs extends Equatable {
@@ -59,7 +59,14 @@ class SpendingSummary extends Equatable {
   );
 
   @override
-  List<Object?> get props => [total, expenseCount, avgPerMonth, biggestExpense, prevPeriodTotal, deltaPct];
+  List<Object?> get props => [
+    total,
+    expenseCount,
+    avgPerMonth,
+    biggestExpense,
+    prevPeriodTotal,
+    deltaPct,
+  ];
 }
 
 class MemberSpendingBreakdown extends Equatable {
@@ -101,7 +108,14 @@ class PersonalGroupSummary extends Equatable {
   });
 
   @override
-  List<Object?> get props => [groupId, groupName, colorValue, totalPaid, totalShare, expenseCount];
+  List<Object?> get props => [
+    groupId,
+    groupName,
+    colorValue,
+    totalPaid,
+    totalShare,
+    expenseCount,
+  ];
 }
 
 class PersonalStatisticsState extends Equatable {
@@ -111,12 +125,23 @@ class PersonalStatisticsState extends Equatable {
   final double totalShare;
   final int expenseCount;
 
+  /// True when the [totalPaid] / [totalShare] hero figures were converted from
+  /// groups in other currencies into the home currency, so they are estimates
+  /// (mark "≈"). False when every group was already in the home currency.
+  final bool approximate;
+
+  /// Number of groups excluded from the hero totals because their currency had
+  /// no available conversion rate.
+  final int excludedCount;
+
   const PersonalStatisticsState({
     required this.groups,
     required this.monthlyTotals,
     required this.totalPaid,
     required this.totalShare,
     required this.expenseCount,
+    this.approximate = false,
+    this.excludedCount = 0,
   });
 
   static const empty = PersonalStatisticsState(
@@ -128,7 +153,15 @@ class PersonalStatisticsState extends Equatable {
   );
 
   @override
-  List<Object?> get props => [groups, monthlyTotals, totalPaid, totalShare, expenseCount];
+  List<Object?> get props => [
+    groups,
+    monthlyTotals,
+    totalPaid,
+    totalShare,
+    expenseCount,
+    approximate,
+    excludedCount,
+  ];
 }
 
 class MonthBucket extends Equatable {
@@ -136,7 +169,11 @@ class MonthBucket extends Equatable {
   final DateTime end;
   final double total;
 
-  const MonthBucket({required this.start, required this.end, required this.total});
+  const MonthBucket({
+    required this.start,
+    required this.end,
+    required this.total,
+  });
 
   @override
   List<Object?> get props => [start, end, total];
@@ -147,7 +184,11 @@ class GroupMonthlyTotalsState extends Equatable {
   final int endOffsetMonths; // 0 = current month, 1 = previous month, ...
   final List<MonthBucket> months; // exactly 6, ending at endOffsetMonths
 
-  const GroupMonthlyTotalsState({required this.groupId, required this.endOffsetMonths, required this.months});
+  const GroupMonthlyTotalsState({
+    required this.groupId,
+    required this.endOffsetMonths,
+    required this.months,
+  });
 
   @override
   List<Object?> get props => [groupId, endOffsetMonths, months];
@@ -158,7 +199,11 @@ class GroupMonthMemberTotalsArgs extends Equatable {
   final DateTime monthStart;
   final DateTime monthEnd;
 
-  const GroupMonthMemberTotalsArgs({required this.groupId, required this.monthStart, required this.monthEnd});
+  const GroupMonthMemberTotalsArgs({
+    required this.groupId,
+    required this.monthStart,
+    required this.monthEnd,
+  });
 
   @override
   List<Object?> get props => [groupId, monthStart, monthEnd];
@@ -168,7 +213,10 @@ class GroupMonthlyTotalsArgs extends Equatable {
   final String groupId;
   final int endOffsetMonths;
 
-  const GroupMonthlyTotalsArgs({required this.groupId, required this.endOffsetMonths});
+  const GroupMonthlyTotalsArgs({
+    required this.groupId,
+    required this.endOffsetMonths,
+  });
 
   @override
   List<Object?> get props => [groupId, endOffsetMonths];
@@ -179,7 +227,11 @@ class MemberMonthTotal extends Equatable {
   final String displayName;
   final double total;
 
-  const MemberMonthTotal({required this.email, required this.displayName, required this.total});
+  const MemberMonthTotal({
+    required this.email,
+    required this.displayName,
+    required this.total,
+  });
 
   @override
   List<Object?> get props => [email, displayName, total];
@@ -190,7 +242,11 @@ class CategoryMonthTotal extends Equatable {
   final String categoryDisplayName;
   final double total;
 
-  const CategoryMonthTotal({required this.categoryName, required this.categoryDisplayName, required this.total});
+  const CategoryMonthTotal({
+    required this.categoryName,
+    required this.categoryDisplayName,
+    required this.total,
+  });
 
   @override
   List<Object?> get props => [categoryName, categoryDisplayName, total];
@@ -201,7 +257,11 @@ class GroupMonthCategoryTotalsArgs extends Equatable {
   final DateTime monthStart;
   final DateTime monthEnd;
 
-  const GroupMonthCategoryTotalsArgs({required this.groupId, required this.monthStart, required this.monthEnd});
+  const GroupMonthCategoryTotalsArgs({
+    required this.groupId,
+    required this.monthStart,
+    required this.monthEnd,
+  });
 
   @override
   List<Object?> get props => [groupId, monthStart, monthEnd];
@@ -225,7 +285,14 @@ class CategoryExpenseDetail extends Equatable {
   });
 
   @override
-  List<Object?> get props => [expenseId, expenseName, expenseDate, amount, paidBy, paidByDisplayName];
+  List<Object?> get props => [
+    expenseId,
+    expenseName,
+    expenseDate,
+    amount,
+    paidBy,
+    paidByDisplayName,
+  ];
 }
 
 class CategoryExpenseDetailsArgs extends Equatable {

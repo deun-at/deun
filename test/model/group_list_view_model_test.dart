@@ -1,3 +1,4 @@
+import 'package:deun/helper/currency_conversion.dart';
 import 'package:deun/pages/groups/data/group_model.dart';
 import 'package:deun/pages/groups/presentation/group_list_view_model.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -10,6 +11,7 @@ Group _group({
   required String id,
   required String name,
   double totalShareAmount = 0,
+  String currencyCode = 'EUR',
 }) {
   final g = Group();
   g.id = id;
@@ -18,6 +20,7 @@ Group _group({
   g.simplifiedExpenses = true;
   g.createdAt = '';
   g.userId = null;
+  g.currencyCode = currencyCode;
   g.groupMembers = [];
   g.groupSharesSummary = {};
   g.totalExpenses = 0;
@@ -36,7 +39,10 @@ void main() {
 
       final favorites = {'a', 'c'};
       final input = [settled, favSettled, unsettled, favUnsettled];
-      final sorted = sortGroups(input, isFavorite: (g) => favorites.contains(g.id));
+      final sorted = sortGroups(
+        input,
+        isFavorite: (g) => favorites.contains(g.id),
+      );
 
       expect(sorted.map((g) => g.id).toList(), ['c', 'a', 'd', 'b']);
     });
@@ -45,7 +51,10 @@ void main() {
       final almostSettled = _group(id: 'a', name: 'A', totalShareAmount: 0.004);
       final unsettled = _group(id: 'b', name: 'B', totalShareAmount: 0.02);
 
-      final sorted = sortGroups([almostSettled, unsettled], isFavorite: (_) => false);
+      final sorted = sortGroups([
+        almostSettled,
+        unsettled,
+      ], isFavorite: (_) => false);
 
       // unsettled (>= 0.01) sorts before the effectively-settled one.
       expect(sorted.map((g) => g.id).toList(), ['b', 'a']);
@@ -112,5 +121,66 @@ void main() {
       expect(agg.owe, 10);
       expect(agg.net, -10);
     });
+  });
+
+  group('aggregateOverallBalance home-currency conversion', () {
+    // 1 EUR = 1.10 USD.
+    const rates = ExchangeRates(base: 'EUR', rates: {'USD': 1.10});
+
+    test(
+      '€10 in a EUR group + \$11 in a USD group is one home total, not 20',
+      () {
+        // Worked example from the plan: with 1 EUR = 1.10 USD, \$11 == €10, so
+        // the home (EUR) net is €20 — never a naive 10 + 11 = 21 or a raw 20.
+        final groups = [
+          _group(id: 'a', name: 'A', totalShareAmount: 10, currencyCode: 'EUR'),
+          _group(id: 'b', name: 'B', totalShareAmount: 11, currencyCode: 'USD'),
+        ];
+        final agg = aggregateOverallBalance(
+          groups,
+          homeCurrency: 'EUR',
+          rates: rates,
+        );
+        expect(agg.owed, closeTo(20, 1e-9));
+        expect(agg.owe, 0);
+        expect(agg.approximate, isTrue);
+        expect(agg.excludedCount, 0);
+      },
+    );
+
+    test('all-home-currency groups are exact (no approximate marker)', () {
+      final groups = [
+        _group(id: 'a', name: 'A', totalShareAmount: 10, currencyCode: 'EUR'),
+        _group(id: 'b', name: 'B', totalShareAmount: -4, currencyCode: 'EUR'),
+      ];
+      final agg = aggregateOverallBalance(
+        groups,
+        homeCurrency: 'EUR',
+        rates: rates,
+      );
+      expect(agg.owed, 10);
+      expect(agg.owe, 4);
+      expect(agg.approximate, isFalse);
+      expect(agg.excludedCount, 0);
+    });
+
+    test(
+      'no rates: foreign groups excluded, home-currency groups still counted',
+      () {
+        final groups = [
+          _group(id: 'a', name: 'A', totalShareAmount: 10, currencyCode: 'EUR'),
+          _group(id: 'b', name: 'B', totalShareAmount: 11, currencyCode: 'USD'),
+        ];
+        final agg = aggregateOverallBalance(
+          groups,
+          homeCurrency: 'EUR',
+          rates: null,
+        );
+        expect(agg.owed, 10);
+        expect(agg.owe, 0);
+        expect(agg.approximate, isFalse);
+        expect(agg.excludedCount, 1);
+      },
+    );
   });
 }

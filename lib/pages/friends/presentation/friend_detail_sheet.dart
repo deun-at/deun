@@ -5,6 +5,7 @@ import 'package:deun/pages/friends/data/friendship_repository.dart';
 import 'package:deun/pages/friends/presentation/friend_detail_view_model.dart';
 import 'package:deun/pages/groups/data/group_repository.dart';
 import 'package:deun/pages/users/user_model.dart';
+import 'package:deun/provider.dart';
 import 'package:deun/widgets/restyle/member_avatar.dart';
 import 'package:deun/widgets/restyle/primary_button.dart';
 import 'package:deun/widgets/restyle/money_text.dart';
@@ -13,6 +14,7 @@ import 'package:deun/widgets/restyle/sheet_scaffold.dart';
 import 'package:deun/widgets/restyle/soft_card.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:deun/l10n/app_localizations.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -28,17 +30,18 @@ import 'package:url_launcher/url_launcher.dart';
 /// This is a presentation-only restyle: the pay-back (`GroupRepository`),
 /// remove-friend (`FriendshipRepository.remove`) and PayPal/IBAN handling are
 /// the same logic as the previous `openFriendshipDialog`.
-class FriendDetailSheet extends StatelessWidget {
+class FriendDetailSheet extends ConsumerWidget {
   const FriendDetailSheet({super.key, required this.friendship});
 
   final Friendship friendship;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context)!;
     final colorScheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
     final user = friendship.user;
+    final homeCurrency = ref.watch(homeCurrencyProvider);
 
     // Negative share = the current user owes the friend → pay-back options.
     final bool owesFriend = friendship.shareAmount < -0.01;
@@ -83,6 +86,8 @@ class FriendDetailSheet extends StatelessWidget {
               const SizedBox(width: 8),
               MoneyText(
                 friendship.shareAmount,
+                currencyCode: homeCurrency,
+                approximate: friendship.approximate,
                 semantic: MoneySemantic.auto,
                 style: textTheme.titleLarge,
               ),
@@ -93,12 +98,16 @@ class FriendDetailSheet extends StatelessWidget {
             SectionLabel(
               l10n.payBackDialog(
                 user.displayName,
-                l10n.toCurrency(friendship.shareAmount.abs()),
+                l10n.toCurrency(friendship.shareAmount.abs(), homeCurrency),
               ),
             ),
             const SizedBox(height: 10),
             for (final method in methods) ...[
-              _PayBackCard(method: method, friendship: friendship),
+              _PayBackCard(
+                method: method,
+                friendship: friendship,
+                homeCurrency: homeCurrency,
+              ),
               const SizedBox(height: 10),
             ],
           ],
@@ -113,10 +122,17 @@ class FriendDetailSheet extends StatelessWidget {
 /// One pay-back method card (PayPal / Copy IBAN / Mark as paid). Mirrors the
 /// group settle-up `_MethodCard` treatment (E4-T1).
 class _PayBackCard extends StatelessWidget {
-  const _PayBackCard({required this.method, required this.friendship});
+  const _PayBackCard({
+    required this.method,
+    required this.friendship,
+    required this.homeCurrency,
+  });
 
   final FriendPayBackMethod method;
   final Friendship friendship;
+
+  /// Home currency the owed amount is expressed in.
+  final String homeCurrency;
 
   @override
   Widget build(BuildContext context) {
@@ -223,7 +239,7 @@ class _PayBackCard extends StatelessWidget {
           context,
           l10n.payBackSuccess(
             user.fullUsername,
-            l10n.toCurrency(friendship.shareAmount.abs()),
+            l10n.toCurrency(friendship.shareAmount.abs(), homeCurrency),
           ),
         );
       }

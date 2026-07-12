@@ -3138,6 +3138,30 @@ abstract class AppLocalizations {
   /// **'Language'**
   String get settingsLanguageSheetTitle;
 
+  /// Label for the home-currency row and the home-currency picker sheet title.
+  ///
+  /// In en, this message translates to:
+  /// **'Home currency'**
+  String get settingsHomeCurrency;
+
+  /// Info callout under the home-currency options explaining what the home currency does.
+  ///
+  /// In en, this message translates to:
+  /// **'Balances and statistics that span groups are converted into this currency at current rates. Each group still uses its own currency.'**
+  String get settingsHomeCurrencyInfo;
+
+  /// Caption noting that converted cross-group totals are estimates.
+  ///
+  /// In en, this message translates to:
+  /// **'Cross-currency totals are approximate.'**
+  String get homeAggregateApproxNote;
+
+  /// Indicator that some groups were left out of a cross-group total because no conversion rate was available.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, one{{count} group excluded (no rate)} other{{count} groups excluded (no rate)}}'**
+  String homeAggregateExcluded(int count);
+
   /// Title of the delete-account confirmation sheet.
   ///
   /// In en, this message translates to:

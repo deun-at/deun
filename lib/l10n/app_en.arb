@@ -1665,6 +1665,27 @@
   "@settingsLanguageSheetTitle": {
     "description": "Title of the language picker bottom sheet."
   },
+  "settingsHomeCurrency": "Home currency",
+  "@settingsHomeCurrency": {
+    "description": "Label for the home-currency row and the home-currency picker sheet title."
+  },
+  "settingsHomeCurrencyInfo": "Balances and statistics that span groups are converted into this currency at current rates. Each group still uses its own currency.",
+  "@settingsHomeCurrencyInfo": {
+    "description": "Info callout under the home-currency options explaining what the home currency does."
+  },
+  "homeAggregateApproxNote": "Cross-currency totals are approximate.",
+  "@homeAggregateApproxNote": {
+    "description": "Caption noting that converted cross-group totals are estimates."
+  },
+  "homeAggregateExcluded": "{count, plural, one{{count} group excluded (no rate)} other{{count} groups excluded (no rate)}}",
+  "@homeAggregateExcluded": {
+    "description": "Indicator that some groups were left out of a cross-group total because no conversion rate was available.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "settingsDeleteAccountTitle": "Delete account?",
   "@settingsDeleteAccountTitle": {
     "description": "Title of the delete-account confirmation sheet."
