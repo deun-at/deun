@@ -99,7 +99,7 @@ final class AuthUserSwitchListenerProvider
 }
 
 String _$authUserSwitchListenerHash() =>
-    r'9794e6d466c6a93c447de8da73361541e6c1dc9e';
+    r'0490adb749a6e61ec59aedb285070a31cfc1e9a6';
 
 /// Watches Supabase auth-state changes and invalidates the user-scoped providers
 /// on sign-out (and on sign-in as a *different* user). Mounted once near the app
@@ -357,3 +357,134 @@ abstract class _$NotificationsEnabledNotifier extends $Notifier<bool> {
     element.handleCreate(ref, build);
   }
 }
+
+/// The user's home currency (ISO 4217): the single currency every cross-group
+/// aggregate is converted into for display. Defaults to [kDefaultCurrencyCode]
+/// (EUR), hydrates from [AsyncPreferences] and persists the choice. Only codes
+/// in [kSupportedCurrencyCodes] are accepted; anything else falls back to the
+/// default. Device-scoped, so it survives a user switch on the same device.
+
+@ProviderFor(HomeCurrencyNotifier)
+final homeCurrencyProvider = HomeCurrencyNotifierProvider._();
+
+/// The user's home currency (ISO 4217): the single currency every cross-group
+/// aggregate is converted into for display. Defaults to [kDefaultCurrencyCode]
+/// (EUR), hydrates from [AsyncPreferences] and persists the choice. Only codes
+/// in [kSupportedCurrencyCodes] are accepted; anything else falls back to the
+/// default. Device-scoped, so it survives a user switch on the same device.
+final class HomeCurrencyNotifierProvider
+    extends $NotifierProvider<HomeCurrencyNotifier, String> {
+  /// The user's home currency (ISO 4217): the single currency every cross-group
+  /// aggregate is converted into for display. Defaults to [kDefaultCurrencyCode]
+  /// (EUR), hydrates from [AsyncPreferences] and persists the choice. Only codes
+  /// in [kSupportedCurrencyCodes] are accepted; anything else falls back to the
+  /// default. Device-scoped, so it survives a user switch on the same device.
+  HomeCurrencyNotifierProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'homeCurrencyProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$homeCurrencyNotifierHash();
+
+  @$internal
+  @override
+  HomeCurrencyNotifier create() => HomeCurrencyNotifier();
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(String value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<String>(value),
+    );
+  }
+}
+
+String _$homeCurrencyNotifierHash() =>
+    r'cafbe05e54aefe2d9ac59c9512b54522244a8b9c';
+
+/// The user's home currency (ISO 4217): the single currency every cross-group
+/// aggregate is converted into for display. Defaults to [kDefaultCurrencyCode]
+/// (EUR), hydrates from [AsyncPreferences] and persists the choice. Only codes
+/// in [kSupportedCurrencyCodes] are accepted; anything else falls back to the
+/// default. Device-scoped, so it survives a user switch on the same device.
+
+abstract class _$HomeCurrencyNotifier extends $Notifier<String> {
+  String build();
+  @$mustCallSuper
+  @override
+  void runBuild() {
+    final ref = this.ref as $Ref<String, String>;
+    final element =
+        ref.element
+            as $ClassProviderElement<
+              AnyNotifier<String, String>,
+              String,
+              Object?,
+              Object?
+            >;
+    element.handleCreate(ref, build);
+  }
+}
+
+/// Current cross-group conversion rates, fetched at load from the free no-key
+/// rate API with an offline last-known-rates fallback (see
+/// [ExchangeRateService]). `null` means no rates are available at all (offline
+/// with no cache), in which case aggregates fall back to home-currency groups
+/// only. Display-only: never applied to the stored ledger.
+
+@ProviderFor(exchangeRates)
+final exchangeRatesProvider = ExchangeRatesProvider._();
+
+/// Current cross-group conversion rates, fetched at load from the free no-key
+/// rate API with an offline last-known-rates fallback (see
+/// [ExchangeRateService]). `null` means no rates are available at all (offline
+/// with no cache), in which case aggregates fall back to home-currency groups
+/// only. Display-only: never applied to the stored ledger.
+
+final class ExchangeRatesProvider
+    extends
+        $FunctionalProvider<
+          AsyncValue<ExchangeRates?>,
+          ExchangeRates?,
+          FutureOr<ExchangeRates?>
+        >
+    with $FutureModifier<ExchangeRates?>, $FutureProvider<ExchangeRates?> {
+  /// Current cross-group conversion rates, fetched at load from the free no-key
+  /// rate API with an offline last-known-rates fallback (see
+  /// [ExchangeRateService]). `null` means no rates are available at all (offline
+  /// with no cache), in which case aggregates fall back to home-currency groups
+  /// only. Display-only: never applied to the stored ledger.
+  ExchangeRatesProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'exchangeRatesProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$exchangeRatesHash();
+
+  @$internal
+  @override
+  $FutureProviderElement<ExchangeRates?> $createElement(
+    $ProviderPointer pointer,
+  ) => $FutureProviderElement(pointer);
+
+  @override
+  FutureOr<ExchangeRates?> create(Ref ref) {
+    return exchangeRates(ref);
+  }
+}
+
+String _$exchangeRatesHash() => r'77e7e54c108b7e55a5554285c56e4609792615a6';

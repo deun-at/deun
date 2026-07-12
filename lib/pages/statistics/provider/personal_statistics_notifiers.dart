@@ -1,6 +1,9 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
+import '../../../helper/currency_conversion.dart';
 import '../../../main.dart';
+import '../../../provider.dart';
+import '../../groups/provider/group_list.dart';
 import '../statistics_models.dart';
 
 part 'personal_statistics_notifiers.g.dart';
@@ -25,17 +28,20 @@ class PersonalStatisticsNotifier extends _$PersonalStatisticsNotifier {
       start = DateTime(now.year, now.month - (range.months! - 1), 1);
     }
 
-    final rows = await supabase.rpc('get_user_spending_summary', params: {
-      'p_user_email': email,
-      'p_start': _toDateOnly(start),
-      'p_end': _toDateOnly(end),
-    }) as List<dynamic>;
+    final rows =
+        await supabase.rpc(
+              'get_user_spending_summary',
+              params: {
+                'p_user_email': email,
+                'p_start': _toDateOnly(start),
+                'p_end': _toDateOnly(end),
+              },
+            )
+            as List<dynamic>;
 
     // Aggregate by group and by month.
     final Map<String, _GroupAgg> byGroup = {};
     final Map<DateTime, double> byMonth = {};
-    double totalPaid = 0;
-    double totalShare = 0;
     int expenseCount = 0;
 
     for (final raw in rows) {
@@ -53,28 +59,71 @@ class PersonalStatisticsNotifier extends _$PersonalStatisticsNotifier {
 
       final agg = byGroup.putIfAbsent(
         groupId,
-        () => _GroupAgg(groupId: groupId, groupName: groupName, colorValue: colorValue),
+        () => _GroupAgg(
+          groupId: groupId,
+          groupName: groupName,
+          colorValue: colorValue,
+        ),
       );
       agg.totalPaid += paid;
       agg.totalShare += share;
       agg.expenseCount += count;
 
-      totalPaid += paid;
-      totalShare += share;
       expenseCount += count;
     }
 
-    final groups = byGroup.values
-        .map((a) => PersonalGroupSummary(
-              groupId: a.groupId,
-              groupName: a.groupName,
-              colorValue: a.colorValue,
-              totalPaid: a.totalPaid,
-              totalShare: a.totalShare,
-              expenseCount: a.expenseCount,
-            ))
-        .toList()
-      ..sort((a, b) => b.totalShare.compareTo(a.totalShare));
+    // The RPC returns per-group figures in each group's own currency. Convert
+    // every group's contribution into the home currency before summing the
+    // "Across all groups" hero figures, so mixed-currency spending aggregates
+    // into one home-currency total rather than a naive sum. The group currency
+    // comes from the loaded group list; groups missing there fall back to the
+    // home currency (no conversion). Per-group and monthly figures stay raw —
+    // they are read per group, not summed across currencies.
+    final homeCurrency = ref.watch(homeCurrencyProvider);
+    final rates = ref.watch(exchangeRatesProvider).value;
+    final loadedGroups = await ref.watch(groupListProvider.future);
+    final currencyByGroup = {
+      for (final g in loadedGroups) g.id: g.currencyCode,
+    };
+    final paidTotal = convertAndSum(
+      byGroup.values.map(
+        (a) => CurrencyAmount(
+          a.totalPaid,
+          currencyByGroup[a.groupId] ?? homeCurrency,
+        ),
+      ),
+      homeCurrency,
+      rates,
+    );
+    final shareTotal = convertAndSum(
+      byGroup.values.map(
+        (a) => CurrencyAmount(
+          a.totalShare,
+          currencyByGroup[a.groupId] ?? homeCurrency,
+        ),
+      ),
+      homeCurrency,
+      rates,
+    );
+    final totalPaid = paidTotal.amount;
+    final totalShare = shareTotal.amount;
+    final approximate = paidTotal.approximate || shareTotal.approximate;
+    final excludedCount = shareTotal.excludedCount;
+
+    final groups =
+        byGroup.values
+            .map(
+              (a) => PersonalGroupSummary(
+                groupId: a.groupId,
+                groupName: a.groupName,
+                colorValue: a.colorValue,
+                totalPaid: a.totalPaid,
+                totalShare: a.totalShare,
+                expenseCount: a.expenseCount,
+              ),
+            )
+            .toList()
+          ..sort((a, b) => b.totalShare.compareTo(a.totalShare));
 
     final sortedMonths = byMonth.keys.toList()..sort();
     final monthly = sortedMonths.map((m) {
@@ -88,6 +137,8 @@ class PersonalStatisticsNotifier extends _$PersonalStatisticsNotifier {
       totalPaid: totalPaid,
       totalShare: totalShare,
       expenseCount: expenseCount,
+      approximate: approximate,
+      excludedCount: excludedCount,
     );
   }
 
@@ -103,5 +154,9 @@ class _GroupAgg {
   double totalShare = 0;
   int expenseCount = 0;
 
-  _GroupAgg({required this.groupId, required this.groupName, required this.colorValue});
+  _GroupAgg({
+    required this.groupId,
+    required this.groupName,
+    required this.colorValue,
+  });
 }

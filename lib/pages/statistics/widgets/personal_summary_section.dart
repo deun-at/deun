@@ -2,6 +2,7 @@ import 'package:deun/constants.dart';
 import 'package:deun/l10n/app_localizations.dart';
 import 'package:deun/pages/statistics/provider/personal_statistics_notifiers.dart';
 import 'package:deun/pages/statistics/statistics_models.dart';
+import 'package:deun/provider.dart';
 import 'package:deun/widgets/restyle/money_text.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -28,18 +29,23 @@ class PersonalSummarySection extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final state = ref.watch(personalStatisticsProvider(range));
     final l10n = AppLocalizations.of(context)!;
+    final homeCurrency = ref.watch(homeCurrencyProvider);
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
     final isDark = theme.brightness == Brightness.dark;
 
-    final Color heroSurface = isDark ? colorScheme.surfaceBright : colorScheme.onSurface;
+    final Color heroSurface = isDark
+        ? colorScheme.surfaceBright
+        : colorScheme.onSurface;
     final Color onHero = isDark ? colorScheme.onSurface : colorScheme.surface;
     final Color onHeroMuted = onHero.withValues(alpha: 0.7);
     // Share accent (mockup #C7B6F0): a light lavender that reads on the ink
     // card. inversePrimary is the primary tint designed for inverse (dark)
     // surfaces in the light theme; on the light-raised dark-theme card, primary
     // is the readable accent.
-    final Color shareAccent = isDark ? colorScheme.primary : colorScheme.inversePrimary;
+    final Color shareAccent = isDark
+        ? colorScheme.primary
+        : colorScheme.inversePrimary;
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
@@ -59,7 +65,10 @@ class PersonalSummarySection extends ConsumerWidget {
           error: (e, _) => SizedBox(
             height: 130,
             child: Center(
-              child: Text(l10n.statisticsNoExpenses, style: TextStyle(color: onHeroMuted)),
+              child: Text(
+                l10n.statisticsNoExpenses,
+                style: TextStyle(color: onHeroMuted),
+              ),
             ),
           ),
           data: (s) => Column(
@@ -67,7 +76,9 @@ class PersonalSummarySection extends ConsumerWidget {
             children: [
               Text(
                 '${l10n.statisticsAcrossAllGroups} · ${_period(l10n)}',
-                style: theme.textTheme.labelMedium?.copyWith(color: onHeroMuted),
+                style: theme.textTheme.labelMedium?.copyWith(
+                  color: onHeroMuted,
+                ),
               ),
               const SizedBox(height: 10),
               Row(
@@ -79,6 +90,8 @@ class PersonalSummarySection extends ConsumerWidget {
                       onHeroMuted: onHeroMuted,
                       child: MoneyText(
                         s.totalPaid,
+                        currencyCode: homeCurrency,
+                        approximate: s.approximate,
                         style: theme.textTheme.headlineMedium?.copyWith(
                           fontWeight: FontWeight.w700,
                           color: onHero,
@@ -93,6 +106,8 @@ class PersonalSummarySection extends ConsumerWidget {
                       onHeroMuted: onHeroMuted,
                       child: MoneyText(
                         s.totalShare,
+                        currencyCode: homeCurrency,
+                        approximate: s.approximate,
                         style: theme.textTheme.headlineMedium?.copyWith(
                           fontWeight: FontWeight.w700,
                           color: shareAccent,
@@ -103,6 +118,15 @@ class PersonalSummarySection extends ConsumerWidget {
                   ),
                 ],
               ),
+              if (s.excludedCount > 0) ...[
+                const SizedBox(height: 8),
+                Text(
+                  l10n.homeAggregateExcluded(s.excludedCount),
+                  style: theme.textTheme.labelSmall?.copyWith(
+                    color: onHeroMuted,
+                  ),
+                ),
+              ],
             ],
           ),
         ),
@@ -113,7 +137,11 @@ class PersonalSummarySection extends ConsumerWidget {
 
 /// One labelled amount inside the personal hero (label above, amount below).
 class _HeroAmount extends StatelessWidget {
-  const _HeroAmount({required this.label, required this.onHeroMuted, required this.child});
+  const _HeroAmount({
+    required this.label,
+    required this.onHeroMuted,
+    required this.child,
+  });
 
   final String label;
   final Color onHeroMuted;
@@ -125,7 +153,10 @@ class _HeroAmount extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label, style: theme.textTheme.labelSmall?.copyWith(color: onHeroMuted)),
+        Text(
+          label,
+          style: theme.textTheme.labelSmall?.copyWith(color: onHeroMuted),
+        ),
         const SizedBox(height: 4),
         child,
       ],

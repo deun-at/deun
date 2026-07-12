@@ -1,3 +1,4 @@
+import 'package:deun/helper/currency_conversion.dart';
 import 'package:deun/helper/helper.dart';
 import 'package:deun/pages/friends/data/friendship_model.dart';
 import 'package:deun/pages/groups/data/group_repository.dart';
@@ -6,7 +7,15 @@ import 'package:deun/pages/users/user_model.dart';
 import '../../../main.dart';
 
 class FriendshipRepository {
-  static Future<List<Friendship>> fetchData() async {
+  /// Fetches accepted friendships with their net shared amount. Each friend's
+  /// amount is summed across mutual groups, converting every group's
+  /// contribution from its own currency into [homeCurrency] with [rates] so
+  /// mixed-currency shares aggregate into one home-currency figure rather than a
+  /// naive sum. Groups whose currency has no rate are excluded and counted.
+  static Future<List<Friendship>> fetchData({
+    String homeCurrency = kDefaultCurrencyCode,
+    ExchangeRates? rates,
+  }) async {
     String currentEmail = supabase.auth.currentUser?.email ?? '';
 
     List<Map<String, dynamic>> data = await supabase
@@ -29,11 +38,28 @@ class FriendshipRepository {
       seenEmails.add(friendship.user.email);
 
       friendship.shareAmount = 0;
+      friendship.approximate = false;
+      friendship.excludedCount = 0;
 
       for (var group in groupList) {
         group.groupSharesSummary.forEach((key, groupShare) {
           if (key == friendship.user.email) {
-            friendship.shareAmount = roundCurrency(friendship.shareAmount + groupShare.shareAmount);
+            final converted = convertToHome(
+              groupShare.shareAmount,
+              group.currencyCode,
+              homeCurrency,
+              rates,
+            );
+            if (converted == null) {
+              friendship.excludedCount++;
+              return;
+            }
+            friendship.shareAmount = roundCurrency(
+              friendship.shareAmount + converted,
+            );
+            if (group.currencyCode != homeCurrency) {
+              friendship.approximate = true;
+            }
           }
         });
       }
@@ -51,9 +77,13 @@ class FriendshipRepository {
       } else if (a.shareAmount != 0 && b.shareAmount == 0) {
         return -1;
       } else if (a.shareAmount == 0 && b.shareAmount == 0) {
-        return a.user.displayName.toLowerCase().compareTo(b.user.displayName.toLowerCase());
+        return a.user.displayName.toLowerCase().compareTo(
+          b.user.displayName.toLowerCase(),
+        );
       } else if (a.shareAmount == b.shareAmount) {
-        return a.user.displayName.toLowerCase().compareTo(b.user.displayName.toLowerCase());
+        return a.user.displayName.toLowerCase().compareTo(
+          b.user.displayName.toLowerCase(),
+        );
       } else {
         return b.shareAmount.compareTo(a.shareAmount);
       }
@@ -116,7 +146,11 @@ class FriendshipRepository {
     return friendship;
   }
 
-  static Future<List<SupaUser>> fetchFriends(String searchString, List<String> selectedUsers, int limit) async {
+  static Future<List<SupaUser>> fetchFriends(
+    String searchString,
+    List<String> selectedUsers,
+    int limit,
+  ) async {
     var userEmail = supabase.auth.currentUser?.email ?? '';
 
     final escaped = searchString.replaceAll(RegExp(r'[%_,()\\]'), '');
@@ -126,7 +160,10 @@ class FriendshipRepository {
         .select("...addressee!inner(*)")
         .or("requester.eq.$userEmail")
         .eq("status", "accepted")
-        .or("email.ilike.%$escaped%,display_name.ilike.%$escaped%,username.ilike.%$escaped%", referencedTable: "addressee")
+        .or(
+          "email.ilike.%$escaped%,display_name.ilike.%$escaped%,username.ilike.%$escaped%",
+          referencedTable: "addressee",
+        )
         .not("addressee.email", "in", "(${selectedUsers.join(",")})")
         .order("email", referencedTable: "addressee")
         .limit(limit);
@@ -154,7 +191,7 @@ class FriendshipRepository {
           "requester": email,
           "addressee": supabase.auth.currentUser?.email,
           "status": "accepted",
-        }
+        },
       ]);
     }
   }
@@ -177,9 +214,14 @@ class FriendshipRepository {
 
   static Future<void> remove(String email) async {
     final safeEmail = sanitizeFilterValue(email);
-    final currentEmail = sanitizeFilterValue(supabase.auth.currentUser?.email ?? '');
-    await supabase.from("friendship").delete().or(
-        'and(requester.eq.$safeEmail,addressee.eq.$currentEmail),and(requester.eq.$currentEmail,addressee.eq.$safeEmail)');
+    final currentEmail = sanitizeFilterValue(
+      supabase.auth.currentUser?.email ?? '',
+    );
+    await supabase
+        .from("friendship")
+        .delete()
+        .or(
+          'and(requester.eq.$safeEmail,addressee.eq.$currentEmail),and(requester.eq.$currentEmail,addressee.eq.$safeEmail)',
+        );
   }
-
 }

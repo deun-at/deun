@@ -39,6 +39,7 @@ class MoneyText extends StatelessWidget {
     this.showSign = false,
     this.textAlign,
     this.animate = false,
+    this.approximate = false,
   });
 
   /// The amount to display. Sign is taken from this value.
@@ -71,6 +72,12 @@ class MoneyText extends StatelessWidget {
   /// Defaults to false so existing usages are unchanged.
   final bool animate;
 
+  /// When true, prefixes an "≈" marker to flag the amount as an approximate
+  /// value (a cross-group aggregate converted from other currencies into the
+  /// home currency). Defaults to false so exact, single-currency amounts show
+  /// no marker.
+  final bool approximate;
+
   Color? _resolveColor(BuildContext context) {
     final semanticColors = Theme.of(context).extension<SemanticColors>()!;
     switch (semantic) {
@@ -93,7 +100,10 @@ class MoneyText extends StatelessWidget {
     )!.toCurrency(displayAmount, currencyCode);
     // showSign uses the final amount (not intermediate) so the "+" appears
     // exactly when the final value is positive — color and sign are consistent.
-    final text = (showSign && amount > 0) ? '+$formatted' : formatted;
+    final signed = (showSign && amount > 0) ? '+$formatted' : formatted;
+    // The approximate "≈" marker leads the whole thing so it reads as a
+    // qualifier on the converted amount.
+    final text = approximate ? '≈$signed' : signed;
 
     final baseStyle = style ?? Theme.of(context).textTheme.titleMedium;
     // Color is always resolved from the FINAL amount, not displayAmount.

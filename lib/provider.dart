@@ -1,4 +1,7 @@
 import 'package:async_preferences/async_preferences.dart';
+import 'package:deun/helper/currency_conversion.dart';
+import 'package:deun/helper/exchange_rate_service.dart';
+import 'package:deun/helper/helper.dart';
 import 'package:deun/main.dart';
 import 'package:deun/pages/friends/provider/friendship_list.dart';
 import 'package:deun/pages/groups/provider/group_list.dart';
@@ -19,6 +22,11 @@ const String kThemeModePrefKey = 'theme_mode';
 /// Persisted-preferences key for the in-app notifications toggle (E7-T3 v0:
 /// stores the user's preference; does not yet gate FCM).
 const String kNotificationsEnabledPrefKey = 'notifications_enabled';
+
+/// Persisted-preferences key for the user's home currency — the currency every
+/// cross-group aggregate (overall balance, friendships, statistics) is
+/// converted into for display. Device-scoped, like the theme/notification prefs.
+const String kHomeCurrencyPrefKey = 'home_currency';
 
 /// The Supabase auth-state change stream. Isolated behind a provider so the
 /// central user-switch listener ([AuthUserSwitchListener]) can be driven with a
@@ -155,3 +163,41 @@ class NotificationsEnabledNotifier extends _$NotificationsEnabledNotifier {
     await _preferences.setBool(kNotificationsEnabledPrefKey, value: enabled);
   }
 }
+
+/// The user's home currency (ISO 4217): the single currency every cross-group
+/// aggregate is converted into for display. Defaults to [kDefaultCurrencyCode]
+/// (EUR), hydrates from [AsyncPreferences] and persists the choice. Only codes
+/// in [kSupportedCurrencyCodes] are accepted; anything else falls back to the
+/// default. Device-scoped, so it survives a user switch on the same device.
+@Riverpod(keepAlive: true)
+class HomeCurrencyNotifier extends _$HomeCurrencyNotifier {
+  final AsyncPreferences _preferences = AsyncPreferences();
+
+  @override
+  String build() {
+    _hydrate();
+    return kDefaultCurrencyCode;
+  }
+
+  Future<void> _hydrate() async {
+    final stored = await _preferences.getString(kHomeCurrencyPrefKey);
+    if (stored != null && kSupportedCurrencyCodes.contains(stored)) {
+      state = stored;
+    }
+  }
+
+  Future<void> setHomeCurrency(String code) async {
+    if (!kSupportedCurrencyCodes.contains(code)) return;
+    state = code;
+    await _preferences.setString(kHomeCurrencyPrefKey, code);
+  }
+}
+
+/// Current cross-group conversion rates, fetched at load from the free no-key
+/// rate API with an offline last-known-rates fallback (see
+/// [ExchangeRateService]). `null` means no rates are available at all (offline
+/// with no cache), in which case aggregates fall back to home-currency groups
+/// only. Display-only: never applied to the stored ledger.
+@Riverpod(keepAlive: true)
+Future<ExchangeRates?> exchangeRates(Ref ref) =>
+    ExchangeRateService().loadRates();

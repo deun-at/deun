@@ -56,7 +56,10 @@ class _SettingState extends ConsumerState<Setting> {
               child: Row(
                 children: [
                   Expanded(
-                    child: Text(l10n.settings, style: theme.textTheme.headlineMedium),
+                    child: Text(
+                      l10n.settings,
+                      style: theme.textTheme.headlineMedium,
+                    ),
                   ),
                   // v3: neutral warm-white circle (the shared header-action
                   // circle, which adapts to dark) with a danger-red logout
@@ -91,7 +94,9 @@ class _SettingState extends ConsumerState<Setting> {
             Center(
               child: Text(
                 l10n.settingsTagline,
-                style: theme.textTheme.bodySmall?.copyWith(color: colorScheme.onSurfaceVariant),
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: colorScheme.onSurfaceVariant,
+                ),
               ),
             ),
           ],
@@ -104,6 +109,7 @@ class _SettingState extends ConsumerState<Setting> {
     final l10n = AppLocalizations.of(context)!;
     final notificationsEnabled = ref.watch(notificationsEnabledProvider);
     final themeMode = ref.watch(themeModeProvider);
+    final homeCurrency = ref.watch(homeCurrencyProvider);
 
     final String appearanceLabel = switch (themeMode) {
       ThemeMode.system => l10n.settingsAppearanceSystem,
@@ -135,8 +141,9 @@ class _SettingState extends ConsumerState<Setting> {
                 child: Switch(
                   value: notificationsEnabled,
                   materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                  onChanged: (v) =>
-                      ref.read(notificationsEnabledProvider.notifier).setEnabled(v),
+                  onChanged: (v) => ref
+                      .read(notificationsEnabledProvider.notifier)
+                      .setEnabled(v),
                 ),
               ),
             ),
@@ -147,6 +154,13 @@ class _SettingState extends ConsumerState<Setting> {
             label: l10n.settingsAppearance,
             valueLabel: appearanceLabel,
             onTap: () => showAppearanceSheet(context),
+          ),
+          const _RowDivider(),
+          _SettingsRow(
+            icon: Icons.currency_exchange,
+            label: l10n.settingsHomeCurrency,
+            valueLabel: homeCurrency,
+            onTap: () => showHomeCurrencySheet(context),
           ),
           const _RowDivider(),
           _SettingsRow(
@@ -200,7 +214,8 @@ class _SettingState extends ConsumerState<Setting> {
   Future<void> _changePrivacyPreferences(BuildContext context) async {
     final scaffoldMessenger = ScaffoldMessenger.of(context);
     final l10n = AppLocalizations.of(context)!;
-    final didChangePreferences = await _initializationHelper.changePrivacyPreferences();
+    final didChangePreferences = await _initializationHelper
+        .changePrivacyPreferences();
     scaffoldMessenger.showSnackBar(
       SnackBar(
         content: Text(
@@ -256,11 +271,15 @@ class _ProfileHeroCard extends StatelessWidget {
     final colorScheme = theme.colorScheme;
     final isDark = theme.brightness == Brightness.dark;
 
-    final Color heroSurface = isDark ? colorScheme.surfaceBright : colorScheme.onSurface;
+    final Color heroSurface = isDark
+        ? colorScheme.surfaceBright
+        : colorScheme.onSurface;
     final Color onHero = isDark ? colorScheme.onSurface : colorScheme.surface;
     final Color onHeroMuted = onHero.withValues(alpha: 0.7);
 
-    final displayName = user.displayName.isNotEmpty ? user.displayName : user.email;
+    final displayName = user.displayName.isNotEmpty
+        ? user.displayName
+        : user.email;
 
     return Container(
       width: double.infinity,
@@ -272,7 +291,12 @@ class _ProfileHeroCard extends StatelessWidget {
       ),
       child: Row(
         children: [
-          MemberAvatar(name: displayName, colorKey: user.email, isYou: true, radius: 28),
+          MemberAvatar(
+            name: displayName,
+            colorKey: user.email,
+            isYou: true,
+            radius: 28,
+          ),
           const SizedBox(width: 16),
           Expanded(
             child: Column(
@@ -285,7 +309,11 @@ class _ProfileHeroCard extends StatelessWidget {
                   overflow: TextOverflow.ellipsis,
                 ),
                 const SizedBox(height: 4),
-                _IdentityLine(user: user, onHero: onHero, onHeroMuted: onHeroMuted),
+                _IdentityLine(
+                  user: user,
+                  onHero: onHero,
+                  onHeroMuted: onHeroMuted,
+                ),
               ],
             ),
           ),
@@ -297,7 +325,11 @@ class _ProfileHeroCard extends StatelessWidget {
 
 /// The `@username#code · email` line, with the code dimmed.
 class _IdentityLine extends StatelessWidget {
-  const _IdentityLine({required this.user, required this.onHero, required this.onHeroMuted});
+  const _IdentityLine({
+    required this.user,
+    required this.onHero,
+    required this.onHeroMuted,
+  });
 
   final SupaUser user;
   final Color onHero;
@@ -361,7 +393,9 @@ class _SettingsRow extends StatelessWidget {
           if (valueLabel != null)
             Text(
               valueLabel!,
-              style: textTheme.bodyMedium?.copyWith(color: colorScheme.onSurfaceVariant),
+              style: textTheme.bodyMedium?.copyWith(
+                color: colorScheme.onSurfaceVariant,
+              ),
             ),
           const SizedBox(width: 4),
           Icon(Icons.chevron_right, color: colorScheme.onSurfaceVariant),
@@ -402,7 +436,9 @@ class _RowDivider extends StatelessWidget {
       thickness: 1,
       indent: 16,
       endIndent: 16,
-      color: Theme.of(context).colorScheme.outlineVariant.withValues(alpha: 0.5),
+      color: Theme.of(
+        context,
+      ).colorScheme.outlineVariant.withValues(alpha: 0.5),
     );
   }
 }

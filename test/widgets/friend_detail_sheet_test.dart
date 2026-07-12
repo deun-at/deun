@@ -8,6 +8,7 @@ import 'package:deun/widgets/theme_builder.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 Friendship _friendship({
@@ -36,22 +37,24 @@ Future<void> _pump(
   Brightness brightness = Brightness.light,
 }) async {
   await tester.pumpWidget(
-    MaterialApp(
-      localizationsDelegates: const [
-        AppLocalizations.delegate,
-        GlobalMaterialLocalizations.delegate,
-        GlobalWidgetsLocalizations.delegate,
-        GlobalCupertinoLocalizations.delegate,
-      ],
-      supportedLocales: AppLocalizations.supportedLocales,
-      home: Builder(
-        builder: (context) => Theme(
-          data: getThemeData(
-            context,
-            kBrandSeed,
-            brightness,
-          ).copyWith(splashFactory: NoSplash.splashFactory),
-          child: Scaffold(body: FriendDetailSheet(friendship: friendship)),
+    ProviderScope(
+      child: MaterialApp(
+        localizationsDelegates: const [
+          AppLocalizations.delegate,
+          GlobalMaterialLocalizations.delegate,
+          GlobalWidgetsLocalizations.delegate,
+          GlobalCupertinoLocalizations.delegate,
+        ],
+        supportedLocales: AppLocalizations.supportedLocales,
+        home: Builder(
+          builder: (context) => Theme(
+            data: getThemeData(
+              context,
+              kBrandSeed,
+              brightness,
+            ).copyWith(splashFactory: NoSplash.splashFactory),
+            child: Scaffold(body: FriendDetailSheet(friendship: friendship)),
+          ),
         ),
       ),
     ),
@@ -61,6 +64,16 @@ Future<void> _pump(
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
+
+  setUp(() {
+    // homeCurrencyProvider hydrates via AsyncPreferences over the
+    // `async_preferences` channel; stub it so the fetch resolves (default EUR).
+    TestWidgetsFlutterBinding.ensureInitialized().defaultBinaryMessenger
+        .setMockMethodCallHandler(
+          const MethodChannel('async_preferences'),
+          (call) async => call.method.startsWith('get') ? null : true,
+        );
+  });
 
   testWidgets('shows friend name and balance', (tester) async {
     final l10n = await AppLocalizations.delegate.load(const Locale('en'));

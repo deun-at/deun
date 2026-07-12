@@ -29,7 +29,8 @@ void showLanguageSheet(
     useSafeArea: true,
     sheetAnimationStyle: kSheetAnimationStyle,
     barrierColor: kSheetBarrierColor,
-    builder: (_) => _LanguageSheet(currentTag: currentTag, onSelected: onSelected),
+    builder: (_) =>
+        _LanguageSheet(currentTag: currentTag, onSelected: onSelected),
   );
 }
 
@@ -42,7 +43,9 @@ class _LanguageSheet extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context)!;
-    final options = AppLocalizations.supportedLocales.map((l) => l.toLanguageTag()).toList();
+    final options = AppLocalizations.supportedLocales
+        .map((l) => l.toLanguageTag())
+        .toList();
 
     void choose(String? tag) {
       if (tag == null) {
@@ -147,14 +150,18 @@ class _AppearanceSheet extends ConsumerWidget {
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Icon(Icons.info, size: 20, color: colorScheme.onPrimaryContainer),
+                Icon(
+                  Icons.info,
+                  size: 20,
+                  color: colorScheme.onPrimaryContainer,
+                ),
                 const SizedBox(width: 12),
                 Expanded(
                   child: Text(
                     l10n.settingsAppearanceInfo,
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: colorScheme.onPrimaryContainer,
-                        ),
+                      color: colorScheme.onPrimaryContainer,
+                    ),
                   ),
                 ),
               ],
@@ -208,6 +215,88 @@ class _OptionRow extends StatelessWidget {
   }
 }
 
+/// Opens the Home-currency picker sheet. Tapping a currency sets the persisted
+/// [homeCurrencyProvider] and closes the sheet. Below the options sits an
+/// accent-tinted info callout explaining that cross-group figures are converted
+/// into this currency while each group keeps its own.
+void showHomeCurrencySheet(BuildContext context) {
+  showModalBottomSheet<void>(
+    context: context,
+    isScrollControlled: true,
+    backgroundColor: Colors.transparent,
+    useSafeArea: true,
+    sheetAnimationStyle: kSheetAnimationStyle,
+    barrierColor: kSheetBarrierColor,
+    builder: (_) => const _HomeCurrencySheet(),
+  );
+}
+
+class _HomeCurrencySheet extends ConsumerWidget {
+  const _HomeCurrencySheet();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context)!;
+    final colorScheme = Theme.of(context).colorScheme;
+    final current = ref.watch(homeCurrencyProvider);
+    final localeName = Localizations.localeOf(context).toString();
+
+    void choose(String code) {
+      ref.read(homeCurrencyProvider.notifier).setHomeCurrency(code);
+      Navigator.pop(context);
+    }
+
+    return SheetScaffold(
+      title: l10n.settingsHomeCurrency,
+      body: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SoftCard(
+            padding: EdgeInsets.zero,
+            child: Column(
+              children: [
+                for (final code in kSupportedCurrencyCodes)
+                  _OptionRow(
+                    label: '$code · ${currencySymbolFor(localeName, code)}',
+                    selected: current == code,
+                    onTap: () => choose(code),
+                  ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 14),
+          Container(
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              color: colorScheme.primaryContainer,
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Icon(
+                  Icons.info,
+                  size: 20,
+                  color: colorScheme.onPrimaryContainer,
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    l10n.settingsHomeCurrencyInfo,
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: colorScheme.onPrimaryContainer,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 /// Opens the type-DELETE account-deletion sheet. Ports the existing dialog's
 /// logic: the destructive button enables only when the input matches
 /// [AppLocalizations.deleteAccountConfirmKeyword], then invokes the
@@ -246,7 +335,8 @@ class _DeleteAccountSheetState extends State<_DeleteAccountSheet> {
     final colorScheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
     final keyword = l10n.deleteAccountConfirmKeyword;
-    final isConfirmed = _controller.text.trim().toUpperCase() == keyword.toUpperCase();
+    final isConfirmed =
+        _controller.text.trim().toUpperCase() == keyword.toUpperCase();
     final radius = BorderRadius.circular(16);
 
     return SheetScaffold(
@@ -266,12 +356,17 @@ class _DeleteAccountSheetState extends State<_DeleteAccountSheet> {
           ),
           const SizedBox(height: 16),
           Center(
-            child: Text(l10n.settingsDeleteAccountTitle, style: textTheme.titleLarge),
+            child: Text(
+              l10n.settingsDeleteAccountTitle,
+              style: textTheme.titleLarge,
+            ),
           ),
           const SizedBox(height: 8),
           Text(
             l10n.settingsDeleteAccountBody,
-            style: textTheme.bodyMedium?.copyWith(color: colorScheme.onSurfaceVariant),
+            style: textTheme.bodyMedium?.copyWith(
+              color: colorScheme.onSurfaceVariant,
+            ),
           ),
           const SizedBox(height: 20),
           TextField(
@@ -283,8 +378,14 @@ class _DeleteAccountSheetState extends State<_DeleteAccountSheet> {
               helperText: l10n.deleteAccountConfirmHint(keyword),
               filled: true,
               fillColor: colorScheme.surfaceContainer,
-              border: OutlineInputBorder(borderRadius: radius, borderSide: BorderSide.none),
-              enabledBorder: OutlineInputBorder(borderRadius: radius, borderSide: BorderSide.none),
+              border: OutlineInputBorder(
+                borderRadius: radius,
+                borderSide: BorderSide.none,
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: radius,
+                borderSide: BorderSide.none,
+              ),
               focusedBorder: OutlineInputBorder(
                 borderRadius: radius,
                 borderSide: BorderSide(color: colorScheme.error, width: 1.5),
