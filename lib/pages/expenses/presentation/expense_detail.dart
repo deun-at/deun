@@ -930,15 +930,12 @@ class _ExpenseDetailState extends ConsumerState<ExpenseDetail> {
                     // DeunHeader's SafeArea already consumed MediaQuery.padding.top
                     // for its subtree; a null-padding ListView would re-apply it as
                     // list top-padding. So top stays 0.
-                    // BUG A: the itemized "Add & share for claiming" CTA is the
-                    // LAST child inside this list (only Quick mode has a pinned
-                    // footer), so the list DOES need a bottom inset — otherwise the
-                    // CTA sits flush against the safe-area bottom and is cut off.
-                    // Clear the safe area plus a small gap.
+                    // Both modes now have a pinned footer save bar below this list
+                    // (a Column sibling that reserves its own space), so the list
+                    // needs no bottom inset to clear a CTA. Itemized keeps a small
+                    // gap so the info callout doesn't touch the footer.
                     padding: EdgeInsets.only(
-                      bottom: _isSingleEntry
-                          ? 0
-                          : MediaQuery.of(context).padding.bottom + 20,
+                      bottom: _isSingleEntry ? 0 : spacing * 2,
                     ),
                     children: [
                       Padding(
@@ -1000,15 +997,12 @@ class _ExpenseDetailState extends ConsumerState<ExpenseDetail> {
                                         )!.expenseDetailsLabel,
                                       ),
                                       const SizedBox(height: spacing),
-                                      SoftCard(
-                                        padding: EdgeInsets.zero,
-                                        child: _buildPaidByRow(),
-                                      ),
-                                      const SizedBox(height: spacing),
-                                      SoftCard(
-                                        padding: EdgeInsets.zero,
-                                        child: _buildDateRow(),
-                                      ),
+                                      // Paid-by / When render as ONE connected
+                                      // card with a hairline divider between
+                                      // them — the same block the quick layout
+                                      // uses — instead of two separate spaced
+                                      // cards.
+                                      _buildPaidWhenList(),
                                       // itemized-expense-categories: an
                                       // expense-level Category row returns to
                                       // the itemized layout (revisits F116) so
@@ -1138,21 +1132,11 @@ class _ExpenseDetailState extends ConsumerState<ExpenseDetail> {
                                   ),
                                   child: _buildItemizedInfoCallout(),
                                 ),
-                                const SizedBox(height: spacing * 2),
-                                Padding(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 16,
-                                  ),
-                                  // Single itemized CTA: items are always shared for
-                                  // claiming (F118) — no diverging plain-save path.
-                                  child: PrimaryButton(
-                                    onPressed: () =>
-                                        _saveExpense(context, claimable: true),
-                                    label: AppLocalizations.of(
-                                      context,
-                                    )!.expenseSaveAndShareForClaiming,
-                                  ),
-                                ),
+                                // The itemized "Add & share for claiming" CTA is
+                                // no longer the last scroll child — it is pinned
+                                // in the opaque footer below (like the Quick save
+                                // bar), so it stays fixed to the bottom instead
+                                // of scrolling with the content.
                               ],
                             ],
                           ),
@@ -1161,21 +1145,30 @@ class _ExpenseDetailState extends ConsumerState<ExpenseDetail> {
                     ],
                   ),
                 ),
-                // Save footer: pinned below the scrollable body. Quick mode
-                // only — the itemized tab has a single share-for-claiming CTA
-                // inline (F118), so no second, diverging save path.
-                if (_isSingleEntry)
-                  Builder(
-                    builder: (context) => Container(
-                      color: colorScheme.surface,
-                      padding: const EdgeInsets.fromLTRB(20, 14, 20, 20),
-                      child: PrimaryButton(
-                        onPressed: () => _saveExpense(context),
-                        // F112: quick CTA reads "Add expense" (create + edit).
-                        label: AppLocalizations.of(context)!.expenseAddButton,
-                      ),
+                // Save footer: pinned below the scrollable body on an opaque
+                // surface bar. Present in BOTH modes — Quick saves the expense
+                // ("Add expense"); Itemized shares the items for claiming (F118).
+                // Because it is a sibling of the Expanded list (not an overlay),
+                // it always reserves its own space, so scroll content is never
+                // hidden behind it.
+                Builder(
+                  builder: (context) => Container(
+                    color: colorScheme.surface,
+                    padding: const EdgeInsets.fromLTRB(20, 14, 20, 20),
+                    child: PrimaryButton(
+                      onPressed: _isSingleEntry
+                          ? () => _saveExpense(context)
+                          : () => _saveExpense(context, claimable: true),
+                      // F112: quick CTA reads "Add expense" (create + edit);
+                      // itemized shares the items for claiming.
+                      label: _isSingleEntry
+                          ? AppLocalizations.of(context)!.expenseAddButton
+                          : AppLocalizations.of(
+                              context,
+                            )!.expenseSaveAndShareForClaiming,
                     ),
                   ),
+                ),
               ],
             ),
           ),

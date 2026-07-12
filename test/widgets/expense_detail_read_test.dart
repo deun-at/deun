@@ -333,6 +333,40 @@ void main() {
     },
   );
 
+  // cosmetic-round-2026-07 (you-owe alignment): the net "you owe / you get
+  // back" line is right-aligned — flush to the summary card's content edge — not
+  // parked mid-row by a Flexible+Spacer pair that split the free space.
+  testWidgets('summary net line is right-aligned to the card content edge', (
+    tester,
+  ) async {
+    final l10n = await AppLocalizations.delegate.load(const Locale('en'));
+    await _pump(
+      tester,
+      _expense(
+        entryCount: 1,
+        shareStat: const {'a@test.com': 10, 'b@test.com': 10},
+        amount: 20,
+      ),
+    );
+
+    // No current auth user in the harness → the net phrase is "not involved";
+    // its alignment is what matters here, not the wording.
+    final netFinder = find.text(l10n.expenseNoShares);
+    expect(netFinder, findsOneWidget);
+
+    // The summary card is the first SoftCard; its content padding is 18.
+    final cardRect = tester.getRect(find.byType(SoftCard).first);
+    final netRect = tester.getRect(netFinder);
+    final payerRect = tester.getRect(
+      find.text(l10n.expensePaidByOther('Alice')),
+    );
+
+    // Net label hugs the right content edge (card right − 18px padding)...
+    expect(netRect.right, moreOrLessEquals(cardRect.right - 18, epsilon: 1.0));
+    // ...and sits to the right of the payer line (not overlapping / left of it).
+    expect(netRect.left, greaterThan(payerRect.right));
+  });
+
   testWidgets('renders in dark mode without throwing', (tester) async {
     await _pump(
       tester,

@@ -330,7 +330,12 @@ class _PaidNetRow extends StatelessWidget {
           isYou: payerIsYou,
         ),
         const SizedBox(width: 8),
-        Flexible(
+        // The payer text takes the flexible slot; the net label is pinned to the
+        // far right. A Flexible + Spacer pair split the free space between them,
+        // which parked leftover space to the RIGHT of the net label so it was not
+        // flush-right. A single Expanded consumes the slack, so the net label
+        // ("You lent … / You owe …") sits truly right-aligned.
+        Expanded(
           child: Text(
             payerIsYou
                 ? l10n.expensePaidByYou
@@ -341,7 +346,7 @@ class _PaidNetRow extends StatelessWidget {
             overflow: TextOverflow.ellipsis,
           ),
         ),
-        const Spacer(),
+        const SizedBox(width: 8),
         Text(
           netLabel,
           style: textTheme.titleSmall?.copyWith(
