@@ -3,8 +3,11 @@ import 'package:deun/l10n/app_localizations.dart';
 import 'package:deun/helper/helper.dart';
 import 'package:deun/pages/expenses/data/editor_mode.dart';
 import 'package:deun/pages/expenses/data/split_mode.dart';
+import 'package:deun/pages/expenses/data/expense_category.dart';
 import 'package:deun/pages/expenses/data/expense_model.dart';
 import 'package:deun/pages/expenses/presentation/expense_detail.dart';
+import 'package:deun/widgets/category_selector.dart';
+import 'package:flutter_form_builder/flutter_form_builder.dart';
 import 'package:deun/pages/groups/data/group_member_model.dart';
 import 'package:deun/pages/groups/data/group_model.dart';
 import 'package:deun/widgets/restyle/app_segmented_control.dart';
@@ -119,6 +122,36 @@ Expense _sharedClaimExpense() {
     'expense_entry': [
       unit('u1', claimers: ['b@test.com']),
       unit('u2'),
+    ],
+  });
+  return e;
+}
+
+/// A saved itemized (shared/claim) expense carrying an expense-level
+/// [category], as fetchDetail returns it.
+Expense _itemizedExpenseWithCategory(String category) {
+  final e = Expense();
+  e.loadDataFromJson({
+    'id': 'exp1',
+    'group_id': 'g1',
+    'name': 'Kiosk',
+    'expense_date': '2026-07-01',
+    'paid_by': 'a@test.com',
+    'created_at': '2026-07-01T10:00:00',
+    'is_paid_back_row': false,
+    'category': category,
+    'expense_entry': [
+      {
+        'id': 'u1',
+        'expense_id': 'exp1',
+        'name': 'Beer',
+        'amount': 2.5,
+        'quantity': 1,
+        'split_mode': 'claim',
+        'item_group_id': 'grp-1',
+        'created_at': '2026-07-01T10:00:00',
+        'expense_entry_share': const [],
+      },
     ],
   });
   return e;
@@ -432,6 +465,12 @@ void main() {
     expect(find.text(l10n.toCurrency(5)), findsNWidgets(2)); // line + header
 
     // Bump quantity 2 -> 3 via the item's qty stepper (no mode toggle).
+    // Scroll it into view first: the expense-level category row pushes the item
+    // card below the fold in the test viewport.
+    await tester.ensureVisible(
+      find.bySemanticsLabel(l10n.stepperIncrease).first,
+    );
+    await tester.pumpAndSettle();
     await tester.tap(find.bySemanticsLabel(l10n.stepperIncrease).first);
     await tester.pumpAndSettle();
 
@@ -469,5 +508,87 @@ void main() {
         reason: 'An item row must have a single SoftCard ancestor, not nested.',
       );
     }
+  });
+
+  // itemized-expense-categories: the itemized layout exposes the same
+  // category selector as the quick layout (revisits F116).
+  testWidgets('Itemized layout exposes a category selector', (tester) async {
+    await _pump(tester);
+    final l10n = await _l10n();
+
+    await tester.tap(find.text(l10n.editorModeItemized));
+    await tester.pumpAndSettle();
+
+    expect(find.byType(CategorySelector), findsOneWidget);
+    expect(find.text(l10n.categoryLabel), findsOneWidget);
+  });
+
+  // itemized-expense-categories: an itemized expense saved with category X
+  // reads back as X (not "Other"). The form value here is exactly the map
+  // ExpenseDetail hands to ExpenseRepository.saveAll, which persists
+  // category.name; statistics group on the same expense.category.
+  testWidgets('itemized expense reads its saved category back (not Other)', (
+    tester,
+  ) async {
+    await _pump(tester, expense: _itemizedExpenseWithCategory('food'));
+    final l10n = await _l10n();
+
+    // Opens directly in the itemized layout for a shared/claim expense.
+    expect(find.text(l10n.expenseSaveAndShareForClaiming), findsOneWidget);
+
+    // The selector shows the saved category, not "Other".
+    expect(find.text(l10n.categoryFood), findsOneWidget);
+    expect(find.text(l10n.categoryOther), findsNothing);
+
+    // The saved form map feeding ExpenseRepository.saveAll carries the
+    // ExpenseCategory value (saveAll persists category.name). save() mirrors
+    // the saveAndValidate() the real save path runs before reading value.
+    final formState = tester.state<FormBuilderState>(find.byType(FormBuilder));
+    formState.save();
+    expect(formState.value['category'], ExpenseCategory.food);
+  });
+
+  // itemized-expense-categories: an itemized expense saved without a category
+  // still reads back as "Other" — no migration, null stays null.
+  testWidgets('itemized expense without a category reads back as Other', (
+    tester,
+  ) async {
+    await _pump(tester, expense: _sharedClaimExpense());
+    final l10n = await _l10n();
+
+    expect(find.text(l10n.categoryOther), findsOneWidget);
+    // An uncategorized expense loads (fromString(null)) as ExpenseCategory.other
+    // and reads back as Other — statistics group it under 'other'. No migration.
+    final formState = tester.state<FormBuilderState>(find.byType(FormBuilder));
+    formState.save();
+    expect(formState.value['category'], ExpenseCategory.other);
+  });
+
+  // itemized-expense-categories: scanning a receipt auto-detects the category
+  // from the merchant name in the itemized layout, same as the quick layout.
+  // Editing the merchant name drives the same CategoryDetector hook.
+  testWidgets('itemized layout auto-detects category from the merchant name', (
+    tester,
+  ) async {
+    await _pump(tester);
+    final l10n = await _l10n();
+
+    await tester.tap(find.text(l10n.editorModeItemized));
+    await tester.pumpAndSettle();
+
+    // Type a merchant name the detector maps to Groceries (keyword "lidl").
+    final nameField = find.byWidgetPredicate(
+      (w) =>
+          w is TextField &&
+          w.decoration?.hintText == l10n.expenseDescriptionHint,
+    );
+    await tester.enterText(nameField, 'Lidl');
+    await tester.pumpAndSettle();
+
+    // The category is auto-detected and written to the form field.
+    final formState = tester.state<FormBuilderState>(find.byType(FormBuilder));
+    formState.save();
+    expect(formState.value['category'], ExpenseCategory.groceries);
+    expect(find.text(l10n.categoryGroceries), findsOneWidget);
   });
 }

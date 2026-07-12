@@ -958,6 +958,9 @@ class _ExpenseDetailState extends ConsumerState<ExpenseDetail> {
                                         initialValue:
                                             _detectedCategory ??
                                             widget.expense?.category,
+                                        onChanged: (category) => setState(
+                                          () => _detectedCategory = category,
+                                        ),
                                       ),
                                       const SizedBox(height: spacing),
                                       _buildExpenseLevelAmount(),
@@ -990,10 +993,24 @@ class _ExpenseDetailState extends ConsumerState<ExpenseDetail> {
                                         padding: EdgeInsets.zero,
                                         child: _buildDateRow(),
                                       ),
-                                      // F116: no expense-level Category row on itemized —
-                                      // items carry auto-derived per-item icons instead
-                                      // (iconForItemName). Category saves as null → reads
-                                      // back as ExpenseCategory.other.
+                                      // itemized-expense-categories: an
+                                      // expense-level Category row returns to
+                                      // the itemized layout (revisits F116) so
+                                      // itemized expenses carry a category for
+                                      // lists and statistics instead of always
+                                      // reading back as "Other". Per-item icons
+                                      // (iconForItemName) are unchanged. Same
+                                      // field name/detection as the quick layout.
+                                      const SizedBox(height: spacing),
+                                      CategorySelector(
+                                        name: "category",
+                                        initialValue:
+                                            _detectedCategory ??
+                                            widget.expense?.category,
+                                        onChanged: (category) => setState(
+                                          () => _detectedCategory = category,
+                                        ),
+                                      ),
                                       const SizedBox(height: spacing * 2),
                                       SectionLabel(
                                         AppLocalizations.of(
