@@ -704,6 +704,12 @@ abstract class AppLocalizations {
   /// **'After you share, members claim their own items — solo or split, per unit.'**
   String get itemizedInfoCallout;
 
+  /// Snackbar shown when switching a multi-item itemized expense back to Quick, warning that per-item detail is dropped and the amount becomes the summed total.
+  ///
+  /// In en, this message translates to:
+  /// **'Items merged into one amount for an even split.'**
+  String get editorModeCollapseNotice;
+
   /// No description provided for @expenseSaveAndShareForClaiming.
   ///
   /// In en, this message translates to:

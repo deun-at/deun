@@ -273,6 +273,10 @@
   "@addItemByHand": {},
   "itemizedInfoCallout": "After you share, members claim their own items — solo or split, per unit.",
   "@itemizedInfoCallout": {},
+  "editorModeCollapseNotice": "Items merged into one amount for an even split.",
+  "@editorModeCollapseNotice": {
+    "description": "Snackbar shown when switching a multi-item itemized expense back to Quick, warning that per-item detail is dropped and the amount becomes the summed total."
+  },
   "expenseSaveAndShareForClaiming": "Add & share for claiming",
   "@expenseSaveAndShareForClaiming": {},
   "expenseAddButton": "Add expense",
