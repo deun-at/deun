@@ -1,4 +1,5 @@
 import 'package:deun/constants.dart';
+import 'package:deun/helper/helper.dart';
 import 'package:deun/l10n/app_localizations.dart';
 import 'package:deun/pages/expenses/data/expense_entry_model.dart';
 import 'package:deun/pages/expenses/data/expense_model.dart';
@@ -59,8 +60,12 @@ ExpenseEntryShare _share(String email, double percentage) {
   return s;
 }
 
-ExpenseEntry _entry(int index, double amount, List<ExpenseEntryShare> shares,
-    {String splitMode = 'equal'}) {
+ExpenseEntry _entry(
+  int index,
+  double amount,
+  List<ExpenseEntryShare> shares, {
+  String splitMode = 'equal',
+}) {
   final e = ExpenseEntry(index: index);
   e.id = 'entry$index';
   e.expenseId = 'x';
@@ -85,7 +90,9 @@ Expense _quick({required String id, required String date}) {
   e.isPaidBackRow = false;
   e.category = null;
   e.paidByDisplayName = 'sam';
-  e.expenseEntries = {'e0': _entry(0, 20, [_share(_myEmail, 50), _share('sam@test.com', 50)])};
+  e.expenseEntries = {
+    'e0': _entry(0, 20, [_share(_myEmail, 50), _share('sam@test.com', 50)]),
+  };
   e.groupMemberShareStatistic = {_myEmail: 10, 'sam@test.com': 10};
   return e;
 }
@@ -126,7 +133,9 @@ Expense _payback({required String id, required String date}) {
   e.isPaidBackRow = true;
   e.category = null;
   e.paidByDisplayName = 'sam';
-  e.expenseEntries = {'e0': _entry(0, 40, [_share(_myEmail, 100)])};
+  e.expenseEntries = {
+    'e0': _entry(0, 40, [_share(_myEmail, 100)]),
+  };
   e.groupMemberShareStatistic = {};
   return e;
 }
@@ -155,7 +164,9 @@ Future<void> _pump(
   await tester.pumpWidget(
     ProviderScope(
       overrides: [
-        expenseListProvider(group.id).overrideWith(() => _FakeExpenseListNotifier(expenses)),
+        expenseListProvider(
+          group.id,
+        ).overrideWith(() => _FakeExpenseListNotifier(expenses)),
       ],
       child: MaterialApp(
         localizationsDelegates: const [
@@ -167,7 +178,11 @@ Future<void> _pump(
         supportedLocales: AppLocalizations.supportedLocales,
         home: Builder(
           builder: (context) => Theme(
-            data: getThemeData(context, kBrandSeed, brightness).copyWith(splashFactory: NoSplash.splashFactory),
+            data: getThemeData(
+              context,
+              kBrandSeed,
+              brightness,
+            ).copyWith(splashFactory: NoSplash.splashFactory),
             child: Scaffold(body: GroupDetailList(group: group)),
           ),
         ),
@@ -181,11 +196,15 @@ void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
   setUpAll(() async {
-    TestWidgetsFlutterBinding.ensureInitialized().defaultBinaryMessenger.setMockMethodCallHandler(
-      const MethodChannel('plugins.flutter.io/shared_preferences'),
-      (call) async => call.method == 'getAll' ? <String, Object>{} : null,
+    TestWidgetsFlutterBinding.ensureInitialized().defaultBinaryMessenger
+        .setMockMethodCallHandler(
+          const MethodChannel('plugins.flutter.io/shared_preferences'),
+          (call) async => call.method == 'getAll' ? <String, Object>{} : null,
+        );
+    await Supabase.initialize(
+      url: 'http://localhost:54321',
+      anonKey: 'test-anon-key',
     );
-    await Supabase.initialize(url: 'http://localhost:54321', anonKey: 'test-anon-key');
   });
 
   tearDownAll(() async {
@@ -193,56 +212,92 @@ void main() {
   });
 
   testWidgets('renders a day header for the ledger', (tester) async {
-    await _pump(tester, expenses: [_quick(id: '1', date: '2026-01-02T10:00:00')]);
+    await _pump(
+      tester,
+      expenses: [_quick(id: '1', date: '2026-01-02T10:00:00')],
+    );
     // The day header uses formatDate; an older date renders as "d MMM".
     expect(find.text('2 Jan'), findsOneWidget);
   });
 
   testWidgets('quick row shows title and amount', (tester) async {
-    await _pump(tester, expenses: [_quick(id: '1', date: '2026-01-02T10:00:00')]);
+    await _pump(
+      tester,
+      expenses: [_quick(id: '1', date: '2026-01-02T10:00:00')],
+    );
     expect(find.text('Quick 1'), findsOneWidget);
   });
 
-  testWidgets('itemized row shows a Tap-to-claim icon button and unclaimed meta', (tester) async {
-    final l10n = await AppLocalizations.delegate.load(const Locale('en'));
-    await _pump(tester, expenses: [_itemized(id: '2', date: '2026-01-02T10:00:00')]);
+  testWidgets(
+    'itemized row shows a Tap-to-claim icon button and unclaimed meta',
+    (tester) async {
+      final l10n = await AppLocalizations.delegate.load(const Locale('en'));
+      await _pump(
+        tester,
+        expenses: [_itemized(id: '2', date: '2026-01-02T10:00:00')],
+      );
 
-    // The claim affordance is an icon button (tooltip carries the label), not
-    // a text pill.
-    final claimButton = find.byWidgetPredicate(
-      (w) => w is HeaderIconButton && w.tooltip == l10n.groupDetailTapToClaim,
+      // The claim affordance is an icon button (tooltip carries the label), not
+      // a text pill.
+      final claimButton = find.byWidgetPredicate(
+        (w) => w is HeaderIconButton && w.tooltip == l10n.groupDetailTapToClaim,
+      );
+      expect(claimButton, findsOneWidget);
+      expect(find.text(l10n.groupDetailTapToClaim), findsNothing);
+
+      // €10 of the €30 total is still unclaimed.
+      expect(
+        find.text(l10n.groupDetailUnclaimed(l10n.toCurrency(10))),
+        findsOneWidget,
+      );
+    },
+  );
+
+  testWidgets('itemized row shows the itemized indicator and payer subline', (
+    tester,
+  ) async {
+    final l10n = await AppLocalizations.delegate.load(const Locale('en'));
+    await _pump(
+      tester,
+      expenses: [_itemized(id: '2', date: '2026-01-02T10:00:00')],
     );
-    expect(claimButton, findsOneWidget);
-    expect(find.text(l10n.groupDetailTapToClaim), findsNothing);
-
-    // €10 of the €30 total is still unclaimed.
-    expect(find.text(l10n.groupDetailUnclaimed(10)), findsOneWidget);
-  });
-
-  testWidgets('itemized row shows the itemized indicator and payer subline', (tester) async {
-    final l10n = await AppLocalizations.delegate.load(const Locale('en'));
-    await _pump(tester, expenses: [_itemized(id: '2', date: '2026-01-02T10:00:00')]);
 
     // Subline is "sam paid · itemized" (paidBy is sam, not the current user).
     expect(find.textContaining(l10n.groupDetailItemizedTag), findsOneWidget);
     expect(find.textContaining(l10n.expensePaidByOther('sam')), findsOneWidget);
   });
 
-  testWidgets('itemized row stacks claimer avatars with AvatarStack', (tester) async {
-    await _pump(tester, expenses: [_itemized(id: '2', date: '2026-01-02T10:00:00')]);
+  testWidgets('itemized row stacks claimer avatars with AvatarStack', (
+    tester,
+  ) async {
+    await _pump(
+      tester,
+      expenses: [_itemized(id: '2', date: '2026-01-02T10:00:00')],
+    );
     // Claimers (sam) render via the overlapping AvatarStack, not a spaced Row.
     expect(find.byType(AvatarStack), findsOneWidget);
   });
 
-  testWidgets('unclaimed meta and claim button sit on opposite sides', (tester) async {
+  testWidgets('unclaimed meta and claim button sit on opposite sides', (
+    tester,
+  ) async {
     final l10n = await AppLocalizations.delegate.load(const Locale('en'));
-    await _pump(tester, expenses: [_itemized(id: '2', date: '2026-01-02T10:00:00')]);
+    await _pump(
+      tester,
+      expenses: [_itemized(id: '2', date: '2026-01-02T10:00:00')],
+    );
 
-    final metaLeft = tester.getTopLeft(find.text(l10n.groupDetailUnclaimed(10))).dx;
+    final metaLeft = tester
+        .getTopLeft(find.text(l10n.groupDetailUnclaimed(l10n.toCurrency(10))))
+        .dx;
     final buttonLeft = tester
-        .getTopLeft(find.byWidgetPredicate(
-          (w) => w is HeaderIconButton && w.tooltip == l10n.groupDetailTapToClaim,
-        ))
+        .getTopLeft(
+          find.byWidgetPredicate(
+            (w) =>
+                w is HeaderIconButton &&
+                w.tooltip == l10n.groupDetailTapToClaim,
+          ),
+        )
         .dx;
     // Unclaimed meta on the LEFT, claim button on the RIGHT (handoff layout).
     expect(metaLeft, lessThan(buttonLeft));
@@ -250,11 +305,16 @@ void main() {
 
   testWidgets('payback row shows the PAYMENT tag', (tester) async {
     final l10n = await AppLocalizations.delegate.load(const Locale('en'));
-    await _pump(tester, expenses: [_payback(id: '3', date: '2026-01-02T10:00:00')]);
+    await _pump(
+      tester,
+      expenses: [_payback(id: '3', date: '2026-01-02T10:00:00')],
+    );
     expect(find.text(l10n.groupDetailPaymentTag), findsOneWidget);
   });
 
-  testWidgets('tapping a quick row navigates to the read expense detail', (tester) async {
+  testWidgets('tapping a quick row navigates to the read expense detail', (
+    tester,
+  ) async {
     final group = _group();
     String? visited;
 
@@ -264,7 +324,11 @@ void main() {
         GoRoute(
           path: '/',
           builder: (context, state) => Theme(
-            data: getThemeData(context, kBrandSeed, Brightness.light).copyWith(splashFactory: NoSplash.splashFactory),
+            data: getThemeData(
+              context,
+              kBrandSeed,
+              Brightness.light,
+            ).copyWith(splashFactory: NoSplash.splashFactory),
             child: Scaffold(body: GroupDetailList(group: group)),
           ),
         ),
@@ -282,8 +346,11 @@ void main() {
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
-          expenseListProvider(group.id)
-              .overrideWith(() => _FakeExpenseListNotifier([_quick(id: '1', date: '2026-01-02T10:00:00')])),
+          expenseListProvider(group.id).overrideWith(
+            () => _FakeExpenseListNotifier([
+              _quick(id: '1', date: '2026-01-02T10:00:00'),
+            ]),
+          ),
         ],
         child: MaterialApp.router(
           routerConfig: router,
@@ -306,7 +373,9 @@ void main() {
     expect(find.text('detail'), findsOneWidget);
   });
 
-  testWidgets('builds all three row types in dark mode without throwing', (tester) async {
+  testWidgets('builds all three row types in dark mode without throwing', (
+    tester,
+  ) async {
     await _pump(
       tester,
       brightness: Brightness.dark,
@@ -321,27 +390,32 @@ void main() {
     expect(find.text('Itemized 2'), findsOneWidget);
   });
 
-  testWidgets('rows within a date group share one card; date groups are separated', (tester) async {
-    await _pump(
-      tester,
-      expenses: [
-        // Two expenses on the same day → one joined card.
-        _quick(id: '1', date: '2026-01-02T10:00:00'),
-        _itemized(id: '2', date: '2026-01-02T09:00:00'),
-        // A third on a different day → its own card.
-        _quick(id: '3', date: '2026-01-01T10:00:00'),
-      ],
-    );
+  testWidgets(
+    'rows within a date group share one card; date groups are separated',
+    (tester) async {
+      await _pump(
+        tester,
+        expenses: [
+          // Two expenses on the same day → one joined card.
+          _quick(id: '1', date: '2026-01-02T10:00:00'),
+          _itemized(id: '2', date: '2026-01-02T09:00:00'),
+          // A third on a different day → its own card.
+          _quick(id: '3', date: '2026-01-01T10:00:00'),
+        ],
+      );
 
-    // Two date groups → exactly two SoftCards (not one per expense row).
-    expect(find.byType(SoftCard), findsNWidgets(2));
-    // Both same-day rows are present inside the first card.
-    expect(find.text('Quick 1'), findsOneWidget);
-    expect(find.text('Itemized 2'), findsOneWidget);
-    expect(find.text('Quick 3'), findsOneWidget);
-  });
+      // Two date groups → exactly two SoftCards (not one per expense row).
+      expect(find.byType(SoftCard), findsNWidgets(2));
+      // Both same-day rows are present inside the first card.
+      expect(find.text('Quick 1'), findsOneWidget);
+      expect(find.text('Itemized 2'), findsOneWidget);
+      expect(find.text('Quick 3'), findsOneWidget);
+    },
+  );
 
-  testWidgets('shows the empty state when there are no expenses', (tester) async {
+  testWidgets('shows the empty state when there are no expenses', (
+    tester,
+  ) async {
     final l10n = await AppLocalizations.delegate.load(const Locale('en'));
     await _pump(tester, expenses: []);
     expect(find.text(l10n.groupExpenseNoEntries), findsOneWidget);
@@ -351,7 +425,9 @@ void main() {
   // so a searched expense behaves identically to a ledger tap (F168). These
   // guard the shared route helper directly (row rendering is already covered
   // by the ledger tests above).
-  testWidgets('openLedgerExpense sends a quick expense to the read detail', (tester) async {
+  testWidgets('openLedgerExpense sends a quick expense to the read detail', (
+    tester,
+  ) async {
     await _expectOpenRoute(
       tester,
       expense: _quick(id: '1', date: '2026-01-02T10:00:00'),
@@ -359,7 +435,9 @@ void main() {
     );
   });
 
-  testWidgets('openLedgerExpense sends an itemized expense to claim', (tester) async {
+  testWidgets('openLedgerExpense sends an itemized expense to claim', (
+    tester,
+  ) async {
     await _expectOpenRoute(
       tester,
       expense: _itemized(id: '2', date: '2026-01-02T10:00:00'),
@@ -385,8 +463,11 @@ Future<void> _expectOpenRoute(
       GoRoute(
         path: '/',
         builder: (context, state) => Theme(
-          data: getThemeData(context, kBrandSeed, Brightness.light)
-              .copyWith(splashFactory: NoSplash.splashFactory),
+          data: getThemeData(
+            context,
+            kBrandSeed,
+            Brightness.light,
+          ).copyWith(splashFactory: NoSplash.splashFactory),
           child: Scaffold(
             body: Center(
               child: TextButton(

@@ -1,5 +1,6 @@
 import 'package:deun/constants.dart';
 import 'package:deun/l10n/app_localizations.dart';
+import 'package:deun/helper/helper.dart';
 import 'package:deun/pages/friends/data/friendship_model.dart';
 import 'package:deun/pages/friends/presentation/friend_detail_sheet.dart';
 import 'package:deun/pages/users/user_model.dart';
@@ -45,11 +46,12 @@ Future<void> _pump(
       supportedLocales: AppLocalizations.supportedLocales,
       home: Builder(
         builder: (context) => Theme(
-          data: getThemeData(context, kBrandSeed, brightness)
-              .copyWith(splashFactory: NoSplash.splashFactory),
-          child: Scaffold(
-            body: FriendDetailSheet(friendship: friendship),
-          ),
+          data: getThemeData(
+            context,
+            kBrandSeed,
+            brightness,
+          ).copyWith(splashFactory: NoSplash.splashFactory),
+          child: Scaffold(body: FriendDetailSheet(friendship: friendship)),
         ),
       ),
     ),
@@ -62,36 +64,54 @@ void main() {
 
   testWidgets('shows friend name and balance', (tester) async {
     final l10n = await AppLocalizations.delegate.load(const Locale('en'));
-    await _pump(tester, friendship: _friendship(shareAmount: -25.0, paypalMe: 'sam'));
+    await _pump(
+      tester,
+      friendship: _friendship(shareAmount: -25.0, paypalMe: 'sam'),
+    );
 
     expect(find.text('Sam'), findsOneWidget);
     // The header renders the signed net balance (you owe Sam → negative).
     expect(find.text(l10n.toCurrency(-25.0)), findsOneWidget);
   });
 
-  testWidgets('owe state shows pay-back methods: PayPal only when set, IBAN only when set, Mark paid always',
-      (tester) async {
-    final l10n = await AppLocalizations.delegate.load(const Locale('en'));
-    await _pump(tester, friendship: _friendship(shareAmount: -25.0, paypalMe: 'sam'));
+  testWidgets(
+    'owe state shows pay-back methods: PayPal only when set, IBAN only when set, Mark paid always',
+    (tester) async {
+      final l10n = await AppLocalizations.delegate.load(const Locale('en'));
+      await _pump(
+        tester,
+        friendship: _friendship(shareAmount: -25.0, paypalMe: 'sam'),
+      );
 
-    // Sam has PayPal but no IBAN.
-    expect(find.text(l10n.paymentMethodPaypal), findsOneWidget);
-    expect(find.text(l10n.paymentMethodIban), findsNothing);
-    expect(find.text(l10n.payBackDialogDone), findsOneWidget);
-  });
+      // Sam has PayPal but no IBAN.
+      expect(find.text(l10n.paymentMethodPaypal), findsOneWidget);
+      expect(find.text(l10n.paymentMethodIban), findsNothing);
+      expect(find.text(l10n.payBackDialogDone), findsOneWidget);
+    },
+  );
 
-  testWidgets('IBAN method appears when the friend has an IBAN', (tester) async {
+  testWidgets('IBAN method appears when the friend has an IBAN', (
+    tester,
+  ) async {
     final l10n = await AppLocalizations.delegate.load(const Locale('en'));
-    await _pump(tester, friendship: _friendship(shareAmount: -25.0, iban: 'DE123'));
+    await _pump(
+      tester,
+      friendship: _friendship(shareAmount: -25.0, iban: 'DE123'),
+    );
 
     expect(find.text(l10n.paymentMethodIban), findsOneWidget);
     expect(find.text(l10n.paymentMethodPaypal), findsNothing);
     expect(find.text(l10n.payBackDialogDone), findsOneWidget);
   });
 
-  testWidgets('settled / owed friend shows no pay-back methods', (tester) async {
+  testWidgets('settled / owed friend shows no pay-back methods', (
+    tester,
+  ) async {
     final l10n = await AppLocalizations.delegate.load(const Locale('en'));
-    await _pump(tester, friendship: _friendship(shareAmount: 15.0, paypalMe: 'sam', iban: 'DE1'));
+    await _pump(
+      tester,
+      friendship: _friendship(shareAmount: 15.0, paypalMe: 'sam', iban: 'DE1'),
+    );
 
     // The current user is owed money → nothing to pay back.
     expect(find.text(l10n.paymentMethodPaypal), findsNothing);
@@ -119,10 +139,20 @@ void main() {
         return null;
       },
     );
-    addTearDown(() => tester.binding.defaultBinaryMessenger
-        .setMockMethodCallHandler(SystemChannels.platform, null));
+    addTearDown(
+      () => tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+        SystemChannels.platform,
+        null,
+      ),
+    );
 
-    await _pump(tester, friendship: _friendship(shareAmount: -25.0, iban: 'DE89370400440532013000'));
+    await _pump(
+      tester,
+      friendship: _friendship(
+        shareAmount: -25.0,
+        iban: 'DE89370400440532013000',
+      ),
+    );
 
     await tester.tap(find.text(l10n.paymentMethodIban));
     await tester.pumpAndSettle();

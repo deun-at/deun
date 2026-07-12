@@ -29,17 +29,19 @@ class _FakeFriendshipListNotifier extends FriendshipListNotifier {
 
 Friendship _friend(String email, String display, String username) {
   final f = Friendship();
-  f.user = SupaUser(email: email, displayName: display, username: username, usernameCode: '0001');
+  f.user = SupaUser(
+    email: email,
+    displayName: display,
+    username: username,
+    usernameCode: '0001',
+  );
   f.status = 'accepted';
   f.isIncomingRequest = false;
   f.shareAmount = 0;
   return f;
 }
 
-Group _group({
-  int? colorValue,
-  bool simplifiedExpenses = true,
-}) {
+Group _group({int? colorValue, bool simplifiedExpenses = true}) {
   final g = Group();
   g.id = 'g1';
   g.name = 'Trip to Rome';
@@ -80,8 +82,11 @@ Future<void> _pump(
         supportedLocales: AppLocalizations.supportedLocales,
         home: Builder(
           builder: (context) => Theme(
-            data: getThemeData(context, kBrandSeed, brightness)
-                .copyWith(splashFactory: NoSplash.splashFactory),
+            data: getThemeData(
+              context,
+              kBrandSeed,
+              brightness,
+            ).copyWith(splashFactory: NoSplash.splashFactory),
             child: GroupEdit(group: group),
           ),
         ),
@@ -109,15 +114,14 @@ void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
   setUpAll(() async {
-    TestWidgetsFlutterBinding.ensureInitialized()
-        .defaultBinaryMessenger
+    TestWidgetsFlutterBinding.ensureInitialized().defaultBinaryMessenger
         .setMockMethodCallHandler(
-      const MethodChannel('plugins.flutter.io/shared_preferences'),
-      (call) async {
-        if (call.method == 'getAll') return <String, Object>{};
-        return null;
-      },
-    );
+          const MethodChannel('plugins.flutter.io/shared_preferences'),
+          (call) async {
+            if (call.method == 'getAll') return <String, Object>{};
+            return null;
+          },
+        );
     await Supabase.initialize(
       url: 'http://localhost:54321',
       anonKey: 'test-anon-key',
@@ -128,31 +132,35 @@ void main() {
     await Supabase.instance.dispose();
   });
 
-  testWidgets('renders name field, six swatches, mode selector and Create button (new group)',
-      (tester) async {
-    await _pump(tester);
+  testWidgets(
+    'renders name field, six swatches, mode selector and Create button (new group)',
+    (tester) async {
+      await _pump(tester);
 
-    final l10n = await AppLocalizations.delegate.load(const Locale('en'));
+      final l10n = await AppLocalizations.delegate.load(const Locale('en'));
 
-    // Name field hint.
-    expect(find.text(l10n.groupNameHint), findsOneWidget);
-    // Six color swatches.
-    expect(_swatchFinder(), findsNWidgets(kGroupColorPalette.length));
-    // Tracking-mode options. The taller centered-icon header pushes this section
-    // below the 800x600 test viewport, so scroll it into view before asserting.
-    await tester.scrollUntilVisible(
-      find.text(l10n.groupTrackingModeSimplifiedTitle),
-      120,
-      scrollable: find.byType(Scrollable).first,
-    );
-    expect(find.text(l10n.groupTrackingModeSimplifiedTitle), findsOneWidget);
-    expect(find.text(l10n.groupTrackingModeDetailedTitle), findsOneWidget);
-    // Sticky Create button (new group, not Save).
-    expect(find.byType(PrimaryButton), findsOneWidget);
-    expect(find.text(l10n.createGroup), findsOneWidget);
-  });
+      // Name field hint.
+      expect(find.text(l10n.groupNameHint), findsOneWidget);
+      // Six color swatches.
+      expect(_swatchFinder(), findsNWidgets(kGroupColorPalette.length));
+      // Tracking-mode options. The taller centered-icon header pushes this section
+      // below the 800x600 test viewport, so scroll it into view before asserting.
+      await tester.scrollUntilVisible(
+        find.text(l10n.groupTrackingModeSimplifiedTitle),
+        120,
+        scrollable: find.byType(Scrollable).first,
+      );
+      expect(find.text(l10n.groupTrackingModeSimplifiedTitle), findsOneWidget);
+      expect(find.text(l10n.groupTrackingModeDetailedTitle), findsOneWidget);
+      // Sticky Create button (new group, not Save).
+      expect(find.byType(PrimaryButton), findsOneWidget);
+      expect(find.text(l10n.createGroup), findsOneWidget);
+    },
+  );
 
-  testWidgets('shows Save button and the group name when editing', (tester) async {
+  testWidgets('shows Save button and the group name when editing', (
+    tester,
+  ) async {
     await _pump(tester, group: _group());
 
     final l10n = await AppLocalizations.delegate.load(const Locale('en'));
@@ -160,12 +168,16 @@ void main() {
     expect(find.text('Trip to Rome'), findsOneWidget);
   });
 
-  testWidgets('tapping a swatch updates the selected colorValue', (tester) async {
+  testWidgets('tapping a swatch updates the selected colorValue', (
+    tester,
+  ) async {
     await _pump(tester);
 
     // Initially the first swatch is selected (shows a check).
     BoxDecoration decoOf(int index) {
-      final w = tester.widgetList<AnimatedContainer>(_swatchFinder()).elementAt(index);
+      final w = tester
+          .widgetList<AnimatedContainer>(_swatchFinder())
+          .elementAt(index);
       return w.decoration as BoxDecoration;
     }
 
@@ -181,7 +193,9 @@ void main() {
     expect(decoOf(0).border, isNull);
   });
 
-  testWidgets('toggling the mode updates the simplified selection', (tester) async {
+  testWidgets('toggling the mode updates the simplified selection', (
+    tester,
+  ) async {
     await _pump(tester);
 
     final l10n = await AppLocalizations.delegate.load(const Locale('en'));
@@ -207,42 +221,45 @@ void main() {
     expect(find.byIcon(Icons.radio_button_checked), findsOneWidget);
   });
 
-  testWidgets('mode options render side by side (two Expanded cards in a Row)',
-      (tester) async {
-    await _pump(tester);
+  testWidgets(
+    'mode options render side by side (two Expanded cards in a Row)',
+    (tester) async {
+      await _pump(tester);
 
-    final l10n = await AppLocalizations.delegate.load(const Locale('en'));
+      final l10n = await AppLocalizations.delegate.load(const Locale('en'));
 
-    await tester.scrollUntilVisible(
-      find.text(l10n.groupTrackingModeSimplifiedTitle),
-      120,
-      scrollable: find.byType(Scrollable).first,
-    );
+      await tester.scrollUntilVisible(
+        find.text(l10n.groupTrackingModeSimplifiedTitle),
+        120,
+        scrollable: find.byType(Scrollable).first,
+      );
 
-    // Both option titles share a common IntrinsicHeight ancestor (the
-    // side-by-side row), each wrapped in an Expanded so they split the width.
-    final simplified = find.text(l10n.groupTrackingModeSimplifiedTitle);
-    final detailed = find.text(l10n.groupTrackingModeDetailedTitle);
-    final sideBySide = find.ancestor(
-      of: simplified,
-      matching: find.byType(IntrinsicHeight),
-    );
-    expect(sideBySide, findsOneWidget);
-    expect(
-      find.descendant(of: sideBySide, matching: detailed),
-      findsOneWidget,
-      reason: 'Simplified and Detailed must sit in the same row (side by side)',
-    );
-    // Each option card is inside an Expanded.
-    expect(
-      find.ancestor(of: simplified, matching: find.byType(Expanded)),
-      findsWidgets,
-    );
-    expect(
-      find.ancestor(of: detailed, matching: find.byType(Expanded)),
-      findsWidgets,
-    );
-  });
+      // Both option titles share a common IntrinsicHeight ancestor (the
+      // side-by-side row), each wrapped in an Expanded so they split the width.
+      final simplified = find.text(l10n.groupTrackingModeSimplifiedTitle);
+      final detailed = find.text(l10n.groupTrackingModeDetailedTitle);
+      final sideBySide = find.ancestor(
+        of: simplified,
+        matching: find.byType(IntrinsicHeight),
+      );
+      expect(sideBySide, findsOneWidget);
+      expect(
+        find.descendant(of: sideBySide, matching: detailed),
+        findsOneWidget,
+        reason:
+            'Simplified and Detailed must sit in the same row (side by side)',
+      );
+      // Each option card is inside an Expanded.
+      expect(
+        find.ancestor(of: simplified, matching: find.byType(Expanded)),
+        findsWidgets,
+      );
+      expect(
+        find.ancestor(of: detailed, matching: find.byType(Expanded)),
+        findsWidgets,
+      );
+    },
+  );
 
   testWidgets('new group defaults to Simplified selected', (tester) async {
     await _pump(tester);
@@ -270,8 +287,9 @@ void main() {
     );
   });
 
-  testWidgets('editing a Detailed group keeps Detailed selected (regression)',
-      (tester) async {
+  testWidgets('editing a Detailed group keeps Detailed selected (regression)', (
+    tester,
+  ) async {
     await _pump(tester, group: _group(simplifiedExpenses: false));
 
     final l10n = await AppLocalizations.delegate.load(const Locale('en'));
@@ -299,105 +317,172 @@ void main() {
   });
 
   testWidgets(
-      'name field sits on white; icon + colour pickers are NOT boxed in a card (F133)',
-      (tester) async {
-    await _pump(tester);
+    'name field sits on white; icon + colour pickers are NOT boxed in a card (F133)',
+    (tester) async {
+      await _pump(tester);
 
-    final l10n = await AppLocalizations.delegate.load(const Locale('en'));
+      final l10n = await AppLocalizations.delegate.load(const Locale('en'));
 
-    // The group-name field carries its own white SoftCard surface.
-    final nameField = find.widgetWithText(TextFormField, l10n.groupNameHint);
-    expect(nameField, findsOneWidget);
-    expect(
-      find.ancestor(of: nameField, matching: find.byType(SoftCard)),
-      findsOneWidget,
-      reason: 'the name field should sit on its own white SoftCard surface',
-    );
+      // The group-name field carries its own white SoftCard surface.
+      final nameField = find.widgetWithText(TextFormField, l10n.groupNameHint);
+      expect(nameField, findsOneWidget);
+      expect(
+        find.ancestor(of: nameField, matching: find.byType(SoftCard)),
+        findsOneWidget,
+        reason: 'the name field should sit on its own white SoftCard surface',
+      );
 
-    // The colour swatches are UNBOXED: no SoftCard wraps them.
-    expect(
-      find.ancestor(of: _swatchFinder().first, matching: find.byType(SoftCard)),
-      findsNothing,
-      reason: 'colour swatches must not sit inside a white card',
-    );
+      // The colour swatches are UNBOXED: no SoftCard wraps them.
+      expect(
+        find.ancestor(
+          of: _swatchFinder().first,
+          matching: find.byType(SoftCard),
+        ),
+        findsNothing,
+        reason: 'colour swatches must not sit inside a white card',
+      );
 
-    // The retinted group-icon preview is UNBOXED too. F134: it is the group
-    // glyph (groups_rounded), not the expense glyph (receipt_long).
-    expect(find.byIcon(Icons.receipt_long), findsNothing);
-    final iconPreview = find.byIcon(Icons.groups_rounded);
-    expect(iconPreview, findsOneWidget);
-    expect(
-      find.ancestor(of: iconPreview, matching: find.byType(SoftCard)),
-      findsNothing,
-      reason: 'the group-icon preview must not sit inside a white card',
-    );
-  });
+      // The retinted group-icon preview is UNBOXED too. F134: it is the group
+      // glyph (groups_rounded), not the expense glyph (receipt_long).
+      expect(find.byIcon(Icons.receipt_long), findsNothing);
+      final iconPreview = find.byIcon(Icons.groups_rounded);
+      expect(iconPreview, findsOneWidget);
+      expect(
+        find.ancestor(of: iconPreview, matching: find.byType(SoftCard)),
+        findsNothing,
+        reason: 'the group-icon preview must not sit inside a white card',
+      );
+    },
+  );
 
   testWidgets('renders in dark mode without throwing', (tester) async {
     await _pump(tester, group: _group(), brightness: Brightness.dark);
     expect(tester.takeException(), isNull);
   });
 
-  // F71: hybrid inline roster — You(Owner) row, greyed candidate toggle rows
-  // from the friends provider, and an "Add guest" section-header link.
-  testWidgets('members section shows Owner tag, Add guest link and inline greyed friend rows (F71)',
-      (tester) async {
-    await _pump(
-      tester,
-      overrides: [
-        friendshipListProvider.overrideWith(
-          () => _FakeFriendshipListNotifier([_friend('sam@test.com', 'Sam', 'sam')]),
-        ),
-      ],
-    );
+  testWidgets('offers a currency picker; new group defaults to EUR', (
+    tester,
+  ) async {
+    // Tall viewport so the whole form (incl. the below-fold currency picker)
+    // builds without scrolling (the ListView builds children lazily).
+    tester.view.physicalSize = const Size(800, 2400);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    await _pump(tester);
 
     final l10n = await AppLocalizations.delegate.load(const Locale('en'));
 
-    // "You" row with an "Owner" trailing tag.
-    expect(find.text(l10n.you), findsOneWidget);
-    expect(find.text(l10n.groupMemberOwnerTag), findsOneWidget);
-
-    // "Add guest" section-header link.
-    expect(find.text(l10n.groupMemberAddGuestLink), findsOneWidget);
-
-    // The friend from the provider renders inline as a greyed toggle row: an
-    // Opacity(0.45) ancestor wrapping the row, with an add-circle affordance.
-    final samRow = find.text('Sam');
-    expect(samRow, findsOneWidget);
-    final greyed = find.ancestor(
-      of: samRow,
-      matching: find.byWidgetPredicate((w) => w is Opacity && w.opacity == 0.45),
-    );
-    expect(greyed, findsOneWidget, reason: 'not-added friend must be greyed at .45 opacity');
-    expect(find.byIcon(Icons.add_circle_outline), findsOneWidget);
+    // The picker and its section label are in the tree (findable off-screen).
+    expect(find.text(l10n.groupCurrencyLabel), findsOneWidget);
+    final picker = find.byType(DropdownButton<String>);
+    expect(picker, findsOneWidget);
+    // A new group defaults to EUR (curated codes: EUR, USD, GBP, CHF...).
+    expect(tester.widget<DropdownButton<String>>(picker).value, 'EUR');
   });
 
-  testWidgets('tapping an inline friend row adds them (removes from candidates) (F71)',
-      (tester) async {
-    await _pump(
-      tester,
-      overrides: [
-        friendshipListProvider.overrideWith(
-          () => _FakeFriendshipListNotifier([_friend('sam@test.com', 'Sam', 'sam')]),
+  testWidgets(
+    'editing a USD group preselects USD and states the relabel note',
+    (tester) async {
+      tester.view.physicalSize = const Size(800, 2400);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+
+      final usd = _group()..currencyCode = 'USD';
+      await _pump(tester, group: usd);
+
+      final l10n = await AppLocalizations.delegate.load(const Locale('en'));
+
+      final picker = find.byType(DropdownButton<String>);
+      expect(tester.widget<DropdownButton<String>>(picker).value, 'USD');
+      // Changing currency relabels amounts without converting — the UI says so.
+      expect(find.text(l10n.groupCurrencyRelabelNote), findsOneWidget);
+    },
+  );
+
+  // F71: hybrid inline roster — You(Owner) row, greyed candidate toggle rows
+  // from the friends provider, and an "Add guest" section-header link.
+  testWidgets(
+    'members section shows Owner tag, Add guest link and inline greyed friend rows (F71)',
+    (tester) async {
+      await _pump(
+        tester,
+        overrides: [
+          friendshipListProvider.overrideWith(
+            () => _FakeFriendshipListNotifier([
+              _friend('sam@test.com', 'Sam', 'sam'),
+            ]),
+          ),
+        ],
+      );
+
+      final l10n = await AppLocalizations.delegate.load(const Locale('en'));
+
+      // "You" row with an "Owner" trailing tag.
+      expect(find.text(l10n.you), findsOneWidget);
+      expect(find.text(l10n.groupMemberOwnerTag), findsOneWidget);
+
+      // "Add guest" section-header link.
+      expect(find.text(l10n.groupMemberAddGuestLink), findsOneWidget);
+
+      // The friend from the provider renders inline as a greyed toggle row: an
+      // Opacity(0.45) ancestor wrapping the row, with an add-circle affordance.
+      final samRow = find.text('Sam');
+      expect(samRow, findsOneWidget);
+      final greyed = find.ancestor(
+        of: samRow,
+        matching: find.byWidgetPredicate(
+          (w) => w is Opacity && w.opacity == 0.45,
         ),
-      ],
-    );
+      );
+      expect(
+        greyed,
+        findsOneWidget,
+        reason: 'not-added friend must be greyed at .45 opacity',
+      );
+      expect(find.byIcon(Icons.add_circle_outline), findsOneWidget);
+    },
+  );
 
-    // Tapping the greyed candidate routes through the same add path the
-    // SearchAnchor uses: Sam becomes a selected member (check_circle remove
-    // action) and is no longer offered as a greyed add candidate.
-    await tester.tap(find.text('Sam'));
-    await tester.pumpAndSettle();
+  testWidgets(
+    'tapping an inline friend row adds them (removes from candidates) (F71)',
+    (tester) async {
+      await _pump(
+        tester,
+        overrides: [
+          friendshipListProvider.overrideWith(
+            () => _FakeFriendshipListNotifier([
+              _friend('sam@test.com', 'Sam', 'sam'),
+            ]),
+          ),
+        ],
+      );
 
-    // Sam is no longer offered as a greyed add candidate...
-    expect(find.byIcon(Icons.add_circle_outline), findsNothing);
-    // ...and now renders as a selected member row carrying a check_circle
-    // remove action.
-    expect(find.text('Sam'), findsOneWidget);
-    final samCheck = find.descendant(
-      of: find.ancestor(of: find.text('Sam'), matching: find.byType(ListTile)),
-      matching: find.byIcon(Icons.check_circle),
-    );
-    expect(samCheck, findsOneWidget, reason: 'added friend shows a check_circle remove action');
-  });
+      // Tapping the greyed candidate routes through the same add path the
+      // SearchAnchor uses: Sam becomes a selected member (check_circle remove
+      // action) and is no longer offered as a greyed add candidate.
+      await tester.tap(find.text('Sam'));
+      await tester.pumpAndSettle();
+
+      // Sam is no longer offered as a greyed add candidate...
+      expect(find.byIcon(Icons.add_circle_outline), findsNothing);
+      // ...and now renders as a selected member row carrying a check_circle
+      // remove action.
+      expect(find.text('Sam'), findsOneWidget);
+      final samCheck = find.descendant(
+        of: find.ancestor(
+          of: find.text('Sam'),
+          matching: find.byType(ListTile),
+        ),
+        matching: find.byIcon(Icons.check_circle),
+      );
+      expect(
+        samCheck,
+        findsOneWidget,
+        reason: 'added friend shows a check_circle remove action',
+      );
+    },
+  );
 }

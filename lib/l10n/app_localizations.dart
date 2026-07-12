@@ -284,6 +284,18 @@ abstract class AppLocalizations {
   /// **'Color'**
   String get groupColorLabel;
 
+  /// Section label above the group currency picker.
+  ///
+  /// In en, this message translates to:
+  /// **'Currency'**
+  String get groupCurrencyLabel;
+
+  /// Note under the currency picker when editing a group, clarifying no conversion happens.
+  ///
+  /// In en, this message translates to:
+  /// **'Changing the currency relabels existing amounts. It does not convert values.'**
+  String get groupCurrencyRelabelNote;
+
   /// No description provided for @groupMemberSectionTitle.
   ///
   /// In en, this message translates to:
@@ -1120,7 +1132,7 @@ abstract class AppLocalizations {
     String displayNameYourself,
     String displayName,
     String expenseType,
-    double amount,
+    String amount,
   );
 
   /// No description provided for @expenseNoShares.
@@ -1136,20 +1148,20 @@ abstract class AppLocalizations {
   String groupDisplayAmount(
     String displayName,
     String paidByYourself,
-    double amount,
+    String amount,
   );
 
   /// Lable in the group list/group detail of what you are owed/what you owe as a sum.
   ///
   /// In en, this message translates to:
   /// **'{paidByYourself, select, yes{You are owed} other{You owe}} {amount}'**
-  String groupDisplaySumAmount(String paidByYourself, double amount);
+  String groupDisplaySumAmount(String paidByYourself, String amount);
 
   /// Lable in the group list/group detail of what you spent
   ///
   /// In en, this message translates to:
   /// **'Total expenses {amount}'**
-  String totalExpensesAmount(double amount);
+  String totalExpensesAmount(String amount);
 
   /// No description provided for @allDone.
   ///
@@ -1179,7 +1191,7 @@ abstract class AppLocalizations {
   ///
   /// In en, this message translates to:
   /// **'You owe {displayName} {amount}'**
-  String payBackDialog(String displayName, double amount);
+  String payBackDialog(String displayName, String amount);
 
   /// No description provided for @payBackDialogPaypal.
   ///
@@ -1215,7 +1227,7 @@ abstract class AppLocalizations {
   ///
   /// In en, this message translates to:
   /// **'You paid back {amount} to {displayName}'**
-  String payBackSuccess(String displayName, double amount);
+  String payBackSuccess(String displayName, String amount);
 
   /// ListTile in the group detail of who paid back money.
   ///
@@ -1226,7 +1238,7 @@ abstract class AppLocalizations {
     String paidBy,
     String paidForYourself,
     String paidFor,
-    double amount,
+    String amount,
   );
 
   /// No description provided for @signInTitle.
@@ -1661,18 +1673,6 @@ abstract class AppLocalizations {
   /// **'Remove as friend'**
   String get friendshipDialogRemoveAsFriend;
 
-  ///
-  ///
-  /// In en, this message translates to:
-  /// **'{amount}'**
-  String toCurrency(double amount);
-
-  ///
-  ///
-  /// In en, this message translates to:
-  /// **'{amount}'**
-  String toCurrencyNoPrefix(double amount);
-
   /// Notification title when a new group was added.
   ///
   /// In en, this message translates to:
@@ -1698,7 +1698,7 @@ abstract class AppLocalizations {
   ///
   /// In en, this message translates to:
   /// **'You should receive {amount} in the next days.'**
-  String groupPayBackNotificationBody(double amount);
+  String groupPayBackNotificationBody(String amount);
 
   /// Notification title when a new expense was added.
   ///
@@ -1713,7 +1713,7 @@ abstract class AppLocalizations {
   String expenseNotificationBody(
     String expenseName,
     String groupName,
-    double amount,
+    String amount,
   );
 
   /// No description provided for @friendRequestNotificationTitle.
@@ -2902,7 +2902,7 @@ abstract class AppLocalizations {
   ///
   /// In en, this message translates to:
   /// **'You owe {amount} in {groupName}'**
-  String reminderNotificationBody(double amount, String groupName);
+  String reminderNotificationBody(String amount, String groupName);
 
   /// No description provided for @dateToday.
   ///
@@ -2932,13 +2932,13 @@ abstract class AppLocalizations {
   ///
   /// In en, this message translates to:
   /// **'You claimed {amount}'**
-  String groupDetailYouClaimed(double amount);
+  String groupDetailYouClaimed(String amount);
 
   /// Meta line on an itemized ledger row showing the still-unclaimed amount.
   ///
   /// In en, this message translates to:
   /// **'{amount} unclaimed'**
-  String groupDetailUnclaimed(double amount);
+  String groupDetailUnclaimed(String amount);
 
   /// Meta line on an itemized ledger row when nothing is left unclaimed.
   ///
@@ -3076,7 +3076,7 @@ abstract class AppLocalizations {
   ///
   /// In en, this message translates to:
   /// **'Pay {amount}'**
-  String paymentPayAmount(double amount);
+  String paymentPayAmount(String amount);
 
   /// Sticky CTA on the cash method-detail sheet that marks the balance settled.
   ///

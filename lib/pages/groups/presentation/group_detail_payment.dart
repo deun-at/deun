@@ -54,10 +54,15 @@ class GroupPaymentBottomSheet extends ConsumerWidget {
                   top: false,
                   child: Consumer(
                     builder: (context, ref, child) {
-                      final Group? detail = ref.watch(groupDetailProvider(group.id)).value;
+                      final Group? detail = ref
+                          .watch(groupDetailProvider(group.id))
+                          .value;
 
                       if (detail == null) {
-                        return const ShimmerCardList(height: 50, listEntryLength: 8);
+                        return const ShimmerCardList(
+                          height: 50,
+                          listEntryLength: 8,
+                        );
                       }
 
                       return SingleChildScrollView(
@@ -131,8 +136,12 @@ class _OverallHero extends StatelessWidget {
     final l10n = AppLocalizations.of(context)!;
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    final Color heroSurface = isDark ? colorScheme.primaryContainer : colorScheme.primary;
-    final Color onHero = isDark ? colorScheme.onPrimaryContainer : colorScheme.onPrimary;
+    final Color heroSurface = isDark
+        ? colorScheme.primaryContainer
+        : colorScheme.primary;
+    final Color onHero = isDark
+        ? colorScheme.onPrimaryContainer
+        : colorScheme.onPrimary;
     final Color onHeroMuted = onHero.withValues(alpha: 0.7);
 
     final net = group.totalShareAmount;
@@ -159,13 +168,18 @@ class _OverallHero extends StatelessWidget {
         children: [
           Text(
             leadLabel,
-            style: Theme.of(context).textTheme.labelLarge?.copyWith(color: onHeroMuted),
+            style: Theme.of(
+              context,
+            ).textTheme.labelLarge?.copyWith(color: onHeroMuted),
           ),
           const SizedBox(height: 6),
           MoneyText(
             settled ? 0 : net.abs(),
+            currencyCode: group.currencyCode,
             semantic: MoneySemantic.neutral,
-            style: Theme.of(context).textTheme.displaySmall?.copyWith(color: onHero),
+            style: Theme.of(
+              context,
+            ).textTheme.displaySmall?.copyWith(color: onHero),
             animate: true,
           ),
         ],
@@ -204,6 +218,7 @@ class _PayRow extends StatelessWidget {
                 const SizedBox(height: 2),
                 MoneyText(
                   entry.amount,
+                  currencyCode: group.currencyCode,
                   semantic: MoneySemantic.negative,
                   style: Theme.of(context).textTheme.bodyMedium,
                 ),
@@ -264,7 +279,10 @@ class _OwesRowState extends State<_OwesRow> {
     return SoftCard(
       child: Row(
         children: [
-          MemberAvatar(name: widget.entry.summary.displayName, colorKey: widget.entry.email),
+          MemberAvatar(
+            name: widget.entry.summary.displayName,
+            colorKey: widget.entry.email,
+          ),
           const SizedBox(width: 12),
           Expanded(
             child: Column(
@@ -284,11 +302,12 @@ class _OwesRowState extends State<_OwesRow> {
                     Text(
                       '${l10n.paymentOwesYouInline} ',
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                            color: Theme.of(context).colorScheme.onSurfaceVariant,
-                          ),
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      ),
                     ),
                     MoneyText(
                       widget.entry.amount,
+                      currencyCode: widget.group.currencyCode,
                       semantic: MoneySemantic.positive,
                       style: Theme.of(context).textTheme.bodyMedium,
                     ),
@@ -318,22 +337,29 @@ class _OwesRowState extends State<_OwesRow> {
     setState(() => _sending = true);
     final l10n = AppLocalizations.of(context)!;
     try {
-      final lastReminder = await ReminderRepository.getLastReminder(widget.group.id, widget.entry.email);
-      if (lastReminder != null && DateTime.now().difference(lastReminder).inHours < 24) {
+      final lastReminder = await ReminderRepository.getLastReminder(
+        widget.group.id,
+        widget.entry.email,
+      );
+      if (lastReminder != null &&
+          DateTime.now().difference(lastReminder).inHours < 24) {
         if (mounted) showSnackBar(context, l10n.reminderCooldown);
         return;
       }
 
-      await ReminderRepository.sendReminder(widget.group.id, widget.entry.email);
+      await ReminderRepository.sendReminder(
+        widget.group.id,
+        widget.entry.email,
+      );
 
       if (mounted) {
-        sendPaymentReminderNotification(
+        sendPaymentReminderNotification(context, widget.group.id, {
+          widget.entry.email,
+        }, widget.entry.amount);
+        showSnackBar(
           context,
-          widget.group.id,
-          {widget.entry.email},
-          widget.entry.amount,
+          l10n.reminderSent(widget.entry.summary.displayName),
         );
-        showSnackBar(context, l10n.reminderSent(widget.entry.summary.displayName));
       }
     } catch (e) {
       debugPrint('Reminder failed for ${widget.entry.email}: $e');
@@ -357,7 +383,11 @@ class _AllSettled extends StatelessWidget {
       padding: const EdgeInsets.symmetric(vertical: 40),
       child: Column(
         children: [
-          SuccessBadge(icon: Icons.check_circle_outline, size: 48, color: semantic.success),
+          SuccessBadge(
+            icon: Icons.check_circle_outline,
+            size: 48,
+            color: semantic.success,
+          ),
           const SizedBox(height: 12),
           Text(
             l10n.paymentAllSettled,
@@ -398,6 +428,7 @@ class _PaymentMethodSheet extends StatelessWidget {
         children: [
           MoneyText(
             entry.amount,
+            currencyCode: group.currencyCode,
             semantic: MoneySemantic.negative,
             style: Theme.of(context).textTheme.headlineMedium,
           ),
@@ -410,7 +441,9 @@ class _PaymentMethodSheet extends StatelessWidget {
       ),
       footer: PrimaryButton(
         onPressed: () => _settle(context),
-        label: l10n.paymentPayAmount(entry.amount),
+        label: l10n.paymentPayAmount(
+          l10n.toCurrency(entry.amount, group.currencyCode),
+        ),
       ),
     );
   }
@@ -420,9 +453,20 @@ class _PaymentMethodSheet extends StatelessWidget {
   Future<void> _settle(BuildContext context) async {
     final l10n = AppLocalizations.of(context)!;
     try {
-      await GroupRepository.payBack(modalContext, group.id, entry.email, entry.amount);
+      await GroupRepository.payBack(
+        modalContext,
+        group.id,
+        entry.email,
+        entry.amount,
+      );
       if (modalContext.mounted) {
-        showSnackBar(modalContext, l10n.payBackSuccess(entry.summary.displayName, entry.amount));
+        showSnackBar(
+          modalContext,
+          l10n.payBackSuccess(
+            entry.summary.displayName,
+            l10n.toCurrency(entry.amount, group.currencyCode),
+          ),
+        );
       }
     } catch (e) {
       if (context.mounted) showSnackBar(context, l10n.payBackError);
@@ -488,17 +532,18 @@ class _MethodCard extends StatelessWidget {
                 const SizedBox(height: 2),
                 Text(
                   subtitle,
-                  style: Theme.of(context)
-                      .textTheme
-                      .bodySmall
-                      ?.copyWith(color: colorScheme.onSurfaceVariant),
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: colorScheme.onSurfaceVariant,
+                  ),
                 ),
               ],
             ),
           ),
           if (onTap != null)
             Icon(
-              method == PaymentMethod.iban ? Icons.copy_outlined : Icons.open_in_new,
+              method == PaymentMethod.iban
+                  ? Icons.copy_outlined
+                  : Icons.open_in_new,
               size: 18,
               color: colorScheme.onSurfaceVariant,
             ),
@@ -510,7 +555,9 @@ class _MethodCard extends StatelessWidget {
   Future<void> _openPaypal(BuildContext context) async {
     final paypalMe = entry.summary.paypalMe;
     if (paypalMe == null || paypalMe.isEmpty) return;
-    final paypalUri = Uri.parse('https://www.paypal.me/$paypalMe/${entry.amount}');
+    final paypalUri = Uri.parse(
+      'https://www.paypal.me/$paypalMe/${entry.amount}',
+    );
     bool launched = false;
     try {
       launched = await launchUrl(paypalUri);

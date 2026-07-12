@@ -1,5 +1,6 @@
 import 'package:deun/constants.dart';
 import 'package:deun/l10n/app_localizations.dart';
+import 'package:deun/helper/helper.dart';
 import 'package:deun/pages/expenses/data/expense_model.dart';
 import 'package:deun/pages/expenses/data/expense_entry_model.dart';
 import 'package:deun/pages/expenses/presentation/expense_detail.dart';
@@ -83,8 +84,11 @@ Future<void> _pump(
         supportedLocales: AppLocalizations.supportedLocales,
         home: Builder(
           builder: (context) => Theme(
-            data: getThemeData(context, kBrandSeed, brightness)
-                .copyWith(splashFactory: NoSplash.splashFactory),
+            data: getThemeData(
+              context,
+              kBrandSeed,
+              brightness,
+            ).copyWith(splashFactory: NoSplash.splashFactory),
             // ExpenseDetail wraps itself in a ThemeBuilder that inherits this
             // ambient brightness.
             child: ExpenseDetail(group: _group(), expense: expense),
@@ -107,15 +111,14 @@ void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
   setUpAll(() async {
-    TestWidgetsFlutterBinding.ensureInitialized()
-        .defaultBinaryMessenger
+    TestWidgetsFlutterBinding.ensureInitialized().defaultBinaryMessenger
         .setMockMethodCallHandler(
-      const MethodChannel('plugins.flutter.io/shared_preferences'),
-      (call) async {
-        if (call.method == 'getAll') return <String, Object>{};
-        return null;
-      },
-    );
+          const MethodChannel('plugins.flutter.io/shared_preferences'),
+          (call) async {
+            if (call.method == 'getAll') return <String, Object>{};
+            return null;
+          },
+        );
     await Supabase.initialize(
       url: 'http://localhost:54321',
       anonKey: 'test-anon-key',
@@ -143,7 +146,10 @@ void main() {
     );
 
     // F103: a per-person split preview sits under the amount.
-    expect(find.text(l10n.expenseSplitEach(l10n.toCurrency(0))), findsOneWidget);
+    expect(
+      find.text(l10n.expenseSplitEach(l10n.toCurrency(0))),
+      findsOneWidget,
+    );
 
     // F103/F113: no "Details" section header in the quick block.
     expect(find.text(l10n.expenseDetailsLabel), findsNothing);
@@ -173,18 +179,25 @@ void main() {
     // inset (already consumed by DeunHeader's SafeArea) isn't double-applied
     // as list top-padding; the inner top Padding is 6 → header→toggle ≈14px.
     final bodyList = tester.widget<ListView>(find.byType(ListView).first);
-    expect(bodyList.padding, EdgeInsets.zero,
-        reason: 'ListView must not re-apply MediaQuery.padding.top (F173)');
-    final innerTopPad = tester.widgetList<Padding>(find.byType(Padding)).firstWhere(
+    expect(
+      bodyList.padding,
+      EdgeInsets.zero,
+      reason: 'ListView must not re-apply MediaQuery.padding.top (F173)',
+    );
+    final innerTopPad = tester
+        .widgetList<Padding>(find.byType(Padding))
+        .firstWhere(
           (p) => p.padding == const EdgeInsets.only(top: 6, bottom: 0),
           orElse: () => throw TestFailure(
-              'expected inner top Padding of 6 above the mode toggle (F173)'),
+            'expected inner top Padding of 6 above the mode toggle (F173)',
+          ),
         );
     expect(innerTopPad.padding, const EdgeInsets.only(top: 6, bottom: 0));
   });
 
-  testWidgets('tapping the date tile opens the date options sheet',
-      (tester) async {
+  testWidgets('tapping the date tile opens the date options sheet', (
+    tester,
+  ) async {
     await _pump(tester);
     final l10n = await AppLocalizations.delegate.load(const Locale('en'));
 
@@ -201,15 +214,20 @@ void main() {
     // ("Today" can also be the tile's current value, so scope to the sheet.)
     final sheet = find.byType(DateOptionsSheet);
     expect(sheet, findsOneWidget);
-    expect(find.descendant(of: sheet, matching: find.text(l10n.dateYesterday)),
-        findsOneWidget);
-    expect(find.descendant(of: sheet, matching: find.text(l10n.datePickCustom)),
-        findsOneWidget);
+    expect(
+      find.descendant(of: sheet, matching: find.text(l10n.dateYesterday)),
+      findsOneWidget,
+    );
+    expect(
+      find.descendant(of: sheet, matching: find.text(l10n.datePickCustom)),
+      findsOneWidget,
+    );
     expect(find.byType(DatePickerDialog), findsNothing);
   });
 
-  testWidgets('"Pick a date…" in the date sheet opens the platform picker',
-      (tester) async {
+  testWidgets('"Pick a date…" in the date sheet opens the platform picker', (
+    tester,
+  ) async {
     await _pump(tester);
     final l10n = await AppLocalizations.delegate.load(const Locale('en'));
 
@@ -232,14 +250,16 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('new expense auto-opens the amount keypad sheet (F100)',
-      (tester) async {
+  testWidgets('new expense auto-opens the amount keypad sheet (F100)', (
+    tester,
+  ) async {
     await _pump(tester, dismissKeypad: false);
     expect(find.byType(AmountKeypadSheet), findsOneWidget);
   });
 
-  testWidgets('editing an existing expense does NOT auto-open the keypad',
-      (tester) async {
+  testWidgets('editing an existing expense does NOT auto-open the keypad', (
+    tester,
+  ) async {
     await _pump(tester, expense: _expense(), dismissKeypad: false);
     expect(find.byType(AmountKeypadSheet), findsNothing);
   });

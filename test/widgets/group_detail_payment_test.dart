@@ -1,5 +1,6 @@
 import 'package:deun/constants.dart';
 import 'package:deun/l10n/app_localizations.dart';
+import 'package:deun/helper/helper.dart';
 import 'package:deun/pages/groups/data/group_member_model.dart';
 import 'package:deun/pages/groups/data/group_model.dart';
 import 'package:deun/pages/groups/presentation/group_detail_payment.dart';
@@ -51,9 +52,17 @@ Group _group() {
   g.simplifiedExpenses = true;
   g.createdAt = '';
   g.userId = null;
-  g.groupMembers = [_member(_myEmail), _member('sam@test.com'), _member('priya@test.com')];
+  g.groupMembers = [
+    _member(_myEmail),
+    _member('sam@test.com'),
+    _member('priya@test.com'),
+  ];
   g.groupSharesSummary = {
-    'sam@test.com': _summary(displayName: 'Sam', shareAmount: -30.0, paypalMe: 'sam'),
+    'sam@test.com': _summary(
+      displayName: 'Sam',
+      shareAmount: -30.0,
+      paypalMe: 'sam',
+    ),
     'priya@test.com': _summary(displayName: 'Priya', shareAmount: 20.0),
   };
   g.totalExpenses = 0;
@@ -87,7 +96,9 @@ Future<void> _pump(
   await tester.pumpWidget(
     ProviderScope(
       overrides: [
-        groupDetailProvider(group.id).overrideWith(() => _FakeGroupDetailNotifier(group)),
+        groupDetailProvider(
+          group.id,
+        ).overrideWith(() => _FakeGroupDetailNotifier(group)),
       ],
       child: MaterialApp(
         localizationsDelegates: const [
@@ -99,7 +110,11 @@ Future<void> _pump(
         supportedLocales: AppLocalizations.supportedLocales,
         home: Builder(
           builder: (context) => Theme(
-            data: getThemeData(context, kBrandSeed, brightness).copyWith(splashFactory: NoSplash.splashFactory),
+            data: getThemeData(
+              context,
+              kBrandSeed,
+              brightness,
+            ).copyWith(splashFactory: NoSplash.splashFactory),
             child: GroupPaymentBottomSheet(group: group),
           ),
         ),
@@ -113,11 +128,15 @@ void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
   setUpAll(() async {
-    TestWidgetsFlutterBinding.ensureInitialized().defaultBinaryMessenger.setMockMethodCallHandler(
-      const MethodChannel('plugins.flutter.io/shared_preferences'),
-      (call) async => call.method == 'getAll' ? <String, Object>{} : null,
+    TestWidgetsFlutterBinding.ensureInitialized().defaultBinaryMessenger
+        .setMockMethodCallHandler(
+          const MethodChannel('plugins.flutter.io/shared_preferences'),
+          (call) async => call.method == 'getAll' ? <String, Object>{} : null,
+        );
+    await Supabase.initialize(
+      url: 'http://localhost:54321',
+      anonKey: 'test-anon-key',
     );
-    await Supabase.initialize(url: 'http://localhost:54321', anonKey: 'test-anon-key');
   });
 
   tearDownAll(() async {
@@ -152,24 +171,32 @@ void main() {
     expect(find.text('${l10n.paymentOwesYouInline} '), findsOneWidget);
     // F59: Remind is a gray tonal pill (no icon), now on the SecondaryButton
     // preset with a surfaceContainer background override.
-    expect(find.widgetWithText(SecondaryButton, l10n.paymentRemind), findsOneWidget);
+    expect(
+      find.widgetWithText(SecondaryButton, l10n.paymentRemind),
+      findsOneWidget,
+    );
   });
 
-  testWidgets('method-detail sheet shows only methods the payee has (PayPal present, IBAN absent)',
-      (tester) async {
-    final l10n = await AppLocalizations.delegate.load(const Locale('en'));
-    await _pump(tester, group: _group());
+  testWidgets(
+    'method-detail sheet shows only methods the payee has (PayPal present, IBAN absent)',
+    (tester) async {
+      final l10n = await AppLocalizations.delegate.load(const Locale('en'));
+      await _pump(tester, group: _group());
 
-    await tester.tap(find.widgetWithText(PrimaryButton, l10n.paymentPay));
-    await tester.pumpAndSettle();
+      await tester.tap(find.widgetWithText(PrimaryButton, l10n.paymentPay));
+      await tester.pumpAndSettle();
 
-    // Sam has PayPal but no IBAN → PayPal + Cash cards, no IBAN card.
-    expect(find.text(l10n.paymentMethodPaypal), findsOneWidget);
-    expect(find.text(l10n.paymentMethodCash), findsOneWidget);
-    expect(find.text(l10n.paymentMethodIban), findsNothing);
-    // Sticky CTA shows the per-payee amount (€30).
-    expect(find.text(l10n.paymentPayAmount(30.0)), findsOneWidget);
-  });
+      // Sam has PayPal but no IBAN → PayPal + Cash cards, no IBAN card.
+      expect(find.text(l10n.paymentMethodPaypal), findsOneWidget);
+      expect(find.text(l10n.paymentMethodCash), findsOneWidget);
+      expect(find.text(l10n.paymentMethodIban), findsNothing);
+      // Sticky CTA shows the per-payee amount (€30).
+      expect(
+        find.text(l10n.paymentPayAmount(l10n.toCurrency(30.0))),
+        findsOneWidget,
+      );
+    },
+  );
 
   testWidgets('all-settled empty state', (tester) async {
     final l10n = await AppLocalizations.delegate.load(const Locale('en'));
@@ -187,30 +214,38 @@ void main() {
     expect(find.text('Priya'), findsOneWidget);
   });
 
-  testWidgets('F155/F58: full-page view uses a DeunHeader back-arrow, not sheet chrome', (tester) async {
-    final l10n = await AppLocalizations.delegate.load(const Locale('en'));
-    await _pump(tester, group: _group());
+  testWidgets(
+    'F155/F58: full-page view uses a DeunHeader back-arrow, not sheet chrome',
+    (tester) async {
+      final l10n = await AppLocalizations.delegate.load(const Locale('en'));
+      await _pump(tester, group: _group());
 
-    // Full-page container: a DeunHeader with a back-arrow, no AppBar.
-    expect(find.byType(DeunHeader), findsOneWidget);
-    expect(find.byType(AppBar), findsNothing);
-    // The header carries the settle-up title.
-    expect(find.text(l10n.paymentTitle), findsOneWidget);
-    // Back-arrow present; the old sheet close-X (Icons.close) must be gone.
-    expect(find.widgetWithIcon(HeaderIconButton, Icons.arrow_back), findsOneWidget);
-    expect(find.byIcon(Icons.close), findsNothing);
-    // No routed bottom-sheet chrome at rest: the top-level view is not a
-    // SheetScaffold (the payment-method detail sheet still is, but only after
-    // tapping Pay).
-    expect(find.byType(SheetScaffold), findsNothing);
-  });
+      // Full-page container: a DeunHeader with a back-arrow, no AppBar.
+      expect(find.byType(DeunHeader), findsOneWidget);
+      expect(find.byType(AppBar), findsNothing);
+      // The header carries the settle-up title.
+      expect(find.text(l10n.paymentTitle), findsOneWidget);
+      // Back-arrow present; the old sheet close-X (Icons.close) must be gone.
+      expect(
+        find.widgetWithIcon(HeaderIconButton, Icons.arrow_back),
+        findsOneWidget,
+      );
+      expect(find.byIcon(Icons.close), findsNothing);
+      // No routed bottom-sheet chrome at rest: the top-level view is not a
+      // SheetScaffold (the payment-method detail sheet still is, but only after
+      // tapping Pay).
+      expect(find.byType(SheetScaffold), findsNothing);
+    },
+  );
 
   testWidgets('back-arrow pops the full-page view', (tester) async {
     bool popped = false;
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
-          groupDetailProvider(_group().id).overrideWith(() => _FakeGroupDetailNotifier(_group())),
+          groupDetailProvider(
+            _group().id,
+          ).overrideWith(() => _FakeGroupDetailNotifier(_group())),
         ],
         child: MaterialApp(
           localizationsDelegates: const [
@@ -222,15 +257,21 @@ void main() {
           supportedLocales: AppLocalizations.supportedLocales,
           home: Builder(
             builder: (context) => Theme(
-              data: getThemeData(context, kBrandSeed, Brightness.light)
-                  .copyWith(splashFactory: NoSplash.splashFactory),
+              data: getThemeData(
+                context,
+                kBrandSeed,
+                Brightness.light,
+              ).copyWith(splashFactory: NoSplash.splashFactory),
               child: Scaffold(
                 body: TextButton(
                   onPressed: () {
                     Navigator.of(context)
-                        .push(MaterialPageRoute<void>(
-                          builder: (_) => GroupPaymentBottomSheet(group: _group()),
-                        ))
+                        .push(
+                          MaterialPageRoute<void>(
+                            builder: (_) =>
+                                GroupPaymentBottomSheet(group: _group()),
+                          ),
+                        )
                         .then((_) => popped = true);
                   },
                   child: const Text('Open'),

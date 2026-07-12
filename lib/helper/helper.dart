@@ -11,7 +11,8 @@ import 'package:deun/l10n/app_localizations.dart';
 /// True when an RPC failed because the function doesn't exist on the server
 /// yet (older database without the atomic save migrations applied).
 /// PGRST202 = PostgREST schema cache miss, 42883 = Postgres undefined function.
-bool isMissingFunctionError(PostgrestException e) => e.code == 'PGRST202' || e.code == '42883';
+bool isMissingFunctionError(PostgrestException e) =>
+    e.code == 'PGRST202' || e.code == '42883';
 
 /// Build a "username#code" string from a raw JSON map, falling back to display_name.
 String fullUsernameFromJson(Map<String, dynamic> json) {
@@ -23,11 +24,71 @@ String fullUsernameFromJson(Map<String, dynamic> json) {
 
 /// Sanitize a value before interpolating it into a Supabase PostgREST filter string.
 /// Strips characters that could break the filter DSL (commas, parentheses, etc.).
-String sanitizeFilterValue(String value) => value.replaceAll(RegExp(r'[%,()\\]'), '');
+String sanitizeFilterValue(String value) =>
+    value.replaceAll(RegExp(r'[%,()\\]'), '');
 
 /// Round a currency value to 2 decimal places to prevent floating-point drift.
 /// Use at every arithmetic boundary where money is computed.
 double roundCurrency(double value) => (value * 100).roundToDouble() / 100;
+
+/// App-wide default group currency (ISO 4217). New groups default to this and
+/// any amount rendered without an explicit group currency falls back to it.
+const String kDefaultCurrencyCode = 'EUR';
+
+/// Currencies offered in the group currency picker. Every entry is an ISO 4217
+/// code `intl` can format with a locale-aware symbol.
+const List<String> kSupportedCurrencyCodes = [
+  'EUR',
+  'USD',
+  'GBP',
+  'CHF',
+  'JPY',
+  'CAD',
+  'AUD',
+  'NZD',
+  'CNY',
+  'SEK',
+  'NOK',
+  'DKK',
+  'PLN',
+  'CZK',
+  'HUF',
+  'INR',
+  'BRL',
+  'ZAR',
+  'MXN',
+  'SGD',
+  'HKD',
+  'KRW',
+  'TRY',
+];
+
+/// The locale-aware currency symbol for [currencyCode] (e.g. "$", "£", "€"),
+/// used for bare amount-input adornments.
+String currencySymbolFor(String localeName, String currencyCode) =>
+    NumberFormat.simpleCurrency(
+      locale: localeName,
+      name: currencyCode,
+    ).currencySymbol;
+
+/// Currency-aware money formatting keyed on an ISO 4217 [currencyCode].
+///
+/// Replaces the former generated `toCurrency` (which baked in "€"): the symbol
+/// and its placement now come from the currency code + active locale, so the
+/// same amount renders "$1,234.56" in en-US/USD and "1.234,56 €" in de-DE/EUR.
+/// [currencyCode] defaults to [kDefaultCurrencyCode] so cross-group/aggregate
+/// call sites (statistics, friends) format via the default rather than a
+/// hardcoded symbol.
+extension AppLocalizationsCurrency on AppLocalizations {
+  String toCurrency(
+    double amount, [
+    String currencyCode = kDefaultCurrencyCode,
+  ]) => NumberFormat.simpleCurrency(
+    locale: localeName,
+    name: currencyCode,
+    decimalDigits: 2,
+  ).format(amount);
+}
 
 String toHumanDateString(String? dateTimeIn) {
   if (dateTimeIn == null) return '';
@@ -45,10 +106,16 @@ String formatDate(String? dateString, [BuildContext? context]) {
   final today = DateTime(now.year, now.month, now.day);
   final yesterday = today.subtract(const Duration(days: 1));
 
-  if (date.year == today.year && date.month == today.month && date.day == today.day) {
+  if (date.year == today.year &&
+      date.month == today.month &&
+      date.day == today.day) {
     return context != null ? AppLocalizations.of(context)!.dateToday : 'Today';
-  } else if (date.year == yesterday.year && date.month == yesterday.month && date.day == yesterday.day) {
-    return context != null ? AppLocalizations.of(context)!.dateYesterday : 'Yesterday';
+  } else if (date.year == yesterday.year &&
+      date.month == yesterday.month &&
+      date.day == yesterday.day) {
+    return context != null
+        ? AppLocalizations.of(context)!.dateYesterday
+        : 'Yesterday';
   } else if (date.year == now.year) {
     // Same year, display day and full month
     return DateFormat('d MMM').format(date);
@@ -69,7 +136,11 @@ void showSnackBar(BuildContext context, String message) {
   messenger.showSnackBar(snackBar);
 }
 
-void showMaterialBanner(BuildContext context, String message, Function onPressed) {
+void showMaterialBanner(
+  BuildContext context,
+  String message,
+  Function onPressed,
+) {
   final messenger = ScaffoldMessenger.of(context);
 
   final banner = MaterialBanner(
@@ -95,76 +166,162 @@ void showMaterialBanner(BuildContext context, String message, Function onPressed
   messenger.showMaterialBanner(banner);
 }
 
-void sendGroupNotification(BuildContext context, String groupId, Set<String> notificationReceiver) {
-  supabase.from('group').select('name, ...user_id(user_display_name:display_name)').eq('id', groupId).single().then(
-    (value) {
-      String title = AppLocalizations.of(context)!.groupNotificationTitle(value['user_display_name']);
-      String body = AppLocalizations.of(context)!.groupNotificationBody(value['name']);
+void sendGroupNotification(
+  BuildContext context,
+  String groupId,
+  Set<String> notificationReceiver,
+) {
+  supabase
+      .from('group')
+      .select('name, ...user_id(user_display_name:display_name)')
+      .eq('id', groupId)
+      .single()
+      .then(
+        (value) {
+          String title = AppLocalizations.of(
+            context,
+          )!.groupNotificationTitle(value['user_display_name']);
+          String body = AppLocalizations.of(
+            context,
+          )!.groupNotificationBody(value['name']);
 
-      sendNotification('group', groupId, notificationReceiver, title, body);
-    },
-    onError: (e) {
-      debugPrint('Failed to send group notification for group $groupId: $e');
-    },
-  );
+          sendNotification('group', groupId, notificationReceiver, title, body);
+        },
+        onError: (e) {
+          debugPrint(
+            'Failed to send group notification for group $groupId: $e',
+          );
+        },
+      );
 }
 
 void sendGroupPayBackNotification(
-    BuildContext context, String groupId, String expenseId, Set<String> notificationReceiver, double amount) {
+  BuildContext context,
+  String groupId,
+  String expenseId,
+  Set<String> notificationReceiver,
+  double amount,
+) {
   supabase
       .from('expense')
-      .select('name, ...group!expense_group_id_fkey(group_name:name), ...paid_by(user_display_name:display_name)')
+      .select(
+        'name, ...group!expense_group_id_fkey(group_name:name, group_currency_code:currency_code), ...paid_by(user_display_name:display_name)',
+      )
       .eq('id', expenseId)
       .single()
       .then(
-    (value) {
-      String title = AppLocalizations.of(context)!
-          .groupPayBackNotificationTitle(value['user_display_name'] ?? '', value['group_name']);
-      String body = AppLocalizations.of(context)!.groupPayBackNotificationBody(amount);
+        (value) {
+          final l10n = AppLocalizations.of(context)!;
+          String title = l10n.groupPayBackNotificationTitle(
+            value['user_display_name'] ?? '',
+            value['group_name'],
+          );
+          String body = l10n.groupPayBackNotificationBody(
+            l10n.toCurrency(
+              amount,
+              value['group_currency_code'] ?? kDefaultCurrencyCode,
+            ),
+          );
 
-      sendNotification('group', groupId, notificationReceiver, title, body);
-    },
-    onError: (e) {
-      debugPrint('Failed to send pay back notification for expense $expenseId: $e');
-    },
-  );
+          sendNotification('group', groupId, notificationReceiver, title, body);
+        },
+        onError: (e) {
+          debugPrint(
+            'Failed to send pay back notification for expense $expenseId: $e',
+          );
+        },
+      );
 }
 
 void sendPaymentReminderNotification(
-    BuildContext context, String groupId, Set<String> notificationReceiver, double amount) {
-  supabase.from('group').select('name, ...user_id(user_display_name:display_name)').eq('id', groupId).single().then(
-    (value) {
-      String title = AppLocalizations.of(context)!.reminderNotificationTitle(value['user_display_name']);
-      String body = AppLocalizations.of(context)!.reminderNotificationBody(amount, value['name']);
+  BuildContext context,
+  String groupId,
+  Set<String> notificationReceiver,
+  double amount,
+) {
+  supabase
+      .from('group')
+      .select('name, currency_code, ...user_id(user_display_name:display_name)')
+      .eq('id', groupId)
+      .single()
+      .then(
+        (value) {
+          final l10n = AppLocalizations.of(context)!;
+          String title = l10n.reminderNotificationTitle(
+            value['user_display_name'],
+          );
+          String body = l10n.reminderNotificationBody(
+            l10n.toCurrency(
+              amount,
+              value['currency_code'] ?? kDefaultCurrencyCode,
+            ),
+            value['name'],
+          );
 
-      sendNotification('reminder', groupId, notificationReceiver, title, body);
-    },
-    onError: (e) {
-      debugPrint('Failed to send reminder notification for group $groupId: $e');
-    },
-  );
+          sendNotification(
+            'reminder',
+            groupId,
+            notificationReceiver,
+            title,
+            body,
+          );
+        },
+        onError: (e) {
+          debugPrint(
+            'Failed to send reminder notification for group $groupId: $e',
+          );
+        },
+      );
 }
 
-void sendExpenseNotification(BuildContext context, String expenseId, Set<String> notificationReceiver, double amount) {
+void sendExpenseNotification(
+  BuildContext context,
+  String expenseId,
+  Set<String> notificationReceiver,
+  double amount,
+) {
   supabase
       .from('expense')
-      .select('name, ...group!expense_group_id_fkey(group_name:name), ...user_id(user_display_name:display_name)')
+      .select(
+        'name, ...group!expense_group_id_fkey(group_name:name, group_currency_code:currency_code), ...user_id(user_display_name:display_name)',
+      )
       .eq('id', expenseId)
       .single()
       .then(
-    (value) {
-      String title = AppLocalizations.of(context)!.expenseNotificationTitle(value['user_display_name']);
-      String body = AppLocalizations.of(context)!.expenseNotificationBody(value['name'], value['group_name'], amount);
+        (value) {
+          final l10n = AppLocalizations.of(context)!;
+          String title = l10n.expenseNotificationTitle(
+            value['user_display_name'],
+          );
+          String body = l10n.expenseNotificationBody(
+            value['name'],
+            value['group_name'],
+            l10n.toCurrency(
+              amount,
+              value['group_currency_code'] ?? kDefaultCurrencyCode,
+            ),
+          );
 
-      sendNotification('expense', expenseId, notificationReceiver, title, body);
-    },
-    onError: (e) {
-      debugPrint('Failed to send expense notification for expense $expenseId: $e');
-    },
-  );
+          sendNotification(
+            'expense',
+            expenseId,
+            notificationReceiver,
+            title,
+            body,
+          );
+        },
+        onError: (e) {
+          debugPrint(
+            'Failed to send expense notification for expense $expenseId: $e',
+          );
+        },
+      );
 }
 
-void sendFriendRequestNotification(BuildContext context, Set<String> notificationReceiver) {
+void sendFriendRequestNotification(
+  BuildContext context,
+  Set<String> notificationReceiver,
+) {
   final l10n = AppLocalizations.of(context)!;
   UserRepository.fetchDetail(supabase.auth.currentUser!.email ?? '').then(
     (value) {
@@ -182,7 +339,10 @@ void sendFriendRequestNotification(BuildContext context, Set<String> notificatio
   );
 }
 
-void sendFriendAcceptNotification(BuildContext context, Set<String> notificationReceiver) {
+void sendFriendAcceptNotification(
+  BuildContext context,
+  Set<String> notificationReceiver,
+) {
   final l10n = AppLocalizations.of(context)!;
   UserRepository.fetchDetail(supabase.auth.currentUser!.email ?? '').then(
     (value) {
@@ -200,7 +360,10 @@ void sendFriendAcceptNotification(BuildContext context, Set<String> notification
   );
 }
 
-void sendFriendDeclineNotification(BuildContext context, Set<String> notificationReceiver) {
+void sendFriendDeclineNotification(
+  BuildContext context,
+  Set<String> notificationReceiver,
+) {
   final l10n = AppLocalizations.of(context)!;
   UserRepository.fetchDetail(supabase.auth.currentUser!.email ?? '').then(
     (value) {
@@ -218,20 +381,29 @@ void sendFriendDeclineNotification(BuildContext context, Set<String> notificatio
   );
 }
 
-Future<void> sendNotification(String type, String objectId, Set<String> notificationReceiver, String title, String body) async {
+Future<void> sendNotification(
+  String type,
+  String objectId,
+  Set<String> notificationReceiver,
+  String title,
+  String body,
+) async {
   try {
     notificationReceiver.remove(supabase.auth.currentUser?.email);
-    final res = await supabase.functions.invoke('push', body: {
-      'type': 'INSERT',
-      'table': type,
-      'record': {
-        'type': type,
-        'object_id': objectId,
-        'title': title,
-        'body': body,
-        'notification_receiver': notificationReceiver.toList(),
-      }
-    });
+    final res = await supabase.functions.invoke(
+      'push',
+      body: {
+        'type': 'INSERT',
+        'table': type,
+        'record': {
+          'type': type,
+          'object_id': objectId,
+          'title': title,
+          'body': body,
+          'notification_receiver': notificationReceiver.toList(),
+        },
+      },
+    );
     final data = res.data;
     debugPrint(data.toString());
   } catch (e) {
@@ -254,9 +426,13 @@ Future<void> sendContactMail(Map<String, dynamic> contactInfo) async {
   final email = escapeHtml(contactInfo['email']?.toString());
   final description = escapeHtml(contactInfo['description']?.toString());
 
-  await supabase.functions.invoke('send-contact-email', body: {
-    'message': "Name: $name <br>Company: $company<br>E-Mail: $email<br><br>Description: $description",
-  });
+  await supabase.functions.invoke(
+    'send-contact-email',
+    body: {
+      'message':
+          "Name: $name <br>Company: $company<br>E-Mail: $email<br><br>Description: $description",
+    },
+  );
 }
 
 void navigateToGroup(BuildContext context, Group group) {
@@ -267,7 +443,10 @@ void navigateToGroup(BuildContext context, Group group) {
 
 void navigateToExpense(BuildContext context, Expense expense) {
   navigateToGroup(context, expense.group);
-  GoRouter.of(context).push("/group/details/expense", extra: {'group': expense.group, 'expense': expense});
+  GoRouter.of(context).push(
+    "/group/details/expense",
+    extra: {'group': expense.group, 'expense': expense},
+  );
 }
 
 void navigateToFriends(BuildContext context) {

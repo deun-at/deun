@@ -41,7 +41,10 @@ class GroupListItem extends ConsumerWidget {
     // spec tint background (light) / a dark-surface derivation (dark) — routed
     // through the centralized `groupTint` mapping, never a flat alpha overlay
     // (F04).
-    final groupTintBg = groupTint(group.colorValue, Theme.of(context).brightness);
+    final groupTintBg = groupTint(
+      group.colorValue,
+      Theme.of(context).brightness,
+    );
     final amount = group.totalShareAmount;
     final isSettled = amount.abs() < _settledThreshold;
 
@@ -73,58 +76,64 @@ class GroupListItem extends ConsumerWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-              Row(
-                children: [
-                  Container(
-                    width: 40,
-                    height: 40,
-                    decoration: BoxDecoration(
-                      color: groupTintBg,
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Icon(Icons.groups_rounded, color: groupColor, size: 22),
+            Row(
+              children: [
+                Container(
+                  width: 40,
+                  height: 40,
+                  decoration: BoxDecoration(
+                    color: groupTintBg,
+                    borderRadius: BorderRadius.circular(12),
                   ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Text(
-                      group.name,
-                      style: textTheme.titleLarge,
-                      overflow: TextOverflow.ellipsis,
-                    ),
+                  child: Icon(
+                    Icons.groups_rounded,
+                    color: groupColor,
+                    size: 22,
                   ),
-                  if (onFavoriteToggle != null)
-                    // IconButton is its own gesture region, so a star tap is
-                    // handled here and never bubbles to the card's onTap (no
-                    // navigation when toggling favorite).
-                    IconButton(
-                      icon: Icon(
-                        isFavorite ? Icons.star : Icons.star_border,
-                        color: isFavorite
-                            ? Theme.of(context).extension<SemanticColors>()!.warning
-                            : colorScheme.outline,
-                      ),
-                      onPressed: onFavoriteToggle,
-                      visualDensity: VisualDensity.compact,
-                      tooltip: l10n.groupSectionFavorites,
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    group.name,
+                    style: textTheme.titleLarge,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+                if (onFavoriteToggle != null)
+                  // IconButton is its own gesture region, so a star tap is
+                  // handled here and never bubbles to the card's onTap (no
+                  // navigation when toggling favorite).
+                  IconButton(
+                    icon: Icon(
+                      isFavorite ? Icons.star : Icons.star_border,
+                      color: isFavorite
+                          ? Theme.of(
+                              context,
+                            ).extension<SemanticColors>()!.warning
+                          : colorScheme.outline,
                     ),
-                  Icon(Icons.chevron_right, color: colorScheme.outline),
+                    onPressed: onFavoriteToggle,
+                    visualDensity: VisualDensity.compact,
+                    tooltip: l10n.groupSectionFavorites,
+                  ),
+                Icon(Icons.chevron_right, color: colorScheme.outline),
+              ],
+            ),
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                if (members.isNotEmpty) ...[
+                  AvatarStack(members: members, radius: 13, maxVisible: 3),
+                  const SizedBox(width: 8),
                 ],
-              ),
-              const SizedBox(height: 12),
-              Row(
-                children: [
-                  if (members.isNotEmpty) ...[
-                    AvatarStack(members: members, radius: 13, maxVisible: 3),
-                    const SizedBox(width: 8),
-                  ],
-                  // Expanded so the balance column FILLS the remaining width and
-                  // pushes label+amount flush to the card's right edge (footer is
-                  // avatars-left / balance-right space-between, F165). The F152
-                  // guard still holds: when a wide member stack + long German lead
-                  // label ("Dir wird geschuldet") won't fit, the LABEL ellipsizes
-                  // (maxLines:1 below) while the amount stays whole.
-                  Expanded(
-                    child: Column(
+                // Expanded so the balance column FILLS the remaining width and
+                // pushes label+amount flush to the card's right edge (footer is
+                // avatars-left / balance-right space-between, F165). The F152
+                // guard still holds: when a wide member stack + long German lead
+                // label ("Dir wird geschuldet") won't fit, the LABEL ellipsizes
+                // (maxLines:1 below) while the amount stays whole.
+                Expanded(
+                  child: Column(
                     crossAxisAlignment: CrossAxisAlignment.end,
                     mainAxisSize: MainAxisSize.min,
                     children: [
@@ -152,6 +161,7 @@ class GroupListItem extends ConsumerWidget {
                         // lead-label + amount hierarchy.
                         MoneyText(
                           amount.abs(),
+                          currencyCode: group.currencyCode,
                           semantic: moneySemantic,
                           style: textTheme.titleMedium?.copyWith(
                             fontWeight: FontWeight.w700,
@@ -159,14 +169,13 @@ class GroupListItem extends ConsumerWidget {
                         ),
                       ],
                     ],
-                    ),
                   ),
-                ],
-              ),
-            ],
-          ),
+                ),
+              ],
+            ),
+          ],
         ),
-      );
+      ),
+    );
   }
 }
-

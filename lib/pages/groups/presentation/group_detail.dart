@@ -202,8 +202,9 @@ class _GroupDetailState extends ConsumerState<GroupDetail> {
             children: [
               FloatingActionButton.small(
                 heroTag: "floating_action_button_scan",
-                backgroundColor:
-                    Theme.of(context).colorScheme.surfaceContainerLowest,
+                backgroundColor: Theme.of(
+                  context,
+                ).colorScheme.surfaceContainerLowest,
                 foregroundColor: Theme.of(context).colorScheme.primary,
                 onPressed: () async {
                   final result = await showModalBottomSheet<ReceiptScanResult>(
@@ -296,8 +297,8 @@ class _GroupDetailState extends ConsumerState<GroupDetail> {
             builder: (context) => Text(
               text,
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: Theme.of(context).colorScheme.onSurfaceVariant,
-                  ),
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+              ),
             ),
           ),
         ),
@@ -429,6 +430,7 @@ class _GroupBalanceHero extends StatelessWidget {
           const SizedBox(height: 6),
           MoneyText(
             settled ? 0 : net.abs(),
+            currencyCode: group.currencyCode,
             semantic: semanticMode,
             // Hero amount: matches the home hero (group_list.dart) — shared
             // displayMedium token (45px / w700 / -0.02em, tabular Bricolage).
@@ -554,7 +556,9 @@ class _QuickActionCard extends StatelessWidget {
           Flexible(
             child: Text(
               label,
-              style: textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w700),
+              style: textTheme.bodyMedium?.copyWith(
+                fontWeight: FontWeight.w700,
+              ),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
             ),

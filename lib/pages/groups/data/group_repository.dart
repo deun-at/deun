@@ -10,13 +10,18 @@ import '../../../constants.dart';
 import '../../../main.dart';
 
 class GroupRepository {
-  static Future<List<Group>> fetchData(String statusFilter, {String? paidTo}) async {
+  static Future<List<Group>> fetchData(
+    String statusFilter, {
+    String? paidTo,
+  }) async {
     var currentUserEmail = supabase.auth.currentUser?.email ?? '';
     var query = supabase.from('group').select(Group.groupSelectString);
 
     if (statusFilter == 'active') {
-      query = query.or('total_share_amount.gte.0.01,total_share_amount.lte.-0.01',
-          referencedTable: 'group_shares_summary_helper');
+      query = query.or(
+        'total_share_amount.gte.0.01,total_share_amount.lte.-0.01',
+        referencedTable: 'group_shares_summary_helper',
+      );
     } else if (statusFilter == 'done') {
       query = query.lt("group_shares_summary_helper.total_share_amount", 0.01);
       query = query.gt("group_shares_summary_helper.total_share_amount", -0.01);
@@ -28,11 +33,15 @@ class GroupRepository {
       final safePaidTo = sanitizeFilterValue(paidTo);
       final safeCurrentEmail = sanitizeFilterValue(currentUserEmail);
       query = query.or(
-          'and(paid_by.eq.$safeCurrentEmail,paid_for.eq.$safePaidTo),and(paid_by.eq.$safePaidTo,paid_for.eq.$safeCurrentEmail)',
-          referencedTable: 'group_shares_summary_helper');
+        'and(paid_by.eq.$safeCurrentEmail,paid_for.eq.$safePaidTo),and(paid_by.eq.$safePaidTo,paid_for.eq.$safeCurrentEmail)',
+        referencedTable: 'group_shares_summary_helper',
+      );
     }
 
-    List<Map<String, dynamic>> data = await query.order('name', ascending: true);
+    List<Map<String, dynamic>> data = await query.order(
+      'name',
+      ascending: true,
+    );
 
     List<Group> retData = List.empty(growable: true);
 
@@ -46,7 +55,11 @@ class GroupRepository {
   }
 
   static Future<Group> fetchDetail(String groupId) async {
-    Map<String, dynamic> data = await supabase.from('group').select(Group.groupSelectString).eq('id', groupId).single();
+    Map<String, dynamic> data = await supabase
+        .from('group')
+        .select(Group.groupSelectString)
+        .eq('id', groupId)
+        .single();
 
     Group group = Group();
     group.loadDataFromJson(data);
@@ -54,8 +67,12 @@ class GroupRepository {
     return group;
   }
 
-  static List<Map<String, dynamic>> decodeGroupMembersString(String? jsonValue) {
-    var selectedGroupMembers = List<Map<String, dynamic>>.from(jsonDecode(jsonValue ?? "[]"));
+  static List<Map<String, dynamic>> decodeGroupMembersString(
+    String? jsonValue,
+  ) {
+    var selectedGroupMembers = List<Map<String, dynamic>>.from(
+      jsonDecode(jsonValue ?? "[]"),
+    );
 
     if (selectedGroupMembers.isEmpty) {
       selectedGroupMembers.add({
@@ -71,12 +88,18 @@ class GroupRepository {
   /// save_group_all RPC (one transaction server-side, including guest user
   /// creation). Falls back to the legacy multi-step write path when the
   /// database doesn't have the RPC yet.
-  static Future<String> saveAll(BuildContext context, String? groupId, Map<String, dynamic> formValue) async {
+  static Future<String> saveAll(
+    BuildContext context,
+    String? groupId,
+    Map<String, dynamic> formValue,
+  ) async {
     try {
       Map<String, dynamic> upsertVals = {
         "name": formValue["name"],
-        "color_value": formValue["color_value"] ?? ColorSeed.baseColor.color.toARGB32(),
+        "color_value":
+            formValue["color_value"] ?? ColorSeed.baseColor.color.toARGB32(),
         "simplified_expenses": formValue["simplified_expenses"] ?? false,
+        "currency_code": formValue["currency_code"] ?? kDefaultCurrencyCode,
         "user_id": supabase.auth.currentUser?.id,
       };
 
@@ -84,21 +107,26 @@ class GroupRepository {
         upsertVals.addAll({'id': groupId});
       }
 
-      List<Map<String, dynamic>> groupMembers = decodeGroupMembersString(formValue['group_members']);
+      List<Map<String, dynamic>> groupMembers = decodeGroupMembersString(
+        formValue['group_members'],
+      );
 
       Set<String> notificationReceiver = {};
       for (var groupMember in groupMembers) {
-        if ((groupMember['is_guest'] ?? false) == false && (groupMember['is_guest_pending'] ?? false) == false) {
+        if ((groupMember['is_guest'] ?? false) == false &&
+            (groupMember['is_guest_pending'] ?? false) == false) {
           notificationReceiver.add(groupMember['email']);
         }
       }
 
       String savedGroupId;
       try {
-        savedGroupId = await supabase.rpc('save_group_all', params: {
-          '_group': upsertVals,
-          '_members': groupMembers,
-        }) as String;
+        savedGroupId =
+            await supabase.rpc(
+                  'save_group_all',
+                  params: {'_group': upsertVals, '_members': groupMembers},
+                )
+                as String;
       } on PostgrestException catch (e) {
         if (!isMissingFunctionError(e)) rethrow;
         savedGroupId = await _saveAllLegacy(upsertVals, groupMembers);
@@ -118,8 +146,14 @@ class GroupRepository {
   /// Legacy non-atomic write path for servers without the save_group_all
   /// RPC. Performs the same writes as the RPC, one statement at a time.
   static Future<String> _saveAllLegacy(
-      Map<String, dynamic> upsertVals, List<Map<String, dynamic>> groupMembers) async {
-    Map<String, dynamic> groupInsertResponse = await supabase.from('group').upsert(upsertVals).select('id').single();
+    Map<String, dynamic> upsertVals,
+    List<Map<String, dynamic>> groupMembers,
+  ) async {
+    Map<String, dynamic> groupInsertResponse = await supabase
+        .from('group')
+        .upsert(upsertVals)
+        .select('id')
+        .single();
     final savedGroupId = groupInsertResponse['id'] as String;
 
     // Resolve any pending guest members by creating guest user records and replacing entries
@@ -148,55 +182,86 @@ class GroupRepository {
     await supabase.from('group_member').delete().eq('group_id', savedGroupId);
 
     if (members.isNotEmpty) {
-      await supabase.from('group_member').insert(members.map((groupMember) {
-        return {'group_id': savedGroupId, 'email': groupMember['email']};
-      }).toList());
+      await supabase
+          .from('group_member')
+          .insert(
+            members.map((groupMember) {
+              return {'group_id': savedGroupId, 'email': groupMember['email']};
+            }).toList(),
+          );
     }
 
-    await supabase.rpc('update_group_member_shares', params: {"_group_id": savedGroupId, "_expense_id": null});
+    await supabase.rpc(
+      'update_group_member_shares',
+      params: {"_group_id": savedGroupId, "_expense_id": null},
+    );
 
     return savedGroupId;
   }
 
-  static Future<void> payBack(BuildContext context, String groupId, String email, double amount,
-      {bool sendNotification = true}) async {
-    final expenseId = await supabase.rpc('pay_back', params: {
-      "_group_id": groupId,
-      "_paid_by": supabase.auth.currentUser?.email,
-      "_paid_for": email,
-      "_amount": amount
-    });
+  static Future<void> payBack(
+    BuildContext context,
+    String groupId,
+    String email,
+    double amount, {
+    bool sendNotification = true,
+  }) async {
+    final expenseId = await supabase.rpc(
+      'pay_back',
+      params: {
+        "_group_id": groupId,
+        "_paid_by": supabase.auth.currentUser?.email,
+        "_paid_for": email,
+        "_amount": amount,
+      },
+    );
 
     // Retry share update once on failure to reduce partial-state risk.
     // This RPC is idempotent (recalculates from scratch), so retrying is safe.
     try {
-      await supabase.rpc('update_group_member_shares', params: {"_group_id": groupId, "_expense_id": expenseId});
+      await supabase.rpc(
+        'update_group_member_shares',
+        params: {"_group_id": groupId, "_expense_id": expenseId},
+      );
     } catch (e) {
-      await supabase.rpc('update_group_member_shares', params: {"_group_id": groupId, "_expense_id": expenseId});
+      await supabase.rpc(
+        'update_group_member_shares',
+        params: {"_group_id": groupId, "_expense_id": expenseId},
+      );
     }
 
     if (context.mounted && sendNotification) {
-      sendGroupPayBackNotification(context, groupId, expenseId, {email}, amount);
+      sendGroupPayBackNotification(context, groupId, expenseId, {
+        email,
+      }, amount);
     }
   }
 
   static Future<void> payBackAll(BuildContext context, String email) async {
     final groupList = await GroupRepository.fetchData("active", paidTo: email);
 
-    await Future.wait(groupList.map((groupData) async {
-      double groupAmount = 0;
-      groupData.groupSharesSummary.forEach((key, groupShare) {
-        if (key == email) {
-          groupAmount = roundCurrency(groupAmount + groupShare.shareAmount);
-        }
-      });
+    await Future.wait(
+      groupList.map((groupData) async {
+        double groupAmount = 0;
+        groupData.groupSharesSummary.forEach((key, groupShare) {
+          if (key == email) {
+            groupAmount = roundCurrency(groupAmount + groupShare.shareAmount);
+          }
+        });
 
-      // Only settle groups where the current user owes this friend, and pay
-      // back exactly the per-group amount — not the cross-group total.
-      if (groupAmount <= -0.01) {
-        await GroupRepository.payBack(context, groupData.id, email, groupAmount.abs(), sendNotification: false);
-      }
-    }));
+        // Only settle groups where the current user owes this friend, and pay
+        // back exactly the per-group amount — not the cross-group total.
+        if (groupAmount <= -0.01) {
+          await GroupRepository.payBack(
+            context,
+            groupData.id,
+            email,
+            groupAmount.abs(),
+            sendNotification: false,
+          );
+        }
+      }),
+    );
   }
 
   static Future<void> toggleFavorite(String groupId, bool isFavorite) async {
@@ -210,6 +275,9 @@ class GroupRepository {
 
   static Future<void> delete(String groupId) async {
     await supabase.from('group').delete().eq('id', groupId);
-    await supabase.from('group_update_checker').delete().eq('group_id', groupId);
+    await supabase
+        .from('group_update_checker')
+        .delete()
+        .eq('group_id', groupId);
   }
 }

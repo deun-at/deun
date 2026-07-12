@@ -14,6 +14,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_staggered_animations/flutter_staggered_animations.dart';
 import 'package:go_router/go_router.dart';
 import 'package:deun/l10n/app_localizations.dart';
+import 'package:deun/helper/helper.dart';
 
 import '../../../constants.dart';
 import '../../../provider.dart';
@@ -51,7 +52,9 @@ class _GroupListState extends ConsumerState<GroupList> {
       _adBlock = null;
     } else {
       _adBlock = NativeAdBlock(
-        adUnitId: Platform.isAndroid ? MobileAdMobs.androidGroupList.value : MobileAdMobs.iosGroupList.value,
+        adUnitId: Platform.isAndroid
+            ? MobileAdMobs.androidGroupList.value
+            : MobileAdMobs.iosGroupList.value,
       );
     }
   }
@@ -73,68 +76,73 @@ class _GroupListState extends ConsumerState<GroupList> {
       body: SafeArea(
         bottom: false,
         child: switch (groupList) {
-          AsyncData(:final value) => value.isEmpty
-              ? RefreshIndicator(
-                  onRefresh: updateGroupList,
-                  // Single scroll view: the empty content + create-first-group
-                  // CTA are laid out inline (not via EmptyListWidget's own inner
-                  // ListView, which would nest an unbounded viewport). With no
-                  // group list to head, the "+ New" section-header action isn't
-                  // rendered, so the empty state carries the create affordance
-                  // (F91: the standalone FAB was removed as redundant when
-                  // groups exist).
-                  child: ListView(
-                    children: [
-                      _GreetingHeader(),
-                      const SizedBox(height: 100),
-                      Icon(Icons.group_outlined,
-                          size: 48, color: Theme.of(context).colorScheme.outline),
-                      const SizedBox(height: 16),
-                      Text(
-                        l10n.groupNoEntries,
-                        style: Theme.of(context).textTheme.headlineMedium,
-                        textAlign: TextAlign.center,
-                      ),
-                      Padding(
-                        padding: const EdgeInsets.fromLTRB(16, 24, 16, 24),
-                        child: PrimaryButton(
-                          label: l10n.addNewGroup,
-                          icon: Icons.add,
-                          onPressed: () => GoRouter.of(context).push("/group/edit"),
-                        ),
-                      ),
-                    ],
-                  ),
-                )
-              : _buildList(value),
-          AsyncError() => RefreshIndicator(
-              onRefresh: updateGroupList,
-              child: ListView(
-                children: [
-                  _GreetingHeader(),
-                  const SizedBox(height: 8),
-                  EmptyListWidget(
-                    icon: Icons.group_outlined,
-                    label: l10n.groupEntriesError,
+          AsyncData(:final value) =>
+            value.isEmpty
+                ? RefreshIndicator(
                     onRefresh: updateGroupList,
-                  ),
-                ],
-              ),
-            ),
-          _ => Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
+                    // Single scroll view: the empty content + create-first-group
+                    // CTA are laid out inline (not via EmptyListWidget's own inner
+                    // ListView, which would nest an unbounded viewport). With no
+                    // group list to head, the "+ New" section-header action isn't
+                    // rendered, so the empty state carries the create affordance
+                    // (F91: the standalone FAB was removed as redundant when
+                    // groups exist).
+                    child: ListView(
+                      children: [
+                        _GreetingHeader(),
+                        const SizedBox(height: 100),
+                        Icon(
+                          Icons.group_outlined,
+                          size: 48,
+                          color: Theme.of(context).colorScheme.outline,
+                        ),
+                        const SizedBox(height: 16),
+                        Text(
+                          l10n.groupNoEntries,
+                          style: Theme.of(context).textTheme.headlineMedium,
+                          textAlign: TextAlign.center,
+                        ),
+                        Padding(
+                          padding: const EdgeInsets.fromLTRB(16, 24, 16, 24),
+                          child: PrimaryButton(
+                            label: l10n.addNewGroup,
+                            icon: Icons.add,
+                            onPressed: () =>
+                                GoRouter.of(context).push("/group/edit"),
+                          ),
+                        ),
+                      ],
+                    ),
+                  )
+                : _buildList(value),
+          AsyncError() => RefreshIndicator(
+            onRefresh: updateGroupList,
+            child: ListView(
               children: [
                 _GreetingHeader(),
-                const SizedBox(height: 12),
-                const Expanded(
-                  child: ShimmerCardList(
-                    height: 100,
-                    listEntryLength: 6,
-                    shape: ShimmerShape.groupHome,
-                  ),
+                const SizedBox(height: 8),
+                EmptyListWidget(
+                  icon: Icons.group_outlined,
+                  label: l10n.groupEntriesError,
+                  onRefresh: updateGroupList,
                 ),
               ],
             ),
+          ),
+          _ => Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              _GreetingHeader(),
+              const SizedBox(height: 12),
+              const Expanded(
+                child: ShimmerCardList(
+                  height: 100,
+                  listEntryLength: 6,
+                  shape: ShimmerShape.groupHome,
+                ),
+              ),
+            ],
+          ),
         },
       ),
     );
@@ -198,8 +206,10 @@ class _GroupListState extends ConsumerState<GroupList> {
       // In spacedCardItems, card i sits at flat index 2*i (gaps between); the ad
       // goes right after card (cardsBeforeAd-1) — flat 2*cardsBeforeAd-1 — offset
       // by the non-card prefix. Insert the ad, then a leading gap before it.
-      final at = (prefixItems.length + 2 * cardsBeforeAd - 1)
-          .clamp(0, listChildren.length);
+      final at = (prefixItems.length + 2 * cardsBeforeAd - 1).clamp(
+        0,
+        listChildren.length,
+      );
       listChildren.insert(at, _adBlock!);
       listChildren.insert(at, const SizedBox(height: kSpacedCardGap));
     }
@@ -260,7 +270,10 @@ class _GreetingHeader extends ConsumerWidget {
         ? user!.displayName
         : (user?.firstName ?? '');
 
-    final greeting = greetingLabel(l10n, greetingBucketForHour(DateTime.now().hour));
+    final greeting = greetingLabel(
+      l10n,
+      greetingBucketForHour(DateTime.now().hour),
+    );
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 14, 16, 0),
@@ -319,7 +332,9 @@ class _OverallBalanceHero extends StatelessWidget {
 
     // Dark hero surface: ink card in light, a lighter raised card in dark
     // (DESIGN_SPEC "Dark hero card": #16181A light / #262824 dark).
-    final Color heroSurface = isDark ? colorScheme.surfaceBright : colorScheme.onSurface;
+    final Color heroSurface = isDark
+        ? colorScheme.surfaceBright
+        : colorScheme.onSurface;
     final Color onHero = isDark ? colorScheme.onSurface : colorScheme.surface;
     final Color onHeroMuted = onHero.withValues(alpha: 0.7);
 
@@ -353,9 +368,9 @@ class _OverallBalanceHero extends StatelessWidget {
             // v3 hero lead: 13px / w600 muted (handoff Groups home). labelLarge
             // defaults to w500 which read too light against the hero amount.
             style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                  color: onHeroMuted,
-                  fontWeight: FontWeight.w600,
-                ),
+              color: onHeroMuted,
+              fontWeight: FontWeight.w600,
+            ),
           ),
           const SizedBox(height: 6),
           if (settled)
@@ -365,7 +380,9 @@ class _OverallBalanceHero extends StatelessWidget {
               // "hero amount"). displayMedium (45px / w700 / -0.02em, tabular)
               // is the shared big-amount token — displaySmall (40px / w600) was
               // too small and too light versus the v3 hero.
-              style: Theme.of(context).textTheme.displayMedium?.copyWith(color: onHero),
+              style: Theme.of(
+                context,
+              ).textTheme.displayMedium?.copyWith(color: onHero),
             )
           else
             // Hero amount renders white-on-ink like the settled branch (F90):
@@ -374,7 +391,9 @@ class _OverallBalanceHero extends StatelessWidget {
             MoneyText(
               net.abs(),
               semantic: MoneySemantic.neutral,
-              style: Theme.of(context).textTheme.displayMedium?.copyWith(color: onHero),
+              style: Theme.of(
+                context,
+              ).textTheme.displayMedium?.copyWith(color: onHero),
               animate: true,
             ),
           const SizedBox(height: 18),
@@ -387,7 +406,9 @@ class _OverallBalanceHero extends StatelessWidget {
                   semantic: MoneySemantic.positive,
                   onHero: onHero,
                   onHeroMuted: onHeroMuted,
-                  background: semantic.success.withValues(alpha: isDark ? 0.18 : 0.16),
+                  background: semantic.success.withValues(
+                    alpha: isDark ? 0.18 : 0.16,
+                  ),
                 ),
               ),
               const SizedBox(width: 12),
@@ -398,7 +419,9 @@ class _OverallBalanceHero extends StatelessWidget {
                   semantic: MoneySemantic.negative,
                   onHero: onHero,
                   onHeroMuted: onHeroMuted,
-                  background: semantic.danger.withValues(alpha: isDark ? 0.18 : 0.16),
+                  background: semantic.danger.withValues(
+                    alpha: isDark ? 0.18 : 0.16,
+                  ),
                 ),
               ),
             ],

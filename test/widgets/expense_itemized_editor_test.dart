@@ -1,5 +1,6 @@
 import 'package:deun/constants.dart';
 import 'package:deun/l10n/app_localizations.dart';
+import 'package:deun/helper/helper.dart';
 import 'package:deun/pages/expenses/data/editor_mode.dart';
 import 'package:deun/pages/expenses/data/split_mode.dart';
 import 'package:deun/pages/expenses/data/expense_model.dart';
@@ -60,8 +61,11 @@ Future<void> _pump(
         supportedLocales: AppLocalizations.supportedLocales,
         home: Builder(
           builder: (context) => Theme(
-            data: getThemeData(context, kBrandSeed, brightness)
-                .copyWith(splashFactory: NoSplash.splashFactory),
+            data: getThemeData(
+              context,
+              kBrandSeed,
+              brightness,
+            ).copyWith(splashFactory: NoSplash.splashFactory),
             child: ExpenseDetail(group: _group(), expense: expense),
           ),
         ),
@@ -82,24 +86,26 @@ Future<void> _pump(
 /// already claimed by Bob.
 Expense _sharedClaimExpense() {
   Map<String, dynamic> unit(String id, {List<String> claimers = const []}) => {
-        'id': id,
-        'expense_id': 'exp1',
-        'name': 'Beer',
-        'amount': 2.5,
-        'quantity': 1,
-        'split_mode': 'claim',
-        'item_group_id': 'grp-1',
-        'created_at': '2026-07-01T10:00:00',
-        'expense_entry_share': claimers
-            .map((email) => {
-                  'expense_entry_id': id,
-                  'email': email,
-                  'display_name': email,
-                  'percentage': 100.0,
-                  'created_at': '2026-07-01T10:00:00',
-                })
-            .toList(),
-      };
+    'id': id,
+    'expense_id': 'exp1',
+    'name': 'Beer',
+    'amount': 2.5,
+    'quantity': 1,
+    'split_mode': 'claim',
+    'item_group_id': 'grp-1',
+    'created_at': '2026-07-01T10:00:00',
+    'expense_entry_share': claimers
+        .map(
+          (email) => {
+            'expense_entry_id': id,
+            'email': email,
+            'display_name': email,
+            'percentage': 100.0,
+            'created_at': '2026-07-01T10:00:00',
+          },
+        )
+        .toList(),
+  };
 
   final e = Expense();
   e.loadDataFromJson({
@@ -125,15 +131,14 @@ void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
   setUpAll(() async {
-    TestWidgetsFlutterBinding.ensureInitialized()
-        .defaultBinaryMessenger
+    TestWidgetsFlutterBinding.ensureInitialized().defaultBinaryMessenger
         .setMockMethodCallHandler(
-      const MethodChannel('plugins.flutter.io/shared_preferences'),
-      (call) async {
-        if (call.method == 'getAll') return <String, Object>{};
-        return null;
-      },
-    );
+          const MethodChannel('plugins.flutter.io/shared_preferences'),
+          (call) async {
+            if (call.method == 'getAll') return <String, Object>{};
+            return null;
+          },
+        );
     await Supabase.initialize(
       url: 'http://localhost:54321',
       anonKey: 'test-anon-key',
@@ -144,7 +149,9 @@ void main() {
     await Supabase.instance.dispose();
   });
 
-  testWidgets('renders the Quick/Itemized top segmented toggle', (tester) async {
+  testWidgets('renders the Quick/Itemized top segmented toggle', (
+    tester,
+  ) async {
     await _pump(tester);
     final l10n = await _l10n();
 
@@ -153,8 +160,9 @@ void main() {
     expect(find.text(l10n.editorModeItemized), findsOneWidget);
   });
 
-  testWidgets('switching to Itemized shows the items list and CTA',
-      (tester) async {
+  testWidgets('switching to Itemized shows the items list and CTA', (
+    tester,
+  ) async {
     await _pump(tester);
     final l10n = await _l10n();
 
@@ -172,46 +180,49 @@ void main() {
   });
 
   testWidgets(
-      'itemized tab shows no per-item split UI and a single share-for-claiming CTA (F118)',
-      (tester) async {
-    await _pump(tester);
-    final l10n = await _l10n();
+    'itemized tab shows no per-item split UI and a single share-for-claiming CTA (F118)',
+    (tester) async {
+      await _pump(tester);
+      final l10n = await _l10n();
 
-    // Quick mode: footer "Add expense" CTA present, split UI present (F112).
-    expect(find.text(l10n.expenseAddButton), findsOneWidget);
-    expect(find.byType(AppSegmentedControl<SplitMode>), findsOneWidget);
+      // Quick mode: footer "Add expense" CTA present, split UI present (F112).
+      expect(find.text(l10n.expenseAddButton), findsOneWidget);
+      expect(find.byType(AppSegmentedControl<SplitMode>), findsOneWidget);
 
-    await tester.tap(find.text(l10n.editorModeItemized));
-    await tester.pumpAndSettle();
+      await tester.tap(find.text(l10n.editorModeItemized));
+      await tester.pumpAndSettle();
 
-    // No per-item split UI: no split-mode selector, no member checkboxes.
-    expect(find.byType(AppSegmentedControl<SplitMode>), findsNothing);
-    expect(find.byType(Checkbox), findsNothing);
-    expect(find.text(l10n.splitSectionLabel), findsNothing);
+      // No per-item split UI: no split-mode selector, no member checkboxes.
+      expect(find.byType(AppSegmentedControl<SplitMode>), findsNothing);
+      expect(find.byType(Checkbox), findsNothing);
+      expect(find.text(l10n.splitSectionLabel), findsNothing);
 
-    // Info note explaining the share-then-claim model is present.
-    expect(find.text(l10n.itemizedInfoCallout), findsOneWidget);
+      // Info note explaining the share-then-claim model is present.
+      expect(find.text(l10n.itemizedInfoCallout), findsOneWidget);
 
-    // Single CTA: the share-for-claiming button — the footer quick CTA is gone.
-    expect(find.text(l10n.expenseSaveAndShareForClaiming), findsOneWidget);
-    expect(find.text(l10n.expenseAddButton), findsNothing);
-  });
-
-  testWidgets('Quick split allocation summary shows no "All set" label (F110)',
-      (tester) async {
-    await _pump(tester);
-    final l10n = await _l10n();
-
-    // Quick mode with the seeded equal split is fully allocated, but the
-    // "All set" status label is intentionally not shown here (F110). The
-    // numeric split-mode selector still renders, confirming we're on quick.
-    expect(find.byType(AppSegmentedControl<SplitMode>), findsOneWidget);
-    expect(find.text(l10n.splitAllocatedLabel), findsNothing);
-  });
+      // Single CTA: the share-for-claiming button — the footer quick CTA is gone.
+      expect(find.text(l10n.expenseSaveAndShareForClaiming), findsOneWidget);
+      expect(find.text(l10n.expenseAddButton), findsNothing);
+    },
+  );
 
   testWidgets(
-      'Quick split has no add-item button; Itemized does (F111)',
-      (tester) async {
+    'Quick split allocation summary shows no "All set" label (F110)',
+    (tester) async {
+      await _pump(tester);
+      final l10n = await _l10n();
+
+      // Quick mode with the seeded equal split is fully allocated, but the
+      // "All set" status label is intentionally not shown here (F110). The
+      // numeric split-mode selector still renders, confirming we're on quick.
+      expect(find.byType(AppSegmentedControl<SplitMode>), findsOneWidget);
+      expect(find.text(l10n.splitAllocatedLabel), findsNothing);
+    },
+  );
+
+  testWidgets('Quick split has no add-item button; Itemized does (F111)', (
+    tester,
+  ) async {
     await _pump(tester);
     final l10n = await _l10n();
 
@@ -252,8 +263,9 @@ void main() {
     expect(find.text(l10n.itemNameHint), findsNWidgets(2));
   });
 
-  testWidgets('switching back to Quick shows the Quick amount card',
-      (tester) async {
+  testWidgets('switching back to Quick shows the Quick amount card', (
+    tester,
+  ) async {
     await _pump(tester);
     final l10n = await _l10n();
 
@@ -268,59 +280,63 @@ void main() {
   });
 
   testWidgets(
-      'editing a shared expense regroups claim units into one qty-N item card (F146)',
-      (tester) async {
-    await _pump(tester, expense: _sharedClaimExpense());
-    final l10n = await _l10n();
+    'editing a shared expense regroups claim units into one qty-N item card (F146)',
+    (tester) async {
+      await _pump(tester, expense: _sharedClaimExpense());
+      final l10n = await _l10n();
 
-    // Opens directly in the itemized layout (no toggle tap needed).
-    expect(find.text(l10n.expenseSaveAndShareForClaiming), findsOneWidget);
-    expect(find.text(l10n.expenseAddButton), findsNothing);
+      // Opens directly in the itemized layout (no toggle tap needed).
+      expect(find.text(l10n.expenseSaveAndShareForClaiming), findsOneWidget);
+      expect(find.text(l10n.expenseAddButton), findsNothing);
 
-    // One card, quantity 2 — not two qty-1 unit cards.
-    expect(find.text(l10n.itemQtyStepperValue(2)), findsOneWidget);
-    expect(find.text(l10n.itemizedTotalFromItems(1)), findsOneWidget);
-  });
-
-  testWidgets(
-      'shared-expense item cards seed real line totals, not €0.00 (F146)',
-      (tester) async {
-    await _pump(tester, expense: _sharedClaimExpense());
-    final l10n = await _l10n();
-
-    // Unit price seeds the amount field; the line total is 2 × €2.50 = €5.00,
-    // which appears twice: the item card's line total + the expense total.
-    expect(find.text('2.50'), findsWidgets);
-    expect(find.text(l10n.toCurrency(5)), findsNWidgets(2));
-    expect(find.textContaining('€0.00'), findsNothing);
-  });
+      // One card, quantity 2 — not two qty-1 unit cards.
+      expect(find.text(l10n.itemQtyStepperValue(2)), findsOneWidget);
+      expect(find.text(l10n.itemizedTotalFromItems(1)), findsOneWidget);
+    },
+  );
 
   testWidgets(
-      'itemized total block is unboxed (no SoftCard) and reads "Total · from N items" (F115)',
-      (tester) async {
-    await _pump(tester);
-    final l10n = await _l10n();
+    'shared-expense item cards seed real line totals, not €0.00 (F146)',
+    (tester) async {
+      await _pump(tester, expense: _sharedClaimExpense());
+      final l10n = await _l10n();
 
-    await tester.tap(find.text(l10n.editorModeItemized));
-    await tester.pumpAndSettle();
+      // Unit price seeds the amount field; the line total is 2 × €2.50 = €5.00,
+      // which appears twice: the item card's line total + the expense total.
+      expect(find.text('2.50'), findsWidgets);
+      expect(find.text(l10n.toCurrency(5)), findsNWidgets(2));
+      expect(find.textContaining('€0.00'), findsNothing);
+    },
+  );
 
-    // Copy carries the dot separator and the live item count.
-    expect(find.text(l10n.itemizedTotalFromItems(1)), findsOneWidget);
-    expect(l10n.itemizedTotalFromItems(1), contains('·'));
+  testWidgets(
+    'itemized total block is unboxed (no SoftCard) and reads "Total · from N items" (F115)',
+    (tester) async {
+      await _pump(tester);
+      final l10n = await _l10n();
 
-    // The total header (anchored on its Scan pill) is not wrapped in a
-    // SoftCard — it sits directly on the page background like F103.
-    expect(
-      find.ancestor(
-        of: find.text(l10n.expenseScanShort),
-        matching: find.byType(SoftCard),
-      ),
-      findsNothing,
-    );
-  });
+      await tester.tap(find.text(l10n.editorModeItemized));
+      await tester.pumpAndSettle();
 
-  testWidgets('itemized editor renders in dark mode without throwing',
-      (tester) async {
+      // Copy carries the dot separator and the live item count.
+      expect(find.text(l10n.itemizedTotalFromItems(1)), findsOneWidget);
+      expect(l10n.itemizedTotalFromItems(1), contains('·'));
+
+      // The total header (anchored on its Scan pill) is not wrapped in a
+      // SoftCard — it sits directly on the page background like F103.
+      expect(
+        find.ancestor(
+          of: find.text(l10n.expenseScanShort),
+          matching: find.byType(SoftCard),
+        ),
+        findsNothing,
+      );
+    },
+  );
+
+  testWidgets('itemized editor renders in dark mode without throwing', (
+    tester,
+  ) async {
     await _pump(tester, brightness: Brightness.dark);
     final l10n = await _l10n();
     await tester.tap(find.text(l10n.editorModeItemized));
@@ -332,15 +348,19 @@ void main() {
   // the scrollable body (only Quick has a pinned footer). The scroll body must
   // keep a bottom inset so the CTA clears the safe area instead of sitting flush
   // against the viewport bottom (regressed by F173's padding: EdgeInsets.zero).
-  testWidgets('itemized scroll body keeps a bottom inset so the CTA is reachable',
-      (tester) async {
+  testWidgets('itemized scroll body keeps a bottom inset so the CTA is reachable', (
+    tester,
+  ) async {
     await _pump(tester);
     final l10n = await _l10n();
 
     // Quick mode: the CTA is a pinned footer, so the list needs no bottom inset.
     final quickList = tester.widget<ListView>(find.byType(ListView).first);
-    expect(quickList.padding, EdgeInsets.zero,
-        reason: 'Quick keeps the F173 zero padding (pinned footer below).');
+    expect(
+      quickList.padding,
+      EdgeInsets.zero,
+      reason: 'Quick keeps the F173 zero padding (pinned footer below).',
+    );
 
     await tester.tap(find.text(l10n.editorModeItemized));
     await tester.pumpAndSettle();
@@ -349,8 +369,11 @@ void main() {
     final itemizedList = tester.widget<ListView>(find.byType(ListView).first);
     final bottomInset =
         itemizedList.padding?.resolve(TextDirection.ltr).bottom ?? 0;
-    expect(bottomInset, greaterThan(0),
-        reason: 'Itemized CTA is the last scroll child — needs bottom clearance.');
+    expect(
+      bottomInset,
+      greaterThan(0),
+      reason: 'Itemized CTA is the last scroll child — needs bottom clearance.',
+    );
     // The top must stay 0 so the F173 header->toggle gap is not reintroduced.
     expect(itemizedList.padding?.resolve(TextDirection.ltr).top, 0);
   });
@@ -358,8 +381,9 @@ void main() {
   // BUG B: switching itemized -> Quick with 2+ items used to no-op silently —
   // the toggle stayed on Itemized and read as a dead, unpressable control. Quick
   // must always be honored (items collapse to a single entry).
-  testWidgets('Quick toggle is honored even with multiple items (collapses)',
-      (tester) async {
+  testWidgets('Quick toggle is honored even with multiple items (collapses)', (
+    tester,
+  ) async {
     await _pump(tester);
     final l10n = await _l10n();
 
@@ -387,17 +411,20 @@ void main() {
     expect(find.byType(AppSegmentedControl<SplitMode>), findsOneWidget);
     // The CTA is genuinely pressable (has an onPressed).
     expect(
-      tester.widget<PrimaryButton>(
-        find.ancestor(of: addButton, matching: find.byType(PrimaryButton)),
-      ).onPressed,
+      tester
+          .widget<PrimaryButton>(
+            find.ancestor(of: addButton, matching: find.byType(PrimaryButton)),
+          )
+          .onPressed,
       isNotNull,
     );
   });
 
   // BUG C: the itemized total header lives in the parent; a per-item price/qty
   // edit must recompute it live (it used to only refresh on a mode toggle).
-  testWidgets('itemized total updates live when an item quantity changes',
-      (tester) async {
+  testWidgets('itemized total updates live when an item quantity changes', (
+    tester,
+  ) async {
     // Seeded shared expense: 1 item, qty 2, unit price 2.50 -> total €5.00.
     await _pump(tester, expense: _sharedClaimExpense());
     final l10n = await _l10n();
@@ -415,8 +442,9 @@ void main() {
 
   // BUG D: itemized item rows must render inside ONE joined SoftCard, not a
   // card-in-card (a per-row SoftCard nested inside an outer CardColumn/Card).
-  testWidgets('itemized items render in a single card, not nested cards',
-      (tester) async {
+  testWidgets('itemized items render in a single card, not nested cards', (
+    tester,
+  ) async {
     await _pump(tester);
     final l10n = await _l10n();
 

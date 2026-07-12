@@ -99,6 +99,14 @@
   "@groupEditTitle": {},
   "groupColorLabel": "Color",
   "@groupColorLabel": {},
+  "groupCurrencyLabel": "Currency",
+  "@groupCurrencyLabel": {
+    "description": "Section label above the group currency picker."
+  },
+  "groupCurrencyRelabelNote": "Changing the currency relabels existing amounts. It does not convert values.",
+  "@groupCurrencyRelabelNote": {
+    "description": "Note under the currency picker when editing a group, clarifying no conversion happens."
+  },
   "groupMemberSectionTitle": "Members",
   "@groupMemberSectionTitle": {},
   "groupTrackingModeTitle": "Expense tracking",
@@ -590,15 +598,7 @@
       "expenseType": {
         "type": "String"
       },
-      "amount": {
-        "type": "double",
-        "format": "currency",
-        "optionalParameters": {
-          "decimalDigits": 2,
-          "name": "€"
-        },
-        "example": "200.00"
-      }
+      "amount": { "type": "String" }
     }
   },
   "expenseNoShares": "You are not involved",
@@ -614,15 +614,7 @@
       "paidByYourself": {
         "type": "String"
       },
-      "amount": {
-        "type": "double",
-        "format": "currency",
-        "optionalParameters": {
-          "decimalDigits": 2,
-          "name": "€"
-        },
-        "example": "200.00"
-      }
+      "amount": { "type": "String" }
     }
   },
   "groupDisplaySumAmount": "{paidByYourself, select, yes{You are owed} other{You owe}} {amount}",
@@ -632,30 +624,14 @@
       "paidByYourself": {
         "type": "String"
       },
-      "amount": {
-        "type": "double",
-        "format": "currency",
-        "optionalParameters": {
-          "decimalDigits": 2,
-          "name": "€"
-        },
-        "example": "200.00"
-      }
+      "amount": { "type": "String" }
     }
   },
   "totalExpensesAmount": "Total expenses {amount}",
   "@totalExpensesAmount": {
     "description": "Lable in the group list/group detail of what you spent",
     "placeholders": {
-      "amount": {
-        "type": "double",
-        "format": "currency",
-        "optionalParameters": {
-          "decimalDigits": 2,
-          "name": "€"
-        },
-        "example": "200.00"
-      }
+      "amount": { "type": "String" }
     }
   },
   "allDone": "all done",
@@ -674,15 +650,7 @@
         "type": "String",
         "example": "Max Muster"
       },
-      "amount": {
-        "type": "double",
-        "format": "currency",
-        "optionalParameters": {
-          "decimalDigits": 2,
-          "name": "€"
-        },
-        "example": "200.00"
-      }
+      "amount": { "type": "String" }
     }
   },
   "payBackDialogPaypal": "Open Paypal link",
@@ -705,15 +673,7 @@
         "type": "String",
         "example": "Max Muster"
       },
-      "amount": {
-        "type": "double",
-        "format": "currency",
-        "optionalParameters": {
-          "decimalDigits": 2,
-          "name": "€"
-        },
-        "example": "200.00"
-      }
+      "amount": { "type": "String" }
     }
   },
   "groupDisplayPaidBack": "{paidBy} paid back {amount} to {paidFor}",
@@ -734,15 +694,7 @@
         "type": "String",
         "example": "Max Muster"
       },
-      "amount": {
-        "type": "double",
-        "format": "currency",
-        "optionalParameters": {
-          "decimalDigits": 2,
-          "name": "€"
-        },
-        "example": "200.00"
-      }
+      "amount": { "type": "String" }
     }
   },
   "signInTitle": "deun.app",
@@ -959,35 +911,6 @@
   "@friendshipDialogFullName": {},
   "friendshipDialogRemoveAsFriend": "Remove as friend",
   "@friendshipDialogRemoveAsFriend": {},
-  "toCurrency": "{amount}",
-  "@toCurrency": {
-    "description": "",
-    "placeholders": {
-      "amount": {
-        "type": "double",
-        "format": "currency",
-        "optionalParameters": {
-          "decimalDigits": 2,
-          "name": "€"
-        },
-        "example": "200.00"
-      }
-    }
-  },
-  "toCurrencyNoPrefix": "{amount}",
-  "@toCurrencyNoPrefix": {
-    "description": "",
-    "placeholders": {
-      "amount": {
-        "type": "double",
-        "format": "currency",
-        "optionalParameters": {
-          "decimalDigits": 2
-        },
-        "example": "200.00"
-      }
-    }
-  },
   "groupNotificationTitle": "{userDisplayName} added you to a new group!",
   "@groupNotificationTitle": {
     "description": "Notification title when a new group was added.",
@@ -1026,15 +949,7 @@
   "@groupPayBackNotificationBody": {
     "description": "Notification body when a new expense was added.",
     "placeholders": {
-      "amount": {
-        "type": "double",
-        "format": "currency",
-        "optionalParameters": {
-          "decimalDigits": 2,
-          "name": "€"
-        },
-        "example": "200.00"
-      }
+      "amount": { "type": "String" }
     }
   },
   "expenseNotificationTitle": "{userDisplayName} added a new expense!",
@@ -1059,15 +974,7 @@
         "type": "String",
         "example": "Shoppingfriends"
       },
-      "amount": {
-        "type": "double",
-        "format": "currency",
-        "optionalParameters": {
-          "decimalDigits": 2,
-          "name": "€"
-        },
-        "example": "200.00"
-      }
+      "amount": { "type": "String" }
     }
   },
   "friendRequestNotificationTitle": "You have a new friend request",
@@ -1593,7 +1500,7 @@
   "reminderNotificationBody": "You owe {amount} in {groupName}",
   "@reminderNotificationBody": {
     "placeholders": {
-      "amount": { "type": "double", "format": "currency", "optionalParameters": { "symbol": "€", "decimalDigits": 2 } },
+      "amount": { "type": "String" },
       "groupName": { "type": "String" }
     }
   },
@@ -1613,24 +1520,14 @@
   "@groupDetailYouClaimed": {
     "description": "Shown on an itemized ledger row after the current user has claimed.",
     "placeholders": {
-      "amount": {
-        "type": "double",
-        "format": "currency",
-        "optionalParameters": { "decimalDigits": 2, "name": "€" },
-        "example": "12.00"
-      }
+      "amount": { "type": "String" }
     }
   },
   "groupDetailUnclaimed": "{amount} unclaimed",
   "@groupDetailUnclaimed": {
     "description": "Meta line on an itemized ledger row showing the still-unclaimed amount.",
     "placeholders": {
-      "amount": {
-        "type": "double",
-        "format": "currency",
-        "optionalParameters": { "decimalDigits": 2, "name": "€" },
-        "example": "8.00"
-      }
+      "amount": { "type": "String" }
     }
   },
   "groupDetailAllClaimed": "all claimed",
@@ -1725,12 +1622,7 @@
   "@paymentPayAmount": {
     "description": "Sticky CTA on the method-detail sheet that records the payment.",
     "placeholders": {
-      "amount": {
-        "type": "double",
-        "format": "currency",
-        "optionalParameters": { "decimalDigits": 2, "name": "€" },
-        "example": "12.00"
-      }
+      "amount": { "type": "String" }
     }
   },
   "paymentMarkSettled": "Mark settled",
