@@ -21,4 +21,36 @@
 - Parallel-with: — (touches the same editor file as scan-split-even; pull sequentially)
 - Blockers: —
 
-status: planned
+status: done
+
+## Evidence
+
+Implementation: the model, DB column, `ExpenseCategory` enum, `CategoryDetector`, and
+`CategorySelector` all already existed and are wired for the quick path. This feature was UI
+plumbing in `lib/pages/expenses/presentation/expense_detail.dart`:
+- Rendered a full-row `CategorySelector` (name `"category"`) in the itemized Details section,
+  right after the Paid-by / When rows — replacing the F116 "no category row" block.
+- Both quick and itemized selectors now pass `onChanged` to keep `_detectedCategory` in sync,
+  so the chosen/auto-detected category survives Quick↔Itemized toggles.
+- The save path (`ExpenseRepository.saveAll`, `formResponse['category']`) and read path
+  (`Expense.loadDataFromJson` → `ExpenseCategory.fromString`) were already correct; adding the
+  field is all that was needed to stop itemized saving `category` as null.
+
+Each criterion proven by tests in `test/widgets/expense_itemized_editor_test.dart`:
+- "Itemized layout exposes a category selector" — `CategorySelector` + `categoryLabel` render in
+  itemized mode (same selector as quick).
+- "itemized expense reads its saved category back (not Other)" — loading an itemized expense with
+  category `food`, `formState.save()` then `value['category'] == ExpenseCategory.food` (the exact
+  map `saveAll` persists as `category.name`); selector shows Food, not Other.
+- "itemized expense without a category reads back as Other" — an uncategorized expense loads as
+  `ExpenseCategory.other` and reads back as Other (no migration; statistics group under 'other').
+- "itemized layout auto-detects category from the merchant name" — typing "Lidl" into the name
+  field drives `CategoryDetector` and writes `ExpenseCategory.groceries` to the form field,
+  same as the quick layout; user can override by tapping the selector.
+- Per-item icons (`iconForItemName`) were not touched — expense-level category is additive.
+- Pre-existing "itemized total updates live when an item quantity changes" was made robust with
+  `ensureVisible` (the new category row pushes the item stepper below the test-viewport fold);
+  the assertion (€7.50 after qty 2→3) is unchanged.
+
+Gate summary (`.ristretto.json`): `dart format` applied; `flutter analyze` → "No issues found!";
+`flutter test` → "All tests passed!" (914 tests, incl. the 4 new itemized-category tests).
