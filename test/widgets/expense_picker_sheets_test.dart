@@ -37,8 +37,11 @@ Future<void> _pump(
       supportedLocales: AppLocalizations.supportedLocales,
       home: Builder(
         builder: (context) => Theme(
-          data: getThemeData(context, kBrandSeed, brightness)
-              .copyWith(splashFactory: NoSplash.splashFactory),
+          data: getThemeData(
+            context,
+            kBrandSeed,
+            brightness,
+          ).copyWith(splashFactory: NoSplash.splashFactory),
           child: Scaffold(body: child),
         ),
       ),
@@ -120,6 +123,7 @@ void main() {
         final container = tester.widget<Container>(containerFinder.first);
         return (container.decoration as BoxDecoration).color!;
       }
+
       // Keep l10n referenced (labels are asserted in sibling tests).
       expect(ExpenseCategory.food.getDisplayName(l10n), isNotEmpty);
 
@@ -147,8 +151,9 @@ void main() {
   });
 
   group('PaidBySheet', () {
-    testWidgets('renders a row per member and pops the chosen email',
-        (tester) async {
+    testWidgets('renders a row per member and pops the chosen email', (
+      tester,
+    ) async {
       final members = [
         _member('a@test.com', 'Alice', username: 'alice'),
         _member('b@test.com', 'Bob', username: 'bob'),
@@ -286,8 +291,10 @@ void main() {
           builder: (context) => Center(
             child: ElevatedButton(
               onPressed: () async {
-                result =
-                    await showAmountKeypadSheet(context, initialAmount: 42.0);
+                result = await showAmountKeypadSheet(
+                  context,
+                  initialAmount: 42.0,
+                );
               },
               child: const Text('open'),
             ),
@@ -301,6 +308,146 @@ void main() {
       await tester.tap(find.byKey(const ValueKey('keypad_confirm')));
       await tester.pumpAndSettle();
       expect(result, 42.0);
+    });
+
+    testWidgets(
+      'offers the four operators and chains 12.50 + 3.20 + 8 = 23.70',
+      (tester) async {
+        double? result;
+        await _pump(
+          tester,
+          Builder(
+            builder: (context) => Center(
+              child: ElevatedButton(
+                onPressed: () async {
+                  result = await showAmountKeypadSheet(
+                    context,
+                    initialAmount: 0,
+                  );
+                },
+                child: const Text('open'),
+              ),
+            ),
+          ),
+        );
+        await tester.tap(find.text('open'));
+        await tester.pumpAndSettle();
+
+        // The +, −, ×, ÷ keys are all present.
+        expect(find.byKey(const ValueKey('keypad_op_add')), findsOneWidget);
+        expect(
+          find.byKey(const ValueKey('keypad_op_subtract')),
+          findsOneWidget,
+        );
+        expect(
+          find.byKey(const ValueKey('keypad_op_multiply')),
+          findsOneWidget,
+        );
+        expect(find.byKey(const ValueKey('keypad_op_divide')), findsOneWidget);
+
+        // 12.50 + 3.20 + 8
+        for (final k in [
+          'keypad_1',
+          'keypad_2',
+          'keypad_decimal',
+          'keypad_5',
+          'keypad_0',
+          'keypad_op_add',
+          'keypad_3',
+          'keypad_decimal',
+          'keypad_2',
+          'keypad_0',
+          'keypad_op_add',
+          'keypad_8',
+        ]) {
+          await tester.tap(find.byKey(ValueKey(k)));
+        }
+        await tester.pumpAndSettle();
+
+        await tester.tap(find.byKey(const ValueKey('keypad_confirm')));
+        await tester.pumpAndSettle();
+        expect(result, 23.70);
+      },
+    );
+
+    testWidgets('shows the in-progress expression line while typing', (
+      tester,
+    ) async {
+      await _pump(
+        tester,
+        Builder(
+          builder: (context) => Center(
+            child: ElevatedButton(
+              onPressed: () async {
+                await showAmountKeypadSheet(context, initialAmount: 0);
+              },
+              child: const Text('open'),
+            ),
+          ),
+        ),
+      );
+      await tester.tap(find.text('open'));
+      await tester.pumpAndSettle();
+
+      for (final k in [
+        'keypad_1',
+        'keypad_2',
+        'keypad_decimal',
+        'keypad_5',
+        'keypad_0',
+        'keypad_op_add',
+        'keypad_3',
+      ]) {
+        await tester.tap(find.byKey(ValueKey(k)));
+      }
+      await tester.pumpAndSettle();
+
+      final expression = tester.widget<Text>(
+        find.byKey(const ValueKey('keypad_expression')),
+      );
+      expect(expression.data, '12.50 + 3');
+    });
+
+    testWidgets('division by zero blocks the confirm and shows an error', (
+      tester,
+    ) async {
+      final l10n = await AppLocalizations.delegate.load(const Locale('en'));
+      double? result;
+      await _pump(
+        tester,
+        Builder(
+          builder: (context) => Center(
+            child: ElevatedButton(
+              onPressed: () async {
+                result = await showAmountKeypadSheet(context, initialAmount: 0);
+              },
+              child: const Text('open'),
+            ),
+          ),
+        ),
+      );
+      await tester.tap(find.text('open'));
+      await tester.pumpAndSettle();
+
+      // 12 ÷ 0 -> invalid
+      for (final k in [
+        'keypad_1',
+        'keypad_2',
+        'keypad_op_divide',
+        'keypad_0',
+      ]) {
+        await tester.tap(find.byKey(ValueKey(k)));
+      }
+      await tester.pumpAndSettle();
+
+      // Inline error is shown.
+      expect(find.text(l10n.amountKeypadInvalid), findsOneWidget);
+
+      // Confirm is disabled: tapping it does not pop a value.
+      await tester.tap(find.byKey(const ValueKey('keypad_confirm')));
+      await tester.pumpAndSettle();
+      expect(result, isNull);
+      expect(find.byType(SheetScaffold), findsOneWidget);
     });
   });
 }

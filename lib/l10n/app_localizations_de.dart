@@ -1731,6 +1731,9 @@ class AppLocalizationsDe extends AppLocalizations {
   String get amountSheetTitle => 'Betrag';
 
   @override
+  String get amountKeypadInvalid => 'Ungültige Berechnung';
+
+  @override
   String get paymentTitle => 'Begleichen';
 
   @override

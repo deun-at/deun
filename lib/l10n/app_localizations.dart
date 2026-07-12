@@ -2994,6 +2994,12 @@ abstract class AppLocalizations {
   /// **'Amount'**
   String get amountSheetTitle;
 
+  /// Inline error shown in the amount keypad when the calculator expression cannot be committed (e.g. division by zero or an out-of-range result).
+  ///
+  /// In en, this message translates to:
+  /// **'Invalid calculation'**
+  String get amountKeypadInvalid;
+
   /// Title of the settle-up / payment sheet (Screen 10).
   ///
   /// In en, this message translates to:
