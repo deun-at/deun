@@ -362,7 +362,7 @@ class _OverallBalanceHero extends StatelessWidget {
     final Color onHeroMuted = onHero.withValues(alpha: 0.7);
 
     final net = overall.net;
-    final bool settled = net.abs() < 0.01;
+    final bool settled = isSettled(net);
 
     // Lead label only — the hero amount is now always white-on-ink (F90), so the
     // net sign drives just the wording, not a semantic color on the big number.

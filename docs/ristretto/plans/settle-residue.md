@@ -9,12 +9,13 @@
 
 ## Contract
 - Acceptance:
-  - After settling a balance with a member, that pair's balance is exactly zero and no further
-    "owes you" entry appears — without editing any expense.
-  - This holds for an amount that does not divide evenly into cents: an expense of 10.00 split three
-    ways, then settled, leaves every pairwise balance at zero rather than at 0.01.
-  - This holds in both group modes — default and simplified — and for `payBackAll`, which settles
-    several groups for one friend in a single action.
+  - **[deferred]** After settling a balance with a member, that pair's balance is exactly zero and no
+    further "owes you" entry appears — without editing any expense.
+  - **[deferred]** This holds for an amount that does not divide evenly into cents: an expense of
+    10.00 split three ways, then settled, leaves every pairwise balance at zero rather than at 0.01.
+  - The single settled predicate and the consistent client-side rounding apply uniformly across both
+    group modes — default and simplified — and `payBackAll`, which settles several groups for one
+    friend in a single action.
   - The group detail, the payment screen, the group-list balance hero and the friend list all agree
     on whether a given balance is settled. Today they cannot: the payment screen treats anything
     under 0.005 as settled while the group list and the friendship repository use 0.01, so a 0.007
@@ -26,10 +27,18 @@
   - `flutter analyze` and `flutter test` pass, with existing money-math tests unchanged in their
     expected values except where they encoded the bug.
 - Provides:
-  - a single settled predicate over an amount, replacing `_kSettledEpsilon` (`payment_view_model.dart`),
+  - `bool isSettled(double amount)` and `const double kSettledEpsilon` (`lib/helper/helper.dart`) —
+    the single settled predicate, replacing `_kSettledEpsilon` (`payment_view_model.dart`),
     `_kSettledThreshold` (`group_list_view_model.dart`) and the inline `< 0.01`
     (`friendship_repository.dart`)
-  - a settlement amount derived from the exact outstanding balance rather than a display-rounded one
+  - `static String GroupRepository.activeBalanceFilter` (`lib/pages/groups/data/group_repository.dart`)
+    — the PostgREST `or` predicate behind the active/done group tabs, built from `kSettledEpsilon` so
+    the server-side filter cannot drift from the client predicate
+  - the `pay_back_exact` RPC (`supabase/migrations/20260815020000_settle_residue_exact_payback.sql`,
+    **[deferred]** — authored but not applied) which snaps the settled amount to the exact outstanding
+    value server-side and delegates the insert to the untouched `pay_back`; `GroupRepository.payBack`
+    calls it with a client fallback to `pay_back` when the RPC is missing (PGRST202/42883), memoized in
+    `_payBackExactMissing` so the probe costs once per app session, not once per group
 - Consumes: —
 - Decisions:
   - Fix the remainder at its source rather than widening a threshold to swallow it -> a wider epsilon
@@ -135,4 +144,72 @@ sequenced rather than parallel — this bug ships first and owns the single pred
 flight widens it afterwards. `payback-on-behalf` likewise depends on this feature: both change
 `pay_back`, and it should be corrected once before it is extended.
 
-status: planned
+## Evidence
+
+- **`[deferred]` a settled pair's balance is exactly zero, no residual "owes you" entry** — the
+  reported scenario is reproduced verbatim in `settle_residue_test.dart`'s `'the reported remainder
+  (2026-08-11)'` group (3 tests): settling the unrounded pairwise figure now leaves a residue that
+  `isSettled` accepts and `roundCurrency` renders as `0.0`, where pre-fix it rendered `-0.01`. The
+  client-side half is proven; the server-side half — `pay_back_exact` snapping to the truly exact
+  outstanding value so a multi-counterparty payer's net also lands on a hard zero — is
+  `[deferred]` to MANUAL_OPS verification steps 2 and 5. Test 13 (`'both group modes and payBackAll'`)
+  asserts this gap explicitly as pre-migration truth: `isSettled(twoThirds - 6.66)` is still `false`
+  without the applied migration.
+- **`[deferred]` holds for an amount that does not divide evenly into cents (10.00 / 3)** — same
+  evidence as above; `thirdOfTen = 3.3333333333333335` is used throughout
+  `settle_residue_test.dart` as the fixture for exactly this case. The exact-zero payer-side
+  guarantee is `[deferred]` to MANUAL_OPS step 2.
+- **One predicate/rounding rule across default mode, simplified mode and `payBackAll`** —
+  `'both group modes and payBackAll'` group, tests 13–15: a 10.00 three-way split settles cent-exact
+  in both group modes, and `payBackAll settles the same amount the payment screen offers`
+  (`Group.amountToSettleWith` matches `PaymentPartition.fromSummary`). Also
+  `'one rounding rule for every accumulated figure'` group, tests 4–6, covering `totalExpenses`
+  accumulation (default and simplified) and pairwise cancellation.
+- **Group detail, payment screen, group-list hero and friend list agree on settled/outstanding** —
+  `'one predicate, every surface'` group, tests 11–12: a `0.007` balance is asserted outstanding, and
+  a `0.004` balance settled, simultaneously across `PaymentPartition`, `aggregateOverallBalance`,
+  `sortGroups`, `isSettled` and `resolveMemberRemoval` in the same test.
+- **All settled/outstanding decisions route through one predicate** — `bool isSettled(double amount)`
+  and `const double kSettledEpsilon = 0.005` (`lib/helper/helper.dart`) replace the three former
+  constants; grep confirms `_kSettledEpsilon`, `_kSettledThreshold` and the inline `< 0.01` no longer
+  exist anywhere in `lib/`, and `isSettled(` is now called from `payment_view_model.dart`,
+  `group_list_view_model.dart`, `friendship_repository.dart`, `member_removal.dart`,
+  `group_model.dart`, `group_detail.dart`, `group_detail_payment.dart`, `group_list.dart`,
+  `group_list_item.dart`, `friend_detail_sheet.dart`, `expense_detail_read.dart`,
+  `expense_entry_widget.dart` and `split_allocation.dart`. The server-side active/done tab filter is
+  unified too: `GroupRepository.activeBalanceFilter` builds its PostgREST predicate from
+  `kSettledEpsilon`, proven equal to the client boundary by
+  `test/model/group_repository_test.dart`'s `'active/done balance filter is built from the shared
+  epsilon, not a literal'` and `'the tab threshold and the client predicate agree on 0.007'`.
+- **A regression test reproduces the remainder and fails without the fix** —
+  `settle_residue_test.dart`'s `'the reported remainder (2026-08-11)'` group encodes the exact
+  pre-fix/post-fix contrast in its comments (pre-fix pairwise `3.34`, residue `-0.01`; post-fix
+  pairwise `3.33`, residue settled) and asserts the post-fix values.
+- **Gates pass, existing money-math tests unchanged except where they encoded the bug** —
+  `flutter analyze`: no issues found. `flutter test`: 1030 passed, 1 failed
+  (`test/widgets/group_detail_payment_test.dart: back-arrow pops the full-page view`, an
+  `ink_sparkle` shader-manifest-version exception in the test engine — a known pre-existing flake,
+  reproduced in isolation, unrelated to this feature). `test/helper/helper_test.dart`,
+  `test/model/friendship_model_test.dart` and `test/model/group_list_view_model_test.dart` were
+  updated to assert against `isSettled`/`kSettledEpsilon` instead of the retired constants; no
+  expected money value changed except at the rounding boundaries the bug produced.
+
+Test counts: 16 new tests in `test/pages/groups/settle_residue_test.dart`, plus 2 new cases in
+`test/model/group_repository_test.dart` (active/done filter) and updated assertions in
+`test/helper/helper_test.dart`, `test/model/friendship_model_test.dart` and
+`test/model/group_list_view_model_test.dart`. `group_share_view_model.dart`'s `shareBalanceColor` was
+already dead code with no production caller (only its own test exercised it) and carried a fourth,
+independently-declared `_settledThreshold = 0.005` that would have kept disagreeing with the unified
+predicate; it and `test/pages/groups/group_share_color_test.dart` were deleted rather than migrated.
+
+Gate summary: `flutter analyze` — no issues found. `flutter test` — 1030 passed, 1 failed
+(`test/widgets/group_detail_payment_test.dart: back-arrow pops the full-page view`, the known
+`ink_sparkle` shader flake, reproduced identically in isolation and unrelated to this feature).
+
+Review verdict:
+- Round 1 — 3 bugs and 3 lean findings, all fixed.
+- Round 2 — no bugs; 1 lean finding (the `activeBalanceFilter`/`_payBackExactMissing` doc comment was
+  a single block attached to the wrong member, leaving the public getter undocumented), fixed by
+  splitting the comment across the two declarations. `review: clean`.
+
+status: code-complete

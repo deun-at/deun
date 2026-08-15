@@ -343,19 +343,19 @@ class _PaidNetRow extends StatelessWidget {
     if (!isInvolved) {
       netLabel = l10n.expenseNoShares;
       netColor = colorScheme.onSurfaceVariant;
-    } else if (net > 0.005) {
+    } else if (isSettled(net)) {
+      netLabel = l10n.expenseNetSettled;
+      netColor = colorScheme.onSurfaceVariant;
+    } else if (net > 0) {
       netLabel = l10n.expenseYouLentAmount(
         l10n.toCurrency(net.abs(), expense.group.currencyCode),
       );
       netColor = Theme.of(context).extension<SemanticColors>()!.success;
-    } else if (net < -0.005) {
+    } else {
       netLabel = l10n.expenseYouOweAmount(
         l10n.toCurrency(net.abs(), expense.group.currencyCode),
       );
       netColor = Theme.of(context).extension<SemanticColors>()!.danger;
-    } else {
-      netLabel = l10n.expenseNetSettled;
-      netColor = colorScheme.onSurfaceVariant;
     }
 
     return Row(

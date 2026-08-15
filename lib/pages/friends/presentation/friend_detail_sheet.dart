@@ -44,7 +44,8 @@ class FriendDetailSheet extends ConsumerWidget {
     final homeCurrency = ref.watch(homeCurrencyProvider);
 
     // Negative share = the current user owes the friend → pay-back options.
-    final bool owesFriend = friendship.shareAmount < -0.01;
+    final bool owesFriend =
+        !isSettled(friendship.shareAmount) && friendship.shareAmount < 0;
     final methods = owesFriend
         ? friendPayBackMethods(user)
         : const <FriendPayBackMethod>[];

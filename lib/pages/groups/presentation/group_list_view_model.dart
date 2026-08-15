@@ -2,12 +2,8 @@ import '../../../helper/currency_conversion.dart';
 import '../../../helper/helper.dart';
 import '../data/group_model.dart';
 
-/// Balance below this magnitude (in currency units) counts as settled.
-const double _kSettledThreshold = 0.01;
-
 /// Whether a group's net balance is effectively non-zero (still owing/owed).
-bool _isUnsettled(Group group) =>
-    group.totalShareAmount.abs() >= _kSettledThreshold;
+bool _isUnsettled(Group group) => !isSettled(group.totalShareAmount);
 
 /// Aggregated overall balance across all of a user's groups.
 class OverallBalance {
@@ -56,7 +52,7 @@ OverallBalance aggregateOverallBalance(
   int excluded = 0;
   for (final group in groups) {
     final amount = group.totalShareAmount;
-    if (amount.abs() < _kSettledThreshold) continue;
+    if (isSettled(amount)) continue;
     final converted = convertToHome(
       amount,
       group.currencyCode,

@@ -145,7 +145,7 @@ class _OverallHero extends StatelessWidget {
     final Color onHeroMuted = onHero.withValues(alpha: 0.7);
 
     final net = group.totalShareAmount;
-    final bool settled = net.abs() < 0.005;
+    final bool settled = isSettled(net);
 
     final String leadLabel;
     if (settled) {

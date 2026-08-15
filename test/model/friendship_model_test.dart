@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:deun/helper/helper.dart';
 import 'package:deun/pages/friends/data/friendship_model.dart';
 
 // Minimal mock for supabase.auth.currentUser?.email
@@ -31,21 +32,23 @@ void main() {
       expect(amounts, [10.0, 5.0, 3.0, -2.0]);
     });
 
-    test('shareAmount below 0.01 is treated as zero', () {
-      const amount = 0.005;
-      final normalized = amount.abs() < 0.01 ? 0.0 : amount;
+    test('a settled shareAmount is normalized to zero', () {
+      const amount = 0.004;
+      final normalized = isSettled(amount) ? 0.0 : amount;
       expect(normalized, 0.0);
     });
 
-    test('shareAmount at 0.01 is kept', () {
-      const amount = 0.01;
-      final normalized = amount.abs() < 0.01 ? 0.0 : amount;
-      expect(normalized, 0.01);
+    test('half a cent is outstanding and kept', () {
+      // Was 0.01 here: the friend list used to swallow anything under a cent,
+      // while the payment screen already offered it as a debt.
+      const amount = 0.005;
+      final normalized = isSettled(amount) ? 0.0 : amount;
+      expect(normalized, 0.005);
     });
 
-    test('negative shareAmount below -0.01 threshold is normalized', () {
-      const amount = -0.009;
-      final normalized = amount.abs() < 0.01 ? 0.0 : amount;
+    test('a negative settled shareAmount is normalized too', () {
+      const amount = -0.004;
+      final normalized = isSettled(amount) ? 0.0 : amount;
       expect(normalized, 0.0);
     });
   });

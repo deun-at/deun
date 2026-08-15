@@ -31,6 +31,26 @@ String sanitizeFilterValue(String value) =>
 /// Use at every arithmetic boundary where money is computed.
 double roundCurrency(double value) => (value * 100).roundToDouble() / 100;
 
+/// Half a cent: the magnitude at which a balance stops being settled. Below it a
+/// balance rounds to `0.00` at two decimals, so "settled" means exactly "renders
+/// as zero" — never a wider window that hides a real cent.
+const double kSettledEpsilon = 0.005;
+
+/// Whether [amount] counts as a settled balance. THE settled/outstanding
+/// decision in the app: the payment screen, the group-detail hero, the group-list
+/// hero, the group cards, the friend list and the member-removal guard all route
+/// through this one predicate, so a balance can never read settled on one screen
+/// and outstanding on another.
+///
+/// The active/done group tabs filter server-side in a PostgREST query and cannot
+/// call this — `GroupRepository.activeBalanceFilter` builds the same threshold
+/// from [kSettledEpsilon] instead.
+///
+/// `multi-currency-core` widens this to `isSettled(double amount, Currency
+/// currency)` (true below half a minor unit). Keep every call site here so that
+/// stays a signature change and not a second sweep.
+bool isSettled(double amount) => amount.abs() < kSettledEpsilon;
+
 /// App-wide default group currency (ISO 4217). New groups default to this and
 /// any amount rendered without an explicit group currency falls back to it.
 const String kDefaultCurrencyCode = 'EUR';

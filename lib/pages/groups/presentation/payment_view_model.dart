@@ -1,3 +1,4 @@
+import '../../../helper/helper.dart';
 import '../data/group_model.dart';
 
 /// A single settlement entry: the counterparty's email plus the already-computed
@@ -18,10 +19,6 @@ class PaymentEntry {
 /// payee's [GroupSharesSummary] contact fields.
 enum PaymentMethod { paypal, iban, cash }
 
-/// Threshold below which a balance is treated as settled (half a cent), matching
-/// the convention used across the group detail / share widgets.
-const double _kSettledEpsilon = 0.005;
-
 /// Partitions an already-computed [groupSharesSummary] into the members the
 /// current user owes ("you pay", negative balances) and the members who owe the
 /// current user ("owes you", positive balances).
@@ -39,17 +36,20 @@ class PaymentPartition {
 
   bool get isEmpty => youPay.isEmpty && owesYou.isEmpty;
 
-  static PaymentPartition fromSummary(Map<String, GroupSharesSummary> groupSharesSummary) {
+  static PaymentPartition fromSummary(
+    Map<String, GroupSharesSummary> groupSharesSummary,
+  ) {
     final youPay = <PaymentEntry>[];
     final owesYou = <PaymentEntry>[];
 
     groupSharesSummary.forEach((email, summary) {
-      if (summary.shareAmount <= -_kSettledEpsilon) {
+      // Settled balances are omitted from both buckets.
+      if (isSettled(summary.shareAmount)) return;
+      if (summary.shareAmount < 0) {
         youPay.add(PaymentEntry(email: email, summary: summary));
-      } else if (summary.shareAmount >= _kSettledEpsilon) {
+      } else {
         owesYou.add(PaymentEntry(email: email, summary: summary));
       }
-      // Amounts within the epsilon are considered settled and omitted.
     });
 
     youPay.sort((a, b) => b.amount.compareTo(a.amount));

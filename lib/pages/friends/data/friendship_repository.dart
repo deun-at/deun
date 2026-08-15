@@ -64,7 +64,7 @@ class FriendshipRepository {
         });
       }
 
-      if (friendship.shareAmount.abs() < 0.01) {
+      if (isSettled(friendship.shareAmount)) {
         friendship.shareAmount = 0;
       }
 

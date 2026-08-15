@@ -43,10 +43,40 @@ void main() {
     });
   });
 
+  group('isSettled', () {
+    test('a zero balance is settled', () {
+      expect(isSettled(0), isTrue);
+    });
+
+    test('below half a cent is settled, in both signs', () {
+      expect(isSettled(0.004), isTrue);
+      expect(isSettled(-0.004), isTrue);
+    });
+
+    test('half a cent is outstanding, in both signs', () {
+      expect(isSettled(0.005), isFalse);
+      expect(isSettled(-0.005), isFalse);
+    });
+
+    test('0.007 is outstanding — one answer, not two', () {
+      // The payment screen said outstanding (0.005) and the group list said
+      // settled (0.01) for this exact value.
+      expect(isSettled(0.007), isFalse);
+    });
+
+    test('settled means exactly "renders as 0.00"', () {
+      expect(roundCurrency(0.004), 0.0);
+      expect(roundCurrency(0.005), 0.01);
+      expect(kSettledEpsilon, 0.005);
+    });
+  });
+
   group('escapeHtml', () {
     test('escapes html-relevant characters', () {
-      expect(escapeHtml('<script>alert("x&y")</script>'),
-          '&lt;script&gt;alert(&quot;x&amp;y&quot;)&lt;/script&gt;');
+      expect(
+        escapeHtml('<script>alert("x&y")</script>'),
+        '&lt;script&gt;alert(&quot;x&amp;y&quot;)&lt;/script&gt;',
+      );
     });
 
     test('null becomes empty string', () {
@@ -65,13 +95,15 @@ void main() {
 
     test('today returns "Today"', () {
       final now = DateTime.now();
-      final todayStr = '${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}';
+      final todayStr =
+          '${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}';
       expect(formatDate(todayStr), 'Today');
     });
 
     test('yesterday returns "Yesterday"', () {
       final yesterday = DateTime.now().subtract(const Duration(days: 1));
-      final str = '${yesterday.year}-${yesterday.month.toString().padLeft(2, '0')}-${yesterday.day.toString().padLeft(2, '0')}';
+      final str =
+          '${yesterday.year}-${yesterday.month.toString().padLeft(2, '0')}-${yesterday.day.toString().padLeft(2, '0')}';
       expect(formatDate(str), 'Yesterday');
     });
 
