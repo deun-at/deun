@@ -27,6 +27,12 @@ GroupMember _member(String email, String name) {
   return m;
 }
 
+GroupMember _removedMember(String email, String name) {
+  final m = _member(email, name);
+  m.removedAt = DateTime.utc(2026, 8, 15, 9, 30);
+  return m;
+}
+
 Group _group() {
   final g = Group();
   g.id = 'g1';
@@ -38,6 +44,16 @@ Group _group() {
     _member('b@test.com', 'Bob'),
   ];
   g.expenses = [];
+  return g;
+}
+
+Group _groupWithRemovedCarol() {
+  final g = _group();
+  g.groupMembers = [
+    _member('a@test.com', 'Alice'),
+    _member('b@test.com', 'Bob'),
+    _removedMember('c@test.com', 'Carol'),
+  ];
   return g;
 }
 
@@ -71,6 +87,7 @@ Future<void> _pump(
   Brightness brightness = Brightness.light,
   Expense? expense,
   bool dismissKeypad = true,
+  Group? group,
 }) async {
   await tester.pumpWidget(
     ProviderScope(
@@ -91,7 +108,7 @@ Future<void> _pump(
             ).copyWith(splashFactory: NoSplash.splashFactory),
             // ExpenseDetail wraps itself in a ThemeBuilder that inherits this
             // ambient brightness.
-            child: ExpenseDetail(group: _group(), expense: expense),
+            child: ExpenseDetail(group: group ?? _group(), expense: expense),
           ),
         ),
       ),
@@ -262,5 +279,62 @@ void main() {
   ) async {
     await _pump(tester, expense: _expense(), dismissKeypad: false);
     expect(find.byType(AmountKeypadSheet), findsNothing);
+  });
+
+  // group-member-removal: a removed-with-history member is gone from the editor's
+  // pickers, while their past expenses (rendered elsewhere from
+  // expense.paidByDisplayName / the stored shares) still show them.
+
+  // 26
+  testWidgets('the paid-by sheet omits a removed member', (tester) async {
+    await _pump(tester, group: _groupWithRemovedCarol());
+    final l10n = await AppLocalizations.delegate.load(const Locale('en'));
+
+    await tester.dragUntilVisible(
+      find.text(l10n.expensePaidBy).first,
+      find.byType(Scrollable).first,
+      const Offset(0, -120),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.text(l10n.expensePaidBy).first);
+    await tester.pumpAndSettle();
+
+    final sheet = find.byType(PaidBySheet);
+    expect(sheet, findsOneWidget);
+    // Scoped to the row's *title*, not a bare Text lookup: PaidBySheet's
+    // subtitle falls back to displayName when a member has no username, so
+    // "Alice" would otherwise match both the title and the subtitle Text
+    // (and find.widgetWithText double-counts the shared ListTile ancestor
+    // in that case).
+    bool hasTitle(Widget w, String text) =>
+        w is ListTile && w.title is Text && (w.title as Text).data == text;
+
+    expect(
+      find.descendant(
+        of: sheet,
+        matching: find.byWidgetPredicate((w) => hasTitle(w, 'Alice')),
+      ),
+      findsOneWidget,
+    );
+    expect(
+      find.descendant(
+        of: sheet,
+        matching: find.byWidgetPredicate((w) => hasTitle(w, 'Carol')),
+      ),
+      findsNothing,
+    );
+  });
+
+  // 27
+  testWidgets('the split member list omits a removed member', (tester) async {
+    await _pump(tester, group: _groupWithRemovedCarol());
+
+    expect(find.text('Alice'), findsWidgets);
+    expect(find.text('Bob'), findsWidgets);
+    expect(
+      find.text('Carol'),
+      findsNothing,
+      reason: 'a removed member must not be offered a share of a new expense',
+    );
   });
 }

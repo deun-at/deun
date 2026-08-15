@@ -1822,4 +1822,37 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get pageNotFound => 'Page not found';
+
+  @override
+  String groupMemberRemoveTitle(String name) {
+    return 'Remove $name?';
+  }
+
+  @override
+  String get groupMemberRemoveBody =>
+      'They stay on the expenses they already share, and nobody\'s balance changes. You can add them back later.';
+
+  @override
+  String get groupMemberRemoveConfirm => 'Remove';
+
+  @override
+  String groupMemberRemoveBlocked(String name, String amount) {
+    return '$name still has $amount outstanding in this group. Settle up first, then remove them.';
+  }
+
+  @override
+  String groupMemberRemoveSuccess(String name) {
+    return '$name was removed from the group.';
+  }
+
+  @override
+  String groupMemberRemoveError(String name) {
+    return '$name could not be removed. Please try again.';
+  }
+
+  @override
+  String get groupMemberRemovedSectionTitle => 'Removed';
+
+  @override
+  String get groupMemberReAdd => 'Add back';
 }

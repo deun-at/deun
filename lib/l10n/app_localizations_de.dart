@@ -1853,4 +1853,37 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get pageNotFound => 'Seite nicht gefunden';
+
+  @override
+  String groupMemberRemoveTitle(String name) {
+    return '$name entfernen?';
+  }
+
+  @override
+  String get groupMemberRemoveBody =>
+      'Bereits geteilte Ausgaben bleiben unverändert, und kein Kontostand ändert sich. Du kannst die Person später wieder hinzufügen.';
+
+  @override
+  String get groupMemberRemoveConfirm => 'Entfernen';
+
+  @override
+  String groupMemberRemoveBlocked(String name, String amount) {
+    return '$name hat in dieser Gruppe noch $amount offen. Bitte zuerst ausgleichen, dann entfernen.';
+  }
+
+  @override
+  String groupMemberRemoveSuccess(String name) {
+    return '$name wurde aus der Gruppe entfernt.';
+  }
+
+  @override
+  String groupMemberRemoveError(String name) {
+    return '$name konnte nicht entfernt werden. Bitte versuche es erneut.';
+  }
+
+  @override
+  String get groupMemberRemovedSectionTitle => 'Entfernt';
+
+  @override
+  String get groupMemberReAdd => 'Wieder hinzufügen';
 }

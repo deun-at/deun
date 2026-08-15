@@ -211,7 +211,7 @@ class _ClaimPageState extends ConsumerState<ClaimPage> {
                       padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
                       children: [
                         _PersonaSwitcher(
-                          members: widget.group.groupMembers,
+                          members: widget.group.activeMembers,
                           selected: _persona,
                           currentUserEmail: _currentUserEmail,
                           onChanged: (email) =>
@@ -241,7 +241,14 @@ class _ClaimPageState extends ConsumerState<ClaimPage> {
                           groups: groups,
                           persona: _persona,
                           currentUserEmail: _currentUserEmail,
-                          members: widget.group.groupMembers,
+                          // group-member-removal: activeMembers, not
+                          // groupMembers — a removed member must not be
+                          // offered a share of a new/edited split. Existing
+                          // claims survive because _SplitEditorCard seeds
+                          // _selected from initialClaimers (the unit's stored
+                          // claimers), and _memberFor/_displayName above keep
+                          // resolving names from the full roster.
+                          members: widget.group.activeMembers,
                           expandedUnit: _expandedUnit,
                           displayName: (e) => _displayName(context, e),
                           onTakeOne: _takeOne,

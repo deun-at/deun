@@ -16,12 +16,17 @@ import 'package:go_router/go_router.dart';
 
 import '../../../constants.dart';
 import '../data/group_model.dart';
+import '../data/member_removal.dart';
 import 'group_member_search.dart';
 
 class GroupEdit extends ConsumerStatefulWidget {
-  const GroupEdit({super.key, this.group});
+  const GroupEdit({super.key, this.group, this.removeMemberOverride});
 
   final Group? group;
+
+  /// Test seam forwarded to [GroupMemberSearch]; null uses the real repository.
+  final Future<MemberRemovalOutcome> Function(String groupId, String email)?
+  removeMemberOverride;
 
   @override
   ConsumerState<GroupEdit> createState() => _GroupEditState();
@@ -134,7 +139,12 @@ class _GroupEditState extends ConsumerState<GroupEdit> {
                                   FormBuilderField(
                                     name: "group_members",
                                     builder: (FormFieldState<dynamic> field) {
-                                      return GroupMemberSearch(field: field);
+                                      return GroupMemberSearch(
+                                        field: field,
+                                        group: widget.group,
+                                        removeMemberOverride:
+                                            widget.removeMemberOverride,
+                                      );
                                     },
                                   ),
                                   const SizedBox(height: 24),

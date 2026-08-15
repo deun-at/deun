@@ -3209,6 +3209,54 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Page not found'**
   String get pageNotFound;
+
+  /// Confirm-dialog title for removing a member from a group.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove {name}?'**
+  String groupMemberRemoveTitle(String name);
+
+  /// Confirm-dialog body explaining that removal keeps history intact.
+  ///
+  /// In en, this message translates to:
+  /// **'They stay on the expenses they already share, and nobody\'s balance changes. You can add them back later.'**
+  String get groupMemberRemoveBody;
+
+  /// Destructive confirm button in the remove-member dialog.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove'**
+  String get groupMemberRemoveConfirm;
+
+  /// Shown when a member cannot be removed because their group balance is not settled.
+  ///
+  /// In en, this message translates to:
+  /// **'{name} still has {amount} outstanding in this group. Settle up first, then remove them.'**
+  String groupMemberRemoveBlocked(String name, String amount);
+
+  /// Snackbar confirming a member was removed.
+  ///
+  /// In en, this message translates to:
+  /// **'{name} was removed from the group.'**
+  String groupMemberRemoveSuccess(String name);
+
+  /// Snackbar shown when the removal write failed.
+  ///
+  /// In en, this message translates to:
+  /// **'{name} could not be removed. Please try again.'**
+  String groupMemberRemoveError(String name);
+
+  /// Section label above members removed from the group, with an add-back action.
+  ///
+  /// In en, this message translates to:
+  /// **'Removed'**
+  String get groupMemberRemovedSectionTitle;
+
+  /// Action that returns a removed member to the group.
+  ///
+  /// In en, this message translates to:
+  /// **'Add back'**
+  String get groupMemberReAdd;
 }
 
 class _AppLocalizationsDelegate

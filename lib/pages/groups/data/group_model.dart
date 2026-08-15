@@ -41,6 +41,13 @@ class Group {
     return groupMembers.any((m) => m.email == email && m.isFavorite);
   }
 
+  /// Members who are still part of the group. Every *picker* (new-expense
+  /// paid-by, share/split, the group-edit roster) binds to this; the ledger, the
+  /// group-detail balance list and past expenses keep binding to
+  /// [groupMembers] so a removed member stays visible where they actually spent.
+  List<GroupMember> get activeMembers =>
+      groupMembers.where((m) => !m.isRemoved).toList();
+
   static const groupSelectString =
       '*, group_shares_summary_helper:group_shares_summary!inner(*), group_shares_summary(*, ...paid_by(paid_by_display_name:display_name, paid_by_paypal_me:paypal_me, paid_by_iban:iban), ...paid_for(paid_for_display_name:display_name, paid_for_paypal_me:paypal_me, paid_for_iban:iban)), group_member(*, ...user(display_name:display_name, username:username, username_code:username_code, is_guest:is_guest))';
 
@@ -252,7 +259,10 @@ class Group {
     'simplified_expenses': simplifiedExpenses,
     'currency_code': currencyCode,
     'group_members': jsonEncode(
-      groupMembers.map((groupMember) => groupMember.toJson()).toList(),
+      // Active members only: this map seeds the group-edit form, and the save
+      // path upserts everything it is handed (clearing removed_at). Feeding it a
+      // removed member would silently resurrect them.
+      activeMembers.map((groupMember) => groupMember.toJson()).toList(),
     ),
   };
 }

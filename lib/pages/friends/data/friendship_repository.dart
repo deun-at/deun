@@ -148,7 +148,7 @@ class FriendshipRepository {
 
   static Future<List<SupaUser>> fetchFriends(
     String searchString,
-    List<String> selectedUsers,
+    Iterable<String> selectedUsers,
     int limit,
   ) async {
     var userEmail = supabase.auth.currentUser?.email ?? '';
