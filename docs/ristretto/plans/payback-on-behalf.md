@@ -25,16 +25,17 @@
   - Because there is no owner, the deterrent is visibility, not permission — hence the mandatory notification to both parties and the "recorded by" attribution. **These are load-bearing, not polish.** Do not drop them to reduce scope.
   - The RPC gains an optional payer parameter rather than a new RPC, so the self-payback path stays on exactly one code path.
 - Units:
-  - Migration: extend `pay_back` with an explicit payer, defaulting to the caller; validate that payer and payee are distinct, both current members of the group.
-  - Repository + call sites: optional `paidBy` on `GroupRepository.payBack`, existing callers untouched.
+  - Repository + call sites: optional `paidBy` on `GroupRepository.payBack`, existing callers untouched. **No migration is needed for this** — see the RPC note below.
+  - Migration: add validation to `pay_back` — payer and payee must be distinct and both current, non-removed members of `_group_id`. The function validates none of this today.
   - Recording attribution: persist and expose who recorded the payback; surface it in the ledger and expense read view.
   - Notification: both-parties notification naming the recorder, extending `sendGroupPayBackNotification`.
   - UI: choosing a payer when recording a payback, from the settle-up surface.
 - Blockers: —
 
 ## Approach
-- **Read this first:** `pay_back` and `update_group_member_shares` are not in `supabase/migrations/` — they exist only in the live self-hosted DB and predate the tracked migrations. Dump the current definition of `pay_back` from the live database before writing the migration; do not reconstruct it from the Dart call site, which only shows four parameters and tells you nothing about the body. Getting this wrong silently breaks every settle-up in the app.
-- Keep the new parameter optional with a caller default so `payBackAll` and the settle-up sheet need no signature churn, and so a client that hasn't been updated keeps working against the new function.
+- **The RPC already supports this.** `pay_back(_group_id, _paid_by, _paid_for, _amount)` takes the payer as a parameter and writes it straight to `expense.paid_by` — recovered 2026-08-15, now in `supabase/migrations/20260815000000_baseline_ledger_functions.sql`. The restriction to "me" is purely client-side: `group_repository.dart:213` hardcodes `supabase.auth.currentUser?.email`. **The core capability is a one-line client change**, not a migration. Scope the feature accordingly and spend the effort on attribution, notification and validation instead.
+- The RPC validates nothing — not that the payer and payee differ, not that either belongs to the group. That gap already exists for self-paybacks; this feature widens who can trigger it, so close it here rather than inheriting it.
+- Keep the new parameter optional with a caller default so `payBackAll` and the settle-up sheet need no signature churn.
 - The client currently calls `pay_back` and then `update_group_member_shares` separately, with a one-shot retry to paper over partial state. Do not extend that pattern — if the new work needs more statements, prefer moving them inside the RPC where they are already transactional.
 - Likely touchpoints: supabase/migrations/ (new migration), lib/pages/groups/data/group_repository.dart (`payBack`, `payBackAll`, notification), lib/pages/groups/presentation/group_detail_payment.dart (payer selection), lib/pages/groups/presentation/payment_view_model.dart (partitioning is per-current-user today), lib/pages/groups/presentation/group_ledger.dart (attribution), lib/l10n/app_en.arb + app_de.arb.
 - Depends: settle-residue
