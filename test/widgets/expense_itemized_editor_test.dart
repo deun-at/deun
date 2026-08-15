@@ -359,7 +359,13 @@ void main() {
       final l10n = await _l10n();
 
       // Opens directly in the itemized layout (no toggle tap needed).
-      expect(find.text(l10n.expenseSaveAndShareForClaiming), findsOneWidget);
+      // expense-editor-edit-labels: this pumps a SAVED expense, so the
+      // itemized CTA is the edit share verb, not the create one.
+      expect(
+        find.text(l10n.expenseSaveAndShareForClaimingEdit),
+        findsOneWidget,
+      );
+      expect(find.text(l10n.expenseSaveAndShareForClaiming), findsNothing);
       expect(find.text(l10n.expenseAddButton), findsNothing);
 
       // One card, quantity 2 — not two qty-1 unit cards.
@@ -659,7 +665,9 @@ void main() {
     final l10n = await _l10n();
 
     // Opens directly in the itemized layout for a shared/claim expense.
-    expect(find.text(l10n.expenseSaveAndShareForClaiming), findsOneWidget);
+    // expense-editor-edit-labels: this pumps a SAVED expense, so the
+    // itemized CTA is the edit share verb, not the create one.
+    expect(find.text(l10n.expenseSaveAndShareForClaimingEdit), findsOneWidget);
 
     // The selector shows the saved category, not "Other".
     expect(find.text(l10n.categoryFood), findsOneWidget);
@@ -740,7 +748,10 @@ void main() {
 
       // Quick layout is back, seeded with the SUMMED total (€6.50), not the
       // first item's €2.50.
-      expect(find.text(l10n.expenseAddButton), findsOneWidget);
+      // expense-editor-edit-labels: this pumps a SAVED expense, so the quick
+      // CTA is the edit verb, not "Add expense".
+      expect(find.text(l10n.save), findsOneWidget);
+      expect(find.text(l10n.expenseAddButton), findsNothing);
       expect(find.text('6.50'), findsOneWidget);
       expect(find.text('2.50'), findsNothing);
 

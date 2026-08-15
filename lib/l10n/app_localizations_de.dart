@@ -257,25 +257,10 @@ class AppLocalizationsDe extends AppLocalizations {
   String get expensesSearchEmpty => 'Keine Ergebnisse gefunden!';
 
   @override
-  String get createExpense => 'Ausgabe erstellen';
-
-  @override
-  String get editExpense => 'Ausgabe bearbeiten';
-
-  @override
-  String get addExpenseTitle => 'Titel hinzufügen';
-
-  @override
   String get expenseName => 'Beschreibung';
 
   @override
   String get expenseNameValidationEmpty => 'Bitte gib einen Titel ein!';
-
-  @override
-  String get expenseAmount => 'Betrag';
-
-  @override
-  String get expenseAmountValidationEmpty => 'Bitte gib einen Betrag ein!';
 
   @override
   String get expenseDate => 'Datum';
@@ -290,9 +275,6 @@ class AppLocalizationsDe extends AppLocalizations {
   String expenseSplitEach(String amount) {
     return '$amount pro Person';
   }
-
-  @override
-  String get expenseEntryTitle => 'Eintrag Titel hinzufügen';
 
   @override
   String get expenseDescriptionHint => 'Beschreibung hinzufügen';
@@ -348,6 +330,10 @@ class AppLocalizationsDe extends AppLocalizations {
       'Hinzufügen & zum Beanspruchen teilen';
 
   @override
+  String get expenseSaveAndShareForClaimingEdit =>
+      'Speichern & zum Beanspruchen teilen';
+
+  @override
   String get expenseAddButton => 'Ausgabe hinzufügen';
 
   @override
@@ -358,9 +344,6 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get expenseDetailTitleEdit => 'Ausgabe bearbeiten';
-
-  @override
-  String get expenseYourNetLabel => 'Dein Saldo';
 
   @override
   String get expensePaidByYou => 'Du hast bezahlt';
@@ -379,12 +362,6 @@ class AppLocalizationsDe extends AppLocalizations {
   String expenseYouOweAmount(String amount) {
     return 'Du schuldest $amount';
   }
-
-  @override
-  String get expenseYouLent => 'Du hast ausgelegt';
-
-  @override
-  String get expenseYouOwe => 'Du schuldest';
 
   @override
   String get expenseNetSettled => 'Ausgeglichen';
@@ -567,9 +544,6 @@ class AppLocalizationsDe extends AppLocalizations {
       'Bitte gib einen Eintrag Titel ein!';
 
   @override
-  String get expenseEntryAmount => 'Betrag';
-
-  @override
   String get expenseEntryAmountValidationEmpty => 'Bitte gib einen Betrag ein!';
 
   @override
@@ -579,9 +553,6 @@ class AppLocalizationsDe extends AppLocalizations {
   @override
   String get expenseEntryAmountValidationNonZero =>
       'Der Betrag darf nicht 0 sein!';
-
-  @override
-  String get expenseEntrySharesLable => 'Aufgeteilt zwischen';
 
   @override
   String get expenseEntrySharesValidationEmpty =>
@@ -676,11 +647,6 @@ class AppLocalizationsDe extends AppLocalizations {
       'other': 'Du hast $amount Schulden',
     });
     return '$_temp0';
-  }
-
-  @override
-  String totalExpensesAmount(String amount) {
-    return 'Gesamtausgaben $amount';
   }
 
   @override
@@ -1538,9 +1504,6 @@ class AppLocalizationsDe extends AppLocalizations {
   String get receiptScanRetake => 'Erneut aufnehmen';
 
   @override
-  String get splitModeAmount => 'Betrag';
-
-  @override
   String get splitModeEqual => 'Gleich';
 
   @override
@@ -1571,9 +1534,6 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get splitBySharesLabel => 'Nach Anteilen aufgeteilt';
-
-  @override
-  String get totalLabel => 'Gesamt';
 
   @override
   String get splitPercentageError => 'Muss 100% ergeben';

@@ -208,20 +208,10 @@
   "@expensesSearchDescription": {},
   "expensesSearchEmpty": "No results found",
   "@expensesSearchEmpty": {},
-  "createExpense": "Create expense",
-  "@createExpense": {},
-  "editExpense": "Edit expense",
-  "@editExpense": {},
-  "addExpenseTitle": "Add title",
-  "@addExpenseTitle": {},
   "expenseName": "Description",
   "@expenseName": {},
   "expenseNameValidationEmpty": "Please enter a title!",
   "@expenseNameValidationEmpty": {},
-  "expenseAmount": "Amount",
-  "@expenseAmount": {},
-  "expenseAmountValidationEmpty": "Please enter an amount!",
-  "@expenseAmountValidationEmpty": {},
   "expenseDate": "Date",
   "@expenseDate": {},
   "expenseWhen": "When",
@@ -237,8 +227,6 @@
       "amount": { "type": "String" }
     }
   },
-  "expenseEntryTitle": "Add item title",
-  "@expenseEntryTitle": {},
   "expenseDescriptionHint": "Add a description",
   "@expenseDescriptionHint": {
     "description": "Placeholder in the inset description field of the expense editor item card."
@@ -279,6 +267,10 @@
   },
   "expenseSaveAndShareForClaiming": "Add & share for claiming",
   "@expenseSaveAndShareForClaiming": {},
+  "expenseSaveAndShareForClaimingEdit": "Save & share for claiming",
+  "@expenseSaveAndShareForClaimingEdit": {
+    "description": "Itemized expense editor footer CTA when editing an existing shared expense. The create-mode sibling is expenseSaveAndShareForClaiming."
+  },
   "expenseAddButton": "Add expense",
   "@expenseAddButton": {},
   "expenseDetailTitle": "Expense",
@@ -292,10 +284,6 @@
   "expenseDetailTitleEdit": "Edit expense",
   "@expenseDetailTitleEdit": {
     "description": "Header title for the expense editor when editing an existing expense."
-  },
-  "expenseYourNetLabel": "Your net",
-  "@expenseYourNetLabel": {
-    "description": "Label above the current user's net amount on the expense detail summary card."
   },
   "expensePaidByYou": "You paid",
   "@expensePaidByYou": {
@@ -321,14 +309,6 @@
     "placeholders": {
       "amount": { "type": "String" }
     }
-  },
-  "expenseYouLent": "You lent",
-  "@expenseYouLent": {
-    "description": "Pill label on the expense detail summary card when the user is owed for this expense."
-  },
-  "expenseYouOwe": "You owe",
-  "@expenseYouOwe": {
-    "description": "Pill label on the expense detail summary card when the user owes for this expense."
   },
   "expenseNetSettled": "Settled",
   "@expenseNetSettled": {
@@ -562,16 +542,12 @@
   "@expenseEntryName": {},
   "expenseEntryNameValidationEmpty": "Please enter an item title!",
   "@expenseEntryNameValidationEmpty": {},
-  "expenseEntryAmount": "Amount",
-  "@expenseEntryAmount": {},
   "expenseEntryAmountValidationEmpty": "Please enter an amount!",
   "@expenseEntryAmountValidationEmpty": {},
   "expenseEntryAmountValidationZero": "Amount must be greater than zero!",
   "@expenseEntryAmountValidationZero": {},
   "expenseEntryAmountValidationNonZero": "Amount can't be zero!",
   "@expenseEntryAmountValidationNonZero": {},
-  "expenseEntrySharesLable": "Split between",
-  "@expenseEntrySharesLable": {},
   "expenseEntrySharesValidationEmpty": "Please select at least one person!",
   "@expenseEntrySharesValidationEmpty": {},
   "expenseDeleteItemTitle": "Delete this expense?",
@@ -651,13 +627,6 @@
       "paidByYourself": {
         "type": "String"
       },
-      "amount": { "type": "String" }
-    }
-  },
-  "totalExpensesAmount": "Total expenses {amount}",
-  "@totalExpensesAmount": {
-    "description": "Lable in the group list/group detail of what you spent",
-    "placeholders": {
       "amount": { "type": "String" }
     }
   },
@@ -1387,8 +1356,6 @@
   "@receiptScanUseItems": {},
   "receiptScanRetake": "Retake",
   "@receiptScanRetake": {},
-  "splitModeAmount": "Amount",
-  "@splitModeAmount": {},
   "splitModeEqual": "Equal",
   "@splitModeEqual": {},
   "splitModeExact": "Exact",
@@ -1415,8 +1382,6 @@
   "@splitByPercentLabel": {},
   "splitBySharesLabel": "Split by shares",
   "@splitBySharesLabel": {},
-  "totalLabel": "Total",
-  "@totalLabel": {},
   "splitPercentageError": "Must add up to 100%",
   "@splitPercentageError": {},
   "splitAmountError": "Must add up to the total",
