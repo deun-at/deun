@@ -595,6 +595,30 @@ class AppLocalizationsDe extends AppLocalizations {
       'Die Ausgabe wird endgültig entfernt und alle Salden werden aktualisiert. Das kann nicht rückgängig gemacht werden.';
 
   @override
+  String get expenseDeletePaybackTitle => 'Diesen Ausgleich löschen?';
+
+  @override
+  String expenseDeletePaybackMessage(String amount, String counterparty) {
+    return 'Damit wird die Zahlung von $amount mit $counterparty entfernt. Die damit ausgeglichene Schuld ist danach wieder offen.';
+  }
+
+  @override
+  String get expenseDeleteSettledTitle => 'Salden verschieben sich';
+
+  @override
+  String expenseDeleteSettledMessage(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other:
+          'Seit dieser Ausgabe wurden bereits $count Ausgleiche gezahlt. Wenn du sie löschst, verschieben sich bereits ausgeglichene Salden.',
+      one:
+          'Seit dieser Ausgabe wurde bereits ein Ausgleich gezahlt. Wenn du sie löschst, verschieben sich bereits ausgeglichene Salden.',
+    );
+    return '$_temp0';
+  }
+
+  @override
   String get expenseDeleteError => 'Fehler beim Löschen der Ausgabe!';
 
   @override

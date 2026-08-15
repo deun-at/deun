@@ -588,6 +588,30 @@ class AppLocalizationsEn extends AppLocalizations {
       'This permanently removes the expense and updates everyone\'s balances. This can\'t be undone.';
 
   @override
+  String get expenseDeletePaybackTitle => 'Delete this settlement?';
+
+  @override
+  String expenseDeletePaybackMessage(String amount, String counterparty) {
+    return 'This removes the $amount settlement with $counterparty. The debt it settled will be open again.';
+  }
+
+  @override
+  String get expenseDeleteSettledTitle => 'Balances will shift';
+
+  @override
+  String expenseDeleteSettledMessage(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other:
+          '$count settlements have already happened since this expense. Deleting it shifts balances that were already settled.',
+      one:
+          'A settlement has already happened since this expense. Deleting it shifts balances that were already settled.',
+    );
+    return '$_temp0';
+  }
+
+  @override
   String get expenseDeleteError => 'Error while deleting expense!';
 
   @override

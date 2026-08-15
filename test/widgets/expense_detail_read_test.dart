@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:deun/constants.dart';
 import 'package:deun/l10n/app_localizations.dart';
 import 'package:deun/helper/helper.dart';
@@ -7,6 +9,7 @@ import 'package:deun/pages/expenses/data/expense_model.dart';
 import 'package:deun/pages/expenses/presentation/expense_detail_read.dart';
 import 'package:deun/pages/groups/data/group_member_model.dart';
 import 'package:deun/pages/groups/data/group_model.dart';
+import 'package:deun/widgets/restyle/deun_header.dart';
 import 'package:deun/widgets/restyle/soft_card.dart';
 import 'package:deun/widgets/theme_builder.dart';
 import 'package:flutter/material.dart';
@@ -72,10 +75,54 @@ Expense _expense({
   return e;
 }
 
+/// A payback row as `pay_back` writes one: a single entry with a single share.
+Expense _paybackExpense({
+  String date = '2026-01-05',
+  double amount = 12.5,
+  String counterpartyEmail = 'b@test.com',
+  String counterpartyName = 'Bob',
+}) {
+  final share = ExpenseEntryShare();
+  share.expenseEntryId = 'pe1';
+  share.email = counterpartyEmail;
+  share.displayName = counterpartyName;
+  share.percentage = 100;
+  share.fixedAmount = null;
+  share.parts = null;
+  share.isLocked = false;
+  share.createdAt = '';
+
+  final entry = ExpenseEntry(index: 0)
+    ..id = 'pe1'
+    ..expenseId = 'p1'
+    ..amount = amount
+    ..quantity = 1
+    ..splitMode = 'equal'
+    ..createdAt = ''
+    ..expenseEntryShares = [share];
+
+  final e = Expense();
+  e.id = 'p1';
+  e.groupId = 'g1';
+  e.name = 'paid_back';
+  e.amount = amount;
+  e.paidBy = 'a@test.com';
+  e.paidByDisplayName = 'Alice';
+  e.expenseDate = date;
+  e.createdAt = '';
+  e.isPaidBackRow = true;
+  e.category = null;
+  e.groupMemberShareStatistic = {counterpartyEmail: amount};
+  e.expenseEntries = {'pe1': entry};
+  return e;
+}
+
 Future<void> _pump(
   WidgetTester tester,
   Expense expense, {
   Brightness brightness = Brightness.light,
+  List<Expense> paybacks = const [],
+  Future<List<Expense>> Function(String groupId)? loader,
 }) async {
   await tester.pumpWidget(
     ProviderScope(
@@ -94,7 +141,11 @@ Future<void> _pump(
               kBrandSeed,
               brightness,
             ).copyWith(splashFactory: NoSplash.splashFactory),
-            child: ExpenseDetailRead(group: _group(), expense: expense),
+            child: ExpenseDetailRead(
+              group: _group(),
+              expense: expense,
+              loadGroupPaybacks: loader ?? (_) async => paybacks,
+            ),
           ),
         ),
       ),
@@ -379,4 +430,193 @@ void main() {
     );
     expect(tester.takeException(), isNull);
   });
+
+  // 13 — plain case, no regression
+  testWidgets('an unguarded delete shows today plain confirmation', (
+    tester,
+  ) async {
+    final l10n = await AppLocalizations.delegate.load(const Locale('en'));
+    await _pump(
+      tester,
+      _expense(
+        entryCount: 1,
+        shareStat: const {'a@test.com': 10, 'b@test.com': 10},
+        amount: 20,
+      ),
+    );
+
+    await tester.tap(find.byIcon(Icons.delete_outline));
+    await tester.pumpAndSettle();
+
+    expect(find.text(l10n.expenseDeleteItemTitle), findsOneWidget);
+    expect(find.text(l10n.expenseDeleteItemMessage), findsOneWidget);
+    expect(find.text(l10n.expenseDeleteSettledTitle), findsNothing);
+    expect(find.text(l10n.expenseDeletePaybackTitle), findsNothing);
+  });
+
+  // 14 — a payback dated strictly before the expense is not a guard trigger
+  testWidgets(
+    'a payback dated before the expense keeps the plain confirmation',
+    (tester) async {
+      final l10n = await AppLocalizations.delegate.load(const Locale('en'));
+      await _pump(
+        tester,
+        _expense(
+          entryCount: 1,
+          shareStat: const {'a@test.com': 10, 'b@test.com': 10},
+          amount: 20,
+        ),
+        paybacks: [_paybackExpense(date: '2025-12-31')],
+      );
+
+      await tester.tap(find.byIcon(Icons.delete_outline));
+      await tester.pumpAndSettle();
+
+      expect(find.text(l10n.expenseDeleteItemMessage), findsOneWidget);
+      expect(find.text(l10n.expenseDeleteSettledTitle), findsNothing);
+    },
+  );
+
+  // 15 — guarded: normal expense already covered by a same-day payback.
+  // Cancelling writes nothing.
+  testWidgets(
+    'a settled expense warns that balances shift, and cancel writes nothing',
+    (tester) async {
+      final l10n = await AppLocalizations.delegate.load(const Locale('en'));
+      await _pump(
+        tester,
+        _expense(
+          entryCount: 1,
+          shareStat: const {'a@test.com': 10, 'b@test.com': 10},
+          amount: 20,
+        ),
+        paybacks: [_paybackExpense(date: '2026-01-01')],
+      );
+
+      await tester.tap(find.byIcon(Icons.delete_outline));
+      await tester.pumpAndSettle();
+
+      expect(find.text(l10n.expenseDeleteSettledTitle), findsOneWidget);
+      expect(find.text(l10n.expenseDeleteSettledMessage(1)), findsOneWidget);
+
+      await tester.tap(find.text(l10n.cancel));
+      await tester.pumpAndSettle();
+
+      // The sheet is gone, the expense screen is still here...
+      expect(find.text(l10n.expenseDeleteSettledTitle), findsNothing);
+      expect(find.text('Dinner'), findsOneWidget);
+      expect(find.byIcon(Icons.delete_outline), findsOneWidget);
+      // ...and NOTHING was written: every ExpenseRepository.delete outcome ends in
+      // one of these two snackbars, so their absence is the zero-write proof.
+      expect(find.text(l10n.expenseDeleteSuccess), findsNothing);
+      expect(find.text(l10n.expenseDeleteError), findsNothing);
+      expect(tester.takeException(), isNull);
+    },
+  );
+
+  // 16 — guarded: the payback row itself. Cancelling writes nothing.
+  testWidgets(
+    'deleting a payback row names the counterparty and amount, and cancel writes nothing',
+    (tester) async {
+      final l10n = await AppLocalizations.delegate.load(const Locale('en'));
+      await _pump(
+        tester,
+        _paybackExpense(amount: 12.5, counterpartyName: 'Bob'),
+      );
+
+      await tester.tap(find.byIcon(Icons.delete_outline));
+      await tester.pumpAndSettle();
+
+      expect(find.text(l10n.expenseDeletePaybackTitle), findsOneWidget);
+      expect(
+        find.text(
+          l10n.expenseDeletePaybackMessage(l10n.toCurrency(12.5), 'Bob'),
+        ),
+        findsOneWidget,
+      );
+
+      await tester.tap(find.text(l10n.cancel));
+      await tester.pumpAndSettle();
+
+      expect(find.text(l10n.expenseDeletePaybackTitle), findsNothing);
+      expect(find.text('paid_back'), findsOneWidget);
+      expect(find.text(l10n.expenseDeleteSuccess), findsNothing);
+      expect(find.text(l10n.expenseDeleteError), findsNothing);
+      expect(tester.takeException(), isNull);
+    },
+  );
+
+  // 17 — the probe is skipped entirely when the row being deleted IS a
+  // settlement: classifyExpenseDeletion never reads the group's other rows in
+  // that branch, so fetching them first would be a wasted round-trip.
+  testWidgets('deleting a payback row never probes the group', (tester) async {
+    var loadCalls = 0;
+    await _pump(
+      tester,
+      _paybackExpense(amount: 12.5, counterpartyName: 'Bob'),
+      loader: (_) async {
+        loadCalls++;
+        return const [];
+      },
+    );
+
+    await tester.tap(find.byIcon(Icons.delete_outline));
+    await tester.pumpAndSettle();
+
+    expect(loadCalls, 0);
+  });
+
+  // 18 — the bug fix: a slow/hanging probe must not leave the delete action
+  // tappable, or a repeat tap would start a second probe and, once both
+  // resolve, stack a second confirmation sheet.
+  testWidgets(
+    'the delete action shows progress and ignores a second tap while the probe is in flight',
+    (tester) async {
+      final l10n = await AppLocalizations.delegate.load(const Locale('en'));
+      var loadCalls = 0;
+      final completer = Completer<List<Expense>>();
+      await _pump(
+        tester,
+        _expense(
+          entryCount: 1,
+          shareStat: const {'a@test.com': 10, 'b@test.com': 10},
+          amount: 20,
+        ),
+        loader: (_) {
+          loadCalls++;
+          return completer.future;
+        },
+      );
+
+      await tester.tap(find.byIcon(Icons.delete_outline));
+      await tester.pump();
+
+      // Probe in flight: the delete icon is replaced by progress, and the
+      // confirmation has not appeared yet.
+      expect(find.byIcon(Icons.delete_outline), findsNothing);
+      expect(find.byType(CircularProgressIndicator), findsOneWidget);
+      expect(find.text(l10n.expenseDeleteItemTitle), findsNothing);
+      expect(loadCalls, 1);
+
+      // A second tap on the DELETE action while busy must be a no-op —
+      // HeaderIconButton ignores taps while `loading`. Scope the finder by the
+      // action's tooltip: the header's first HeaderIconButton is the leading
+      // back button, whose tap would be a no-op for unrelated reasons.
+      final deleteAction = find.ancestor(
+        of: find.byTooltip(l10n.delete),
+        matching: find.byType(HeaderIconButton),
+      );
+      expect(deleteAction, findsOneWidget);
+      await tester.tap(deleteAction, warnIfMissed: false);
+      await tester.pump();
+      expect(loadCalls, 1);
+
+      completer.complete(const []);
+      await tester.pumpAndSettle();
+
+      // Exactly one confirmation appears once the single probe resolves.
+      expect(find.text(l10n.expenseDeleteItemTitle), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    },
+  );
 }

@@ -578,6 +578,29 @@
   "@expenseDeleteItemTitle": {},
   "expenseDeleteItemMessage": "This permanently removes the expense and updates everyone's balances. This can't be undone.",
   "@expenseDeleteItemMessage": {},
+  "expenseDeletePaybackTitle": "Delete this settlement?",
+  "@expenseDeletePaybackTitle": {
+    "description": "Title of the delete confirmation shown for a payback (settle-up) row."
+  },
+  "expenseDeletePaybackMessage": "This removes the {amount} settlement with {counterparty}. The debt it settled will be open again.",
+  "@expenseDeletePaybackMessage": {
+    "description": "Body of the delete confirmation for a payback row: names the amount and the counterparty, and says the settled debt reopens.",
+    "placeholders": {
+      "amount": { "type": "String" },
+      "counterparty": { "type": "String", "example": "Max Muster" }
+    }
+  },
+  "expenseDeleteSettledTitle": "Balances will shift",
+  "@expenseDeleteSettledTitle": {
+    "description": "Title of the delete confirmation for a normal expense that a settlement has already covered."
+  },
+  "expenseDeleteSettledMessage": "{count, plural, one{A settlement has already happened since this expense. Deleting it shifts balances that were already settled.} other{{count} settlements have already happened since this expense. Deleting it shifts balances that were already settled.}}",
+  "@expenseDeleteSettledMessage": {
+    "description": "Body of the delete confirmation for a normal expense covered by one or more settlements dated on or after it.",
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
   "expenseDeleteError": "Error while deleting expense!",
   "@expenseDeleteError": {},
   "expenseDeleteSuccess": "Expense deleted!",

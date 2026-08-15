@@ -26,6 +26,18 @@ class Expense {
   static const expenseSelectString =
       '*, ...paid_by(paid_by_display_name:display_name), expense_entry(*, expense_entry_share(*, ...email(display_name:display_name))), group!expense_group_id_fkey(*, group_shares_summary(*, ...paid_by(paid_by_display_name:display_name), ...paid_for(paid_for_display_name:display_name)), group_member(*, ...user(display_name:display_name, is_guest:is_guest)))';
 
+  /// Lean select for a group's payback rows (see
+  /// `ExpenseRepository.fetchPaybackRows`): only the columns [loadDataFromJson]
+  /// needs to build a valid [Expense] without crashing (the non-nullable
+  /// `late` fields) plus [expenseDate] and [isPaidBackRow], which is all
+  /// `classifyExpenseDeletion` ever reads off a probed row. No `paid_by` join,
+  /// no `expense_entry` tree, no `group` embed — the guard never reads amounts,
+  /// shares, or the group off these rows; [group] simply stays
+  /// default-initialized and callers format amounts with the group they
+  /// already hold.
+  static const paybackSelectString =
+      'id, group_id, name, expense_date, created_at, is_paid_back_row';
+
   void loadDataFromJson(Map<String, dynamic> json) {
     id = json["id"];
     groupId = json["group_id"];

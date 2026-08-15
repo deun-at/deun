@@ -1,3 +1,4 @@
+import '../../../helper/helper.dart';
 import '../../expenses/data/expense_model.dart';
 
 /// The three ledger row presentations on the group-detail screen.
@@ -49,9 +50,7 @@ List<LedgerDaySection> groupExpensesByDay(List<Expense> expenses) {
   final indexByDay = <DateTime, int>{};
 
   for (final expense in expenses) {
-    final parsed = DateTime.tryParse(expense.expenseDate);
-    final local = (parsed ?? DateTime.fromMillisecondsSinceEpoch(0)).toLocal();
-    final day = DateTime(local.year, local.month, local.day);
+    final day = localDayOf(expense.expenseDate);
 
     final existing = indexByDay[day];
     if (existing == null) {
