@@ -107,7 +107,7 @@ class _ExpenseDetailState extends ConsumerState<ExpenseDetail> {
   void initState() {
     super.initState();
 
-    groupMembers = widget.group.groupMembers;
+    groupMembers = widget.group.activeMembers;
     _detectedCategory = widget.expense?.category;
     _nameController.text = widget.expense?.name ?? '';
     if (widget.expense != null && widget.expense!.expenseEntries.isNotEmpty) {
@@ -304,13 +304,16 @@ class _ExpenseDetailState extends ConsumerState<ExpenseDetail> {
 
   List<GroupMember> get _sortedMembers {
     final currentEmail = supabase.auth.currentUser?.email;
-    return [...widget.group.groupMembers]..sort((a, b) {
+    return [...widget.group.activeMembers]..sort((a, b) {
       if (a.email == currentEmail) return -1;
       if (b.email == currentEmail) return 1;
       return a.fullUsername.compareTo(b.fullUsername);
     });
   }
 
+  // group-member-removal: keeps searching the FULL roster (not activeMembers) —
+  // a past expense paid by a since-removed member must still resolve to their
+  // name in the ledger.
   GroupMember? _findMember(String? email) {
     if (email == null) return null;
     try {

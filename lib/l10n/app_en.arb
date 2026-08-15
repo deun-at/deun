@@ -1722,5 +1722,50 @@
   "pageNotFound": "Page not found",
   "@pageNotFound": {
     "description": "Fallback message shown for unknown/invalid routes."
+  },
+  "groupMemberRemoveTitle": "Remove {name}?",
+  "@groupMemberRemoveTitle": {
+    "description": "Confirm-dialog title for removing a member from a group.",
+    "placeholders": {
+      "name": {"type": "String", "example": "Ann"}
+    }
+  },
+  "groupMemberRemoveBody": "They stay on the expenses they already share, and nobody's balance changes. You can add them back later.",
+  "@groupMemberRemoveBody": {
+    "description": "Confirm-dialog body explaining that removal keeps history intact."
+  },
+  "groupMemberRemoveConfirm": "Remove",
+  "@groupMemberRemoveConfirm": {
+    "description": "Destructive confirm button in the remove-member dialog."
+  },
+  "groupMemberRemoveBlocked": "{name} still has {amount} outstanding in this group. Settle up first, then remove them.",
+  "@groupMemberRemoveBlocked": {
+    "description": "Shown when a member cannot be removed because their group balance is not settled.",
+    "placeholders": {
+      "name": {"type": "String", "example": "Ann"},
+      "amount": {"type": "String", "example": "€12.50"}
+    }
+  },
+  "groupMemberRemoveSuccess": "{name} was removed from the group.",
+  "@groupMemberRemoveSuccess": {
+    "description": "Snackbar confirming a member was removed.",
+    "placeholders": {
+      "name": {"type": "String", "example": "Ann"}
+    }
+  },
+  "groupMemberRemoveError": "{name} could not be removed. Please try again.",
+  "@groupMemberRemoveError": {
+    "description": "Snackbar shown when the removal write failed.",
+    "placeholders": {
+      "name": {"type": "String", "example": "Ann"}
+    }
+  },
+  "groupMemberRemovedSectionTitle": "Removed",
+  "@groupMemberRemovedSectionTitle": {
+    "description": "Section label above members removed from the group, with an add-back action."
+  },
+  "groupMemberReAdd": "Add back",
+  "@groupMemberReAdd": {
+    "description": "Action that returns a removed member to the group."
   }
 }

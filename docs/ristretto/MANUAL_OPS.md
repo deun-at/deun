@@ -25,10 +25,9 @@ Do not mark a roadmap row done on the strength of green gates alone when it has 
 
 ## Pending
 
-*(Nothing yet — entries land here as features are pulled.)*
-
 | Feature | What to apply | How to verify | Status |
 |---------|---------------|---------------|--------|
+| group-member-removal | `supabase/migrations/20260815010000_group_member_removal.sql` — adds `group_member.removed_at`, fixes `update_group_member_shares`' `total_share_amount` counterparty semi-join, and stops `save_group_all` deleting members. Then recompute every group once: `select public.update_group_member_shares(g.id, null::uuid) from public."group" g;` | 1) `select removed_at from public.group_member limit 1;` succeeds. 2) In a group with expenses, note `groupSharesSummary` for every member, remove a settled member with history, and confirm the map is identical and the group list total is unchanged. 3) Remove a settled member with no expenses at all and confirm their `group_member` row is gone. 4) Re-add a removed member and confirm `removed_at` is null and their `expense_entry_share` rows are unchanged and not duplicated. 5) Open the group on a second client and confirm the roster updates without a manual refresh. 6) Edit a group without touching its members (e.g. rename it) and save, then confirm no `group_member` row disappeared and every member's `is_favorite` survived — this is the one non-deferred write-path criterion (`saveAll`/`save_group_all` no longer delete members merely absent from the submitted list) and it is only exercised end-to-end here, not by a unit test. | pending |
 
 ## Applied
 

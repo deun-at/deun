@@ -533,5 +533,13 @@
   "friendAcceptNotificationTitle": "Deine Freundschaftsanfrage wurde angenommen",
   "friendAcceptNotificationBody": "{userDisplayName} hat deine Freundschaftsanfrage angenommen.",
   "friendDeclineNotificationTitle": "Deine Freundschaftsanfrage wurde abgelehnt",
-  "friendDeclineNotificationBody": "{userDisplayName} hat deine Freundschaftsanfrage abgelehnt."
+  "friendDeclineNotificationBody": "{userDisplayName} hat deine Freundschaftsanfrage abgelehnt.",
+  "groupMemberRemoveTitle": "{name} entfernen?",
+  "groupMemberRemoveBody": "Bereits geteilte Ausgaben bleiben unverändert, und kein Kontostand ändert sich. Du kannst die Person später wieder hinzufügen.",
+  "groupMemberRemoveConfirm": "Entfernen",
+  "groupMemberRemoveBlocked": "{name} hat in dieser Gruppe noch {amount} offen. Bitte zuerst ausgleichen, dann entfernen.",
+  "groupMemberRemoveSuccess": "{name} wurde aus der Gruppe entfernt.",
+  "groupMemberRemoveError": "{name} konnte nicht entfernt werden. Bitte versuche es erneut.",
+  "groupMemberRemovedSectionTitle": "Entfernt",
+  "groupMemberReAdd": "Wieder hinzufügen"
 }

@@ -1,9 +1,11 @@
 import 'package:deun/constants.dart';
+import 'package:deun/helper/helper.dart';
 import 'package:deun/l10n/app_localizations.dart';
 import 'package:deun/pages/friends/data/friendship_model.dart';
 import 'package:deun/pages/friends/provider/friendship_list.dart';
 import 'package:deun/pages/groups/data/group_member_model.dart';
 import 'package:deun/pages/groups/data/group_model.dart';
+import 'package:deun/pages/groups/data/member_removal.dart';
 import 'package:deun/pages/groups/presentation/group_detail_edit.dart';
 import 'package:deun/pages/users/user_model.dart';
 import 'package:deun/widgets/restyle/primary_button.dart';
@@ -69,6 +71,8 @@ Future<void> _pump(
   Group? group,
   Brightness brightness = Brightness.light,
   List<dynamic> overrides = const [],
+  Future<MemberRemovalOutcome> Function(String groupId, String email)?
+  removeMemberOverride,
 }) async {
   await tester.pumpWidget(
     ProviderScope(
@@ -88,13 +92,66 @@ Future<void> _pump(
               kBrandSeed,
               brightness,
             ).copyWith(splashFactory: NoSplash.splashFactory),
-            child: GroupEdit(group: group),
+            child: GroupEdit(
+              group: group,
+              removeMemberOverride: removeMemberOverride,
+            ),
           ),
         ),
       ),
     ),
   );
   await tester.pumpAndSettle();
+}
+
+GroupMember _memberOf(String email, String display, {DateTime? removedAt}) {
+  final m = GroupMember();
+  m.groupId = 'g1';
+  m.email = email;
+  m.displayName = display;
+  m.isGuest = false;
+  m.isFavorite = false;
+  m.removedAt = removedAt;
+  return m;
+}
+
+/// An existing group with Me + Ann, and optionally a removed Carol.
+Group _groupWithRoster({bool carolRemoved = false}) {
+  final g = _group();
+  g.groupMembers = [
+    _memberOf('me@test.com', 'Me'),
+    _memberOf('ann@test.com', 'Ann'),
+    if (carolRemoved)
+      _memberOf(
+        'carol@test.com',
+        'Carol',
+        removedAt: DateTime.utc(2026, 8, 15),
+      ),
+  ];
+  return g;
+}
+
+/// A roster row's *title* Text, specifically — not a bare `find.text(name)`.
+/// GroupMemberSearch's subtitle falls back to displayName when a member has no
+/// username (as these test fixtures don't), so the name would otherwise match
+/// both the title and the subtitle Text under the same ListTile.
+bool _hasTitle(Widget w, String text) =>
+    w is ListTile && w.title is Text && (w.title as Text).data == text;
+
+Finder _rowTitle(String name) =>
+    find.byWidgetPredicate((w) => _hasTitle(w, name));
+
+/// The trailing remove action on a roster row (icon unchanged by this feature).
+Finder _removeActionFor(String name) => find.descendant(
+  of: _rowTitle(name),
+  matching: find.byIcon(Icons.check_circle),
+);
+
+/// The group_members form value as GroupRepository.saveAll would receive it.
+String _submittedMembers(WidgetTester tester) {
+  final form = tester.state<FormBuilderState>(find.byType(FormBuilder));
+  expect(form.saveAndValidate(), isTrue);
+  return form.value['group_members'] as String;
 }
 
 /// Finds the selectable color swatches: AnimatedContainers whose decoration is a
@@ -733,4 +790,186 @@ void main() {
       expect(tester.takeException(), isNull);
     },
   );
+
+  // -------------------------------------------------------------------------
+  // group-member-removal: removing a member is an explicit, defined operation.
+  // Each test restates one acceptance criterion.
+  // -------------------------------------------------------------------------
+
+  final noFriends = [
+    friendshipListProvider.overrideWith(
+      () => _FakeFriendshipListNotifier(const []),
+    ),
+  ];
+
+  // 21
+  testWidgets(
+    'an unsettled member is not removed and the block names the outstanding amount',
+    (tester) async {
+      final calls = <String>[];
+      await _pump(
+        tester,
+        group: _groupWithRoster(),
+        overrides: noFriends,
+        removeMemberOverride: (groupId, email) async {
+          calls.add('$groupId/$email');
+          return const MemberRemovalOutcome.blocked(outstanding: 12.5);
+        },
+      );
+      final l10n = await AppLocalizations.delegate.load(const Locale('en'));
+
+      await tester.ensureVisible(_rowTitle('Ann'));
+      await tester.pumpAndSettle();
+      await tester.tap(_removeActionFor('Ann'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text(l10n.groupMemberRemoveConfirm));
+      await tester.pumpAndSettle();
+
+      expect(calls, ['g1/ann@test.com']);
+      expect(
+        find.text(
+          l10n.groupMemberRemoveBlocked('Ann', l10n.toCurrency(12.5, 'EUR')),
+        ),
+        findsOneWidget,
+        reason:
+            'the block must name the outstanding amount in the group currency',
+      );
+
+      await tester.tap(find.text(l10n.close));
+      await tester.pumpAndSettle();
+
+      // Nothing changed client-side either: the member is still submitted.
+      expect(_rowTitle('Ann'), findsOneWidget);
+      expect(_submittedMembers(tester), contains('ann@test.com'));
+    },
+  );
+
+  // 22
+  testWidgets(
+    'confirming a settled removal drops the member from the roster and the submitted list',
+    (tester) async {
+      await _pump(
+        tester,
+        group: _groupWithRoster(),
+        overrides: noFriends,
+        removeMemberOverride: (groupId, email) async =>
+            MemberRemovalOutcome.softRemoved,
+      );
+      final l10n = await AppLocalizations.delegate.load(const Locale('en'));
+
+      expect(_submittedMembers(tester), contains('ann@test.com'));
+
+      await tester.ensureVisible(_rowTitle('Ann'));
+      await tester.pumpAndSettle();
+      await tester.tap(_removeActionFor('Ann'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text(l10n.groupMemberRemoveConfirm));
+      await tester.pumpAndSettle();
+
+      // Ann is now listed under "Removed" (with an add-back action), never as an
+      // active roster row, and she is out of the submitted list.
+      expect(find.text(l10n.groupMemberRemovedSectionTitle), findsWidgets);
+      expect(_removeActionFor('Ann'), findsNothing);
+      expect(find.byIcon(Icons.person_add_alt_1), findsOneWidget);
+      expect(_submittedMembers(tester), isNot(contains('ann@test.com')));
+    },
+  );
+
+  // 23
+  testWidgets(
+    'a member loaded as removed sits in the Removed section, and Add back returns them',
+    (tester) async {
+      await _pump(
+        tester,
+        group: _groupWithRoster(carolRemoved: true),
+        overrides: noFriends,
+        removeMemberOverride: (groupId, email) async =>
+            MemberRemovalOutcome.softRemoved,
+      );
+      final l10n = await AppLocalizations.delegate.load(const Locale('en'));
+
+      // Not an active member: no remove action, and not in the submitted list.
+      expect(_removeActionFor('Carol'), findsNothing);
+      expect(_submittedMembers(tester), isNot(contains('carol@test.com')));
+      expect(find.text(l10n.groupMemberRemovedSectionTitle), findsWidgets);
+
+      final addBack = find.byIcon(Icons.person_add_alt_1);
+      expect(addBack, findsOneWidget);
+      await tester.ensureVisible(addBack);
+      await tester.pumpAndSettle();
+      await tester.tap(addBack);
+      await tester.pumpAndSettle();
+
+      // Back in the submitted list (the save path clears removed_at) and back to
+      // being a normal, removable roster row.
+      expect(_submittedMembers(tester), contains('carol@test.com'));
+      expect(find.byIcon(Icons.person_add_alt_1), findsNothing);
+      expect(_removeActionFor('Carol'), findsOneWidget);
+    },
+  );
+
+  // 24
+  testWidgets(
+    'while creating a group, removing a chip never calls the removal path',
+    (tester) async {
+      var calls = 0;
+      await _pump(
+        tester,
+        overrides: [
+          friendshipListProvider.overrideWith(
+            () => _FakeFriendshipListNotifier([
+              _friend('sam@test.com', 'Sam', 'sam'),
+            ]),
+          ),
+        ],
+        removeMemberOverride: (groupId, email) async {
+          calls++;
+          return MemberRemovalOutcome.softRemoved;
+        },
+      );
+      final l10n = await AppLocalizations.delegate.load(const Locale('en'));
+
+      // Add Sam to the not-yet-persisted group, then take him back off.
+      await tester.tap(find.text('Sam'));
+      await tester.pumpAndSettle();
+      await tester.ensureVisible(_rowTitle('Sam'));
+      await tester.pumpAndSettle();
+      await tester.tap(_removeActionFor('Sam'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text(l10n.groupMemberRemoveConfirm));
+      await tester.pumpAndSettle();
+
+      expect(
+        calls,
+        0,
+        reason: 'nothing is persisted yet, so there is no membership to remove',
+      );
+      expect(find.byIcon(Icons.add_circle_outline), findsOneWidget);
+    },
+  );
+
+  // 25
+  testWidgets('cancelling the confirm dialog removes nothing', (tester) async {
+    var calls = 0;
+    await _pump(
+      tester,
+      group: _groupWithRoster(),
+      overrides: noFriends,
+      removeMemberOverride: (groupId, email) async {
+        calls++;
+        return MemberRemovalOutcome.softRemoved;
+      },
+    );
+    final l10n = await AppLocalizations.delegate.load(const Locale('en'));
+
+    await tester.ensureVisible(_rowTitle('Ann'));
+    await tester.pumpAndSettle();
+    await tester.tap(_removeActionFor('Ann'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text(l10n.cancel));
+    await tester.pumpAndSettle();
+
+    expect(calls, 0);
+    expect(_submittedMembers(tester), contains('ann@test.com'));
+  });
 }

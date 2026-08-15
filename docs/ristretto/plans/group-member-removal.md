@@ -16,9 +16,12 @@
   - The removal-outcome decision is a pure function, unit-tested at the epsilon boundary: `0.004` settles, `0.005` blocks, and both signs of the balance block symmetrically.
   - **[deferred]** A member removal performed by one client is reflected on other clients' open group detail via the existing realtime path, with no stale roster.
 - Provides:
-  - `GroupMember.removedAt: DateTime?` and `GroupMember.isRemoved: bool`
-  - `MemberRemovalOutcome` — one of `blocked(outstanding: double)` · `softRemoved` · `hardRemoved`
+  - `GroupMember.removedAt: DateTime?` and `GroupMember.isRemoved: bool` (`lib/pages/groups/data/group_member_model.dart`)
+  - `Group.activeMembers: List<GroupMember>` — non-removed members, what every picker binds to (`lib/pages/groups/data/group_model.dart`)
+  - `MemberRemovalOutcome` — sealed, one of `blocked(outstanding: double)` · `softRemoved` · `hardRemoved` (`lib/pages/groups/data/member_removal.dart`)
   - `resolveMemberRemoval({balance: double, hasExpenseHistory: bool}): MemberRemovalOutcome` (pure)
+  - `excludedCandidateEmails({submittedMembers, currentUserEmail, allMembers}): Set<String>` — emails the member-search "add" list must exclude; returns a `Set<String>`, not a `List`
+  - `GroupJoinPlan({insertMembership, clearRemovedAt, mergeGuest})` and `resolveGroupJoin({existingMembership, selectedGuestEmail}): GroupJoinPlan` (pure) — decides an invite-link join independently of the guest-merge decision, added during review round 3 to fix a bug where a soft-removed member's guest merge was skipped on re-join
   - `GroupRepository.removeMember(groupId: String, email: String): Future<MemberRemovalOutcome>`
 - Consumes: —
 - Decisions:
@@ -80,4 +83,65 @@ soft-remove: it is the criterion that proves the ghost shares are gone.
 - Depends: —
 - Parallel-with: group-member-add-flow
 
-status: planned
+## Evidence
+
+- **Unsettled removal writes nothing, message names the amount** — `resolveMemberRemoval` unit tests
+  2, 3, 7, 8 (`test/model/member_removal_test.dart`) plus the widget test `'an unsettled member is not
+  removed and the block names the outstanding amount'` (`test/widgets/group_edit_screen_test.dart`),
+  which asserts the block dialog text and that the member stays in the submitted form value. Backed
+  structurally by `GroupRepository.removeMember`'s `MemberRemovalBlocked` branch returning before any
+  `group_member` statement.
+- **`[deferred]` soft-removed member's shares and balance map are untouched** — client half proven by
+  `resolveMemberRemoval` tests 1, 5 (settled-with-history → `softRemoved`) and
+  `test/pages/groups/group_member_removal_test.dart` tests 17–18 (`activeMembers` drops them,
+  `groupMembers`/`groupSharesSummary` keep them). The server-side arithmetic — that the migration's
+  semi-join actually keeps `total_share_amount` identical before/after against a live group — is
+  `[deferred]` to MANUAL_OPS verification step 2.
+- **`[deferred]` zero-involvement removal deletes the row outright** — `resolveMemberRemoval` tests 4,
+  6 (settled-with-no-history → `hardRemoved`); the actual delete against the live instance is
+  `[deferred]` to MANUAL_OPS step 3.
+- **Removed member absent from pickers, present in ledger/balances/past expenses** —
+  `group_member_removal_test.dart` tests 17, 18, 20 (`activeMembers` filtering, `PaidBySheet` omits
+  Carol) and `test/widgets/expense_detail_tiles_test.dart`'s two new cases ("the paid-by sheet omits a
+  removed member", "the split member list omits a removed member"). Ledger call sites
+  (`group_detail_list.dart`, `expense_detail_read.dart`, `group_list_item.dart`,
+  `statistics_notifiers.dart`, `claim_page.dart`) were deliberately left unmodified since they already
+  read `groupMembers`/`groupSharesSummary`, not `activeMembers`.
+- **Saving no longer deletes members merely absent from the submitted list** —
+  `test/widgets/group_edit_screen_test.dart`'s `'confirming a settled removal drops the member from
+  the roster and the submitted list'` plus the rewritten `_saveAllLegacy` member half in
+  `group_repository.dart` (insert-missing / clear-marker instead of delete-all/re-insert) and the
+  matching `save_group_all` rewrite in the migration. The end-to-end DB behaviour is the one
+  **non-deferred** write-path criterion and is exercised only by MANUAL_OPS verification step 6, not by
+  a unit test (no live connection in the test run).
+- **`[deferred]` re-adding a removed member clears the marker and restores history unduplicated** —
+  `group_member_removal_test.dart` test 19 (`toJson` excludes removed members from the save payload)
+  and `group_edit_screen_test.dart`'s `'a member loaded as removed sits in the Removed section, and Add
+  back returns them'`. The actual clear-and-preserve behaviour against Postgres is `[deferred]` to
+  MANUAL_OPS step 4.
+- **Epsilon boundary is a unit-tested pure function, symmetric in both signs** — all 8 tests in
+  `resolveMemberRemoval` group of `test/model/member_removal_test.dart`, including the `0.004` /
+  `0.005` boundary and the `-0.005` / `0.005` symmetry case.
+- **`[deferred]` realtime reflects a removal on other open clients** — `removeMember` always calls
+  `update_group_member_shares`, which bumps `group_update_checker`, the table `GroupDetailNotifier`
+  already subscribes to via `RealtimeNotifierMixin`. No new subscription code was needed. Actually
+  observing a second client refresh is `[deferred]` to MANUAL_OPS step 5.
+
+Test counts: 23 new tests across `test/model/member_removal_test.dart` (15) and
+`test/pages/groups/group_member_removal_test.dart` (8), plus 2 new cases in
+`test/widgets/expense_detail_tiles_test.dart` and 5 new cases in `test/widgets/group_edit_screen_test.dart`.
+
+Gate summary: `flutter analyze` — no issues found. `flutter test` — 988 passed, 1 failed
+(`test/widgets/group_detail_payment_test.dart: back-arrow pops the full-page view`, an `ink_sparkle`
+shader-manifest-version exception in the test engine, reproduced identically with this feature's
+changes stashed out — pre-existing and unrelated to this feature).
+
+Review verdict:
+- Round 1 — 4 bugs and 2 lean findings, all fixed.
+- Round 2 — 1 bug remaining: a soft-removed member's guest merge was silently skipped when they
+  re-joined through the invite link, because the guest-merge branch was nested inside the
+  membership-insert `if`.
+- Round 3 — escalated fix: extracted the pure `GroupJoinPlan`/`resolveGroupJoin` decision function so
+  the guest merge is decided independently of the membership write. `review: clean`.
+
+status: code-complete

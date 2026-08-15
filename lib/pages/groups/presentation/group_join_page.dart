@@ -1,6 +1,7 @@
 import 'package:deun/helper/helper.dart';
 import 'package:deun/main.dart';
 import 'package:deun/pages/groups/data/group_repository.dart';
+import 'package:deun/pages/groups/data/member_removal.dart';
 import 'package:deun/widgets/restyle/deun_header.dart';
 import 'package:deun/widgets/restyle/primary_button.dart';
 import 'package:flutter/material.dart';
@@ -29,12 +30,14 @@ class _GroupJoinPageState extends State<GroupJoinPage> {
     try {
       final existing = await supabase
           .from('group_member')
-          .select('email')
+          .select('email, removed_at')
           .eq('group_id', widget.groupId)
           .eq('email', email)
           .maybeSingle();
 
-      if (existing != null) {
+      // A soft-removed member is NOT "already a member" — they have to re-join,
+      // which clears their removed_at in _joinGroup.
+      if (existing != null && existing['removed_at'] == null) {
         final g = await GroupRepository.fetchDetail(widget.groupId);
         if (!mounted) return;
         GoRouter.of(context).go('/group/details', extra: {'group': g});
@@ -55,13 +58,17 @@ class _GroupJoinPageState extends State<GroupJoinPage> {
     try {
       final data = await supabase
           .from('group_member')
-          .select('email, ...user(display_name:display_name, is_guest:is_guest)')
+          .select(
+            'email, ...user(display_name:display_name, is_guest:is_guest)',
+          )
           .eq('group_id', widget.groupId);
 
       final guests = <Map<String, dynamic>>[];
       for (final row in (data as List<dynamic>)) {
         final isGuest = (row['is_guest'] ?? row['user']?['is_guest']) ?? false;
-        final displayName = (row['display_name'] ?? row['user']?['display_name']) ?? row['email'];
+        final displayName =
+            (row['display_name'] ?? row['user']?['display_name']) ??
+            row['email'];
         if (isGuest == true) {
           guests.add({'email': row['email'], 'display_name': displayName});
         }
@@ -91,37 +98,67 @@ class _GroupJoinPageState extends State<GroupJoinPage> {
       // Ensure user is member
       final existing = await supabase
           .from('group_member')
-          .select('email')
+          .select('email, removed_at')
           .eq('group_id', widget.groupId)
           .eq('email', email)
           .maybeSingle();
 
-      if (existing == null) {
+      final plan = resolveGroupJoin(
+        existingMembership: existing,
+        selectedGuestEmail: _selectedGuestEmail,
+      );
+
+      if (plan.clearRemovedAt) {
+        // Re-joining via the invite link clears the removal marker; their
+        // historical shares are untouched and not duplicated.
+        await supabase
+            .from('group_member')
+            .update({'removed_at': null})
+            .eq('group_id', widget.groupId)
+            .eq('email', email);
+      }
+
+      if (plan.insertMembership) {
         await supabase.from('group_member').insert({
           'group_id': widget.groupId,
           'email': email,
         });
+      }
 
-        // If a guest was selected, transfer their data to current user and remove guest from this group
-        if (_selectedGuestEmail != null) {
-          final guestEmail = _selectedGuestEmail!;
+      // If a guest was selected, transfer their data to current user and remove
+      // guest from this group. Independent of the membership write above: a
+      // re-joining removed member may be picking up a guest placeholder too.
+      if (plan.mergeGuest) {
+        final guestEmail = _selectedGuestEmail!;
 
-          // 1) Update expense.paid_by for this group
-          await supabase.from('expense').update({'paid_by': email}).eq('paid_by', guestEmail);
+        // 1) Update expense.paid_by for this group
+        await supabase
+            .from('expense')
+            .update({'paid_by': email})
+            .eq('paid_by', guestEmail);
 
-          // 2) Update expense_entry_share.email for this email
-          await supabase.from('expense_entry_share').update({'email': email}).eq('email', guestEmail);
+        // 2) Update expense_entry_share.email for this email
+        await supabase
+            .from('expense_entry_share')
+            .update({'email': email})
+            .eq('email', guestEmail);
 
-          // 3) Remove guest membership from this group
-          await supabase.from('group_member').delete().eq('group_id', widget.groupId).eq('email', guestEmail);
+        // 3) Remove guest membership from this group
+        await supabase
+            .from('group_member')
+            .delete()
+            .eq('group_id', widget.groupId)
+            .eq('email', guestEmail);
 
-          // 4) Remove guest member from user
-          await supabase.from('user').delete().eq('email', guestEmail);
-        }
+        // 4) Remove guest member from user
+        await supabase.from('user').delete().eq('email', guestEmail);
       }
 
       // Update calculated shares after changes
-      await supabase.rpc('update_group_member_shares', params: {"_group_id": widget.groupId, "_expense_id": null});
+      await supabase.rpc(
+        'update_group_member_shares',
+        params: {"_group_id": widget.groupId, "_expense_id": null},
+      );
 
       // Navigate to group details
       final g = await GroupRepository.fetchDetail(widget.groupId);
@@ -150,77 +187,105 @@ class _GroupJoinPageState extends State<GroupJoinPage> {
                   padding: const EdgeInsets.all(16.0),
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(Icons.group, size: 64, color: Theme.of(context).colorScheme.primary),
-              const SizedBox(height: 12),
-              Text(widget.groupName ?? 'Group', style: Theme.of(context).textTheme.headlineSmall),
-              const SizedBox(height: 8),
-              Text(t.groupInviteJoinSubtitle, textAlign: TextAlign.center),
-              const SizedBox(height: 20),
-
-              // Guest selection section
-              Align(
-                alignment: Alignment.centerLeft,
-                child: Text(t.groupInviteGuestSelectTitle, style: Theme.of(context).textTheme.titleMedium),
-              ),
-              const SizedBox(height: 8),
-              Text(t.groupInviteGuestSelectSubtitle, textAlign: TextAlign.left),
-              const SizedBox(height: 12),
-              if (_loading)
-                const Padding(
-                  padding: EdgeInsets.all(8.0),
-                  child: CircularProgressIndicator(),
-                )
-              else
-                RadioGroup<String?>(
-                  groupValue: _selectedGuestEmail,
-                  onChanged: (String? value) {
-                    setState(() {
-                      _selectedGuestEmail = value;
-                    });
-                  },
-                  child: Column(
                     children: [
-                      RadioListTile<String?>(
-                        title: Text(t.groupInviteJoinAsNew),
-                        value: null,
+                      Icon(
+                        Icons.group,
+                        size: 64,
+                        color: Theme.of(context).colorScheme.primary,
                       ),
-                      if (_guestMembers.isEmpty)
-                        Align(
-                            alignment: Alignment.centerLeft,
-                            child: Text(t.groupInviteNoGuestsFound, style: Theme.of(context).textTheme.bodySmall))
+                      const SizedBox(height: 12),
+                      Text(
+                        widget.groupName ?? 'Group',
+                        style: Theme.of(context).textTheme.headlineSmall,
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        t.groupInviteJoinSubtitle,
+                        textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: 20),
+
+                      // Guest selection section
+                      Align(
+                        alignment: Alignment.centerLeft,
+                        child: Text(
+                          t.groupInviteGuestSelectTitle,
+                          style: Theme.of(context).textTheme.titleMedium,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        t.groupInviteGuestSelectSubtitle,
+                        textAlign: TextAlign.left,
+                      ),
+                      const SizedBox(height: 12),
+                      if (_loading)
+                        const Padding(
+                          padding: EdgeInsets.all(8.0),
+                          child: CircularProgressIndicator(),
+                        )
                       else
-                        ConstrainedBox(
-                          constraints: const BoxConstraints(maxHeight: 220),
-                          child: ListView.builder(
-                            shrinkWrap: true,
-                            itemCount: _guestMembers.length,
-                            itemBuilder: (context, index) {
-                              final gm = _guestMembers[index];
-                              return RadioListTile<String>(
-                                title: Text(gm['display_name'] ?? gm['email']),
-                                subtitle: Text(
-                                  (gm['is_guest'] ?? false)
-                                      ? AppLocalizations.of(context)!.groupMemberIsGuest
-                                      : fullUsernameFromJson(gm),
+                        RadioGroup<String?>(
+                          groupValue: _selectedGuestEmail,
+                          onChanged: (String? value) {
+                            setState(() {
+                              _selectedGuestEmail = value;
+                            });
+                          },
+                          child: Column(
+                            children: [
+                              RadioListTile<String?>(
+                                title: Text(t.groupInviteJoinAsNew),
+                                value: null,
+                              ),
+                              if (_guestMembers.isEmpty)
+                                Align(
+                                  alignment: Alignment.centerLeft,
+                                  child: Text(
+                                    t.groupInviteNoGuestsFound,
+                                    style: Theme.of(
+                                      context,
+                                    ).textTheme.bodySmall,
+                                  ),
+                                )
+                              else
+                                ConstrainedBox(
+                                  constraints: const BoxConstraints(
+                                    maxHeight: 220,
+                                  ),
+                                  child: ListView.builder(
+                                    shrinkWrap: true,
+                                    itemCount: _guestMembers.length,
+                                    itemBuilder: (context, index) {
+                                      final gm = _guestMembers[index];
+                                      return RadioListTile<String>(
+                                        title: Text(
+                                          gm['display_name'] ?? gm['email'],
+                                        ),
+                                        subtitle: Text(
+                                          (gm['is_guest'] ?? false)
+                                              ? AppLocalizations.of(
+                                                  context,
+                                                )!.groupMemberIsGuest
+                                              : fullUsernameFromJson(gm),
+                                        ),
+                                        value: gm['email'],
+                                      );
+                                    },
+                                  ),
                                 ),
-                                value: gm['email'],
-                              );
-                            },
+                            ],
                           ),
                         ),
+                      const SizedBox(height: 20),
+                      PrimaryButton(
+                        fullWidth: false,
+                        loading: _joining,
+                        icon: Icons.login,
+                        onPressed: _joining ? null : _joinGroup,
+                        label: t.groupInviteTransferButton,
+                      ),
                     ],
-                  ),
-                ),
-              const SizedBox(height: 20),
-              PrimaryButton(
-                fullWidth: false,
-                loading: _joining,
-                icon: Icons.login,
-                onPressed: _joining ? null : _joinGroup,
-                label: t.groupInviteTransferButton,
-              ),
-            ],
                   ),
                 ),
               ),
