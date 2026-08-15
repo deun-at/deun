@@ -9,7 +9,7 @@
 
 | Flight | Feature | Title | Status | Plan | Updated |
 |--------|---------|-------|--------|------|---------|
-| — | group-form-field-structure | Group edit form: fields in a Column, not a lazy ListView | done | [plan](plans/archived/group-form-field-structure.md) | 2026-08-15 — commit `PENDING` — files: lib/pages/groups/presentation/group_detail_edit.dart, test/widgets/group_edit_screen_test.dart |
+| — | group-form-field-structure | Group edit form: fields in a Column, not a lazy ListView | done | [plan](plans/archived/group-form-field-structure.md) | 2026-08-15 — commit `c9ed967` — files: lib/pages/groups/presentation/group_detail_edit.dart, test/widgets/group_edit_screen_test.dart |
 | — | group-member-removal | Removing a group member: defined semantics instead of a silent wipe | planned | [plan](plans/group-member-removal.md) | 2026-08-15 |
 | — | expense-delete-settled-guard | Warn before deleting an expense that a payback already touched | planned | [plan](plans/expense-delete-settled-guard.md) | 2026-08-15 |
 | — | payback-on-behalf | Record a payback that someone else made | planned | [plan](plans/payback-on-behalf.md) | 2026-08-15 |
