@@ -1,8 +1,18 @@
 # multi-currency — Design brief (by surface)
 
+> **⚠️ SUPERSEDED 2026-08-15 — do not design against the product model below.**
+> The 2026-08-11 replan reverses it on competitor and user-sentiment research. Two rules here are
+> now wrong: (1) "the app **never** converts ledger values" — expenses will be enterable in another
+> currency with a manual, frozen rate, see
+> [multi-currency-expense-rate](multi-currency-expense-rate.md); (2) the cross-group **home
+> currency** and its "≈ approximate" treatment are cut entirely and replaced by a per-currency
+> breakdown, see [multi-currency-group](multi-currency-group.md). Surfaces 1, 2 and 4 below are
+> still broadly useful as a description of what shipped; surfaces 3, 5, 6 and 7 and the whole
+> "Cross-cutting design decisions" section describe a model the app is moving away from.
+
 Handoff doc for visual design against the running app mockup. Engineering specs live in two
-phase-ordered plans ([foundation](multi-currency-foundation.md) →
-[home-aggregates](multi-currency-home-aggregates.md)); this file re-pivots them by **screen/surface**
+phase-ordered plans ([foundation](archived/multi-currency-foundation.md) →
+[home-aggregates](archived/multi-currency-home-aggregates.md)); this file re-pivots them by **screen/surface**
 so each surface is designed once. Apply changes to the existing screens — don't rebuild.
 
 **Product model (the one rule everything follows):** a group has exactly one currency, and every

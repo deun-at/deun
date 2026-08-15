@@ -37,7 +37,11 @@
 - Keep the new parameter optional with a caller default so `payBackAll` and the settle-up sheet need no signature churn, and so a client that hasn't been updated keeps working against the new function.
 - The client currently calls `pay_back` and then `update_group_member_shares` separately, with a one-shot retry to paper over partial state. Do not extend that pattern — if the new work needs more statements, prefer moving them inside the RPC where they are already transactional.
 - Likely touchpoints: supabase/migrations/ (new migration), lib/pages/groups/data/group_repository.dart (`payBack`, `payBackAll`, notification), lib/pages/groups/presentation/group_detail_payment.dart (payer selection), lib/pages/groups/presentation/payment_view_model.dart (partitioning is per-current-user today), lib/pages/groups/presentation/group_ledger.dart (attribution), lib/l10n/app_en.arb + app_de.arb.
-- Depends: —
+- Depends: settle-residue
 - Parallel-with: group-member-removal
+
+`Depends: settle-residue` because both features change the `pay_back` RPC, whose definition is not in
+this repo. Correcting the settlement amount and extending the signature in two concurrent passes over
+a function we have to recover from the live instance first is how one of them gets silently reverted.
 
 status: planned
