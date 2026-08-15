@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 
 /// Custom app-header widget that replaces Material [AppBar] on sub-screens.
@@ -5,8 +7,9 @@ import 'package:flutter/material.dart';
 /// Renders a header with:
 ///   - A leading 38×38 icon button (or spacer when [showLeading] is false)
 ///   - A title (+ optional subtitle) **optically centered across the full
-///     header width** using a [Stack], so centering is robust regardless of
-///     how wide the trailing slot is.
+///     header width**, whatever the trailing slot's measured width — unless
+///     centering would starve it, in which case it takes the whole band
+///     between the slots (see `_titlePadding`).
 ///   - A trailing slot: either a single [trailing] widget (38×38) or a list
 ///     of [trailingActions] rendered as a compact [Row]. When neither is
 ///     provided, a 38×38 spacer preserves optical centering.
@@ -87,6 +90,10 @@ class DeunHeader extends StatelessWidget {
       color: colorScheme.onSurfaceVariant,
     );
 
+    // The leading slot is DeunHeader's own widget, so its width is exact rather
+    // than assumed: a HeaderIconButton is a 48dp hit target, the spacer is 38dp.
+    final double leadingSlotWidth = showLeading ? 48 : 38;
+
     Widget leadingSlot;
     if (showLeading) {
       leadingSlot = HeaderIconButton(
@@ -111,22 +118,6 @@ class DeunHeader extends StatelessWidget {
       trailingSlot = const SizedBox(width: 38, height: 38);
     }
 
-    // Reserve symmetric side space equal to the widest slot so a long, centered
-    // title truncates before it can paint under the leading or trailing actions.
-    // The Stack keeps the title centered across the FULL header width; a fixed
-    // 46px inset only cleared ONE 48px action, so a multi-action trailing Row
-    // (e.g. search + edit on group detail) sat under the title. Each action
-    // occupies a 48dp hit target, so reserve that per trailing action.
-    final int trailingActionCount =
-        (trailingActions != null && trailingActions!.isNotEmpty)
-        ? trailingActions!.length
-        : 1;
-    const double actionSlotWidth = 48;
-    final double titleSideInset = trailingActionCount * actionSlotWidth;
-
-    // The title block is centered across the FULL header width using a Stack.
-    // Leading and trailing are pinned to left/right; the title sits in the
-    // center layer and spans the full width with overflow ellipsis.
     final subtitleWidget = subtitle != null
         ? (subtitleLeading != null
               ? Row(
@@ -165,27 +156,89 @@ class DeunHeader extends StatelessWidget {
       ],
     );
 
+    // Leading | title | trailing, with the title laid out in what the two slots
+    // leave. The trailing slot is whatever the caller passed, so its width is
+    // MEASURED (outer width minus the leading slot minus the band the Row hands
+    // the title) rather than guessed at a fixed number of dp per action.
     return SafeArea(
       bottom: false,
       child: Padding(
         padding: const EdgeInsets.fromLTRB(14, 4, 14, 8),
-        child: Stack(
-          alignment: Alignment.center,
-          children: [
-            // Title centred across the full row width.
-            Padding(
-              padding: EdgeInsets.symmetric(horizontal: titleSideInset),
-              child: titleBlock,
-            ),
-            // Leading pinned to the left.
-            Align(alignment: Alignment.centerLeft, child: leadingSlot),
-            // Trailing pinned to the right.
-            Align(alignment: Alignment.centerRight, child: trailingSlot),
-          ],
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final double headerWidth = constraints.maxWidth;
+            return Row(
+              children: [
+                leadingSlot,
+                Expanded(
+                  child: LayoutBuilder(
+                    builder: (context, bandConstraints) {
+                      final double bandWidth = bandConstraints.maxWidth;
+                      final double trailingWidth = math.max(
+                        0,
+                        headerWidth - bandWidth - leadingSlotWidth,
+                      );
+                      return Padding(
+                        padding: _titlePadding(
+                          headerWidth: headerWidth,
+                          leadingWidth: leadingSlotWidth,
+                          trailingWidth: trailingWidth,
+                        ),
+                        // heightFactor: the header sits in an unbounded-height
+                        // Column, so the title layer shrink-wraps its child
+                        // instead of trying to fill infinity.
+                        child: Align(
+                          alignment: Alignment.center,
+                          heightFactor: 1,
+                          child: titleBlock,
+                        ),
+                      );
+                    },
+                  ),
+                ),
+                trailingSlot,
+              ],
+            );
+          },
         ),
       ),
     );
   }
+
+  /// Padding that keeps the title **optically centered across the full header
+  /// width** — the band between the slots is off-center whenever they differ, so
+  /// the wider side's excess is added back on the narrower side.
+  ///
+  /// Centering costs the title twice the widest slot: three trailing actions
+  /// reserve 3×48dp per side, which leaves ~44dp of title on a 360dp phone. When
+  /// centering starves the title like that, it takes the whole band between the
+  /// slots instead. It still cannot paint under either slot — it is simply no
+  /// longer centered on a row that has no room to center it.
+  static EdgeInsets _titlePadding({
+    required double headerWidth,
+    required double leadingWidth,
+    required double trailingWidth,
+  }) {
+    final double widestSlot = math.max(leadingWidth, trailingWidth);
+    final double centeredTitleWidth = headerWidth - 2 * widestSlot;
+    if (centeredTitleWidth < _minCenteredTitleWidth) {
+      return EdgeInsets.zero;
+    }
+    return EdgeInsets.only(
+      left: math.max(0, trailingWidth - leadingWidth),
+      right: math.max(0, leadingWidth - trailingWidth),
+    );
+  }
+
+  /// Absolute floor (in logical pixels) a centered title must keep before
+  /// centering is given up (see [_titlePadding]). This is the same 120dp
+  /// readability bar the regression tests assert directly, rather than a
+  /// fraction of header width: a proportional test (e.g. 50% of header width)
+  /// would also punish ordinary 2-action headers (edit + delete) on narrow
+  /// phones even though their centered title comfortably clears 120dp there —
+  /// only genuinely cramped layouts (e.g. 3 trailing actions on a 360dp phone,
+  /// leaving ~44dp) should give up centering.
+  static const double _minCenteredTitleWidth = 120;
 }
 
 /// The standard 38×38 circular header-action button (COMPONENTS.md §1 "Icon

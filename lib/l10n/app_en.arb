@@ -1790,5 +1790,9 @@
   "groupMemberReAdd": "Add back",
   "@groupMemberReAdd": {
     "description": "Action that returns a removed member to the group."
+  },
+  "groupAddMembersAction": "Add members",
+  "@groupAddMembersAction": {
+    "description": "Group-detail header action that opens the surface where members are added."
   }
 }

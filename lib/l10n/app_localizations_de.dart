@@ -1910,4 +1910,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get groupMemberReAdd => 'Wieder hinzufügen';
+
+  @override
+  String get groupAddMembersAction => 'Mitglieder hinzufügen';
 }

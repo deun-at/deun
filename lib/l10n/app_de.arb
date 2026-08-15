@@ -545,5 +545,6 @@
   "groupMemberRemoveSuccess": "{name} wurde aus der Gruppe entfernt.",
   "groupMemberRemoveError": "{name} konnte nicht entfernt werden. Bitte versuche es erneut.",
   "groupMemberRemovedSectionTitle": "Entfernt",
-  "groupMemberReAdd": "Wieder hinzufügen"
+  "groupMemberReAdd": "Wieder hinzufügen",
+  "groupAddMembersAction": "Mitglieder hinzufügen"
 }

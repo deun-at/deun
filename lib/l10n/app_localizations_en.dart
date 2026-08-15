@@ -1879,4 +1879,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get groupMemberReAdd => 'Add back';
+
+  @override
+  String get groupAddMembersAction => 'Add members';
 }

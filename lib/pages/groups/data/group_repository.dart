@@ -90,21 +90,115 @@ class GroupRepository {
     return group;
   }
 
+  /// Decodes the `group_members` form value. A missing or empty payload decodes
+  /// to NO members.
+  ///
+  /// group-create-simplify: this used to inject
+  /// `{'email': <current user>, 'display_name': ''}` whenever the list came out
+  /// empty — that is how a placeholder member row with an empty display name
+  /// reached the database on create. The creator is now added explicitly, and
+  /// only on the create path, by [resolveSaveMembers].
   static List<Map<String, dynamic>> decodeGroupMembersString(
     String? jsonValue,
   ) {
-    var selectedGroupMembers = List<Map<String, dynamic>>.from(
-      jsonDecode(jsonValue ?? "[]"),
-    );
+    return List<Map<String, dynamic>>.from(jsonDecode(jsonValue ?? "[]"));
+  }
 
-    if (selectedGroupMembers.isEmpty) {
-      selectedGroupMembers.add({
-        'email': supabase.auth.currentUser?.email ?? '',
-        'display_name': '',
-      });
+  /// The `group_member` rows a group save submits, decided before anything is
+  /// written.
+  ///
+  /// * **create** ([isCreate]) — exactly ONE row: the creator, carrying nothing
+  ///   but their email. The create form has no member field any more, so
+  ///   [membersJson] is deliberately not read here; members are added afterwards
+  ///   on the group's own surface. `group_member` stores no display name, so
+  ///   there is none to invent — and no placeholder to write.
+  /// * **edit** — exactly the roster the form carries, unchanged.
+  ///
+  /// A client with no signed-in user ([currentUserEmail] null or empty) yields
+  /// NO rows rather than a row with an empty email.
+  ///
+  /// Pure: no Supabase, no context — the caller passes the current user in.
+  static List<Map<String, dynamic>> resolveSaveMembers({
+    required bool isCreate,
+    required String? membersJson,
+    required String? currentUserEmail,
+  }) {
+    if (!isCreate) return decodeGroupMembersString(membersJson);
+
+    final email = currentUserEmail ?? '';
+    if (email.isEmpty) return <Map<String, dynamic>>[];
+    return [
+      {'email': email},
+    ];
+  }
+
+  /// The `group_member` writes a save performs, decided before anything is
+  /// written: submitted members the group does not have an **active** row for
+  /// are inserted; the rest are re-adds (rows that exist already, possibly
+  /// soft-removed). Rows with no email are never written.
+  ///
+  /// This is the union/dedup against the group's current roster — the same rule
+  /// the `save_group_all` RPC applies server-side — expressed once so the legacy
+  /// write path and the tests share it instead of restating it.
+  ///
+  /// Pure: no Supabase. The caller passes the group's current [existingEmails].
+  static GroupMemberWrite resolveMemberWrite({
+    required String groupId,
+    required List<Map<String, dynamic>> members,
+    required Set<String> existingEmails,
+  }) {
+    final inserts = <Map<String, dynamic>>[];
+    final reAddEmails = <String>[];
+    for (final member in members) {
+      final email = (member['email'] as String?) ?? '';
+      if (email.isEmpty) continue;
+      if (existingEmails.contains(email)) {
+        reAddEmails.add(email);
+      } else {
+        inserts.add({'group_id': groupId, 'email': email});
+      }
     }
+    return GroupMemberWrite(inserts: inserts, reAddEmails: reAddEmails);
+  }
 
-    return selectedGroupMembers;
+  /// Who a group save pushes a "you were added to a group" notification to:
+  /// submitted members who are real users (guests have no device) and who were
+  /// not already in the group.
+  ///
+  /// group-create-simplify: members join through the **edit** save now, so this
+  /// diff is what makes the push reach them. A create submits nothing but the
+  /// creator, whom [sendNotification] strips from every receiver set — which is
+  /// why the create path no longer raises one at all.
+  ///
+  /// Pure: no Supabase. The caller passes the group's current [existingEmails].
+  static Set<String> resolveNotificationReceivers({
+    required List<Map<String, dynamic>> members,
+    required Set<String> existingEmails,
+  }) {
+    final receivers = <String>{};
+    for (final member in members) {
+      final email = (member['email'] as String?) ?? '';
+      if (email.isEmpty) continue;
+      if ((member['is_guest'] ?? false) == true) continue;
+      if ((member['is_guest_pending'] ?? false) == true) continue;
+      if (existingEmails.contains(email)) continue;
+      receivers.add(email);
+    }
+    return receivers;
+  }
+
+  /// Emails of the group's **active** members (soft-removed rows are not
+  /// active: re-adding one is a join, so it both inserts nothing and notifies).
+  static Future<Set<String>> _activeMemberEmails(String groupId) async {
+    final rows = await supabase
+        .from('group_member')
+        .select('email, removed_at')
+        .eq('group_id', groupId);
+    return rows
+        .where((row) => row['removed_at'] == null)
+        .map((row) => (row['email'] as String?) ?? '')
+        .where((email) => email.isNotEmpty)
+        .toSet();
   }
 
   /// Saves a group with members and share recalculation atomically via the
@@ -130,17 +224,23 @@ class GroupRepository {
         upsertVals.addAll({'id': groupId});
       }
 
-      List<Map<String, dynamic>> groupMembers = decodeGroupMembersString(
-        formValue['group_members'],
+      final List<Map<String, dynamic>> groupMembers = resolveSaveMembers(
+        isCreate: groupId == null,
+        membersJson: formValue['group_members'] as String?,
+        currentUserEmail: supabase.auth.currentUser?.email,
       );
 
-      Set<String> notificationReceiver = {};
-      for (var groupMember in groupMembers) {
-        if ((groupMember['is_guest'] ?? false) == false &&
-            (groupMember['is_guest_pending'] ?? false) == false) {
-          notificationReceiver.add(groupMember['email']);
-        }
-      }
+      // group-create-simplify: a group gains members through the EDIT save now
+      // (create submits the creator alone), so the "you were added to a group"
+      // push is raised here, for the members this save actually adds. The old
+      // create-only call could never reach anybody: its receiver set was the
+      // creator, whom sendNotification strips.
+      final Set<String> notificationReceiver = groupId == null
+          ? const <String>{}
+          : resolveNotificationReceivers(
+              members: groupMembers,
+              existingEmails: await _activeMemberEmails(groupId),
+            );
 
       String savedGroupId;
       try {
@@ -155,7 +255,7 @@ class GroupRepository {
         savedGroupId = await _saveAllLegacy(upsertVals, groupMembers);
       }
 
-      if (groupId == null && context.mounted) {
+      if (notificationReceiver.isNotEmpty && context.mounted) {
         sendGroupNotification(context, savedGroupId, notificationReceiver);
       }
 
@@ -215,17 +315,13 @@ class GroupRepository {
         .map((row) => (row['email'] as String?) ?? '')
         .toSet();
 
-    final newRows = <Map<String, dynamic>>[];
-    final reAddEmails = <String>[];
-    for (final groupMember in members) {
-      final email = (groupMember['email'] as String?) ?? '';
-      if (email.isEmpty) continue;
-      if (existingEmails.contains(email)) {
-        reAddEmails.add(email);
-      } else {
-        newRows.add({'group_id': savedGroupId, 'email': email});
-      }
-    }
+    final write = resolveMemberWrite(
+      groupId: savedGroupId,
+      members: members,
+      existingEmails: existingEmails,
+    );
+    final newRows = write.inserts;
+    final reAddEmails = write.reAddEmails;
 
     if (reAddEmails.isNotEmpty) {
       // One round trip for every re-add instead of one per member: almost all
@@ -441,4 +537,19 @@ class GroupRepository {
         .delete()
         .eq('group_id', groupId);
   }
+}
+
+/// The `group_member` writes one group save performs, as resolved by
+/// [GroupRepository.resolveMemberWrite]. A save never deletes: membership
+/// shrinks only through [GroupRepository.removeMember].
+class GroupMemberWrite {
+  const GroupMemberWrite({required this.inserts, required this.reAddEmails});
+
+  /// Rows to insert, each `{'group_id': ..., 'email': ...}` — members the group
+  /// has no row for at all.
+  final List<Map<String, dynamic>> inserts;
+
+  /// Emails that already have a row; the write only clears a `removed_at` on
+  /// the soft-removed ones and leaves the rest untouched.
+  final List<String> reAddEmails;
 }
