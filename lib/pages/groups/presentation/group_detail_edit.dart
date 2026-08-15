@@ -99,44 +99,60 @@ class _GroupEditState extends ConsumerState<GroupEdit> {
                   child: Column(
                     children: [
                       Expanded(
-                        child: FormBuilder(
-                          key: _formKey,
-                          // MUST stay false: fields live in a scrolling ListView,
-                          // so a field scrolled off-screen unregisters. With this
-                          // true, scrolling to the currency picker at the bottom
-                          // disposed the name field at the top and wiped its value,
-                          // saving name=null and corrupting the group. Retaining
-                          // values on unregister is the correct behaviour here.
-                          clearValueOnUnregister: false,
-                          initialValue: widget.group?.toJson() ?? {},
-                          child: ListView(
-                            padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
-                            children: <Widget>[
-                              _NameAndColorCard(formKey: _formKey),
-                              const SizedBox(height: 24),
-                              // Members section header + roster live inside
-                              // GroupMemberSearch (F71): the header carries the
-                              // "Add guest" link that opens the search view.
-                              FormBuilderField(
-                                name: "group_members",
-                                builder: (FormFieldState<dynamic> field) {
-                                  return GroupMemberSearch(field: field);
-                                },
+                        // ONE outer scroller wraps the WHOLE form (mirrors
+                        // expense_detail.dart). Every FormBuilder-owned field
+                        // lives in the Column below, so no field is a direct
+                        // child of a lazily-built sliver and none can be
+                        // unmounted — and therefore unregistered — by scrolling.
+                        child: ListView(
+                          padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
+                          children: [
+                            FormBuilder(
+                              key: _formKey,
+                              // Safe at true now that the fields sit in a Column:
+                              // they are never unmounted by scrolling, so this
+                              // only clears genuinely-removed conditional fields
+                              // (the correct behaviour, and what the expense form
+                              // and the settings forms already use).
+                              clearValueOnUnregister: true,
+                              initialValue: widget.group?.toJson() ?? {},
+                              child: Column(
+                                // A ListView child gets unbounded height.
+                                mainAxisSize: MainAxisSize.min,
+                                // stretch reproduces the tight full-width
+                                // constraint these widgets got as direct ListView
+                                // children — the swatch Row (spaceBetween), the
+                                // side-by-side mode cards and every SoftCard
+                                // depend on it.
+                                crossAxisAlignment: CrossAxisAlignment.stretch,
+                                children: <Widget>[
+                                  _NameAndColorCard(formKey: _formKey),
+                                  const SizedBox(height: 24),
+                                  // Members section header + roster live inside
+                                  // GroupMemberSearch (F71): the header carries the
+                                  // "Add guest" link that opens the search view.
+                                  FormBuilderField(
+                                    name: "group_members",
+                                    builder: (FormFieldState<dynamic> field) {
+                                      return GroupMemberSearch(field: field);
+                                    },
+                                  ),
+                                  const SizedBox(height: 24),
+                                  SectionLabel(l10n.groupTrackingModeTitle),
+                                  const SizedBox(height: 8),
+                                  _TrackingModeField(group: widget.group),
+                                  const SizedBox(height: 24),
+                                  SectionLabel(l10n.groupCurrencyLabel),
+                                  const SizedBox(height: 8),
+                                  _CurrencyField(group: widget.group),
+                                  if (_isEdit) ...[
+                                    const SizedBox(height: 24),
+                                    _buildGroupActions(context),
+                                  ],
+                                ],
                               ),
-                              const SizedBox(height: 24),
-                              SectionLabel(l10n.groupTrackingModeTitle),
-                              const SizedBox(height: 8),
-                              _TrackingModeField(group: widget.group),
-                              const SizedBox(height: 24),
-                              SectionLabel(l10n.groupCurrencyLabel),
-                              const SizedBox(height: 8),
-                              _CurrencyField(group: widget.group),
-                              if (_isEdit) ...[
-                                const SizedBox(height: 24),
-                                _buildGroupActions(context),
-                              ],
-                            ],
-                          ),
+                            ),
+                          ],
                         ),
                       ),
                       _StickyFooter(
@@ -481,7 +497,7 @@ class _TrackingModeField extends StatelessWidget {
       builder: (FormFieldState<bool> field) {
         final simplified = field.value ?? true;
         // IntrinsicHeight so both cards match the taller one; stretch alone
-        // would force unbounded height inside the ListView.
+        // would force unbounded height inside the Column.
         return IntrinsicHeight(
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.stretch,
