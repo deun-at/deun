@@ -14,26 +14,9 @@ import 'package:deun/widgets/theme_builder.dart';
 import 'package:flutter/material.dart';
 import 'package:deun/l10n/app_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 
 import '../../expenses/data/expense_model.dart';
 import '../../expenses/provider/expense_list.dart';
-
-/// Opens an expense the same way the ledger does: expenses with per-unit claim
-/// items go to Tap-to-Claim (Screen 9); everything else — quick expenses AND
-/// old itemized expenses with manual splits (no claim units) — goes to the read
-/// detail (Screen 11), which shows the real per-member breakdown. Routing on
-/// claim units (not entry count) keeps old itemized expenses off the claim
-/// screen, where they'd read as €0.00 / "no claimable items". Shared so the
-/// expense search routes identically to a ledger tap.
-void openLedgerExpense(BuildContext context, Group group, Expense expense) {
-  GoRouter.of(context).push(
-    expense.hasClaimUnits
-        ? "/group/details/claim"
-        : "/group/details/expense-detail",
-    extra: {'group': group, 'expense': expense},
-  );
-}
 
 class GroupDetailList extends ConsumerStatefulWidget {
   const GroupDetailList({super.key, required this.group, this.adBlock});
