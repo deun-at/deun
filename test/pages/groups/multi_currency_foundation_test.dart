@@ -50,6 +50,15 @@ void main() {
       expect(g.currencyCode, 'EUR');
     });
 
+    test('a row with a null name loads (empty name) instead of throwing', () {
+      // Regression: a partially-written row (name=null) must not throw in
+      // loadDataFromJson — one bad row would otherwise fail the whole list.
+      final json = _groupJson()..['name'] = null;
+      final g = Group();
+      expect(() => g.loadDataFromJson(json), returnsNormally);
+      expect(g.name, '');
+    });
+
     test('a group reads its persisted currency_code', () {
       final g = Group()..loadDataFromJson(_groupJson(currencyCode: 'USD'));
       expect(g.currencyCode, 'USD');

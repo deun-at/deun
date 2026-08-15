@@ -1,6 +1,5 @@
 import 'dart:io';
 
-import 'package:deun/widgets/empty_list_widget.dart';
 import 'package:deun/widgets/restyle/member_avatar.dart';
 import 'package:deun/widgets/restyle/money_text.dart';
 import 'package:deun/widgets/restyle/primary_button.dart';
@@ -117,14 +116,24 @@ class _GroupListState extends ConsumerState<GroupList> {
                 : _buildList(value),
           AsyncError() => RefreshIndicator(
             onRefresh: updateGroupList,
+            // Single scroll view: greeting + error laid out inline. Do NOT wrap
+            // EmptyListWidget (it has its own inner ListView) in another ListView
+            // here — nesting two vertical viewports gives unbounded height and
+            // crashes layout. Same rule as the empty-state branch above.
             child: ListView(
               children: [
                 _GreetingHeader(),
-                const SizedBox(height: 8),
-                EmptyListWidget(
-                  icon: Icons.group_outlined,
-                  label: l10n.groupEntriesError,
-                  onRefresh: updateGroupList,
+                const SizedBox(height: 100),
+                Icon(
+                  Icons.group_outlined,
+                  size: 48,
+                  color: Theme.of(context).colorScheme.outline,
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  l10n.groupEntriesError,
+                  style: Theme.of(context).textTheme.headlineMedium,
+                  textAlign: TextAlign.center,
                 ),
               ],
             ),
