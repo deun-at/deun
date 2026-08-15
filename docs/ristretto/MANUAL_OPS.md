@@ -20,8 +20,13 @@ A feature that needs a database change **must still run through green**. It does
    **`[deferred]`** in its plan, so the difference between "tested" and "assumed" stays visible.
 4. Appending an entry below saying exactly what to run and how to confirm it worked.
 
-A feature is **code-complete** when the gates pass. It is **done** when its entry here is ticked.
-Do not mark a roadmap row done on the strength of green gates alone when it has an open entry here.
+A feature is **done** when its gates pass. An open entry here does **not** hold its roadmap row open,
+and `code-complete` is no longer a status — it stalled every dependent feature behind hand-applied
+work and cost a full brew run on 2026-08-15. Mark the row `done`, add a `⚠ migration pending` marker
+to it, and leave the entry here open until the migration is actually applied.
+
+This file, not the roadmap, is the authority on what has been applied and verified. A `done` row can
+carry `[deferred]` criteria that nobody has ever observed. Check here before shipping.
 
 ## Pending
 

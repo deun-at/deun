@@ -4,8 +4,18 @@
 > unreachable from the build, so features write their migrations and defer application to
 > [MANUAL_OPS.md](MANUAL_OPS.md). Gates (`dart format`, `flutter analyze`, `flutter test`) touch no
 > database, so a DB-coupled feature still runs through green — but a criterion marked `[deferred]`
-> in its plan is **assumed, not tested**. Do not mark a row `done` while it has an open entry in
-> MANUAL_OPS.
+> in its plan is **assumed, not tested**.
+>
+> **A row goes `done` when its gates pass.** A pending migration does **not** hold it open, and
+> `code-complete` is no longer a status — it stalled every dependent feature behind work that only
+> Jakob can do by hand, which cost a whole brew run on 2026-08-15. The unapplied-migration fact is
+> still recorded, in the two places where it does its job: an open entry in
+> [MANUAL_OPS.md](MANUAL_OPS.md), and a `⚠ migration pending` marker on the row here. What changed is
+> that it no longer gates automation.
+>
+> The trade this makes, explicitly: `done` now means "built and green", not "verified end to end". A
+> row can be `done` while its `[deferred]` criteria have never been observed. MANUAL_OPS is the only
+> authority on what has actually been applied and checked — read it before shipping, not the roadmap.
 
 | Flight | Feature | Title | Status | Plan | Updated |
 |--------|---------|-------|--------|------|---------|
