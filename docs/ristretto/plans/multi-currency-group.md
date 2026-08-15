@@ -39,23 +39,61 @@ already-shipped cross-group "home currency" conversion is **retired here** for t
 
 ## Contract
 - Acceptance:
-  - Cross-group totals never sum or convert unlike currencies. When a user's groups span more than one
-    currency, the overall balance hero, the friend balances and the personal statistics figures each
-    show a per-currency breakdown; when all groups share one currency the display is unchanged from
-    today.
+  - Cross-group totals never sum or convert unlike currencies. No displayed figure is ever the sum of
+    amounts in two different currencies.
+  - When all of a user's groups share one currency, all three surfaces (overall balance hero, friend
+    balances, personal statistics) render exactly as they do today — same layout, same line count, no
+    expand affordance shown. This is the only case that exists in production right now and it must not
+    regress.
+  - When groups span more than one currency, each of the three surfaces shows the **primary currency
+    inline** and collapses the remainder behind a disclosure labelled with the count of hidden
+    currencies. The primary currency is the one with the largest absolute balance on that surface;
+    ties break by ISO code ascending so the choice is deterministic and testable.
+  - Expanding the disclosure reveals one row per remaining currency, each an exact ledger value in its
+    own currency with that currency's decimal digits. Collapsing restores the inline state. The
+    expanded/collapsed state is local to the surface and is not persisted across app launches.
+  - A user with exactly two currencies sees the primary inline and a disclosure naming one hidden
+    currency — the disclosure is never shown with a count of zero.
+  - The personal statistics trend chart plots exactly one currency at a time, never a mixed series.
+    It defaults to the primary currency, its axis is labelled with that currency, and selecting a
+    different currency from the disclosure re-plots the chart in that currency. A single-currency user
+    sees no selector.
+  - Each month bucket in the trend chart is the sum of that month's expenses **in the plotted currency
+    only**; groups in other currencies contribute nothing to it rather than being converted or
+    silently folded in.
+  - `approximate` and `excludedCount` are gone from the personal statistics state, along with the "≈"
+    marker and the "N groups excluded, no rate available" copy — with no conversion there is no
+    estimate and nothing is ever excluded for want of a rate.
+  - A friend list row shows the primary-currency balance plus a non-interactive marker of how many
+    other currencies that friendship spans. The row has no expand target of its own — its whole area
+    still opens the detail sheet, and the sheet carries the expandable breakdown. A single-currency
+    friendship shows no marker.
+  - A friendship's owes-you/you-owe direction and its semantic colour follow the **primary currency**.
+    When a friend owes the user in one currency while the user owes them in another, each currency's
+    row in the sheet carries its own direction and colour independently, and no direction is inferred
+    from a sum across currencies.
+  - Settling a friend across groups in different currencies settles each group in that group's own
+    currency, and the confirmation names the per-currency amounts rather than one merged figure.
   - The home-currency surface is gone: `currency_conversion.dart`, `exchange_rate_service.dart`,
     `homeCurrencyProvider`, the settings home-currency row and the `settingsHomeCurrency` /
     `settingsHomeCurrencyInfo` strings in both ARB files no longer exist, and no code path fetches an
     exchange rate. Grepping `lib/` for `homeCurrency` returns no matches.
+  - The `http: ^1.2.0` dependency is removed from `pubspec.yaml`. `exchange_rate_service.dart` is its
+    only importer in `lib/`, verified at prep time, so nothing else breaks — and after this the app
+    genuinely has no HTTP client, which is the premise
+    [multi-currency-rate-source](multi-currency-rate-source.md) rests its Edge Function decision on.
+  - A user who had set a home currency, or who has a cached rates blob under
+    `kExchangeRatesCachePrefKey`, sees no error and no empty state. Both stored preferences are ignored
+    on read and never written again; leftover values are inert rather than migrated.
   - No "≈ approximate" marker survives anywhere, because no displayed number is an estimate any more.
     Every figure the app shows is an exact ledger value in a named currency.
-  - A user who had set a non-EUR home currency sees no error, no empty state and no lost data after
-    the removal — the stored preference is ignored or dropped cleanly on read.
   - A group list containing a EUR group and a JPY group shows each row in its own currency with
     correct decimal digits per row (¥3,000 next to €25.50).
   - The settled/active classification uses the group's own currency: a JPY group with a net balance of
-    0.4 is settled, one with 0.6 is active. This holds for the server-side active/done group filter as
-    well as the client-side lists, so the group tabs and the group rows agree.
+    0.4 is settled, one with 0.6 is active, and a EUR group at 0.004 is settled where one at 0.006 is
+    active. The PostgREST tab predicate returns a superset in both directions — `active` filtered on
+    the smallest supported epsilon, `done` on the largest — and `isSettled(amount, currency)` makes the
+    final call, so a group's tab placement and its row rendering can never disagree.
   - A group's currency may be changed only while every expense in it shares that currency; once any
     expense carries a different original currency the picker is disabled and states why. (Vacuously
     true until [multi-currency-expense-rate](multi-currency-expense-rate.md) lands — build the guard
@@ -69,13 +107,46 @@ already-shipped cross-group "home currency" conversion is **retired here** for t
 - Provides:
   - `Group.currency -> Currency`
   - `canChangeGroupCurrency(Group) -> bool`
-  - `balancesByCurrency(List<Group>) -> Map<Currency, OverallBalance>`
-- Consumes: `Currency`, `kSupportedCurrencies`, `roundCurrency`, `isSettled`, `CurrencyScope`,
-  `MoneyText` (from [multi-currency-core](multi-currency-core.md))
+  - `showCurrencyPicker(BuildContext, {Currency? initial}) -> Future<Currency?>` — the group-edit
+    currency field extracted from its current private `_CurrencyField` form binding so
+    [multi-currency-expense-rate](multi-currency-expense-rate.md) can reuse it for entry currency.
+    **Added at prep 2026-08-16:** that feature already listed this in its `Consumes:` while this plan
+    did not provide it — a mismatch that would have surfaced as a missing signature at pull time.
+  - `CurrencyAmount` — `.currency -> Currency`, `.amount -> double`
+  - `CurrencyBreakdown` — `.primary -> CurrencyAmount`, `.others -> List<CurrencyAmount>`,
+    `.hiddenCount -> int`, `.isSingleCurrency -> bool`. The one shape all three surfaces render, so
+    "primary inline, remainder collapsed" is decided once rather than three times.
+  - `balancesByCurrency(List<Group>) -> CurrencyBreakdown`
+  - `friendBalancesByCurrency(List<Friendship>) -> CurrencyBreakdown`
+- Consumes: `Currency`, `kSupportedCurrencies`, `roundCurrency`, `isSettled`, `formatMoney`,
+  `CurrencyScope`, `MoneyText` (from [multi-currency-core](multi-currency-core.md)) — checked at prep
+  2026-08-16 against that plan's `Provides:`; every name is present.
 - Decisions:
   - Cross-group totals get a per-currency breakdown rather than conversion to a personal home
     currency -> home currency has essentially no evidenced demand (4 votes); the breakdown is honest,
     free, and needs no rate source.
+  - The breakdown is **primary-inline plus a collapsed remainder**, not a stack of all currencies and
+    not a global currency filter (Jakob, prep 2026-08-16) -> keeps every surface one line tall in the
+    common case, so the single-currency layout that 100% of production is on today is untouched, and
+    no surface has to reflow for a case almost nobody is in. The cost — real money one tap away — is
+    accepted because the disclosure states how many currencies are hidden.
+  - Primary = largest absolute balance, ties by ISO code ascending -> "largest" is the figure the user
+    most needs to see, and the tiebreak exists so the choice is deterministic rather than dependent on
+    map iteration order, which is what makes it testable.
+  - **The monthly trend series does not need an RPC change** (prep 2026-08-16, corrected against the
+    live schema) -> the earlier plan text claimed the series "has no group dimension at all". That is
+    wrong. `get_user_spending_summary` — the only RPC the personal statistics notifiers call — already
+    returns `group_id` per row and groups by group and month. The per-currency fold is pure client-side
+    work over rows that already carry the dimension. No migration, no RPC edit, and this feature does
+    not touch the database at all.
+  - **The active/done tab filter stays a PostgREST filter, widened to the permissive bound per tab,
+    with the exact call made client-side** (prep 2026-08-16) -> `activeBalanceFilter` is already built
+    from `kSettledEpsilon` rather than a hardcoded 0.01 (settle-residue unified that), and the group
+    list is not paginated, so over-fetching is harmless. The `active` tab filters on the *smallest*
+    supported epsilon and the `done` tab on the *largest*, each returning a superset; `isSettled(amount,
+    currency)` then makes the real decision on the client. Tabs and rows agree by construction because
+    one predicate decides both. Rejected: moving the filter behind a new RPC — it would put settled
+    semantics in two places and add a migration to a feature that otherwise needs none.
   - The already-shipped home-currency aggregates are **removed, not left dormant** -> leaving a second,
     contradictory money model in the tree is how the app ends up with two answers for one balance.
     (Jakob, 2026-08-15: replan supersedes the shipped model.)
@@ -91,16 +162,31 @@ already-shipped cross-group "home currency" conversion is **retired here** for t
     destructive rewrite that generates "it screwed up hundreds of my past transactions".
   - Multi-currency is never gated behind a paywall or ad tier -> it is free in every competitor except
     Splitwise, and the paywall is a named reason users leave.
+  - The trend chart plots one currency at a time and the disclosure doubles as its currency switcher
+    (Jakob, prep 2026-08-16) -> unlike currencies cannot share a y-axis, and small multiples would
+    multiply chart work and vertical space for a case that currently affects zero users. Switching
+    keeps every figure reachable, which the "primary only, others excluded" alternative would not.
+  - The chart's currency selection is view state, not a preference -> it is derived from the same
+    per-currency map the scalars use, so there is nothing to persist and no second source of truth
+    about which currency a user cares about.
 - Units:
-  - Retire the home-currency surface: delete the conversion helper, the rate service, the provider,
-    the settings row, both ARB key pairs and the two test files; drop the pubspec dependency added
-    for it if nothing else uses it.
-  - Per-currency breakdown for the overall balance hero, the friend balances and the personal
-    statistics figures, replacing the converted totals at the same three call sites.
-  - Currency-correct settled classification, including the server-side active/done group filter.
-  - Group-currency lock (`canChangeGroupCurrency`) wired into the existing picker's disabled state.
-  - Correct decimal digits per group row for 0-decimal currencies.
-  - PayPal.me link currency.
+  - Retire the home-currency surface: delete `currency_conversion.dart`, `exchange_rate_service.dart`,
+    `homeCurrencyProvider`, the settings row, both ARB key pairs and the two test files; drop
+    `http: ^1.2.0` from pubspec. Its own commit, first — deleting the old model before building the
+    new one makes "did we miss a call site" a question the compiler answers.
+  - `CurrencyAmount` / `CurrencyBreakdown` plus the three per-currency folds that replace the
+    converting ones: the overall balance hero (view-model fold), the friend balances (folded inside
+    `friendship_repository.dart` today, so either the currency is injected there or the fold moves out
+    to a view model), and the personal statistics notifier.
+  - Render the breakdown: primary inline with a collapsed disclosure on the overall balance hero and
+    the friend detail sheet, and the non-interactive count marker on the friend list row.
+  - Trend chart plots one currency at a time with the disclosure as its switcher; remove `approximate`,
+    `excludedCount` and the "≈" marker from the statistics state and its widgets.
+  - Currency-correct settled classification: widen `activeBalanceFilter` to the permissive bound per
+    tab and let `isSettled(amount, currency)` make the real call client-side, so tabs and rows agree.
+  - Group-currency lock (`canChangeGroupCurrency`) wired into the picker's disabled state, the picker
+    extracted as `showCurrencyPicker`, correct decimal digits per group row, and the PayPal.me link
+    currency.
 - Blockers: —
 
 ## Approach
@@ -111,14 +197,17 @@ the diff, and makes the "did we miss a call site" question answerable by the com
 Three aggregation points span groups and currently **convert**: the overall balance hero (a view-model
 fold, the easy one), the friendship balances (folded inside the repository, so either the currency is
 injected there or the fold moves out to a view model), and the personal statistics notifier. Each
-becomes a per-currency fold. The monthly trend series has no group dimension at all and so cannot be
-broken down without changing the RPC — expect that to need an explicit answer at pull time; it is the
-one place where "just don't convert" is not a local change.
+becomes a per-currency fold producing one `CurrencyBreakdown`.
 
-The active/done group tabs filter server-side on `total_share_amount` against a hardcoded ±0.01 in a
-PostgREST query. With per-group currencies that threshold is no longer uniform, so the classification
-has to either travel with the group's currency or move behind an RPC. Whichever way it goes, the tabs
-and the rows must agree.
+The monthly trend series was previously believed to need an RPC change. It does not —
+`get_user_spending_summary` already returns `group_id` per row and groups by group and month, so the
+trend is foldable per currency on the client like everything else. This feature touches no database.
+
+The active/done tabs filter through a PostgREST predicate built in Dart from `kSettledEpsilon`
+(`activeBalanceFilter`). It stays there: `active` filters on the smallest supported epsilon, `done` on
+the largest, each deliberately returning a superset, and `isSettled(amount, currency)` makes the real
+decision client-side. The group list is not paginated, so the over-fetch costs nothing and the tabs
+and rows cannot disagree because one predicate decides both.
 
 Note the base schema — `group`, `save_group_all`, `update_group_member_shares` — is not in
 `supabase/migrations`; the instance is self-hosted and changes are applied by hand. Only new
@@ -131,7 +220,14 @@ migrations land in the repo.
   `lib/pages/friends/data/friendship_repository.dart` and `friend_detail_sheet.dart`,
   `lib/pages/statistics/provider/personal_statistics_notifiers.dart`,
   `lib/pages/groups/presentation/group_detail_payment.dart`, both ARB files
-- Depends: multi-currency-core
+- Depends: multi-currency-core, group-currency-persist
 - Parallel-with: —
+
+`Depends: group-currency-persist` was added at prep 2026-08-16 and is already satisfied. It is
+recorded rather than dropped because this feature builds per-currency balances, a currency lock and a
+per-row currency on `Group.currency` — and until `20260816000000` was applied, `save_group_all`
+discarded that value on every write, so every group in the instance was EUR regardless of the picker.
+Building this on that field before the fix would have produced a feature that passed every test and
+did nothing.
 
 status: planned
