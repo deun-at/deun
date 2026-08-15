@@ -1,11 +1,6 @@
-import 'group_member_model.dart';
+import 'package:deun/helper/helper.dart';
 
-/// Balance magnitude at or above which a member is treated as unsettled (half a
-/// cent). Mirrors `_kSettledEpsilon` in
-/// `lib/pages/groups/presentation/payment_view_model.dart` — the `settle-residue`
-/// feature unifies every settled threshold behind one predicate, and this call
-/// site is one of the ones it will sweep up. Do not add a third spelling.
-const double _kSettledEpsilon = 0.005;
+import 'group_member_model.dart';
 
 /// What removing a member from a group should do, decided before anything is
 /// written. `blocked` carries the amount to name in the message.
@@ -52,7 +47,7 @@ MemberRemovalOutcome resolveMemberRemoval({
   required double balance,
   required bool hasExpenseHistory,
 }) {
-  if (balance.abs() >= _kSettledEpsilon) {
+  if (!isSettled(balance)) {
     return MemberRemovalOutcome.blocked(outstanding: balance.abs());
   }
   return hasExpenseHistory

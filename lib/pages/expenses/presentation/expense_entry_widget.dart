@@ -643,7 +643,7 @@ class _ExpenseEntryWidgetState extends State<ExpenseEntryWidget> {
         );
         // Member amounts must add up to the entry total exactly at cent
         // level — anything looser silently creates or destroys money.
-        return (roundCurrency(sum) - roundCurrency(_entryTotal)).abs() < 0.005;
+        return isSettled(roundCurrency(sum) - roundCurrency(_entryTotal));
       case SplitMode.percentage:
         double sum = _enabledMembers.fold(
           0.0,

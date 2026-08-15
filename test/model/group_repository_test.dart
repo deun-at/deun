@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:deun/helper/helper.dart';
 import 'package:deun/pages/groups/data/group_repository.dart';
 
 void main() {
@@ -64,6 +65,23 @@ void main() {
 
       expect(result[0]['is_guest'], isNull);
       expect(result[0]['username'], isNull);
+    });
+  });
+
+  group('active/done balance filter', () {
+    test('is built from the shared epsilon, not a literal', () {
+      expect(
+        GroupRepository.activeBalanceFilter,
+        'total_share_amount.gte.0.005,total_share_amount.lte.-0.005',
+      );
+      expect(kSettledEpsilon, 0.005);
+    });
+
+    test('the tab threshold and the client predicate agree on 0.007', () {
+      // 0.007 is >= the filter's 0.005 bound, so the group stays on the active
+      // tab — and isSettled(0.007) is false, so every screen agrees with it.
+      expect(isSettled(0.007), isFalse);
+      expect(GroupRepository.activeBalanceFilter, contains('gte.0.005'));
     });
   });
 }

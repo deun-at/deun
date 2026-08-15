@@ -11,6 +11,22 @@ import '../../../main.dart';
 import 'member_removal.dart';
 
 class GroupRepository {
+  /// Set once `pay_back_exact` is confirmed missing (PGRST202/42883) so that
+  /// `payBackAll` — which fans payBack out once per shared group in parallel —
+  /// pays the round-trip cost of probing for the RPC once per app session
+  /// instead of once per group.
+  static bool _payBackExactMissing = false;
+
+  /// The PostgREST `or` predicate behind the **active** group tab. The tabs
+  /// filter inside the query, so they cannot call [isSettled] — building this
+  /// from [kSettledEpsilon] is what keeps the server-side filter from drifting
+  /// away from the client predicate (they disagreed at 0.01 vs 0.005 before
+  /// settle-residue, so a 0.007 balance was "done" on the tab and outstanding on
+  /// the payment screen).
+  static String get activeBalanceFilter =>
+      'total_share_amount.gte.$kSettledEpsilon,'
+      'total_share_amount.lte.-$kSettledEpsilon';
+
   static Future<List<Group>> fetchData(
     String statusFilter, {
     String? paidTo,
@@ -20,12 +36,18 @@ class GroupRepository {
 
     if (statusFilter == 'active') {
       query = query.or(
-        'total_share_amount.gte.0.01,total_share_amount.lte.-0.01',
+        activeBalanceFilter,
         referencedTable: 'group_shares_summary_helper',
       );
     } else if (statusFilter == 'done') {
-      query = query.lt("group_shares_summary_helper.total_share_amount", 0.01);
-      query = query.gt("group_shares_summary_helper.total_share_amount", -0.01);
+      query = query.lt(
+        'group_shares_summary_helper.total_share_amount',
+        kSettledEpsilon,
+      );
+      query = query.gt(
+        'group_shares_summary_helper.total_share_amount',
+        -kSettledEpsilon,
+      );
     }
 
     query = query.eq('group_shares_summary_helper.paid_for', currentUserEmail);
@@ -332,15 +354,31 @@ class GroupRepository {
     double amount, {
     bool sendNotification = true,
   }) async {
-    final expenseId = await supabase.rpc(
-      'pay_back',
-      params: {
-        "_group_id": groupId,
-        "_paid_by": supabase.auth.currentUser?.email,
-        "_paid_for": email,
-        "_amount": amount,
-      },
-    );
+    final params = {
+      "_group_id": groupId,
+      "_paid_by": supabase.auth.currentUser?.email,
+      "_paid_for": email,
+      "_amount": amount,
+    };
+
+    // settle-residue: pay_back_exact snaps `amount` to the exact outstanding
+    // value server-side, so the payback cancels the unrounded balance the client
+    // could only see rounded. Its migration is deferred (MANUAL_OPS.md), so a
+    // server without it falls back to pay_back — the pre-fix behaviour — exactly
+    // the way `saveAll` falls back for `save_group_all`.
+    String expenseId;
+    if (_payBackExactMissing) {
+      expenseId = await supabase.rpc('pay_back', params: params) as String;
+    } else {
+      try {
+        expenseId =
+            await supabase.rpc('pay_back_exact', params: params) as String;
+      } on PostgrestException catch (e) {
+        if (!isMissingFunctionError(e)) rethrow;
+        _payBackExactMissing = true;
+        expenseId = await supabase.rpc('pay_back', params: params) as String;
+      }
+    }
 
     // Retry share update once on failure to reduce partial-state risk.
     // This RPC is idempotent (recalculates from scratch), so retrying is safe.
@@ -368,24 +406,21 @@ class GroupRepository {
 
     await Future.wait(
       groupList.map((groupData) async {
-        double groupAmount = 0;
-        groupData.groupSharesSummary.forEach((key, groupShare) {
-          if (key == email) {
-            groupAmount = roundCurrency(groupAmount + groupShare.shareAmount);
-          }
-        });
-
         // Only settle groups where the current user owes this friend, and pay
         // back exactly the per-group amount — not the cross-group total.
-        if (groupAmount <= -0.01) {
-          await GroupRepository.payBack(
-            context,
-            groupData.id,
-            email,
-            groupAmount.abs(),
-            sendNotification: false,
-          );
-        }
+        // `amountToSettleWith` is the same value the payment screen shows and
+        // applies the same settled predicate, so a balance can never be settled
+        // on one path and outstanding on the other.
+        final amount = groupData.amountToSettleWith(email);
+        if (amount == null) return;
+
+        await GroupRepository.payBack(
+          context,
+          groupData.id,
+          email,
+          amount,
+          sendNotification: false,
+        );
       }),
     );
   }

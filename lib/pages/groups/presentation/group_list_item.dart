@@ -1,3 +1,4 @@
+import 'package:deun/helper/helper.dart';
 import 'package:deun/widgets/restyle/avatar_stack.dart';
 import 'package:deun/widgets/restyle/money_text.dart';
 import 'package:deun/widgets/restyle/soft_card.dart';
@@ -28,8 +29,6 @@ class GroupListItem extends ConsumerWidget {
   final bool isFavorite;
   final VoidCallback? onFavoriteToggle;
 
-  static const double _settledThreshold = 0.01;
-
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final colorScheme = Theme.of(context).colorScheme;
@@ -46,11 +45,11 @@ class GroupListItem extends ConsumerWidget {
       Theme.of(context).brightness,
     );
     final amount = group.totalShareAmount;
-    final isSettled = amount.abs() < _settledThreshold;
+    final settled = isSettled(amount);
 
     final String balanceLabel;
     final MoneySemantic moneySemantic;
-    if (isSettled) {
+    if (settled) {
       balanceLabel = l10n.balanceSettled;
       moneySemantic = MoneySemantic.neutral;
     } else if (amount > 0) {
@@ -153,7 +152,7 @@ class GroupListItem extends ConsumerWidget {
                       ),
                       // Settled groups show "gray, no amount" (DESIGN_SPEC edge
                       // states) — only render the balance amount when unsettled.
-                      if (!isSettled) ...[
+                      if (!settled) ...[
                         const SizedBox(height: 2),
                         // Amount: card-title size (titleMedium) at w700, colored
                         // green owed / red owe via the SemanticColors token

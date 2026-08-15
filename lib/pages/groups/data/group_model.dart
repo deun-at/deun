@@ -48,6 +48,24 @@ class Group {
   List<GroupMember> get activeMembers =>
       groupMembers.where((m) => !m.isRemoved).toList();
 
+  /// The amount the current user should settle with [email] in this group, or
+  /// null when there is nothing to settle — either the pair reads settled or the
+  /// balance runs the other way (they owe the user).
+  ///
+  /// Positive = the user pays [email]. This is the SINGLE definition of "what a
+  /// settle-up with this person is worth": the payment screen shows
+  /// `PaymentEntry.amount` and `GroupRepository.payBackAll` settles this, and both
+  /// read the already-rounded `groupSharesSummary` entry instead of
+  /// re-accumulating it (`payBackAll` used to re-sum and re-round it against a
+  /// hardcoded 0.01 of its own).
+  double? amountToSettleWith(String email) {
+    final summary = groupSharesSummary[email];
+    if (summary == null) return null;
+    if (isSettled(summary.shareAmount)) return null;
+    if (summary.shareAmount > 0) return null;
+    return summary.shareAmount.abs();
+  }
+
   static const groupSelectString =
       '*, group_shares_summary_helper:group_shares_summary!inner(*), group_shares_summary(*, ...paid_by(paid_by_display_name:display_name, paid_by_paypal_me:paypal_me, paid_by_iban:iban), ...paid_for(paid_for_display_name:display_name, paid_for_paypal_me:paypal_me, paid_for_iban:iban)), group_member(*, ...user(display_name:display_name, username:username, username_code:username_code, is_guest:is_guest))';
 
@@ -95,9 +113,8 @@ class Group {
     if (json["group_shares_summary"] != null) {
       for (var element in json["group_shares_summary"]) {
         if (element['paid_for'] == currentUserEmail) {
-          totalExpenses = roundCurrency(
-            totalExpenses +
-                double.parse((element['total_expenses'] ?? 0).toString()),
+          totalExpenses += double.parse(
+            (element['total_expenses'] ?? 0).toString(),
           );
           totalShareAmount = roundCurrency(
             double.parse((element['total_share_amount'] ?? 0).toString()),
@@ -117,9 +134,8 @@ class Group {
             groupSharesSummary[element['paid_for']]!.shareAmount = 0;
           }
 
-          groupSharesSummary[element['paid_for']]!.shareAmount = roundCurrency(
-            groupSharesSummary[element['paid_for']]!.shareAmount +
-                double.parse((element['share_amount'] ?? 0).toString()),
+          groupSharesSummary[element['paid_for']]!.shareAmount += double.parse(
+            (element['share_amount'] ?? 0).toString(),
           );
         } else if (element['paid_for'] == currentUserEmail &&
             element['paid_by'] != currentUserEmail) {
@@ -134,11 +150,22 @@ class Group {
             groupSharesSummary[element['paid_by']]!.shareAmount = 0;
           }
 
-          groupSharesSummary[element['paid_by']]!.shareAmount = roundCurrency(
-            groupSharesSummary[element['paid_by']]!.shareAmount -
-                double.parse((element['share_amount'] ?? 0).toString()),
+          groupSharesSummary[element['paid_by']]!.shareAmount -= double.parse(
+            (element['share_amount'] ?? 0).toString(),
           );
         }
+      }
+
+      // settle-residue: round ONCE per counterparty, after every row of that
+      // pair has been accumulated — the same rule `totalShareAmount` (the
+      // server's already-summed net) has always used. Rounding after each row
+      // let the two directions of a pair round in sequence, so a pair that
+      // nets 3.3333… surfaced as 3.34 on the pairwise row while the group hero
+      // showed 3.33. Settling 3.34 then left -0.0067 behind, which is the 0.01
+      // "owes you" the user reported on 2026-08-11.
+      totalExpenses = roundCurrency(totalExpenses);
+      for (final summary in groupSharesSummary.values) {
+        summary.shareAmount = roundCurrency(summary.shareAmount);
       }
     }
   }
@@ -156,9 +183,8 @@ class Group {
       Map<String, double> simplifiedExpenseArray = {};
       for (var element in json["group_shares_summary"]) {
         if (element['paid_for'] == currentUserEmail) {
-          totalExpenses = roundCurrency(
-            totalExpenses +
-                double.parse((element['total_expenses'] ?? 0).toString()),
+          totalExpenses += double.parse(
+            (element['total_expenses'] ?? 0).toString(),
           );
           totalShareAmount = roundCurrency(
             double.parse((element['total_share_amount'] ?? 0).toString()),
@@ -189,6 +215,8 @@ class Group {
           };
         }
       }
+
+      totalExpenses = roundCurrency(totalExpenses);
 
       simplifiedExpenseArray = Map.fromEntries(
         simplifiedExpenseArray.entries.toList()

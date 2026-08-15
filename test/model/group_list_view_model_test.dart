@@ -56,7 +56,7 @@ void main() {
         unsettled,
       ], isFavorite: (_) => false);
 
-      // unsettled (>= 0.01) sorts before the effectively-settled one.
+      // unsettled (not isSettled) sorts before the effectively-settled one.
       expect(sorted.map((g) => g.id).toList(), ['b', 'a']);
     });
 

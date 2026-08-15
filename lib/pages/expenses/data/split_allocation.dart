@@ -58,14 +58,16 @@ class SplitAllocation {
         final sum = enabled.fold<double>(0, (s, e) => s + (amounts[e] ?? 0));
         final diff = roundCurrency(sum) - roundCurrency(total);
         final AllocationStatus status;
-        if (diff.abs() < 0.005) {
+        if (isSettled(diff)) {
           status = AllocationStatus.ok;
         } else if (diff < 0) {
           status = AllocationStatus.under;
         } else {
           status = AllocationStatus.over;
         }
-        final fraction = total > 0 ? (sum / total).clamp(0.0, 1.0).toDouble() : 0.0;
+        final fraction = total > 0
+            ? (sum / total).clamp(0.0, 1.0).toDouble()
+            : 0.0;
         return SplitAllocation(
           status: status,
           fraction: fraction,
@@ -73,7 +75,10 @@ class SplitAllocation {
         );
 
       case SplitMode.percentage:
-        final sum = enabled.fold<double>(0, (s, e) => s + (percentages[e] ?? 0));
+        final sum = enabled.fold<double>(
+          0,
+          (s, e) => s + (percentages[e] ?? 0),
+        );
         final diff = sum - 100;
         final AllocationStatus status;
         if (diff.abs() < 0.01) {
