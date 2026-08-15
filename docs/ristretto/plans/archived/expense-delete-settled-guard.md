@@ -15,8 +15,13 @@
   - Both delete call sites are guarded — the read view and the editor — proven by a widget test on each that cancelling leaves the expense present.
   - All new copy exists in EN and DE, and `flutter gen-l10n` output is committed.
 - Provides:
-  - `ExpenseDeletionImpact` — one of `none` · `reopensSettlement(counterparty: String, amount: double)` · `alreadySettled(paybackCount: int)`
-  - `classifyExpenseDeletion(expense: Expense, groupExpenses: List<Expense>): ExpenseDeletionImpact` (pure)
+  - `ExpenseDeletionImpact` (`lib/pages/expenses/data/expense_deletion_impact.dart`) — sealed, one of `none` · `reopensSettlement(counterparty: String, amount: double)` · `alreadySettled(paybackCount: int)`
+  - `classifyExpenseDeletion(Expense expense, List<Expense> groupExpenses): ExpenseDeletionImpact` (pure)
+  - `probeDeletionImpact(Expense expense, {GroupPaybackLoader? loader}): Future<ExpenseDeletionImpact>` — the shared probe-fetch-classify sequence both delete call sites use; skips the network round-trip when the row is itself a payback, degrades to `none` on a failed probe
+  - `localDayOf(String raw): DateTime` (`lib/helper/helper.dart`) — the local-midnight normalization factored out of the ledger's day grouping so the guard's "same day" matches the ledger's
+  - `HeaderIconButton`'s new `loading` bool param (`lib/widgets/restyle/deun_header.dart`) — shows a small spinner in place of the icon and ignores taps while a probe is in flight
+  - `Expense.paybackSelectString` (`lib/pages/expenses/data/expense_model.dart`) — the trimmed select for payback rows
+  - `ExpenseRepository.fetchPaybackRows(String groupId): Future<List<Expense>>` — every payback row of a group, on the trimmed select
 - Consumes: —
 - Decisions:
   - Guard scope -> both cases: the payback row itself **and** a normal expense already covered by a payback. (Jakob, prep 2026-08-15)
@@ -36,4 +41,15 @@
 - Depends: —
 - Parallel-with: —
 
-status: planned
+status: done
+
+## Evidence
+- Confirmation naming counterparty + amount, cancel = zero writes: `test/model/expense_deletion_impact_test.dart` (`classifyExpenseDeletion` group — "deleting a payback row reports the counterparty and the amount") + `test/widgets/expense_detail_read_test.dart` / `test/widgets/expense_editor_delete_guard_test.dart` ("deleting a payback row never probes the group").
+- Already-settled normal expense shows the balances-will-shift confirmation: `expense_deletion_impact_test.dart` — "paybackCount counts only the covering paybacks", "normal expenses in the list are never mistaken for settlements".
+- No-payback / paybacks-strictly-before keeps today's plain confirmation: `expense_deletion_impact_test.dart` — "an expense in a group with no other rows at all is unguarded", "a payback dated strictly BEFORE the expense does not cover it"; both widget test files — "an unguarded delete shows today plain confirmation".
+- Same-day boundary: `expense_deletion_impact_test.dart` — "a payback dated the SAME day counts as covering the expense" vs "a payback dated strictly BEFORE the expense does not cover it" (12 tests total in this file, including the copy/l10n group).
+- Confirming performs the same writes in the same order, unchanged: proven by construction — `ExpenseRepository.delete` is untouched by this feature (verified against `lib/pages/expenses/data/expense_repository.dart`); both call sites still call it as their only write.
+- Both call sites guarded, cancel leaves the expense present: `expense_detail_read_test.dart` and `expense_editor_delete_guard_test.dart`, each with its own "unguarded delete shows today plain confirmation" / guarded-delete / never-probes-on-payback tests (5 `testWidgets` added to the editor file).
+- EN/DE copy + generated l10n committed: `expense_deletion_impact_test.dart` — "all new copy exists in German and differs from English"; `lib/l10n/app_en.arb`, `lib/l10n/app_de.arb`, and the three generated `app_localizations*.dart` files are part of this commit.
+- Gate summary: `flutter analyze` — no issues found. `flutter test` — 1012 passed, 0 failed.
+- Review verdict: round 1 found 1 bug + 6 lean findings, all fixed. Round 2 found 1 bug (a vacuous test assertion targeting the wrong button) + 1 lean finding, both fixed. Round 3 escalated the remaining fix, proved it red without the guard and green with it, and closed with `review: clean`.
