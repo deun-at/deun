@@ -23,7 +23,7 @@
 - Consumes: —
 - Decisions:
   - What happens on removal -> Block while unsettled; soft-remove once settled if they have history; hard-remove if they have none. (Jakob, prep 2026-08-15)
-  - Settled threshold -> reuse the existing `_kSettledEpsilon = 0.005` convention from `payment_view_model.dart`; do **not** invent a new one. Note the codebase also uses `0.01` in `fetchData`/`payBackAll` — this feature does not unify those, it only picks the tighter, member-level one.
+  - Settled threshold -> route through the single settled predicate that [settle-residue](settle-residue.md) unifies; do **not** invent a new constant and do **not** reach for `_kSettledEpsilon` directly. If this feature is pulled before `settle-residue`, use `_kSettledEpsilon = 0.005` from `payment_view_model.dart` and expect that call site to be swept up later. (Revised 2026-08-15: the original plan said this feature would not unify the thresholds; `settle-residue` now owns that.)
   - Soft-remove representation -> a nullable `removed_at` timestamp on `group_member`, not a boolean, so the event is auditable and re-adding is just clearing it.
   - Share recalculation -> `update_group_member_shares` must keep computing rows for removed-with-history members; removal changes visibility, never ledger math.
   - Redistribution of a removed member's shares was explicitly rejected — it would rewrite historical expense amounts so past receipts stop matching the app.
