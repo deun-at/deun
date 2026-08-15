@@ -78,8 +78,29 @@ class KeypadCalculator {
   }
 
   /// Removes the last character of the current operand.
+  ///
+  /// With a pending operator, backspace steps back through the operation rather
+  /// than sticking on a lone `0`:
+  ///   - blank operand (right after the operator, or just emptied) → undo the
+  ///     operator, restoring the folded left value as the editable operand;
+  ///   - operand with one visible character → clear it back to the blank
+  ///     "awaiting operand" state (running result is the left value again);
+  ///   - otherwise → drop the last operand character.
+  /// Without an operator it is the plain keypad backspace.
   KeypadCalculator backspace() {
-    if (_awaitingOperand) return this;
+    if (_operator != null) {
+      if (_awaitingOperand) {
+        return KeypadCalculator._(
+          null,
+          null,
+          KeypadAmount.fromText(_format(_pending!)),
+          false,
+        );
+      }
+      if (_operand.text.length <= 1) {
+        return _copy(operand: _zero, awaitingOperand: true);
+      }
+    }
     return _copy(operand: _operand.backspace());
   }
 

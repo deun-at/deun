@@ -53,6 +53,56 @@ void main() {
     });
   });
 
+  group('KeypadCalculator backspace', () {
+    test('backspace right after an operator removes the operator', () {
+      // Enter "12 +", then backspace: the operator is undone and the left
+      // value is editable again (no longer stuck behind the operator).
+      final calc = _run('0', ['12', '+']).backspace();
+      expect(calc.hasPendingOperation, isFalse);
+      expect(calc.expression, '');
+      expect(calc.value, 12);
+    });
+
+    test('backspace after an operator then deletes into the left number', () {
+      // "12 +" → undo operator → "12" → backspace → "1".
+      final calc = _run('0', ['12', '+']).backspace().backspace();
+      expect(calc.value, 1);
+    });
+
+    test('backspace deletes the last operand digit during operand entry', () {
+      // "12 + 34" → backspace → "12 + 3" → 15.
+      final calc = _run('0', ['12', '+', '34']).backspace();
+      expect(calc.value, 15);
+    });
+
+    test('deleting a single-digit operand clears back to the operator', () {
+      // Repro: "23 * 1" → backspace → "23 ×" (blank operand, result is 23),
+      // not a stuck "23 × 0".
+      final calc = _run('0', ['23', '*', '1']).backspace();
+      expect(calc.hasPendingOperation, isTrue);
+      expect(calc.expression, '23 ×');
+      expect(calc.value, 23);
+    });
+
+    test('backspace then removes the operator (not stuck on 23 × 0)', () {
+      // "23 * 1" → backspace → "23 ×" → backspace → "23".
+      final calc = _run('0', ['23', '*', '1']).backspace().backspace();
+      expect(calc.hasPendingOperation, isFalse);
+      expect(calc.expression, '');
+      expect(calc.value, 23);
+    });
+
+    test(
+      'a typed zero operand is also deletable back through the operator',
+      () {
+        // "23 * 0" → backspace → "23 ×" → backspace → "23".
+        final calc = _run('0', ['23', '*', '0']).backspace().backspace();
+        expect(calc.hasPendingOperation, isFalse);
+        expect(calc.value, 23);
+      },
+    );
+  });
+
   group('KeypadCalculator decimals & clamping', () {
     test(
       'division rounds the committed result to 2 decimals (10 / 3 = 3.33)',
