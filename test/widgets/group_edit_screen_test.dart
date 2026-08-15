@@ -7,6 +7,7 @@ import 'package:deun/pages/groups/data/group_member_model.dart';
 import 'package:deun/pages/groups/data/group_model.dart';
 import 'package:deun/pages/groups/data/member_removal.dart';
 import 'package:deun/pages/groups/presentation/group_detail_edit.dart';
+import 'package:deun/pages/groups/presentation/group_member_search.dart';
 import 'package:deun/pages/users/user_model.dart';
 import 'package:deun/widgets/restyle/primary_button.dart';
 import 'package:deun/widgets/restyle/soft_card.dart';
@@ -93,8 +94,63 @@ Future<void> _pump(
               brightness,
             ).copyWith(splashFactory: NoSplash.splashFactory),
             child: GroupEdit(
+              // Keyed by group id so that a test which pumps create then edit
+              // sequentially (in the SAME tester) gets a fresh GroupEdit State
+              // each time, mirroring real navigation (a new /group/edit route
+              // per push) instead of Flutter's default in-place widget update.
+              key: ValueKey(group?.id ?? 'create'),
               group: group,
               removeMemberOverride: removeMemberOverride,
+            ),
+          ),
+        ),
+      ),
+    ),
+  );
+  await tester.pumpAndSettle();
+}
+
+/// Pumps [GroupMemberSearch] with NO group — the way the group form hosts it
+/// while the group is not persisted yet — as the builder of a `group_members`
+/// FormBuilderField, so its own create-vs-edit branch stays under test now that
+/// the create FORM no longer hosts it (group-create-simplify).
+Future<void> _pumpMemberSearch(
+  WidgetTester tester, {
+  List<dynamic> overrides = const [],
+  Future<MemberRemovalOutcome> Function(String groupId, String email)?
+  removeMemberOverride,
+}) async {
+  await tester.pumpWidget(
+    ProviderScope(
+      overrides: overrides.cast(),
+      child: MaterialApp(
+        localizationsDelegates: const [
+          AppLocalizations.delegate,
+          GlobalMaterialLocalizations.delegate,
+          GlobalWidgetsLocalizations.delegate,
+          GlobalCupertinoLocalizations.delegate,
+        ],
+        supportedLocales: AppLocalizations.supportedLocales,
+        home: Builder(
+          builder: (context) => Theme(
+            data: getThemeData(
+              context,
+              kBrandSeed,
+              Brightness.light,
+            ).copyWith(splashFactory: NoSplash.splashFactory),
+            child: Scaffold(
+              body: FormBuilder(
+                child: FormBuilderField(
+                  name: 'group_members',
+                  builder: (FormFieldState<dynamic> field) =>
+                      SingleChildScrollView(
+                        child: GroupMemberSearch(
+                          field: field,
+                          removeMemberOverride: removeMemberOverride,
+                        ),
+                      ),
+                ),
+              ),
             ),
           ),
         ),
@@ -465,8 +521,11 @@ void main() {
   testWidgets(
     'members section shows Owner tag, Add guest link and inline greyed friend rows (F71)',
     (tester) async {
+      // group-create-simplify: the member section is edit-only now, so this
+      // F71 roster criterion is asserted on the edit form. Assertions unchanged.
       await _pump(
         tester,
+        group: _group(),
         overrides: [
           friendshipListProvider.overrideWith(
             () => _FakeFriendshipListNotifier([
@@ -507,8 +566,11 @@ void main() {
   testWidgets(
     'tapping an inline friend row adds them (removes from candidates) (F71)',
     (tester) async {
+      // group-create-simplify: the member section is edit-only now, so this
+      // F71 roster criterion is asserted on the edit form. Assertions unchanged.
       await _pump(
         tester,
+        group: _group(),
         overrides: [
           friendshipListProvider.overrideWith(
             () => _FakeFriendshipListNotifier([
@@ -521,6 +583,8 @@ void main() {
       // Tapping the greyed candidate routes through the same add path the
       // SearchAnchor uses: Sam becomes a selected member (check_circle remove
       // action) and is no longer offered as a greyed add candidate.
+      await tester.ensureVisible(find.text('Sam'));
+      await tester.pumpAndSettle();
       await tester.tap(find.text('Sam'));
       await tester.pumpAndSettle();
 
@@ -601,17 +665,15 @@ void main() {
             'as direct ListView children',
       );
 
-      // All five fields are already built on a 400x400 viewport WITHOUT any
-      // scrolling — a lazy list would not have built the bottom ones.
+      // All FOUR create fields are already built on a 400x400 viewport WITHOUT
+      // any scrolling — a lazy list would not have built the bottom ones.
+      // (group-create-simplify: the fifth, group_members, is edit-only now.)
       expect(find.byType(TextFormField), findsOneWidget); // name
       expect(
         _swatchFinder(),
         findsNWidgets(kGroupColorPalette.length),
       ); // color_value
-      expect(
-        find.text(l10n.groupMemberSectionTitle),
-        findsOneWidget,
-      ); // group_members
+      expect(find.text(l10n.groupMemberSectionTitle), findsNothing);
       expect(
         find.text(l10n.groupTrackingModeSimplifiedTitle),
         findsOneWidget,
@@ -738,12 +800,11 @@ void main() {
         dyOf(find.byType(TextFormField)),
         lessThan(dyOf(find.text(l10n.groupColorLabel))),
       );
+      // group-create-simplify: colour is followed directly by tracking mode —
+      // the member section is gone from create.
+      expect(find.text(l10n.groupMemberSectionTitle), findsNothing);
       expect(
         dyOf(find.text(l10n.groupColorLabel)),
-        lessThan(dyOf(find.text(l10n.groupMemberSectionTitle))),
-      );
-      expect(
-        dyOf(find.text(l10n.groupMemberSectionTitle)),
         lessThan(dyOf(find.text(l10n.groupTrackingModeTitle))),
       );
       expect(
@@ -770,6 +831,25 @@ void main() {
 
       expect(tester.getSize(find.byType(FormBuilder)).width, 760);
 
+      // The EDIT form is unchanged: same fields, same order, member section
+      // still sitting between colour and tracking mode.
+      expect(
+        dyOf(find.text('Trip to Rome')),
+        lessThan(dyOf(find.text(l10n.groupColorLabel))),
+      );
+      expect(
+        dyOf(find.text(l10n.groupColorLabel)),
+        lessThan(dyOf(find.text(l10n.groupMemberSectionTitle))),
+      );
+      expect(
+        dyOf(find.text(l10n.groupMemberSectionTitle)),
+        lessThan(dyOf(find.text(l10n.groupTrackingModeTitle))),
+      );
+      expect(
+        dyOf(find.text(l10n.groupTrackingModeTitle)),
+        lessThan(dyOf(find.text(l10n.groupCurrencyLabel))),
+      );
+
       // Same order, with the edit-only actions block last.
       expect(
         dyOf(find.text(l10n.groupCurrencyLabel)),
@@ -788,6 +868,98 @@ void main() {
       );
       expect(find.text(l10n.save), findsOneWidget);
       expect(tester.takeException(), isNull);
+    },
+  );
+
+  // -------------------------------------------------------------------------
+  // group-create-simplify: create asks for the three decisions that must be
+  // made up front and nothing else. Each test restates one acceptance
+  // criterion.
+  // -------------------------------------------------------------------------
+
+  testWidgets(
+    'the create form carries exactly three inputs: name + colour, tracking mode, currency',
+    (tester) async {
+      // Tall viewport so the whole create form is on screen at once.
+      tester.view.physicalSize = const Size(800, 2400);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+
+      // A friend IS available: if any member affordance survived on create, the
+      // inline candidate row would render and this test would catch it.
+      await _pump(
+        tester,
+        overrides: [
+          friendshipListProvider.overrideWith(
+            () => _FakeFriendshipListNotifier([
+              _friend('sam@test.com', 'Sam', 'sam'),
+            ]),
+          ),
+        ],
+      );
+
+      final l10n = await AppLocalizations.delegate.load(const Locale('en'));
+
+      // The three inputs.
+      expect(
+        find.widgetWithText(TextFormField, l10n.groupNameHint),
+        findsOneWidget,
+      );
+      expect(_swatchFinder(), findsNWidgets(kGroupColorPalette.length));
+      expect(find.text(l10n.groupTrackingModeSimplifiedTitle), findsOneWidget);
+      expect(find.text(l10n.groupTrackingModeDetailedTitle), findsOneWidget);
+      expect(find.byType(DropdownButton<String>), findsOneWidget);
+
+      // No member section in ANY of its forms: no search widget, no roster row,
+      // no guest-add link, no inline friend candidate.
+      expect(find.byType(GroupMemberSearch), findsNothing);
+      expect(find.text(l10n.groupMemberSectionTitle), findsNothing);
+      expect(find.text(l10n.groupMemberAddGuestLink), findsNothing);
+      expect(find.text(l10n.groupMemberAddFriends), findsNothing);
+      expect(find.text(l10n.groupMemberOwnerTag), findsNothing);
+      expect(find.text(l10n.you), findsNothing);
+      expect(find.text('Sam'), findsNothing);
+      expect(find.byIcon(Icons.add_circle_outline), findsNothing);
+
+      // The form registers no member field at all, so no member value can reach
+      // GroupRepository.saveAll from here.
+      final form = tester.state<FormBuilderState>(find.byType(FormBuilder));
+      expect(form.fields.keys.toSet(), {
+        'name',
+        'color_value',
+        'simplified_expenses',
+        'currency_code',
+      });
+    },
+  );
+
+  testWidgets(
+    'creating with only a name keeps the create defaults: Simplified and EUR',
+    (tester) async {
+      await _pump(tester);
+
+      final l10n = await AppLocalizations.delegate.load(const Locale('en'));
+
+      await tester.enterText(
+        find.widgetWithText(TextFormField, l10n.groupNameHint),
+        'Trip to Rome',
+      );
+      FocusManager.instance.primaryFocus?.unfocus();
+      await tester.pumpAndSettle();
+
+      // What _save hands to GroupRepository.saveAll.
+      final form = tester.state<FormBuilderState>(find.byType(FormBuilder));
+      expect(form.saveAndValidate(), isTrue);
+      expect(form.value['name'], 'Trip to Rome');
+      expect(
+        form.value['simplified_expenses'],
+        isTrue,
+        reason: 'the existing create default (Simplified) is untouched',
+      );
+      expect(form.value['currency_code'], kDefaultCurrencyCode);
+      expect(kDefaultCurrencyCode, 'EUR');
+      expect(form.value.containsKey('group_members'), isFalse);
     },
   );
 
@@ -908,12 +1080,14 @@ void main() {
     },
   );
 
-  // 24
+  // 24 (group-member-removal criterion, rebased by group-create-simplify: the
+  // create FORM no longer hosts the member section, so the not-yet-persisted
+  // branch is asserted on GroupMemberSearch itself). Assertions unchanged.
   testWidgets(
-    'while creating a group, removing a chip never calls the removal path',
+    'with no persisted group, removing a chip never calls the removal path',
     (tester) async {
       var calls = 0;
-      await _pump(
+      await _pumpMemberSearch(
         tester,
         overrides: [
           friendshipListProvider.overrideWith(

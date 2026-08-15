@@ -20,13 +20,24 @@ import '../data/member_removal.dart';
 import 'group_member_search.dart';
 
 class GroupEdit extends ConsumerStatefulWidget {
-  const GroupEdit({super.key, this.group, this.removeMemberOverride});
+  const GroupEdit({
+    super.key,
+    this.group,
+    this.removeMemberOverride,
+    this.saveOverride,
+  });
 
   final Group? group;
 
   /// Test seam forwarded to [GroupMemberSearch]; null uses the real repository.
   final Future<MemberRemovalOutcome> Function(String groupId, String email)?
   removeMemberOverride;
+
+  /// Test seam for the whole write path: persists [formValue] and returns the
+  /// saved group exactly as the repository round-trip would. Null uses
+  /// [GroupRepository.saveAll] + [GroupRepository.fetchDetail].
+  final Future<Group> Function(String? groupId, Map<String, dynamic> formValue)?
+  saveOverride;
 
   @override
   ConsumerState<GroupEdit> createState() => _GroupEditState();
@@ -57,12 +68,10 @@ class _GroupEditState extends ConsumerState<GroupEdit> {
 
     Group? newGroup;
     try {
-      String groupInsertId = await GroupRepository.saveAll(
-        context,
+      newGroup = await (widget.saveOverride ?? _persist)(
         widget.group?.id,
         _formKey.currentState!.value,
       );
-      newGroup = await GroupRepository.fetchDetail(groupInsertId);
       showMessage(l10n.groupCreateSuccess);
     } catch (e) {
       showMessage(l10n.groupCreateError);
@@ -79,6 +88,17 @@ class _GroupEditState extends ConsumerState<GroupEdit> {
         }
       }
     }
+  }
+
+  /// The real write path: one atomic save, then re-read the saved group so the
+  /// detail page opens on server state (id, members, shares) rather than the
+  /// form's guess.
+  Future<Group> _persist(
+    String? groupId,
+    Map<String, dynamic> formValue,
+  ) async {
+    final savedId = await GroupRepository.saveAll(context, groupId, formValue);
+    return GroupRepository.fetchDetail(savedId);
   }
 
   @override
@@ -133,21 +153,34 @@ class _GroupEditState extends ConsumerState<GroupEdit> {
                                 children: <Widget>[
                                   _NameAndColorCard(formKey: _formKey),
                                   const SizedBox(height: 24),
-                                  // Members section header + roster live inside
-                                  // GroupMemberSearch (F71): the header carries the
-                                  // "Add guest" link that opens the search view.
-                                  FormBuilderField(
-                                    name: "group_members",
-                                    builder: (FormFieldState<dynamic> field) {
-                                      return GroupMemberSearch(
-                                        field: field,
-                                        group: widget.group,
-                                        removeMemberOverride:
-                                            widget.removeMemberOverride,
-                                      );
-                                    },
-                                  ),
-                                  const SizedBox(height: 24),
+                                  // group-create-simplify: the members section is
+                                  // EDIT-ONLY. Create asks for the three decisions
+                                  // that must be made up front (name + colour,
+                                  // tracking mode, currency); members are added on
+                                  // the group's own surface once the group exists.
+                                  // Create and edit diverge on purpose for one
+                                  // release — group-member-add-flow takes members
+                                  // off this form entirely.
+                                  //
+                                  // Safe under clearValueOnUnregister: true. The
+                                  // branch is fixed for the lifetime of this
+                                  // GroupEdit (widget.group never changes), so this
+                                  // field is never unregistered mid-form; on create
+                                  // it simply never registers.
+                                  if (_isEdit) ...[
+                                    FormBuilderField(
+                                      name: "group_members",
+                                      builder: (FormFieldState<dynamic> field) {
+                                        return GroupMemberSearch(
+                                          field: field,
+                                          group: widget.group,
+                                          removeMemberOverride:
+                                              widget.removeMemberOverride,
+                                        );
+                                      },
+                                    ),
+                                    const SizedBox(height: 24),
+                                  ],
                                   SectionLabel(l10n.groupTrackingModeTitle),
                                   const SizedBox(height: 8),
                                   _TrackingModeField(group: widget.group),

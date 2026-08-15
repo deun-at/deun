@@ -90,6 +90,16 @@ class _GroupDetailState extends ConsumerState<GroupDetail> {
     return ThemeBuilder(
       colorValue: widget.group.colorValue,
       builder: (context) {
+        // Both header actions open the same surface: the group form is where
+        // members are added until group-member-add-flow gives them their own.
+        // One closure, two entry points — the icons stay distinct because the
+        // affordances are (nobody looking to add a member reads "edit group").
+        void openGroupForm() {
+          GoRouter.of(
+            context,
+          ).push("/group/edit", extra: {'group': widget.group});
+        }
+
         return Scaffold(
           body: NotificationListener<ScrollUpdateNotification>(
             child: Column(
@@ -107,14 +117,23 @@ class _GroupDetailState extends ConsumerState<GroupDetail> {
                   // the edit action.
                   trailingActions: [
                     _buildExpenseSearch(context),
+                    // group-create-simplify: create no longer collects members,
+                    // so the group's own surface carries the add-members entry
+                    // point — one tap from the page the user lands on after
+                    // creating. It opens the group form, where the member
+                    // section still lives; group-member-add-flow repoints this
+                    // at the standalone add flow without moving the affordance.
+                    HeaderIconButton(
+                      icon: Icons.group_add,
+                      tooltip: AppLocalizations.of(
+                        context,
+                      )!.groupAddMembersAction,
+                      onTap: openGroupForm,
+                    ),
                     HeaderIconButton(
                       icon: Icons.tune,
                       tooltip: AppLocalizations.of(context)!.editGroup,
-                      onTap: () {
-                        GoRouter.of(
-                          context,
-                        ).push("/group/edit", extra: {'group': widget.group});
-                      },
+                      onTap: openGroupForm,
                     ),
                   ],
                 ),

@@ -3281,6 +3281,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Add back'**
   String get groupMemberReAdd;
+
+  /// Group-detail header action that opens the surface where members are added.
+  ///
+  /// In en, this message translates to:
+  /// **'Add members'**
+  String get groupAddMembersAction;
 }
 
 class _AppLocalizationsDelegate

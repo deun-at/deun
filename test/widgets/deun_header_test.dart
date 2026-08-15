@@ -328,6 +328,113 @@ void main() {
       },
     );
 
+    testWidgets(
+      'on a narrow phone, THREE trailing actions still leave the title a '
+      'readable width (and never overlap them)',
+      (tester) async {
+        // A 360dp phone — the narrowest mainstream Android width, and the one
+        // where a symmetric 3×48dp inset left ~44dp of title.
+        tester.view.physicalSize = const Size(360, 800);
+        tester.view.devicePixelRatio = 1.0;
+        addTearDown(tester.view.resetPhysicalSize);
+        addTearDown(tester.view.resetDevicePixelRatio);
+
+        const longTitle = 'Weekend Trip To The Mountains';
+        await _pump(
+          tester,
+          DeunHeader(
+            title: longTitle,
+            trailingActions: [
+              HeaderIconButton(icon: Icons.search, onTap: () {}),
+              HeaderIconButton(icon: Icons.group_add, onTap: () {}),
+              HeaderIconButton(icon: Icons.tune, onTap: () {}),
+            ],
+          ),
+        );
+
+        final titleBox = tester.renderObject(find.text(longTitle)) as RenderBox;
+        expect(
+          titleBox.size.width,
+          greaterThanOrEqualTo(120.0),
+          reason:
+              'the group name must stay readable next to three actions; a '
+              'symmetric inset of 3×48dp per side leaves only ~44dp',
+        );
+
+        // ...and it still truncates before the first trailing action.
+        final titleRight = titleBox
+            .localToGlobal(Offset(titleBox.size.width, 0))
+            .dx;
+        final searchBox =
+            tester.renderObject(
+                  find
+                      .ancestor(
+                        of: find.byIcon(Icons.search),
+                        matching: find.byType(InkWell),
+                      )
+                      .first,
+                )
+                as RenderBox;
+        expect(
+          titleRight,
+          lessThanOrEqualTo(searchBox.localToGlobal(Offset.zero).dx + 0.5),
+          reason: 'the title must never paint under the trailing actions',
+        );
+
+        // All three actions are on screen and tappable.
+        expect(find.byIcon(Icons.search).hitTestable(), findsOneWidget);
+        expect(find.byIcon(Icons.group_add).hitTestable(), findsOneWidget);
+        expect(find.byIcon(Icons.tune).hitTestable(), findsOneWidget);
+      },
+    );
+
+    testWidgets(
+      'on a narrow phone, TWO trailing actions still keep the title optically '
+      'centered (regression: a proportional centering floor over-triggered '
+      'here even though 120dp of title clears the readability bar)',
+      (tester) async {
+        // Same 360dp phone as the three-action regression test above — this
+        // is the pre-existing expense-detail header shape (delete + edit).
+        tester.view.physicalSize = const Size(360, 800);
+        tester.view.devicePixelRatio = 1.0;
+        addTearDown(tester.view.resetPhysicalSize);
+        addTearDown(tester.view.resetDevicePixelRatio);
+
+        const headerKey = Key('two_action_header_centering_test');
+        const title = 'Expense';
+        await _pump(
+          tester,
+          DeunHeader(
+            key: headerKey,
+            title: title,
+            trailingActions: [
+              HeaderIconButton(icon: Icons.delete_outline, onTap: () {}),
+              HeaderIconButton(icon: Icons.edit_outlined, onTap: () {}),
+            ],
+          ),
+        );
+
+        final headerBox =
+            tester.renderObject(find.byKey(headerKey)) as RenderBox;
+        final headerOffset = headerBox.localToGlobal(Offset.zero);
+        final headerWidth = headerBox.size.width;
+        final headerCenterX = headerOffset.dx + headerWidth / 2;
+
+        final titleBox = tester.renderObject(find.text(title)) as RenderBox;
+        final titleOffset = titleBox.localToGlobal(Offset.zero);
+        final titleCenterX = titleOffset.dx + titleBox.size.width / 2;
+
+        expect(
+          (titleCenterX - headerCenterX).abs(),
+          lessThan(10.0),
+          reason:
+              'Title center ($titleCenterX) should be within 10px of header '
+              'center ($headerCenterX) — two actions leave well over 120dp of '
+              'title, so centering must not be given up here.',
+        );
+      },
+    );
+
     // ── subtitleLeading tests (TDD: RED first) ─────────────────────────────────
 
     testWidgets('subtitleLeading renders alongside subtitle text', (
