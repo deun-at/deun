@@ -35,10 +35,40 @@
   - UI: removal affordance in the group edit member list showing the block reason (with the outstanding amount) or the soft-remove confirmation; EN + DE strings.
 - Blockers: —
 
+## Confirmed mechanism (2026-08-15)
+`update_group_member_shares` was recovered from the live instance and is now in
+`supabase/migrations/20260815000000_baseline_ledger_functions.sql`. It explains the corruption
+exactly, and the explanation is worse than "the roster is stale":
+
+- The **outer** query builds `group_shares_summary` from `group_member gm`, joining shares with
+  `ees.email = gm.email`. Delete a member's row and their pairwise entries vanish cleanly.
+- The **`total_share_amount` subquery never joins `group_member` at all.** It walks
+  `expense → expense_entry → expense_entry_share` filtered only by `group_id`, so a removed member's
+  surviving `expense_entry_share` rows keep counting toward every *remaining* member's net balance.
+
+The result: the removed person disappears from the per-counterparty rows that the group **detail**
+renders, while the group **list** — which reads `total_share_amount` — still carries their share.
+The two screens disagree permanently, and the phantom amount belongs to nobody, so no settle-up can
+ever clear it. That is the reported "balances get confused" and "breaks the group list for everyone",
+and it is a data-integrity bug affecting every member, not a display glitch.
+
+This raises the stakes on the acceptance criterion that balances be **identical** before and after a
+soft-remove: it is the criterion that proves the ghost shares are gone.
+
 ## Approach
-- The bug's root is that removal has no code path of its own: the group edit form treats `group_members` as a whole-list form value, and `saveAll` replays it, so dropping a chip from the list deletes the membership row while the member's `expense_entry_share` rows survive. Balances then come from a recalculation over a roster that no longer contains someone who still owes money. Fixing the symptom in the recalculation would be wrong — the fix is to give removal an explicit, guarded entry point and to stop `saveAll` from being able to remove anyone at all.
-- Prefer enforcing the block server-side as well as in the UI, since the same guard protects concurrent clients; the client-side check is for the message, not for correctness.
-- `pay_back` and `update_group_member_shares` are **not** in `supabase/migrations/` — they exist only in the live self-hosted DB. Recover the current definition of `update_group_member_shares` before assuming what it does with removed members; treat "it already handles this" as unverified.
+- Two independent defects have to be fixed together. The client-side one: removal has no code path of
+  its own, so dropping a chip from the form makes `saveAll` delete the membership row while the
+  `expense_entry_share` rows survive. The server-side one: even a *correct* removal would corrupt
+  balances, because the subquery above counts shares with no living member behind them. Fixing only
+  the entry point leaves the corruption reachable through any other path that deletes a member row.
+- Soft-remove is what makes the server side tractable: if the `group_member` row survives with a
+  `removed_at` stamp, the subquery keeps finding a member behind every share and the arithmetic stays
+  whole. Filtering removed members out of the summary is then a display concern, not a ledger one.
+- Existing groups may already carry ghost shares from removals performed before this fix. Decide at
+  pull time whether to detect and repair them — a one-off audit query — or to leave them; do not
+  assume the fix is retroactive, because it is not.
+- Prefer enforcing the block server-side as well as in the UI, since the same guard protects
+  concurrent clients; the client-side check is for the message, not for correctness.
 - Likely touchpoints: lib/pages/groups/data/group_repository.dart (saveAll legacy path, new removal path), lib/pages/groups/data/group_member_model.dart, lib/pages/groups/data/group_model.dart (select string, shares summary), lib/pages/groups/presentation/group_member_search.dart (candidate list), lib/pages/groups/presentation/group_detail_edit.dart (removal affordance), lib/pages/expenses/presentation/expense_detail.dart (pickers), supabase/migrations/ (new migration).
 - Depends: —
 - Parallel-with: group-member-add-flow

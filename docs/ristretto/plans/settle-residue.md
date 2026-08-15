@@ -42,20 +42,50 @@
   - The active/done group tabs also filter on a hardcoded ±0.01, but server-side in a PostgREST
     query, so it cannot share the client predicate directly. It must still agree with it; making
     them agree is in scope here even though the mechanism differs.
+  - Storing `expense_entry_share.percentage` as a **percentage** rather than an amount is the
+    architectural root: every share is a derived product that is never rounded and can never be made
+    to sum to the expense total (three shares of 33.33% of 10.00 do not make 10.00). Migrating to
+    stored minor-unit amounts is the real fix and is explicitly **out of scope** here -> it is a data
+    migration over every historical expense, and this bug does not need it. Fix the settlement
+    arithmetic now; revisit the representation if remainders reappear elsewhere.
 - Units:
   - Failing test: settle an unevenly divisible split and assert the resulting balance is exactly zero.
-  - Determine which side introduces the remainder — the client rounding the balance before it calls
-    `pay_back`, or `update_group_member_shares` redistributing the generated payback expense.
-  - Fix it at that source so the settled amount is the exact outstanding value.
+  - Make the settled amount the **exact** outstanding value rather than a client-rounded one, so the
+    payback cancels the balance it was derived from. Prefer computing it server-side from
+    `group_shares_summary` over passing a longer decimal from the client — the client cannot know the
+    unrounded figure it is trying to cancel.
+  - Make the client's two roundings consistent: per-counterparty `shareAmount` is rounded after each
+    accumulation while `totalShareAmount` is rounded once, so the pairwise rows and the group total
+    can disagree by a cent before any settlement happens.
   - Collapse the three epsilon constants into one predicate and align the server-side active/done
     filter with it.
   - Verify across default mode, simplified mode and `payBackAll`.
-- Blockers:
-  - If the remainder originates server-side, `pay_back`, `update_group_member_shares` and the
-    `group_shares_summary` rebuild are the code that has to change — and none of them is in this
-    repo. They exist only on the self-hosted instance at api.deun.app, which the Supabase MCP cannot
-    reach. **The user must supply those function definitions, or run a diagnostic query against a
-    reproducing group, before that half can be fixed.** The client-side half can proceed regardless.
+- Blockers: — *(cleared 2026-08-15: Jakob supplied both function definitions; they are now committed
+  as `supabase/migrations/20260815000000_baseline_ledger_functions.sql`. See the mechanism below.)*
+
+## Confirmed mechanism (2026-08-15)
+The hypothesis in unit two is confirmed by reading the recovered definitions — **the remainder is a
+rounding mismatch between the server and the client, not a bug on either side alone**:
+
+- `update_group_member_shares` computes every share as `ee.amount * (ees.percentage / 100)` with
+  **no rounding at any step**. Both `share_amount` (per counterparty pair) and `total_share_amount`
+  (the member's net across the group) are full-precision numerics.
+- `group_model.dart` then rounds those two quantities **differently**: the per-counterparty
+  `shareAmount` is `roundCurrency`'d after *each* accumulation (`group_model.dart:113`, `:130`),
+  while `totalShareAmount` rounds the server's already-summed net exactly once (`:95`).
+- Settle-up sends the *incrementally rounded pairwise* figure, and `pay_back` inserts that value
+  **verbatim** — it does no rounding either. The recomputation that follows subtracts a rounded
+  payback from an unrounded balance, and the difference surfaces as `total_share_amount`.
+
+So the residue is `(unrounded pairwise sum) − (incrementally rounded pairwise sum)`. It grows with
+the number of expenses and counterparties contributing error in the same direction, which is why it
+reaches a visible 0.01 in a real group but not in a two-person one-expense test. It also explains the
+reported workaround: hand-editing a cent off an expense changes the unrounded sum enough to bring the
+difference under the display threshold.
+
+This also means the three disagreeing epsilon constants are a **second, independent** defect — they
+make the same balance read settled on one screen and outstanding on another even when no remainder
+exists. Both are in scope; do not let fixing one mask the other.
 
 ## Approach
 Start by reproducing, not by patching. The client already rounds to cents at every accumulation step
