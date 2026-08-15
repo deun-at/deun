@@ -566,24 +566,6 @@ abstract class AppLocalizations {
   /// **'No results found'**
   String get expensesSearchEmpty;
 
-  /// No description provided for @createExpense.
-  ///
-  /// In en, this message translates to:
-  /// **'Create expense'**
-  String get createExpense;
-
-  /// No description provided for @editExpense.
-  ///
-  /// In en, this message translates to:
-  /// **'Edit expense'**
-  String get editExpense;
-
-  /// No description provided for @addExpenseTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Add title'**
-  String get addExpenseTitle;
-
   /// No description provided for @expenseName.
   ///
   /// In en, this message translates to:
@@ -595,18 +577,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Please enter a title!'**
   String get expenseNameValidationEmpty;
-
-  /// No description provided for @expenseAmount.
-  ///
-  /// In en, this message translates to:
-  /// **'Amount'**
-  String get expenseAmount;
-
-  /// No description provided for @expenseAmountValidationEmpty.
-  ///
-  /// In en, this message translates to:
-  /// **'Please enter an amount!'**
-  String get expenseAmountValidationEmpty;
 
   /// No description provided for @expenseDate.
   ///
@@ -631,12 +601,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Split {amount} each'**
   String expenseSplitEach(String amount);
-
-  /// No description provided for @expenseEntryTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Add item title'**
-  String get expenseEntryTitle;
 
   /// Placeholder in the inset description field of the expense editor item card.
   ///
@@ -716,6 +680,12 @@ abstract class AppLocalizations {
   /// **'Add & share for claiming'**
   String get expenseSaveAndShareForClaiming;
 
+  /// Itemized expense editor footer CTA when editing an existing shared expense. The create-mode sibling is expenseSaveAndShareForClaiming.
+  ///
+  /// In en, this message translates to:
+  /// **'Save & share for claiming'**
+  String get expenseSaveAndShareForClaimingEdit;
+
   /// No description provided for @expenseAddButton.
   ///
   /// In en, this message translates to:
@@ -740,12 +710,6 @@ abstract class AppLocalizations {
   /// **'Edit expense'**
   String get expenseDetailTitleEdit;
 
-  /// Label above the current user's net amount on the expense detail summary card.
-  ///
-  /// In en, this message translates to:
-  /// **'Your net'**
-  String get expenseYourNetLabel;
-
   /// Combined payer line on the expense detail summary card when the current user paid.
   ///
   /// In en, this message translates to:
@@ -769,18 +733,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'You owe {amount}'**
   String expenseYouOweAmount(String amount);
-
-  /// Pill label on the expense detail summary card when the user is owed for this expense.
-  ///
-  /// In en, this message translates to:
-  /// **'You lent'**
-  String get expenseYouLent;
-
-  /// Pill label on the expense detail summary card when the user owes for this expense.
-  ///
-  /// In en, this message translates to:
-  /// **'You owe'**
-  String get expenseYouOwe;
 
   /// Pill label on the expense detail summary card when the user's net for this expense is zero.
   ///
@@ -1052,12 +1004,6 @@ abstract class AppLocalizations {
   /// **'Please enter an item title!'**
   String get expenseEntryNameValidationEmpty;
 
-  /// No description provided for @expenseEntryAmount.
-  ///
-  /// In en, this message translates to:
-  /// **'Amount'**
-  String get expenseEntryAmount;
-
   /// No description provided for @expenseEntryAmountValidationEmpty.
   ///
   /// In en, this message translates to:
@@ -1075,12 +1021,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Amount can\'t be zero!'**
   String get expenseEntryAmountValidationNonZero;
-
-  /// No description provided for @expenseEntrySharesLable.
-  ///
-  /// In en, this message translates to:
-  /// **'Split between'**
-  String get expenseEntrySharesLable;
 
   /// No description provided for @expenseEntrySharesValidationEmpty.
   ///
@@ -1186,12 +1126,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'{paidByYourself, select, yes{You are owed} other{You owe}} {amount}'**
   String groupDisplaySumAmount(String paidByYourself, String amount);
-
-  /// Lable in the group list/group detail of what you spent
-  ///
-  /// In en, this message translates to:
-  /// **'Total expenses {amount}'**
-  String totalExpensesAmount(String amount);
 
   /// No description provided for @allDone.
   ///
@@ -2646,12 +2580,6 @@ abstract class AppLocalizations {
   /// **'Retake'**
   String get receiptScanRetake;
 
-  /// No description provided for @splitModeAmount.
-  ///
-  /// In en, this message translates to:
-  /// **'Amount'**
-  String get splitModeAmount;
-
   /// No description provided for @splitModeEqual.
   ///
   /// In en, this message translates to:
@@ -2711,12 +2639,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Split by shares'**
   String get splitBySharesLabel;
-
-  /// No description provided for @totalLabel.
-  ///
-  /// In en, this message translates to:
-  /// **'Total'**
-  String get totalLabel;
 
   /// No description provided for @splitPercentageError.
   ///

@@ -102,6 +102,12 @@ class _ExpenseDetailState extends ConsumerState<ExpenseDetail> {
     itemizedOverride: _itemizedOverride,
   );
 
+  /// True when the editor was opened on an existing expense. Mirrors
+  /// `group_detail_edit.dart`'s `_isEdit` — every mode-sensitive label on this
+  /// screen (header title, footer CTA) branches on it so an edit never reads
+  /// as an add.
+  bool get _isEdit => widget.expense != null;
+
   /// Whether the user has touched the form (drives the discard guard).
   bool _isDirty = false;
 
@@ -971,9 +977,9 @@ class _ExpenseDetailState extends ConsumerState<ExpenseDetail> {
             body: Column(
               children: [
                 DeunHeader(
-                  title: widget.expense == null
-                      ? l10n.expenseDetailTitleNew
-                      : l10n.expenseDetailTitleEdit,
+                  title: _isEdit
+                      ? l10n.expenseDetailTitleEdit
+                      : l10n.expenseDetailTitleNew,
                   leadingIcon: Icons.close,
                   trailing: headerTrailing,
                 ),
@@ -1199,8 +1205,8 @@ class _ExpenseDetailState extends ConsumerState<ExpenseDetail> {
                   ),
                 ),
                 // Save footer: pinned below the scrollable body on an opaque
-                // surface bar. Present in BOTH modes — Quick saves the expense
-                // ("Add expense"); Itemized shares the items for claiming (F118).
+                // surface bar. Present in BOTH modes — Quick saves the expense;
+                // Itemized shares the items for claiming (F118).
                 // Because it is a sibling of the Expanded list (not an overlay),
                 // it always reserves its own space, so scroll content is never
                 // hidden behind it.
@@ -1212,13 +1218,16 @@ class _ExpenseDetailState extends ConsumerState<ExpenseDetail> {
                       onPressed: _isSingleEntry
                           ? () => _saveExpense(context)
                           : () => _saveExpense(context, claimable: true),
-                      // F112: quick CTA reads "Add expense" (create + edit);
-                      // itemized shares the items for claiming.
+                      // expense-editor-edit-labels: the CTA is mode-aware in
+                      // BOTH axes. Quick/Itemized picks the action; new/edit
+                      // picks the verb — editing must never read "Add expense".
+                      // Edit reuses the shared `save` key, the same way
+                      // group_detail_edit.dart's sticky footer does.
                       label: _isSingleEntry
-                          ? AppLocalizations.of(context)!.expenseAddButton
-                          : AppLocalizations.of(
-                              context,
-                            )!.expenseSaveAndShareForClaiming,
+                          ? (_isEdit ? l10n.save : l10n.expenseAddButton)
+                          : (_isEdit
+                                ? l10n.expenseSaveAndShareForClaimingEdit
+                                : l10n.expenseSaveAndShareForClaiming),
                     ),
                   ),
                 ),
