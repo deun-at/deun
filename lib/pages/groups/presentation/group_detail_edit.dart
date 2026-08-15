@@ -101,7 +101,13 @@ class _GroupEditState extends ConsumerState<GroupEdit> {
                       Expanded(
                         child: FormBuilder(
                           key: _formKey,
-                          clearValueOnUnregister: true,
+                          // MUST stay false: fields live in a scrolling ListView,
+                          // so a field scrolled off-screen unregisters. With this
+                          // true, scrolling to the currency picker at the bottom
+                          // disposed the name field at the top and wiped its value,
+                          // saving name=null and corrupting the group. Retaining
+                          // values on unregister is the correct behaviour here.
+                          clearValueOnUnregister: false,
                           initialValue: widget.group?.toJson() ?? {},
                           child: ListView(
                             padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),

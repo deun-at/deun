@@ -46,7 +46,11 @@ class Group {
 
   void loadDataFromJson(Map<String, dynamic> json) {
     id = json["id"];
-    name = json["name"];
+    // Defensive: a partially-written row could carry a null name. Never let one
+    // bad row throw here — it would fail the whole list fetch (loadDataFromJson
+    // runs per group). Fall back to an empty name so the group still loads and
+    // can be renamed or deleted in-app.
+    name = json["name"] ?? '';
     colorValue = json["color_value"] ?? ColorSeed.baseColor.color.toARGB32();
     simplifiedExpenses = json["simplified_expenses"];
     createdAt = json["created_at"];
