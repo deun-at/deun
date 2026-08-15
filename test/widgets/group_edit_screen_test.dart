@@ -11,6 +11,7 @@ import 'package:deun/widgets/restyle/soft_card.dart';
 import 'package:deun/widgets/theme_builder.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_form_builder/flutter_form_builder.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -363,8 +364,8 @@ void main() {
   testWidgets('offers a currency picker; new group defaults to EUR', (
     tester,
   ) async {
-    // Tall viewport so the whole form (incl. the below-fold currency picker)
-    // builds without scrolling (the ListView builds children lazily).
+    // Tall viewport so the whole form is on screen at once (the form is
+    // built eagerly now, so this only avoids scrolling in the assertions).
     tester.view.physicalSize = const Size(800, 2400);
     tester.view.devicePixelRatio = 1.0;
     addTearDown(tester.view.resetPhysicalSize);
@@ -374,7 +375,7 @@ void main() {
 
     final l10n = await AppLocalizations.delegate.load(const Locale('en'));
 
-    // The picker and its section label are in the tree (findable off-screen).
+    // The picker and its section label are on screen.
     expect(find.text(l10n.groupCurrencyLabel), findsOneWidget);
     final picker = find.byType(DropdownButton<String>);
     expect(picker, findsOneWidget);
@@ -483,6 +484,253 @@ void main() {
         findsOneWidget,
         reason: 'added friend shows a check_circle remove action',
       );
+    },
+  );
+
+  // -------------------------------------------------------------------------
+  // group-form-field-structure: the form's fields live in a Column under one
+  // outer scroller, so scrolling can never unregister a field and wipe its
+  // value. Each test restates one acceptance criterion.
+  // -------------------------------------------------------------------------
+
+  /// Phone-sized viewport: the form is far taller than the viewport, so the
+  /// name field ends up well outside a lazy list's 250px cacheExtent when the
+  /// form is scrolled to the bottom. Shrink further if the scroll extent is
+  /// ever not enough to push the name field off screen.
+  void _useShortViewport(WidgetTester tester) {
+    tester.view.physicalSize = const Size(400, 400);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+  }
+
+  testWidgets(
+    'every form field renders in a single Column under the FormBuilder, wrapped by one outer scroller',
+    (tester) async {
+      _useShortViewport(tester);
+      await _pump(tester);
+
+      final l10n = await AppLocalizations.delegate.load(const Locale('en'));
+
+      // Exactly one scroller, and it WRAPS the form (rather than the form
+      // wrapping it).
+      expect(find.byType(ListView), findsOneWidget);
+      expect(
+        find.ancestor(
+          of: find.byType(FormBuilder),
+          matching: find.byType(ListView),
+        ),
+        findsOneWidget,
+      );
+      expect(
+        find.descendant(
+          of: find.byType(FormBuilder),
+          matching: find.byType(SliverList),
+        ),
+        findsNothing,
+        reason:
+            'no FormBuilder-owned field may sit inside a lazily-built sliver',
+      );
+
+      // The FormBuilder's child is the Column that holds every field.
+      final column =
+          tester.widget<FormBuilder>(find.byType(FormBuilder)).child as Column;
+      expect(column.mainAxisSize, MainAxisSize.min);
+      expect(
+        column.crossAxisAlignment,
+        CrossAxisAlignment.stretch,
+        reason:
+            'stretch reproduces the tight full-width constraint the fields had '
+            'as direct ListView children',
+      );
+
+      // All five fields are already built on a 400x400 viewport WITHOUT any
+      // scrolling — a lazy list would not have built the bottom ones.
+      expect(find.byType(TextFormField), findsOneWidget); // name
+      expect(
+        _swatchFinder(),
+        findsNWidgets(kGroupColorPalette.length),
+      ); // color_value
+      expect(
+        find.text(l10n.groupMemberSectionTitle),
+        findsOneWidget,
+      ); // group_members
+      expect(
+        find.text(l10n.groupTrackingModeSimplifiedTitle),
+        findsOneWidget,
+      ); // simplified_expenses
+      expect(
+        find.byType(DropdownButton<String>),
+        findsOneWidget,
+      ); // currency_code
+    },
+  );
+
+  testWidgets(
+    'clearValueOnUnregister matches the expense form (true), the false stopgap is gone',
+    (tester) async {
+      await _pump(tester);
+
+      expect(
+        tester
+            .widget<FormBuilder>(find.byType(FormBuilder))
+            .clearValueOnUnregister,
+        isTrue,
+      );
+    },
+  );
+
+  testWidgets(
+    'scrolling to the currency picker keeps the name field mounted and its value survives save (create)',
+    (tester) async {
+      _useShortViewport(tester);
+      await _pump(tester);
+
+      final l10n = await AppLocalizations.delegate.load(const Locale('en'));
+
+      // Type a group name at the top of the form.
+      final nameField = find.widgetWithText(TextFormField, l10n.groupNameHint);
+      await tester.enterText(nameField, 'Trip to Rome');
+      FocusManager.instance.primaryFocus?.unfocus();
+      await tester.pumpAndSettle();
+
+      // Scroll all the way down to the currency picker (a single over-long drag
+      // clamps at the max scroll extent).
+      await tester.drag(find.byType(ListView), const Offset(0, -2000));
+      await tester.pumpAndSettle();
+
+      expect(
+        find.byType(DropdownButton<String>).hitTestable(),
+        findsOneWidget,
+        reason: 'the currency picker at the bottom is on screen',
+      );
+
+      // The name field is scrolled out of the viewport but STILL MOUNTED, so it
+      // never unregistered.
+      expect(nameField, findsOneWidget);
+      expect(
+        tester.getRect(nameField).bottom,
+        lessThan(tester.getRect(find.byType(ListView)).top),
+        reason: 'the name field is above the scroller viewport, yet mounted',
+      );
+
+      // Saving from here (what _save does: saveAndValidate() then .value) keeps
+      // the name. This pair of expectations is only satisfiable with the Column
+      // restructure: with the old fields-as-ListView-children tree,
+      // clearValueOnUnregister: true drops name from FormBuilderState.value.
+      final form = tester.state<FormBuilderState>(find.byType(FormBuilder));
+      expect(form.saveAndValidate(), isTrue);
+      expect(form.value['name'], 'Trip to Rome');
+    },
+  );
+
+  testWidgets(
+    'scrolling to the bottom preserves every other field value too (edit)',
+    (tester) async {
+      _useShortViewport(tester);
+      final usd = _group(simplifiedExpenses: false)..currencyCode = 'USD';
+      await _pump(tester, group: usd);
+
+      await tester.drag(find.byType(ListView), const Offset(0, -2000));
+      await tester.pumpAndSettle();
+
+      final form = tester.state<FormBuilderState>(find.byType(FormBuilder));
+      expect(form.saveAndValidate(), isTrue);
+
+      // Every key GroupRepository.saveAll consumes survives the scroll.
+      expect(form.value['name'], 'Trip to Rome');
+      expect(form.value['color_value'], kGroupColorPalette.first.toARGB32());
+      expect(form.value['simplified_expenses'], isFalse);
+      expect(form.value['currency_code'], 'USD');
+      expect(form.value['group_members'] as String, contains('me@test.com'));
+    },
+  );
+
+  testWidgets(
+    'no layout regression: section order, full-width fields and sticky footer (create and edit)',
+    (tester) async {
+      tester.view.physicalSize = const Size(800, 2400);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+
+      final l10n = await AppLocalizations.delegate.load(const Locale('en'));
+
+      double dyOf(Finder finder) => tester.getTopLeft(finder).dy;
+
+      // Both flows are pumped in this single test (create, then edit). Avoid
+      // FriendshipListNotifier's real Supabase realtime subscription here: its
+      // retry backoff timer is not cancelled by disposeChannels() (a
+      // pre-existing gap, out of scope for this feature), and surviving across
+      // the create->edit remount trips flutter_test's "no pending timers"
+      // invariant. Neither flow's layout assertions depend on friend data.
+      final noRealtimeOverrides = [
+        friendshipListProvider.overrideWith(
+          () => _FakeFriendshipListNotifier(const []),
+        ),
+      ];
+
+      // --- create flow -----------------------------------------------------
+      await _pump(tester, overrides: noRealtimeOverrides);
+
+      // Content is full width: viewport 800 minus the list's 20+20 padding.
+      expect(tester.getSize(find.byType(FormBuilder)).width, 760);
+
+      // Section order, top to bottom.
+      expect(
+        dyOf(find.byType(TextFormField)),
+        lessThan(dyOf(find.text(l10n.groupColorLabel))),
+      );
+      expect(
+        dyOf(find.text(l10n.groupColorLabel)),
+        lessThan(dyOf(find.text(l10n.groupMemberSectionTitle))),
+      );
+      expect(
+        dyOf(find.text(l10n.groupMemberSectionTitle)),
+        lessThan(dyOf(find.text(l10n.groupTrackingModeTitle))),
+      );
+      expect(
+        dyOf(find.text(l10n.groupTrackingModeTitle)),
+        lessThan(dyOf(find.text(l10n.groupCurrencyLabel))),
+      );
+
+      // The sticky footer is OUTSIDE the scroller, below it.
+      expect(
+        find.descendant(
+          of: find.byType(ListView),
+          matching: find.byType(PrimaryButton),
+        ),
+        findsNothing,
+      );
+      expect(
+        tester.getRect(find.byType(PrimaryButton)).top,
+        greaterThanOrEqualTo(tester.getRect(find.byType(ListView)).bottom),
+      );
+      expect(find.text(l10n.createGroup), findsOneWidget);
+
+      // --- edit flow -------------------------------------------------------
+      await _pump(tester, group: _group(), overrides: noRealtimeOverrides);
+
+      expect(tester.getSize(find.byType(FormBuilder)).width, 760);
+
+      // Same order, with the edit-only actions block last.
+      expect(
+        dyOf(find.text(l10n.groupCurrencyLabel)),
+        lessThan(dyOf(find.text(l10n.groupInviteTitle))),
+      );
+      expect(
+        dyOf(find.text(l10n.groupInviteTitle)),
+        lessThan(dyOf(find.text(l10n.groupDeleteItemTitle))),
+      );
+      expect(
+        find.descendant(
+          of: find.byType(ListView),
+          matching: find.byType(PrimaryButton),
+        ),
+        findsNothing,
+      );
+      expect(find.text(l10n.save), findsOneWidget);
+      expect(tester.takeException(), isNull);
     },
   );
 }
