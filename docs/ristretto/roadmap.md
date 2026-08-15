@@ -1,5 +1,12 @@
 # Ristretto Roadmap
 
+> **Database changes are authored, never applied.** The Supabase instance is self-hosted and
+> unreachable from the build, so features write their migrations and defer application to
+> [MANUAL_OPS.md](MANUAL_OPS.md). Gates (`dart format`, `flutter analyze`, `flutter test`) touch no
+> database, so a DB-coupled feature still runs through green — but a criterion marked `[deferred]`
+> in its plan is **assumed, not tested**. Do not mark a row `done` while it has an open entry in
+> MANUAL_OPS.
+
 | Flight | Feature | Title | Status | Plan | Updated |
 |--------|---------|-------|--------|------|---------|
 | — | group-form-field-structure | Group edit form: fields in a Column, not a lazy ListView | planned | [plan](plans/group-form-field-structure.md) | 2026-07-12 |

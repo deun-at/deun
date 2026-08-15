@@ -8,13 +8,13 @@
 ## Contract
 - Acceptance:
   - Attempting to remove a member whose group balance magnitude is `>= 0.005` performs **no write** to `group_member` and surfaces a message naming the outstanding amount in the group's currency.
-  - Removing a member whose balance is settled (`< 0.005`) but who appears in at least one expense keeps **every** existing `expense_entry_share` row for them byte-identical, marks them removed, and leaves the group's per-member balance map identical before and after (asserted by comparing the full `groupSharesSummary` map).
-  - Removing a member with zero expense involvement deletes their `group_member` row outright — no tombstone left behind.
+  - **[deferred]** Removing a member whose balance is settled (`< 0.005`) but who appears in at least one expense keeps **every** existing `expense_entry_share` row for them byte-identical, marks them removed, and leaves the group's per-member balance map identical before and after (asserted by comparing the full `groupSharesSummary` map). *This is the criterion that proves the ghost shares are gone — it is the single most important thing to check once the migration is applied.*
+  - **[deferred]** Removing a member with zero expense involvement deletes their `group_member` row outright — no tombstone left behind.
   - A removed-with-history member does **not** appear in the new-expense "paid by" picker or the share/split pickers, but **does** still appear on their past expenses in the group ledger and in the group detail balance list.
   - Saving the group edit form no longer deletes `group_member` rows for members merely absent from the submitted `group_members` list; membership shrinks **only** through the explicit removal path.
-  - Re-adding a removed-with-history member clears their removed marker and restores them to all pickers, with their historical shares unchanged and not duplicated.
+  - **[deferred]** Re-adding a removed-with-history member clears their removed marker and restores them to all pickers, with their historical shares unchanged and not duplicated.
   - The removal-outcome decision is a pure function, unit-tested at the epsilon boundary: `0.004` settles, `0.005` blocks, and both signs of the balance block symmetrically.
-  - A member removal performed by one client is reflected on other clients' open group detail via the existing realtime path, with no stale roster.
+  - **[deferred]** A member removal performed by one client is reflected on other clients' open group detail via the existing realtime path, with no stale roster.
 - Provides:
   - `GroupMember.removedAt: DateTime?` and `GroupMember.isRemoved: bool`
   - `MemberRemovalOutcome` — one of `blocked(outstanding: double)` · `softRemoved` · `hardRemoved`
@@ -34,6 +34,13 @@
   - Read-path filtering: removed members excluded from expense paid-by/share pickers and from member search's "add" candidates, retained in ledger, group detail balances and past expenses.
   - UI: removal affordance in the group edit member list showing the block reason (with the outstanding amount) or the soft-remove confirmation; EN + DE strings.
 - Blockers: —
+- Deferred DB work: this feature runs through green without a database. Author the migration, write
+  the Dart against its post-migration shape, test with fakes, and append an entry to
+  [MANUAL_OPS.md](../MANUAL_OPS.md) rather than waiting. Two changes are deferred:
+  (1) `group_member.removed_at timestamptz null`; (2) `update_group_member_shares` — its
+  `total_share_amount` subquery must join `group_member` so shares belonging to a removed member stop
+  counting toward everyone else's balance. Criteria marked `[deferred]` above cannot be observed until
+  both are applied; every other criterion must genuinely pass.
 
 ## Confirmed mechanism (2026-08-15)
 `update_group_member_shares` was recovered from the live instance and is now in
