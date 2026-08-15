@@ -144,4 +144,11 @@ Review verdict:
 - Round 3 — escalated fix: extracted the pure `GroupJoinPlan`/`resolveGroupJoin` decision function so
   the guest merge is decided independently of the membership write. `review: clean`.
 
-status: code-complete
+- **Migration applied 2026-08-16** — `20260815010000_group_member_removal.sql` is live on the
+  self-hosted instance. The `[deferred]` criteria above (MANUAL_OPS verification steps 2 and 3 — the
+  semi-join keeping `total_share_amount` identical across a soft removal, and the hard delete for a
+  zero-involvement member) are now *reachable* but were not reported as walked, so they remain assumed
+  rather than observed. Step 6 in particular — a group save leaving membership and `is_favorite`
+  untouched — is the one non-deferred write-path criterion and has no unit coverage.
+
+status: done

@@ -27,14 +27,41 @@ Do not mark a roadmap row done on the strength of green gates alone when it has 
 
 | Feature | What to apply | How to verify | Status |
 |---------|---------------|---------------|--------|
-| group-member-removal | `supabase/migrations/20260815010000_group_member_removal.sql` — adds `group_member.removed_at`, fixes `update_group_member_shares`' `total_share_amount` counterparty semi-join, and stops `save_group_all` deleting members. Then recompute every group once: `select public.update_group_member_shares(g.id, null::uuid) from public."group" g;` | 1) `select removed_at from public.group_member limit 1;` succeeds. 2) In a group with expenses, note `groupSharesSummary` for every member, remove a settled member with history, and confirm the map is identical and the group list total is unchanged. 3) Remove a settled member with no expenses at all and confirm their `group_member` row is gone. 4) Re-add a removed member and confirm `removed_at` is null and their `expense_entry_share` rows are unchanged and not duplicated. 5) Open the group on a second client and confirm the roster updates without a manual refresh. 6) Edit a group without touching its members (e.g. rename it) and save, then confirm no `group_member` row disappeared and every member's `is_favorite` survived — this is the one non-deferred write-path criterion (`saveAll`/`save_group_all` no longer delete members merely absent from the submitted list) and it is only exercised end-to-end here, not by a unit test. | pending |
-| settle-residue | `supabase/migrations/20260815020000_settle_residue_exact_payback.sql` — adds `pay_back_exact`, which snaps the settled amount to the exact (unrounded) outstanding value and delegates the insert to `pay_back`. `pay_back` is unchanged. | 1) `select public.pay_back_exact(g.id, 'a@x', 'b@x', 0);` on a throwaway group succeeds (function exists), then delete the row it created. 2) In a group with one 10.00 expense split three ways, settle up as each debtor and confirm every member's `total_share_amount` is exactly `0`: `select paid_for, total_share_amount from group_shares_summary where group_id = '<id>';` — before this migration the payer is left at ~0.0067 and the group hero shows 0.01. 3) Confirm the group leaves the active tab and appears under done. 4) Enter a deliberate partial payment (e.g. 5.00 against a 12.00 debt) and confirm the inserted `expense_entry.amount` is exactly 5.00 — the snap must not touch a partial. 5) Repeat 2) in a simplified-expenses group, where the amount comes from the client's greedy assignment, and confirm the settling member's net is exactly `0`. 6) Confirm `payBackAll` from the friend sheet settles the pair's balance in every shared group to exactly `0` in one action — in a group with 3+ members the user's own net may still carry other members, so check the pair's balance, not the net. | pending |
+| — | *(queue empty)* | — | — |
 
 ## Applied
 
 | Feature | What was applied | Date |
 |---------|------------------|------|
 | — | `20260815000000_baseline_ledger_functions.sql` — baseline only, reproduces the functions already live, safe to skip | not required |
+| group-member-removal | `20260815010000_group_member_removal.sql` — `group_member.removed_at`, the `update_group_member_shares` counterparty semi-join fix, and `save_group_all` no longer deleting absent members. Applied by Jakob against the live instance. | 2026-08-16 |
+| settle-residue | `20260815020000_settle_residue_exact_payback.sql` — adds `pay_back_exact`; `pay_back` unchanged. Applied by Jakob against the live instance. | 2026-08-16 |
+| group-currency-persist | `20260816000000_group_currency_code_persist.sql` — `currency_code` added to `save_group_all`'s UPDATE SET and INSERT column list; no backfill. Applied by Jakob against the live instance. | 2026-08-16 |
+
+### Verification still outstanding
+
+Both migrations are **applied**, which is what unblocks the dependent features. The numbered
+verification steps that were recorded with them have **not been reported as run**, so the criteria
+marked `[deferred]` in the two archived plans remain *assumed*, not *observed*. Worth walking once
+against a real group before the branch ships:
+
+- **group-member-removal** — step 6 is the one **non-deferred** write-path criterion and has no unit
+  coverage: edit a group without touching its members (e.g. rename it), save, then confirm no
+  `group_member` row disappeared and every `is_favorite` survived. Also confirm a settled member with
+  history soft-removes with an identical `groupSharesSummary`, and one with no history is deleted
+  outright.
+- **settle-residue** — settle a 10.00 expense split three ways and confirm every member's
+  `total_share_amount` is exactly `0`, in both default and simplified groups; then confirm a partial
+  payment (5.00 against a 12.00 debt) still inserts exactly 5.00.
+- **group-currency-persist** — every criterion in that plan is `[deferred]`, because the feature is a
+  migration with no Dart and nothing a unit test can observe. The cheapest confirmation is to create
+  a group picking USD and check `select currency_code from public."group" where id = '<id>';` returns
+  `USD`; then confirm `select currency_code, count(*) from public."group" group by 1;` still shows the
+  110 pre-existing groups as EUR.
+
+**Deploy note:** until the branch ships, the live app still removes members by omission through
+`save_group_all`, which this migration made a no-op. Member removal from the group edit form will
+silently do nothing on the currently deployed build.
 
 ## Known deferred work by feature
 
