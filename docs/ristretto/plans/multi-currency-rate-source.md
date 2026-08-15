@@ -61,6 +61,12 @@
     date-change-only refetch.
   - Fallback UX for unavailable rates, plus a check that every supported currency resolves.
 - Blockers: —
+- Deferred DB work: needs an Edge Function deployed to the self-hosted instance, which updates by
+  force-recreate rather than in place. Write the function source into the repo and the client against
+  its contract, test the client against a faked response including the failure and offline paths,
+  mark anything requiring the deployed function `[deferred]`, and append to
+  [MANUAL_OPS.md](../MANUAL_OPS.md). A prefill that silently fails must degrade to manual entry —
+  that behaviour is testable without deploying anything, and is the one that matters most.
 
 ## Approach
 Small and self-contained compared to the rest of the flight, because everything it feeds already

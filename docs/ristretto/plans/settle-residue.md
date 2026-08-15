@@ -69,6 +69,13 @@
   - Verify across default mode, simplified mode and `payBackAll`.
 - Blockers: — *(cleared 2026-08-15: Jakob supplied both function definitions; they are now committed
   as `supabase/migrations/20260815000000_baseline_ledger_functions.sql`. See the mechanism below.)*
+- Deferred DB work: **split this feature's two halves rather than blocking on the second.** The
+  client half — collapsing the three disagreeing settled thresholds into one predicate, and making
+  the per-counterparty and group-total roundings consistent — needs no database and must genuinely
+  pass. The server half — deriving the settled amount from the exact outstanding value — changes
+  `pay_back` or adds a settle-in-full RPC; author that migration, mark its criteria `[deferred]`,
+  append an entry to [MANUAL_OPS.md](../MANUAL_OPS.md), and keep going. Do **not** report the
+  remainder bug fixed on green gates alone: the gates cannot observe it.
 
 ## Confirmed mechanism (2026-08-15)
 The hypothesis in unit two is confirmed by reading the recovered definitions — **the remainder is a

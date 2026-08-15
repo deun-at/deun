@@ -77,6 +77,11 @@
   - Sticky per-group rate prefill and reset.
   - Wire `canChangeGroupCurrency` to real expense currencies so the group picker locks correctly.
 - Blockers: —
+- Deferred DB work: needs new columns for the entry's original currency, the frozen rate and the
+  converted amount. Author the migration, write the model and editor against its post-migration
+  shape, test the conversion and freezing logic as pure functions with fixtures, mark the
+  persistence criteria `[deferred]`, and append to [MANUAL_OPS.md](../MANUAL_OPS.md). The rate maths
+  is the risky part and it is fully testable without a database — put the effort there.
 
 ## Approach
 The whole design rests on one property: the converted amount is computed in the form and written as
