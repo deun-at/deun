@@ -1,6 +1,7 @@
 import 'package:deun/helper/helper.dart';
 import 'package:deun/l10n/app_localizations.dart';
 import 'package:deun/main.dart';
+import 'package:deun/pages/expenses/data/expense_deletion_impact.dart';
 import 'package:deun/pages/expenses/data/expense_detail_view_model.dart';
 import 'package:deun/pages/expenses/data/expense_model.dart';
 import 'package:deun/pages/expenses/data/expense_repository.dart';
@@ -28,22 +29,40 @@ import 'package:go_router/go_router.dart';
 /// This is intentionally a SEPARATE widget from the editor
 /// (`expense_detail.dart`): tapping a quick expense in the ledger opens this
 /// read view, and Edit pushes the editor unchanged.
-class ExpenseDetailRead extends ConsumerWidget {
+class ExpenseDetailRead extends ConsumerStatefulWidget {
   const ExpenseDetailRead({
     super.key,
     required this.group,
     required this.expense,
+    this.loadGroupPaybacks,
   });
 
   final Group group;
   final Expense expense;
+
+  /// Test seam for the group's payback probe. Null in production →
+  /// [ExpenseRepository.fetchPaybackRows].
+  final GroupPaybackLoader? loadGroupPaybacks;
+
+  @override
+  ConsumerState<ExpenseDetailRead> createState() => _ExpenseDetailReadState();
+}
+
+class _ExpenseDetailReadState extends ConsumerState<ExpenseDetailRead> {
+  /// True while the delete guard's payback probe is in flight. A slow/hanging
+  /// fetch must not leave the delete action tappable — that would let a repeat
+  /// tap start a second probe and stack a second confirmation on top of the
+  /// first. The action shows progress and ignores taps for exactly this
+  /// window; once the confirmation sheet appears it is itself modal, so no
+  /// further guard is needed past this point.
+  bool _deleteProbeInFlight = false;
 
   String? get _currentUserEmail => supabase.auth.currentUser?.email;
 
   GroupMember? _findMember(String? email) {
     if (email == null) return null;
     try {
-      return group.groupMembers.firstWhere((m) => m.email == email);
+      return widget.group.groupMembers.firstWhere((m) => m.email == email);
     } catch (_) {
       return null;
     }
@@ -52,7 +71,7 @@ class ExpenseDetailRead extends ConsumerWidget {
   /// Members in display order: "you" first, then alphabetical — matching the
   /// editor's sort so the breakdown reads consistently.
   List<String> get _orderedMemberEmails {
-    final members = [...group.groupMembers]
+    final members = [...widget.group.groupMembers]
       ..sort((a, b) {
         if (a.email == _currentUserEmail) return -1;
         if (b.email == _currentUserEmail) return 1;
@@ -71,22 +90,36 @@ class ExpenseDetailRead extends ConsumerWidget {
   void _openEditor(BuildContext context) {
     GoRouter.of(context).push(
       '/group/details/expense',
-      extra: {'group': group, 'expense': expense},
+      extra: {'group': widget.group, 'expense': widget.expense},
     );
   }
 
   Future<void> _confirmDelete(BuildContext context) async {
+    if (_deleteProbeInFlight) return;
+
+    // Presentation-level guard: name what the delete will reopen BEFORE
+    // running it. Warn, then allow — a failed probe degrades to today's plain
+    // confirmation rather than blocking a delete.
+    setState(() => _deleteProbeInFlight = true);
+    final impact = await probeDeletionImpact(
+      widget.expense,
+      loader: widget.loadGroupPaybacks,
+    );
+    if (!mounted) return;
+    setState(() => _deleteProbeInFlight = false);
+    if (!context.mounted) return;
+
     final l10n = AppLocalizations.of(context)!;
     final confirmed = await showDeleteConfirmationSheet(
       context,
-      title: l10n.expenseDeleteItemTitle,
-      message: l10n.expenseDeleteItemMessage,
+      title: impact.confirmTitle(l10n),
+      message: impact.confirmMessage(l10n, widget.group.currencyCode),
       confirmLabel: l10n.delete,
       cancelLabel: l10n.cancel,
     );
     if (confirmed != true || !context.mounted) return;
     try {
-      await ExpenseRepository.delete(expense.id, expense.groupId);
+      await ExpenseRepository.delete(widget.expense.id, widget.expense.groupId);
       if (context.mounted) {
         showSnackBar(context, l10n.expenseDeleteSuccess);
       }
@@ -101,11 +134,11 @@ class ExpenseDetailRead extends ConsumerWidget {
   }
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
 
     return ThemeBuilder(
-      colorValue: group.colorValue,
+      colorValue: widget.group.colorValue,
       builder: (context) {
         return Scaffold(
           body: Column(
@@ -121,6 +154,7 @@ class ExpenseDetailRead extends ConsumerWidget {
                     icon: Icons.delete_outline,
                     tooltip: l10n.delete,
                     onTap: () => _confirmDelete(context),
+                    loading: _deleteProbeInFlight,
                     iconColor: Theme.of(
                       context,
                     ).extension<SemanticColors>()!.danger,
@@ -138,34 +172,37 @@ class ExpenseDetailRead extends ConsumerWidget {
                   padding: const EdgeInsets.fromLTRB(16, 12, 16, 40),
                   children: [
                     _SummaryCard(
-                      expense: expense,
+                      expense: widget.expense,
                       payerName: _displayName(
                         context,
-                        _findMember(expense.paidBy),
+                        _findMember(widget.expense.paidBy),
                       ),
-                      payerIsYou: expense.paidBy == _currentUserEmail,
+                      payerIsYou: widget.expense.paidBy == _currentUserEmail,
                       currentUserEmail: _currentUserEmail,
                     ),
                     // Only real claim expenses get the "Review & claim" banner. Old
                     // itemized expenses (manual splits, no claim units) would land on
                     // an empty claim screen, so they show just the breakdown below.
-                    if (expense.hasClaimUnits) ...[
+                    if (widget.expense.hasClaimUnits) ...[
                       const SizedBox(height: 16),
                       _ReviewClaimBanner(
                         onTap: () {
                           // → Tap-to-Claim screen (Screen 9).
                           GoRouter.of(context).push(
                             '/group/details/claim',
-                            extra: {'group': group, 'expense': expense},
+                            extra: {
+                              'group': widget.group,
+                              'expense': widget.expense,
+                            },
                           );
                         },
                       ),
                     ],
                     const SizedBox(height: 24),
-                    SectionLabel(breakdownHeading(expense, l10n)),
+                    SectionLabel(breakdownHeading(widget.expense, l10n)),
                     const SizedBox(height: 8),
                     _MemberBreakdown(
-                      expense: expense,
+                      expense: widget.expense,
                       memberEmails: _orderedMemberEmails,
                       memberFor: _findMember,
                       displayName: (m) => _displayName(context, m),

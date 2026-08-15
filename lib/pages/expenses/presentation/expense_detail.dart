@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:deun/helper/helper.dart';
 import 'package:deun/pages/groups/data/group_member_model.dart';
 import 'package:deun/widgets/restyle/deun_header.dart';
@@ -15,6 +17,7 @@ import 'expense_entry_widget.dart';
 import 'receipt_scanner_sheet.dart';
 import '../data/claimable_form.dart';
 import '../data/editor_mode.dart';
+import '../data/expense_deletion_impact.dart';
 import '../data/expense_entry_model.dart';
 import '../data/expense_model.dart';
 import '../data/expense_repository.dart';
@@ -58,11 +61,16 @@ class ExpenseDetail extends ConsumerStatefulWidget {
     required this.group,
     this.expense,
     this.receiptResult,
+    this.loadGroupPaybacks,
   });
 
   final Group group;
   final Expense? expense;
   final ReceiptScanResult? receiptResult;
+
+  /// Test seam for the group's payback probe. Null in production →
+  /// [ExpenseRepository.fetchPaybackRows].
+  final GroupPaybackLoader? loadGroupPaybacks;
 
   @override
   ConsumerState<ExpenseDetail> createState() => _ExpenseDetailState();
@@ -100,6 +108,14 @@ class _ExpenseDetailState extends ConsumerState<ExpenseDetail> {
   /// Set once a save succeeds (or the expense is deleted) so the post-action
   /// `Navigator.pop` is not intercepted by the dirty guard.
   bool _bypassDiscardGuard = false;
+
+  /// True while the delete guard's payback probe is in flight. A slow/hanging
+  /// fetch must not leave the header delete action tappable — a repeat tap
+  /// would start a second probe and, once both resolve, stack a second
+  /// `AlertDialog` on top of the first. The action shows progress and ignores
+  /// taps for exactly this window; once the dialog appears it is itself
+  /// modal, so no further guard is needed past this point.
+  bool _deleteProbeInFlight = false;
 
   ExpenseCategory? _detectedCategory;
 
@@ -253,51 +269,74 @@ class _ExpenseDetailState extends ConsumerState<ExpenseDetail> {
     }
   }
 
-  void openDeleteItemDialog(BuildContext modalContext, Expense expense) {
-    showDialog<void>(
-      context: context,
-      builder: (context) => AlertDialog(
-        content: Text(AppLocalizations.of(context)!.expenseDeleteItemTitle),
-        actions: <Widget>[
-          TextButton(
-            child: Text(AppLocalizations.of(context)!.cancel),
-            onPressed: () => Navigator.pop(context),
+  Future<void> openDeleteItemDialog(
+    BuildContext modalContext,
+    Expense expense,
+  ) async {
+    if (_deleteProbeInFlight) return;
+
+    // Presentation-level guard, same rule as the read view: warn, then allow.
+    // A failed probe degrades to today's plain prompt.
+    setState(() => _deleteProbeInFlight = true);
+    final impact = await probeDeletionImpact(
+      expense,
+      loader: widget.loadGroupPaybacks,
+    );
+    if (!mounted) return;
+    setState(() => _deleteProbeInFlight = false);
+
+    unawaited(
+      showDialog<void>(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: Text(impact.confirmTitle(AppLocalizations.of(context)!)),
+          content: Text(
+            impact.confirmMessage(
+              AppLocalizations.of(context)!,
+              widget.group.currencyCode,
+            ),
           ),
-          PrimaryButton(
-            compact: true,
-            background: Theme.of(context).colorScheme.error,
-            foreground: Theme.of(context).colorScheme.onError,
-            label: AppLocalizations.of(context)!.delete,
-            onPressed: () async {
-              try {
-                await ExpenseRepository.delete(
-                  widget.expense!.id,
-                  widget.expense!.groupId,
-                );
-                if (context.mounted) {
-                  showSnackBar(
-                    context,
-                    AppLocalizations.of(context)!.expenseDeleteSuccess,
+          actions: <Widget>[
+            TextButton(
+              child: Text(AppLocalizations.of(context)!.cancel),
+              onPressed: () => Navigator.pop(context),
+            ),
+            PrimaryButton(
+              compact: true,
+              background: Theme.of(context).colorScheme.error,
+              foreground: Theme.of(context).colorScheme.onError,
+              label: AppLocalizations.of(context)!.delete,
+              onPressed: () async {
+                try {
+                  await ExpenseRepository.delete(
+                    widget.expense!.id,
+                    widget.expense!.groupId,
                   );
+                  if (context.mounted) {
+                    showSnackBar(
+                      context,
+                      AppLocalizations.of(context)!.expenseDeleteSuccess,
+                    );
+                  }
+                } catch (e) {
+                  if (context.mounted) {
+                    showSnackBar(
+                      context,
+                      AppLocalizations.of(context)!.expenseDeleteError,
+                    );
+                  }
+                } finally {
+                  //pop both dialog and edit page, because this item is not existing anymore
+                  if (context.mounted) {
+                    _bypassDiscardGuard = true;
+                    Navigator.pop(context);
+                    Navigator.pop(modalContext);
+                  }
                 }
-              } catch (e) {
-                if (context.mounted) {
-                  showSnackBar(
-                    context,
-                    AppLocalizations.of(context)!.expenseDeleteError,
-                  );
-                }
-              } finally {
-                //pop both dialog and edit page, because this item is not existing anymore
-                if (context.mounted) {
-                  _bypassDiscardGuard = true;
-                  Navigator.pop(context);
-                  Navigator.pop(modalContext);
-                }
-              }
-            },
-          ),
-        ],
+              },
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -899,8 +938,19 @@ class _ExpenseDetailState extends ConsumerState<ExpenseDetail> {
         Widget? headerTrailing;
         if (widget.expense != null) {
           headerTrailing = IconButton(
-            onPressed: () => openDeleteItemDialog(context, widget.expense!),
-            icon: Icon(Icons.delete_outline, color: colorScheme.onSurface),
+            onPressed: _deleteProbeInFlight
+                ? null
+                : () => openDeleteItemDialog(context, widget.expense!),
+            icon: _deleteProbeInFlight
+                ? SizedBox(
+                    width: 16,
+                    height: 16,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: colorScheme.onSurface,
+                    ),
+                  )
+                : Icon(Icons.delete_outline, color: colorScheme.onSurface),
             iconSize: 22,
             constraints: const BoxConstraints(minWidth: 38, minHeight: 38),
             padding: EdgeInsets.zero,

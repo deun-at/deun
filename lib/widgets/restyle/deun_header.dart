@@ -217,6 +217,7 @@ class HeaderIconButton extends StatelessWidget {
     this.filled = false,
     this.tooltip,
     this.iconColor,
+    this.loading = false,
   });
 
   final IconData icon;
@@ -235,6 +236,12 @@ class HeaderIconButton extends StatelessWidget {
   /// sign-out action). Ignored for the [filled] variant. Pass a theme-resolved
   /// color (e.g. `SemanticColors.danger`) — never inline prototype hex.
   final Color? iconColor;
+
+  /// When true, shows a small spinner in place of [icon] and ignores taps.
+  /// For actions that start an async step (e.g. a network probe) before their
+  /// visible effect — so a slow response can't be tapped twice and stack a
+  /// second effect on top of the first.
+  final bool loading;
 
   @override
   Widget build(BuildContext context) {
@@ -272,7 +279,7 @@ class HeaderIconButton extends StatelessWidget {
     const double pad = (hitTarget - visibleSize) / 2;
 
     Widget button = InkWell(
-      onTap: onTap,
+      onTap: loading ? null : onTap,
       customBorder: const CircleBorder(),
       child: Padding(
         padding: const EdgeInsets.all(pad),
@@ -284,7 +291,18 @@ class HeaderIconButton extends StatelessWidget {
             shape: BoxShape.circle,
             boxShadow: shadows,
           ),
-          child: Icon(icon, size: 22, color: resolvedIconColor),
+          child: loading
+              ? Center(
+                  child: SizedBox(
+                    width: 16,
+                    height: 16,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: resolvedIconColor,
+                    ),
+                  ),
+                )
+              : Icon(icon, size: 22, color: resolvedIconColor),
         ),
       ),
     );

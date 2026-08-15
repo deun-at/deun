@@ -90,6 +90,17 @@ extension AppLocalizationsCurrency on AppLocalizations {
   ).format(amount);
 }
 
+/// Normalizes a raw `expense_date` string to local midnight, leniently:
+/// unparseable values fall back to epoch so grouping/comparison stays
+/// deterministic instead of throwing. Shared by the ledger's day grouping
+/// (`groupExpensesByDay`) and the delete guard's same-day check
+/// (`classifyExpenseDeletion`) so "same day" means the same thing in both.
+DateTime localDayOf(String raw) {
+  final parsed = DateTime.tryParse(raw);
+  final local = (parsed ?? DateTime.fromMillisecondsSinceEpoch(0)).toLocal();
+  return DateTime(local.year, local.month, local.day);
+}
+
 String toHumanDateString(String? dateTimeIn) {
   if (dateTimeIn == null) return '';
 

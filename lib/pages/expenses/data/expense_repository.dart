@@ -54,6 +54,33 @@ class ExpenseRepository {
     return retData;
   }
 
+  /// Every payback (settle-up) row of [groupId], newest date first
+  /// (`order()` defaults to descending). Order is incidental — the guard counts
+  /// rows rather than walking them in sequence.
+  ///
+  /// The delete guard needs the group's WHOLE settlement history: the ledger is
+  /// paginated (`ExpenseListNotifier.pageSize` 20), so classifying from the
+  /// loaded page would silently miss a settlement on an unloaded one. One row
+  /// per settle-up ever made in the group, on a trimmed select with no `group`
+  /// embed — the guard reads only `expense_date` and `is_paid_back_row`.
+  static Future<List<Expense>> fetchPaybackRows(String groupId) async {
+    final List<Map<String, dynamic>> data = await supabase
+        .from('expense')
+        .select(Expense.paybackSelectString)
+        .eq('group_id', groupId)
+        .eq('is_paid_back_row', true)
+        .order('expense_date');
+
+    final List<Expense> retData = List.empty(growable: true);
+    for (var element in data) {
+      Expense expense = Expense();
+      expense.loadDataFromJson(element);
+      retData.add(expense);
+    }
+
+    return retData;
+  }
+
   static Future<Expense> fetchDetail(String expenseId) async {
     Map<String, dynamic> data = await supabase
         .from('expense')

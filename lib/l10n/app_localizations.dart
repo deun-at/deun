@@ -1100,6 +1100,30 @@ abstract class AppLocalizations {
   /// **'This permanently removes the expense and updates everyone\'s balances. This can\'t be undone.'**
   String get expenseDeleteItemMessage;
 
+  /// Title of the delete confirmation shown for a payback (settle-up) row.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete this settlement?'**
+  String get expenseDeletePaybackTitle;
+
+  /// Body of the delete confirmation for a payback row: names the amount and the counterparty, and says the settled debt reopens.
+  ///
+  /// In en, this message translates to:
+  /// **'This removes the {amount} settlement with {counterparty}. The debt it settled will be open again.'**
+  String expenseDeletePaybackMessage(String amount, String counterparty);
+
+  /// Title of the delete confirmation for a normal expense that a settlement has already covered.
+  ///
+  /// In en, this message translates to:
+  /// **'Balances will shift'**
+  String get expenseDeleteSettledTitle;
+
+  /// Body of the delete confirmation for a normal expense covered by one or more settlements dated on or after it.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, one{A settlement has already happened since this expense. Deleting it shifts balances that were already settled.} other{{count} settlements have already happened since this expense. Deleting it shifts balances that were already settled.}}'**
+  String expenseDeleteSettledMessage(int count);
+
   /// No description provided for @expenseDeleteError.
   ///
   /// In en, this message translates to:
