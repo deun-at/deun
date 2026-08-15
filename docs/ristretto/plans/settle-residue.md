@@ -43,11 +43,18 @@
     query, so it cannot share the client predicate directly. It must still agree with it; making
     them agree is in scope here even though the mechanism differs.
   - Storing `expense_entry_share.percentage` as a **percentage** rather than an amount is the
-    architectural root: every share is a derived product that is never rounded and can never be made
-    to sum to the expense total (three shares of 33.33% of 10.00 do not make 10.00). Migrating to
-    stored minor-unit amounts is the real fix and is explicitly **out of scope** here -> it is a data
-    migration over every historical expense, and this bug does not need it. Fix the settlement
-    arithmetic now; revisit the representation if remainders reappear elsewhere.
+    architectural root — but not for the reason first assumed. Percentages are stored at full double
+    precision (`100 / shareData.length`, `expense_repository.dart:237`), so the stored split **does**
+    sum to the total. The problem is that each individual share is then a non-cent value (3.3333…),
+    while the UI shows and settles a cent-aligned one. The remainder-to-the-payer rounding is a
+    deliberate product decision (Jakob, 2026-08-15) that currently lives **only in the display
+    layer**, so the number a user settles is not the number the ledger holds.
+  - The fix that honours that decision is to push the cent assignment **down into stored amounts**
+    rather than keep it in the display -> then displayed, stored and settled values are one number.
+    That is a data migration over every historical expense and is **out of scope here**; this feature
+    makes the settlement arithmetic exact instead. Revisit the representation as its own feature —
+    see the note in [multi-currency-core](multi-currency-core.md), which already moves money handling
+    toward an explicit decimal-digit model.
 - Units:
   - Failing test: settle an unevenly divisible split and assert the resulting balance is exactly zero.
   - Make the settled amount the **exact** outstanding value rather than a client-rounded one, so the
