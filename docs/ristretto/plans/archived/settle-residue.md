@@ -212,4 +212,11 @@ Review verdict:
   a single block attached to the wrong member, leaving the public getter undocumented), fixed by
   splitting the comment across the two declarations. `review: clean`.
 
-status: code-complete
+- **Migration applied 2026-08-16** — `20260815020000_settle_residue_exact_payback.sql` is live on the
+  self-hosted instance, so the server half is no longer deferred by availability. The `[deferred]`
+  criteria above (MANUAL_OPS verification steps 2 and 5 — a multi-counterparty payer's net landing on
+  a hard zero) are now *reachable* but were not reported as walked, so they remain assumed rather than
+  observed. The client-side fallback in `GroupRepository.payBack` is now dead code on this instance and
+  can be removed whenever convenient.
+
+status: done
