@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:deun/helper/currency_breakdown.dart';
 import 'package:deun/helper/helper.dart';
 import 'package:deun/pages/groups/data/group_model.dart';
 import 'package:deun/pages/users/user_repository.dart';
@@ -690,6 +691,7 @@ class GroupRepository {
         PayBackAllTarget(
           groupId: group.id,
           groupName: group.name,
+          currency: group.currency,
           amount: amount,
           // fetchData already loaded the roster; no extra SELECT per group.
           members: group.groupMembers,
@@ -733,6 +735,10 @@ class GroupRepository {
     return PayBackAllResult(
       settledGroupNames: [for (final target in plan.settle) target.groupName],
       skippedGroupNames: plan.skipped,
+      settledAmounts: sumByCurrency([
+        for (final target in plan.settle)
+          CurrencyAmount(target.currency, target.amount.abs()),
+      ]),
     );
   }
 
@@ -760,12 +766,16 @@ class PayBackAllTarget {
   const PayBackAllTarget({
     required this.groupId,
     required this.groupName,
+    required this.currency,
     required this.amount,
     required this.members,
   });
 
   final String groupId;
   final String groupName;
+
+  /// The group's own currency — the one this per-group write settles in.
+  final Currency currency;
 
   /// The per-group amount, never the cross-group total.
   final double amount;
@@ -788,20 +798,22 @@ class PayBackAllPlan {
 
 /// What a [GroupRepository.payBackAll] run actually did.
 ///
-/// [skippedGroupNames] is the load-bearing half: the friend sheet settles a
-/// **cross-group** total, so a single group left unsettled means the "you paid
-/// back X" confirmation would be a lie. The names let the caller say which
-/// groups are still open instead. No amount is carried, deliberately: groups may
-/// use different currencies, and the friendship total is already a converted
-/// home-currency figure that a per-group sum could not reproduce.
+/// Each group is settled in ITS OWN currency, so what was paid is a list of
+/// per-currency totals, never one merged figure — the confirmation names them
+/// all. [skippedGroupNames] stays load-bearing: a single group left unsettled
+/// means a "you paid back X" confirmation would be a lie.
 class PayBackAllResult {
   const PayBackAllResult({
     required this.settledGroupNames,
     required this.skippedGroupNames,
+    this.settledAmounts = const [],
   });
 
   final List<String> settledGroupNames;
   final List<String> skippedGroupNames;
+
+  /// Total actually settled per currency, primary first. Positive magnitudes.
+  final List<CurrencyAmount> settledAmounts;
 
   /// True when every group that owed something was settled.
   bool get isComplete => skippedGroupNames.isEmpty;

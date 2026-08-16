@@ -1,3 +1,5 @@
+import 'package:deun/helper/currency_breakdown.dart';
+import 'package:deun/helper/helper.dart';
 import 'package:equatable/equatable.dart';
 
 enum StatsRange {
@@ -94,6 +96,7 @@ class PersonalGroupSummary extends Equatable {
   final String groupId;
   final String groupName;
   final int colorValue;
+  final Currency currency;
   final double totalPaid;
   final double totalShare;
   final int expenseCount;
@@ -102,6 +105,7 @@ class PersonalGroupSummary extends Equatable {
     required this.groupId,
     required this.groupName,
     required this.colorValue,
+    this.currency = Currency.eur,
     required this.totalPaid,
     required this.totalShare,
     required this.expenseCount,
@@ -112,6 +116,7 @@ class PersonalGroupSummary extends Equatable {
     groupId,
     groupName,
     colorValue,
+    currency,
     totalPaid,
     totalShare,
     expenseCount,
@@ -120,47 +125,63 @@ class PersonalGroupSummary extends Equatable {
 
 class PersonalStatisticsState extends Equatable {
   final List<PersonalGroupSummary> groups;
-  final List<MonthBucket> monthlyTotals;
-  final double totalPaid;
-  final double totalShare;
+
+  /// Month buckets per currency. A group in another currency contributes
+  /// nothing to a bucket rather than being converted or folded in.
+  final Map<Currency, List<MonthBucket>> monthlyTotalsByCurrency;
+
+  /// "You paid", per currency.
+  final Map<Currency, double> totalPaidByCurrency;
+
+  /// "Your share", per currency, primary-inline / remainder-collapsed. The
+  /// primary currency of this surface — the one the hero renders inline, the
+  /// chart defaults to and the axis is labelled with — is this breakdown's.
+  final CurrencyBreakdown shareByCurrency;
+
   final int expenseCount;
-
-  /// True when the [totalPaid] / [totalShare] hero figures were converted from
-  /// groups in other currencies into the home currency, so they are estimates
-  /// (mark "≈"). False when every group was already in the home currency.
-  final bool approximate;
-
-  /// Number of groups excluded from the hero totals because their currency had
-  /// no available conversion rate.
-  final int excludedCount;
 
   const PersonalStatisticsState({
     required this.groups,
-    required this.monthlyTotals,
-    required this.totalPaid,
-    required this.totalShare,
+    required this.monthlyTotalsByCurrency,
+    required this.totalPaidByCurrency,
+    required this.shareByCurrency,
     required this.expenseCount,
-    this.approximate = false,
-    this.excludedCount = 0,
   });
+
+  Currency get currency => shareByCurrency.primary.currency;
+  double get totalShare => shareByCurrency.primary.amount;
+  double get totalPaid => totalPaidByCurrency[currency] ?? 0;
+
+  List<MonthBucket> monthsFor(Currency c) =>
+      monthlyTotalsByCurrency[c] ?? const <MonthBucket>[];
+  List<MonthBucket> get monthlyTotals => monthsFor(currency);
+
+  /// Resolves the surface's view-state currency [selected] against THIS state.
+  ///
+  /// The selection is global across ranges, so a currency picked under one
+  /// range may have no buckets under another — and if that other range is
+  /// single-currency the selector is gone too, leaving no way back. Falling
+  /// back to the primary keeps the chart on screen and the selection honest.
+  Currency resolveCurrency(Currency? selected) =>
+      (selected != null && monthlyTotalsByCurrency.containsKey(selected))
+      ? selected
+      : currency;
 
   static const empty = PersonalStatisticsState(
     groups: [],
-    monthlyTotals: [],
-    totalPaid: 0,
-    totalShare: 0,
+    monthlyTotalsByCurrency: {},
+    totalPaidByCurrency: {},
+    shareByCurrency: CurrencyBreakdown.empty,
     expenseCount: 0,
   );
 
   @override
   List<Object?> get props => [
     groups,
-    monthlyTotals,
-    totalPaid,
-    totalShare,
+    monthlyTotalsByCurrency,
+    totalPaidByCurrency,
+    shareByCurrency,
     expenseCount,
-    approximate,
-    excludedCount,
   ];
 }
 

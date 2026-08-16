@@ -109,7 +109,6 @@ class _SettingState extends ConsumerState<Setting> {
     final l10n = AppLocalizations.of(context)!;
     final notificationsEnabled = ref.watch(notificationsEnabledProvider);
     final themeMode = ref.watch(themeModeProvider);
-    final homeCurrency = ref.watch(homeCurrencyProvider);
 
     final String appearanceLabel = switch (themeMode) {
       ThemeMode.system => l10n.settingsAppearanceSystem,
@@ -154,13 +153,6 @@ class _SettingState extends ConsumerState<Setting> {
             label: l10n.settingsAppearance,
             valueLabel: appearanceLabel,
             onTap: () => showAppearanceSheet(context),
-          ),
-          const _RowDivider(),
-          _SettingsRow(
-            icon: Icons.currency_exchange,
-            label: l10n.settingsHomeCurrency,
-            valueLabel: homeCurrency,
-            onTap: () => showHomeCurrencySheet(context),
           ),
           const _RowDivider(),
           _SettingsRow(

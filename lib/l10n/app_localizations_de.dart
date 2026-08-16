@@ -111,6 +111,42 @@ class AppLocalizationsDe extends AppLocalizations {
       'Das Ändern der Währung beschriftet bestehende Beträge neu. Werte werden nicht umgerechnet.';
 
   @override
+  String get groupCurrencyLockedNote =>
+      'Die Währung ist gesperrt: Ausgaben in dieser Gruppe wurden in mehr als einer Währung erfasst.';
+
+  @override
+  String currencyBreakdownMore(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '+$count weitere Währungen',
+      one: '+$count weitere Währung',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String currencyBreakdownSelect(int count) {
+    return 'Währung wechseln (+$count weitere)';
+  }
+
+  @override
+  String friendOtherCurrencies(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '+$count Währungen',
+      one: '+$count Währung',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String statisticsTrendCurrency(String code) {
+    return 'in $code';
+  }
+
+  @override
   String get groupMemberSectionTitle => 'Mitglieder';
 
   @override
@@ -1846,28 +1882,6 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get settingsLanguageSheetTitle => 'Sprache';
-
-  @override
-  String get settingsHomeCurrency => 'Heimatwährung';
-
-  @override
-  String get settingsHomeCurrencyInfo =>
-      'Gruppenübergreifende Salden und Statistiken werden zum aktuellen Kurs in diese Währung umgerechnet. Jede Gruppe behält ihre eigene Währung.';
-
-  @override
-  String get homeAggregateApproxNote =>
-      'Währungsübergreifende Summen sind ungefähre Werte.';
-
-  @override
-  String homeAggregateExcluded(int count) {
-    String _temp0 = intl.Intl.pluralLogic(
-      count,
-      locale: localeName,
-      other: '$count Gruppen ausgeschlossen (kein Kurs)',
-      one: '$count Gruppe ausgeschlossen (kein Kurs)',
-    );
-    return '$_temp0';
-  }
 
   @override
   String get settingsDeleteAccountTitle => 'Konto löschen?';

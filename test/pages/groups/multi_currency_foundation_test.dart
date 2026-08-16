@@ -78,7 +78,7 @@ void main() {
   group('curated currency list', () {
     test('offers at minimum EUR, USD, GBP, CHF', () {
       expect(
-        kSupportedCurrencyCodes,
+        kSupportedCurrencies.map((c) => c.code),
         containsAll(['EUR', 'USD', 'GBP', 'CHF']),
       );
     });

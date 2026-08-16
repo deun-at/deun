@@ -107,6 +107,30 @@
   "@groupCurrencyRelabelNote": {
     "description": "Note under the currency picker when editing a group, clarifying no conversion happens."
   },
+  "groupCurrencyLockedNote": "The currency is locked: expenses in this group were entered in more than one currency.",
+  "@groupCurrencyLockedNote": {
+    "description": "Note under a disabled group-currency picker explaining why it cannot be changed."
+  },
+  "currencyBreakdownMore": "{count, plural, one{+{count} more currency} other{+{count} more currencies}}",
+  "@currencyBreakdownMore": {
+    "description": "Disclosure label on a cross-group total, naming how many currencies are collapsed behind it.",
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "currencyBreakdownSelect": "Switch currency (+{count} more)",
+  "@currencyBreakdownSelect": {
+    "description": "Disclosure label when the breakdown doubles as the trend chart's currency switcher. It expands to every currency including the primary, so it names the action rather than counting the rows; {count} is still the number of currencies hidden inline.",
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "friendOtherCurrencies": "{count, plural, one{+{count} currency} other{+{count} currencies}}",
+  "@friendOtherCurrencies": {
+    "description": "Non-interactive marker on a friend list row: how many other currencies that friendship spans.",
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "statisticsTrendCurrency": "in {code}",
+  "@statisticsTrendCurrency": {
+    "description": "Axis label on the personal monthly-trend chart naming the currency it plots.",
+    "placeholders": { "code": { "type": "String", "example": "JPY" } }
+  },
   "groupMemberSectionTitle": "Members",
   "@groupMemberSectionTitle": {},
   "groupTrackingModeTitle": "Expense tracking",
@@ -1758,27 +1782,6 @@
   "settingsLanguageSheetTitle": "Language",
   "@settingsLanguageSheetTitle": {
     "description": "Title of the language picker bottom sheet."
-  },
-  "settingsHomeCurrency": "Home currency",
-  "@settingsHomeCurrency": {
-    "description": "Label for the home-currency row and the home-currency picker sheet title."
-  },
-  "settingsHomeCurrencyInfo": "Balances and statistics that span groups are converted into this currency at current rates. Each group still uses its own currency.",
-  "@settingsHomeCurrencyInfo": {
-    "description": "Info callout under the home-currency options explaining what the home currency does."
-  },
-  "homeAggregateApproxNote": "Cross-currency totals are approximate.",
-  "@homeAggregateApproxNote": {
-    "description": "Caption noting that converted cross-group totals are estimates."
-  },
-  "homeAggregateExcluded": "{count, plural, one{{count} group excluded (no rate)} other{{count} groups excluded (no rate)}}",
-  "@homeAggregateExcluded": {
-    "description": "Indicator that some groups were left out of a cross-group total because no conversion rate was available.",
-    "placeholders": {
-      "count": {
-        "type": "int"
-      }
-    }
   },
   "settingsDeleteAccountTitle": "Delete account?",
   "@settingsDeleteAccountTitle": {

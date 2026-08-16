@@ -1,5 +1,7 @@
 import 'dart:io';
 
+import 'package:deun/helper/currency_breakdown.dart';
+import 'package:deun/widgets/restyle/currency_breakdown_disclosure.dart';
 import 'package:deun/widgets/restyle/member_avatar.dart';
 import 'package:deun/widgets/restyle/money_text.dart';
 import 'package:deun/widgets/restyle/primary_button.dart';
@@ -160,14 +162,12 @@ class _GroupListState extends ConsumerState<GroupList> {
   Widget _buildList(List<Group> allGroups) {
     final l10n = AppLocalizations.of(context)!;
     final sorted = sortGroups(allGroups, isFavorite: (g) => g.isFavorite);
-    final homeCurrency = ref.watch(homeCurrencyProvider);
-    // While rates are still loading (or unavailable offline with no cache) this
-    // is null; the aggregation then falls back to home-currency groups only.
-    final rates = ref.watch(exchangeRatesProvider).value;
+    // Per-currency, never converted: the primary currency is rendered inline
+    // and the rest collapse behind the hero's disclosure.
+    final breakdown = balancesByCurrency(allGroups);
     final overall = aggregateOverallBalance(
       allGroups,
-      homeCurrency: homeCurrency,
-      rates: rates,
+      currency: breakdown.primary.currency,
     );
 
     // Non-animated prefix items (header, hero, section label) are excluded from
@@ -175,7 +175,7 @@ class _GroupListState extends ConsumerState<GroupList> {
     final List<Widget> prefixItems = [
       _GreetingHeader(),
       const SizedBox(height: 12),
-      _OverallBalanceHero(overall: overall, homeCurrency: homeCurrency),
+      _OverallBalanceHero(breakdown: breakdown, overall: overall),
       const SizedBox(height: 24),
       SectionLabel(
         l10n.homeYourGroups,
@@ -336,15 +336,13 @@ class _GreetingHeader extends ConsumerWidget {
 /// Dark "ink" hero summarizing the user's overall balance across groups:
 /// a big "you're owed / you owe €X" plus owed/owe stat chips.
 class _OverallBalanceHero extends StatelessWidget {
-  const _OverallBalanceHero({
-    required this.overall,
-    required this.homeCurrency,
-  });
+  const _OverallBalanceHero({required this.breakdown, required this.overall});
 
+  /// Net per currency, primary first — drives the disclosure.
+  final CurrencyBreakdown breakdown;
+
+  /// owed / owe / net in [breakdown]'s primary currency only.
   final OverallBalance overall;
-
-  /// The home currency all hero figures are expressed in.
-  final String homeCurrency;
 
   @override
   Widget build(BuildContext context) {
@@ -398,7 +396,7 @@ class _OverallBalanceHero extends StatelessWidget {
           const SizedBox(height: 6),
           if (settled)
             Text(
-              l10n.toCurrency(0, homeCurrency),
+              l10n.toCurrency(0, overall.currency.code),
               // Hero amount: big w700 Bricolage display tier (DESIGN_SPEC
               // "hero amount"). displayMedium (45px / w700 / -0.02em, tabular)
               // is the shared big-amount token — displaySmall (40px / w600) was
@@ -414,22 +412,12 @@ class _OverallBalanceHero extends StatelessWidget {
             MoneyText(
               net.abs(),
               currency: overall.currency,
-              approximate: overall.approximate,
               semantic: MoneySemantic.neutral,
               style: Theme.of(
                 context,
               ).textTheme.displayMedium?.copyWith(color: onHero),
               animate: true,
             ),
-          if (overall.excludedCount > 0) ...[
-            const SizedBox(height: 6),
-            Text(
-              l10n.homeAggregateExcluded(overall.excludedCount),
-              style: Theme.of(
-                context,
-              ).textTheme.labelSmall?.copyWith(color: onHeroMuted),
-            ),
-          ],
           const SizedBox(height: 18),
           Row(
             children: [
@@ -438,7 +426,6 @@ class _OverallBalanceHero extends StatelessWidget {
                   label: l10n.homeStatOwed,
                   amount: overall.owed,
                   currency: overall.currency,
-                  approximate: overall.approximate,
                   semantic: MoneySemantic.positive,
                   onHero: onHero,
                   onHeroMuted: onHeroMuted,
@@ -453,7 +440,6 @@ class _OverallBalanceHero extends StatelessWidget {
                   label: l10n.homeStatOwe,
                   amount: overall.owe,
                   currency: overall.currency,
-                  approximate: overall.approximate,
                   semantic: MoneySemantic.negative,
                   onHero: onHero,
                   onHeroMuted: onHeroMuted,
@@ -464,6 +450,17 @@ class _OverallBalanceHero extends StatelessWidget {
               ),
             ],
           ),
+          // Guarded, like the friend sheet and the personal hero: the spacer
+          // has to collapse with the disclosure, or an all-EUR hero grows 8px
+          // against "renders exactly as today". The widget also renders nothing
+          // when single-currency, so the two agree.
+          if (!breakdown.isSingleCurrency) ...[
+            const SizedBox(height: 8),
+            CurrencyBreakdownDisclosure(
+              breakdown: breakdown,
+              foreground: onHeroMuted,
+            ),
+          ],
         ],
       ),
     );
@@ -476,7 +473,6 @@ class _HeroStat extends StatelessWidget {
     required this.label,
     required this.amount,
     required this.currency,
-    required this.approximate,
     required this.semantic,
     required this.onHero,
     required this.onHeroMuted,
@@ -486,7 +482,6 @@ class _HeroStat extends StatelessWidget {
   final String label;
   final double amount;
   final Currency currency;
-  final bool approximate;
   final MoneySemantic semantic;
   final Color onHero;
   final Color onHeroMuted;
@@ -517,7 +512,6 @@ class _HeroStat extends StatelessWidget {
           MoneyText(
             amount,
             currency: currency,
-            approximate: approximate,
             semantic: semantic,
             style: textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
           ),

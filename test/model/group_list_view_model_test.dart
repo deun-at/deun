@@ -1,4 +1,5 @@
-import 'package:deun/helper/currency_conversion.dart';
+import 'package:deun/helper/currency_breakdown.dart';
+import 'package:deun/helper/helper.dart';
 import 'package:deun/pages/groups/data/group_model.dart';
 import 'package:deun/pages/groups/presentation/group_list_view_model.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -123,64 +124,100 @@ void main() {
     });
   });
 
-  group('aggregateOverallBalance home-currency conversion', () {
-    // 1 EUR = 1.10 USD.
-    const rates = ExchangeRates(base: 'EUR', rates: {'USD': 1.10});
-
+  group('balancesByCurrency', () {
     test(
-      '€10 in a EUR group + \$11 in a USD group is one home total, not 20',
+      'a EUR group and a JPY group produce a per-currency breakdown, not one merged number',
       () {
-        // Worked example from the plan: with 1 EUR = 1.10 USD, \$11 == €10, so
-        // the home (EUR) net is €20 — never a naive 10 + 11 = 21 or a raw 20.
         final groups = [
-          _group(id: 'a', name: 'A', totalShareAmount: 10, currencyCode: 'EUR'),
-          _group(id: 'b', name: 'B', totalShareAmount: 11, currencyCode: 'USD'),
+          _group(
+            id: 'a',
+            name: 'A',
+            totalShareAmount: 25.50,
+            currencyCode: 'EUR',
+          ),
+          _group(
+            id: 'b',
+            name: 'B',
+            totalShareAmount: 3000,
+            currencyCode: 'JPY',
+          ),
         ];
-        final agg = aggregateOverallBalance(
-          groups,
-          homeCurrency: 'EUR',
-          rates: rates,
-        );
-        expect(agg.owed, closeTo(20, 1e-9));
-        expect(agg.owe, 0);
-        expect(agg.approximate, isTrue);
-        expect(agg.excludedCount, 0);
+        final b = balancesByCurrency(groups);
+        expect(b.primary, const CurrencyAmount(Currency.jpy, 3000));
+        expect(b.others, const [CurrencyAmount(Currency.eur, 25.50)]);
+        expect(b.hiddenCount, 1);
       },
     );
 
-    test('all-home-currency groups are exact (no approximate marker)', () {
+    test(
+      'an all-EUR user gets a single-currency breakdown (no disclosure)',
+      () {
+        final groups = [
+          _group(id: 'a', name: 'A', totalShareAmount: 12.50),
+          _group(id: 'b', name: 'B', totalShareAmount: -4.25),
+        ];
+        expect(balancesByCurrency(groups).isSingleCurrency, isTrue);
+      },
+    );
+
+    test(
+      'settled groups are ignored, exactly as the converting fold ignored them',
+      () {
+        final groups = [
+          _group(
+            id: 'a',
+            name: 'A',
+            totalShareAmount: 0.004,
+            currencyCode: 'EUR',
+          ),
+          _group(
+            id: 'b',
+            name: 'B',
+            totalShareAmount: 0.4,
+            currencyCode: 'JPY',
+          ),
+        ];
+        expect(balancesByCurrency(groups).isSingleCurrency, isTrue);
+        expect(balancesByCurrency(groups).primary.amount, 0);
+      },
+    );
+  });
+
+  group('aggregateOverallBalance is single-currency', () {
+    test(
+      'groups in another currency contribute nothing rather than converting',
+      () {
+        final groups = [
+          _group(id: 'a', name: 'A', totalShareAmount: 10, currencyCode: 'EUR'),
+          _group(
+            id: 'b',
+            name: 'B',
+            totalShareAmount: 3000,
+            currencyCode: 'JPY',
+          ),
+        ];
+        final eur = aggregateOverallBalance(groups, currency: Currency.eur);
+        expect(eur.owed, 10);
+        expect(eur.owe, 0);
+        expect(eur.currency, Currency.eur);
+
+        final jpy = aggregateOverallBalance(groups, currency: Currency.jpy);
+        expect(jpy.owed, 3000);
+        expect(jpy.net, 3000);
+        expect(jpy.currency, Currency.jpy);
+      },
+    );
+
+    test('net rounds at the requested currency\'s precision', () {
       final groups = [
-        _group(id: 'a', name: 'A', totalShareAmount: 10, currencyCode: 'EUR'),
-        _group(id: 'b', name: 'B', totalShareAmount: -4, currencyCode: 'EUR'),
+        _group(
+          id: 'a',
+          name: 'A',
+          totalShareAmount: 1500.5,
+          currencyCode: 'JPY',
+        ),
       ];
-      final agg = aggregateOverallBalance(
-        groups,
-        homeCurrency: 'EUR',
-        rates: rates,
-      );
-      expect(agg.owed, 10);
-      expect(agg.owe, 4);
-      expect(agg.approximate, isFalse);
-      expect(agg.excludedCount, 0);
+      expect(aggregateOverallBalance(groups, currency: Currency.jpy).net, 1501);
     });
-
-    test(
-      'no rates: foreign groups excluded, home-currency groups still counted',
-      () {
-        final groups = [
-          _group(id: 'a', name: 'A', totalShareAmount: 10, currencyCode: 'EUR'),
-          _group(id: 'b', name: 'B', totalShareAmount: 11, currencyCode: 'USD'),
-        ];
-        final agg = aggregateOverallBalance(
-          groups,
-          homeCurrency: 'EUR',
-          rates: null,
-        );
-        expect(agg.owed, 10);
-        expect(agg.owe, 0);
-        expect(agg.approximate, isFalse);
-        expect(agg.excludedCount, 1);
-      },
-    );
   });
 }

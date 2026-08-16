@@ -111,6 +111,42 @@ class AppLocalizationsEn extends AppLocalizations {
       'Changing the currency relabels existing amounts. It does not convert values.';
 
   @override
+  String get groupCurrencyLockedNote =>
+      'The currency is locked: expenses in this group were entered in more than one currency.';
+
+  @override
+  String currencyBreakdownMore(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '+$count more currencies',
+      one: '+$count more currency',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String currencyBreakdownSelect(int count) {
+    return 'Switch currency (+$count more)';
+  }
+
+  @override
+  String friendOtherCurrencies(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '+$count currencies',
+      one: '+$count currency',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String statisticsTrendCurrency(String code) {
+    return 'in $code';
+  }
+
+  @override
   String get groupMemberSectionTitle => 'Members';
 
   @override
@@ -1812,28 +1848,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get settingsLanguageSheetTitle => 'Language';
-
-  @override
-  String get settingsHomeCurrency => 'Home currency';
-
-  @override
-  String get settingsHomeCurrencyInfo =>
-      'Balances and statistics that span groups are converted into this currency at current rates. Each group still uses its own currency.';
-
-  @override
-  String get homeAggregateApproxNote =>
-      'Cross-currency totals are approximate.';
-
-  @override
-  String homeAggregateExcluded(int count) {
-    String _temp0 = intl.Intl.pluralLogic(
-      count,
-      locale: localeName,
-      other: '$count groups excluded (no rate)',
-      one: '$count group excluded (no rate)',
-    );
-    return '$_temp0';
-  }
 
   @override
   String get settingsDeleteAccountTitle => 'Delete account?';

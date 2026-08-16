@@ -1,11 +1,12 @@
 import 'package:deun/constants.dart';
+import 'package:deun/helper/currency_breakdown.dart';
 import 'package:deun/helper/helper.dart';
 import 'package:deun/pages/friends/data/friendship_model.dart';
 import 'package:deun/pages/friends/data/friendship_repository.dart';
 import 'package:deun/pages/friends/presentation/friend_detail_view_model.dart';
 import 'package:deun/pages/groups/data/group_repository.dart';
 import 'package:deun/pages/users/user_model.dart';
-import 'package:deun/provider.dart';
+import 'package:deun/widgets/restyle/currency_breakdown_disclosure.dart';
 import 'package:deun/widgets/restyle/member_avatar.dart';
 import 'package:deun/widgets/restyle/primary_button.dart';
 import 'package:deun/widgets/restyle/money_text.dart';
@@ -52,12 +53,12 @@ class FriendDetailSheet extends ConsumerWidget {
     final colorScheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
     final user = friendship.user;
-    final homeCurrency = ref.watch(homeCurrencyProvider);
-    final home = Currency.fromCode(homeCurrency);
+    final currency = friendship.currency;
 
     // Negative share = the current user owes the friend → pay-back options.
     final bool owesFriend =
-        !isSettled(friendship.shareAmount, home) && friendship.shareAmount < 0;
+        !isSettled(friendship.shareAmount, currency) &&
+        friendship.shareAmount < 0;
     final methods = owesFriend
         ? friendPayBackMethods(user)
         : const <FriendPayBackMethod>[];
@@ -99,19 +100,25 @@ class FriendDetailSheet extends ConsumerWidget {
               const SizedBox(width: 8),
               MoneyText(
                 friendship.shareAmount,
-                currency: home,
-                approximate: friendship.approximate,
+                currency: currency,
                 semantic: MoneySemantic.auto,
                 style: textTheme.titleLarge,
               ),
             ],
           ),
+          if (!friendship.breakdown.isSingleCurrency) ...[
+            const SizedBox(height: 10),
+            CurrencyBreakdownDisclosure(
+              breakdown: friendship.breakdown,
+              foreground: colorScheme.onSurfaceVariant,
+            ),
+          ],
           if (owesFriend) ...[
             const SizedBox(height: 20),
             SectionLabel(
               l10n.payBackDialog(
                 user.displayName,
-                l10n.toCurrency(friendship.shareAmount.abs(), homeCurrency),
+                l10n.toCurrency(friendship.shareAmount.abs(), currency.code),
               ),
             ),
             const SizedBox(height: 10),
@@ -119,7 +126,7 @@ class FriendDetailSheet extends ConsumerWidget {
               _PayBackCard(
                 method: method,
                 friendship: friendship,
-                homeCurrency: homeCurrency,
+                currency: currency,
                 settleAll: settleAll,
               ),
               const SizedBox(height: 10),
@@ -139,15 +146,15 @@ class _PayBackCard extends StatelessWidget {
   const _PayBackCard({
     required this.method,
     required this.friendship,
-    required this.homeCurrency,
+    required this.currency,
     this.settleAll,
   });
 
   final FriendPayBackMethod method;
   final Friendship friendship;
 
-  /// Home currency the owed amount is expressed in.
-  final String homeCurrency;
+  /// The currency the owed amount is expressed in.
+  final Currency currency;
 
   final FriendSettleAll? settleAll;
 
@@ -220,7 +227,8 @@ class _PayBackCard extends StatelessWidget {
     final paypalMe = friendship.user.paypalMe;
     if (paypalMe == null || paypalMe.isEmpty) return;
     final paypalUri = Uri.parse(
-      'https://www.paypal.me/$paypalMe/${friendship.shareAmount.abs()}',
+      'https://www.paypal.me/$paypalMe/'
+      '${paypalMeAmountSegment(friendship.shareAmount.abs(), currency)}',
     );
     bool launched = false;
     try {
@@ -252,25 +260,42 @@ class _PayBackCard extends StatelessWidget {
   /// means part of that total is still outstanding. Confirming the full amount
   /// in that case would tell the user a debt was cleared when it was not, so the
   /// partial case names the groups it could not settle instead.
+  ///
+  /// A run can also write nothing while skipping nothing: the balance settled
+  /// concurrently, or every target rounded away in its own currency. That is
+  /// neither a success worth naming an amount for — there is none, and
+  /// `formatCurrencyAmounts` on an empty list yields a blank — nor a partial
+  /// settle, since no group was left behind. It reports "nothing to pay back".
   Future<void> _markPaid(BuildContext context) async {
     final l10n = AppLocalizations.of(context)!;
     final user = friendship.user;
     try {
       final settle = settleAll ?? GroupRepository.payBackAll;
       final result = await settle(context, user.email);
-      if (context.mounted) {
-        showSnackBar(
-          context,
-          result.isComplete
-              ? l10n.payBackSuccess(
-                  user.fullUsername,
-                  l10n.toCurrency(friendship.shareAmount.abs(), homeCurrency),
-                )
-              : l10n.payBackPartialSuccess(
-                  user.fullUsername,
-                  result.skippedGroupNames.join(', '),
-                ),
+      final String message;
+      if (result.settledAmounts.isEmpty) {
+        message = result.skippedGroupNames.isEmpty
+            ? l10n.payBackNoEntries
+            : l10n.payBackPartialSuccess(
+                user.fullUsername,
+                result.skippedGroupNames.join(', '),
+              );
+      } else if (result.isComplete) {
+        message = l10n.payBackSuccess(
+          user.fullUsername,
+          // Each group was settled in its own currency, so the confirmation
+          // names them all rather than one merged figure. A single-currency
+          // settle reads exactly as it did before.
+          formatCurrencyAmounts(result.settledAmounts, Locale(l10n.localeName)),
         );
+      } else {
+        message = l10n.payBackPartialSuccess(
+          user.fullUsername,
+          result.skippedGroupNames.join(', '),
+        );
+      }
+      if (context.mounted) {
+        showSnackBar(context, message);
       }
     } catch (e) {
       debugPrint(e.toString());

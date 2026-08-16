@@ -1,8 +1,8 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
-import '../../../helper/currency_conversion.dart';
+import '../../../helper/currency_breakdown.dart';
+import '../../../helper/helper.dart';
 import '../../../main.dart';
-import '../../../provider.dart';
 import '../../groups/provider/group_list.dart';
 import '../statistics_models.dart';
 
@@ -39,14 +39,20 @@ class PersonalStatisticsNotifier extends _$PersonalStatisticsNotifier {
             )
             as List<dynamic>;
 
-    // Aggregate by group and by month.
+    // The RPC already returns group_id per row and groups by group and month,
+    // so the per-currency fold is pure client-side work over rows that already
+    // carry the dimension. No RPC change, no migration.
+    final loadedGroups = await ref.watch(groupListProvider.future);
+    final currencyByGroup = {for (final g in loadedGroups) g.id: g.currency};
+
     final Map<String, _GroupAgg> byGroup = {};
-    final Map<DateTime, double> byMonth = {};
+    final Map<Currency, Map<DateTime, double>> byMonth = {};
     int expenseCount = 0;
 
     for (final raw in rows) {
       final row = raw as Map<String, dynamic>;
       final groupId = row['group_id'] as String;
+      final currency = currencyByGroup[groupId] ?? Currency.eur;
       final groupName = row['group_name'] as String? ?? '';
       final colorValue = (row['color_value'] as num?)?.toInt() ?? 0;
       final month = DateTime.parse(row['month'] as String);
@@ -55,7 +61,8 @@ class PersonalStatisticsNotifier extends _$PersonalStatisticsNotifier {
       final count = (row['expense_count'] as num?)?.toInt() ?? 0;
 
       final monthKey = DateTime(month.year, month.month, 1);
-      byMonth[monthKey] = (byMonth[monthKey] ?? 0) + share;
+      final months = byMonth.putIfAbsent(currency, () => <DateTime, double>{});
+      months[monthKey] = (months[monthKey] ?? 0) + share;
 
       final agg = byGroup.putIfAbsent(
         groupId,
@@ -63,6 +70,7 @@ class PersonalStatisticsNotifier extends _$PersonalStatisticsNotifier {
           groupId: groupId,
           groupName: groupName,
           colorValue: colorValue,
+          currency: currency,
         ),
       );
       agg.totalPaid += paid;
@@ -72,43 +80,16 @@ class PersonalStatisticsNotifier extends _$PersonalStatisticsNotifier {
       expenseCount += count;
     }
 
-    // The RPC returns per-group figures in each group's own currency. Convert
-    // every group's contribution into the home currency before summing the
-    // "Across all groups" hero figures, so mixed-currency spending aggregates
-    // into one home-currency total rather than a naive sum. The group currency
-    // comes from the loaded group list; groups missing there fall back to the
-    // home currency (no conversion). Per-group and monthly figures stay raw —
-    // they are read per group, not summed across currencies.
-    final homeCurrency = ref.watch(homeCurrencyProvider);
-    final rates = ref.watch(exchangeRatesProvider).value;
-    final loadedGroups = await ref.watch(groupListProvider.future);
-    final currencyByGroup = {
-      for (final g in loadedGroups) g.id: g.currencyCode,
-    };
-    final paidTotal = convertAndSum(
-      byGroup.values.map(
-        (a) => CurrencyAmount(
-          a.totalPaid,
-          currencyByGroup[a.groupId] ?? homeCurrency,
-        ),
-      ),
-      homeCurrency,
-      rates,
-    );
-    final shareTotal = convertAndSum(
-      byGroup.values.map(
-        (a) => CurrencyAmount(
-          a.totalShare,
-          currencyByGroup[a.groupId] ?? homeCurrency,
-        ),
-      ),
-      homeCurrency,
-      rates,
-    );
-    final totalPaid = paidTotal.amount;
-    final totalShare = shareTotal.amount;
-    final approximate = paidTotal.approximate || shareTotal.approximate;
-    final excludedCount = shareTotal.excludedCount;
+    final shareByCurrency = personalShareByCurrency([
+      for (final a in byGroup.values) CurrencyAmount(a.currency, a.totalShare),
+    ]);
+    final totalPaidByCurrency = <Currency, double>{};
+    for (final a in byGroup.values) {
+      totalPaidByCurrency[a.currency] = roundCurrency(
+        (totalPaidByCurrency[a.currency] ?? 0) + a.totalPaid,
+        a.currency,
+      );
+    }
 
     final groups =
         byGroup.values
@@ -117,6 +98,7 @@ class PersonalStatisticsNotifier extends _$PersonalStatisticsNotifier {
                 groupId: a.groupId,
                 groupName: a.groupName,
                 colorValue: a.colorValue,
+                currency: a.currency,
                 totalPaid: a.totalPaid,
                 totalShare: a.totalShare,
                 expenseCount: a.expenseCount,
@@ -125,20 +107,24 @@ class PersonalStatisticsNotifier extends _$PersonalStatisticsNotifier {
             .toList()
           ..sort((a, b) => b.totalShare.compareTo(a.totalShare));
 
-    final sortedMonths = byMonth.keys.toList()..sort();
-    final monthly = sortedMonths.map((m) {
-      final end = DateTime(m.year, m.month + 1, 1);
-      return MonthBucket(start: m, end: end, total: byMonth[m] ?? 0);
-    }).toList();
+    final monthlyTotalsByCurrency = <Currency, List<MonthBucket>>{
+      for (final entry in byMonth.entries)
+        entry.key: [
+          for (final m in entry.value.keys.toList()..sort())
+            MonthBucket(
+              start: m,
+              end: DateTime(m.year, m.month + 1, 1),
+              total: entry.value[m] ?? 0,
+            ),
+        ],
+    };
 
     return PersonalStatisticsState(
       groups: groups,
-      monthlyTotals: monthly,
-      totalPaid: totalPaid,
-      totalShare: totalShare,
+      monthlyTotalsByCurrency: monthlyTotalsByCurrency,
+      totalPaidByCurrency: totalPaidByCurrency,
+      shareByCurrency: shareByCurrency,
       expenseCount: expenseCount,
-      approximate: approximate,
-      excludedCount: excludedCount,
     );
   }
 
@@ -146,10 +132,23 @@ class PersonalStatisticsNotifier extends _$PersonalStatisticsNotifier {
       '${d.year.toString().padLeft(4, '0')}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
 }
 
+/// "Your share" per currency for the personal statistics surface, primary
+/// first — the breakdown the hero renders, the selector lists and the trend
+/// chart defaults to.
+///
+/// Spending, not a balance: unlike a balance fold this does NOT drop a currency
+/// whose net share rounds away. A group the user only ever paid for others in
+/// nets a ~0 share, and dropping it would take its "you paid" total and its
+/// whole trend series out of the selector with it — unreachable, with no way
+/// back. Pure.
+CurrencyBreakdown personalShareByCurrency(Iterable<CurrencyAmount> shares) =>
+    currencyBreakdownOf(shares, dropSettled: false);
+
 class _GroupAgg {
   final String groupId;
   final String groupName;
   final int colorValue;
+  final Currency currency;
   double totalPaid = 0;
   double totalShare = 0;
   int expenseCount = 0;
@@ -158,5 +157,18 @@ class _GroupAgg {
     required this.groupId,
     required this.groupName,
     required this.colorValue,
+    required this.currency,
   });
+}
+
+/// Which currency the personal statistics surface is showing. VIEW STATE, not a
+/// preference: it is derived from the same per-currency map the scalars use, so
+/// there is nothing to persist and no second source of truth. `null` means
+/// "follow the primary currency".
+@riverpod
+class PersonalStatsCurrencyNotifier extends _$PersonalStatsCurrencyNotifier {
+  @override
+  Currency? build() => null;
+
+  void select(Currency currency) => state = currency;
 }

@@ -296,6 +296,36 @@ abstract class AppLocalizations {
   /// **'Changing the currency relabels existing amounts. It does not convert values.'**
   String get groupCurrencyRelabelNote;
 
+  /// Note under a disabled group-currency picker explaining why it cannot be changed.
+  ///
+  /// In en, this message translates to:
+  /// **'The currency is locked: expenses in this group were entered in more than one currency.'**
+  String get groupCurrencyLockedNote;
+
+  /// Disclosure label on a cross-group total, naming how many currencies are collapsed behind it.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, one{+{count} more currency} other{+{count} more currencies}}'**
+  String currencyBreakdownMore(int count);
+
+  /// Disclosure label when the breakdown doubles as the trend chart's currency switcher. It expands to every currency including the primary, so it names the action rather than counting the rows; {count} is still the number of currencies hidden inline.
+  ///
+  /// In en, this message translates to:
+  /// **'Switch currency (+{count} more)'**
+  String currencyBreakdownSelect(int count);
+
+  /// Non-interactive marker on a friend list row: how many other currencies that friendship spans.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, one{+{count} currency} other{+{count} currencies}}'**
+  String friendOtherCurrencies(int count);
+
+  /// Axis label on the personal monthly-trend chart naming the currency it plots.
+  ///
+  /// In en, this message translates to:
+  /// **'in {code}'**
+  String statisticsTrendCurrency(String code);
+
   /// No description provided for @groupMemberSectionTitle.
   ///
   /// In en, this message translates to:
@@ -3188,30 +3218,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Language'**
   String get settingsLanguageSheetTitle;
-
-  /// Label for the home-currency row and the home-currency picker sheet title.
-  ///
-  /// In en, this message translates to:
-  /// **'Home currency'**
-  String get settingsHomeCurrency;
-
-  /// Info callout under the home-currency options explaining what the home currency does.
-  ///
-  /// In en, this message translates to:
-  /// **'Balances and statistics that span groups are converted into this currency at current rates. Each group still uses its own currency.'**
-  String get settingsHomeCurrencyInfo;
-
-  /// Caption noting that converted cross-group totals are estimates.
-  ///
-  /// In en, this message translates to:
-  /// **'Cross-currency totals are approximate.'**
-  String get homeAggregateApproxNote;
-
-  /// Indicator that some groups were left out of a cross-group total because no conversion rate was available.
-  ///
-  /// In en, this message translates to:
-  /// **'{count, plural, one{{count} group excluded (no rate)} other{{count} groups excluded (no rate)}}'**
-  String homeAggregateExcluded(int count);
 
   /// Title of the delete-account confirmation sheet.
   ///

@@ -1,4 +1,4 @@
-import 'package:deun/helper/currency_conversion.dart';
+import 'package:deun/helper/currency_breakdown.dart';
 import 'package:deun/helper/helper.dart';
 import 'package:deun/pages/friends/data/friendship_model.dart';
 import 'package:deun/pages/groups/data/group_repository.dart';
@@ -7,17 +7,11 @@ import 'package:deun/pages/users/user_model.dart';
 import '../../../main.dart';
 
 class FriendshipRepository {
-  /// Fetches accepted friendships with their net shared amount. Each friend's
-  /// amount is summed across mutual groups, converting every group's
-  /// contribution from its own currency into [homeCurrency] with [rates] so
-  /// mixed-currency shares aggregate into one home-currency figure rather than a
-  /// naive sum. Groups whose currency has no rate are excluded and counted.
-  static Future<List<Friendship>> fetchData({
-    String homeCurrency = kDefaultCurrencyCode,
-    ExchangeRates? rates,
-  }) async {
+  /// Fetches accepted friendships with their per-currency shared amounts. Each
+  /// mutual group contributes in ITS OWN currency; nothing is converted and
+  /// nothing is excluded for want of a rate.
+  static Future<List<Friendship>> fetchData() async {
     String currentEmail = supabase.auth.currentUser?.email ?? '';
-    final home = Currency.fromCode(homeCurrency);
 
     List<Map<String, dynamic>> data = await supabase
         .from('friendship')
@@ -38,37 +32,16 @@ class FriendshipRepository {
       if (seenEmails.contains(friendship.user.email)) continue;
       seenEmails.add(friendship.user.email);
 
-      friendship.shareAmount = 0;
-      friendship.approximate = false;
-      friendship.excludedCount = 0;
-
+      final contributions = <CurrencyAmount>[];
       for (var group in groupList) {
-        group.groupSharesSummary.forEach((key, groupShare) {
-          if (key == friendship.user.email) {
-            final converted = convertToHome(
-              groupShare.shareAmount,
-              group.currencyCode,
-              homeCurrency,
-              rates,
-            );
-            if (converted == null) {
-              friendship.excludedCount++;
-              return;
-            }
-            friendship.shareAmount = roundCurrency(
-              friendship.shareAmount + converted,
-              home,
-            );
-            if (group.currencyCode != homeCurrency) {
-              friendship.approximate = true;
-            }
-          }
-        });
+        final groupShare = group.groupSharesSummary[friendship.user.email];
+        if (groupShare == null) continue;
+        if (isSettled(groupShare.shareAmount, group.currency)) continue;
+        contributions.add(
+          CurrencyAmount(group.currency, groupShare.shareAmount),
+        );
       }
-
-      if (isSettled(friendship.shareAmount, home)) {
-        friendship.shareAmount = 0;
-      }
+      friendship.balances = contributions;
 
       retData.add(friendship);
     }

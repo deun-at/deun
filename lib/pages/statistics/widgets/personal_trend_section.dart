@@ -22,10 +22,14 @@ class PersonalTrendSection extends ConsumerWidget {
     final theme = Theme.of(context);
     final l10n = AppLocalizations.of(context)!;
 
-    final months = state.maybeWhen(
-      data: (s) => s.monthlyTotals,
-      orElse: () => const <MonthBucket>[],
-    );
+    final s = state.maybeWhen(data: (s) => s, orElse: () => null);
+    if (s == null) return const SizedBox.shrink();
+
+    // One currency at a time — unlike currencies cannot share a y-axis. The
+    // selection is view state; null, or a currency this range has no buckets
+    // for, follows the primary.
+    final plotted = s.resolveCurrency(ref.watch(personalStatsCurrencyProvider));
+    final months = s.monthsFor(plotted);
     if (months.isEmpty) return const SizedBox.shrink();
 
     return Padding(
@@ -43,15 +47,31 @@ class PersonalTrendSection extends ConsumerWidget {
                   gridData: const FlGridData(show: false),
                   borderData: FlBorderData(show: false),
                   titlesData: FlTitlesData(
-                    topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                    rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                    leftTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                    topTitles: const AxisTitles(
+                      sideTitles: SideTitles(showTitles: false),
+                    ),
+                    rightTitles: const AxisTitles(
+                      sideTitles: SideTitles(showTitles: false),
+                    ),
+                    leftTitles: AxisTitles(
+                      // The axis is labelled with the currency it plots, so a
+                      // bar is never read as the wrong money.
+                      axisNameSize: 20,
+                      axisNameWidget: Text(
+                        l10n.statisticsTrendCurrency(plotted.code),
+                        style: theme.textTheme.labelSmall?.copyWith(
+                          color: theme.colorScheme.onSurfaceVariant,
+                        ),
+                      ),
+                      sideTitles: const SideTitles(showTitles: false),
+                    ),
                     bottomTitles: AxisTitles(
                       sideTitles: SideTitles(
                         showTitles: true,
                         reservedSize: 26,
                         interval: 1,
-                        getTitlesWidget: (value, meta) => _bottomLabel(value, meta, months, theme),
+                        getTitlesWidget: (value, meta) =>
+                            _bottomLabel(value, meta, months, theme),
                       ),
                     ),
                   ),
@@ -84,7 +104,12 @@ class PersonalTrendSection extends ConsumerWidget {
   }
 }
 
-Widget _bottomLabel(double value, TitleMeta meta, List<MonthBucket> months, ThemeData theme) {
+Widget _bottomLabel(
+  double value,
+  TitleMeta meta,
+  List<MonthBucket> months,
+  ThemeData theme,
+) {
   final idx = value.toInt();
   if (idx < 0 || idx >= months.length) return const SizedBox.shrink();
   final step = labelStep(months.length);
@@ -95,7 +120,9 @@ Widget _bottomLabel(double value, TitleMeta meta, List<MonthBucket> months, Them
     child: Text(
       DateFormat('MMM').format(months[idx].start),
       style: theme.textTheme.labelSmall?.copyWith(
-        color: isLatest ? theme.colorScheme.onSurface : theme.colorScheme.onSurfaceVariant,
+        color: isLatest
+            ? theme.colorScheme.onSurface
+            : theme.colorScheme.onSurfaceVariant,
       ),
     ),
   );
