@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 
 import 'package:deun/constants.dart';
+import 'package:deun/helper/currency.dart';
 import 'package:deun/l10n/app_localizations.dart';
 import 'package:deun/pages/expenses/data/date_option.dart';
 import 'package:deun/pages/expenses/data/expense_category.dart';
+import 'package:deun/pages/expenses/data/keypad_amount.dart';
 import 'package:deun/pages/expenses/data/keypad_calculator.dart';
 import 'package:deun/pages/groups/data/group_member_model.dart';
 
@@ -312,19 +314,25 @@ class DateOptionsSheet extends StatelessWidget {
 Future<double?> showAmountKeypadSheet(
   BuildContext context, {
   required double initialAmount,
+  required Currency currency,
 }) {
   return _showSheet<double>(
     context,
-    AmountKeypadSheet(initialAmount: initialAmount),
+    AmountKeypadSheet(initialAmount: initialAmount, currency: currency),
   );
 }
 
 /// A numeric amount keypad (digits, decimal, backspace) with a live amount
 /// display. Confirm pops the entered value.
 class AmountKeypadSheet extends StatefulWidget {
-  const AmountKeypadSheet({super.key, required this.initialAmount});
+  const AmountKeypadSheet({
+    super.key,
+    required this.initialAmount,
+    required this.currency,
+  });
 
   final double initialAmount;
+  final Currency currency;
 
   @override
   State<AmountKeypadSheet> createState() => _AmountKeypadSheetState();
@@ -336,17 +344,19 @@ class _AmountKeypadSheetState extends State<AmountKeypadSheet> {
   @override
   void initState() {
     super.initState();
+    // The seed goes through the keypad's own formatter (KeypadAmount.format) so
+    // the sheet cannot disagree with the calculator about how a currency's
+    // digits are rendered: 42 -> "42", 12.5 -> "12.50", ¥3000 -> "3000".
     final seed = widget.initialAmount > 0
-        ? _trimAmount(widget.initialAmount)
+        ? KeypadAmount.format(
+            widget.initialAmount,
+            widget.currency.decimalDigits,
+          )
         : '0';
-    _calc = KeypadCalculator.fromText(seed);
-  }
-
-  /// Formats the seed value without forcing trailing zeros (e.g. 42 -> "42",
-  /// 12.5 -> "12.50") so the keypad display matches what the user expects.
-  String _trimAmount(double value) {
-    final fixed = value.toStringAsFixed(2);
-    return fixed.endsWith('.00') ? fixed.substring(0, fixed.length - 3) : fixed;
+    _calc = KeypadCalculator.fromText(
+      seed,
+      decimalDigits: widget.currency.decimalDigits,
+    );
   }
 
   void _onDigit(String digit) =>
@@ -396,6 +406,7 @@ class _AmountKeypadSheetState extends State<AmountKeypadSheet> {
             padding: const EdgeInsets.only(top: 2, bottom: 16),
             child: MoneyText(
               displayValue,
+              currency: widget.currency,
               style: textTheme.displayMedium?.copyWith(
                 color: hasError ? colorScheme.error : colorScheme.onSurface,
               ),

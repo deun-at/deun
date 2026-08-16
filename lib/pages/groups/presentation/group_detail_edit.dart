@@ -30,7 +30,11 @@ class GroupEdit extends ConsumerStatefulWidget {
   final Group? group;
 
   /// Test seam forwarded to [GroupMemberSearch]; null uses the real repository.
-  final Future<MemberRemovalOutcome> Function(String groupId, String email)?
+  final Future<MemberRemovalOutcome> Function(
+    String groupId,
+    String email, {
+    required Currency currency,
+  })?
   removeMemberOverride;
 
   /// Test seam for the whole write path: persists [formValue] and returns the
@@ -486,11 +490,11 @@ class _CurrencyField extends StatelessWidget {
                   isExpanded: true,
                   value: selected,
                   items: [
-                    for (final code in kSupportedCurrencyCodes)
+                    for (final c in kSupportedCurrencies)
                       DropdownMenuItem<String>(
-                        value: code,
+                        value: c.code,
                         child: Text(
-                          '$code · ${currencySymbolFor(l10n.localeName, code)}',
+                          '${c.code} · ${c.symbol}',
                           style: theme.textTheme.titleMedium,
                         ),
                       ),

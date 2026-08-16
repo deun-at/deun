@@ -1111,22 +1111,6 @@ abstract class AppLocalizations {
   /// **'You are not involved'**
   String get expenseNoShares;
 
-  /// Lable in the group list/group detail of what you are owed/what you owe per user.
-  ///
-  /// In en, this message translates to:
-  /// **'{paidByYourself, select, yes{{displayName} owes you} other{You owe {displayName}}} {amount}'**
-  String groupDisplayAmount(
-    String displayName,
-    String paidByYourself,
-    String amount,
-  );
-
-  /// Lable in the group list/group detail of what you are owed/what you owe as a sum.
-  ///
-  /// In en, this message translates to:
-  /// **'{paidByYourself, select, yes{You are owed} other{You owe}} {amount}'**
-  String groupDisplaySumAmount(String paidByYourself, String amount);
-
   /// No description provided for @allDone.
   ///
   /// In en, this message translates to:

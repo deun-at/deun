@@ -191,6 +191,7 @@ class _ClaimPageState extends ConsumerState<ClaimPage> {
               final summary = buildClaimSummary(
                 units: rows.map((r) => r.unit).toList(),
                 personaEmail: _persona,
+                currency: widget.group.currency,
               );
 
               return Column(
@@ -222,16 +223,19 @@ class _ClaimPageState extends ConsumerState<ClaimPage> {
                           summary: summary,
                           displayName: (e) => _displayName(context, e),
                           currentUserEmail: _currentUserEmail,
-                          currencyCode: widget.group.currencyCode,
+                          currency: widget.group.currency,
                         ),
                         if (!summary.isFullyClaimed &&
-                            summary.unclaimed > 0.005) ...[
+                            !isSettled(
+                              summary.unclaimed,
+                              widget.group.currency,
+                            )) ...[
                           const SizedBox(height: 16),
                           _UnclaimedCallout(
                             unclaimed: summary.unclaimed,
                             payerName: _payerName(context, expense),
                             onNudge: _nudge,
-                            currencyCode: widget.group.currencyCode,
+                            currency: widget.group.currency,
                           ),
                         ],
                         const SizedBox(height: 24),
@@ -255,7 +259,7 @@ class _ClaimPageState extends ConsumerState<ClaimPage> {
                           onTapUnit: _toggleUnit,
                           onSplitOne: _splitOne,
                           onApplySplit: _applySplit,
-                          currencyCode: widget.group.currencyCode,
+                          currency: widget.group.currency,
                         ),
                       ],
                     ),
@@ -500,13 +504,13 @@ class _SummaryCard extends StatelessWidget {
     required this.summary,
     required this.displayName,
     required this.currentUserEmail,
-    required this.currencyCode,
+    required this.currency,
   });
 
   final ClaimSummary summary;
   final String Function(String email) displayName;
   final String? currentUserEmail;
-  final String currencyCode;
+  final Currency currency;
 
   @override
   Widget build(BuildContext context) {
@@ -547,7 +551,7 @@ class _SummaryCard extends StatelessWidget {
                     const SizedBox(height: 6),
                     MoneyText(
                       summary.yourShare,
-                      currencyCode: currencyCode,
+                      currency: currency,
                       style: textTheme.displaySmall?.copyWith(color: onHero),
                       animate: true,
                     ),
@@ -589,8 +593,8 @@ class _SummaryCard extends StatelessWidget {
             children: [
               Text(
                 l10n.claimProgressLabel(
-                  l10n.toCurrency(summary.claimed, currencyCode),
-                  l10n.toCurrency(summary.total, currencyCode),
+                  l10n.toCurrency(summary.claimed, currency.code),
+                  l10n.toCurrency(summary.total, currency.code),
                 ),
                 style: textTheme.bodySmall?.copyWith(color: onHeroMuted),
               ),
@@ -601,7 +605,7 @@ class _SummaryCard extends StatelessWidget {
                 summary.isFullyClaimed
                     ? l10n.claimAllClaimed
                     : l10n.claimLeftLabel(
-                        l10n.toCurrency(summary.unclaimed, currencyCode),
+                        l10n.toCurrency(summary.unclaimed, currency.code),
                       ),
                 style: textTheme.bodySmall?.copyWith(
                   color: summary.isFullyClaimed
@@ -630,7 +634,7 @@ class _SummaryCard extends StatelessWidget {
                       amount: m.amount,
                       isYou: m.email == currentUserEmail,
                       onHero: onHero,
-                      currencyCode: currencyCode,
+                      currency: currency,
                     ),
                   ),
                   if (m != summary.memberTotals.last) const SizedBox(width: 6),
@@ -656,7 +660,7 @@ class _MemberTotalChip extends StatelessWidget {
     required this.amount,
     required this.isYou,
     required this.onHero,
-    required this.currencyCode,
+    required this.currency,
   });
 
   final String name;
@@ -664,7 +668,7 @@ class _MemberTotalChip extends StatelessWidget {
   final double amount;
   final bool isYou;
   final Color onHero;
-  final String currencyCode;
+  final Currency currency;
 
   @override
   Widget build(BuildContext context) {
@@ -693,7 +697,7 @@ class _MemberTotalChip extends StatelessWidget {
           const SizedBox(height: 5),
           MoneyText(
             amount,
-            currencyCode: currencyCode,
+            currency: currency,
             style: textTheme.bodySmall?.copyWith(
               color: onHero,
               fontWeight: FontWeight.w700,
@@ -743,7 +747,7 @@ class _ItemList extends StatelessWidget {
     required this.onTapUnit,
     required this.onSplitOne,
     required this.onApplySplit,
-    required this.currencyCode,
+    required this.currency,
   });
 
   final List<ClaimItemGroup> groups;
@@ -756,7 +760,7 @@ class _ItemList extends StatelessWidget {
   final ValueChanged<ClaimUnitRow> onTapUnit;
   final ValueChanged<ClaimItemGroup> onSplitOne;
   final void Function(String entryId, List<String> claimers) onApplySplit;
-  final String currencyCode;
+  final Currency currency;
 
   @override
   Widget build(BuildContext context) {
@@ -788,7 +792,7 @@ class _ItemList extends StatelessWidget {
             onTapUnit: onTapUnit,
             onSplitOne: () => onSplitOne(group),
             onApplySplit: onApplySplit,
-            currencyCode: currencyCode,
+            currency: currency,
           ),
           if (group != groups.last) const SizedBox(height: 10),
         ],
@@ -812,7 +816,7 @@ class _ItemCard extends StatelessWidget {
     required this.onTapUnit,
     required this.onSplitOne,
     required this.onApplySplit,
-    required this.currencyCode,
+    required this.currency,
   });
 
   final ClaimItemGroup group;
@@ -825,7 +829,7 @@ class _ItemCard extends StatelessWidget {
   final ValueChanged<ClaimUnitRow> onTapUnit;
   final VoidCallback onSplitOne;
   final void Function(String entryId, List<String> claimers) onApplySplit;
-  final String currencyCode;
+  final Currency currency;
 
   @override
   Widget build(BuildContext context) {
@@ -838,10 +842,13 @@ class _ItemCard extends StatelessWidget {
     final category = CategoryDetector.detectCategory(name);
     final categoryColor = category.getColor(context);
     final yourCost = persona.isEmpty ? 0.0 : group.costForPersona(persona);
-    final personaHoldsNone = yourCost <= 0.005;
+    // "Holds nothing" is the same settled decision the rest of the app makes,
+    // in this receipt's currency — a ¥0.3 cost renders as ¥0, so it must not
+    // light the card up as taken.
+    final personaHoldsNone = isSettled(yourCost, currency);
     // F163 taken-highlight: tint the whole card + add a faint primary border
     // when the persona holds any part of this item.
-    final taken = yourCost > 0.005;
+    final taken = !personaHoldsNone;
 
     // F163 inline editor: the expanded unit for this item (if any).
     ClaimUnitRow? expandedRow;
@@ -905,10 +912,10 @@ class _ItemCard extends StatelessWidget {
                     Text(
                       group.quantity > 1
                           ? l10n.claimEachOrdered(
-                              l10n.toCurrency(group.unitCost, currencyCode),
+                              l10n.toCurrency(group.unitCost, currency.code),
                               group.quantity,
                             )
-                          : l10n.toCurrency(group.unitCost, currencyCode),
+                          : l10n.toCurrency(group.unitCost, currency.code),
                       style: textTheme.bodySmall?.copyWith(
                         color: colorScheme.onSurfaceVariant,
                       ),
@@ -916,11 +923,11 @@ class _ItemCard extends StatelessWidget {
                   ],
                 ),
               ),
-              if (yourCost > 0.005) ...[
+              if (taken) ...[
                 const SizedBox(width: 8),
                 MoneyText(
                   yourCost,
-                  currencyCode: currencyCode,
+                  currency: currency,
                   style: textTheme.titleSmall?.copyWith(
                     color: colorScheme.primary,
                     fontWeight: FontWeight.w700,
@@ -943,7 +950,7 @@ class _ItemCard extends StatelessWidget {
                     currentUserEmail: currentUserEmail,
                     displayName: displayName,
                     onTap: () => onTapUnit(row),
-                    currencyCode: currencyCode,
+                    currency: currency,
                   )
                 else
                   _TakeOneChip(
@@ -966,7 +973,7 @@ class _ItemCard extends StatelessWidget {
                       unitCost: expandedRow.unit.unitCost,
                       members: members,
                       currentUserEmail: currentUserEmail,
-                      currencyCode: currencyCode,
+                      currency: currency,
                       // Seed with the unit's claimers; for a still-free unit
                       // (opened via "Split one") preselect the current persona,
                       // matching the old modal's behaviour.
@@ -1027,7 +1034,7 @@ class _ClaimedUnitChip extends StatelessWidget {
     required this.currentUserEmail,
     required this.displayName,
     required this.onTap,
-    required this.currencyCode,
+    required this.currency,
   });
 
   final ClaimUnitRow row;
@@ -1035,7 +1042,7 @@ class _ClaimedUnitChip extends StatelessWidget {
   final String? currentUserEmail;
   final String Function(String email) displayName;
   final VoidCallback onTap;
-  final String currencyCode;
+  final Currency currency;
 
   @override
   Widget build(BuildContext context) {
@@ -1064,7 +1071,7 @@ class _ClaimedUnitChip extends StatelessWidget {
         : colorScheme.outlineVariant;
     final label = chipState.splitCount > 1
         ? l10n.claimSplitLabel(
-            l10n.toCurrency(chipState.perUnitCost, currencyCode),
+            l10n.toCurrency(chipState.perUnitCost, currency.code),
           )
         : displayName(claimers.first);
 
@@ -1253,13 +1260,13 @@ class _UnclaimedCallout extends StatelessWidget {
     required this.unclaimed,
     required this.payerName,
     required this.onNudge,
-    required this.currencyCode,
+    required this.currency,
   });
 
   final double unclaimed;
   final String payerName;
   final VoidCallback onNudge;
-  final String currencyCode;
+  final Currency currency;
 
   @override
   Widget build(BuildContext context) {
@@ -1286,7 +1293,7 @@ class _UnclaimedCallout extends StatelessWidget {
               Expanded(
                 child: Text(
                   l10n.claimUnclaimedCallout(
-                    l10n.toCurrency(unclaimed, currencyCode),
+                    l10n.toCurrency(unclaimed, currency.code),
                     payerName,
                   ),
                   style: textTheme.bodyMedium?.copyWith(
@@ -1404,7 +1411,7 @@ class _SplitEditorCard extends StatefulWidget {
     required this.currentUserEmail,
     required this.initialClaimers,
     required this.onDone,
-    required this.currencyCode,
+    required this.currency,
   });
 
   final double unitCost;
@@ -1412,7 +1419,7 @@ class _SplitEditorCard extends StatefulWidget {
   final String? currentUserEmail;
   final Set<String> initialClaimers;
   final ValueChanged<List<String>> onDone;
-  final String currencyCode;
+  final Currency currency;
 
   @override
   State<_SplitEditorCard> createState() => _SplitEditorCardState();
@@ -1444,7 +1451,7 @@ class _SplitEditorCardState extends State<_SplitEditorCard> {
         children: [
           Text(
             l10n.claimSplitEditorTitle(
-              l10n.toCurrency(perPerson, widget.currencyCode),
+              l10n.toCurrency(perPerson, widget.currency.code),
             ),
             style: textTheme.labelMedium?.copyWith(
               color: colorScheme.onSurfaceVariant,

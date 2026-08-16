@@ -75,6 +75,7 @@ class PaymentPartition {
   static PaymentPartition fromSummary(
     Map<String, GroupSharesSummary> groupSharesSummary, {
     Set<String> removedEmails = const {},
+    required Currency currency,
   }) {
     final youPay = <PaymentEntry>[];
     final owesYou = <PaymentEntry>[];
@@ -82,7 +83,7 @@ class PaymentPartition {
 
     groupSharesSummary.forEach((email, summary) {
       // Settled balances are omitted from every bucket.
-      if (isSettled(summary.shareAmount)) return;
+      if (isSettled(summary.shareAmount, currency)) return;
       if (removedEmails.contains(email)) {
         stranded.add(PaymentEntry(email: email, summary: summary));
         return;

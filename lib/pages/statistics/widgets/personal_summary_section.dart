@@ -1,4 +1,5 @@
 import 'package:deun/constants.dart';
+import 'package:deun/helper/currency.dart';
 import 'package:deun/l10n/app_localizations.dart';
 import 'package:deun/pages/statistics/provider/personal_statistics_notifiers.dart';
 import 'package:deun/pages/statistics/statistics_models.dart';
@@ -90,7 +91,7 @@ class PersonalSummarySection extends ConsumerWidget {
                       onHeroMuted: onHeroMuted,
                       child: MoneyText(
                         s.totalPaid,
-                        currencyCode: homeCurrency,
+                        currency: Currency.fromCode(homeCurrency),
                         approximate: s.approximate,
                         style: theme.textTheme.headlineMedium?.copyWith(
                           fontWeight: FontWeight.w700,
@@ -106,7 +107,7 @@ class PersonalSummarySection extends ConsumerWidget {
                       onHeroMuted: onHeroMuted,
                       child: MoneyText(
                         s.totalShare,
-                        currencyCode: homeCurrency,
+                        currency: Currency.fromCode(homeCurrency),
                         approximate: s.approximate,
                         style: theme.textTheme.headlineMedium?.copyWith(
                           fontWeight: FontWeight.w700,

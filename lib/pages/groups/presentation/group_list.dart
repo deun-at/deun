@@ -362,7 +362,7 @@ class _OverallBalanceHero extends StatelessWidget {
     final Color onHeroMuted = onHero.withValues(alpha: 0.7);
 
     final net = overall.net;
-    final bool settled = isSettled(net);
+    final bool settled = isSettled(net, overall.currency);
 
     // Lead label only — the hero amount is now always white-on-ink (F90), so the
     // net sign drives just the wording, not a semantic color on the big number.
@@ -413,7 +413,7 @@ class _OverallBalanceHero extends StatelessWidget {
             // carry semantic green/red. semanticMode still drives the lead label.
             MoneyText(
               net.abs(),
-              currencyCode: homeCurrency,
+              currency: overall.currency,
               approximate: overall.approximate,
               semantic: MoneySemantic.neutral,
               style: Theme.of(
@@ -437,7 +437,7 @@ class _OverallBalanceHero extends StatelessWidget {
                 child: _HeroStat(
                   label: l10n.homeStatOwed,
                   amount: overall.owed,
-                  currencyCode: homeCurrency,
+                  currency: overall.currency,
                   approximate: overall.approximate,
                   semantic: MoneySemantic.positive,
                   onHero: onHero,
@@ -452,7 +452,7 @@ class _OverallBalanceHero extends StatelessWidget {
                 child: _HeroStat(
                   label: l10n.homeStatOwe,
                   amount: overall.owe,
-                  currencyCode: homeCurrency,
+                  currency: overall.currency,
                   approximate: overall.approximate,
                   semantic: MoneySemantic.negative,
                   onHero: onHero,
@@ -475,7 +475,7 @@ class _HeroStat extends StatelessWidget {
   const _HeroStat({
     required this.label,
     required this.amount,
-    required this.currencyCode,
+    required this.currency,
     required this.approximate,
     required this.semantic,
     required this.onHero,
@@ -485,7 +485,7 @@ class _HeroStat extends StatelessWidget {
 
   final String label;
   final double amount;
-  final String currencyCode;
+  final Currency currency;
   final bool approximate;
   final MoneySemantic semantic;
   final Color onHero;
@@ -516,7 +516,7 @@ class _HeroStat extends StatelessWidget {
           const SizedBox(height: 4),
           MoneyText(
             amount,
-            currencyCode: currencyCode,
+            currency: currency,
             approximate: approximate,
             semantic: semantic,
             style: textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),

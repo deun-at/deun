@@ -28,6 +28,10 @@ class Group {
   /// initialized (not `late`) so a Group built without JSON still formats.
   String currencyCode = kDefaultCurrencyCode;
 
+  /// The group's currency as a value object — the single conversion point from
+  /// the stored `currency_code` string to the type the money pipeline takes.
+  Currency get currency => Currency.fromCode(currencyCode);
+
   late List<GroupMember> groupMembers;
   late Map<String, GroupSharesSummary> groupSharesSummary;
   late double totalExpenses;
@@ -72,7 +76,7 @@ class Group {
   double? amountToSettleWith(String email) {
     final summary = groupSharesSummary[email];
     if (summary == null) return null;
-    if (isSettled(summary.shareAmount)) return null;
+    if (isSettled(summary.shareAmount, currency)) return null;
     if (summary.shareAmount > 0) return null;
     return summary.shareAmount.abs();
   }
@@ -129,6 +133,7 @@ class Group {
           );
           totalShareAmount = roundCurrency(
             double.parse((element['total_share_amount'] ?? 0).toString()),
+            currency,
           );
         }
 
@@ -174,9 +179,9 @@ class Group {
       // nets 3.3333… surfaced as 3.34 on the pairwise row while the group hero
       // showed 3.33. Settling 3.34 then left -0.0067 behind, which is the 0.01
       // "owes you" the user reported on 2026-08-11.
-      totalExpenses = roundCurrency(totalExpenses);
+      totalExpenses = roundCurrency(totalExpenses, currency);
       for (final summary in groupSharesSummary.values) {
-        summary.shareAmount = roundCurrency(summary.shareAmount);
+        summary.shareAmount = roundCurrency(summary.shareAmount, currency);
       }
     }
   }
@@ -199,6 +204,7 @@ class Group {
           );
           totalShareAmount = roundCurrency(
             double.parse((element['total_share_amount'] ?? 0).toString()),
+            currency,
           );
         }
 
@@ -207,6 +213,7 @@ class Group {
           // values and its == 0 termination checks are reliable.
           simplifiedExpenseArray[element["paid_for"]] = roundCurrency(
             double.parse((element['total_share_amount'] ?? 0).toString()),
+            currency,
           );
         }
 
@@ -227,7 +234,7 @@ class Group {
         }
       }
 
-      totalExpenses = roundCurrency(totalExpenses);
+      totalExpenses = roundCurrency(totalExpenses, currency);
 
       simplifiedExpenseArray = Map.fromEntries(
         simplifiedExpenseArray.entries.toList()
@@ -255,6 +262,7 @@ class Group {
             simplifiedExpenseArray[firstEntry.key] = 0;
             simplifiedExpenseArray[lastEntry.key] = roundCurrency(
               lastEntry.value.abs() - firstEntry.value.abs(),
+              currency,
             );
           } else {
             if (firstEntry.key == currentUserEmail) {
@@ -265,6 +273,7 @@ class Group {
 
             simplifiedExpenseArray[firstEntry.key] = roundCurrency(
               lastEntry.value.abs() - firstEntry.value.abs(),
+              currency,
             );
             simplifiedExpenseArray[lastEntry.key] = 0;
           }

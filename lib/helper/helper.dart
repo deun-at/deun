@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:deun/main.dart';
 import 'package:deun/pages/expenses/data/expense_model.dart';
 import 'package:deun/pages/groups/data/group_model.dart';
@@ -7,6 +9,9 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:deun/l10n/app_localizations.dart';
+
+import 'currency.dart';
+export 'currency.dart';
 
 /// True when an RPC failed because the function doesn't exist on the server
 /// yet (older database without the atomic save migrations applied).
@@ -27,60 +32,53 @@ String fullUsernameFromJson(Map<String, dynamic> json) {
 String sanitizeFilterValue(String value) =>
     value.replaceAll(RegExp(r'[%,()\\]'), '');
 
-/// Round a currency value to 2 decimal places to prevent floating-point drift.
+/// Rounds [value] to [currency]'s minor unit, to prevent floating-point drift.
 /// Use at every arithmetic boundary where money is computed.
-double roundCurrency(double value) => (value * 100).roundToDouble() / 100;
+///
+/// The [Currency] is required on purpose: a compile error at every call site is
+/// the cheapest way to guarantee none keeps the old hardcoded 2 decimals.
+double roundCurrency(double value, Currency currency) {
+  final factor = math.pow(10, currency.decimalDigits).toDouble();
+  return (value * factor).roundToDouble() / factor;
+}
 
-/// Half a cent: the magnitude at which a balance stops being settled. Below it a
-/// balance rounds to `0.00` at two decimals, so "settled" means exactly "renders
-/// as zero" — never a wider window that hides a real cent.
+/// EUR's half-minor-unit, and the SMALLEST settled epsilon in
+/// [kSupportedCurrencies]. Kept as a top-level constant for the server-side
+/// predicates that cannot take a [Currency]: `GroupRepository.fetchData` filters
+/// `total_share_amount` on a referenced table for groups of mixed currencies, so
+/// no single currency is knowable inside the query. Those predicates bracket
+/// with this and [kMaxSettledEpsilon] to return a SUPERSET, and
+/// `GroupRepository.narrowToStatus` then applies [isSettled] per row. It must
+/// stay equal to `Currency.eur.settledEpsilon`; `helper_test.dart` pins that.
 const double kSettledEpsilon = 0.005;
 
-/// Whether [amount] counts as a settled balance. THE settled/outstanding
-/// decision in the app: the payment screen, the group-detail hero, the group-list
-/// hero, the group cards, the friend list and the member-removal guard all route
-/// through this one predicate, so a balance can never read settled on one screen
-/// and outstanding on another.
-///
-/// The active/done group tabs filter server-side in a PostgREST query and cannot
-/// call this — `GroupRepository.activeBalanceFilter` builds the same threshold
-/// from [kSettledEpsilon] instead.
-///
-/// `multi-currency-core` widens this to `isSettled(double amount, Currency
-/// currency)` (true below half a minor unit). Keep every call site here so that
-/// stays a signature change and not a second sweep.
-bool isSettled(double amount) => amount.abs() < kSettledEpsilon;
+/// The LARGEST settled epsilon in [kSupportedCurrencies] — half a unit of the
+/// 0-decimal currencies (JPY/ISK/KRW), i.e. 0.5. The counterpart bound to
+/// [kSettledEpsilon]: a server-side "settled" predicate must use this wider
+/// value so a ¥0.3 balance (which renders as ¥0) is not excluded from the
+/// settled side before the client can judge it in its own currency.
+final double kMaxSettledEpsilon = kSupportedCurrencies
+    .map((c) => c.settledEpsilon)
+    .reduce(math.max);
+
+/// Whether [amount] counts as a settled balance in [currency]: true below half
+/// a minor unit, i.e. exactly when the amount renders as zero at that
+/// currency's precision. THE settled/outstanding decision in the app — the
+/// payment screen, the group-detail hero, the group-list hero, the group cards,
+/// the friend list and the member-removal guard all route through here, so a
+/// balance can never read settled on one screen and outstanding on another.
+bool isSettled(double amount, Currency currency) =>
+    amount.abs() < currency.settledEpsilon;
 
 /// App-wide default group currency (ISO 4217). New groups default to this and
 /// any amount rendered without an explicit group currency falls back to it.
 const String kDefaultCurrencyCode = 'EUR';
 
-/// Currencies offered in the group currency picker. Every entry is an ISO 4217
-/// code `intl` can format with a locale-aware symbol.
-const List<String> kSupportedCurrencyCodes = [
-  'EUR',
-  'USD',
-  'GBP',
-  'CHF',
-  'JPY',
-  'CAD',
-  'AUD',
-  'NZD',
-  'CNY',
-  'SEK',
-  'NOK',
-  'DKK',
-  'PLN',
-  'CZK',
-  'HUF',
-  'INR',
-  'BRL',
-  'ZAR',
-  'MXN',
-  'SGD',
-  'HKD',
-  'KRW',
-  'TRY',
+/// ISO codes of [kSupportedCurrencies], for the String-keyed surfaces that still
+/// store a bare code (the group form's `currency_code`, the home-currency
+/// preference). Derived — never edit this list, edit [kSupportedCurrencies].
+final List<String> kSupportedCurrencyCodes = [
+  for (final c in kSupportedCurrencies) c.code,
 ];
 
 /// The locale-aware currency symbol for [currencyCode] (e.g. "$", "£", "€"),
@@ -91,23 +89,45 @@ String currencySymbolFor(String localeName, String currencyCode) =>
       name: currencyCode,
     ).currencySymbol;
 
+/// The canonical money string: [amount] in [currency], with [locale]'s grouping,
+/// decimal separator and symbol placement, at the currency's own decimal digits.
+/// "¥3,000" in `en` and "3.000 ¥" in `de`; "$1,234.56" and "1.234,56 $". A
+/// 0-decimal currency never renders a fractional part.
+String formatMoney(double amount, Currency currency, Locale locale) =>
+    NumberFormat.simpleCurrency(
+      locale: locale.toString(),
+      name: currency.code,
+      decimalDigits: currency.decimalDigits,
+    ).format(amount);
+
+/// The same number without a symbol, for the few places that render the symbol
+/// themselves as a separate, differently-styled glyph (the expense-editor hero,
+/// the itemized unit-price chips). "12,50" in `de`, "12.50" in `en`.
+String formatAmountOnly(double amount, Currency currency, Locale locale) =>
+    NumberFormat.decimalPatternDigits(
+      locale: locale.toString(),
+      decimalDigits: currency.decimalDigits,
+    ).format(amount);
+
+/// The machine round-trip text for an amount in a form field or a controller:
+/// fixed to [currency]'s decimal digits, always `.`-separated, so
+/// `double.parse` reads it back exactly. NOT for display — use [formatMoney] or
+/// [formatAmountOnly] for anything the user reads as money.
+String amountToFieldText(double amount, Currency currency) =>
+    amount.toStringAsFixed(currency.decimalDigits);
+
 /// Currency-aware money formatting keyed on an ISO 4217 [currencyCode].
 ///
-/// Replaces the former generated `toCurrency` (which baked in "€"): the symbol
-/// and its placement now come from the currency code + active locale, so the
-/// same amount renders "$1,234.56" in en-US/USD and "1.234,56 €" in de-DE/EUR.
-/// [currencyCode] defaults to [kDefaultCurrencyCode] so cross-group/aggregate
-/// call sites (statistics, friends) format via the default rather than a
-/// hardcoded symbol.
+/// Thin adapter over [formatMoney]: the code is resolved through
+/// [Currency.fromCode] (EUR fallback), so decimal digits now travel with the
+/// currency and a JPY amount renders "¥3,000", not "¥3,000.00". Every existing
+/// call site is unchanged.
 extension AppLocalizationsCurrency on AppLocalizations {
   String toCurrency(
     double amount, [
     String currencyCode = kDefaultCurrencyCode,
-  ]) => NumberFormat.simpleCurrency(
-    locale: localeName,
-    name: currencyCode,
-    decimalDigits: 2,
-  ).format(amount);
+  ]) =>
+      formatMoney(amount, Currency.fromCode(currencyCode), Locale(localeName));
 }
 
 /// Normalizes a raw `expense_date` string to local midnight, leniently:

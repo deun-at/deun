@@ -239,7 +239,6 @@ class _HomeCurrencySheet extends ConsumerWidget {
     final l10n = AppLocalizations.of(context)!;
     final colorScheme = Theme.of(context).colorScheme;
     final current = ref.watch(homeCurrencyProvider);
-    final localeName = Localizations.localeOf(context).toString();
 
     void choose(String code) {
       ref.read(homeCurrencyProvider.notifier).setHomeCurrency(code);
@@ -255,11 +254,11 @@ class _HomeCurrencySheet extends ConsumerWidget {
             padding: EdgeInsets.zero,
             child: Column(
               children: [
-                for (final code in kSupportedCurrencyCodes)
+                for (final c in kSupportedCurrencies)
                   _OptionRow(
-                    label: '$code · ${currencySymbolFor(localeName, code)}',
-                    selected: current == code,
-                    onTap: () => choose(code),
+                    label: '${c.code} · ${c.symbol}',
+                    selected: current == c.code,
+                    onTap: () => choose(c.code),
                   ),
               ],
             ),

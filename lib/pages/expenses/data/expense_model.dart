@@ -1,3 +1,4 @@
+import '../../../helper/helper.dart';
 import '../../groups/data/group_model.dart';
 import 'expense_entry_model.dart';
 import 'expense_category.dart';
@@ -172,8 +173,13 @@ class Expense {
     for (final value in editorEntries) {
       jsonValue.addAll({"expense_entry[${value.index}][name]": value.name});
       jsonValue.addAll({
-        "expense_entry[${value.index}][amount]": value.unitPrice
-            .toStringAsFixed(2),
+        // Machine round-trip text at the group currency's precision, so a JPY
+        // expense seeds the editor field with "3000" and not "3000.00". A
+        // group-less Expense keeps the default Group's EUR precision.
+        "expense_entry[${value.index}][amount]": amountToFieldText(
+          value.unitPrice,
+          group.currency,
+        ),
       });
       jsonValue.addAll({
         "expense_entry[${value.index}][shares]": value.expenseEntryShares

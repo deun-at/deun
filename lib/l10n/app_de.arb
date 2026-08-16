@@ -168,8 +168,6 @@
   "expenseNoEntries": "So leer hier :(",
   "expenseDisplayAmount": "{displayName} {displayNameYourself, select, yes{hast} other{hat}} {amount} {expenseType, select, paid{gezahlt} lent{geliehen} borrowed{geborgt} other{}}",
   "expenseNoShares": "Du bist nicht beteiligt",
-  "groupDisplayAmount": "{paidByYourself, select, yes{{displayName} schuldet dir} other{Du schuldest {displayName}}} {amount}",
-  "groupDisplaySumAmount": "{paidByYourself, select, yes{Du hast {amount} gut} other{Du hast {amount} Schulden}}",
   "allDone": "Alles erledigt",
   "payBack": "Zurückzahlen",
   "payBackNoEntries": "Es gibt nichts zurückzuzahlen!",

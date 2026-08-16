@@ -42,7 +42,11 @@ class GroupMemberSearch extends ConsumerStatefulWidget {
 
   /// Test seam for [GroupRepository.removeMember] — same pattern as
   /// `ClaimPage.sendNotificationOverride`.
-  final Future<MemberRemovalOutcome> Function(String groupId, String email)?
+  final Future<MemberRemovalOutcome> Function(
+    String groupId,
+    String email, {
+    required Currency currency,
+  })?
   removeMemberOverride;
 
   @override
@@ -96,7 +100,7 @@ class _GroupMemberSearchState extends ConsumerState<GroupMemberSearch> {
 
     MemberRemovalOutcome outcome;
     try {
-      outcome = await remove(groupId, email);
+      outcome = await remove(groupId, email, currency: widget.group!.currency);
     } catch (e) {
       debugPrint('Failed to remove $email from group $groupId: $e');
       if (!mounted) return;

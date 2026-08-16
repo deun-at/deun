@@ -72,7 +72,11 @@ Future<void> _pump(
   Group? group,
   Brightness brightness = Brightness.light,
   List<dynamic> overrides = const [],
-  Future<MemberRemovalOutcome> Function(String groupId, String email)?
+  Future<MemberRemovalOutcome> Function(
+    String groupId,
+    String email, {
+    required Currency currency,
+  })?
   removeMemberOverride,
 }) async {
   await tester.pumpWidget(
@@ -117,7 +121,11 @@ Future<void> _pump(
 Future<void> _pumpMemberSearch(
   WidgetTester tester, {
   List<dynamic> overrides = const [],
-  Future<MemberRemovalOutcome> Function(String groupId, String email)?
+  Future<MemberRemovalOutcome> Function(
+    String groupId,
+    String email, {
+    required Currency currency,
+  })?
   removeMemberOverride,
 }) async {
   await tester.pumpWidget(
@@ -983,7 +991,7 @@ void main() {
         tester,
         group: _groupWithRoster(),
         overrides: noFriends,
-        removeMemberOverride: (groupId, email) async {
+        removeMemberOverride: (groupId, email, {required currency}) async {
           calls.add('$groupId/$email');
           return const MemberRemovalOutcome.blocked(outstanding: 12.5);
         },
@@ -1024,7 +1032,7 @@ void main() {
         tester,
         group: _groupWithRoster(),
         overrides: noFriends,
-        removeMemberOverride: (groupId, email) async =>
+        removeMemberOverride: (groupId, email, {required currency}) async =>
             MemberRemovalOutcome.softRemoved,
       );
       final l10n = await AppLocalizations.delegate.load(const Locale('en'));
@@ -1055,7 +1063,7 @@ void main() {
         tester,
         group: _groupWithRoster(carolRemoved: true),
         overrides: noFriends,
-        removeMemberOverride: (groupId, email) async =>
+        removeMemberOverride: (groupId, email, {required currency}) async =>
             MemberRemovalOutcome.softRemoved,
       );
       final l10n = await AppLocalizations.delegate.load(const Locale('en'));
@@ -1096,7 +1104,7 @@ void main() {
             ]),
           ),
         ],
-        removeMemberOverride: (groupId, email) async {
+        removeMemberOverride: (groupId, email, {required currency}) async {
           calls++;
           return MemberRemovalOutcome.softRemoved;
         },
@@ -1129,7 +1137,7 @@ void main() {
       tester,
       group: _groupWithRoster(),
       overrides: noFriends,
-      removeMemberOverride: (groupId, email) async {
+      removeMemberOverride: (groupId, email, {required currency}) async {
         calls++;
         return MemberRemovalOutcome.softRemoved;
       },

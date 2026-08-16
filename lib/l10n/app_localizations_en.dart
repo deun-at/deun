@@ -616,28 +616,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get expenseNoShares => 'You are not involved';
 
   @override
-  String groupDisplayAmount(
-    String displayName,
-    String paidByYourself,
-    String amount,
-  ) {
-    String _temp0 = intl.Intl.selectLogic(paidByYourself, {
-      'yes': '$displayName owes you',
-      'other': 'You owe $displayName',
-    });
-    return '$_temp0 $amount';
-  }
-
-  @override
-  String groupDisplaySumAmount(String paidByYourself, String amount) {
-    String _temp0 = intl.Intl.selectLogic(paidByYourself, {
-      'yes': 'You are owed',
-      'other': 'You owe',
-    });
-    return '$_temp0 $amount';
-  }
-
-  @override
   String get allDone => 'all done';
 
   @override

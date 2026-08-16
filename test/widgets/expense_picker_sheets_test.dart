@@ -1,4 +1,5 @@
 import 'package:deun/constants.dart';
+import 'package:deun/helper/currency.dart';
 import 'package:deun/l10n/app_localizations.dart';
 import 'package:deun/pages/expenses/data/expense_category.dart';
 import 'package:deun/pages/groups/data/group_member_model.dart';
@@ -199,7 +200,11 @@ void main() {
           builder: (context) => Center(
             child: ElevatedButton(
               onPressed: () async {
-                result = await showAmountKeypadSheet(context, initialAmount: 0);
+                result = await showAmountKeypadSheet(
+                  context,
+                  initialAmount: 0,
+                  currency: Currency.eur,
+                );
               },
               child: const Text('open'),
             ),
@@ -232,7 +237,11 @@ void main() {
           builder: (context) => Center(
             child: ElevatedButton(
               onPressed: () async {
-                result = await showAmountKeypadSheet(context, initialAmount: 0);
+                result = await showAmountKeypadSheet(
+                  context,
+                  initialAmount: 0,
+                  currency: Currency.eur,
+                );
               },
               child: const Text('open'),
             ),
@@ -263,7 +272,11 @@ void main() {
           builder: (context) => Center(
             child: ElevatedButton(
               onPressed: () async {
-                result = await showAmountKeypadSheet(context, initialAmount: 0);
+                result = await showAmountKeypadSheet(
+                  context,
+                  initialAmount: 0,
+                  currency: Currency.eur,
+                );
               },
               child: const Text('open'),
             ),
@@ -294,6 +307,7 @@ void main() {
                 result = await showAmountKeypadSheet(
                   context,
                   initialAmount: 42.0,
+                  currency: Currency.eur,
                 );
               },
               child: const Text('open'),
@@ -323,6 +337,7 @@ void main() {
                   result = await showAmountKeypadSheet(
                     context,
                     initialAmount: 0,
+                    currency: Currency.eur,
                   );
                 },
                 child: const Text('open'),
@@ -379,7 +394,11 @@ void main() {
           builder: (context) => Center(
             child: ElevatedButton(
               onPressed: () async {
-                await showAmountKeypadSheet(context, initialAmount: 0);
+                await showAmountKeypadSheet(
+                  context,
+                  initialAmount: 0,
+                  currency: Currency.eur,
+                );
               },
               child: const Text('open'),
             ),
@@ -419,7 +438,11 @@ void main() {
           builder: (context) => Center(
             child: ElevatedButton(
               onPressed: () async {
-                result = await showAmountKeypadSheet(context, initialAmount: 0);
+                result = await showAmountKeypadSheet(
+                  context,
+                  initialAmount: 0,
+                  currency: Currency.eur,
+                );
               },
               child: const Text('open'),
             ),

@@ -113,7 +113,11 @@ class _RecordPaybackSheetState extends State<RecordPaybackSheet> {
   }
 
   Future<void> _pickAmount() async {
-    final picked = await showAmountKeypadSheet(context, initialAmount: _amount);
+    final picked = await showAmountKeypadSheet(
+      context,
+      initialAmount: _amount,
+      currency: widget.group.currency,
+    );
     if (picked == null || !mounted) return;
     setState(() => _amount = picked);
   }
@@ -229,7 +233,7 @@ class _RecordPaybackSheetState extends State<RecordPaybackSheet> {
             title: Text(l10n.paybackRecordAmountLabel),
             trailing: MoneyText(
               _amount,
-              currencyCode: widget.group.currencyCode,
+              currency: widget.group.currency,
               style: Theme.of(context).textTheme.titleMedium,
             ),
             onTap: _pickAmount,

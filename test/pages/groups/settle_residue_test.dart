@@ -127,8 +127,8 @@ void main() {
 
       // Pre-fix: settled == 3.34, residue == -0.006666666666666643, which
       // renders as -0.01 — the "person I paid back owes me 0.01" report.
-      expect(isSettled(residue), isTrue);
-      expect(roundCurrency(residue), 0.0);
+      expect(isSettled(residue, Currency.eur), isTrue);
+      expect(roundCurrency(residue, Currency.eur), 0.0);
     });
   });
 
@@ -154,7 +154,10 @@ void main() {
       ]);
 
       expect(g.groupSharesSummary[alice]!.shareAmount, 0.0);
-      expect(isSettled(g.groupSharesSummary[alice]!.shareAmount), isTrue);
+      expect(
+        isSettled(g.groupSharesSummary[alice]!.shareAmount, Currency.eur),
+        isTrue,
+      );
     });
 
     // 6
@@ -189,7 +192,10 @@ void main() {
       final g = _defaultGroup([
         row(paidBy: alice, paidFor: me, shareAmount: thirdOfTen),
       ]);
-      final partition = PaymentPartition.fromSummary(g.groupSharesSummary);
+      final partition = PaymentPartition.fromSummary(
+        g.groupSharesSummary,
+        currency: Currency.eur,
+      );
 
       expect(g.amountToSettleWith(alice), partition.youPay.single.amount);
       expect(g.amountToSettleWith(alice), 3.33);
@@ -203,7 +209,10 @@ void main() {
 
       expect(g.amountToSettleWith(alice), isNull);
       expect(
-        PaymentPartition.fromSummary(g.groupSharesSummary).isEmpty,
+        PaymentPartition.fromSummary(
+          g.groupSharesSummary,
+          currency: Currency.eur,
+        ).isEmpty,
         isTrue,
       );
     });
@@ -218,7 +227,10 @@ void main() {
 
       expect(g.amountToSettleWith(alice), 0.01);
       expect(
-        PaymentPartition.fromSummary(g.groupSharesSummary).youPay.single.amount,
+        PaymentPartition.fromSummary(
+          g.groupSharesSummary,
+          currency: Currency.eur,
+        ).youPay.single.amount,
         0.01,
       );
     });
@@ -245,7 +257,7 @@ void main() {
       // Payment screen (was 0.005 → outstanding).
       final partition = PaymentPartition.fromSummary({
         alice: _summary(-residue),
-      });
+      }, currency: Currency.eur);
       expect(partition.youPay.single.amount, closeTo(residue, 1e-12));
 
       // Group list hero (was 0.01 → contributed nothing).
@@ -263,9 +275,13 @@ void main() {
 
       // Friend list normalization (was 0.01 → zeroed) and the member-removal
       // guard, both now the same question.
-      expect(isSettled(residue), isFalse);
+      expect(isSettled(residue, Currency.eur), isFalse);
       expect(
-        resolveMemberRemoval(balance: residue, hasExpenseHistory: true),
+        resolveMemberRemoval(
+          balance: residue,
+          hasExpenseHistory: true,
+          currency: Currency.eur,
+        ),
         isA<MemberRemovalBlocked>(),
       );
     });
@@ -275,13 +291,19 @@ void main() {
       const residue = 0.004;
 
       expect(
-        PaymentPartition.fromSummary({alice: _summary(-residue)}).isEmpty,
+        PaymentPartition.fromSummary({
+          alice: _summary(-residue),
+        }, currency: Currency.eur).isEmpty,
         isTrue,
       );
       expect(aggregateOverallBalance([_balanceGroup(-residue)]).owe, 0);
-      expect(isSettled(residue), isTrue);
+      expect(isSettled(residue, Currency.eur), isTrue);
       expect(
-        resolveMemberRemoval(balance: residue, hasExpenseHistory: true),
+        resolveMemberRemoval(
+          balance: residue,
+          hasExpenseHistory: true,
+          currency: Currency.eur,
+        ),
         MemberRemovalOutcome.softRemoved,
       );
     });
@@ -308,7 +330,7 @@ void main() {
           final settled = g.groupSharesSummary[email]!.shareAmount;
           expect(settled, 3.33);
           // What each debtor's own balance becomes once they settle it.
-          expect(isSettled(thirdOfTen - settled), isTrue);
+          expect(isSettled(thirdOfTen - settled, Currency.eur), isTrue);
         }
 
         // [deferred] The PAYER's net after both settle is
@@ -316,7 +338,7 @@ void main() {
         // sub-cent residues add up. Only `pay_back_exact` (Unit 2, deferred to
         // MANUAL_OPS) settles the exact value and drives this to a hard zero.
         // Asserted here as the pre-migration truth so the gap stays visible.
-        expect(isSettled(twoThirds - 6.66), isFalse);
+        expect(isSettled(twoThirds - 6.66, Currency.eur), isFalse);
       },
     );
 
@@ -335,8 +357,8 @@ void main() {
       // Alice owes her third to me, as a whole number of cents.
       final owed = g.groupSharesSummary[me]!.shareAmount;
       expect(owed, -3.33);
-      expect(roundCurrency(owed), owed);
-      expect(isSettled(thirdOfTen - owed.abs()), isTrue);
+      expect(roundCurrency(owed, Currency.eur), owed);
+      expect(isSettled(thirdOfTen - owed.abs(), Currency.eur), isTrue);
     });
 
     // 15
@@ -357,6 +379,7 @@ void main() {
       expect(
         PaymentPartition.fromSummary(
           owing.groupSharesSummary,
+          currency: Currency.eur,
         ).youPay.single.amount,
         6.67,
       );

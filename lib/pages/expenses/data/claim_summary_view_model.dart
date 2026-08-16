@@ -1,3 +1,5 @@
+import 'package:deun/helper/helper.dart';
+
 import 'claim_math.dart';
 
 /// One member's claimed total, for the summary card's per-member list.
@@ -22,6 +24,7 @@ class ClaimSummary {
     required this.unclaimed,
     required this.total,
     required this.memberTotals,
+    required this.currency,
   });
 
   /// The selected persona's claimed total across all units.
@@ -43,11 +46,17 @@ class ClaimSummary {
   /// pinned first.
   final List<MemberTotal> memberTotals;
 
+  /// The receipt's currency — what "nothing left unclaimed" is measured in.
+  /// Without it the remainder was judged against a hardcoded EUR half-cent, so
+  /// a ¥0.3 remainder read as outstanding on a screen that renders it as ¥0.
+  final Currency currency;
+
   /// Claimed fraction of the receipt (0..1); 0 for an empty receipt.
   double get progress => total <= 0 ? 0.0 : (claimed / total).clamp(0.0, 1.0);
 
-  /// True when every unit has at least one claimer (nothing left unclaimed).
-  bool get isFullyClaimed => total > 0 && unclaimed <= 0.005;
+  /// True when every unit has at least one claimer (nothing left unclaimed) —
+  /// i.e. the remainder is settled at [currency]'s precision.
+  bool get isFullyClaimed => total > 0 && isSettled(unclaimed, currency);
 
   /// True when there are no claimable units at all.
   bool get isEmpty => total <= 0 && memberTotals.isEmpty;
@@ -61,25 +70,29 @@ class ClaimSummary {
 ClaimSummary buildClaimSummary({
   required List<ClaimUnit> units,
   required String personaEmail,
+  required Currency currency,
 }) {
   final totals = memberShareTotals(units);
 
-  final ordered = totals.entries
-      .map((e) => MemberTotal(email: e.key, amount: e.value))
-      .toList()
-    ..sort((a, b) {
-      if (a.email == personaEmail) return -1;
-      if (b.email == personaEmail) return 1;
-      return b.amount.compareTo(a.amount);
-    });
+  final ordered =
+      totals.entries
+          .map((e) => MemberTotal(email: e.key, amount: e.value))
+          .toList()
+        ..sort((a, b) {
+          if (a.email == personaEmail) return -1;
+          if (b.email == personaEmail) return 1;
+          return b.amount.compareTo(a.amount);
+        });
 
   return ClaimSummary(
     yourShare: totals[personaEmail] ?? 0.0,
-    yourClaimedCount:
-        units.where((u) => u.claimers.contains(personaEmail)).length,
+    yourClaimedCount: units
+        .where((u) => u.claimers.contains(personaEmail))
+        .length,
     claimed: claimedTotal(units),
     unclaimed: unclaimedTotal(units),
     total: grandTotal(units),
     memberTotals: ordered,
+    currency: currency,
   );
 }

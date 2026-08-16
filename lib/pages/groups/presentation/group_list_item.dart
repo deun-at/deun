@@ -45,7 +45,7 @@ class GroupListItem extends ConsumerWidget {
       Theme.of(context).brightness,
     );
     final amount = group.totalShareAmount;
-    final settled = isSettled(amount);
+    final settled = isSettled(amount, group.currency);
 
     final String balanceLabel;
     final MoneySemantic moneySemantic;
@@ -160,7 +160,7 @@ class GroupListItem extends ConsumerWidget {
                         // lead-label + amount hierarchy.
                         MoneyText(
                           amount.abs(),
-                          currencyCode: group.currencyCode,
+                          currency: group.currency,
                           semantic: moneySemantic,
                           style: textTheme.titleMedium?.copyWith(
                             fontWeight: FontWeight.w700,

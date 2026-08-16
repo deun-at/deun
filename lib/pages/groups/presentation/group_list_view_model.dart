@@ -3,7 +3,8 @@ import '../../../helper/helper.dart';
 import '../data/group_model.dart';
 
 /// Whether a group's net balance is effectively non-zero (still owing/owed).
-bool _isUnsettled(Group group) => !isSettled(group.totalShareAmount);
+bool _isUnsettled(Group group) =>
+    !isSettled(group.totalShareAmount, group.currency);
 
 /// Aggregated overall balance across all of a user's groups.
 class OverallBalance {
@@ -12,6 +13,7 @@ class OverallBalance {
     required this.owe,
     this.approximate = false,
     this.excludedCount = 0,
+    this.currency = Currency.eur,
   });
 
   /// Total the user is owed across groups (sum of positive nets), as a
@@ -30,8 +32,11 @@ class OverallBalance {
   /// Number of groups excluded because their currency had no available rate.
   final int excludedCount;
 
+  /// The home currency [owed] / [owe] / [net] are expressed in.
+  final Currency currency;
+
   /// Net position: `owed - owe` (positive = net owed to the user).
-  double get net => roundCurrency(owed - owe);
+  double get net => roundCurrency(owed - owe, currency);
 }
 
 /// Totals the per-group net (`Group.totalShareAmount`, already computed by the
@@ -46,13 +51,14 @@ OverallBalance aggregateOverallBalance(
   String homeCurrency = kDefaultCurrencyCode,
   ExchangeRates? rates,
 }) {
+  final home = Currency.fromCode(homeCurrency);
   double owed = 0;
   double owe = 0;
   bool approximate = false;
   int excluded = 0;
   for (final group in groups) {
     final amount = group.totalShareAmount;
-    if (isSettled(amount)) continue;
+    if (isSettled(amount, group.currency)) continue;
     final converted = convertToHome(
       amount,
       group.currencyCode,
@@ -65,9 +71,9 @@ OverallBalance aggregateOverallBalance(
     }
     if (group.currencyCode != homeCurrency) approximate = true;
     if (converted > 0) {
-      owed = roundCurrency(owed + converted);
+      owed = roundCurrency(owed + converted, home);
     } else {
-      owe = roundCurrency(owe + converted.abs());
+      owe = roundCurrency(owe + converted.abs(), home);
     }
   }
   return OverallBalance(
@@ -75,6 +81,7 @@ OverallBalance aggregateOverallBalance(
     owe: owe,
     approximate: approximate,
     excludedCount: excluded,
+    currency: home,
   );
 }
 
