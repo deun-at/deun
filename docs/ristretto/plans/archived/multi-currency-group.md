@@ -230,4 +230,101 @@ discarded that value on every write, so every group in the instance was EUR rega
 Building this on that field before the fix would have produced a feature that passed every test and
 did nothing.
 
-status: planned
+## Evidence
+
+`Provides:` was checked line-by-line against the built code at close and needs no correction —
+`Group.currency`, `canChangeGroupCurrency(Group) -> bool` (`lib/pages/groups/data/group_model.dart:331`,
+vacuously `true` as documented), `showCurrencyPicker(BuildContext, {Currency? initial}) ->
+Future<Currency?>` (`lib/widgets/currency_picker_sheet.dart:16`), `CurrencyAmount`, `CurrencyBreakdown`
+(`.primary`, `.others`, `.hiddenCount`, `.isSingleCurrency`), `balancesByCurrency`,
+`friendBalancesByCurrency` all exist with exactly the signatures promised, verified by grep and by
+reading each definition. One deliberate deletion outside the stated Consumes/Provides surface:
+`kSupportedCurrencyCodes` (from `multi-currency-core`) was removed because its last consumer went with
+the home-currency notifier this feature retires — the "offers at minimum EUR, USD, GBP, CHF" criterion
+is now asserted against `kSupportedCurrencies.map((c) => c.code)`
+(`test/pages/groups/multi_currency_foundation_test.dart:79`).
+
+- **Cross-group totals never sum/convert unlike currencies** — `test/helper/currency_breakdown_test.dart`
+  "never sums unlike currencies: one entry per currency"; `test/widgets/group_list_screen_test.dart`
+  "no displayed hero figure is the sum of two currencies".
+- **Single-currency layout is byte-for-byte unchanged (no expand affordance)** — the pre-existing hero
+  tests in `test/widgets/group_list_screen_test.dart` (lines 263-331) pass unmodified;
+  `test/pages/groups/multi_currency_group_test.dart` "a single-currency breakdown shows no expand
+  affordance at all"; `test/pages/statistics/personal_statistics_restyle_test.dart` "single-currency
+  stats show no currency selector"; friend list/sheet equivalents in `friend_list_test.dart` and
+  `friend_detail_sheet_test.dart`.
+- **Primary = largest absolute balance, ties by ISO code ascending, disclosure never shows 0** —
+  `test/helper/currency_breakdown_test.dart` "primary is the largest ABSOLUTE amount, sign included",
+  "ties break by ISO code ascending, not by map iteration order", "exactly two currencies hide exactly
+  one — never a count of zero".
+- **Expand reveals one row per currency at its own decimals; collapse restores inline state** —
+  `test/pages/groups/multi_currency_group_test.dart` "expanding reveals one row per remaining currency
+  at its own decimal digits", "collapsing restores the inline state", "each expanded row carries its
+  own direction and colour".
+- **Trend chart plots one currency, axis labelled, selection re-plots; buckets never fold currencies**
+  — `test/pages/statistics/personal_statistics_restyle_test.dart` "the trend chart defaults to the
+  primary currency and labels its axis", "each bucket sums the plotted currency ONLY — other currencies
+  contribute nothing", "selecting another currency from the disclosure re-plots the chart", "a
+  single-currency user sees no chart selector".
+- **`approximate` / `excludedCount` and the "≈" marker are gone** —
+  `test/pages/groups/multi_currency_group_test.dart` "approximate and excludedCount are gone from the
+  state and its widgets" (source grep across all six touched files) and 'no "≈ approximate" marker
+  survives: MoneyText has no approximate flag'.
+- **Friend row: primary inline + non-interactive hidden-currency marker, no expand target of its own**
+  — `test/pages/friends/friend_list_test.dart` "a multi-currency friendship shows a non-interactive
+  count marker and the whole row still opens the sheet", "a single-currency friendship shows no
+  currency marker".
+- **Direction/colour follow the primary currency only; each sheet row keeps its own** —
+  `test/pages/friends/friend_list_test.dart` "direction and colour follow the primary currency, not a
+  cross-currency sum"; `test/widgets/friend_detail_sheet_test.dart` "a mixed-currency sheet carries the
+  expandable breakdown, each row with its own direction", "pay-back methods follow the primary
+  currency: JPY-owed shows none".
+- **Settling across groups in different currencies settles each in its own currency; confirmation
+  names per-currency amounts** — `test/model/group_repository_test.dart` "a plan carries each group's
+  own currency", "the result names per-currency totals, never one merged figure", "a single-currency
+  settle formats exactly as before"; rendered via `formatCurrencyAmounts` in
+  `lib/pages/friends/presentation/friend_detail_sheet.dart:289`.
+- **Home-currency surface fully gone; no exchange-rate fetch; `homeCurrency` absent from `lib/`** —
+  `test/pages/groups/multi_currency_group_test.dart` "currency_conversion.dart and
+  exchange_rate_service.dart do not exist", "grepping lib/ for homeCurrency returns no matches", "no
+  code path fetches an exchange rate".
+- **`http` dependency removed** — `test/pages/groups/multi_currency_group_test.dart` "http is no
+  longer a dependency of the app"; confirmed directly with `grep -n "http" pubspec.yaml` at close
+  (no match).
+- **Stale `home_currency` / `kExchangeRatesCachePrefKey` SharedPreferences values are inert, not
+  migrated** — deliberate, verified by code inspection rather than a runtime test: neither key is read
+  or written anywhere in `lib/` after this commit (confirmed by the same "no homeCurrency reference"
+  grep guard above, since both call sites that ever read them were deleted in Unit 1 alongside
+  `HomeCurrencyNotifier`); no migration or clear-on-read path was added, matching the Contract's
+  "ignored on read and never written again".
+- **Deleted features' test files removed, not skipped** —
+  `test/pages/groups/multi_currency_group_test.dart` "the deleted features' test files are removed,
+  not skipped"; confirmed directly, `test/helper/currency_conversion_test.dart` and
+  `test/provider/home_currency_test.dart` are gone from the tree and the commit's deletions.
+- **Group row rendering and settled/active classification are currency-correct** —
+  `test/pages/groups/multi_currency_group_test.dart` "a JPY group at 0.4 is settled and at 0.6 is
+  active", "a EUR group at 0.004 is settled and at 0.006 is active", "the query bounds are a superset
+  in both directions", "a group's tab placement and its row rendering cannot disagree";
+  `test/widgets/group_list_screen_test.dart` "a EUR group and a JPY group each render in their own
+  currency with the right decimal digits".
+- **Currency lock wired into the picker** — `test/pages/groups/multi_currency_group_test.dart`
+  `canChangeGroupCurrency` group; the predicate itself is vacuously `true` until
+  `multi-currency-expense-rate` gives an expense its own currency, exactly as the Contract anticipates.
+- **PayPal.me link carries the group/friendship currency, not the payee's default** —
+  `test/helper/helper_test.dart` `paypalMeAmountSegment` group (`'25.50EUR'`, `'12.34USD'`,
+  `'3000JPY'`), consumed at `friend_detail_sheet.dart:231` and `group_detail_payment.dart:653`.
+
+### Gate summary
+- `flutter analyze` — clean, no issues, re-run at close (`C:\flutter`, 3.44.2).
+- `flutter test` — 1290 passed, 0 failed, re-run at close. Baseline at HEAD `48116cd` (before this
+  feature) was 1219 passed — a net +71 tests across the six units.
+
+### Review verdict
+Three rounds. Round 1 raised 3 bugs and 3 lean-cleanliness findings; all six fixed. Round 2 verified
+five of the six fixes but caught that the sixth had traded a lean finding for a genuine contract
+violation: selector-mode disclosure text was overstating the hidden-currency count. Round 3 fixed that
+with distinct selector wording (`currencyBreakdownSelect`, kept separate from the plain
+`currencyBreakdownMore` label) while keeping the underlying `hiddenCount` semantics unchanged. Final
+verdict: `review: clean`.
+
+status: done
