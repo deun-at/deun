@@ -1,3 +1,4 @@
+import 'package:deun/pages/expenses/data/keypad_amount.dart';
 import 'package:deun/pages/expenses/data/keypad_calculator.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -183,6 +184,44 @@ void main() {
     test('shows the folded left value, operator and current operand', () {
       final calc = _run('0', ['12', '.', '50', '+', '3']);
       expect(calc.expression, '12.50 + 3');
+    });
+  });
+
+  group('currency decimal digits', () {
+    test('a JPY calculation commits a whole number', () {
+      final c = KeypadCalculator.fromText(
+        '2500',
+        decimalDigits: 0,
+      ).applyOperator(KeypadOperator.divide).appendDigit('3');
+      expect(c.value, 833); // 833.333… → 833 at 0 decimals
+    });
+
+    test('the JPY expression line carries no decimal point', () {
+      final c = KeypadCalculator.fromText(
+        '3000',
+        decimalDigits: 0,
+      ).applyOperator(KeypadOperator.add);
+      expect(c.expression, '3000 +');
+    });
+
+    test('EUR behaviour is unchanged', () {
+      final c = KeypadCalculator.fromText(
+        '10',
+      ).applyOperator(KeypadOperator.divide).appendDigit('3');
+      expect(c.value, 3.33);
+      expect(c.expression, '10 ÷ 3');
+    });
+
+    // multi-currency-core review: the expression line and the sheet's seed text
+    // now share KeypadAmount.format instead of two parallel copies.
+    test('the expression line matches the shared keypad format', () {
+      for (final d in const [0, 2]) {
+        final c = KeypadCalculator.fromText(
+          '42',
+          decimalDigits: d,
+        ).applyOperator(KeypadOperator.add);
+        expect(c.expression, '${KeypadAmount.format(42, d)} +', reason: 'd=$d');
+      }
     });
   });
 }

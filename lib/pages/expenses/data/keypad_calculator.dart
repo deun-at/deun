@@ -18,11 +18,13 @@ enum KeypadOperator {
 /// It keeps a physical-calculator, left-to-right chain: a folded [_pending]
 /// accumulator, a [_operator] awaiting its right-hand operand, and the current
 /// [_operand] (a [KeypadAmount], so operand typing reuses the exact single-dot /
-/// 2-decimal / 7-integer-digit rules — and clamping — of the plain keypad).
+/// entry-currency-decimal-digits / 7-integer-digit rules — and clamping — of
+/// the plain keypad).
 ///
 /// Evaluation is plain arithmetic on doubles; the committed [value] is rounded
-/// to 2 decimals so it obeys the same keypad rules and feeds the same save path
-/// as a plainly typed amount. Divide-by-zero and >7-integer-digit overflow are
+/// to the entry currency's decimal digits so it obeys the same keypad rules and
+/// feeds the same save path as a plainly typed amount. Divide-by-zero and
+/// >7-integer-digit overflow are
 /// surfaced as [hasError] so the sheet can block the commit instead of crashing
 /// or persisting a bad value.
 class KeypadCalculator {
@@ -46,11 +48,19 @@ class KeypadCalculator {
   /// the operand shows as empty and the running result is just [_pending].
   final bool _awaitingOperand;
 
-  /// Seeds a plain-entry calculator (no pending operation) from [text].
-  factory KeypadCalculator.fromText(String? text) =>
-      KeypadCalculator._(null, null, KeypadAmount.fromText(text), false);
+  /// Seeds a plain-entry calculator (no pending operation) from [text]. The
+  /// entry currency's decimal digits (default 2, EUR-compatible) are carried
+  /// into every operand this calculator produces.
+  factory KeypadCalculator.fromText(String? text, {int decimalDigits = 2}) =>
+      KeypadCalculator._(
+        null,
+        null,
+        KeypadAmount.fromText(text, decimalDigits: decimalDigits),
+        false,
+      );
 
-  static final KeypadAmount _zero = KeypadAmount.fromText('0');
+  KeypadAmount get _zero =>
+      KeypadAmount.fromText('0', decimalDigits: _operand.decimalDigits);
 
   KeypadCalculator _copy({
     double? pending,
@@ -93,7 +103,10 @@ class KeypadCalculator {
         return KeypadCalculator._(
           null,
           null,
-          KeypadAmount.fromText(_format(_pending!)),
+          KeypadAmount.fromText(
+            _format(_pending!),
+            decimalDigits: _operand.decimalDigits,
+          ),
           false,
         );
       }
@@ -143,11 +156,12 @@ class KeypadCalculator {
     return _combine(_pending!, _operator, _operand.value);
   }
 
-  /// The live running result rounded to 2 decimals, or `null` when invalid.
+  /// The live running result rounded to the entry currency's decimal digits,
+  /// or `null` when invalid.
   double? get result {
     final raw = _rawResult;
     if (raw == null) return null;
-    return double.parse(raw.toStringAsFixed(2));
+    return double.parse(raw.toStringAsFixed(_operand.decimalDigits));
   }
 
   /// True when there is a pending operator awaiting/using an operand, i.e. a
@@ -175,8 +189,5 @@ class KeypadCalculator {
     return '$left ${_operator.symbol} ${_operand.text}';
   }
 
-  static String _format(double v) {
-    final fixed = v.toStringAsFixed(2);
-    return fixed.endsWith('.00') ? fixed.substring(0, fixed.length - 3) : fixed;
-  }
+  String _format(double v) => KeypadAmount.format(v, _operand.decimalDigits);
 }

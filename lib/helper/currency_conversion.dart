@@ -88,7 +88,7 @@ double? convertToHome(
   if (fromCurrency == homeCurrency) return amount;
   final rate = rates?.conversionRate(fromCurrency, homeCurrency);
   if (rate == null) return null;
-  return roundCurrency(amount * rate);
+  return roundCurrency(amount * rate, Currency.fromCode(homeCurrency));
 }
 
 /// Converts every entry in [contributions] into [homeCurrency] and sums them,
@@ -114,7 +114,7 @@ ConvertedTotal convertAndSum(
       excluded++;
       continue;
     }
-    total = roundCurrency(total + converted);
+    total = roundCurrency(total + converted, Currency.fromCode(homeCurrency));
     if (c.currencyCode != homeCurrency) approximate = true;
   }
   return ConvertedTotal(

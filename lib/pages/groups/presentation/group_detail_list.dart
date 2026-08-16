@@ -351,7 +351,7 @@ class LedgerQuickRow extends StatelessWidget {
           const SizedBox(width: 10),
           MoneyText(
             expense.amount,
-            currencyCode: expense.group.currencyCode,
+            currency: expense.group.currency,
             style: Theme.of(context).textTheme.titleMedium,
           ),
         ],
@@ -405,9 +405,13 @@ class _ItemizedRow extends StatelessWidget {
     final shareStat = expense.groupMemberShareStatistic;
     final claimed = shareStat.values.fold<double>(0, (sum, v) => sum + v);
     final unclaimed = expense.amount - claimed;
-    final hasUnclaimed = unclaimed > 0.005;
+    // Both remainders are judged in the expense's OWN currency: a ¥0.3 leftover
+    // renders as ¥0, so it must not light up as unclaimed here.
+    final currency = expense.group.currency;
+    final hasUnclaimed = !isSettled(unclaimed, currency);
     final youClaimed =
-        currentUserEmail != null && (shareStat[currentUserEmail] ?? 0) > 0.005;
+        currentUserEmail != null &&
+        !isSettled(shareStat[currentUserEmail] ?? 0, currency);
 
     final currentUserPaid = expense.paidBy == currentUserEmail;
     // Handoff subline: "You paid · itemized" / "Sam paid · itemized".
@@ -491,7 +495,7 @@ class _ItemizedRow extends StatelessWidget {
                         const SizedBox(width: 10),
                         MoneyText(
                           expense.amount,
-                          currencyCode: expense.group.currencyCode,
+                          currency: expense.group.currency,
                           style: Theme.of(context).textTheme.titleMedium,
                         ),
                       ],

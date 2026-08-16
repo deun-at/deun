@@ -93,6 +93,7 @@ class _PaymentBody extends StatelessWidget {
     final partition = PaymentPartition.fromSummary(
       group.groupSharesSummary,
       removedEmails: group.removedMemberEmails,
+      currency: group.currency,
     );
 
     return Column(
@@ -170,7 +171,7 @@ class _OverallHero extends StatelessWidget {
     final Color onHeroMuted = onHero.withValues(alpha: 0.7);
 
     final net = group.totalShareAmount;
-    final bool settled = isSettled(net);
+    final bool settled = isSettled(net, group.currency);
 
     final String leadLabel;
     if (settled) {
@@ -200,7 +201,7 @@ class _OverallHero extends StatelessWidget {
           const SizedBox(height: 6),
           MoneyText(
             settled ? 0 : net.abs(),
-            currencyCode: group.currencyCode,
+            currency: group.currency,
             semantic: MoneySemantic.neutral,
             style: Theme.of(
               context,
@@ -243,7 +244,7 @@ class _PayRow extends StatelessWidget {
                 const SizedBox(height: 2),
                 MoneyText(
                   entry.amount,
-                  currencyCode: group.currencyCode,
+                  currency: group.currency,
                   semantic: MoneySemantic.negative,
                   style: Theme.of(context).textTheme.bodyMedium,
                 ),
@@ -332,7 +333,7 @@ class _OwesRowState extends State<_OwesRow> {
                     ),
                     MoneyText(
                       widget.entry.amount,
-                      currencyCode: widget.group.currencyCode,
+                      currency: widget.group.currency,
                       semantic: MoneySemantic.positive,
                       style: Theme.of(context).textTheme.bodyMedium,
                     ),
@@ -434,7 +435,7 @@ class _StrandedRow extends StatelessWidget {
                 const SizedBox(height: 2),
                 MoneyText(
                   entry.summary.shareAmount,
-                  currencyCode: group.currencyCode,
+                  currency: group.currency,
                   semantic: MoneySemantic.auto,
                   style: Theme.of(context).textTheme.bodyMedium,
                 ),
@@ -512,7 +513,7 @@ class _PaymentMethodSheet extends StatelessWidget {
         children: [
           MoneyText(
             entry.amount,
-            currencyCode: group.currencyCode,
+            currency: group.currency,
             semantic: MoneySemantic.negative,
             style: Theme.of(context).textTheme.headlineMedium,
           ),

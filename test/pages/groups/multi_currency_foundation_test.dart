@@ -149,8 +149,8 @@ void main() {
           _harness(
             const Row(
               children: [
-                MoneyText(1234.56, currencyCode: 'USD'),
-                MoneyText(1234.56, currencyCode: 'EUR'),
+                MoneyText(1234.56, currency: Currency.usd),
+                MoneyText(1234.56, currency: Currency.eur),
               ],
             ),
           ),

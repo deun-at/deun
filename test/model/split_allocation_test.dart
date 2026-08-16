@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:deun/helper/currency.dart';
 import 'package:deun/pages/expenses/data/split_allocation.dart';
 import 'package:deun/pages/expenses/data/split_mode.dart';
 
@@ -12,6 +13,7 @@ void main() {
         percentages: {},
         parts: {},
         enabled: {'a', 'b'},
+        currency: Currency.eur,
       );
       expect(a.status, AllocationStatus.ok);
       expect(a.fraction, 1.0);
@@ -26,6 +28,7 @@ void main() {
         percentages: {},
         parts: {},
         enabled: {},
+        currency: Currency.eur,
       );
       expect(a.status, AllocationStatus.under);
       expect(a.fraction, 0.0);
@@ -41,6 +44,7 @@ void main() {
         percentages: {},
         parts: {},
         enabled: {'a', 'b'},
+        currency: Currency.eur,
       );
       expect(a.status, AllocationStatus.ok);
       expect(a.fraction, closeTo(1.0, 1e-9));
@@ -55,6 +59,7 @@ void main() {
         percentages: {},
         parts: {},
         enabled: {'a', 'b'},
+        currency: Currency.eur,
       );
       expect(a.status, AllocationStatus.under);
       expect(a.fraction, closeTo(0.7, 1e-9));
@@ -69,6 +74,7 @@ void main() {
         percentages: {},
         parts: {},
         enabled: {'a', 'b'},
+        currency: Currency.eur,
       );
       expect(a.status, AllocationStatus.over);
       expect(a.fraction, 1.0);
@@ -83,6 +89,7 @@ void main() {
         percentages: {},
         parts: {},
         enabled: {'a', 'b'},
+        currency: Currency.eur,
       );
       expect(a.status, AllocationStatus.ok);
     });
@@ -97,6 +104,7 @@ void main() {
         percentages: {'a': 60, 'b': 40},
         parts: {},
         enabled: {'a', 'b'},
+        currency: Currency.eur,
       );
       expect(a.status, AllocationStatus.ok);
       expect(a.fraction, closeTo(1.0, 1e-9));
@@ -110,6 +118,7 @@ void main() {
         percentages: {'a': 50, 'b': 30},
         parts: {},
         enabled: {'a', 'b'},
+        currency: Currency.eur,
       );
       expect(a.status, AllocationStatus.under);
       expect(a.fraction, closeTo(0.8, 1e-9));
@@ -123,6 +132,7 @@ void main() {
         percentages: {'a': 70, 'b': 50},
         parts: {},
         enabled: {'a', 'b'},
+        currency: Currency.eur,
       );
       expect(a.status, AllocationStatus.over);
       expect(a.fraction, 1.0);
@@ -138,6 +148,7 @@ void main() {
         percentages: {},
         parts: {'a': 1, 'b': 2},
         enabled: {'a', 'b'},
+        currency: Currency.eur,
       );
       expect(a.status, AllocationStatus.ok);
       expect(a.fraction, 1.0);
@@ -151,6 +162,7 @@ void main() {
         percentages: {},
         parts: {'a': 0, 'b': 0},
         enabled: {'a', 'b'},
+        currency: Currency.eur,
       );
       expect(a.status, AllocationStatus.under);
     });
@@ -165,6 +177,7 @@ void main() {
         percentages: {},
         parts: {},
         enabled: {},
+        currency: Currency.eur,
       );
       expect(a.status, AllocationStatus.under);
       expect(a.fraction, 0.0);

@@ -53,10 +53,11 @@ class FriendDetailSheet extends ConsumerWidget {
     final textTheme = Theme.of(context).textTheme;
     final user = friendship.user;
     final homeCurrency = ref.watch(homeCurrencyProvider);
+    final home = Currency.fromCode(homeCurrency);
 
     // Negative share = the current user owes the friend → pay-back options.
     final bool owesFriend =
-        !isSettled(friendship.shareAmount) && friendship.shareAmount < 0;
+        !isSettled(friendship.shareAmount, home) && friendship.shareAmount < 0;
     final methods = owesFriend
         ? friendPayBackMethods(user)
         : const <FriendPayBackMethod>[];
@@ -98,7 +99,7 @@ class FriendDetailSheet extends ConsumerWidget {
               const SizedBox(width: 8),
               MoneyText(
                 friendship.shareAmount,
-                currencyCode: homeCurrency,
+                currency: home,
                 approximate: friendship.approximate,
                 semantic: MoneySemantic.auto,
                 style: textTheme.titleLarge,

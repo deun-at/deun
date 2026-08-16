@@ -1,4 +1,5 @@
 import 'package:deun/pages/groups/data/group_member_model.dart';
+import 'package:deun/helper/currency.dart';
 import 'package:deun/pages/groups/data/member_removal.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -18,7 +19,11 @@ void main() {
     // 1
     test('0.004 counts as settled — a member with history is soft-removed', () {
       expect(
-        resolveMemberRemoval(balance: 0.004, hasExpenseHistory: true),
+        resolveMemberRemoval(
+          balance: 0.004,
+          hasExpenseHistory: true,
+          currency: Currency.eur,
+        ),
         MemberRemovalOutcome.softRemoved,
       );
     });
@@ -28,6 +33,7 @@ void main() {
       final outcome = resolveMemberRemoval(
         balance: 0.005,
         hasExpenseHistory: true,
+        currency: Currency.eur,
       );
 
       expect(outcome, isA<MemberRemovalBlocked>());
@@ -39,10 +45,12 @@ void main() {
       final owed = resolveMemberRemoval(
         balance: 0.005,
         hasExpenseHistory: false,
+        currency: Currency.eur,
       );
       final owing = resolveMemberRemoval(
         balance: -0.005,
         hasExpenseHistory: false,
+        currency: Currency.eur,
       );
 
       expect(owed, isA<MemberRemovalBlocked>());
@@ -56,7 +64,11 @@ void main() {
     // 4
     test('-0.004 with no expense history is a hard remove', () {
       expect(
-        resolveMemberRemoval(balance: -0.004, hasExpenseHistory: false),
+        resolveMemberRemoval(
+          balance: -0.004,
+          hasExpenseHistory: false,
+          currency: Currency.eur,
+        ),
         MemberRemovalOutcome.hardRemoved,
       );
     });
@@ -64,7 +76,11 @@ void main() {
     // 5
     test('an exactly zero balance with history is a soft remove', () {
       expect(
-        resolveMemberRemoval(balance: 0, hasExpenseHistory: true),
+        resolveMemberRemoval(
+          balance: 0,
+          hasExpenseHistory: true,
+          currency: Currency.eur,
+        ),
         MemberRemovalOutcome.softRemoved,
       );
     });
@@ -72,7 +88,11 @@ void main() {
     // 6
     test('an exactly zero balance with no history is a hard remove', () {
       expect(
-        resolveMemberRemoval(balance: 0, hasExpenseHistory: false),
+        resolveMemberRemoval(
+          balance: 0,
+          hasExpenseHistory: false,
+          currency: Currency.eur,
+        ),
         MemberRemovalOutcome.hardRemoved,
       );
     });
@@ -83,6 +103,7 @@ void main() {
       final outcome = resolveMemberRemoval(
         balance: 12.5,
         hasExpenseHistory: false,
+        currency: Currency.eur,
       );
 
       expect(outcome, isA<MemberRemovalBlocked>());
@@ -96,6 +117,7 @@ void main() {
         final outcome = resolveMemberRemoval(
           balance: -7.25,
           hasExpenseHistory: true,
+          currency: Currency.eur,
         );
 
         expect((outcome as MemberRemovalBlocked).outstanding, 7.25);

@@ -1,3 +1,4 @@
+import 'package:deun/helper/currency.dart';
 import 'package:deun/pages/groups/data/group_model.dart';
 import 'package:deun/pages/groups/presentation/payment_view_model.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -22,7 +23,7 @@ void main() {
       final partition = PaymentPartition.fromSummary({
         'a@test.com': _summary(displayName: 'A', shareAmount: -10.0),
         'b@test.com': _summary(displayName: 'B', shareAmount: 25.0),
-      });
+      }, currency: Currency.eur);
 
       expect(partition.youPay.map((e) => e.email), ['a@test.com']);
       expect(partition.owesYou.map((e) => e.email), ['b@test.com']);
@@ -31,7 +32,7 @@ void main() {
     test('amount getter is the magnitude (always non-negative)', () {
       final partition = PaymentPartition.fromSummary({
         'a@test.com': _summary(shareAmount: -12.34),
-      });
+      }, currency: Currency.eur);
       expect(partition.youPay.single.amount, 12.34);
     });
 
@@ -39,7 +40,7 @@ void main() {
       final partition = PaymentPartition.fromSummary({
         'a@test.com': _summary(shareAmount: 0.004),
         'b@test.com': _summary(shareAmount: -0.004),
-      });
+      }, currency: Currency.eur);
       expect(partition.isEmpty, isTrue);
     });
 
@@ -48,7 +49,7 @@ void main() {
         'small@test.com': _summary(shareAmount: -5.0),
         'big@test.com': _summary(shareAmount: -50.0),
         'mid@test.com': _summary(shareAmount: -20.0),
-      });
+      }, currency: Currency.eur);
       expect(partition.youPay.map((e) => e.email), [
         'big@test.com',
         'mid@test.com',
@@ -60,7 +61,7 @@ void main() {
       final partition = PaymentPartition.fromSummary({
         'small@test.com': _summary(shareAmount: 5.0),
         'big@test.com': _summary(shareAmount: 50.0),
-      });
+      }, currency: Currency.eur);
       expect(partition.owesYou.map((e) => e.email), [
         'big@test.com',
         'small@test.com',
@@ -68,7 +69,10 @@ void main() {
     });
 
     test('empty summary yields an empty partition', () {
-      expect(PaymentPartition.fromSummary({}).isEmpty, isTrue);
+      expect(
+        PaymentPartition.fromSummary({}, currency: Currency.eur).isEmpty,
+        isTrue,
+      );
     });
 
     // payback-on-behalf: a payback naming a soft-removed member is rejected
@@ -82,6 +86,7 @@ void main() {
           'left@test.com': _summary(displayName: 'Left', shareAmount: 25.0),
         },
         removedEmails: {'gone@test.com', 'left@test.com'},
+        currency: Currency.eur,
       );
 
       expect(partition.youPay, isEmpty);
@@ -94,6 +99,7 @@ void main() {
         PaymentPartition.fromSummary(
           {'gone@test.com': _summary(shareAmount: -10.0)},
           removedEmails: {'gone@test.com'},
+          currency: Currency.eur,
         ).isEmpty,
         isTrue,
       );
@@ -111,6 +117,7 @@ void main() {
         final partition = PaymentPartition.fromSummary(
           {'gone@test.com': _summary(displayName: 'Gone', shareAmount: -10.0)},
           removedEmails: {'gone@test.com'},
+          currency: Currency.eur,
         );
 
         expect(partition.stranded.single.email, 'gone@test.com');
@@ -126,6 +133,7 @@ void main() {
       final partition = PaymentPartition.fromSummary(
         {'gone@test.com': _summary(shareAmount: 0.004)},
         removedEmails: {'gone@test.com'},
+        currency: Currency.eur,
       );
 
       expect(partition.stranded, isEmpty);
@@ -139,6 +147,7 @@ void main() {
           'big@test.com': _summary(shareAmount: 50.0),
         },
         removedEmails: {'small@test.com', 'big@test.com'},
+        currency: Currency.eur,
       );
 
       expect(partition.stranded.map((e) => e.email), [
@@ -154,6 +163,7 @@ void main() {
           'gone@test.com': _summary(shareAmount: -10.0),
         },
         removedEmails: {'gone@test.com'},
+        currency: Currency.eur,
       );
 
       expect(partition.youPay.map((e) => e.email), ['here@test.com']);
@@ -162,14 +172,17 @@ void main() {
     });
 
     test('a genuinely settled group is fully settled', () {
-      expect(PaymentPartition.fromSummary({}).isFullySettled, isTrue);
+      expect(
+        PaymentPartition.fromSummary({}, currency: Currency.eur).isFullySettled,
+        isTrue,
+      );
     });
 
     test('no removedEmails filters nothing, as every other caller expects', () {
       expect(
         PaymentPartition.fromSummary({
           'a@test.com': _summary(shareAmount: -10.0),
-        }).youPay.single.email,
+        }, currency: Currency.eur).youPay.single.email,
         'a@test.com',
       );
     });

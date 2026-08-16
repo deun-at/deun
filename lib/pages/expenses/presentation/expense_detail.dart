@@ -152,7 +152,10 @@ class _ExpenseDetailState extends ConsumerState<ExpenseDetail> {
             // Seed the item card and the itemized total header directly from
             // the loaded entry — claim units have no shares, so the widget's
             // shares-gated seeding showed €0.00 line totals before.
-            initialAmount: expenseEntry.unitPrice.toStringAsFixed(2),
+            initialAmount: amountToFieldText(
+              expenseEntry.unitPrice,
+              widget.group.currency,
+            ),
             initialQuantity: expenseEntry.quantity.toString(),
           ),
         );
@@ -170,7 +173,10 @@ class _ExpenseDetailState extends ConsumerState<ExpenseDetail> {
             onRemove: () => _removeEntry(expenseEntry),
             groupMembers: groupMembers,
             initialName: item.name,
-            initialAmount: item.amount.toStringAsFixed(2),
+            initialAmount: amountToFieldText(
+              item.amount,
+              widget.group.currency,
+            ),
           ),
         );
       }
@@ -183,7 +189,10 @@ class _ExpenseDetailState extends ConsumerState<ExpenseDetail> {
           expenseEntry: expenseEntry,
           onRemove: () => _removeEntry(expenseEntry),
           groupMembers: groupMembers,
-          initialAmount: widget.receiptResult!.total!.toStringAsFixed(2),
+          initialAmount: amountToFieldText(
+            widget.receiptResult!.total!,
+            widget.group.currency,
+          ),
         ),
       );
     } else {
@@ -201,11 +210,17 @@ class _ExpenseDetailState extends ConsumerState<ExpenseDetail> {
     // Initialize amount controller from first entry data
     if (widget.expense != null && widget.expense!.expenseEntries.isNotEmpty) {
       final firstEntry = widget.expense!.expenseEntries.values.first;
-      _amountController.text = firstEntry.unitPrice.toStringAsFixed(2);
+      _amountController.text = amountToFieldText(
+        firstEntry.unitPrice,
+        widget.group.currency,
+      );
     } else if (widget.receiptResult != null &&
         widget.receiptResult!.total != null &&
         widget.receiptResult!.lineItems.isEmpty) {
-      _amountController.text = widget.receiptResult!.total!.toStringAsFixed(2);
+      _amountController.text = amountToFieldText(
+        widget.receiptResult!.total!,
+        widget.group.currency,
+      );
     }
 
     // New (non-receipt) expense opens on the Quick amount card — pop the amount
@@ -414,7 +429,7 @@ class _ExpenseDetailState extends ConsumerState<ExpenseDetail> {
               const SizedBox(height: 4),
               MoneyText(
                 total,
-                currencyCode: widget.group.currencyCode,
+                currency: widget.group.currency,
                 style: Theme.of(context).textTheme.displaySmall?.copyWith(
                   color: colorScheme.onSurface,
                 ),
@@ -658,7 +673,11 @@ class _ExpenseDetailState extends ConsumerState<ExpenseDetail> {
                       ),
                       const SizedBox(width: 4),
                       Text(
-                        amount.toStringAsFixed(2),
+                        formatAmountOnly(
+                          amount,
+                          widget.group.currency,
+                          Localizations.localeOf(context),
+                        ),
                         textAlign: TextAlign.center,
                         style: amountStyle,
                       ),
@@ -686,15 +705,20 @@ class _ExpenseDetailState extends ConsumerState<ExpenseDetail> {
   /// Opens the restyled amount keypad sheet and, on confirm, writes the value
   /// back through the same channels the inline editor used: the form field
   /// (validated/saved) and the shared [_amountController] (split-sync). The
-  /// written string keeps the `toStringAsFixed(2)` format the inline editor
-  /// produced, so the value round-trips and validators are unchanged.
+  /// written string keeps the currency-precision field format
+  /// (`amountToFieldText`), so the value round-trips and validators are
+  /// unchanged.
   Future<void> _openAmountKeypad(
     FormFieldState<dynamic> field,
     double current,
   ) async {
-    final picked = await showAmountKeypadSheet(context, initialAmount: current);
+    final picked = await showAmountKeypadSheet(
+      context,
+      initialAmount: current,
+      currency: widget.group.currency,
+    );
     if (picked == null || !mounted) return;
-    final text = picked.toStringAsFixed(2);
+    final text = amountToFieldText(picked, widget.group.currency);
     setState(() {
       _amountController.text = text;
     });
@@ -774,7 +798,7 @@ class _ExpenseDetailState extends ConsumerState<ExpenseDetail> {
           _entries.removeRange(1, _entries.length);
         }
         final amount = summedTotal > 0
-            ? summedTotal.toStringAsFixed(2)
+            ? amountToFieldText(summedTotal, widget.group.currency)
             : _formKey
                   .currentState
                   ?.fields["expense_entry[${_entries.first.index}][amount]"]
@@ -850,12 +874,18 @@ class _ExpenseDetailState extends ConsumerState<ExpenseDetail> {
               onRemove: () => _removeEntry(expenseEntry),
               groupMembers: groupMembers,
               initialName: item.name,
-              initialAmount: item.amount.toStringAsFixed(2),
+              initialAmount: amountToFieldText(
+                item.amount,
+                widget.group.currency,
+              ),
             ),
           );
         }
       } else if (result.total != null && _entries.isNotEmpty) {
-        _entries.first.initialAmount = result.total!.toStringAsFixed(2);
+        _entries.first.initialAmount = amountToFieldText(
+          result.total!,
+          widget.group.currency,
+        );
       }
       _isDirty = true;
     });
@@ -906,6 +936,7 @@ class _ExpenseDetailState extends ConsumerState<ExpenseDetail> {
           widget.group.id,
           widget.expense?.id,
           formValue,
+          currency: widget.group.currency,
         );
         if (context.mounted) {
           showSnackBar(
@@ -1107,8 +1138,7 @@ class _ExpenseDetailState extends ConsumerState<ExpenseDetail> {
                                           index: data.index,
                                           onRemove: data.onRemove,
                                           groupMembers: data.groupMembers,
-                                          currencyCode:
-                                              widget.group.currencyCode,
+                                          currency: widget.group.currency,
                                           initialName: data.initialName,
                                           initialAmount: _isSingleEntry
                                               ? null

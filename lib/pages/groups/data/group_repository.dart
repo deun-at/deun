@@ -19,15 +19,49 @@ class GroupRepository {
   /// instead of once per group.
   static bool _payBackExactMissing = false;
 
-  /// The PostgREST `or` predicate behind the **active** group tab. The tabs
-  /// filter inside the query, so they cannot call [isSettled] — building this
-  /// from [kSettledEpsilon] is what keeps the server-side filter from drifting
-  /// away from the client predicate (they disagreed at 0.01 vs 0.005 before
-  /// settle-residue, so a 0.007 balance was "done" on the tab and outstanding on
-  /// the payment screen).
+  /// The PostgREST `or` predicate behind the **active** group list. The filter
+  /// runs inside the query, so it cannot call [isSettled] — the balance lives on
+  /// a referenced table while `currency_code` lives on the parent row, so no
+  /// single currency is knowable here. Building it from [kSettledEpsilon] (the
+  /// SMALLEST supported epsilon) makes it a deliberate SUPERSET: it keeps every
+  /// group any currency could call outstanding, and [narrowToStatus] then makes
+  /// the real per-currency decision on the client.
+  ///
+  /// Keeping the bound tied to the shared epsilon is also what stops the
+  /// server-side filter from drifting away from the client predicate (they
+  /// disagreed at 0.01 vs 0.005 before settle-residue, so a 0.007 balance was
+  /// "done" on the tab and outstanding on the payment screen).
   static String get activeBalanceFilter =>
       'total_share_amount.gte.$kSettledEpsilon,'
       'total_share_amount.lte.-$kSettledEpsilon';
+
+  /// Narrows a server-fetched list to what [statusFilter] actually means in each
+  /// group's OWN currency.
+  ///
+  /// The query-side predicates bracket with [kSettledEpsilon] /
+  /// [kMaxSettledEpsilon] and return a superset on purpose (see
+  /// [activeBalanceFilter]); this is where the decision is finally made, through
+  /// the same [isSettled] every screen uses. Without it a 0-decimal group with
+  /// |net| in [0.005, 0.5) rendered a settled ¥0 hero while still counting as
+  /// active — the tab/hero drift settle-residue closed, reopened for JPY/ISK/KRW.
+  ///
+  /// Pure; any other [statusFilter] (e.g. `"all"`) passes through untouched.
+  static List<Group> narrowToStatus(List<Group> groups, String statusFilter) {
+    switch (statusFilter) {
+      case 'active':
+        return [
+          for (final group in groups)
+            if (!isSettled(group.totalShareAmount, group.currency)) group,
+        ];
+      case 'done':
+        return [
+          for (final group in groups)
+            if (isSettled(group.totalShareAmount, group.currency)) group,
+        ];
+      default:
+        return groups;
+    }
+  }
 
   /// The `pay_back` / `pay_back_exact` argument map — the ONE place those
   /// parameter names live. Pure, so a test can prove that defaulting `paidBy` to
@@ -59,13 +93,16 @@ class GroupRepository {
         referencedTable: 'group_shares_summary_helper',
       );
     } else if (statusFilter == 'done') {
+      // The widest supported epsilon, so a settled 0-decimal balance (|net| < 0.5
+      // in JPY/ISK/KRW) is not excluded before narrowToStatus can judge it in its
+      // own currency. EUR rows are narrowed back to |net| < 0.005 on the client.
       query = query.lt(
         'group_shares_summary_helper.total_share_amount',
-        kSettledEpsilon,
+        kMaxSettledEpsilon,
       );
       query = query.gt(
         'group_shares_summary_helper.total_share_amount',
-        -kSettledEpsilon,
+        -kMaxSettledEpsilon,
       );
     }
 
@@ -93,7 +130,7 @@ class GroupRepository {
       retData.add(group);
     }
 
-    return retData;
+    return narrowToStatus(retData, statusFilter);
   }
 
   static Future<Group> fetchDetail(String groupId) async {
@@ -399,14 +436,16 @@ class GroupRepository {
   /// on, so other clients' open group detail refreshes with no stale roster.
   static Future<MemberRemovalOutcome> removeMember(
     String groupId,
-    String email,
-  ) async {
+    String email, {
+    required Currency currency,
+  }) async {
     final balance = await _memberGroupBalance(groupId, email);
     final hasHistory = await _hasExpenseHistory(groupId, email);
 
     final outcome = resolveMemberRemoval(
       balance: balance,
       hasExpenseHistory: hasHistory,
+      currency: currency,
     );
 
     switch (outcome) {

@@ -1,5 +1,5 @@
 import 'package:deun/helper/helper.dart';
-import 'package:deun/l10n/app_localizations.dart';
+import 'package:deun/widgets/currency_scope.dart';
 import 'package:deun/widgets/motion.dart';
 import 'package:deun/widgets/theme_builder.dart';
 import 'package:flutter/material.dart';
@@ -19,9 +19,9 @@ enum MoneySemantic {
   auto,
 }
 
-/// Renders a monetary [amount] via the locale-aware
-/// `AppLocalizations.toCurrency`, in a tabular figure style, with an optional
-/// semantic color and an optional explicit sign.
+/// Renders a monetary [amount] via the locale-aware [formatMoney], in a
+/// tabular figure style, with an optional semantic color and an optional
+/// explicit sign.
 ///
 /// When [animate] is true the amount counts up from 0 on mount using a
 /// [TweenAnimationBuilder] (750 ms, ease-out-cubic). The semantic color is
@@ -33,7 +33,7 @@ class MoneyText extends StatelessWidget {
   const MoneyText(
     this.amount, {
     super.key,
-    this.currencyCode = kDefaultCurrencyCode,
+    this.currency,
     this.semantic = MoneySemantic.neutral,
     this.style,
     this.showSign = false,
@@ -45,10 +45,11 @@ class MoneyText extends StatelessWidget {
   /// The amount to display. Sign is taken from this value.
   final double amount;
 
-  /// ISO 4217 currency code the amount is formatted in (symbol + locale-aware
-  /// placement). Defaults to [kDefaultCurrencyCode] so cross-group/aggregate
-  /// call sites format via the default rather than a hardcoded symbol.
-  final String currencyCode;
+  /// Currency the amount is formatted in (symbol, placement and decimal digits).
+  /// When omitted the widget falls back to [CurrencyScope.of], so a call site
+  /// with no group in scope renders in the ambient currency rather than a
+  /// hardcoded one.
+  final Currency? currency;
 
   /// Color mode (see [MoneySemantic]).
   final MoneySemantic semantic;
@@ -95,9 +96,12 @@ class MoneyText extends StatelessWidget {
   }
 
   Text _buildText(BuildContext context, double displayAmount) {
-    final formatted = AppLocalizations.of(
-      context,
-    )!.toCurrency(displayAmount, currencyCode);
+    final resolved = currency ?? CurrencyScope.of(context);
+    final formatted = formatMoney(
+      displayAmount,
+      resolved,
+      Localizations.localeOf(context),
+    );
     // showSign uses the final amount (not intermediate) so the "+" appears
     // exactly when the final value is positive — color and sign are consistent.
     final signed = (showSign && amount > 0) ? '+$formatted' : formatted;

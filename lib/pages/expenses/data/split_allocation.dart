@@ -36,6 +36,7 @@ class SplitAllocation {
     required Map<String, double> percentages,
     required Map<String, int> parts,
     required Set<String> enabled,
+    required Currency currency,
   }) {
     if (enabled.isEmpty) {
       return const SplitAllocation(
@@ -56,9 +57,10 @@ class SplitAllocation {
 
       case SplitMode.amount:
         final sum = enabled.fold<double>(0, (s, e) => s + (amounts[e] ?? 0));
-        final diff = roundCurrency(sum) - roundCurrency(total);
+        final diff =
+            roundCurrency(sum, currency) - roundCurrency(total, currency);
         final AllocationStatus status;
-        if (isSettled(diff)) {
+        if (isSettled(diff, currency)) {
           status = AllocationStatus.ok;
         } else if (diff < 0) {
           status = AllocationStatus.under;

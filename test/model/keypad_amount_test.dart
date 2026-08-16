@@ -100,4 +100,59 @@ void main() {
       expect(KeypadAmount.fromText('0').value, 0.0);
     });
   });
+
+  group('currency decimal digits', () {
+    test('a 0-decimal currency rejects the decimal key', () {
+      final a = KeypadAmount.fromText('12', decimalDigits: 0).appendDecimal();
+      expect(a.text, '12');
+      expect(a.appendDigit('5').text, '125');
+    });
+
+    test('a 0-decimal currency drops a seeded fractional part', () {
+      expect(KeypadAmount.fromText('12.50', decimalDigits: 0).text, '12');
+      expect(KeypadAmount.fromText('12.50', decimalDigits: 0).value, 12);
+    });
+
+    test('EUR still accepts exactly two fractional digits', () {
+      final a = KeypadAmount.fromText(
+        '12',
+        decimalDigits: 2,
+      ).appendDecimal().appendDigit('5').appendDigit('0').appendDigit('9');
+      expect(a.text, '12.50');
+    });
+
+    test('backspace keeps the currency precision', () {
+      final a = KeypadAmount.fromText('125', decimalDigits: 0).backspace();
+      expect(a.decimalDigits, 0);
+      expect(a.appendDecimal().text, '12');
+    });
+  });
+
+  // multi-currency-core review: the keypad sheet used to carry a verbatim copy
+  // of the calculator's private formatter. There is one now, here.
+  group('KeypadAmount.format is THE keypad number format', () {
+    test('drops an all-zero fractional part, keeps a real one', () {
+      expect(KeypadAmount.format(42, 2), '42');
+      expect(KeypadAmount.format(12.5, 2), '12.50');
+      expect(KeypadAmount.format(12.05, 2), '12.05');
+    });
+
+    test('a 0-decimal currency never grows a decimal point', () {
+      expect(KeypadAmount.format(3000, 0), '3000');
+      expect(KeypadAmount.format(2500.6, 0), '2501');
+    });
+
+    test('its output round-trips through fromText unchanged', () {
+      for (final d in const [0, 2]) {
+        for (final v in const [0.0, 42.0, 12.5, 2500.6]) {
+          final text = KeypadAmount.format(v, d);
+          expect(
+            KeypadAmount.fromText(text, decimalDigits: d).text,
+            text,
+            reason: 'format($v, $d)',
+          );
+        }
+      }
+    });
+  });
 }

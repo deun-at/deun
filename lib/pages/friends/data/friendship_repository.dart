@@ -17,6 +17,7 @@ class FriendshipRepository {
     ExchangeRates? rates,
   }) async {
     String currentEmail = supabase.auth.currentUser?.email ?? '';
+    final home = Currency.fromCode(homeCurrency);
 
     List<Map<String, dynamic>> data = await supabase
         .from('friendship')
@@ -56,6 +57,7 @@ class FriendshipRepository {
             }
             friendship.shareAmount = roundCurrency(
               friendship.shareAmount + converted,
+              home,
             );
             if (group.currencyCode != homeCurrency) {
               friendship.approximate = true;
@@ -64,7 +66,7 @@ class FriendshipRepository {
         });
       }
 
-      if (isSettled(friendship.shareAmount)) {
+      if (isSettled(friendship.shareAmount, home)) {
         friendship.shareAmount = 0;
       }
 

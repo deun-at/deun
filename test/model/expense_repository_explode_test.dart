@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:deun/helper/currency.dart';
 import 'package:deun/pages/expenses/data/expense_repository.dart';
 
 void main() {
@@ -10,6 +11,7 @@ void main() {
         quantity: 3,
         itemGroupSeq: 1,
         sortIdStart: 10,
+        currency: Currency.eur,
       );
 
       expect(units.length, 3);
@@ -20,14 +22,21 @@ void main() {
         expect(entry['split_mode'], 'claim');
         expect(entry['item_group_seq'], 1);
         expect(entry['name'], 'Beer');
-        expect((unit['shares'] as List).isEmpty, isTrue); // new units start unclaimed
+        expect(
+          (unit['shares'] as List).isEmpty,
+          isTrue,
+        ); // new units start unclaimed
       }
     });
 
     test('sort_id increments per unit so order is stable', () {
       final units = ExpenseRepository.explodeItemizedEntry(
-        name: 'Beer', unitPrice: 5.0, quantity: 2,
-        itemGroupSeq: 1, sortIdStart: 20,
+        name: 'Beer',
+        unitPrice: 5.0,
+        quantity: 2,
+        itemGroupSeq: 1,
+        sortIdStart: 20,
+        currency: Currency.eur,
       );
       expect((units[0]['entry'] as Map)['sort_id'], 20);
       expect((units[1]['entry'] as Map)['sort_id'], 21);
@@ -35,8 +44,12 @@ void main() {
 
     test('qty 1 produces exactly one unit', () {
       final units = ExpenseRepository.explodeItemizedEntry(
-        name: 'Wine', unitPrice: 8.5, quantity: 1,
-        itemGroupSeq: 2, sortIdStart: 10,
+        name: 'Wine',
+        unitPrice: 8.5,
+        quantity: 1,
+        itemGroupSeq: 2,
+        sortIdStart: 10,
+        currency: Currency.eur,
       );
       expect(units.length, 1);
       expect((units[0]['entry'] as Map)['amount'], 8.5);
@@ -44,8 +57,12 @@ void main() {
 
     test('qty 0 is treated as 1 (guard)', () {
       final units = ExpenseRepository.explodeItemizedEntry(
-        name: 'Odd', unitPrice: 2.0, quantity: 0,
-        itemGroupSeq: 3, sortIdStart: 10,
+        name: 'Odd',
+        unitPrice: 2.0,
+        quantity: 0,
+        itemGroupSeq: 3,
+        sortIdStart: 10,
+        currency: Currency.eur,
       );
       expect(units.length, 1);
     });
@@ -54,8 +71,12 @@ void main() {
   group('ExpenseRepository.explodeItemizedEntry with unitClaims (F146)', () {
     test('existing claims are preserved per unit on re-explode', () {
       final units = ExpenseRepository.explodeItemizedEntry(
-        name: 'Beer', unitPrice: 2.5, quantity: 3,
-        itemGroupSeq: 1, sortIdStart: 10,
+        name: 'Beer',
+        unitPrice: 2.5,
+        quantity: 3,
+        itemGroupSeq: 1,
+        sortIdStart: 10,
+        currency: Currency.eur,
         unitClaims: [
           ['a@test.com'],
           [],
@@ -79,8 +100,12 @@ void main() {
 
     test('units beyond the old quantity start unclaimed', () {
       final units = ExpenseRepository.explodeItemizedEntry(
-        name: 'Beer', unitPrice: 2.5, quantity: 3,
-        itemGroupSeq: 1, sortIdStart: 10,
+        name: 'Beer',
+        unitPrice: 2.5,
+        quantity: 3,
+        itemGroupSeq: 1,
+        sortIdStart: 10,
+        currency: Currency.eur,
         unitClaims: [
           ['a@test.com'],
         ],
@@ -92,8 +117,12 @@ void main() {
 
     test('shrinking the quantity drops trailing claims', () {
       final units = ExpenseRepository.explodeItemizedEntry(
-        name: 'Beer', unitPrice: 2.5, quantity: 1,
-        itemGroupSeq: 1, sortIdStart: 10,
+        name: 'Beer',
+        unitPrice: 2.5,
+        quantity: 1,
+        itemGroupSeq: 1,
+        sortIdStart: 10,
+        currency: Currency.eur,
         unitClaims: [
           ['a@test.com'],
           ['b@test.com'],

@@ -290,7 +290,7 @@ class _SummaryCard extends StatelessWidget {
           const SizedBox(height: 18),
           MoneyText(
             expense.amount,
-            currencyCode: expense.group.currencyCode,
+            currency: expense.group.currency,
             style: textTheme.displaySmall?.copyWith(
               color: colorScheme.onSurface,
             ),
@@ -352,7 +352,7 @@ class _PaidNetRow extends StatelessWidget {
     if (!isInvolved) {
       netLabel = l10n.expenseNoShares;
       netColor = colorScheme.onSurfaceVariant;
-    } else if (isSettled(net)) {
+    } else if (isSettled(net, expense.group.currency)) {
       netLabel = l10n.expenseNetSettled;
       netColor = colorScheme.onSurfaceVariant;
     } else if (net > 0) {
@@ -499,7 +499,7 @@ class _MemberBreakdown extends StatelessWidget {
               payerName: payerName,
               payerIsYou: payerIsYou,
               total: expense.amount,
-              currencyCode: expense.group.currencyCode,
+              currency: expense.group.currency,
             ),
         ],
       ),
@@ -516,7 +516,7 @@ class _MemberRow extends StatelessWidget {
     required this.payerName,
     required this.payerIsYou,
     required this.total,
-    required this.currencyCode,
+    required this.currency,
   });
 
   final MemberBreakdownEntry entry;
@@ -526,7 +526,7 @@ class _MemberRow extends StatelessWidget {
   final String payerName;
   final bool payerIsYou;
   final double total;
-  final String currencyCode;
+  final Currency currency;
 
   @override
   Widget build(BuildContext context) {
@@ -543,7 +543,7 @@ class _MemberRow extends StatelessWidget {
     final Color subLabelColor;
     if (entry.isPayer) {
       subLabel = l10n.expenseMemberPaidAmount(
-        l10n.toCurrency(total, currencyCode),
+        l10n.toCurrency(total, currency.code),
       );
       subLabelColor = Theme.of(context).extension<SemanticColors>()!.success;
     } else if (isYou) {
@@ -591,7 +591,7 @@ class _MemberRow extends StatelessWidget {
           // single line, right-aligned. No semantic color, no two-line label.
           MoneyText(
             entry.share,
-            currencyCode: currencyCode,
+            currency: currency,
             style: textTheme.titleSmall?.copyWith(
               color: colorScheme.onSurface,
               fontWeight: FontWeight.w700,

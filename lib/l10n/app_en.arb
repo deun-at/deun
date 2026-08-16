@@ -606,30 +606,6 @@
   },
   "expenseNoShares": "You are not involved",
   "@expenseNoShares": {},
-  "groupDisplayAmount": "{paidByYourself, select, yes{{displayName} owes you} other{You owe {displayName}}} {amount}",
-  "@groupDisplayAmount": {
-    "description": "Lable in the group list/group detail of what you are owed/what you owe per user.",
-    "placeholders": {
-      "displayName": {
-        "type": "String",
-        "example": "Max Muster"
-      },
-      "paidByYourself": {
-        "type": "String"
-      },
-      "amount": { "type": "String" }
-    }
-  },
-  "groupDisplaySumAmount": "{paidByYourself, select, yes{You are owed} other{You owe}} {amount}",
-  "@groupDisplaySumAmount": {
-    "description": "Lable in the group list/group detail of what you are owed/what you owe as a sum.",
-    "placeholders": {
-      "paidByYourself": {
-        "type": "String"
-      },
-      "amount": { "type": "String" }
-    }
-  },
   "allDone": "all done",
   "@allDone": {},
   "payBack": "Pay back",

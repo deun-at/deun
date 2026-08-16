@@ -19,6 +19,7 @@ import 'package:deun/pages/settings/contact.dart';
 import 'package:deun/pages/settings/privacy_policy.dart';
 import 'package:deun/provider.dart';
 import 'helper/realtime_mixin.dart';
+import 'package:deun/widgets/currency_scope.dart';
 import 'package:deun/widgets/dev/widget_gallery_page.dart';
 import 'package:deun/widgets/initialization_helper.dart';
 import 'package:deun/widgets/theme_builder.dart';
@@ -647,22 +648,27 @@ class _NavigationScreenState extends ConsumerState<NavigationScreen>
     final locale = ref.watch(localeProvider);
     final themeMode = ref.watch(themeModeProvider);
 
-    return MaterialApp.router(
-      routerConfig: _routerConfig,
-      title: 'Deun',
-      theme: getThemeData(context, kBrandSeed, Brightness.light),
-      darkTheme: getThemeData(context, kBrandSeed, Brightness.dark),
-      themeMode: themeMode,
-      locale: locale,
-      localizationsDelegates: AppLocalizations.localizationsDelegates,
-      supportedLocales: AppLocalizations.supportedLocales,
-      localeResolutionCallback: (locale, supportedLocales) {
-        if (locale == null) {
-          return const Locale('en');
-        }
+    return CurrencyScope(
+      currency: Currency.eur,
+      child: MaterialApp.router(
+        routerConfig: _routerConfig,
+        title: 'Deun',
+        theme: getThemeData(context, kBrandSeed, Brightness.light),
+        darkTheme: getThemeData(context, kBrandSeed, Brightness.dark),
+        themeMode: themeMode,
+        locale: locale,
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        localeResolutionCallback: (locale, supportedLocales) {
+          if (locale == null) {
+            return const Locale('en');
+          }
 
-        return supportedLocales.contains(locale) ? locale : const Locale('en');
-      },
+          return supportedLocales.contains(locale)
+              ? locale
+              : const Locale('en');
+        },
+      ),
     );
   }
 }

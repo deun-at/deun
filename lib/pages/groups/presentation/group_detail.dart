@@ -406,7 +406,7 @@ class _GroupBalanceHero extends StatelessWidget {
     final Color onHeroMuted = onHero.withValues(alpha: 0.7);
 
     final net = group.totalShareAmount;
-    final bool settled = isSettled(net);
+    final bool settled = isSettled(net, group.currency);
 
     final String leadLabel;
     final MoneySemantic semanticMode;
@@ -450,7 +450,7 @@ class _GroupBalanceHero extends StatelessWidget {
           const SizedBox(height: 6),
           MoneyText(
             settled ? 0 : net.abs(),
-            currencyCode: group.currencyCode,
+            currency: group.currency,
             semantic: semanticMode,
             // Hero amount: matches the home hero (group_list.dart) — shared
             // displayMedium token (45px / w700 / -0.02em, tabular Bricolage).

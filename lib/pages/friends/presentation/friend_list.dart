@@ -455,7 +455,7 @@ class _FriendCard extends StatelessWidget {
                   const SizedBox(width: 6),
                   MoneyText(
                     friendship.shareAmount.abs(),
-                    currencyCode: homeCurrency,
+                    currency: Currency.fromCode(homeCurrency),
                     approximate: friendship.approximate,
                     semantic: moneySemantic,
                     style: balanceStyle,

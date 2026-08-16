@@ -39,6 +39,8 @@ Future<void> _pump(
   String? initialAmount = '12.00',
   bool isSingleEntry = false,
   TextEditingController? expenseLevelAmountController,
+  Locale locale = const Locale('en'),
+  Currency currency = Currency.eur,
 }) async {
   final members = [
     _member('a@test.com', 'Alice'),
@@ -49,6 +51,7 @@ Future<void> _pump(
   await tester.pumpWidget(
     ProviderScope(
       child: MaterialApp(
+        locale: locale,
         localizationsDelegates: const [
           AppLocalizations.delegate,
           GlobalMaterialLocalizations.delegate,
@@ -71,6 +74,7 @@ Future<void> _pump(
                     index: 0,
                     onRemove: () {},
                     groupMembers: members,
+                    currency: currency,
                     initialAmount: initialAmount,
                     isSingleEntry: isSingleEntry,
                     expenseLevelAmountController: expenseLevelAmountController,
@@ -457,6 +461,129 @@ void main() {
 
   testWidgets('renders in dark mode without throwing', (tester) async {
     await _pump(tester, brightness: Brightness.dark);
+    expect(tester.takeException(), isNull);
+  });
+
+  // ---------------------------------------------------------------------------
+  // multi-currency-core review: the per-member amount tile is display-only text.
+  // It used to be SEEDED locale-formatted ("6,00") and then REWRITTEN as machine
+  // field text ("6.00"), so a German user watched the separator flip on the
+  // first recompute or keypad confirm.
+  // ---------------------------------------------------------------------------
+  group('per-member exact-amount tiles are locale-formatted throughout', () {
+    Future<void> pumpExact(
+      WidgetTester tester, {
+      required Locale locale,
+      Currency currency = Currency.eur,
+    }) async {
+      final controller = TextEditingController(text: '12.00');
+      addTearDown(controller.dispose);
+      await _pump(
+        tester,
+        initialAmount: null,
+        isSingleEntry: true,
+        expenseLevelAmountController: controller,
+        locale: locale,
+        currency: currency,
+      );
+      final l10n = await AppLocalizations.delegate.load(locale);
+      await tester.tap(find.text(l10n.splitModeExact));
+      await tester.pumpAndSettle();
+    }
+
+    testWidgets('the German seed uses a comma', (tester) async {
+      await pumpExact(tester, locale: const Locale('de'));
+      expect(find.text('6,00'), findsNWidgets(2));
+      expect(find.text('6.00'), findsNothing);
+    });
+
+    testWidgets(
+      'the separator does not flip after a keypad confirm rebalances the '
+      'other member',
+      (tester) async {
+        await pumpExact(tester, locale: const Locale('de'));
+
+        // Edit Alice to 9 → Bob is recomputed through
+        // _updateUnlockedControllers, which is the write that used to switch
+        // the tile from "3,00" to "3.00".
+        await tester.tap(find.text('6,00').first);
+        await tester.pumpAndSettle();
+        await tester.tap(find.byKey(const ValueKey('keypad_backspace')));
+        await tester.tap(find.byKey(const ValueKey('keypad_9')));
+        await tester.pumpAndSettle();
+        await tester.tap(find.byKey(const ValueKey('keypad_confirm')));
+        await tester.pumpAndSettle();
+
+        // The edited tile AND the recomputed tile both stay German.
+        expect(find.text('9,00'), findsOneWidget);
+        expect(find.text('3,00'), findsOneWidget);
+        expect(find.text('9.00'), findsNothing);
+        expect(find.text('3.00'), findsNothing);
+      },
+    );
+
+    testWidgets('the English seed and recompute both use a period', (
+      tester,
+    ) async {
+      await pumpExact(tester, locale: const Locale('en'));
+      expect(find.text('6.00'), findsNWidgets(2));
+
+      await tester.tap(find.text('6.00').first);
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const ValueKey('keypad_backspace')));
+      await tester.tap(find.byKey(const ValueKey('keypad_9')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const ValueKey('keypad_confirm')));
+      await tester.pumpAndSettle();
+      expect(find.text('9.00'), findsOneWidget);
+      expect(find.text('3.00'), findsOneWidget);
+    });
+
+    testWidgets('a 0-decimal currency renders whole units, seed and after', (
+      tester,
+    ) async {
+      await pumpExact(
+        tester,
+        locale: const Locale('en'),
+        currency: Currency.jpy,
+      );
+      // ¥12 over two members → ¥6 each, never "6.00".
+      expect(find.text('6'), findsNWidgets(2));
+      expect(find.text('6.00'), findsNothing);
+
+      await tester.tap(find.text('6').first);
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const ValueKey('keypad_backspace')));
+      await tester.tap(find.byKey(const ValueKey('keypad_9')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const ValueKey('keypad_confirm')));
+      await tester.pumpAndSettle();
+      expect(find.text('9'), findsOneWidget);
+      expect(find.text('3'), findsOneWidget);
+    });
+  });
+
+  // multi-currency-core review: _getAmountPreview used to hand both callers a
+  // String they immediately re-parsed. It returns a double now, so the preview
+  // is formatted once, by MoneyText, in the reader's locale.
+  testWidgets('the equal-mode preview is locale-formatted, not re-parsed', (
+    tester,
+  ) async {
+    final controller = TextEditingController(text: '12.00');
+    addTearDown(controller.dispose);
+    await _pump(
+      tester,
+      initialAmount: null,
+      isSingleEntry: true,
+      expenseLevelAmountController: controller,
+      locale: const Locale('de'),
+    );
+    final l10n = await AppLocalizations.delegate.load(const Locale('de'));
+
+    // German renders "6,00 €" (with a non-breaking space), so compare against
+    // the pipeline's own output rather than a hand-typed literal.
+    expect(l10n.toCurrency(6), startsWith('6,00'));
+    expect(find.text(l10n.toCurrency(6)), findsNWidgets(2));
     expect(tester.takeException(), isNull);
   });
 }

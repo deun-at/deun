@@ -46,8 +46,9 @@ class MemberRemovalHardRemoved extends MemberRemovalOutcome {
 MemberRemovalOutcome resolveMemberRemoval({
   required double balance,
   required bool hasExpenseHistory,
+  required Currency currency,
 }) {
-  if (!isSettled(balance)) {
+  if (!isSettled(balance, currency)) {
     return MemberRemovalOutcome.blocked(outstanding: balance.abs());
   }
   return hasExpenseHistory

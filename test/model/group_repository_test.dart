@@ -399,8 +399,100 @@ void main() {
     test('the tab threshold and the client predicate agree on 0.007', () {
       // 0.007 is >= the filter's 0.005 bound, so the group stays on the active
       // tab — and isSettled(0.007) is false, so every screen agrees with it.
-      expect(isSettled(0.007), isFalse);
+      expect(isSettled(0.007, Currency.eur), isFalse);
       expect(GroupRepository.activeBalanceFilter, contains('gte.0.005'));
+    });
+
+    test('the query bounds bracket every supported currency', () {
+      // The predicates cannot see a row's currency, so they must be a superset:
+      // the active bound is the SMALLEST supported epsilon and the done bound
+      // the LARGEST. narrowToStatus makes the real decision per row.
+      for (final c in kSupportedCurrencies) {
+        expect(
+          c.settledEpsilon,
+          inInclusiveRange(kSettledEpsilon, kMaxSettledEpsilon),
+          reason: c.code,
+        );
+      }
+      expect(kMaxSettledEpsilon, Currency.jpy.settledEpsilon);
+      expect(kMaxSettledEpsilon, 0.5);
+    });
+  });
+
+  // ---------------------------------------------------------------------------
+  // multi-currency-core review: the server predicate is pinned to EUR, so the
+  // per-currency decision has to happen on the client — otherwise a 0-decimal
+  // group with |net| in [0.005, 0.5) renders a settled ¥0 hero while still
+  // counting as active.
+  // ---------------------------------------------------------------------------
+  group('GroupRepository.narrowToStatus', () {
+    Group g(String id, double net, String code) {
+      final group = Group();
+      group.id = id;
+      group.name = id;
+      group.colorValue = 0xFF5750E6;
+      group.simplifiedExpenses = true;
+      group.createdAt = '';
+      group.userId = null;
+      group.currencyCode = code;
+      group.groupMembers = [];
+      group.groupSharesSummary = {};
+      group.totalExpenses = 0;
+      group.totalShareAmount = net;
+      group.expenses = null;
+      return group;
+    }
+
+    List<String> ids(List<Group> groups) => [for (final x in groups) x.id];
+
+    test('a sub-yen JPY balance is settled, so it is not active', () {
+      final groups = [g('jpy-residue', 0.3, 'JPY'), g('jpy-real', 3, 'JPY')];
+      expect(ids(GroupRepository.narrowToStatus(groups, 'active')), [
+        'jpy-real',
+      ]);
+    });
+
+    test('the same 0.3 balance IS active in EUR', () {
+      final groups = [g('eur', 0.3, 'EUR')];
+      expect(ids(GroupRepository.narrowToStatus(groups, 'active')), ['eur']);
+    });
+
+    test('done is the exact complement, per currency', () {
+      final groups = [
+        g('jpy-residue', 0.3, 'JPY'),
+        g('jpy-real', -3, 'JPY'),
+        g('eur-residue', 0.004, 'EUR'),
+        g('eur-real', 0.007, 'EUR'),
+      ];
+      expect(ids(GroupRepository.narrowToStatus(groups, 'done')), [
+        'jpy-residue',
+        'eur-residue',
+      ]);
+      expect(ids(GroupRepository.narrowToStatus(groups, 'active')), [
+        'jpy-real',
+        'eur-real',
+      ]);
+    });
+
+    test('EUR groups are unaffected — every existing caller passes EUR', () {
+      final groups = [
+        g('a', 0, 'EUR'),
+        g('b', 12.5, 'EUR'),
+        g('c', -0.004, 'EUR'),
+      ];
+      expect(ids(GroupRepository.narrowToStatus(groups, 'active')), ['b']);
+      expect(ids(GroupRepository.narrowToStatus(groups, 'done')), ['a', 'c']);
+    });
+
+    test('an unrecognised filter (e.g. "all") passes everything through', () {
+      final groups = [g('a', 0, 'JPY'), g('b', 0.3, 'JPY')];
+      expect(ids(GroupRepository.narrowToStatus(groups, 'all')), ['a', 'b']);
+    });
+
+    test('it agrees with the hero: narrowed-out means isSettled', () {
+      final residue = g('jpy-residue', 0.3, 'JPY');
+      expect(GroupRepository.narrowToStatus([residue], 'active'), isEmpty);
+      expect(isSettled(residue.totalShareAmount, residue.currency), isTrue);
     });
   });
 

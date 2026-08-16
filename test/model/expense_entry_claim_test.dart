@@ -19,13 +19,15 @@ Map<String, dynamic> _unitJson(
     'item_group_id': groupId,
     'created_at': '2026-07-01T10:00:00',
     'expense_entry_share': claimers
-        .map((email) => {
-              'expense_entry_id': id,
-              'email': email,
-              'display_name': email,
-              'percentage': 100 / claimers.length,
-              'created_at': '2026-07-01T10:00:00',
-            })
+        .map(
+          (email) => {
+            'expense_entry_id': id,
+            'email': email,
+            'display_name': email,
+            'percentage': 100 / claimers.length,
+            'created_at': '2026-07-01T10:00:00',
+          },
+        )
         .toList(),
   };
 }
@@ -83,9 +85,14 @@ void main() {
     test('true when split_mode is claim and quantity is 1', () {
       final entry = ExpenseEntry(index: 0);
       entry.loadDataFromJson({
-        'id': 'u1', 'expense_id': 'exp1', 'name': 'Beer',
-        'amount': 5.0, 'quantity': 1, 'split_mode': 'claim',
-        'item_group_id': 'grp-1', 'created_at': '2024-03-15T10:00:00',
+        'id': 'u1',
+        'expense_id': 'exp1',
+        'name': 'Beer',
+        'amount': 5.0,
+        'quantity': 1,
+        'split_mode': 'claim',
+        'item_group_id': 'grp-1',
+        'created_at': '2024-03-15T10:00:00',
       });
       expect(entry.isClaimUnit, isTrue);
     });
@@ -93,8 +100,12 @@ void main() {
     test('false for a regular equal-split entry', () {
       final entry = ExpenseEntry(index: 0);
       entry.loadDataFromJson({
-        'id': 'e1', 'expense_id': 'exp1', 'name': 'Dinner',
-        'amount': 40.0, 'quantity': 1, 'split_mode': 'equal',
+        'id': 'e1',
+        'expense_id': 'exp1',
+        'name': 'Dinner',
+        'amount': 40.0,
+        'quantity': 1,
+        'split_mode': 'equal',
         'created_at': '2024-03-15T10:00:00',
       });
       expect(entry.isClaimUnit, isFalse);
@@ -150,7 +161,7 @@ void main() {
               'display_name': 'a',
               'percentage': 100.0,
               'created_at': '2026-07-01T10:00:00',
-            }
+            },
           ],
         },
       ]);
@@ -187,6 +198,48 @@ void main() {
       expect(json['expense_entry[0][amount]'], '2.50');
       expect(json['expense_entry[0][name]'], 'Beer');
       expect(json.containsKey('expense_entry[1][amount]'), isFalse);
+    });
+
+    // multi-currency-core review: toJson seeds the editor form's amount field,
+    // and it kept a hardcoded toStringAsFixed(2) — so a JPY expense opened the
+    // editor showing "3000.00".
+    group('toJson seeds the amount at the group currency precision', () {
+      test('a 0-decimal group writes a whole number', () {
+        final expense = _expenseWith([_unitJson('u1', null, amount: 3000)]);
+        expense.group.currencyCode = 'JPY';
+
+        expect(expense.toJson()['expense_entry[0][amount]'], '3000');
+      });
+
+      test('a 0-decimal group rounds rather than truncates', () {
+        final expense = _expenseWith([_unitJson('u1', null, amount: 2500.6)]);
+        expense.group.currencyCode = 'JPY';
+
+        expect(expense.toJson()['expense_entry[0][amount]'], '2501');
+      });
+
+      test('a 2-decimal group is byte-identical to the old behaviour', () {
+        final expense = _expenseWith([_unitJson('u1', null, amount: 2.5)]);
+        expense.group.currencyCode = 'EUR';
+
+        expect(expense.toJson()['expense_entry[0][amount]'], '2.50');
+      });
+
+      test('a group-less expense still serializes at EUR precision', () {
+        final expense = _expenseWith([_unitJson('u1', null, amount: 2.5)]);
+
+        // The default Group carries kDefaultCurrencyCode, so nothing throws and
+        // the legacy 2-decimal shape survives.
+        expect(expense.toJson()['expense_entry[0][amount]'], '2.50');
+      });
+
+      test('the seed is always dot-separated machine text', () {
+        final expense = _expenseWith([_unitJson('u1', null, amount: 12.5)]);
+
+        final raw = expense.toJson()['expense_entry[0][amount]'] as String;
+        expect(raw, isNot(contains(',')));
+        expect(double.parse(raw), 12.5);
+      });
     });
   });
 }

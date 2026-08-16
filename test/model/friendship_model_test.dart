@@ -34,7 +34,7 @@ void main() {
 
     test('a settled shareAmount is normalized to zero', () {
       const amount = 0.004;
-      final normalized = isSettled(amount) ? 0.0 : amount;
+      final normalized = isSettled(amount, Currency.eur) ? 0.0 : amount;
       expect(normalized, 0.0);
     });
 
@@ -42,13 +42,13 @@ void main() {
       // Was 0.01 here: the friend list used to swallow anything under a cent,
       // while the payment screen already offered it as a debt.
       const amount = 0.005;
-      final normalized = isSettled(amount) ? 0.0 : amount;
+      final normalized = isSettled(amount, Currency.eur) ? 0.0 : amount;
       expect(normalized, 0.005);
     });
 
     test('a negative settled shareAmount is normalized too', () {
       const amount = -0.004;
-      final normalized = isSettled(amount) ? 0.0 : amount;
+      final normalized = isSettled(amount, Currency.eur) ? 0.0 : amount;
       expect(normalized, 0.0);
     });
   });

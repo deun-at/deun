@@ -7,7 +7,12 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../main.dart';
 
 class ExpenseRepository {
-  static Future<List<Expense>> fetchData([String? groupId, int rangeFrom = 0, int rangeTo = 0, String? filter]) async {
+  static Future<List<Expense>> fetchData([
+    String? groupId,
+    int rangeFrom = 0,
+    int rangeTo = 0,
+    String? filter,
+  ]) async {
     var query = supabase.from('expense').select(Expense.expenseSelectString);
 
     if (groupId != null) {
@@ -19,7 +24,10 @@ class ExpenseRepository {
     }
 
     //created_at as fallback if multiple entrys are on the same date/check if name makes more senses
-    List<Map<String, dynamic>> data = await query.order('expense_date').order('created_at').range(rangeFrom, rangeTo);
+    List<Map<String, dynamic>> data = await query
+        .order('expense_date')
+        .order('created_at')
+        .range(rangeFrom, rangeTo);
 
     List<Expense> retData = List.empty(growable: true);
 
@@ -32,7 +40,11 @@ class ExpenseRepository {
     return retData;
   }
 
-  static Future<List<Expense>> fetchRange(String groupId, DateTime start, DateTime end) async {
+  static Future<List<Expense>> fetchRange(
+    String groupId,
+    DateTime start,
+    DateTime end,
+  ) async {
     var query = supabase
         .from('expense')
         .select(Expense.expenseSelectString)
@@ -113,27 +125,31 @@ class ExpenseRepository {
     required int quantity,
     required int itemGroupSeq,
     required int sortIdStart,
+    required Currency currency,
     List<List<String>>? unitClaims,
   }) {
     final qty = quantity > 0 ? quantity : 1;
     final units = <Map<String, dynamic>>[];
     for (int i = 0; i < qty; i++) {
-      final claimers =
-          (unitClaims != null && i < unitClaims.length) ? unitClaims[i] : const <String>[];
+      final claimers = (unitClaims != null && i < unitClaims.length)
+          ? unitClaims[i]
+          : const <String>[];
       units.add({
         'entry': {
           'name': name,
-          'amount': roundCurrency(unitPrice),
+          'amount': roundCurrency(unitPrice, currency),
           'quantity': 1,
           'split_mode': 'claim',
           'item_group_seq': itemGroupSeq,
           'sort_id': sortIdStart + i,
         },
         'shares': claimers
-            .map((email) => <String, dynamic>{
-                  'email': email,
-                  'percentage': 100 / claimers.length,
-                })
+            .map(
+              (email) => <String, dynamic>{
+                'email': email,
+                'percentage': 100 / claimers.length,
+              },
+            )
             .toList(),
       });
     }
@@ -145,7 +161,12 @@ class ExpenseRepository {
   /// the legacy multi-step write path when the database doesn't have the
   /// RPC yet, so the app works against not-yet-migrated servers.
   static Future<void> saveAll(
-      BuildContext context, String groupId, String? expenseId, Map<String, dynamic> formResponse) async {
+    BuildContext context,
+    String groupId,
+    String? expenseId,
+    Map<String, dynamic> formResponse, {
+    required Currency currency,
+  }) async {
     try {
       Map<String, dynamic> upsertVals = {
         'name': formResponse['name'],
@@ -153,7 +174,7 @@ class ExpenseRepository {
         'paid_by': formResponse['paid_by'],
         'group_id': groupId,
         'user_id': supabase.auth.currentUser?.id,
-        'category': (formResponse['category'] as ExpenseCategory?)?.name
+        'category': (formResponse['category'] as ExpenseCategory?)?.name,
       };
 
       if (expenseId != null) {
@@ -184,10 +205,11 @@ class ExpenseRepository {
       int sortId = 10;
       int itemGroupSeq = 0;
       for (var expenseEntry in expenseEntryValues.values) {
-        int qty = int.tryParse(expenseEntry['quantity']?.toString() ?? '1') ?? 1;
+        int qty =
+            int.tryParse(expenseEntry['quantity']?.toString() ?? '1') ?? 1;
         double unitPrice = double.parse(expenseEntry['amount']);
-        double entryTotal = roundCurrency(unitPrice * qty);
-        amount = roundCurrency(amount + entryTotal);
+        double entryTotal = roundCurrency(unitPrice * qty, currency);
+        amount = roundCurrency(amount + entryTotal, currency);
 
         String splitMode = expenseEntry['split_mode'] ?? 'equal';
 
@@ -195,7 +217,8 @@ class ExpenseRepository {
         // may be absent entirely.
         Set<String> expenseEntryShares = expenseEntry['shares'] ?? <String>{};
         Map<String, dynamic> shareData = expenseEntry['share_data'] ?? {};
-        Set<String> lockedMembers = expenseEntry['locked_members'] is Set<String>
+        Set<String> lockedMembers =
+            expenseEntry['locked_members'] is Set<String>
             ? expenseEntry['locked_members']
             : <String>{};
 
@@ -205,7 +228,8 @@ class ExpenseRepository {
         // (quantity 1, split_mode 'claim'), grouped server-side by a shared
         // item_group_seq. Detection: an explicit claimable flag, or a plain
         // multi-quantity itemized line with no manual custom split.
-        final bool isClaimable = (expenseEntry['claimable'] == true) ||
+        final bool isClaimable =
+            (expenseEntry['claimable'] == true) ||
             (qty > 1 && shareData.isEmpty && expenseEntryShares.isEmpty);
 
         if (isClaimable) {
@@ -215,14 +239,17 @@ class ExpenseRepository {
           final unitClaims = (expenseEntry['existing_claims'] as List?)
               ?.map((u) => (u as List).cast<String>())
               .toList();
-          entries.addAll(ExpenseRepository.explodeItemizedEntry(
-            name: expenseEntry['name'] as String?,
-            unitPrice: unitPrice,
-            quantity: qty,
-            itemGroupSeq: itemGroupSeq,
-            sortIdStart: sortId,
-            unitClaims: unitClaims,
-          ));
+          entries.addAll(
+            ExpenseRepository.explodeItemizedEntry(
+              name: expenseEntry['name'] as String?,
+              unitPrice: unitPrice,
+              quantity: qty,
+              itemGroupSeq: itemGroupSeq,
+              sortIdStart: sortId,
+              currency: currency,
+              unitClaims: unitClaims,
+            ),
+          );
           sortId += qty * 10; // leave room between groups
           continue;
         }
@@ -231,7 +258,8 @@ class ExpenseRepository {
 
         // Safety net: if split mode is 'exact' but all amounts are zero,
         // the widget didn't know the real total — fall back to equal split.
-        bool allZeroExact = splitMode == 'exact' &&
+        bool allZeroExact =
+            splitMode == 'exact' &&
             shareData.isNotEmpty &&
             shareData.values.every((v) => (v as num).toDouble() == 0.0);
         if (allZeroExact) {
@@ -251,7 +279,9 @@ class ExpenseRepository {
             switch (splitMode) {
               case 'exact':
                 fixedAmount = (entry.value as num).toDouble();
-                percentage = entryTotal > 0 ? (fixedAmount / entryTotal) * 100 : 0;
+                percentage = entryTotal > 0
+                    ? (fixedAmount / entryTotal) * 100
+                    : 0;
                 break;
               case 'percentage':
                 percentage = (entry.value as num).toDouble();
@@ -298,18 +328,28 @@ class ExpenseRepository {
 
       String savedExpenseId;
       try {
-        savedExpenseId = await supabase.rpc('save_expense_all', params: {
-          '_group_id': groupId,
-          '_expense': upsertVals,
-          '_entries': entries,
-        }) as String;
+        savedExpenseId =
+            await supabase.rpc(
+                  'save_expense_all',
+                  params: {
+                    '_group_id': groupId,
+                    '_expense': upsertVals,
+                    '_entries': entries,
+                  },
+                )
+                as String;
       } on PostgrestException catch (e) {
         if (!isMissingFunctionError(e)) rethrow;
         savedExpenseId = await _saveAllLegacy(groupId, upsertVals, entries);
       }
 
       if (expenseId == null && context.mounted) {
-        sendExpenseNotification(context, savedExpenseId, notificationReceiver, amount);
+        sendExpenseNotification(
+          context,
+          savedExpenseId,
+          notificationReceiver,
+          amount,
+        );
       }
     } on PostgrestException catch (e) {
       debugPrint('Failed to save expense in group $groupId: ${e.message}');
@@ -320,29 +360,49 @@ class ExpenseRepository {
   /// Legacy non-atomic write path for servers without the save_expense_all
   /// RPC. Performs the same writes as the RPC, one statement at a time.
   static Future<String> _saveAllLegacy(
-      String groupId, Map<String, dynamic> upsertVals, List<Map<String, dynamic>> entries) async {
-    Map<String, dynamic> expenseInsertResponse =
-        await supabase.from('expense').upsert(upsertVals).select('id').single();
+    String groupId,
+    Map<String, dynamic> upsertVals,
+    List<Map<String, dynamic>> entries,
+  ) async {
+    Map<String, dynamic> expenseInsertResponse = await supabase
+        .from('expense')
+        .upsert(upsertVals)
+        .select('id')
+        .single();
     final savedExpenseId = expenseInsertResponse['id'] as String;
 
-    await supabase.from('expense_entry').delete().eq('expense_id', savedExpenseId);
+    await supabase
+        .from('expense_entry')
+        .delete()
+        .eq('expense_id', savedExpenseId);
 
     for (var item in entries) {
       Map<String, dynamic> expenseEntryResult = await supabase
           .from('expense_entry')
-          .insert({...item['entry'] as Map<String, dynamic>, 'expense_id': savedExpenseId})
+          .insert({
+            ...item['entry'] as Map<String, dynamic>,
+            'expense_id': savedExpenseId,
+          })
           .select('id')
           .single();
 
       final shareRows = (item['shares'] as List)
-          .map((s) => {...s as Map<String, dynamic>, 'expense_entry_id': expenseEntryResult['id']})
+          .map(
+            (s) => {
+              ...s as Map<String, dynamic>,
+              'expense_entry_id': expenseEntryResult['id'],
+            },
+          )
           .toList();
       if (shareRows.isNotEmpty) {
         await supabase.from('expense_entry_share').insert(shareRows);
       }
     }
 
-    await supabase.rpc('update_group_member_shares', params: {"_group_id": groupId, "_expense_id": savedExpenseId});
+    await supabase.rpc(
+      'update_group_member_shares',
+      params: {"_group_id": groupId, "_expense_id": savedExpenseId},
+    );
     return savedExpenseId;
   }
 
@@ -359,39 +419,67 @@ class ExpenseRepository {
     required List<String> claimerEmails,
   }) async {
     final double pct = claimerEmails.isEmpty ? 0 : 100 / claimerEmails.length;
-    final shareRows =
-        claimerEmails.map((email) => {'email': email, 'percentage': pct}).toList();
+    final shareRows = claimerEmails
+        .map((email) => {'email': email, 'percentage': pct})
+        .toList();
     try {
-      await supabase.rpc('claim_set_unit_shares', params: {
-        '_group_id': groupId,
-        '_expense_id': expenseId,
-        '_entry_id': unitEntryId,
-        '_shares': shareRows,
-      });
+      await supabase.rpc(
+        'claim_set_unit_shares',
+        params: {
+          '_group_id': groupId,
+          '_expense_id': expenseId,
+          '_entry_id': unitEntryId,
+          '_shares': shareRows,
+        },
+      );
     } on PostgrestException catch (e) {
       if (!isMissingFunctionError(e)) rethrow;
-      await _claimSetUnitSharesLegacy(groupId, expenseId, unitEntryId, shareRows);
+      await _claimSetUnitSharesLegacy(
+        groupId,
+        expenseId,
+        unitEntryId,
+        shareRows,
+      );
     }
   }
 
   /// Legacy non-atomic claim mutation for servers without the
   /// claim_set_unit_shares RPC. Mirrors the RPC's statements one at a time.
-  static Future<void> _claimSetUnitSharesLegacy(String groupId, String expenseId,
-      String unitEntryId, List<Map<String, dynamic>> shareRows) async {
-    await supabase.from('expense_entry_share').delete().eq('expense_entry_id', unitEntryId);
+  static Future<void> _claimSetUnitSharesLegacy(
+    String groupId,
+    String expenseId,
+    String unitEntryId,
+    List<Map<String, dynamic>> shareRows,
+  ) async {
+    await supabase
+        .from('expense_entry_share')
+        .delete()
+        .eq('expense_entry_id', unitEntryId);
     if (shareRows.isNotEmpty) {
-      await supabase.from('expense_entry_share').insert(
-            shareRows.map((s) => {...s, 'expense_entry_id': unitEntryId}).toList(),
+      await supabase
+          .from('expense_entry_share')
+          .insert(
+            shareRows
+                .map((s) => {...s, 'expense_entry_id': unitEntryId})
+                .toList(),
           );
     }
     // Recompute member shares (also bumps expense_update_checker for realtime).
-    await supabase.rpc('update_group_member_shares',
-        params: {"_group_id": groupId, "_expense_id": expenseId});
+    await supabase.rpc(
+      'update_group_member_shares',
+      params: {"_group_id": groupId, "_expense_id": expenseId},
+    );
   }
 
   static Future<void> delete(String expenseId, String groupId) async {
     await supabase.from('expense').delete().eq('id', expenseId);
-    await supabase.from('expense_update_checker').delete().eq('expense_id', expenseId);
-    await supabase.rpc('update_group_member_shares', params: {"_group_id": groupId, "_expense_id": null});
+    await supabase
+        .from('expense_update_checker')
+        .delete()
+        .eq('expense_id', expenseId);
+    await supabase.rpc(
+      'update_group_member_shares',
+      params: {"_group_id": groupId, "_expense_id": null},
+    );
   }
 }

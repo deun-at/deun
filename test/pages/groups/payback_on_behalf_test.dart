@@ -325,6 +325,7 @@ void main() {
       final partition = PaymentPartition.fromSummary(
         g.groupSharesSummary,
         removedEmails: g.removedMemberEmails,
+        currency: g.currency,
       );
 
       expect(partition.youPay.map((e) => e.email), [ann]);
@@ -352,6 +353,7 @@ void main() {
         PaymentPartition.fromSummary(
           g.groupSharesSummary,
           removedEmails: g.removedMemberEmails,
+          currency: g.currency,
         ).youPay.single.amount,
         10,
       );
