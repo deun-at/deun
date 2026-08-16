@@ -48,6 +48,17 @@ class Group {
   List<GroupMember> get activeMembers =>
       groupMembers.where((m) => !m.isRemoved).toList();
 
+  /// Emails of the members whose `group_member` row is soft-removed.
+  ///
+  /// They stay in [groupMembers] and in [groupSharesSummary] on purpose
+  /// (group-member-removal), but they can no longer be a party to a payback —
+  /// so every settle-up surface filters on this. See
+  /// `PaymentPartition.fromSummary`.
+  Set<String> get removedMemberEmails => {
+    for (final member in groupMembers)
+      if (member.isRemoved) member.email,
+  };
+
   /// The amount the current user should settle with [email] in this group, or
   /// null when there is nothing to settle — either the pair reads settled or the
   /// balance runs the other way (they owe the user).

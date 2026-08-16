@@ -302,6 +302,15 @@ class _SummaryCard extends StatelessWidget {
             payerIsYou: payerIsYou,
             currentUserEmail: currentUserEmail,
           ),
+          if (expense.isRecordedOnBehalf) ...[
+            const SizedBox(height: 10),
+            Text(
+              l10n.paybackRecordedBy(expense.recordedByDisplayName ?? ''),
+              style: textTheme.bodySmall?.copyWith(
+                color: colorScheme.onSurfaceVariant,
+              ),
+            ),
+          ],
         ],
       ),
     );

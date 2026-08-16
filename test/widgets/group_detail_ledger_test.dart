@@ -121,7 +121,12 @@ Expense _itemized({required String id, required String date}) {
   return e;
 }
 
-Expense _payback({required String id, required String date}) {
+Expense _payback({
+  required String id,
+  required String date,
+  String? recordedByEmail,
+  String? recordedByDisplayName,
+}) {
   final e = Expense();
   e.id = id;
   e.groupId = 'g';
@@ -137,6 +142,8 @@ Expense _payback({required String id, required String date}) {
     'e0': _entry(0, 40, [_share(_myEmail, 100)]),
   };
   e.groupMemberShareStatistic = {};
+  e.recordedByEmail = recordedByEmail;
+  e.recordedByDisplayName = recordedByDisplayName;
   return e;
 }
 
@@ -443,6 +450,49 @@ void main() {
       expense: _itemized(id: '2', date: '2026-01-02T10:00:00'),
       expectedRoute: '/group/details/claim',
     );
+  });
+
+  // 30 — criterion: the ledger shows who recorded a payback when that differs
+  // from the payer.
+  testWidgets('a payback recorded by someone else names the recorder', (
+    tester,
+  ) async {
+    final l10n = await AppLocalizations.delegate.load(const Locale('en'));
+    await _pump(
+      tester,
+      expenses: [
+        _payback(
+          id: '3',
+          date: '2026-01-02T10:00:00',
+          recordedByEmail: _myEmail,
+          recordedByDisplayName: 'me',
+        ),
+      ],
+    );
+
+    expect(find.text(l10n.paybackRecordedBy('me')), findsOneWidget);
+    expect(find.text(l10n.groupDetailPaymentTag), findsOneWidget);
+  });
+
+  // 31
+  testWidgets('a payback the payer recorded shows no attribution line', (
+    tester,
+  ) async {
+    final l10n = await AppLocalizations.delegate.load(const Locale('en'));
+    await _pump(
+      tester,
+      expenses: [
+        _payback(
+          id: '4',
+          date: '2026-01-02T10:00:00',
+          recordedByEmail: 'sam@test.com',
+          recordedByDisplayName: 'sam',
+        ),
+      ],
+    );
+
+    expect(find.text(l10n.paybackRecordedBy('sam')), findsNothing);
+    expect(find.text(l10n.groupDetailPaymentTag), findsOneWidget);
   });
 }
 

@@ -18,13 +18,14 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 const _myEmail = 'me@test.com';
 
-GroupMember _member(String email) {
+GroupMember _member(String email, {DateTime? removedAt}) {
   final m = GroupMember();
   m.groupId = 'g';
   m.email = email;
   m.displayName = email.split('@').first;
   m.isGuest = false;
   m.isFavorite = false;
+  m.removedAt = removedAt;
   return m;
 }
 
@@ -76,6 +77,24 @@ Group _settledGroup() {
   final g = _group();
   g.groupSharesSummary = {};
   g.totalShareAmount = 0.0;
+  return g;
+}
+
+/// The current user owes €10 to Gone, who was soft-removed from the group.
+///
+/// Reachable because removal is gated on the member's NET group balance
+/// (`total_share_amount`) while this row is PAIRWISE: Gone can be square with
+/// the group as a whole and still owed by one particular person.
+Group _strandedGroup() {
+  final g = _group();
+  g.groupMembers = [
+    _member(_myEmail),
+    _member('gone@test.com', removedAt: DateTime.utc(2026, 8, 15)),
+  ];
+  g.groupSharesSummary = {
+    'gone@test.com': _summary(displayName: 'Gone', shareAmount: -10.0),
+  };
+  g.totalShareAmount = -10.0;
   return g;
 }
 
@@ -297,5 +316,75 @@ void main() {
     // The page is popped: the future resolves and the page is gone.
     expect(popped, isTrue);
     expect(find.byType(DeunHeader), findsNothing);
+  });
+
+  // 42 — criterion: the payer choice is reachable from the settle-up surface.
+  testWidgets('the settle-up screen offers Record a payment', (tester) async {
+    final l10n = await AppLocalizations.delegate.load(const Locale('en'));
+    await _pump(tester, group: _group());
+
+    expect(
+      find.widgetWithText(SecondaryButton, l10n.paymentRecordPayment),
+      findsOneWidget,
+    );
+  });
+
+  // 43 — a group settled FOR ME can still owe between two other members, so the
+  // action must survive the all-settled state.
+  testWidgets('Record a payment is offered even when everything is settled', (
+    tester,
+  ) async {
+    final l10n = await AppLocalizations.delegate.load(const Locale('en'));
+    await _pump(tester, group: _settledGroup());
+
+    expect(find.text(l10n.paymentAllSettled), findsOneWidget);
+    expect(
+      find.widgetWithText(SecondaryButton, l10n.paymentRecordPayment),
+      findsOneWidget,
+    );
+  });
+
+  // payback-on-behalf review: the screen must never claim to be settled while
+  // its own hero shows an outstanding amount. A soft-removed counterparty gets
+  // no Pay button (the write would be rejected) but is still reported.
+  testWidgets(
+    'a balance with a removed member is shown instead of the all-settled state',
+    (tester) async {
+      final l10n = await AppLocalizations.delegate.load(const Locale('en'));
+      await _pump(tester, group: _strandedGroup());
+
+      // The hero says the user owes €10 …
+      expect(find.text(l10n.balanceOwe), findsOneWidget);
+      // … so the all-settled state must NOT be on screen with it.
+      expect(find.text(l10n.paymentAllSettled), findsNothing);
+
+      expect(find.text(l10n.paymentStrandedLabel), findsOneWidget);
+      expect(find.text('Gone'), findsOneWidget);
+      expect(find.text(l10n.paymentStrandedHint), findsOneWidget);
+    },
+  );
+
+  testWidgets('a removed counterparty is offered no Pay or Remind action', (
+    tester,
+  ) async {
+    final l10n = await AppLocalizations.delegate.load(const Locale('en'));
+    await _pump(tester, group: _strandedGroup());
+
+    // resolvePayback rejects a payback naming a soft-removed payee, so a Pay
+    // button here could only throw.
+    expect(find.widgetWithText(PrimaryButton, l10n.paymentPay), findsNothing);
+    expect(
+      find.widgetWithText(SecondaryButton, l10n.paymentRemind),
+      findsNothing,
+    );
+    expect(find.text(l10n.paymentYouPay), findsNothing);
+  });
+
+  testWidgets('a settled group shows no stranded section', (tester) async {
+    final l10n = await AppLocalizations.delegate.load(const Locale('en'));
+    await _pump(tester, group: _settledGroup());
+
+    expect(find.text(l10n.paymentStrandedLabel), findsNothing);
+    expect(find.text(l10n.paymentAllSettled), findsOneWidget);
   });
 }

@@ -32,7 +32,7 @@ carry `[deferred]` criteria that nobody has ever observed. Check here before shi
 
 | Feature | What to apply | How to verify | Status |
 |---------|---------------|---------------|--------|
-| — | *(queue empty)* | — | — |
+| payback-on-behalf | `20260816010000_payback_on_behalf.sql` — `pay_back` gains payer≠payee + both-current-member validation and records `auth.uid()` into `expense.user_id` | 1. `select public.pay_back('<group>','a@x','a@x',5);` → raises `payer and payee must be different`. 2. same with a soft-removed member as `_paid_by` → raises `not a current member`. 3. record a valid on-behalf payback from the app, then `select paid_by, user_id from expense where is_paid_back_row order by created_at desc limit 1;` → `paid_by` is the payer, `user_id` is the recorder. 4. `select public.pay_back_exact(...)` for a valid pair still returns an id (validation inherited, not duplicated). | open |
 
 ## Applied
 

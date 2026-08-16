@@ -676,6 +676,11 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String payBackPartialSuccess(String displayName, String groupNames) {
+    return 'You paid back $displayName, but these groups are still open: $groupNames';
+  }
+
+  @override
   String groupDisplayPaidBack(
     String paidByYourself,
     String paidBy,
@@ -957,6 +962,23 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String groupPayBackNotificationBody(String amount) {
     return 'You should receive $amount in the next days.';
+  }
+
+  @override
+  String groupPayBackOnBehalfNotificationTitle(
+    String recordedByDisplayName,
+    String groupName,
+  ) {
+    return '$recordedByDisplayName recorded a payment in \"$groupName\"';
+  }
+
+  @override
+  String groupPayBackOnBehalfNotificationBody(
+    String paidByDisplayName,
+    String paidForDisplayName,
+    String amount,
+  ) {
+    return '$paidByDisplayName paid $paidForDisplayName $amount.';
   }
 
   @override
@@ -1705,6 +1727,56 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get paymentAllSettled => 'You\'re all settled up';
+
+  @override
+  String get paymentStrandedLabel => 'Can\'t be settled here';
+
+  @override
+  String get paymentStrandedHint =>
+      'No longer in this group. Add them back to settle up.';
+
+  @override
+  String get paymentRecordPayment => 'Record a payment';
+
+  @override
+  String get paybackRecordTitle => 'Record a payment';
+
+  @override
+  String get paybackRecordSubtitle =>
+      'Log a payment between two members, even if you were not part of it.';
+
+  @override
+  String get paybackRecordPaidByLabel => 'Paid by';
+
+  @override
+  String get paybackRecordPaidToLabel => 'Paid to';
+
+  @override
+  String get paybackRecordAmountLabel => 'Amount';
+
+  @override
+  String get paybackRecordSubmit => 'Record payment';
+
+  @override
+  String get paybackRecordSamePersonError => 'Pick two different people.';
+
+  @override
+  String paybackRecordNotMemberError(String displayName) {
+    return '$displayName is not a current member of this group.';
+  }
+
+  @override
+  String get paybackRecordAmountError => 'Enter an amount greater than zero.';
+
+  @override
+  String paybackRecordSuccess(String paidBy, String paidFor, String amount) {
+    return 'Recorded: $paidBy paid $paidFor $amount';
+  }
+
+  @override
+  String paybackRecordedBy(String displayName) {
+    return 'Recorded by $displayName';
+  }
 
   @override
   String get paymentMethodPaypal => 'PayPal';

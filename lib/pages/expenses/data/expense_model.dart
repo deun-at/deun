@@ -23,8 +23,15 @@ class Expense {
   late Map<String, double> groupMemberShareStatistic;
   late String? paidByDisplayName;
 
+  /// Who wrote this row, from `expense.user_id`. On a payback that is the
+  /// recorder, who is the payer on the ordinary self-payback and somebody else
+  /// when the payback was recorded on the payer's behalf. Null on every row
+  /// written before `pay_back` started stamping it.
+  String? recordedByEmail;
+  String? recordedByDisplayName;
+
   static const expenseSelectString =
-      '*, ...paid_by(paid_by_display_name:display_name), expense_entry(*, expense_entry_share(*, ...email(display_name:display_name))), group!expense_group_id_fkey(*, group_shares_summary(*, ...paid_by(paid_by_display_name:display_name), ...paid_for(paid_for_display_name:display_name)), group_member(*, ...user(display_name:display_name, is_guest:is_guest)))';
+      '*, ...paid_by(paid_by_display_name:display_name), ...user_id(recorded_by_email:email, recorded_by_display_name:display_name), expense_entry(*, expense_entry_share(*, ...email(display_name:display_name))), group!expense_group_id_fkey(*, group_shares_summary(*, ...paid_by(paid_by_display_name:display_name), ...paid_for(paid_for_display_name:display_name)), group_member(*, ...user(display_name:display_name, is_guest:is_guest)))';
 
   /// Lean select for a group's payback rows (see
   /// `ExpenseRepository.fetchPaybackRows`): only the columns [loadDataFromJson]
@@ -50,6 +57,8 @@ class Expense {
     expenseDate = json["expense_date"];
     paidBy = json["paid_by"];
     paidByDisplayName = json["paid_by_display_name"];
+    recordedByEmail = json["recorded_by_email"];
+    recordedByDisplayName = json["recorded_by_display_name"];
     createdAt = json["created_at"];
     isPaidBackRow = json["is_paid_back_row"];
     category = ExpenseCategory.fromString(json["category"]);
@@ -83,6 +92,17 @@ class Expense {
   /// claim feature) have none — the claim screen can't show them, so routing
   /// gates on this to send them to the read view instead.
   bool get hasClaimUnits => expenseEntries.values.any((e) => e.isClaimUnit);
+
+  /// True when this settle-up row was recorded by someone other than the payer.
+  ///
+  /// Gated on [isPaidBackRow] deliberately: on a normal expense `user_id` and
+  /// `paid_by` differ all the time (anyone may enter an expense someone else
+  /// paid) and that is not attribution-worthy. On a payback it is the whole
+  /// point — the record carries who made it.
+  bool get isRecordedOnBehalf =>
+      isPaidBackRow &&
+      (recordedByEmail ?? '').isNotEmpty &&
+      recordedByEmail != paidBy;
 
   /// Entries grouped per item card, insertion-ordered: per-unit claim entries
   /// (split_mode 'claim', quantity 1) group by item_group_id — a standalone
