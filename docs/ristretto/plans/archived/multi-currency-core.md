@@ -52,22 +52,45 @@ feature survives almost intact, with these corrections:
     do not spend a unit on it.
   - The expense-editor hero amount renders through the formatting pipeline rather than
     `toStringAsFixed(2)`, so a German user sees "12,50" and not "12.50".
-  - Amount entry respects the currency's decimal digits: the keypad and the decimal text input accept
-    no fractional part for JPY and two fractional digits for EUR.
+  - Amount entry respects the currency's decimal digits: the keypad accepts no fractional part for
+    JPY and two fractional digits for EUR. *(Amended during build — see the amount-entry decision
+    below: there is no money-carrying decimal text input left in the app, so the keypad is the whole
+    of amount entry.)*
   - The three l10n keys with zero Dart callers (`groupDisplayAmount`, `groupDisplaySumAmount`,
     `totalExpensesAmount`) are deleted rather than migrated.
   - `flutter analyze` and `flutter test` pass, with new tests covering rounding, the settled
     predicate and formatting for at least one 0-decimal and one 2-decimal currency in both locales.
 - Provides:
-  - `Currency` — `Currency.fromCode(String? code) -> Currency` (EUR fallback), `.code -> String`,
-    `.symbol -> String`, `.decimalDigits -> int`, `.minorUnit -> double`
-  - `kSupportedCurrencies -> List<Currency>`
-  - `roundCurrency(double value, Currency currency) -> double`
-  - `isSettled(double amount, Currency currency) -> bool`
-  - `formatMoney(double amount, Currency currency, Locale locale) -> String`
-  - `CurrencyScope` — inherited widget; `CurrencyScope.of(BuildContext) -> Currency`
-  - `MoneyText(double amount, {Currency? currency, ...})` — falls back to `CurrencyScope.of` when
-    `currency` is omitted
+  - `Currency` (`lib/helper/currency.dart`) — `Currency.fromCode(String? code) -> Currency` (EUR
+    fallback), `.code -> String`, `.symbol -> String`, `.decimalDigits -> int`,
+    `.minorUnit -> double`, `.settledEpsilon -> double` (half a minor unit), equality/hashCode by
+    `code`
+  - `kSupportedCurrencies -> List<Currency>` — the 31-code ECB/Frankfurter reference set
+  - `roundCurrency(double value, Currency currency) -> double` (`lib/helper/helper.dart`)
+  - `isSettled(double amount, Currency currency) -> bool` (`lib/helper/helper.dart`) — widened from
+    `settle-residue`'s currency-blind predicate
+  - `kSettledEpsilon -> double` (unchanged, 0.005) and `kMaxSettledEpsilon -> double` (new — the
+    largest `settledEpsilon` across `kSupportedCurrencies`, 0.5 from JPY/ISK/KRW)
+  - `formatMoney(double amount, Currency currency, Locale locale) -> String` and
+    `formatAmountOnly(double amount, Currency currency, Locale locale) -> String` (bare number, no
+    symbol) (`lib/helper/helper.dart`)
+  - `AppLocalizations.toCurrency(double amount, String? currencyCode)` — kept its existing `String`
+    signature (per the Rebase note) but its body now routes through `formatMoney` +
+    `Currency.fromCode`, so all ~35 existing call sites became decimal-digit-correct with zero edits
+  - `CurrencyScope` (`lib/widgets/currency_scope.dart`) — inherited widget;
+    `CurrencyScope.of(BuildContext) -> Currency` (EUR when unmounted); mounted at the app root in
+    `lib/navigation.dart` with `Currency.eur`
+  - `MoneyText(double amount, {Currency? currency, ...})` (`lib/widgets/restyle/money_text.dart`) —
+    `currencyCode` migrated from `String` to `Currency?`, falling back to `CurrencyScope.of` when
+    omitted
+  - `GroupRepository.narrowToStatus(List<Group> groups, String statusFilter) -> List<Group>`
+    (`lib/pages/groups/data/group_repository.dart`) — new pure function; applies `isSettled` per row
+    to narrow the server's superset query (see Decisions)
+  - `KeypadAmount.fromText`/`AmountKeypadSheet` currency-aware `decimalDigits` (0 for JPY-class
+    currencies, inert decimal key) (`lib/pages/expenses/data/keypad_amount.dart`)
+  - `DecimalTextInputFormatter(decimalRange: ...)` — `decimalRange` is now honoured for real (was
+    dead), and `decimalRange: 0` rejects the separator outright; no currency constructor was added
+    (see Decisions)
 - Consumes: —
 - Decisions:
   - Money stays a Dart `double`; only the decimal-digit count becomes currency-aware -> migrating to
@@ -85,6 +108,25 @@ feature survives almost intact, with these corrections:
     implementation still handles a general exponent; the list simply exercises only 0 and 2.
   - `roundCurrency` keeps its name and gains a required `Currency` -> a compile error at every call
     site is the cheapest way to guarantee none is missed.
+  - **Amount entry is keypad-only; `DecimalTextInputFormatter` gets no currency constructor**
+    (decided during build, from review) -> every money field in the app opens `AmountKeypadSheet`
+    (F158), which takes its precision from the group's `Currency`. The only surviving
+    `DecimalTextInputFormatter` wiring in `lib/` is the per-member **percentage** field
+    (`decimalRange: 1`). A `forCurrency` constructor was added and had zero callers, which made the
+    "decimal text input" half of the entry criterion true only of its own unit test; it is dropped.
+    What survives is the real fix underneath it: `decimalRange` is finally honoured (the body
+    hardcoded `dotIndex + 3`, so `decimalRange: 1` let two digits through), and `decimalRange: 0`
+    rejects the separator outright. If a money text field ever comes back, that is the moment to add
+    the currency constructor — with a caller.
+  - **The server-side balance predicates stay currency-blind and are narrowed on the client**
+    (decided during build, from review) -> `GroupRepository.fetchData` filters
+    `total_share_amount` on a *referenced* table while `currency_code` lives on the parent row, so
+    PostgREST genuinely cannot ask a row for its currency there. Rather than leave the threshold
+    pinned to EUR (which put a JPY group with |net| in `[0.005, 0.5)` — a settled ¥0 hero — on the
+    active side), the query bounds are now a deliberate **superset**: active uses `kSettledEpsilon`
+    (the smallest supported epsilon), done uses `kMaxSettledEpsilon` (the largest, 0.5), and
+    `GroupRepository.narrowToStatus` then applies the one `isSettled(amount, currency)` per row. EUR
+    results are byte-identical, so no existing caller moves.
 - Units:
   - `Currency` value object + curated registry (code, symbol, decimal digits) with EUR fallback.
   - Currency-aware rounding; replace the hardcoded `/100`, and widen the settled predicate inherited
@@ -126,4 +168,75 @@ expense-editor hero stops showing a period-separated amount to German users.
   unified.)*
 - Parallel-with: expense-notification-route, expense-editor-edit-labels
 
-status: planned
+## Evidence
+
+- **`Currency` exists for every curated code, EUR fallback for unknown/null** —
+  `test/helper/currency_test.dart`: `resolves every code in the curated list`,
+  `JPY has 0 decimal digits, EUR has 2`, `an unknown or null code falls back to EUR instead of
+  throwing`.
+- **Curated list is exactly the 31-code ECB/Frankfurter set, contains EUR/USD/GBP/CHF/JPY, no
+  duplicates** — `test/helper/currency_test.dart`: `exactly the 31 ECB reference codes, no more and
+  no fewer`, `contains at least EUR, USD, GBP, CHF and JPY`, `no code appears twice`, `every entry
+  exposes a non-empty symbol and a sane exponent`, `the list exercises exactly the 0- and 2-decimal
+  cases`.
+- **Currency-aware rounding, 2-decimal behaviour unchanged** —
+  `test/helper/helper_test.dart` group `roundCurrency is currency-aware`: `roundCurrency(12.345,
+  EUR) == 12.35`, `roundCurrency(2500.4, JPY) == 2500`, `roundCurrency(2500.6, JPY) == 2501`, plus
+  every pre-existing 2-decimal case (`0.1+0.2`, `100/3`, `200/3`, `-200/3`, `12.34`) re-asserted
+  byte-identical against `Currency.eur`.
+- **Settled predicate widened, currency-aware** — `test/helper/helper_test.dart` group `isSettled is
+  currency-aware`: `isSettled(0.4, JPY) == true`, `isSettled(0.6, JPY) == false`,
+  `isSettled(0.004, EUR) == true`, `isSettled(0.006, EUR) == false` (and the symmetric negative
+  cases).
+- **Formatting is currency- and locale-aware, no fractional digits for 0-decimal currencies** —
+  `test/pages/groups/multi_currency_core_test.dart` group `formatMoney is currency- and
+  locale-aware`: `JPY renders "¥3,000" in en and "3.000 ¥" in de`, `USD renders "$1,234.56" in en and
+  "1.234,56 $" in de`, `EUR is unchanged in both locales`, `no 0-decimal currency ever renders a
+  fractional part`; group `formatAmountOnly renders the bare number in the locale`: `12.5 in EUR is
+  "12.50" in en and "12,50" in de`, `3000 in JPY carries no fractional part`.
+- **`AppLocalizations.toCurrency` routes through the new pipeline with zero call-site edits** —
+  `test/pages/groups/multi_currency_core_test.dart` group `AppLocalizations.toCurrency routes through
+  the currency`: `a 0-decimal code loses its fractional digits`, `an unknown code falls back to EUR
+  instead of throwing`, `2-decimal formatting is unchanged`.
+- **Dead l10n keys deleted** — `test/pages/groups/multi_currency_core_test.dart` group `dead l10n
+  keys` asserts `groupDisplayAmount` and `groupDisplaySumAmount` have no remaining Dart references
+  (`totalExpensesAmount` was already gone, per the plan's Rebase note).
+- **No hardcoded `€` regression guard** — `test/pages/groups/multi_currency_core_test.dart`: `no
+  user-visible amount renders a hardcoded € (regression guard)`.
+- **Expense-editor hero renders through the formatting pipeline (German gets a comma, not a
+  period)** — `test/widgets/expense_editor_amount_locale_test.dart`.
+- **`CurrencyScope` + `MoneyText` migration** — `test/pages/groups/multi_currency_core_test.dart`
+  group `CurrencyScope + MoneyText`, plus `test/widgets/expense_entry_widget_test.dart` and
+  `test/widgets/expense_picker_sheets_test.dart` (updated for the `Currency` param).
+  `CurrencyScope` is mounted at the app root in `lib/navigation.dart` with `Currency.eur`, so every
+  existing call site keeps working unchanged.
+- **Amount entry respects the currency's decimal digits (keypad)** —
+  `test/model/keypad_amount_test.dart` (currency-aware `decimalDigits`, JPY's decimal key inert).
+- **`decimalRange` on `DecimalTextInputFormatter` is honoured for real, `decimalRange: 0` rejects
+  the separator** — `test/widgets/decimal_text_input_formatter_test.dart`: `decimalRange: 0 rejects
+  both separators outright`, `decimalRange: 1 blocks a second fractional digit`, `a typed comma is
+  normalized to a dot`, `a second separator is rejected`. (No `forCurrency` constructor exists — see
+  the amount-entry Decision above.)
+- **Server-side balance predicate stays a deliberate superset; `narrowToStatus` makes the real,
+  currency-aware decision per row** — `test/model/group_repository_test.dart`: assertions that the
+  query bounds sit in `[kSettledEpsilon, kMaxSettledEpsilon]` and `kMaxSettledEpsilon ==
+  Currency.jpy.settledEpsilon == 0.5`, plus the `GroupRepository.narrowToStatus` group covering
+  active/done narrowing per-currency and the EUR-byte-identical case.
+
+### Gate summary
+- `flutter analyze` — clean, no issues.
+- `flutter test` — 1219 passed, 0 failed. Baseline at HEAD `0582263` (before this feature) was 1140;
+  the implementer added 53 tests to reach 1195, the two review rounds' fixes added 24 more.
+
+### Review verdict
+Two rounds. Round 1 raised 5 bugs and 2 lean/simplification points, all fixed — including the two
+Decisions recorded above (dropping the callerless `DecimalTextInputFormatter.forCurrency` and
+narrowing the server query to a deliberate superset resolved per-row by `narrowToStatus`). Round 2
+verdict: `review: clean`.
+
+### Known follow-up (not fixed, surfaced by the implementer)
+`lib/pages/expenses/data/expense_deletion_impact.dart`'s `confirmMessage` and a few other minor
+callers still take a raw `currencyCode` String rather than `Currency`. Left as-is — out of scope for
+this feature's contract, worth a small follow-up sweep whenever those call sites are next touched.
+
+status: done
