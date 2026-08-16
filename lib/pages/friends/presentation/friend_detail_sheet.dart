@@ -30,10 +30,21 @@ import 'package:url_launcher/url_launcher.dart';
 /// This is a presentation-only restyle: the pay-back (`GroupRepository`),
 /// remove-friend (`FriendshipRepository.remove`) and PayPal/IBAN handling are
 /// the same logic as the previous `openFriendshipDialog`.
+/// The cross-group settle "Mark as paid" performs. Null in production →
+/// [GroupRepository.payBackAll]; widget tests inject a stub so they never reach
+/// the network (same seam as `RecordPaybackSheet.recordPayback`).
+typedef FriendSettleAll =
+    Future<PayBackAllResult> Function(BuildContext context, String email);
+
 class FriendDetailSheet extends ConsumerWidget {
-  const FriendDetailSheet({super.key, required this.friendship});
+  const FriendDetailSheet({
+    super.key,
+    required this.friendship,
+    this.settleAll,
+  });
 
   final Friendship friendship;
+  final FriendSettleAll? settleAll;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -108,6 +119,7 @@ class FriendDetailSheet extends ConsumerWidget {
                 method: method,
                 friendship: friendship,
                 homeCurrency: homeCurrency,
+                settleAll: settleAll,
               ),
               const SizedBox(height: 10),
             ],
@@ -127,6 +139,7 @@ class _PayBackCard extends StatelessWidget {
     required this.method,
     required this.friendship,
     required this.homeCurrency,
+    this.settleAll,
   });
 
   final FriendPayBackMethod method;
@@ -134,6 +147,8 @@ class _PayBackCard extends StatelessWidget {
 
   /// Home currency the owed amount is expressed in.
   final String homeCurrency;
+
+  final FriendSettleAll? settleAll;
 
   @override
   Widget build(BuildContext context) {
@@ -230,18 +245,30 @@ class _PayBackCard extends StatelessWidget {
 
   /// Records the payment via the existing [GroupRepository.payBackAll] RPC, then
   /// closes the sheet (same behavior as the previous friend sheet).
+  ///
+  /// The balance shown here is a **cross-group** total, so a group `payBackAll`
+  /// had to skip — the friend, or the current user, is soft-removed from it —
+  /// means part of that total is still outstanding. Confirming the full amount
+  /// in that case would tell the user a debt was cleared when it was not, so the
+  /// partial case names the groups it could not settle instead.
   Future<void> _markPaid(BuildContext context) async {
     final l10n = AppLocalizations.of(context)!;
     final user = friendship.user;
     try {
-      await GroupRepository.payBackAll(context, user.email);
+      final settle = settleAll ?? GroupRepository.payBackAll;
+      final result = await settle(context, user.email);
       if (context.mounted) {
         showSnackBar(
           context,
-          l10n.payBackSuccess(
-            user.fullUsername,
-            l10n.toCurrency(friendship.shareAmount.abs(), homeCurrency),
-          ),
+          result.isComplete
+              ? l10n.payBackSuccess(
+                  user.fullUsername,
+                  l10n.toCurrency(friendship.shareAmount.abs(), homeCurrency),
+                )
+              : l10n.payBackPartialSuccess(
+                  user.fullUsername,
+                  result.skippedGroupNames.join(', '),
+                ),
         );
       }
     } catch (e) {

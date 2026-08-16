@@ -672,6 +672,20 @@
       "amount": { "type": "String" }
     }
   },
+  "payBackPartialSuccess": "You paid back {displayName}, but these groups are still open: {groupNames}",
+  "@payBackPartialSuccess": {
+    "description": "Snackbar message when settling a friend's balance skipped one or more shared groups because one of the two is no longer a member there.",
+    "placeholders": {
+      "displayName": {
+        "type": "String",
+        "example": "Max Muster"
+      },
+      "groupNames": {
+        "type": "String",
+        "example": "Trip to Vienna, Flat share"
+      }
+    }
+  },
   "groupDisplayPaidBack": "{paidBy} paid back {amount} to {paidFor}",
   "@groupDisplayPaidBack": {
     "description": "ListTile in the group detail of who paid back money.",
@@ -945,6 +959,35 @@
   "@groupPayBackNotificationBody": {
     "description": "Notification body when a new expense was added.",
     "placeholders": {
+      "amount": { "type": "String" }
+    }
+  },
+  "groupPayBackOnBehalfNotificationTitle": "{recordedByDisplayName} recorded a payment in \"{groupName}\"",
+  "@groupPayBackOnBehalfNotificationTitle": {
+    "description": "Notification title when a member records a payback that someone else made.",
+    "placeholders": {
+      "recordedByDisplayName": {
+        "type": "String",
+        "example": "Max Muster"
+      },
+      "groupName": {
+        "type": "String",
+        "example": "Trip to Vienna"
+      }
+    }
+  },
+  "groupPayBackOnBehalfNotificationBody": "{paidByDisplayName} paid {paidForDisplayName} {amount}.",
+  "@groupPayBackOnBehalfNotificationBody": {
+    "description": "Notification body for a payback recorded on someone else's behalf.",
+    "placeholders": {
+      "paidByDisplayName": {
+        "type": "String",
+        "example": "Max Muster"
+      },
+      "paidForDisplayName": {
+        "type": "String",
+        "example": "Erika Muster"
+      },
       "amount": { "type": "String" }
     }
   },
@@ -1585,6 +1628,85 @@
   "paymentAllSettled": "You're all settled up",
   "@paymentAllSettled": {
     "description": "Empty state on the settle-up sheet when nothing is owed either way."
+  },
+  "paymentStrandedLabel": "Can't be settled here",
+  "@paymentStrandedLabel": {
+    "description": "Section label on the settle-up screen above balances with members who were removed from the group."
+  },
+  "paymentStrandedHint": "No longer in this group. Add them back to settle up.",
+  "@paymentStrandedHint": {
+    "description": "Explains why a balance with a removed group member has no Pay action, and how to clear it."
+  },
+  "paymentRecordPayment": "Record a payment",
+  "@paymentRecordPayment": {
+    "description": "Action on the settle-up screen that opens the record-a-payment sheet for a payback somebody else made."
+  },
+  "paybackRecordTitle": "Record a payment",
+  "@paybackRecordTitle": {
+    "description": "Title of the record-a-payment bottom sheet."
+  },
+  "paybackRecordSubtitle": "Log a payment between two members, even if you were not part of it.",
+  "@paybackRecordSubtitle": {
+    "description": "Explainer under the record-a-payment sheet title."
+  },
+  "paybackRecordPaidByLabel": "Paid by",
+  "@paybackRecordPaidByLabel": {
+    "description": "Payer row label in the record-a-payment sheet."
+  },
+  "paybackRecordPaidToLabel": "Paid to",
+  "@paybackRecordPaidToLabel": {
+    "description": "Payee row label in the record-a-payment sheet."
+  },
+  "paybackRecordAmountLabel": "Amount",
+  "@paybackRecordAmountLabel": {
+    "description": "Amount row label in the record-a-payment sheet."
+  },
+  "paybackRecordSubmit": "Record payment",
+  "@paybackRecordSubmit": {
+    "description": "Confirm button of the record-a-payment sheet."
+  },
+  "paybackRecordSamePersonError": "Pick two different people.",
+  "@paybackRecordSamePersonError": {
+    "description": "Block message when the payer and the payee are the same member."
+  },
+  "paybackRecordNotMemberError": "{displayName} is not a current member of this group.",
+  "@paybackRecordNotMemberError": {
+    "description": "Block message when the payer or the payee is not in the group, or was removed from it.",
+    "placeholders": {
+      "displayName": {
+        "type": "String",
+        "example": "Max Muster"
+      }
+    }
+  },
+  "paybackRecordAmountError": "Enter an amount greater than zero.",
+  "@paybackRecordAmountError": {
+    "description": "Block message when the record-a-payment amount is zero or negative."
+  },
+  "paybackRecordSuccess": "Recorded: {paidBy} paid {paidFor} {amount}",
+  "@paybackRecordSuccess": {
+    "description": "Snackbar shown after a payback was recorded on someone's behalf.",
+    "placeholders": {
+      "paidBy": {
+        "type": "String",
+        "example": "Max Muster"
+      },
+      "paidFor": {
+        "type": "String",
+        "example": "Erika Muster"
+      },
+      "amount": { "type": "String" }
+    }
+  },
+  "paybackRecordedBy": "Recorded by {displayName}",
+  "@paybackRecordedBy": {
+    "description": "Attribution line on a payback that somebody other than the payer recorded.",
+    "placeholders": {
+      "displayName": {
+        "type": "String",
+        "example": "Max Muster"
+      }
+    }
   },
   "paymentMethodPaypal": "PayPal",
   "@paymentMethodPaypal": {

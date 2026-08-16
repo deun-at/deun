@@ -688,6 +688,11 @@ class AppLocalizationsDe extends AppLocalizations {
   }
 
   @override
+  String payBackPartialSuccess(String displayName, String groupNames) {
+    return 'Du hast $displayName zurückgezahlt, aber diese Gruppen sind noch offen: $groupNames';
+  }
+
+  @override
   String groupDisplayPaidBack(
     String paidByYourself,
     String paidBy,
@@ -983,6 +988,23 @@ class AppLocalizationsDe extends AppLocalizations {
   @override
   String groupPayBackNotificationBody(String amount) {
     return 'Du solltest $amount in den nächsten Tagen erhalten.';
+  }
+
+  @override
+  String groupPayBackOnBehalfNotificationTitle(
+    String recordedByDisplayName,
+    String groupName,
+  ) {
+    return '$recordedByDisplayName hat eine Zahlung in \"$groupName\" erfasst';
+  }
+
+  @override
+  String groupPayBackOnBehalfNotificationBody(
+    String paidByDisplayName,
+    String paidForDisplayName,
+    String amount,
+  ) {
+    return '$paidByDisplayName hat $paidForDisplayName $amount gezahlt.';
   }
 
   @override
@@ -1737,6 +1759,58 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get paymentAllSettled => 'Alles beglichen';
+
+  @override
+  String get paymentStrandedLabel => 'Hier nicht ausgleichbar';
+
+  @override
+  String get paymentStrandedHint =>
+      'Nicht mehr in dieser Gruppe. Füge die Person wieder hinzu, um auszugleichen.';
+
+  @override
+  String get paymentRecordPayment => 'Zahlung erfassen';
+
+  @override
+  String get paybackRecordTitle => 'Zahlung erfassen';
+
+  @override
+  String get paybackRecordSubtitle =>
+      'Erfasse eine Zahlung zwischen zwei Mitgliedern, auch wenn du nicht beteiligt warst.';
+
+  @override
+  String get paybackRecordPaidByLabel => 'Bezahlt von';
+
+  @override
+  String get paybackRecordPaidToLabel => 'Bezahlt an';
+
+  @override
+  String get paybackRecordAmountLabel => 'Betrag';
+
+  @override
+  String get paybackRecordSubmit => 'Zahlung erfassen';
+
+  @override
+  String get paybackRecordSamePersonError =>
+      'Wähle zwei verschiedene Personen.';
+
+  @override
+  String paybackRecordNotMemberError(String displayName) {
+    return '$displayName ist kein aktuelles Mitglied dieser Gruppe.';
+  }
+
+  @override
+  String get paybackRecordAmountError =>
+      'Gib einen Betrag größer als null ein.';
+
+  @override
+  String paybackRecordSuccess(String paidBy, String paidFor, String amount) {
+    return 'Erfasst: $paidBy hat $paidFor $amount gezahlt';
+  }
+
+  @override
+  String paybackRecordedBy(String displayName) {
+    return 'Erfasst von $displayName';
+  }
 
   @override
   String get paymentMethodPaypal => 'PayPal';

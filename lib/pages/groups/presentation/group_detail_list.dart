@@ -641,17 +641,37 @@ class _PaybackRow extends StatelessWidget {
           Icon(Icons.swap_horiz, size: 18, color: semantic.paybackText),
           const SizedBox(width: 10),
           Expanded(
-            child: Text(
-              l10n.groupDisplayPaidBack(
-                paidByYourself,
-                paidByDisplayName,
-                paidToYourself,
-                paidToDisplayName,
-                l10n.toCurrency(expense.amount, expense.group.currencyCode),
-              ),
-              style: Theme.of(
-                context,
-              ).textTheme.bodyMedium?.copyWith(color: semantic.paybackText),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  l10n.groupDisplayPaidBack(
+                    paidByYourself,
+                    paidByDisplayName,
+                    paidToYourself,
+                    paidToDisplayName,
+                    l10n.toCurrency(expense.amount, expense.group.currencyCode),
+                  ),
+                  style: Theme.of(
+                    context,
+                  ).textTheme.bodyMedium?.copyWith(color: semantic.paybackText),
+                ),
+                // payback-on-behalf: no owner concept means the deterrent is
+                // visibility — a payback somebody else recorded says so, right
+                // in the ledger.
+                if (expense.isRecordedOnBehalf)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 2),
+                    child: Text(
+                      l10n.paybackRecordedBy(
+                        expense.recordedByDisplayName ?? '',
+                      ),
+                      style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                        color: semantic.paybackText.withValues(alpha: 0.8),
+                      ),
+                    ),
+                  ),
+              ],
             ),
           ),
           const SizedBox(width: 10),

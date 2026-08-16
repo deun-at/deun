@@ -21,6 +21,7 @@ import '../provider/group_detail.dart';
 import '../data/group_model.dart';
 import '../data/group_repository.dart';
 import 'payment_view_model.dart';
+import 'record_payback_sheet.dart';
 
 /// Screen 10 — Settle up / payment view (restyle).
 ///
@@ -89,14 +90,17 @@ class _PaymentBody extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
-    final partition = PaymentPartition.fromSummary(group.groupSharesSummary);
+    final partition = PaymentPartition.fromSummary(
+      group.groupSharesSummary,
+      removedEmails: group.removedMemberEmails,
+    );
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         _OverallHero(group: group),
         const SizedBox(height: 20),
-        if (partition.isEmpty)
+        if (partition.isFullySettled)
           _AllSettled(l10n: l10n)
         else ...[
           if (partition.youPay.isNotEmpty) ...[
@@ -118,7 +122,28 @@ class _PaymentBody extends StatelessWidget {
                 child: _OwesRow(group: group, entry: entry),
               ),
           ],
+          // A balance with a soft-removed member cannot be settled from here
+          // (payback-on-behalf rejects a payback naming one), but it is still
+          // outstanding — leaving it out entirely made the "all settled" state
+          // render under a hero showing a non-zero balance.
+          if (partition.stranded.isNotEmpty) ...[
+            if (!partition.isEmpty) const SizedBox(height: 14),
+            SectionLabel(l10n.paymentStrandedLabel),
+            const SizedBox(height: 10),
+            for (final entry in partition.stranded)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 10),
+                child: _StrandedRow(group: group, entry: entry),
+              ),
+          ],
         ],
+        const SizedBox(height: 18),
+        SecondaryButton(
+          key: const ValueKey('payment_record_payment'),
+          label: l10n.paymentRecordPayment,
+          icon: Icons.edit_note_outlined,
+          onPressed: () => showRecordPaybackSheet(context, group: group),
+        ),
       ],
     );
   }
@@ -370,6 +395,65 @@ class _OwesRowState extends State<_OwesRow> {
   }
 }
 
+/// A balance with a member who was removed from the group while it was still
+/// open on this pair.
+///
+/// Removal is gated on the member's **net** group balance, while these rows are
+/// **pairwise**, so a member who was square with the group as a whole can be
+/// soft-removed while still owing — or being owed by — one particular person.
+/// group-member-removal keeps such a member in the balance list, so the row
+/// stays; payback-on-behalf forbids a payback naming them, so it carries no Pay
+/// action and points at the remedy the removal dialog already names — adding
+/// them back.
+class _StrandedRow extends StatelessWidget {
+  const _StrandedRow({required this.group, required this.entry});
+
+  final Group group;
+  final PaymentEntry entry;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    final colorScheme = Theme.of(context).colorScheme;
+
+    return SoftCard(
+      child: Row(
+        children: [
+          MemberAvatar(name: entry.summary.displayName, colorKey: entry.email),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  entry.summary.displayName,
+                  style: Theme.of(context).textTheme.titleSmall,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: 2),
+                MoneyText(
+                  entry.summary.shareAmount,
+                  currencyCode: group.currencyCode,
+                  semantic: MoneySemantic.auto,
+                  style: Theme.of(context).textTheme.bodyMedium,
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  l10n.paymentStrandedHint,
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: colorScheme.onSurfaceVariant,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 /// Empty / all-settled state.
 class _AllSettled extends StatelessWidget {
   const _AllSettled({required this.l10n});
@@ -458,6 +542,9 @@ class _PaymentMethodSheet extends StatelessWidget {
         group.id,
         entry.email,
         entry.amount,
+        // The roster this screen is already bound to — the settle path must not
+        // pay for a second `group_member` SELECT, nor fail on one.
+        members: group.groupMembers,
       );
       if (modalContext.mounted) {
         showSnackBar(

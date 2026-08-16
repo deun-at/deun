@@ -3,6 +3,7 @@ import 'package:deun/l10n/app_localizations.dart';
 import 'package:deun/helper/helper.dart';
 import 'package:deun/pages/friends/data/friendship_model.dart';
 import 'package:deun/pages/friends/presentation/friend_detail_sheet.dart';
+import 'package:deun/pages/groups/data/group_repository.dart';
 import 'package:deun/pages/users/user_model.dart';
 import 'package:deun/widgets/theme_builder.dart';
 import 'package:flutter/material.dart';
@@ -35,6 +36,7 @@ Future<void> _pump(
   WidgetTester tester, {
   required Friendship friendship,
   Brightness brightness = Brightness.light,
+  FriendSettleAll? settleAll,
 }) async {
   await tester.pumpWidget(
     ProviderScope(
@@ -53,7 +55,12 @@ Future<void> _pump(
               kBrandSeed,
               brightness,
             ).copyWith(splashFactory: NoSplash.splashFactory),
-            child: Scaffold(body: FriendDetailSheet(friendship: friendship)),
+            child: Scaffold(
+              body: FriendDetailSheet(
+                friendship: friendship,
+                settleAll: settleAll,
+              ),
+            ),
           ),
         ),
       ),
@@ -61,6 +68,14 @@ Future<void> _pump(
   );
   await tester.pumpAndSettle();
 }
+
+/// A stubbed cross-group settle, so "Mark as paid" never reaches the network
+/// (same seam as `RecordPaybackSheet.recordPayback`).
+FriendSettleAll _settle({List<String> skipped = const []}) =>
+    (context, email) async => PayBackAllResult(
+      settledGroupNames: const ['Trip'],
+      skippedGroupNames: skipped,
+    );
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -171,6 +186,55 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(clipboardText, 'DE89370400440532013000');
+  });
+
+  // payback-on-behalf review: `payBackAll` skips a shared group whose
+  // counterparty (or current user) is soft-removed. Confirming the FULL
+  // cross-group total in that case tells the user a balance was settled that is
+  // still outstanding.
+  testWidgets('a fully settled friendship confirms the whole amount', (
+    tester,
+  ) async {
+    final l10n = await AppLocalizations.delegate.load(const Locale('en'));
+    await _pump(
+      tester,
+      friendship: _friendship(shareAmount: -25.0),
+      settleAll: _settle(),
+    );
+
+    await tester.tap(find.text(l10n.payBackDialogDone));
+    await tester.pump();
+    await tester.pump();
+
+    expect(
+      find.text(l10n.payBackSuccess('sam#0001', l10n.toCurrency(25.0))),
+      findsOneWidget,
+    );
+  });
+
+  testWidgets('a skipped group is named instead of reported as paid', (
+    tester,
+  ) async {
+    final l10n = await AppLocalizations.delegate.load(const Locale('en'));
+    await _pump(
+      tester,
+      friendship: _friendship(shareAmount: -25.0),
+      settleAll: _settle(skipped: ['Flat share', 'Ski trip']),
+    );
+
+    await tester.tap(find.text(l10n.payBackDialogDone));
+    await tester.pump();
+    await tester.pump();
+
+    expect(
+      find.text(l10n.payBackPartialSuccess('sam#0001', 'Flat share, Ski trip')),
+      findsOneWidget,
+    );
+    // The full-amount confirmation must NOT be shown — part of it is still open.
+    expect(
+      find.text(l10n.payBackSuccess('sam#0001', l10n.toCurrency(25.0))),
+      findsNothing,
+    );
   });
 
   testWidgets('renders in dark mode without throwing', (tester) async {

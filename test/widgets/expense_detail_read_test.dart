@@ -81,6 +81,8 @@ Expense _paybackExpense({
   double amount = 12.5,
   String counterpartyEmail = 'b@test.com',
   String counterpartyName = 'Bob',
+  String? recordedByEmail,
+  String? recordedByDisplayName,
 }) {
   final share = ExpenseEntryShare();
   share.expenseEntryId = 'pe1';
@@ -114,6 +116,8 @@ Expense _paybackExpense({
   e.category = null;
   e.groupMemberShareStatistic = {counterpartyEmail: amount};
   e.expenseEntries = {'pe1': entry};
+  e.recordedByEmail = recordedByEmail;
+  e.recordedByDisplayName = recordedByDisplayName;
   return e;
 }
 
@@ -619,4 +623,36 @@ void main() {
       expect(tester.takeException(), isNull);
     },
   );
+
+  // 32 — criterion: the expense read view shows who recorded a payback.
+  testWidgets('the read view names the recorder of an on-behalf payback', (
+    tester,
+  ) async {
+    final l10n = await AppLocalizations.delegate.load(const Locale('en'));
+    await _pump(
+      tester,
+      _paybackExpense(
+        recordedByEmail: 'b@test.com',
+        recordedByDisplayName: 'Bob',
+      ),
+    );
+
+    expect(find.text(l10n.paybackRecordedBy('Bob')), findsOneWidget);
+  });
+
+  // 33
+  testWidgets('the read view shows no attribution when the payer recorded it', (
+    tester,
+  ) async {
+    final l10n = await AppLocalizations.delegate.load(const Locale('en'));
+    await _pump(
+      tester,
+      _paybackExpense(
+        recordedByEmail: 'a@test.com',
+        recordedByDisplayName: 'Alice',
+      ),
+    );
+
+    expect(find.text(l10n.paybackRecordedBy('Alice')), findsNothing);
+  });
 }

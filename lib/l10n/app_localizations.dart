@@ -1193,6 +1193,12 @@ abstract class AppLocalizations {
   /// **'You paid back {amount} to {displayName}'**
   String payBackSuccess(String displayName, String amount);
 
+  /// Snackbar message when settling a friend's balance skipped one or more shared groups because one of the two is no longer a member there.
+  ///
+  /// In en, this message translates to:
+  /// **'You paid back {displayName}, but these groups are still open: {groupNames}'**
+  String payBackPartialSuccess(String displayName, String groupNames);
+
   /// ListTile in the group detail of who paid back money.
   ///
   /// In en, this message translates to:
@@ -1663,6 +1669,25 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'You should receive {amount} in the next days.'**
   String groupPayBackNotificationBody(String amount);
+
+  /// Notification title when a member records a payback that someone else made.
+  ///
+  /// In en, this message translates to:
+  /// **'{recordedByDisplayName} recorded a payment in \"{groupName}\"'**
+  String groupPayBackOnBehalfNotificationTitle(
+    String recordedByDisplayName,
+    String groupName,
+  );
+
+  /// Notification body for a payback recorded on someone else's behalf.
+  ///
+  /// In en, this message translates to:
+  /// **'{paidByDisplayName} paid {paidForDisplayName} {amount}.'**
+  String groupPayBackOnBehalfNotificationBody(
+    String paidByDisplayName,
+    String paidForDisplayName,
+    String amount,
+  );
 
   /// Notification title when a new expense was added.
   ///
@@ -2987,6 +3012,90 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'You\'re all settled up'**
   String get paymentAllSettled;
+
+  /// Section label on the settle-up screen above balances with members who were removed from the group.
+  ///
+  /// In en, this message translates to:
+  /// **'Can\'t be settled here'**
+  String get paymentStrandedLabel;
+
+  /// Explains why a balance with a removed group member has no Pay action, and how to clear it.
+  ///
+  /// In en, this message translates to:
+  /// **'No longer in this group. Add them back to settle up.'**
+  String get paymentStrandedHint;
+
+  /// Action on the settle-up screen that opens the record-a-payment sheet for a payback somebody else made.
+  ///
+  /// In en, this message translates to:
+  /// **'Record a payment'**
+  String get paymentRecordPayment;
+
+  /// Title of the record-a-payment bottom sheet.
+  ///
+  /// In en, this message translates to:
+  /// **'Record a payment'**
+  String get paybackRecordTitle;
+
+  /// Explainer under the record-a-payment sheet title.
+  ///
+  /// In en, this message translates to:
+  /// **'Log a payment between two members, even if you were not part of it.'**
+  String get paybackRecordSubtitle;
+
+  /// Payer row label in the record-a-payment sheet.
+  ///
+  /// In en, this message translates to:
+  /// **'Paid by'**
+  String get paybackRecordPaidByLabel;
+
+  /// Payee row label in the record-a-payment sheet.
+  ///
+  /// In en, this message translates to:
+  /// **'Paid to'**
+  String get paybackRecordPaidToLabel;
+
+  /// Amount row label in the record-a-payment sheet.
+  ///
+  /// In en, this message translates to:
+  /// **'Amount'**
+  String get paybackRecordAmountLabel;
+
+  /// Confirm button of the record-a-payment sheet.
+  ///
+  /// In en, this message translates to:
+  /// **'Record payment'**
+  String get paybackRecordSubmit;
+
+  /// Block message when the payer and the payee are the same member.
+  ///
+  /// In en, this message translates to:
+  /// **'Pick two different people.'**
+  String get paybackRecordSamePersonError;
+
+  /// Block message when the payer or the payee is not in the group, or was removed from it.
+  ///
+  /// In en, this message translates to:
+  /// **'{displayName} is not a current member of this group.'**
+  String paybackRecordNotMemberError(String displayName);
+
+  /// Block message when the record-a-payment amount is zero or negative.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter an amount greater than zero.'**
+  String get paybackRecordAmountError;
+
+  /// Snackbar shown after a payback was recorded on someone's behalf.
+  ///
+  /// In en, this message translates to:
+  /// **'Recorded: {paidBy} paid {paidFor} {amount}'**
+  String paybackRecordSuccess(String paidBy, String paidFor, String amount);
+
+  /// Attribution line on a payback that somebody other than the payer recorded.
+  ///
+  /// In en, this message translates to:
+  /// **'Recorded by {displayName}'**
+  String paybackRecordedBy(String displayName);
 
   /// Title of the PayPal payment-method card.
   ///

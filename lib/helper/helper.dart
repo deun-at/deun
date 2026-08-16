@@ -226,33 +226,60 @@ void sendGroupNotification(
       );
 }
 
+/// Pushes the settle-up notification.
+///
+/// payback-on-behalf: [recordedByDisplayName] null means "the payer recorded
+/// this themselves" and produces byte-identical copy to before the feature.
+/// Non-null switches to the on-behalf copy, which names the recorder in the
+/// title and both parties in the body — the visibility that stands in for the
+/// permission model Deun deliberately does not have. Every name is passed in by
+/// the caller (they come off the group roster it resolved the payback against),
+/// so this copy does not wait on `expense.user_id` being populated and the
+/// select only has to fetch the group.
 void sendGroupPayBackNotification(
   BuildContext context,
   String groupId,
   String expenseId,
   Set<String> notificationReceiver,
-  double amount,
-) {
+  double amount, {
+  required String paidByDisplayName,
+  required String paidForDisplayName,
+  String? recordedByDisplayName,
+}) {
   supabase
       .from('expense')
       .select(
-        'name, ...group!expense_group_id_fkey(group_name:name, group_currency_code:currency_code), ...paid_by(user_display_name:display_name)',
+        'name, ...group!expense_group_id_fkey(group_name:name, group_currency_code:currency_code)',
       )
       .eq('id', expenseId)
       .single()
       .then(
         (value) {
           final l10n = AppLocalizations.of(context)!;
-          String title = l10n.groupPayBackNotificationTitle(
-            value['user_display_name'] ?? '',
-            value['group_name'],
+          final String formattedAmount = l10n.toCurrency(
+            amount,
+            value['group_currency_code'] ?? kDefaultCurrencyCode,
           );
-          String body = l10n.groupPayBackNotificationBody(
-            l10n.toCurrency(
-              amount,
-              value['group_currency_code'] ?? kDefaultCurrencyCode,
-            ),
-          );
+
+          final String title;
+          final String body;
+          if (recordedByDisplayName == null) {
+            title = l10n.groupPayBackNotificationTitle(
+              paidByDisplayName,
+              value['group_name'],
+            );
+            body = l10n.groupPayBackNotificationBody(formattedAmount);
+          } else {
+            title = l10n.groupPayBackOnBehalfNotificationTitle(
+              recordedByDisplayName,
+              value['group_name'],
+            );
+            body = l10n.groupPayBackOnBehalfNotificationBody(
+              paidByDisplayName,
+              paidForDisplayName,
+              formattedAmount,
+            );
+          }
 
           sendNotification('group', groupId, notificationReceiver, title, body);
         },

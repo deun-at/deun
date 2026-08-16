@@ -8,7 +8,9 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../constants.dart';
 import '../../../main.dart';
+import 'group_member_model.dart';
 import 'member_removal.dart';
+import 'payback_request.dart';
 
 class GroupRepository {
   /// Set once `pay_back_exact` is confirmed missing (PGRST202/42883) so that
@@ -26,6 +28,23 @@ class GroupRepository {
   static String get activeBalanceFilter =>
       'total_share_amount.gte.$kSettledEpsilon,'
       'total_share_amount.lte.-$kSettledEpsilon';
+
+  /// The `pay_back` / `pay_back_exact` argument map — the ONE place those
+  /// parameter names live. Pure, so a test can prove that defaulting `paidBy` to
+  /// the current user leaves the self-payback call byte-identical to what it
+  /// sent before the parameter existed. `pay_back_exact` takes the same four
+  /// arguments and delegates to `pay_back`, so one map serves both.
+  static Map<String, dynamic> payBackRpcParams({
+    required String groupId,
+    required String paidBy,
+    required String paidFor,
+    required double amount,
+  }) => {
+    "_group_id": groupId,
+    "_paid_by": paidBy,
+    "_paid_for": paidFor,
+    "_amount": amount,
+  };
 
   static Future<List<Group>> fetchData(
     String statusFilter, {
@@ -199,6 +218,24 @@ class GroupRepository {
         .map((row) => (row['email'] as String?) ?? '')
         .where((email) => email.isNotEmpty)
         .toSet();
+  }
+
+  /// The group's FULL `group_member` roster as models, soft-removed rows
+  /// included. [resolvePayback] needs the removed rows to tell "not a member"
+  /// from "removed", and needs `is_guest` to decide whether the payer can be
+  /// notified. The embed fragment is the same one `Group.groupSelectString`
+  /// uses for its members.
+  static Future<List<GroupMember>> _groupRoster(String groupId) async {
+    final rows = await supabase
+        .from('group_member')
+        .select(
+          '*, ...user(display_name:display_name, username:username, '
+          'username_code:username_code, is_guest:is_guest)',
+        )
+        .eq('group_id', groupId);
+    return rows
+        .map((row) => GroupMember()..loadDataFromJson(row))
+        .toList(growable: false);
   }
 
   /// Saves a group with members and share recalculation atomically via the
@@ -443,25 +480,86 @@ class GroupRepository {
     return shareRows.isNotEmpty;
   }
 
+  /// The payback plan for "[paidBy] paid [paidFor] [amount]", recorded by
+  /// [recordedBy], with **the default for [paidBy] applied here**: a null
+  /// [paidBy] means the signed-in user, which is what keeps the self-payback
+  /// path sending exactly the `_paid_by` it sent before the parameter existed.
+  ///
+  /// Split out of [payBack] so that default has one home and a pure test can
+  /// assert it — [payBack] itself needs a Supabase session and an RPC.
+  @visibleForTesting
+  static PaybackPlan planPayBack({
+    String? paidBy,
+    required String paidFor,
+    required double amount,
+    required String recordedBy,
+    required List<GroupMember> members,
+  }) => resolvePayback(
+    paidBy: paidBy ?? recordedBy,
+    paidFor: paidFor,
+    amount: amount,
+    recordedBy: recordedBy,
+    members: members,
+  );
+
+  /// Records "[paidBy] paid [email] [amount]" in [groupId].
+  ///
+  /// [paidBy] defaults to the signed-in user, so every existing call site keeps
+  /// its exact behaviour and the common case stays on this one code path — the
+  /// feature extends the RPC call, it does not re-route it. Passing a different
+  /// member records a payback on their behalf: any member may do this for any
+  /// two distinct members (there is no owner concept in Deun — see the plan's
+  /// Decisions), and the deterrent is visibility, which is why BOTH parties are
+  /// notified and the recorder is persisted.
+  ///
+  /// The plan is resolved by [planPayBack] *before* anything is written; a
+  /// rejection throws [PaybackRejectedException] having written nothing. The
+  /// same two rules are enforced inside `pay_back` by
+  /// `20260816010000_payback_on_behalf.sql` for concurrent clients.
+  ///
+  /// [members] is the group's FULL roster (soft-removed rows included). Every
+  /// in-app caller already holds it on the group it is settling, so pass it:
+  /// the fallback SELECT costs a round trip on the hot self-settle path (and
+  /// one per group in [payBackAll]), and turns a transient read failure into a
+  /// failed settle.
   static Future<void> payBack(
     BuildContext context,
     String groupId,
     String email,
     double amount, {
+    String? paidBy,
+    List<GroupMember>? members,
     bool sendNotification = true,
   }) async {
-    final params = {
-      "_group_id": groupId,
-      "_paid_by": supabase.auth.currentUser?.email,
-      "_paid_for": email,
-      "_amount": amount,
-    };
+    final recordedBy = supabase.auth.currentUser?.email ?? '';
+    final plan = planPayBack(
+      paidBy: paidBy,
+      paidFor: email,
+      amount: amount,
+      recordedBy: recordedBy,
+      members: members ?? await _groupRoster(groupId),
+    );
+
+    final PaybackAccepted accepted;
+    switch (plan) {
+      case PaybackRejected():
+        // No write of any kind: the guard is the throw itself.
+        throw PaybackRejectedException(plan);
+      case PaybackAccepted():
+        accepted = plan;
+    }
+
+    final params = payBackRpcParams(
+      groupId: groupId,
+      paidBy: accepted.paidBy,
+      paidFor: accepted.paidFor,
+      amount: accepted.amount,
+    );
 
     // settle-residue: pay_back_exact snaps `amount` to the exact outstanding
     // value server-side, so the payback cancels the unrounded balance the client
-    // could only see rounded. Its migration is deferred (MANUAL_OPS.md), so a
-    // server without it falls back to pay_back — the pre-fix behaviour — exactly
-    // the way `saveAll` falls back for `save_group_all`.
+    // could only see rounded. A server without it falls back to pay_back —
+    // exactly the way `saveAll` falls back for `save_group_all`.
     String expenseId;
     if (_payBackExactMissing) {
       expenseId = await supabase.rpc('pay_back', params: params) as String;
@@ -491,33 +589,111 @@ class GroupRepository {
     }
 
     if (context.mounted && sendNotification) {
-      sendGroupPayBackNotification(context, groupId, expenseId, {
-        email,
-      }, amount);
+      sendGroupPayBackNotification(
+        context,
+        groupId,
+        expenseId,
+        accepted.notificationReceivers,
+        amount,
+        // Every name comes off the roster this call resolved the plan against,
+        // NOT from the DB row, so the copy works before the migration is
+        // applied. `recordedByDisplayName` null on the self path -> today's
+        // copy, unchanged.
+        paidByDisplayName: accepted.paidByDisplayName,
+        paidForDisplayName: accepted.paidForDisplayName,
+        recordedByDisplayName: accepted.isOnBehalf
+            ? accepted.recordedByDisplayName
+            : null,
+      );
     }
   }
 
-  static Future<void> payBackAll(BuildContext context, String email) async {
+  /// Which of [groups] a settle-everything-with-[email] run may actually write,
+  /// and which it has to leave alone.
+  ///
+  /// Pure, so the fan-out below is only the *application* of a decision that can
+  /// be unit-tested. A group lands in [PayBackAllPlan.skipped] when
+  /// [resolvePayback] would reject its payback — which is the same rule
+  /// [payBack] enforces, so a skipped group is exactly a group whose write would
+  /// have thrown. Checking the whole plan (rather than only the payee's
+  /// membership) also covers the mirror case: the **current user** soft-removed
+  /// from a shared group, which would otherwise throw `payerNotInGroup` out of
+  /// `Future.wait` and abort every group that had not been written yet.
+  static PayBackAllPlan resolvePayBackAll({
+    required List<Group> groups,
+    required String email,
+    required String recordedBy,
+  }) {
+    final settle = <PayBackAllTarget>[];
+    final skipped = <String>[];
+
+    for (final group in groups) {
+      // Only settle groups where the current user owes this friend, and pay back
+      // exactly the per-group amount — not the cross-group total.
+      // `amountToSettleWith` is the same value the payment screen shows and
+      // applies the same settled predicate, so a balance can never be settled on
+      // one path and outstanding on the other.
+      final amount = group.amountToSettleWith(email);
+      if (amount == null) continue;
+
+      final plan = planPayBack(
+        paidFor: email,
+        amount: amount,
+        recordedBy: recordedBy,
+        members: group.groupMembers,
+      );
+      if (plan is PaybackRejected) {
+        skipped.add(group.name);
+        continue;
+      }
+
+      settle.add(
+        PayBackAllTarget(
+          groupId: group.id,
+          groupName: group.name,
+          amount: amount,
+          // fetchData already loaded the roster; no extra SELECT per group.
+          members: group.groupMembers,
+        ),
+      );
+    }
+
+    return PayBackAllPlan(settle: settle, skipped: skipped);
+  }
+
+  /// Settles every active group the current user shares with [email].
+  ///
+  /// Returns what actually happened. A group whose payback would be rejected —
+  /// because [email] or the current user is soft-removed from it — is skipped
+  /// rather than written, and is **named in the result** so the caller cannot
+  /// report a total as settled when part of it is still outstanding.
+  static Future<PayBackAllResult> payBackAll(
+    BuildContext context,
+    String email,
+  ) async {
     final groupList = await GroupRepository.fetchData("active", paidTo: email);
+    final plan = resolvePayBackAll(
+      groups: groupList,
+      email: email,
+      recordedBy: supabase.auth.currentUser?.email ?? '',
+    );
 
     await Future.wait(
-      groupList.map((groupData) async {
-        // Only settle groups where the current user owes this friend, and pay
-        // back exactly the per-group amount — not the cross-group total.
-        // `amountToSettleWith` is the same value the payment screen shows and
-        // applies the same settled predicate, so a balance can never be settled
-        // on one path and outstanding on the other.
-        final amount = groupData.amountToSettleWith(email);
-        if (amount == null) return;
-
-        await GroupRepository.payBack(
+      plan.settle.map(
+        (target) => GroupRepository.payBack(
           context,
-          groupData.id,
+          target.groupId,
           email,
-          amount,
+          target.amount,
+          members: target.members,
           sendNotification: false,
-        );
-      }),
+        ),
+      ),
+    );
+
+    return PayBackAllResult(
+      settledGroupNames: [for (final target in plan.settle) target.groupName],
+      skippedGroupNames: plan.skipped,
     );
   }
 
@@ -537,6 +713,59 @@ class GroupRepository {
         .delete()
         .eq('group_id', groupId);
   }
+}
+
+/// One group a [GroupRepository.payBackAll] run will settle, with everything
+/// that write needs already resolved.
+class PayBackAllTarget {
+  const PayBackAllTarget({
+    required this.groupId,
+    required this.groupName,
+    required this.amount,
+    required this.members,
+  });
+
+  final String groupId;
+  final String groupName;
+
+  /// The per-group amount, never the cross-group total.
+  final double amount;
+
+  /// The group's FULL roster, soft-removed rows included — passed straight
+  /// through to [GroupRepository.payBack] so it needs no extra SELECT.
+  final List<GroupMember> members;
+}
+
+/// What a settle-everything-with-one-friend run will and will not write, as
+/// resolved by [GroupRepository.resolvePayBackAll].
+class PayBackAllPlan {
+  const PayBackAllPlan({required this.settle, required this.skipped});
+
+  final List<PayBackAllTarget> settle;
+
+  /// Names of the groups whose payback would be rejected, in roster order.
+  final List<String> skipped;
+}
+
+/// What a [GroupRepository.payBackAll] run actually did.
+///
+/// [skippedGroupNames] is the load-bearing half: the friend sheet settles a
+/// **cross-group** total, so a single group left unsettled means the "you paid
+/// back X" confirmation would be a lie. The names let the caller say which
+/// groups are still open instead. No amount is carried, deliberately: groups may
+/// use different currencies, and the friendship total is already a converted
+/// home-currency figure that a per-group sum could not reproduce.
+class PayBackAllResult {
+  const PayBackAllResult({
+    required this.settledGroupNames,
+    required this.skippedGroupNames,
+  });
+
+  final List<String> settledGroupNames;
+  final List<String> skippedGroupNames;
+
+  /// True when every group that owed something was settled.
+  bool get isComplete => skippedGroupNames.isEmpty;
 }
 
 /// The `group_member` writes one group save performs, as resolved by
