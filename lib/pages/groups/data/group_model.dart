@@ -314,3 +314,18 @@ class Group {
     ),
   };
 }
+
+/// Whether [group]'s currency may still be changed.
+///
+/// The rule (Kittysplit's guardrail): a group's currency may be changed only
+/// while every expense in it shares that currency; once any expense carries a
+/// different ORIGINAL currency the picker locks, because a currency switch that
+/// silently moves other people's settled balances is the single angriest review
+/// class in the research.
+///
+/// An expense has no currency of its own yet — multi-currency-expense-rate adds
+/// one — so today every expense in a group is by construction in the group's
+/// currency and this is true for every group. The guard is wired into the
+/// picker NOW so that feature only has to change this body, not retrofit a
+/// disabled state, its copy and its tests.
+bool canChangeGroupCurrency(Group group) => true;

@@ -2,10 +2,7 @@ import 'dart:async';
 
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
-import '../../../helper/currency_conversion.dart';
-import '../../../helper/helper.dart';
 import '../../../helper/realtime_mixin.dart';
-import '../../../provider.dart';
 import '../data/friendship_model.dart';
 import '../data/friendship_repository.dart';
 
@@ -56,12 +53,7 @@ class FriendshipListNotifier extends _$FriendshipListNotifier
 
     listenForResume(ref: ref, onResume: () => reload());
 
-    // Watched so a home-currency change or freshly-loaded rates rebuild the
-    // list with converted shared amounts.
-    final homeCurrency = ref.watch(homeCurrencyProvider);
-    final rates = ref.watch(exchangeRatesProvider).value;
-
-    return await fetchFriendshipList(homeCurrency: homeCurrency, rates: rates);
+    return await fetchFriendshipList();
   }
 
   /// Debounce group update reloads to avoid excessive refreshes
@@ -75,20 +67,12 @@ class FriendshipListNotifier extends _$FriendshipListNotifier
 
   Future<void> reload() async {
     if (!ref.mounted) return;
-    final homeCurrency = ref.read(homeCurrencyProvider);
-    final rates = ref.read(exchangeRatesProvider).value;
-    state = await AsyncValue.guard(
-      () async =>
-          await fetchFriendshipList(homeCurrency: homeCurrency, rates: rates),
-    );
+    state = await AsyncValue.guard(fetchFriendshipList);
   }
 
-  Future<FriendshipListState> fetchFriendshipList({
-    String homeCurrency = kDefaultCurrencyCode,
-    ExchangeRates? rates,
-  }) async {
+  Future<FriendshipListState> fetchFriendshipList() async {
     final results = await Future.wait([
-      FriendshipRepository.fetchData(homeCurrency: homeCurrency, rates: rates),
+      FriendshipRepository.fetchData(),
       FriendshipRepository.fetchPendingIncoming(),
       FriendshipRepository.fetchPendingOutgoing(),
     ]);

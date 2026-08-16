@@ -74,13 +74,6 @@ bool isSettled(double amount, Currency currency) =>
 /// any amount rendered without an explicit group currency falls back to it.
 const String kDefaultCurrencyCode = 'EUR';
 
-/// ISO codes of [kSupportedCurrencies], for the String-keyed surfaces that still
-/// store a bare code (the group form's `currency_code`, the home-currency
-/// preference). Derived — never edit this list, edit [kSupportedCurrencies].
-final List<String> kSupportedCurrencyCodes = [
-  for (final c in kSupportedCurrencies) c.code,
-];
-
 /// The locale-aware currency symbol for [currencyCode] (e.g. "$", "£", "€"),
 /// used for bare amount-input adornments.
 String currencySymbolFor(String localeName, String currencyCode) =>
@@ -115,6 +108,13 @@ String formatAmountOnly(double amount, Currency currency, Locale locale) =>
 /// [formatAmountOnly] for anything the user reads as money.
 String amountToFieldText(double amount, Currency currency) =>
     amount.toStringAsFixed(currency.decimalDigits);
+
+/// The PayPal.me amount path segment: the amount at [currency]'s own precision
+/// with its ISO code appended ("25.50EUR", "3000JPY"). Without the code PayPal
+/// opens the request in the PAYEE's default currency, so a USD balance would ask
+/// for the wrong money.
+String paypalMeAmountSegment(double amount, Currency currency) =>
+    '${amountToFieldText(amount, currency)}${currency.code}';
 
 /// Currency-aware money formatting keyed on an ISO 4217 [currencyCode].
 ///

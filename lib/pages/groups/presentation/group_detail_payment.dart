@@ -519,7 +519,7 @@ class _PaymentMethodSheet extends StatelessWidget {
           ),
           const SizedBox(height: 16),
           for (final method in methods) ...[
-            _MethodCard(method: method, entry: entry),
+            _MethodCard(method: method, entry: entry, currency: group.currency),
             const SizedBox(height: 10),
           ],
         ],
@@ -569,10 +569,15 @@ class _PaymentMethodSheet extends StatelessWidget {
 /// One payment-method card (PayPal / IBAN / Cash) with method-specific tap
 /// behavior (open PayPal.me link, copy IBAN, or no-op for cash).
 class _MethodCard extends StatelessWidget {
-  const _MethodCard({required this.method, required this.entry});
+  const _MethodCard({
+    required this.method,
+    required this.entry,
+    required this.currency,
+  });
 
   final PaymentMethod method;
   final PaymentEntry entry;
+  final Currency currency;
 
   @override
   Widget build(BuildContext context) {
@@ -644,7 +649,8 @@ class _MethodCard extends StatelessWidget {
     final paypalMe = entry.summary.paypalMe;
     if (paypalMe == null || paypalMe.isEmpty) return;
     final paypalUri = Uri.parse(
-      'https://www.paypal.me/$paypalMe/${entry.amount}',
+      'https://www.paypal.me/$paypalMe/'
+      '${paypalMeAmountSegment(entry.amount, currency)}',
     );
     bool launched = false;
     try {

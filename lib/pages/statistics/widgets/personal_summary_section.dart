@@ -1,9 +1,8 @@
 import 'package:deun/constants.dart';
-import 'package:deun/helper/currency.dart';
 import 'package:deun/l10n/app_localizations.dart';
 import 'package:deun/pages/statistics/provider/personal_statistics_notifiers.dart';
 import 'package:deun/pages/statistics/statistics_models.dart';
-import 'package:deun/provider.dart';
+import 'package:deun/widgets/restyle/currency_breakdown_disclosure.dart';
 import 'package:deun/widgets/restyle/money_text.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -30,7 +29,6 @@ class PersonalSummarySection extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final state = ref.watch(personalStatisticsProvider(range));
     final l10n = AppLocalizations.of(context)!;
-    final homeCurrency = ref.watch(homeCurrencyProvider);
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
     final isDark = theme.brightness == Brightness.dark;
@@ -91,8 +89,7 @@ class PersonalSummarySection extends ConsumerWidget {
                       onHeroMuted: onHeroMuted,
                       child: MoneyText(
                         s.totalPaid,
-                        currency: Currency.fromCode(homeCurrency),
-                        approximate: s.approximate,
+                        currency: s.currency,
                         style: theme.textTheme.headlineMedium?.copyWith(
                           fontWeight: FontWeight.w700,
                           color: onHero,
@@ -107,8 +104,7 @@ class PersonalSummarySection extends ConsumerWidget {
                       onHeroMuted: onHeroMuted,
                       child: MoneyText(
                         s.totalShare,
-                        currency: Currency.fromCode(homeCurrency),
-                        approximate: s.approximate,
+                        currency: s.currency,
                         style: theme.textTheme.headlineMedium?.copyWith(
                           fontWeight: FontWeight.w700,
                           color: shareAccent,
@@ -119,13 +115,20 @@ class PersonalSummarySection extends ConsumerWidget {
                   ),
                 ],
               ),
-              if (s.excludedCount > 0) ...[
+              if (!s.shareByCurrency.isSingleCurrency) ...[
                 const SizedBox(height: 8),
-                Text(
-                  l10n.homeAggregateExcluded(s.excludedCount),
-                  style: theme.textTheme.labelSmall?.copyWith(
-                    color: onHeroMuted,
+                CurrencyBreakdownDisclosure(
+                  breakdown: s.shareByCurrency,
+                  foreground: onHeroMuted,
+                  // Resolved, not raw: a selection carried over from another
+                  // range that this one has no data for marks the primary, so
+                  // the marked row is always the row the chart is plotting.
+                  selected: s.resolveCurrency(
+                    ref.watch(personalStatsCurrencyProvider),
                   ),
+                  onSelected: (c) => ref
+                      .read(personalStatsCurrencyProvider.notifier)
+                      .select(c),
                 ),
               ],
             ],

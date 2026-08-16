@@ -1,4 +1,6 @@
 import 'package:deun/constants.dart';
+import 'package:deun/helper/currency_breakdown.dart';
+import 'package:deun/helper/helper.dart';
 import 'package:deun/l10n/app_localizations.dart';
 import 'package:deun/pages/friends/data/friendship_model.dart';
 import 'package:deun/pages/friends/presentation/friend_list.dart';
@@ -30,10 +32,15 @@ class _FakeFriendshipListNotifier extends FriendshipListNotifier {
 
 Friendship _friend(String name, String email, {double shareAmount = 0}) {
   final f = Friendship();
-  f.user = SupaUser(email: email, displayName: name, username: name.toLowerCase(), usernameCode: '0001');
+  f.user = SupaUser(
+    email: email,
+    displayName: name,
+    username: name.toLowerCase(),
+    usernameCode: '0001',
+  );
   f.status = 'accepted';
   f.isIncomingRequest = false;
-  f.shareAmount = shareAmount;
+  f.balances = [CurrencyAmount(Currency.eur, shareAmount)];
   return f;
 }
 
@@ -45,7 +52,9 @@ Future<void> _pumpFriendList(
   await tester.pumpWidget(
     ProviderScope(
       overrides: [
-        friendshipListProvider.overrideWith(() => _FakeFriendshipListNotifier(state)),
+        friendshipListProvider.overrideWith(
+          () => _FakeFriendshipListNotifier(state),
+        ),
       ],
       child: MaterialApp(
         localizationsDelegates: const [
@@ -80,64 +89,71 @@ Color? _balanceLabelColor(WidgetTester tester, String text) {
 }
 
 void main() {
-  testWidgets('header shows a tinted QR action and a filled accent add action',
-      (tester) async {
-    await _pumpFriendList(tester, const FriendshipListState());
+  testWidgets(
+    'header shows a tinted QR action and a filled accent add action',
+    (tester) async {
+      await _pumpFriendList(tester, const FriendshipListState());
 
-    // Both header actions are the shared 38×38 HeaderIconButton.
-    expect(find.byIcon(Icons.qr_code), findsOneWidget);
-    expect(find.byIcon(Icons.person_add), findsOneWidget);
+      // Both header actions are the shared 38×38 HeaderIconButton.
+      expect(find.byIcon(Icons.qr_code), findsOneWidget);
+      expect(find.byIcon(Icons.person_add), findsOneWidget);
 
-    final qr = tester.widget<HeaderIconButton>(
-      find.ancestor(
-        of: find.byIcon(Icons.qr_code),
-        matching: find.byType(HeaderIconButton),
-      ),
-    );
-    final add = tester.widget<HeaderIconButton>(
-      find.ancestor(
-        of: find.byIcon(Icons.person_add),
-        matching: find.byType(HeaderIconButton),
-      ),
-    );
+      final qr = tester.widget<HeaderIconButton>(
+        find.ancestor(
+          of: find.byIcon(Icons.qr_code),
+          matching: find.byType(HeaderIconButton),
+        ),
+      );
+      final add = tester.widget<HeaderIconButton>(
+        find.ancestor(
+          of: find.byIcon(Icons.person_add),
+          matching: find.byType(HeaderIconButton),
+        ),
+      );
 
-    // QR is the tinted (secondary) variant; add-friend is the filled accent
-    // (primary) variant.
-    expect(qr.filled, isFalse);
-    expect(add.filled, isTrue);
+      // QR is the tinted (secondary) variant; add-friend is the filled accent
+      // (primary) variant.
+      expect(qr.filled, isFalse);
+      expect(add.filled, isTrue);
 
-    // The filled accent circle paints colorScheme.primary with an onPrimary
-    // icon (legible); the tinted circle paints the warm-tint surface.
-    final context = tester.element(find.byType(FriendList));
-    final colorScheme = Theme.of(context).colorScheme;
+      // The filled accent circle paints colorScheme.primary with an onPrimary
+      // icon (legible); the tinted circle paints the warm-tint surface.
+      final context = tester.element(find.byType(FriendList));
+      final colorScheme = Theme.of(context).colorScheme;
 
-    final addContainer = tester.widget<Container>(
-      find.ancestor(
-        of: find.byIcon(Icons.person_add),
-        matching: find.byType(Container),
-      ).first,
-    );
-    expect(
-      (addContainer.decoration as BoxDecoration).color,
-      colorScheme.primary,
-    );
-    final addIcon = tester.widget<Icon>(find.byIcon(Icons.person_add));
-    expect(addIcon.color, colorScheme.onPrimary);
+      final addContainer = tester.widget<Container>(
+        find
+            .ancestor(
+              of: find.byIcon(Icons.person_add),
+              matching: find.byType(Container),
+            )
+            .first,
+      );
+      expect(
+        (addContainer.decoration as BoxDecoration).color,
+        colorScheme.primary,
+      );
+      final addIcon = tester.widget<Icon>(find.byIcon(Icons.person_add));
+      expect(addIcon.color, colorScheme.onPrimary);
 
-    final qrContainer = tester.widget<Container>(
-      find.ancestor(
-        of: find.byIcon(Icons.qr_code),
-        matching: find.byType(Container),
-      ).first,
-    );
-    expect(
-      (qrContainer.decoration as BoxDecoration).color,
-      colorScheme.onSurface.withValues(alpha: 0.04),
-    );
-  });
+      final qrContainer = tester.widget<Container>(
+        find
+            .ancestor(
+              of: find.byIcon(Icons.qr_code),
+              matching: find.byType(Container),
+            )
+            .first,
+      );
+      expect(
+        (qrContainer.decoration as BoxDecoration).color,
+        colorScheme.onSurface.withValues(alpha: 0.04),
+      );
+    },
+  );
 
-  testWidgets('incoming request renders accept and decline actions',
-      (tester) async {
+  testWidgets('incoming request renders accept and decline actions', (
+    tester,
+  ) async {
     await _pumpFriendList(
       tester,
       FriendshipListState(
@@ -163,8 +179,9 @@ void main() {
     expect(find.text(l10n.cancel), findsOneWidget);
   });
 
-  testWidgets('accepted friends render plain semantic-colored balance text',
-      (tester) async {
+  testWidgets('accepted friends render plain semantic-colored balance text', (
+    tester,
+  ) async {
     await _pumpFriendList(
       tester,
       FriendshipListState(
@@ -209,39 +226,47 @@ void main() {
   // The request sections stay on the SPACED preset (per-card SoftCard w/ gaps).
   // -------------------------------------------------------------------------
 
-  testWidgets('all-friends renders as ONE joined SoftCard (radius 22, no inter-row gap)',
-      (tester) async {
-    await _pumpFriendList(
-      tester,
-      FriendshipListState(
-        acceptedFriends: [
-          _friend('Alice', 'alice@x.com', shareAmount: 10),
-          _friend('Bob', 'bob@x.com', shareAmount: -5),
-        ],
-      ),
-    );
+  testWidgets(
+    'all-friends renders as ONE joined SoftCard (radius 22, no inter-row gap)',
+    (tester) async {
+      await _pumpFriendList(
+        tester,
+        FriendshipListState(
+          acceptedFriends: [
+            _friend('Alice', 'alice@x.com', shareAmount: 10),
+            _friend('Bob', 'bob@x.com', shareAmount: -5),
+          ],
+        ),
+      );
 
-    // The legacy CardColumn/Card chrome is gone; the section is a single SoftCard.
-    expect(find.byType(CardColumn), findsNothing);
-    final softCard = tester.widget<SoftCard>(find.byType(SoftCard));
-    expect(softCard.borderRadius, 22, reason: 'v3 all-friends radius');
+      // The legacy CardColumn/Card chrome is gone; the section is a single SoftCard.
+      expect(find.byType(CardColumn), findsNothing);
+      final softCard = tester.widget<SoftCard>(find.byType(SoftCard));
+      expect(softCard.borderRadius, 22, reason: 'v3 all-friends radius');
 
-    // Joined: consecutive friend rows sit flush (no inter-row gap). The bottom of
-    // Alice's InkWell row touches the top of Bob's.
-    final aliceRow = tester.getRect(find.ancestor(
-      of: find.text('Alice'),
-      matching: find.byType(InkWell),
-    ).first);
-    final bobRow = tester.getRect(find.ancestor(
-      of: find.text('Bob'),
-      matching: find.byType(InkWell),
-    ).first);
-    expect((bobRow.top - aliceRow.bottom).abs(), lessThan(0.5),
-        reason: 'joined rows have no vertical gap between them');
-  });
+      // Joined: consecutive friend rows sit flush (no inter-row gap). The bottom of
+      // Alice's InkWell row touches the top of Bob's.
+      final aliceRow = tester.getRect(
+        find
+            .ancestor(of: find.text('Alice'), matching: find.byType(InkWell))
+            .first,
+      );
+      final bobRow = tester.getRect(
+        find
+            .ancestor(of: find.text('Bob'), matching: find.byType(InkWell))
+            .first,
+      );
+      expect(
+        (bobRow.top - aliceRow.bottom).abs(),
+        lessThan(0.5),
+        reason: 'joined rows have no vertical gap between them',
+      );
+    },
+  );
 
-  testWidgets('friend requests use the SPACED SoftCard preset (gapped cards)',
-      (tester) async {
+  testWidgets('friend requests use the SPACED SoftCard preset (gapped cards)', (
+    tester,
+  ) async {
     await _pumpFriendList(
       tester,
       FriendshipListState(
@@ -256,36 +281,49 @@ void main() {
     expect(find.byType(CardColumn), findsNothing);
   });
 
-  testWidgets('accepted friend row lays the balance RIGHT of the name, not beneath it (F95)',
-      (tester) async {
-    await _pumpFriendList(
-      tester,
-      FriendshipListState(
-        acceptedFriends: [_friend('Owed Friend', 'owed@x.com', shareAmount: 20)],
-      ),
-    );
+  testWidgets(
+    'accepted friend row lays the balance RIGHT of the name, not beneath it (F95)',
+    (tester) async {
+      await _pumpFriendList(
+        tester,
+        FriendshipListState(
+          acceptedFriends: [
+            _friend('Owed Friend', 'owed@x.com', shareAmount: 20),
+          ],
+        ),
+      );
 
-    final l10n = await AppLocalizations.delegate.load(const Locale('en'));
+      final l10n = await AppLocalizations.delegate.load(const Locale('en'));
 
-    final nameRect = tester.getRect(find.text('Owed Friend'));
-    final labelRect = tester.getRect(find.text(l10n.balanceOwed));
-    final amountRect = tester.getRect(find.byType(MoneyText));
+      final nameRect = tester.getRect(find.text('Owed Friend'));
+      final labelRect = tester.getRect(find.text(l10n.balanceOwed));
+      final amountRect = tester.getRect(find.byType(MoneyText));
 
-    // Balance label + amount sit to the RIGHT of the name (trailing edge of the
-    // row), NOT stacked beneath it in a subtitle column.
-    expect(labelRect.left, greaterThan(nameRect.right),
-        reason: 'balance label must be right of the name, not beneath it');
-    expect(amountRect.left, greaterThan(labelRect.left),
-        reason: 'amount trails the label on the right');
+      // Balance label + amount sit to the RIGHT of the name (trailing edge of the
+      // row), NOT stacked beneath it in a subtitle column.
+      expect(
+        labelRect.left,
+        greaterThan(nameRect.right),
+        reason: 'balance label must be right of the name, not beneath it',
+      );
+      expect(
+        amountRect.left,
+        greaterThan(labelRect.left),
+        reason: 'amount trails the label on the right',
+      );
 
-    // Same-row placement: their vertical centers align (not stacked vertically).
-    expect((labelRect.center.dy - nameRect.center.dy).abs(), lessThan(nameRect.height),
-        reason: 'balance shares the row baseline with the name');
+      // Same-row placement: their vertical centers align (not stacked vertically).
+      expect(
+        (labelRect.center.dy - nameRect.center.dy).abs(),
+        lessThan(nameRect.height),
+        reason: 'balance shares the row baseline with the name',
+      );
 
-    // The trailing chevron is the right-most element (balance is left of it).
-    final chevronRect = tester.getRect(find.byIcon(Icons.chevron_right));
-    expect(amountRect.right, lessThan(chevronRect.left));
-  });
+      // The trailing chevron is the right-most element (balance is left of it).
+      final chevronRect = tester.getRect(find.byIcon(Icons.chevron_right));
+      expect(amountRect.right, lessThan(chevronRect.left));
+    },
+  );
 
   // -------------------------------------------------------------------------
   // F92: section wordings match the v3 handoff — incoming = "N friend
@@ -313,8 +351,9 @@ void main() {
     expect(find.text('Pending Requests (1)'), findsNothing);
   });
 
-  testWidgets('incoming header uses singular form for a single request (F92)',
-      (tester) async {
+  testWidgets('incoming header uses singular form for a single request (F92)', (
+    tester,
+  ) async {
     await _pumpFriendList(
       tester,
       FriendshipListState(
@@ -329,8 +368,9 @@ void main() {
   // normal 16px bottom margin, not the 110px FAB reservation.
   // -------------------------------------------------------------------------
 
-  testWidgets('friends list has no extra reserved bottom padding (F97)',
-      (tester) async {
+  testWidgets('friends list has no extra reserved bottom padding (F97)', (
+    tester,
+  ) async {
     await _pumpFriendList(
       tester,
       FriendshipListState(
@@ -375,62 +415,129 @@ void main() {
   // V3-T5: Staggered list entrance
   // -------------------------------------------------------------------------
 
-  testWidgets('friend cards are fully visible after pumpAndSettle (stagger completes)', (tester) async {
-    await _pumpFriendList(
-      tester,
-      FriendshipListState(
-        acceptedFriends: [
-          _friend('Alice', 'alice@x.com', shareAmount: 10),
-          _friend('Bob', 'bob@x.com', shareAmount: -5),
-        ],
-      ),
-    );
+  testWidgets(
+    'friend cards are fully visible after pumpAndSettle (stagger completes)',
+    (tester) async {
+      await _pumpFriendList(
+        tester,
+        FriendshipListState(
+          acceptedFriends: [
+            _friend('Alice', 'alice@x.com', shareAmount: 10),
+            _friend('Bob', 'bob@x.com', shareAmount: -5),
+          ],
+        ),
+      );
 
-    // All cards visible — entrance animation must have completed.
-    expect(find.byType(MoneyText), findsNWidgets(2));
-    // The AnimationLimiter must be in the tree.
-    expect(find.byType(AnimationLimiter), findsOneWidget);
-  });
+      // All cards visible — entrance animation must have completed.
+      expect(find.byType(MoneyText), findsNWidgets(2));
+      // The AnimationLimiter must be in the tree.
+      expect(find.byType(AnimationLimiter), findsOneWidget);
+    },
+  );
 
   testWidgets(
-      'friend list is visible immediately with disableAnimations=true (reduced motion)', (tester) async {
-    final state = FriendshipListState(
-      acceptedFriends: [_friend('Alice', 'alice@x.com', shareAmount: 10)],
-    );
+    'friend list is visible immediately with disableAnimations=true (reduced motion)',
+    (tester) async {
+      final state = FriendshipListState(
+        acceptedFriends: [_friend('Alice', 'alice@x.com', shareAmount: 10)],
+      );
 
-    await tester.pumpWidget(
-      ProviderScope(
-        overrides: [
-          friendshipListProvider.overrideWith(() => _FakeFriendshipListNotifier(state)),
-        ],
-        child: MaterialApp(
-          // Use builder to inject MediaQuery override *inside* MaterialApp so it
-          // takes effect after MaterialApp's own MediaQuery is established.
-          builder: (context, child) => MediaQuery(
-            data: MediaQuery.of(context).copyWith(disableAnimations: true),
-            child: child!,
-          ),
-          localizationsDelegates: const [
-            AppLocalizations.delegate,
-            GlobalMaterialLocalizations.delegate,
-            GlobalWidgetsLocalizations.delegate,
-            GlobalCupertinoLocalizations.delegate,
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            friendshipListProvider.overrideWith(
+              () => _FakeFriendshipListNotifier(state),
+            ),
           ],
-          supportedLocales: AppLocalizations.supportedLocales,
-          home: Builder(
-            builder: (context) => Theme(
-              data: getThemeData(context, kBrandSeed, Brightness.light),
-              child: const FriendList(),
+          child: MaterialApp(
+            // Use builder to inject MediaQuery override *inside* MaterialApp so it
+            // takes effect after MaterialApp's own MediaQuery is established.
+            builder: (context, child) => MediaQuery(
+              data: MediaQuery.of(context).copyWith(disableAnimations: true),
+              child: child!,
+            ),
+            localizationsDelegates: const [
+              AppLocalizations.delegate,
+              GlobalMaterialLocalizations.delegate,
+              GlobalWidgetsLocalizations.delegate,
+              GlobalCupertinoLocalizations.delegate,
+            ],
+            supportedLocales: AppLocalizations.supportedLocales,
+            home: Builder(
+              builder: (context) => Theme(
+                data: getThemeData(context, kBrandSeed, Brightness.light),
+                child: const FriendList(),
+              ),
             ),
           ),
         ),
+      );
+
+      await tester.pumpAndSettle();
+
+      expect(find.byType(MoneyText), findsOneWidget);
+      // In reduced-motion mode there is no AnimationLimiter wrapper.
+      expect(find.byType(AnimationLimiter), findsNothing);
+    },
+  );
+
+  testWidgets('a single-currency friendship shows no currency marker', (
+    tester,
+  ) async {
+    final l10n = await AppLocalizations.delegate.load(const Locale('en'));
+    await _pumpFriendList(
+      tester,
+      FriendshipListState(
+        acceptedFriends: [_friend('Solo', 'solo@x.com', shareAmount: 20)],
       ),
     );
-
-    await tester.pumpAndSettle();
-
-    expect(find.byType(MoneyText), findsOneWidget);
-    // In reduced-motion mode there is no AnimationLimiter wrapper.
-    expect(find.byType(AnimationLimiter), findsNothing);
+    expect(find.text(l10n.friendOtherCurrencies(1)), findsNothing);
   });
+
+  testWidgets('a multi-currency friendship shows a non-interactive count marker '
+      'and the whole row still opens the sheet', (tester) async {
+    final l10n = await AppLocalizations.delegate.load(const Locale('en'));
+    final f = _friend('Mixed', 'mixed@x.com');
+    f.balances = const [
+      CurrencyAmount(Currency.jpy, 3000),
+      CurrencyAmount(Currency.eur, -25.50),
+    ];
+    await _pumpFriendList(tester, FriendshipListState(acceptedFriends: [f]));
+
+    // The primary (JPY) is inline; one other currency is marked.
+    expect(find.text('¥3,000'), findsOneWidget);
+    expect(find.text(l10n.friendOtherCurrencies(1)), findsOneWidget);
+
+    // The row has NO expand target of its own: exactly one InkWell, the row's.
+    expect(
+      find.descendant(
+        of: find
+            .ancestor(of: find.text('Mixed'), matching: find.byType(InkWell))
+            .first,
+        matching: find.byType(InkWell),
+      ),
+      findsNothing,
+    );
+  });
+
+  testWidgets(
+    'direction and colour follow the primary currency, not a cross-currency sum',
+    (tester) async {
+      final l10n = await AppLocalizations.delegate.load(const Locale('en'));
+      // Friend owes ¥3,000; user owes €25.50. Primary is JPY → "You're owed".
+      final f = _friend('Mixed', 'mixed@x.com');
+      f.balances = const [
+        CurrencyAmount(Currency.jpy, 3000),
+        CurrencyAmount(Currency.eur, -25.50),
+      ];
+      await _pumpFriendList(tester, FriendshipListState(acceptedFriends: [f]));
+
+      expect(find.text(l10n.balanceOwed), findsOneWidget);
+      expect(find.text(l10n.balanceOwe), findsNothing);
+      expect(
+        _balanceLabelColor(tester, l10n.balanceOwed),
+        _semanticColors(tester).success,
+      );
+    },
+  );
 }

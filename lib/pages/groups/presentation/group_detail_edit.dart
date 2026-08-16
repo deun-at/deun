@@ -15,6 +15,7 @@ import 'package:deun/l10n/app_localizations.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../constants.dart';
+import '../../../widgets/currency_picker_sheet.dart';
 import '../data/group_model.dart';
 import '../data/member_removal.dart';
 import 'group_member_search.dart';
@@ -191,7 +192,12 @@ class _GroupEditState extends ConsumerState<GroupEdit> {
                                   const SizedBox(height: 24),
                                   SectionLabel(l10n.groupCurrencyLabel),
                                   const SizedBox(height: 8),
-                                  _CurrencyField(group: widget.group),
+                                  GroupCurrencyField(
+                                    group: widget.group,
+                                    locked:
+                                        widget.group != null &&
+                                        !canChangeGroupCurrency(widget.group!),
+                                  ),
                                   if (_isEdit) ...[
                                     const SizedBox(height: 24),
                                     _buildGroupActions(context),
@@ -464,10 +470,17 @@ class _ColorSwatch extends StatelessWidget {
 /// defaults to [kDefaultCurrencyCode] (EUR); an existing group initialises from
 /// its persisted `currencyCode`. When editing, a note states that changing the
 /// currency relabels existing amounts without converting their values.
-class _CurrencyField extends StatelessWidget {
-  const _CurrencyField({this.group});
+class GroupCurrencyField extends StatelessWidget {
+  const GroupCurrencyField({super.key, this.group, this.locked = false});
 
   final Group? group;
+
+  /// When true the picker is disabled and states why. [GroupEdit] passes
+  /// `!canChangeGroupCurrency(group)`. It is a parameter rather than an internal
+  /// call so the locked branch is renderable in a widget test while
+  /// [canChangeGroupCurrency] is still vacuously true — the same test-seam shape
+  /// as `GroupEdit.saveOverride` and `removeMemberOverride`.
+  final bool locked;
 
   @override
   Widget build(BuildContext context) {
@@ -478,34 +491,50 @@ class _CurrencyField extends StatelessWidget {
       name: "currency_code",
       initialValue: group?.currencyCode ?? kDefaultCurrencyCode,
       builder: (FormFieldState<String> field) {
-        final selected = field.value ?? kDefaultCurrencyCode;
+        final selected = Currency.fromCode(field.value ?? kDefaultCurrencyCode);
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             SoftCard(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 2),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
               borderRadius: 16,
-              child: DropdownButtonHideUnderline(
-                child: DropdownButton<String>(
-                  isExpanded: true,
-                  value: selected,
-                  items: [
-                    for (final c in kSupportedCurrencies)
-                      DropdownMenuItem<String>(
-                        value: c.code,
-                        child: Text(
-                          '${c.code} · ${c.symbol}',
-                          style: theme.textTheme.titleMedium,
-                        ),
+              onTap: locked
+                  ? null
+                  : () async {
+                      final picked = await showCurrencyPicker(
+                        context,
+                        initial: selected,
+                      );
+                      if (picked != null) field.didChange(picked.code);
+                    },
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      '${selected.code} · ${selected.symbol}',
+                      style: theme.textTheme.titleMedium?.copyWith(
+                        color: locked
+                            ? theme.colorScheme.onSurfaceVariant
+                            : null,
                       ),
-                  ],
-                  onChanged: (value) {
-                    if (value != null) field.didChange(value);
-                  },
-                ),
+                    ),
+                  ),
+                  Icon(
+                    locked ? Icons.lock_outline : Icons.expand_more,
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
+                ],
               ),
             ),
-            if (group != null) ...[
+            if (locked) ...[
+              const SizedBox(height: 8),
+              Text(
+                l10n.groupCurrencyLockedNote,
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
+              ),
+            ] else if (group != null) ...[
               const SizedBox(height: 8),
               Text(
                 l10n.groupCurrencyRelabelNote,

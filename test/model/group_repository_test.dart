@@ -1,4 +1,6 @@
+import 'package:flutter/widgets.dart' show Locale;
 import 'package:flutter_test/flutter_test.dart';
+import 'package:deun/helper/currency_breakdown.dart';
 import 'package:deun/helper/helper.dart';
 import 'package:deun/pages/groups/data/group_repository.dart';
 import 'package:deun/pages/groups/data/group_member_model.dart';
@@ -664,10 +666,16 @@ void main() {
 
     /// A group in which the current user owes [friend] [owed], with whichever
     /// members are given.
-    Group group(String name, {double owed = 10, List<GroupMember>? members}) {
+    Group group(
+      String name, {
+      double owed = 10,
+      List<GroupMember>? members,
+      String currencyCode = 'EUR',
+    }) {
       final g = Group();
       g.id = 'id-$name';
       g.name = name;
+      g.currencyCode = currencyCode;
       g.groupMembers =
           members ?? [_groupMember(me, 'Me'), _groupMember(friend, 'Ann')];
       final summary = GroupSharesSummary();
@@ -794,6 +802,81 @@ void main() {
           skippedGroupNames: ['Flat share'],
         ).isComplete,
         isFalse,
+      );
+    });
+  });
+
+  group('PayBackAllResult per-currency amounts', () {
+    const me = 'me@test.com';
+    const friend = 'ann@test.com';
+
+    Group group(
+      String name, {
+      double owed = 10,
+      List<GroupMember>? members,
+      String currencyCode = 'EUR',
+    }) {
+      final g = Group();
+      g.id = 'id-$name';
+      g.name = name;
+      g.currencyCode = currencyCode;
+      g.groupMembers =
+          members ?? [_groupMember(me, 'Me'), _groupMember(friend, 'Ann')];
+      final summary = GroupSharesSummary();
+      summary.displayName = 'Ann';
+      summary.shareAmount = -owed;
+      g.groupSharesSummary = {friend: summary};
+      return g;
+    }
+
+    PayBackAllPlan resolve(List<Group> groups) =>
+        GroupRepository.resolvePayBackAll(
+          groups: groups,
+          email: friend,
+          recordedBy: me,
+        );
+
+    test('a plan carries each group\'s own currency', () {
+      final plan = resolve([
+        group('Flat', owed: 25.50),
+        group('Tokyo', owed: 3000, currencyCode: 'JPY'),
+      ]);
+      expect(plan.settle.map((t) => t.currency).toList(), [
+        Currency.eur,
+        Currency.jpy,
+      ]);
+      expect(plan.settle.map((t) => t.amount).toList(), [25.50, 3000]);
+    });
+
+    test('the result names per-currency totals, never one merged figure', () {
+      final amounts = sumByCurrency(const [
+        CurrencyAmount(Currency.eur, 25.50),
+        CurrencyAmount(Currency.jpy, 3000),
+        CurrencyAmount(Currency.eur, 4.50),
+      ]);
+      final result = PayBackAllResult(
+        settledGroupNames: const ['Flat', 'Tokyo', 'Ski'],
+        skippedGroupNames: const [],
+        settledAmounts: amounts,
+      );
+      expect(
+        formatCurrencyAmounts(result.settledAmounts, const Locale('en')),
+        '¥3,000 + €30.00',
+      );
+      expect(result.isComplete, isTrue);
+    });
+
+    test('a single-currency settle formats exactly as before', () {
+      final result = PayBackAllResult(
+        settledGroupNames: const ['Flat'],
+        skippedGroupNames: const [],
+        settledAmounts: sumByCurrency(const [
+          CurrencyAmount(Currency.eur, 25.50),
+        ]),
+      );
+      expect(
+        formatCurrencyAmounts(result.settledAmounts, const Locale('en')),
+        '€25.50',
       );
     });
   });

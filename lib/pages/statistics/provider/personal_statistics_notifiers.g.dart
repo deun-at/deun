@@ -56,7 +56,7 @@ final class PersonalStatisticsNotifierProvider
 }
 
 String _$personalStatisticsNotifierHash() =>
-    r'70549bac84e257dd5b662c0cad7f97d5a79861e3';
+    r'daf876642630b18f4797b9f8443820820d916288';
 
 final class PersonalStatisticsNotifierFamily extends $Family
     with
@@ -110,5 +110,76 @@ abstract class _$PersonalStatisticsNotifier
               Object?
             >;
     element.handleCreate(ref, () => build(_$args));
+  }
+}
+
+/// Which currency the personal statistics surface is showing. VIEW STATE, not a
+/// preference: it is derived from the same per-currency map the scalars use, so
+/// there is nothing to persist and no second source of truth. `null` means
+/// "follow the primary currency".
+
+@ProviderFor(PersonalStatsCurrencyNotifier)
+final personalStatsCurrencyProvider = PersonalStatsCurrencyNotifierProvider._();
+
+/// Which currency the personal statistics surface is showing. VIEW STATE, not a
+/// preference: it is derived from the same per-currency map the scalars use, so
+/// there is nothing to persist and no second source of truth. `null` means
+/// "follow the primary currency".
+final class PersonalStatsCurrencyNotifierProvider
+    extends $NotifierProvider<PersonalStatsCurrencyNotifier, Currency?> {
+  /// Which currency the personal statistics surface is showing. VIEW STATE, not a
+  /// preference: it is derived from the same per-currency map the scalars use, so
+  /// there is nothing to persist and no second source of truth. `null` means
+  /// "follow the primary currency".
+  PersonalStatsCurrencyNotifierProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'personalStatsCurrencyProvider',
+        isAutoDispose: true,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$personalStatsCurrencyNotifierHash();
+
+  @$internal
+  @override
+  PersonalStatsCurrencyNotifier create() => PersonalStatsCurrencyNotifier();
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(Currency? value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<Currency?>(value),
+    );
+  }
+}
+
+String _$personalStatsCurrencyNotifierHash() =>
+    r'8a6ef161cd5ab43a219e9b30a57813ba26ecf49d';
+
+/// Which currency the personal statistics surface is showing. VIEW STATE, not a
+/// preference: it is derived from the same per-currency map the scalars use, so
+/// there is nothing to persist and no second source of truth. `null` means
+/// "follow the primary currency".
+
+abstract class _$PersonalStatsCurrencyNotifier extends $Notifier<Currency?> {
+  Currency? build();
+  @$mustCallSuper
+  @override
+  void runBuild() {
+    final ref = this.ref as $Ref<Currency?, Currency?>;
+    final element =
+        ref.element
+            as $ClassProviderElement<
+              AnyNotifier<Currency?, Currency?>,
+              Currency?,
+              Object?,
+              Object?
+            >;
+    element.handleCreate(ref, build);
   }
 }

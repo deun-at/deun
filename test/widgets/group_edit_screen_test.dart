@@ -41,7 +41,6 @@ Friendship _friend(String email, String display, String username) {
   );
   f.status = 'accepted';
   f.isIncomingRequest = false;
-  f.shareAmount = 0;
   return f;
 }
 
@@ -498,10 +497,9 @@ void main() {
 
     // The picker and its section label are on screen.
     expect(find.text(l10n.groupCurrencyLabel), findsOneWidget);
-    final picker = find.byType(DropdownButton<String>);
-    expect(picker, findsOneWidget);
+    expect(find.byType(GroupCurrencyField), findsOneWidget);
     // A new group defaults to EUR (curated codes: EUR, USD, GBP, CHF...).
-    expect(tester.widget<DropdownButton<String>>(picker).value, 'EUR');
+    expect(find.text('EUR · €'), findsOneWidget);
   });
 
   testWidgets(
@@ -517,8 +515,7 @@ void main() {
 
       final l10n = await AppLocalizations.delegate.load(const Locale('en'));
 
-      final picker = find.byType(DropdownButton<String>);
-      expect(tester.widget<DropdownButton<String>>(picker).value, 'USD');
+      expect(find.text('USD · \$'), findsOneWidget);
       // Changing currency relabels amounts without converting — the UI says so.
       expect(find.text(l10n.groupCurrencyRelabelNote), findsOneWidget);
     },
@@ -686,10 +683,7 @@ void main() {
         find.text(l10n.groupTrackingModeSimplifiedTitle),
         findsOneWidget,
       ); // simplified_expenses
-      expect(
-        find.byType(DropdownButton<String>),
-        findsOneWidget,
-      ); // currency_code
+      expect(find.byType(GroupCurrencyField), findsOneWidget); // currency_code
     },
   );
 
@@ -727,7 +721,7 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(
-        find.byType(DropdownButton<String>).hitTestable(),
+        find.byType(GroupCurrencyField).hitTestable(),
         findsOneWidget,
         reason: 'the currency picker at the bottom is on screen',
       );
@@ -917,7 +911,7 @@ void main() {
       expect(_swatchFinder(), findsNWidgets(kGroupColorPalette.length));
       expect(find.text(l10n.groupTrackingModeSimplifiedTitle), findsOneWidget);
       expect(find.text(l10n.groupTrackingModeDetailedTitle), findsOneWidget);
-      expect(find.byType(DropdownButton<String>), findsOneWidget);
+      expect(find.byType(GroupCurrencyField), findsOneWidget);
 
       // No member section in ANY of its forms: no search widget, no roster row,
       // no guest-add link, no inline friend candidate.
@@ -1154,4 +1148,88 @@ void main() {
     expect(calls, 0);
     expect(_submittedMembers(tester), contains('ann@test.com'));
   });
+
+  // -------------------------------------------------------------------------
+  // multi-currency-group: the shared currency picker replaces the DropdownButton,
+  // and the group-currency lock is wired into GroupCurrencyField's disabled state.
+  // -------------------------------------------------------------------------
+
+  testWidgets('tapping the currency field opens the shared picker and the pick '
+      'lands in the form value', (tester) async {
+    tester.view.physicalSize = const Size(800, 2400);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    await _pump(tester);
+    final l10n = await AppLocalizations.delegate.load(const Locale('en'));
+    // A name is required to saveAndValidate(); unrelated to the currency
+    // criterion under test, but needed to exercise the form value round-trip.
+    await tester.enterText(
+      find.widgetWithText(TextFormField, l10n.groupNameHint),
+      'Trip to Rome',
+    );
+    FocusManager.instance.primaryFocus?.unfocus();
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byType(GroupCurrencyField));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('USD · \$'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('USD · \$'), findsOneWidget);
+    final form = tester.state<FormBuilderState>(find.byType(FormBuilder));
+    expect(form.saveAndValidate(), isTrue);
+    expect(form.value['currency_code'], 'USD');
+  });
+
+  testWidgets('a locked group currency cannot be changed and states why', (
+    tester,
+  ) async {
+    final l10n = await AppLocalizations.delegate.load(const Locale('en'));
+    await tester.pumpWidget(
+      MaterialApp(
+        localizationsDelegates: const [
+          AppLocalizations.delegate,
+          GlobalMaterialLocalizations.delegate,
+          GlobalWidgetsLocalizations.delegate,
+          GlobalCupertinoLocalizations.delegate,
+        ],
+        supportedLocales: AppLocalizations.supportedLocales,
+        home: Builder(
+          builder: (context) => Theme(
+            data: getThemeData(context, kBrandSeed, Brightness.light),
+            child: Scaffold(
+              body: FormBuilder(
+                child: GroupCurrencyField(group: _group(), locked: true),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text(l10n.groupCurrencyLockedNote), findsOneWidget);
+    expect(find.byIcon(Icons.lock_outline), findsOneWidget);
+    // Disabled: tapping opens nothing.
+    await tester.tap(find.byType(GroupCurrencyField));
+    await tester.pumpAndSettle();
+    expect(find.text('USD · \$'), findsNothing);
+  });
+
+  testWidgets(
+    'an unlocked group still shows the relabel note, not the lock note',
+    (tester) async {
+      final l10n = await AppLocalizations.delegate.load(const Locale('en'));
+      tester.view.physicalSize = const Size(800, 2400);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+
+      await _pump(tester, group: _group());
+      expect(find.text(l10n.groupCurrencyRelabelNote), findsOneWidget);
+      expect(find.text(l10n.groupCurrencyLockedNote), findsNothing);
+    },
+  );
 }

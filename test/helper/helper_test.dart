@@ -183,4 +183,15 @@ void main() {
       expect(formatDate('2020-06-15'), contains('2020'));
     });
   });
+
+  group('paypalMeAmountSegment', () {
+    test('appends the ISO code so PayPal does not use the payee default', () {
+      expect(paypalMeAmountSegment(25.5, Currency.eur), '25.50EUR');
+      expect(paypalMeAmountSegment(12.34, Currency.usd), '12.34USD');
+    });
+
+    test('a 0-decimal currency carries no fractional part', () {
+      expect(paypalMeAmountSegment(3000, Currency.jpy), '3000JPY');
+    });
+  });
 }

@@ -4,7 +4,6 @@ import 'package:deun/pages/friends/data/friendship_repository.dart';
 import 'package:deun/pages/friends/presentation/friend_balance.dart';
 import 'package:deun/pages/friends/presentation/friend_detail_sheet.dart';
 import 'package:deun/pages/users/user_model.dart';
-import 'package:deun/provider.dart';
 import 'package:deun/widgets/empty_list_widget.dart';
 import 'package:deun/widgets/restyle/balance_pill.dart' show BalanceState;
 import 'package:deun/widgets/restyle/deun_header.dart' show HeaderIconButton;
@@ -84,7 +83,6 @@ class _FriendListState extends ConsumerState<FriendList> {
     BuildContext context,
     FriendshipListState value,
     AppLocalizations l10n,
-    String homeCurrency,
   ) {
     final children = <Widget>[
       _FriendsHeader(),
@@ -143,7 +141,6 @@ class _FriendListState extends ConsumerState<FriendList> {
               for (final friendship in value.acceptedFriends)
                 _FriendCard(
                   friendship: friendship,
-                  homeCurrency: homeCurrency,
                   onTap: () => openFriendDetailSheet(context, friendship),
                 ),
             ],
@@ -174,7 +171,6 @@ class _FriendListState extends ConsumerState<FriendList> {
       friendshipListProvider,
     );
     final l10n = AppLocalizations.of(context)!;
-    final homeCurrency = ref.watch(homeCurrencyProvider);
 
     return Scaffold(
       body: SafeArea(
@@ -198,7 +194,7 @@ class _FriendListState extends ConsumerState<FriendList> {
                       ),
                     ],
                   )
-                : _buildFriendListView(context, value, l10n, homeCurrency),
+                : _buildFriendListView(context, value, l10n),
           AsyncError() => Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
@@ -387,16 +383,9 @@ class _OutgoingRequestCard extends StatelessWidget {
 /// the friend owes you, red when you owe, neutral gray when settled — with no
 /// filled chip/pill background (matches `Deun Redesign v3.dc.html` "All friends").
 class _FriendCard extends StatelessWidget {
-  const _FriendCard({
-    required this.friendship,
-    required this.homeCurrency,
-    required this.onTap,
-  });
+  const _FriendCard({required this.friendship, required this.onTap});
 
   final Friendship friendship;
-
-  /// The home currency the friend's aggregated shared amount is expressed in.
-  final String homeCurrency;
   final VoidCallback onTap;
 
   @override
@@ -455,11 +444,24 @@ class _FriendCard extends StatelessWidget {
                   const SizedBox(width: 6),
                   MoneyText(
                     friendship.shareAmount.abs(),
-                    currency: Currency.fromCode(homeCurrency),
-                    approximate: friendship.approximate,
+                    currency: friendship.currency,
                     semantic: moneySemantic,
                     style: balanceStyle,
                   ),
+                  if (friendship.breakdown.hiddenCount > 0) ...[
+                    const SizedBox(width: 6),
+                    // Non-interactive marker: plain Text inside the row's
+                    // InkWell, so the row has no expand target of its own and
+                    // its whole area still opens the detail sheet.
+                    Text(
+                      l10n.friendOtherCurrencies(
+                        friendship.breakdown.hiddenCount,
+                      ),
+                      style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                        color: colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                  ],
                 ],
               ],
             ),

@@ -83,14 +83,19 @@ class _GroupRow extends StatelessWidget {
             Expanded(
               child: Text(
                 group.groupName,
-                style: theme.textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w600),
+                style: theme.textTheme.bodyLarge?.copyWith(
+                  fontWeight: FontWeight.w600,
+                ),
                 overflow: TextOverflow.ellipsis,
               ),
             ),
             const SizedBox(width: 8),
             MoneyText(
               group.totalShare,
-              style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
+              currency: group.currency,
+              style: theme.textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.w600,
+              ),
             ),
           ],
         ),
