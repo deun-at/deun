@@ -32,7 +32,7 @@ carry `[deferred]` criteria that nobody has ever observed. Check here before shi
 
 | Feature | What to apply | How to verify | Status |
 |---------|---------------|---------------|--------|
-| payback-on-behalf | `20260816010000_payback_on_behalf.sql` — `pay_back` gains payer≠payee + both-current-member validation and records `auth.uid()` into `expense.user_id` | 1. `select public.pay_back('<group>','a@x','a@x',5);` → raises `payer and payee must be different`. 2. same with a soft-removed member as `_paid_by` → raises `not a current member`. 3. record a valid on-behalf payback from the app, then `select paid_by, user_id from expense where is_paid_back_row order by created_at desc limit 1;` → `paid_by` is the payer, `user_id` is the recorder. 4. `select public.pay_back_exact(...)` for a valid pair still returns an id (validation inherited, not duplicated). | open |
+| — | *(nothing pending)* | — | — |
 
 ## Applied
 
@@ -42,6 +42,7 @@ carry `[deferred]` criteria that nobody has ever observed. Check here before shi
 | group-member-removal | `20260815010000_group_member_removal.sql` — `group_member.removed_at`, the `update_group_member_shares` counterparty semi-join fix, and `save_group_all` no longer deleting absent members. Applied by Jakob against the live instance. | 2026-08-16 |
 | settle-residue | `20260815020000_settle_residue_exact_payback.sql` — adds `pay_back_exact`; `pay_back` unchanged. Applied by Jakob against the live instance. | 2026-08-16 |
 | group-currency-persist | `20260816000000_group_currency_code_persist.sql` — `currency_code` added to `save_group_all`'s UPDATE SET and INSERT column list; no backfill. Applied by Jakob against the live instance. | 2026-08-16 |
+| payback-on-behalf | `20260816010000_payback_on_behalf.sql` — `pay_back` gains payer≠payee + both-current-member validation and records `auth.uid()` into `expense.user_id`. Applied by Jakob against the live instance. | 2026-08-16 |
 
 ### Verification still outstanding
 
