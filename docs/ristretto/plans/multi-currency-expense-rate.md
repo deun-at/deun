@@ -54,6 +54,13 @@
     balance math -> this is what makes conversion repeatable and non-destructive, and it is the
     difference between this design and the one that produces "it screwed up hundreds of my past
     transactions".
+  - **Switching an expense back to the group currency re-converts the entered amounts at the frozen
+    rate** (Jakob, 2026-08-16) -> the fields hold amounts in the *entry* currency, so leaving them as
+    typed would save a 3000 JPY expense as 3000 EUR, and clearing them would silently discard the
+    user's numbers. Re-converting at the rate the expense was already carrying preserves the value the
+    ledger has today: switching a converted 17.40 EUR expense back to EUR leaves 17.40 EUR, not 3000.
+    The provenance clears in the same step, as it already did. This closes the gap that blocked the
+    feature on the 2026-08-16 brew run — the contract had decided only the provenance half.
   - Rate and rate date live on `expense`; original amount lives on `expense_entry` -> the currency and
     rate are facts about the expense as entered, while amounts are per-entry, matching where
     `amount` already lives.
