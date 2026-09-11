@@ -51,8 +51,11 @@ class _SettingState extends ConsumerState<Setting> {
           padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
           children: [
             // Header row: title + sign-out icon button.
+            // No horizontal padding of its own: the ListView above supplies
+            // the gutter, so the title lines up with the cards beneath it. The
+            // stray 4 put it 4px right of everything else on the screen.
             Padding(
-              padding: const EdgeInsets.fromLTRB(4, 8, 0, 8),
+              padding: const EdgeInsets.fromLTRB(0, 8, 0, 8),
               child: Row(
                 children: [
                   Expanded(

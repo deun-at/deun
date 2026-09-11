@@ -1549,6 +1549,12 @@ abstract class AppLocalizations {
   /// **'Friends'**
   String get friends;
 
+  /// Section label above the accepted-friends card. Not just "Friends" — that repeats the screen title verbatim, and this section sits alongside the two request sections.
+  ///
+  /// In en, this message translates to:
+  /// **'All friends'**
+  String get friendsAllSection;
+
   /// No description provided for @addFriends.
   ///
   /// In en, this message translates to:

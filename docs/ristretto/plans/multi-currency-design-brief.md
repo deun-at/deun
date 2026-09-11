@@ -145,21 +145,27 @@ no longer stands in for the whole balance visually.
 
 ## 7b. Friend list row — the balance stacks
 
-Label over amount, right-aligned, with the other-currency marker on a third
-line when there is one. Laid out along the row — label, amount and marker side
-by side — the balance took enough width to ellipsise the friend's handle
-(`jaggkovsky#92…`): the identity was losing room to the money. A stacked column
-is only as wide as its widest line.
+**Two lines, never three.** Line one is the context — the label, plus the
+other-currency marker when there is one. Line two is the figure, alone.
 
-This is also what the group card already does, so the two lists read the same
-way.
+Laid out along the row instead — label, amount and marker side by side — the
+balance took enough width to ellipsise the friend's handle (`jaggkovsky#92…`):
+the identity was losing room to the money. A stacked column is only as wide as
+its widest line. Label over amount is also what the group card already does, so
+the two lists read the same way.
 
-A multi-currency row is therefore one line taller than a single-currency one.
-That is information, not inconsistency — the row is carrying more.
+The marker rides on the label line rather than taking a third: the label is
+short, and a third line would make multi-currency rows stand taller than their
+neighbours in the list.
 
 The row keeps the primary-plus-count form rather than the sheet's chips: it is
 a dense list row, and a count marker is an honest "there is more here" without
 claiming the figure beside it is the whole story.
+
+The section above it is labelled **"All friends"**, not "Friends" — the three
+sections (incoming requests, pending, accepted) each keep a label, but using
+the screen's own title for one printed the word twice, once as the heading and
+again directly under it.
 
 ## 8. Statistics
 
@@ -179,6 +185,14 @@ for the trend chart.
   with a `bottomNavigationBar` and no `extendBody`, so a list already stops
   above the nav and needs no clearance for it. Only a floating element earns
   extra bottom padding, and only while it exists.
+- **The screen's scroll view owns the gutter** (`kScreenGutter`, 16). A header
+  rendered inside that scroll view adds no horizontal padding of its own; a
+  header rendered outside one — the loading and empty branches are bare
+  `Column`s — applies the value itself. Each of the three top-level screens had
+  hard-coded its own and drifted: Groups and Friends added 16 on top of their
+  list's 16 and landed at 32, Settings added 4 and landed at 20. Three
+  different left edges for the screen title, none aligned with the cards under
+  it.
 
 ---
 

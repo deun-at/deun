@@ -10,6 +10,7 @@ import 'package:deun/pages/users/user_model.dart';
 import 'package:deun/widgets/card_list_view_builder.dart';
 import 'package:deun/widgets/restyle/balance_pill.dart';
 import 'package:deun/widgets/restyle/soft_card.dart';
+import 'package:deun/widgets/restyle/section_label.dart';
 import 'package:deun/widgets/restyle/deun_header.dart';
 import 'package:deun/widgets/restyle/member_avatar.dart';
 import 'package:deun/widgets/restyle/money_text.dart';
@@ -539,7 +540,7 @@ void main() {
     expect(amountY, greaterThan(labelY));
   });
 
-  testWidgets('the other-currency marker gets its own line under the amount', (
+  testWidgets('the balance is two lines even with an other-currency marker', (
     tester,
   ) async {
     final l10n = await AppLocalizations.delegate.load(const Locale('en'));
@@ -550,11 +551,51 @@ void main() {
     ];
     await _pumpFriendList(tester, FriendshipListState(acceptedFriends: [f]));
 
-    final amountY = tester.getTopLeft(find.text('JPY 3,000')).dy;
+    // The marker rides on the LABEL line — the label is short, and a third
+    // line would make the row taller than any other in the list.
+    final labelY = tester.getTopLeft(find.text(l10n.balanceOwed)).dy;
     final markerY = tester
         .getTopLeft(find.text(l10n.friendOtherCurrencies(1)))
         .dy;
-    expect(markerY, greaterThan(amountY));
+    final amountY = tester.getTopLeft(find.text('JPY 3,000')).dy;
+
+    expect(markerY, labelY, reason: 'marker shares the label line');
+    expect(amountY, greaterThan(labelY), reason: 'the amount is line two');
+  });
+
+  testWidgets('a multi-currency row is no taller than a single-currency one', (
+    tester,
+  ) async {
+    final mixed = _friend('Mixed', 'mixed@x.com');
+    mixed.balances = const [
+      CurrencyAmount(Currency.jpy, 3000),
+      CurrencyAmount(Currency.eur, -25.50),
+    ];
+    await _pumpFriendList(
+      tester,
+      FriendshipListState(
+        acceptedFriends: [
+          _friend('Plain', 'plain@x.com', shareAmount: -25.0),
+          mixed,
+        ],
+      ),
+    );
+
+    // Measure the friend ROWS, not every InkWell on screen (the header
+    // actions are InkWells too).
+    double rowHeight(String name) => tester
+        .getSize(
+          find
+              .ancestor(of: find.text(name), matching: find.byType(InkWell))
+              .first,
+        )
+        .height;
+
+    expect(
+      rowHeight('Mixed'),
+      rowHeight('Plain'),
+      reason: 'a multi-currency row must not stand taller than its neighbours',
+    );
   });
 
   testWidgets('the balance column never crowds the identity off the row', (
@@ -605,4 +646,67 @@ void main() {
       );
     },
   );
+
+  testWidgets('the accepted-friends section does not repeat the screen title', (
+    tester,
+  ) async {
+    final l10n = await AppLocalizations.delegate.load(const Locale('en'));
+    await _pumpFriendList(
+      tester,
+      FriendshipListState(
+        acceptedFriends: [_friend('Sam', 'sam@x.com', shareAmount: -25.0)],
+      ),
+    );
+
+    // The section keeps a label — it sits alongside the request sections — but
+    // it is not the screen's own title printed a second time.
+    expect(find.text(l10n.friends), findsOneWidget, reason: 'the title only');
+    expect(find.text(l10n.friendsAllSection), findsOneWidget);
+    expect(find.byType(SectionLabel), findsOneWidget);
+  });
+
+  testWidgets('all three sections carry distinct labels', (tester) async {
+    final l10n = await AppLocalizations.delegate.load(const Locale('en'));
+    await _pumpFriendList(
+      tester,
+      FriendshipListState(
+        pendingIncomingRequests: [_friend('Priya', 'priya@x.com')],
+        pendingOutgoingRequests: [_friend('Lee', 'lee@x.com')],
+        acceptedFriends: [_friend('Sam', 'sam@x.com', shareAmount: -25.0)],
+      ),
+    );
+
+    expect(find.text(l10n.friendRequests(1)), findsOneWidget);
+    expect(find.text(l10n.pendingRequests(1)), findsOneWidget);
+    expect(find.text(l10n.friendsAllSection), findsOneWidget);
+    expect(find.byType(SectionLabel), findsNWidgets(3));
+  });
+
+  testWidgets('German has its own wording for the all-friends section', (
+    tester,
+  ) async {
+    final en = await AppLocalizations.delegate.load(const Locale('en'));
+    final de = await AppLocalizations.delegate.load(const Locale('de'));
+    expect(de.friendsAllSection, isNot(en.friendsAllSection));
+    expect(de.friendsAllSection, isNot(de.friends));
+  });
+
+  testWidgets('the screen title lines up with the cards beneath it', (
+    tester,
+  ) async {
+    final l10n = await AppLocalizations.delegate.load(const Locale('en'));
+    await _pumpFriendList(
+      tester,
+      FriendshipListState(
+        acceptedFriends: [_friend('Sam', 'sam@x.com', shareAmount: -25.0)],
+      ),
+    );
+
+    // The header used to add a 16px gutter on top of the list's own 16, so the
+    // title sat 32px in while every card below it sat at 16.
+    expect(
+      tester.getTopLeft(find.text(l10n.friends)).dx,
+      tester.getTopLeft(find.byType(SoftCard).first).dx,
+    );
+  });
 }

@@ -1147,6 +1147,22 @@ void main() {
     expect(find.text('EUR 25.50'), findsWidgets);
     expect(find.text('JPY 3,000.00'), findsNothing);
   });
+
+  testWidgets('the greeting lines up with the cards beneath it', (
+    tester,
+  ) async {
+    await _pumpScreen(
+      tester,
+      groups: [_group(id: 'a', name: 'Trip', totalShareAmount: 25)],
+    );
+
+    // The greeting header used to add a 16px gutter on top of the list's own
+    // 16, so it sat 32px in while the hero and every card below it sat at 16.
+    expect(
+      tester.getTopLeft(find.text('Alex')).dx,
+      tester.getTopLeft(find.byType(GroupListItem).first).dx,
+    );
+  });
 }
 
 class _RecordingNavigatorObserver extends NavigatorObserver {
