@@ -5,6 +5,7 @@ import 'package:deun/widgets/restyle/member_avatar.dart';
 import 'package:deun/widgets/restyle/money_text.dart';
 import 'package:deun/widgets/restyle/primary_button.dart';
 import 'package:deun/widgets/restyle/section_label.dart';
+import 'package:deun/widgets/restyle/currency_chips.dart';
 import 'package:deun/widgets/restyle/spaced_card_list.dart';
 import 'package:deun/widgets/staggered_list.dart';
 import 'package:deun/widgets/theme_builder.dart';
@@ -446,21 +447,7 @@ class _OverallBalanceHero extends StatelessWidget {
           // forget. The disclosure widget stays in use on the friend sheet and
           // the statistics hero, where the list can run long.
           if (multiCurrency)
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: [
-                for (final entry in breakdown.others)
-                  _HeroCurrencyChip(
-                    entry: entry,
-                    onHero: onHero,
-                    onHeroMuted: onHeroMuted,
-                    background:
-                        (entry.amount < 0 ? semantic.danger : semantic.success)
-                            .withValues(alpha: isDark ? 0.18 : 0.16),
-                  ),
-              ],
-            )
+            CurrencyChips(entries: breakdown.others, labelColor: onHeroMuted)
           else
             Row(
               children: [
@@ -545,61 +532,6 @@ class _HeroStat extends StatelessWidget {
             amount,
             currency: currency,
             semantic: semantic,
-            style: textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-/// One currency's net inside the multi-currency hero: its ISO code over its
-/// bare amount, tinted by direction.
-///
-/// Shares [_HeroStat]'s shape so the hero reads as one family in both modes,
-/// but the label is the CURRENCY rather than a direction — the direction is
-/// already in the sign and the tint, and the currency is the thing the user
-/// cannot otherwise tell. The amount carries no symbol: the code above it has
-/// done the identifying, and seven supported currencies share "$".
-class _HeroCurrencyChip extends StatelessWidget {
-  const _HeroCurrencyChip({
-    required this.entry,
-    required this.onHero,
-    required this.onHeroMuted,
-    required this.background,
-  });
-
-  final CurrencyAmount entry;
-  final Color onHero;
-  final Color onHeroMuted;
-  final Color background;
-
-  @override
-  Widget build(BuildContext context) {
-    final textTheme = Theme.of(context).textTheme;
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-      decoration: BoxDecoration(
-        color: background,
-        borderRadius: BorderRadius.circular(14),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Text(
-            entry.currency.code,
-            style: textTheme.labelMedium?.copyWith(
-              color: onHeroMuted,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-          const SizedBox(height: 4),
-          MoneyText(
-            entry.amount,
-            currency: entry.currency,
-            semantic: MoneySemantic.auto,
-            showSymbol: false,
             style: textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
           ),
         ],

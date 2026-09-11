@@ -6,7 +6,7 @@ import 'package:deun/pages/friends/data/friendship_repository.dart';
 import 'package:deun/pages/friends/presentation/friend_detail_view_model.dart';
 import 'package:deun/pages/groups/data/group_repository.dart';
 import 'package:deun/pages/users/user_model.dart';
-import 'package:deun/widgets/restyle/currency_breakdown_disclosure.dart';
+import 'package:deun/widgets/restyle/currency_chips.dart';
 import 'package:deun/widgets/restyle/member_avatar.dart';
 import 'package:deun/widgets/restyle/primary_button.dart';
 import 'package:deun/widgets/restyle/money_text.dart';
@@ -97,21 +97,30 @@ class FriendDetailSheet extends ConsumerWidget {
                   ],
                 ),
               ),
-              const SizedBox(width: 8),
-              MoneyText(
-                friendship.shareAmount,
-                currency: currency,
-                semantic: MoneySemantic.auto,
-                style: textTheme.titleLarge,
-              ),
+              // Single currency: the net inline, beside the name.
+              //
+              // Several currencies: no inline figure at all. `shareAmount` is
+              // the PRIMARY currency's net, so "JPY 3,000" sat next to Sam's
+              // name reading as the state of the friendship when the truth was
+              // that you are owed in JPY and owe in EUR. Same defect the home
+              // hero had, and the same fix — see [CurrencyChips].
+              if (friendship.breakdown.isSingleCurrency) ...[
+                const SizedBox(width: 8),
+                MoneyText(
+                  friendship.shareAmount,
+                  currency: currency,
+                  semantic: MoneySemantic.auto,
+                  style: textTheme.titleLarge,
+                ),
+              ],
             ],
           ),
+          // Every currency, stated outright. A friendship spans only the groups
+          // two people share, so this list is shorter than the home hero's —
+          // there was never anything here worth collapsing.
           if (!friendship.breakdown.isSingleCurrency) ...[
-            const SizedBox(height: 10),
-            CurrencyBreakdownDisclosure(
-              breakdown: friendship.breakdown,
-              foreground: colorScheme.onSurfaceVariant,
-            ),
+            const SizedBox(height: 14),
+            CurrencyChips(entries: friendship.breakdown.all),
           ],
           if (owesFriend) ...[
             const SizedBox(height: 20),

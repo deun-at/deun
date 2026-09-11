@@ -6,6 +6,8 @@ import 'package:deun/pages/friends/data/friendship_model.dart';
 import 'package:deun/pages/friends/presentation/friend_detail_sheet.dart';
 import 'package:deun/pages/groups/data/group_repository.dart';
 import 'package:deun/pages/users/user_model.dart';
+import 'package:deun/widgets/restyle/currency_breakdown_disclosure.dart';
+import 'package:deun/widgets/restyle/currency_chips.dart';
 import 'package:deun/widgets/theme_builder.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -308,9 +310,18 @@ void main() {
     expect(find.byIcon(Icons.expand_more), findsNothing);
   });
 
+  testWidgets('a single-currency sheet keeps its inline header amount', (
+    tester,
+  ) async {
+    final l10n = await AppLocalizations.delegate.load(const Locale('en'));
+    await _pump(tester, friendship: _friendship(shareAmount: -25.0));
+
+    expect(find.text(l10n.toCurrency(-25.0)), findsOneWidget);
+    expect(find.byType(CurrencyChip), findsNothing);
+  });
+
   testWidgets(
-    'a mixed-currency sheet carries the expandable breakdown, each row '
-    'with its own direction',
+    'a mixed-currency sheet states every currency instead of promoting one',
     (tester) async {
       final l10n = await AppLocalizations.delegate.load(const Locale('en'));
       await _pump(
@@ -324,15 +335,46 @@ void main() {
         ),
       );
 
-      // Header renders the primary only.
-      expect(find.text('JPY 3,000'), findsOneWidget);
-      expect(find.text(l10n.currencyBreakdownMore(1)), findsOneWidget);
+      // The header figure is gone: "JPY 3,000" read as the state of the
+      // friendship when the truth is you are owed in JPY and owe in EUR.
+      expect(find.text('JPY 3,000'), findsNothing);
 
-      await tester.tap(find.text(l10n.currencyBreakdownMore(1)));
-      await tester.pumpAndSettle();
+      // Both currencies are on screen, one chip each, without a tap.
+      expect(find.byType(CurrencyChip), findsNWidgets(2));
+      expect(find.text('JPY'), findsOneWidget);
+      expect(find.text('3,000'), findsOneWidget);
+      expect(find.text('EUR'), findsOneWidget);
       expect(find.text('-25.50'), findsOneWidget);
+
+      // …so there is nothing left to disclose.
+      expect(find.byType(CurrencyBreakdownDisclosure), findsNothing);
+      expect(find.text(l10n.currencyBreakdownMore(1)), findsNothing);
     },
   );
+
+  testWidgets('each chip is tinted by its own direction', (tester) async {
+    await _pump(
+      tester,
+      friendship: _friendship(
+        shareAmount: 0,
+        balances: const [
+          CurrencyAmount(Currency.jpy, 3000),
+          CurrencyAmount(Currency.eur, -25.50),
+        ],
+      ),
+    );
+
+    final ctx = tester.element(find.byType(CurrencyChip).first);
+    final semantic = Theme.of(ctx).extension<SemanticColors>()!;
+    expect(
+      tester.widget<Text>(find.text('3,000')).style?.color,
+      semantic.success,
+    );
+    expect(
+      tester.widget<Text>(find.text('-25.50')).style?.color,
+      semantic.danger,
+    );
+  });
 
   testWidgets(
     'pay-back methods follow the primary currency: JPY-owed shows none',

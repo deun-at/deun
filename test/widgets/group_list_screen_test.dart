@@ -9,6 +9,7 @@ import 'package:deun/pages/users/user_model.dart';
 import 'package:deun/provider.dart';
 import 'package:deun/widgets/restyle/avatar_stack.dart';
 import 'package:deun/widgets/restyle/currency_breakdown_disclosure.dart';
+import 'package:deun/widgets/restyle/currency_chips.dart';
 import 'package:deun/widgets/restyle/money_text.dart';
 import 'package:deun/widgets/theme_builder.dart';
 import 'package:flutter/material.dart';
@@ -1098,7 +1099,7 @@ void main() {
             )
             .first,
       );
-      expect(heroColumn.children.last, isA<Wrap>());
+      expect(heroColumn.children.last, isA<CurrencyChips>());
 
       // The EUR debt is on screen instead of a "You owe ¥0" that hides it.
       expect(find.text('EUR'), findsOneWidget);
