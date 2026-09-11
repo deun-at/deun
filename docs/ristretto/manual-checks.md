@@ -34,7 +34,7 @@ carry `[human]` criteria that nobody has ever observed. Check here before shippi
 
 ## Open
 
-- [ ] **proves** · multi-currency-expense-rate: saving stores the converted amount as the ledger
+- [x] **proves** · multi-currency-expense-rate: saving stores the converted amount as the ledger
   value; provenance survives a save/reload round trip; the stored rate and converted amount are
   frozen across non-amount edits · self-hosted instance, not reachable from the build · apply
   `20260816020000_expense_entry_currency_rate.sql` — three nullable provenance columns on `expense`,
@@ -61,9 +61,10 @@ carry `[human]` criteria that nobody has ever observed. Check here before shippi
      converted one by one to 4.23. The shares are now apportioned out of the converted line, so they
      sum to it — see the finding below.)*
 
-  **Walked 2026-09-11, migration applied. Steps 1–6 pass; step 7 does not — leaving this open.**
-  Verified through the app rather than by SQL (no database access from here), so each assertion
-  below is the app reading those same columns, not the query itself.
+  **Walked 2026-09-11, migration applied. All seven steps pass — closed.**
+  Steps 1–6 were verified through the app rather than by SQL, so those assertions are the app
+  reading the same columns rather than the query itself. Step 7 was run as SQL against the live
+  instance after the defect it found was fixed.
   - Steps 1–2: provenance saves and reloads without error, so the five columns exist.
   - Steps 3–4: 3000 entered in JPY at 0.0058 in a EUR group stored €17.40 and the read view shows
     "¥3,000 as entered · Rate 0.0058 · 11.09.2026" — converted amount, original amount, original
@@ -72,7 +73,24 @@ carry `[human]` criteria that nobody has ever observed. Check here before shippi
     untouched. Nothing recomputed.
   - Step 6: the group balance moved by exactly the converted value — `−6.67 + (17.40 − 5.80)` =
     €4.93 — so the summary totals 17.40, not 3000.
-  - **Step 7 fails.** See "A converted exact split leaves a cent unallocated" below.
+  - **Step 7 failed, was fixed, and now passes — confirmed by SQL against the live instance
+    (Jakob, 2026-09-11).** Two expenses, both 4.50 CHF at 0.9432 split exact 1.50/1.50/1.50 in a EUR
+    group, one written before the fix and one after:
+
+    | name | entry_amount | shares_sum | unallocated | verdict |
+    |------|--------------|------------|-------------|---------|
+    | CHF-Exact (pre-fix) | 4.24 | 4.23 | 0.01 | FAIL |
+    | Exact-Fixed (post-fix) | 4.24 | 4.24 | 0 | PASS |
+
+    The verdict is `sum(fixed_amount) = amount` on `numeric` — exact equality, not a tolerance. The
+    pre-fix row still showing the gap is what makes this discriminating rather than merely green:
+    the only difference between the two is which code wrote them.
+  - Not run, and not required by the criterion: the per-row 1.42/1.41 distribution (implied by the
+    exact sum, and observed on screen), the rename-fingerprint freeze for this particular row (the
+    freeze itself is proven by step 5 on the JPY expense), and the sweep for pre-fix rows elsewhere
+    in the database. The sweep is worth a glance if you ever want to know whether this reached real
+    data — nothing recomputes a saved expense, so those rows do not heal themselves. They cost
+    nobody money: balances derive from `percentage`, not `fixed_amount`.
 
 - [x] **proves** · group-member-removal: editing a group without touching its members leaves the
   roster and favourites intact (the one non-deferred write-path criterion, which has no unit
@@ -168,7 +186,7 @@ settle-up figures are a different path: they come from the server view `group_sh
 self-hosted instance — a schema change, not a Dart change, which is why it is parked here rather
 than done.
 
-### A converted exact split leaves a cent unallocated — FIXED, one query short of proven
+### A converted exact split left a cent unallocated — FIXED and CONFIRMED
 
 Found 2026-09-11 by step 7 of the expense-rate check — the check did its job. Fixed the same day in
 `ledgerFixedAmounts` (`expense_conversion.dart`): an exact split's ledger amounts are now
