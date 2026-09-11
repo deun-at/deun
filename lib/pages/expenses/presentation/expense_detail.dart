@@ -1409,9 +1409,14 @@ class _ExpenseDetailState extends ConsumerState<ExpenseDetail> {
     final sticky = ref.read(stickyRateProvider.notifier);
     await sticky.clearStickyRate(widget.group.id, _entryCurrency);
     if (!mounted) return;
-    // The field is emptied, so ownership goes back to free and a later date
-    // change may prefill into it. No fetch is issued here: clearing a
-    // remembered rate is the user saying they intend to type one.
+    // Ownership goes back to free, and a rate is fetched straight away.
+    //
+    // This state — foreign currency, empty field, nothing remembered — is
+    // exactly the one a fresh currency pick produces, and that one fetches.
+    // Not fetching here made the same state behave two ways depending on how
+    // it was reached, and left the user on an empty field having just asked to
+    // be rid of a stale number: the reason to clear a saved rate is almost
+    // always that it is wrong, not that typing is preferred.
     setState(() {
       _rateController.text = '';
       _rateOrigin = _RateOrigin.none;
@@ -1421,6 +1426,7 @@ class _ExpenseDetailState extends ConsumerState<ExpenseDetail> {
     if (context.mounted) {
       showSnackBar(context, AppLocalizations.of(context)!.expenseRateResetDone);
     }
+    unawaited(_prefillRate());
   }
 
   /// Switches the editor back to the group's own currency.
