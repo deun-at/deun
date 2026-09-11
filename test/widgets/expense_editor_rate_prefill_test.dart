@@ -436,6 +436,38 @@ void main() {
     },
   );
 
+  // Clearing a saved rate leaves exactly the state a fresh currency pick does —
+  // foreign currency, empty field, nothing remembered — and that state fetches.
+  // Not fetching here made the same state behave two different ways depending
+  // on how it was reached, and left the user staring at an empty field having
+  // just asked to be rid of a stale number.
+  testWidgets('clearing a saved rate fetches a fresh one', (tester) async {
+    prefsValues[kStickyRatesPrefKey] = jsonEncode({'g1|CHF': 0.9432});
+    final lookup = _StubLookup({
+      '2026-07-01': RateQuote(
+        rate: 0.8123,
+        effectiveDate: DateTime(2026, 6, 30),
+      ),
+    });
+    await pumpEditor(tester, currencyCode: 'EUR', lookupRate: lookup.call);
+    await pickCurrency(tester, 'CHF');
+    await tester.pumpAndSettle();
+    // The remembered rate wins on the way in, and is not fetched for.
+    expect(_rateText(tester), '0.9432');
+    expect(lookup.calls, isEmpty);
+
+    await tester.tap(find.byKey(const ValueKey('expense_rate_reset')));
+    await tester.pumpAndSettle();
+
+    expect(lookup.calls, hasLength(1), reason: 'clearing must ask for a rate');
+    expect(_rateText(tester), '0.8123');
+    expect(
+      find.byKey(const ValueKey('expense_rate_prefill_date')),
+      findsOneWidget,
+      reason: 'the fetched rate is a suggestion and says which day it is for',
+    );
+  });
+
   // Half a precision fix is none: `formatRate` can now render ten decimals for
   // a small rate, but the field's input formatter decides whether one survives
   // being edited. Capped at six, touching a prefilled IDR rate would silently
