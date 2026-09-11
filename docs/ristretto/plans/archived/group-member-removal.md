@@ -39,7 +39,7 @@
 - Blockers: —
 - Deferred DB work: this feature runs through green without a database. Author the migration, write
   the Dart against its post-migration shape, test with fakes, and append an entry to
-  [MANUAL_OPS.md](../MANUAL_OPS.md) rather than waiting. Two changes are deferred:
+  [manual-checks.md](../manual-checks.md) rather than waiting. Two changes are deferred:
   (1) `group_member.removed_at timestamptz null`; (2) `update_group_member_shares` — its
   `total_share_amount` subquery must join `group_member` so shares belonging to a removed member stop
   counting toward everyone else's balance. Criteria marked `[deferred]` above cannot be observed until
@@ -96,10 +96,10 @@ soft-remove: it is the criterion that proves the ghost shares are gone.
   `test/pages/groups/group_member_removal_test.dart` tests 17–18 (`activeMembers` drops them,
   `groupMembers`/`groupSharesSummary` keep them). The server-side arithmetic — that the migration's
   semi-join actually keeps `total_share_amount` identical before/after against a live group — is
-  `[deferred]` to MANUAL_OPS verification step 2.
+  `[deferred]` to manual-checks verification step 2.
 - **`[deferred]` zero-involvement removal deletes the row outright** — `resolveMemberRemoval` tests 4,
   6 (settled-with-no-history → `hardRemoved`); the actual delete against the live instance is
-  `[deferred]` to MANUAL_OPS step 3.
+  `[deferred]` to manual-checks step 3.
 - **Removed member absent from pickers, present in ledger/balances/past expenses** —
   `group_member_removal_test.dart` tests 17, 18, 20 (`activeMembers` filtering, `PaidBySheet` omits
   Carol) and `test/widgets/expense_detail_tiles_test.dart`'s two new cases ("the paid-by sheet omits a
@@ -112,20 +112,20 @@ soft-remove: it is the criterion that proves the ghost shares are gone.
   the roster and the submitted list'` plus the rewritten `_saveAllLegacy` member half in
   `group_repository.dart` (insert-missing / clear-marker instead of delete-all/re-insert) and the
   matching `save_group_all` rewrite in the migration. The end-to-end DB behaviour is the one
-  **non-deferred** write-path criterion and is exercised only by MANUAL_OPS verification step 6, not by
+  **non-deferred** write-path criterion and is exercised only by manual-checks verification step 6, not by
   a unit test (no live connection in the test run).
 - **`[deferred]` re-adding a removed member clears the marker and restores history unduplicated** —
   `group_member_removal_test.dart` test 19 (`toJson` excludes removed members from the save payload)
   and `group_edit_screen_test.dart`'s `'a member loaded as removed sits in the Removed section, and Add
   back returns them'`. The actual clear-and-preserve behaviour against Postgres is `[deferred]` to
-  MANUAL_OPS step 4.
+  manual-checks step 4.
 - **Epsilon boundary is a unit-tested pure function, symmetric in both signs** — all 8 tests in
   `resolveMemberRemoval` group of `test/model/member_removal_test.dart`, including the `0.004` /
   `0.005` boundary and the `-0.005` / `0.005` symmetry case.
 - **`[deferred]` realtime reflects a removal on other open clients** — `removeMember` always calls
   `update_group_member_shares`, which bumps `group_update_checker`, the table `GroupDetailNotifier`
   already subscribes to via `RealtimeNotifierMixin`. No new subscription code was needed. Actually
-  observing a second client refresh is `[deferred]` to MANUAL_OPS step 5.
+  observing a second client refresh is `[deferred]` to manual-checks step 5.
 
 Test counts: 23 new tests across `test/model/member_removal_test.dart` (15) and
 `test/pages/groups/group_member_removal_test.dart` (8), plus 2 new cases in
@@ -145,7 +145,7 @@ Review verdict:
   the guest merge is decided independently of the membership write. `review: clean`.
 
 - **Migration applied 2026-08-16** — `20260815010000_group_member_removal.sql` is live on the
-  self-hosted instance. The `[deferred]` criteria above (MANUAL_OPS verification steps 2 and 3 — the
+  self-hosted instance. The `[deferred]` criteria above (manual-checks verification steps 2 and 3 — the
   semi-join keeping `total_share_amount` identical across a soft removal, and the hard delete for a
   zero-involvement member) are now *reachable* but were not reported as walked, so they remain assumed
   rather than observed. Step 6 in particular — a group save leaving membership and `is_favorite`

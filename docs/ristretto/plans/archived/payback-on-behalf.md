@@ -10,11 +10,11 @@
   - A payback can be recorded with a payer other than the current user: any member of the group may record "X paid Y" for any two distinct members of that group.
   - The recorded payback is indistinguishable in the ledger from one the payer recorded themselves, except that it carries who recorded it — same `is_paid_back_row` semantics, same effect on balances.
   - Recording "X paid Y" moves X's and Y's balances by exactly the payback amount and leaves every other member's balance unchanged, asserted over the full `groupSharesSummary` map.
-  - **[deferred]** A payback where payer and payee are the same member is rejected before any write. *The client half is enforced and tested (`resolvePayback`, `GroupRepository.payBack`, the record sheet); the server backstop lives in the unapplied migration — MANUAL_OPS verification step 1.*
-  - **[deferred]** A payback naming a member who is not in the group, or who is soft-removed, is rejected before any write. *Same split: client-side enforced and tested, server backstop deferred — MANUAL_OPS verification step 2.*
+  - **[deferred]** A payback where payer and payee are the same member is rejected before any write. *The client half is enforced and tested (`resolvePayback`, `GroupRepository.payBack`, the record sheet); the server backstop lives in the unapplied migration — manual-checks verification step 1.*
+  - **[deferred]** A payback naming a member who is not in the group, or who is soft-removed, is rejected before any write. *Same split: client-side enforced and tested, server backstop deferred — manual-checks verification step 2.*
   - Recording a payback on someone's behalf notifies the **payee** and the **payer** (when the payer is a real user, not a guest) — the person whose money moved must find out, and the notification must name who recorded it.
   - The existing self-payback path (`_paid_by = current user`) produces byte-identical writes to today — this feature extends the RPC, it does not re-route the common case.
-  - **[deferred]** The ledger and expense read view show who recorded a payback when that differs from the payer. *The rendering is widget-tested against fixtures, but `pay_back` only starts stamping `expense.user_id` once the migration is applied — MANUAL_OPS verification step 3.*
+  - **[deferred]** The ledger and expense read view show who recorded a payback when that differs from the payer. *The rendering is widget-tested against fixtures, but `pay_back` only starts stamping `expense.user_id` once the migration is applied — manual-checks verification step 3.*
   - All new copy exists in EN and DE with generated l10n committed.
 - Provides:
   - `GroupRepository.payBack(context, groupId: String, email: String, amount: double, {paidBy: String?, members: List<GroupMember>?, sendNotification: bool}): Future<void>` — `paidBy` defaulting to the current user preserves every existing call site; `members` lets a caller that already holds the roster (e.g. `payBackAll`) skip a redundant SELECT
@@ -41,7 +41,7 @@
 - Deferred DB work: **minimal here.** The core capability needs no migration — `pay_back` already
   takes `_paid_by`, so recording someone else's payback is a client change and its criteria must
   genuinely pass. Only the validation (payer ≠ payee, both current non-removed members) is deferred:
-  author it, mark those criteria `[deferred]`, append to [MANUAL_OPS.md](../MANUAL_OPS.md), continue.
+  author it, mark those criteria `[deferred]`, append to [manual-checks.md](../manual-checks.md), continue.
 
 ## Approach
 - **The RPC already supports this.** `pay_back(_group_id, _paid_by, _paid_for, _amount)` takes the payer as a parameter and writes it straight to `expense.paid_by` — recovered 2026-08-15, now in `supabase/migrations/20260815000000_baseline_ledger_functions.sql`. The restriction to "me" is purely client-side: `group_repository.dart:213` hardcodes `supabase.auth.currentUser?.email`. **The core capability is a one-line client change**, not a migration. Scope the feature accordingly and spend the effort on attribution, notification and validation instead.
@@ -76,13 +76,13 @@ a function we have to recover from the live instance first is how one of them ge
   `'payer and payee being the same member is rejected'`, `'paying yourself back is rejected on the self
   path too'`, and `GroupRepository.payBack` throwing `PaybackRejectedException` before any RPC call
   (structural — `planPayBack` runs and is switched on before `params`/`supabase.rpc` are reached).
-  Server backstop is `[deferred]` to MANUAL_OPS verification step 1.
+  Server backstop is `[deferred]` to manual-checks verification step 1.
 - **`[deferred]` a non-member or soft-removed payer/payee is rejected before any write** — client half:
   `resolvePayback` tests `'a payer who is not in the group is rejected, named by email'`, `'a payee who
   is not in the group is rejected'`, `'a soft-removed payer is rejected and named by display name'`,
   `'a soft-removed payee is rejected'` (`test/model/payback_request_test.dart`), plus
   `PaybackRejected.message` group's `'each rejection maps to its own copy'` for the surfaced text.
-  Server backstop is `[deferred]` to MANUAL_OPS verification step 2.
+  Server backstop is `[deferred]` to manual-checks verification step 2.
 - **Both payee and payer (when not a guest) are notified, naming the recorder** —
   `'both parties are notified when the payer is a real user'`, `'a guest payer is not notified — only
   the payee is'`, `'a self-payback still reaches only the payee once the recorder is factored in'`, and
@@ -102,7 +102,7 @@ a function we have to recover from the live instance first is how one of them ge
   .isRecordedOnBehalf` unit tests `'the recorder is read off the user_id embed'`, `'a payback the payer
   recorded themselves is not on behalf'`, `'a payback with no recorder shows no attribution'`
   (`test/pages/groups/payback_on_behalf_test.dart`). `expense.user_id` only gets stamped on payback
-  rows once the migration runs, so this is `[deferred]` to MANUAL_OPS verification step 3.
+  rows once the migration runs, so this is `[deferred]` to manual-checks verification step 3.
 - **All new copy exists in EN and DE with generated l10n committed** —
   `test/pages/groups/payback_on_behalf_test.dart`'s `'copy exists in both languages'` group:
   `'every new string is translated, not copied'`; `app_localizations*.dart` regenerated via `flutter
@@ -141,7 +141,7 @@ Review verdict:
 
 - **[deferred] server-side validation and `user_id` attribution ride on the unapplied migration** —
   `20260816010000_payback_on_behalf.sql` is authored, not applied (self-hosted instance, unreachable
-  from the build — see MANUAL_OPS.md). Until it runs, the criteria marked `[deferred]` above are
+  from the build — see manual-checks.md). Until it runs, the criteria marked `[deferred]` above are
   assumed from the client-side halves and code inspection, not observed end to end.
 
 status: done

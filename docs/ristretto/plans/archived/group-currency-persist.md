@@ -57,7 +57,7 @@ There is one path that would have written it correctly — `_saveAllLegacy` does
 - Deferred DB work: **all of it.** This feature is a migration and nothing else — there is no Dart
   change, because the client already sends the value correctly, and therefore no unit test can
   observe the fix without a live connection. Every acceptance criterion above is `[deferred]` to the
-  MANUAL_OPS verification steps. This is the rare case where `code-complete` carries no code.
+  manual-checks verification steps. This is the rare case where `code-complete` carries no code.
 
 ## Approach
 `jsonb_populate_record(null::public."group", _group)` already materializes `r.currency_code`; it was
@@ -89,7 +89,7 @@ per-group value. Neither should be pulled until this is applied.
 - **No gates were run** — this feature changed no Dart, so `flutter analyze` / `flutter test` have
   nothing to say about it. Every acceptance criterion is `[deferred]` and none has been reported as
   walked, so they are all *assumed*, not *observed*. The cheapest confirmation is recorded in
-  [MANUAL_OPS.md](../MANUAL_OPS.md).
+  [manual-checks.md](../manual-checks.md).
 - `review: skipped (migration only, no code)`.
 
 status: done

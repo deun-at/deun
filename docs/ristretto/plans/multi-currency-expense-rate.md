@@ -9,30 +9,30 @@
 
 ## Contract
 - Acceptance:
-  - The expense editor offers a currency for the amount, defaulting to the group's currency. Choosing
+  - [auto] The expense editor offers a currency for the amount, defaulting to the group's currency. Choosing
     a different one reveals a rate field and a live preview of the resulting group-currency amount.
-  - Saving stores the converted group-currency amount as the ledger value. Balances, settlement
+  - [human] Saving stores the converted group-currency amount as the ledger value. Balances, settlement
     suggestions, group totals and statistics read only that value and never the original.
-  - The original amount, original currency, rate and rate date survive a save/reload round trip and
+  - [human] The original amount, original currency, rate and rate date survive a save/reload round trip and
     are shown on the expense read view (the amount as entered, the rate applied, and the date that
     rate is attributed to).
-  - The stored rate and converted amount are frozen: editing an expense's name, category, payer,
+  - [human] The stored rate and converted amount are frozen: editing an expense's name, category, payer,
     participants, split or date leaves both untouched. Nothing in this feature ever recomputes a
     saved expense.
-  - There is no implicit rate. An expense in a currency other than the group's cannot be saved
+  - [auto] There is no implicit rate. An expense in a currency other than the group's cannot be saved
     without an explicitly supplied rate — no 1:1 fallback, no silent substitution.
-  - Balance arithmetic is unchanged: every existing money-math test passes without its expected
+  - [auto] Balance arithmetic is unchanged: every existing money-math test passes without its expected
     values being edited, and a group containing only group-currency expenses produces identical
     balances to before this feature.
-  - Conversion respects both currencies' decimal digits: 3,000 JPY into a EUR group at 0.0058 stores
+  - [auto] Conversion respects both currencies' decimal digits: 3,000 JPY into a EUR group at 0.0058 stores
     17.40 EUR; 20 EUR into a JPY group at 172 stores 3,440 JPY with no fractional part.
-  - The last rate the user entered manually for a given group and source currency prefills the next
+  - [auto] The last rate the user entered manually for a given group and source currency prefills the next
     expense entered in that currency in that group, until they change or reset it — so a group can
     hold one agreed rate for a whole trip without a separate concept for it.
-  - A group's currency picker is disabled once any expense in it carries a different original
+  - [auto] A group's currency picker is disabled once any expense in it carries a different original
     currency (the guardrail promised by [multi-currency-group](multi-currency-group.md) becomes
     reachable here).
-  - `flutter analyze` and `flutter test` pass, including tests for the conversion arithmetic across a
+  - [auto] `flutter analyze` and `flutter test` pass, including tests for the conversion arithmetic across a
     0-decimal and a 2-decimal currency in both directions, and a test that editing a non-amount field
     leaves the stored rate and converted amount byte-identical.
 - Provides:
@@ -83,11 +83,12 @@
   - Expense read view: show the amount as entered, the rate, and the rate's date.
   - Sticky per-group rate prefill and reset.
   - Wire `canChangeGroupCurrency` to real expense currencies so the group picker locks correctly.
+- Manual-Checks: [manual-checks.md](../manual-checks.md) — apply and verify `20260816020000_expense_entry_currency_rate.sql`
 - Blockers: —
 - Deferred DB work: needs new columns for the entry's original currency, the frozen rate and the
   converted amount. Author the migration, write the model and editor against its post-migration
   shape, test the conversion and freezing logic as pure functions with fixtures, mark the
-  persistence criteria `[deferred]`, and append to [MANUAL_OPS.md](../MANUAL_OPS.md). The rate maths
+  persistence criteria `[deferred]`, and append to [manual-checks.md](../manual-checks.md). The rate maths
   is the risky part and it is fully testable without a database — put the effort there.
 
 ## Approach

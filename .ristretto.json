@@ -1,7 +1,9 @@
 {
   "gates": {
     "format": "dart format {file}",
+    "formatPaths": ["**/*.dart"],
     "lint": "flutter analyze",
-    "test": "flutter test"
+    "test": "flutter test",
+    "testChanged": ""
   }
 }

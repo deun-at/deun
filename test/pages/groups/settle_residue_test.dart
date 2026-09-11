@@ -336,7 +336,7 @@ void main() {
         // [deferred] The PAYER's net after both settle is
         // 6.666666666666667 - 6.66 = 0.0066666…, which is NOT settled: two
         // sub-cent residues add up. Only `pay_back_exact` (Unit 2, deferred to
-        // MANUAL_OPS) settles the exact value and drives this to a hard zero.
+        // manual-checks) settles the exact value and drives this to a hard zero.
         // Asserted here as the pre-migration truth so the gap stays visible.
         expect(isSettled(twoThirds - 6.66, Currency.eur), isFalse);
       },

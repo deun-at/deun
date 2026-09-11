@@ -83,7 +83,7 @@
   the per-counterparty and group-total roundings consistent — needs no database and must genuinely
   pass. The server half — deriving the settled amount from the exact outstanding value — changes
   `pay_back` or adds a settle-in-full RPC; author that migration, mark its criteria `[deferred]`,
-  append an entry to [MANUAL_OPS.md](../MANUAL_OPS.md), and keep going. Do **not** report the
+  append an entry to [manual-checks.md](../manual-checks.md), and keep going. Do **not** report the
   remainder bug fixed on green gates alone: the gates cannot observe it.
 
 ## Confirmed mechanism (2026-08-15)
@@ -152,13 +152,13 @@ flight widens it afterwards. `payback-on-behalf` likewise depends on this featur
   `isSettled` accepts and `roundCurrency` renders as `0.0`, where pre-fix it rendered `-0.01`. The
   client-side half is proven; the server-side half — `pay_back_exact` snapping to the truly exact
   outstanding value so a multi-counterparty payer's net also lands on a hard zero — is
-  `[deferred]` to MANUAL_OPS verification steps 2 and 5. Test 13 (`'both group modes and payBackAll'`)
+  `[deferred]` to manual-checks verification steps 2 and 5. Test 13 (`'both group modes and payBackAll'`)
   asserts this gap explicitly as pre-migration truth: `isSettled(twoThirds - 6.66)` is still `false`
   without the applied migration.
 - **`[deferred]` holds for an amount that does not divide evenly into cents (10.00 / 3)** — same
   evidence as above; `thirdOfTen = 3.3333333333333335` is used throughout
   `settle_residue_test.dart` as the fixture for exactly this case. The exact-zero payer-side
-  guarantee is `[deferred]` to MANUAL_OPS step 2.
+  guarantee is `[deferred]` to manual-checks step 2.
 - **One predicate/rounding rule across default mode, simplified mode and `payBackAll`** —
   `'both group modes and payBackAll'` group, tests 13–15: a 10.00 three-way split settles cent-exact
   in both group modes, and `payBackAll settles the same amount the payment screen offers`
@@ -214,7 +214,7 @@ Review verdict:
 
 - **Migration applied 2026-08-16** — `20260815020000_settle_residue_exact_payback.sql` is live on the
   self-hosted instance, so the server half is no longer deferred by availability. The `[deferred]`
-  criteria above (MANUAL_OPS verification steps 2 and 5 — a multi-counterparty payer's net landing on
+  criteria above (manual-checks verification steps 2 and 5 — a multi-counterparty payer's net landing on
   a hard zero) are now *reachable* but were not reported as walked, so they remain assumed rather than
   observed. The client-side fallback in `GroupRepository.payBack` is now dead code on this instance and
   can be removed whenever convenient.

@@ -164,7 +164,7 @@ expense-editor hero stops showing a period-separated amount to German users.
   `lib/pages/friends/data/friendship_repository.dart`, `lib/pages/groups/presentation/payment_view_model.dart`
 - Depends: settle-residue *(its **client half** only — the single settled predicate. This feature does
   not need settle-residue's deferred server-side exact-settlement fix, so it is **not** blocked if
-  that half is waiting in [MANUAL_OPS.md](../MANUAL_OPS.md). Pull this as soon as the predicate is
+  that half is waiting in [manual-checks.md](../manual-checks.md). Pull this as soon as the predicate is
   unified.)*
 - Parallel-with: expense-notification-route, expense-editor-edit-labels
 

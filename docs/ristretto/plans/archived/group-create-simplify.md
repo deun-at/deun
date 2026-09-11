@@ -74,7 +74,7 @@ coverage:
 - Full suite (`flutter test`) — `+1049: All tests passed!`, 0 regressions.
 - No database change: `save_group_all` (migration `20260815010000_group_member_removal.sql`, already
   applied by `group-member-removal`) inserts one `group_member` row per submitted member and never
-  deletes, so this feature needed no migration and has no `MANUAL_OPS.md` entry.
+  deletes, so this feature needed no migration and has no `manual-checks.md` entry.
 
 ### Review verdict
 
