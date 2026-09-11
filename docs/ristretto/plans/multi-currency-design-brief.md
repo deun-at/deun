@@ -145,18 +145,19 @@ no longer stands in for the whole balance visually.
 
 ## 7b. Friend list row — the balance stacks
 
-**Two lines, never three.** Line one is the context — the label, plus the
-other-currency marker when there is one. Line two is the figure, alone.
+**Two lines, never three.** Line one is the phrase — `You owe USD 4.00`. Line
+two is the other-currency marker, when there is one.
 
 Laid out along the row instead — label, amount and marker side by side — the
 balance took enough width to ellipsise the friend's handle (`jaggkovsky#92…`):
-the identity was losing room to the money. A stacked column is only as wide as
-its widest line. Label over amount is also what the group card already does, so
-the two lists read the same way.
+the identity was losing room to the money. What crowded the row was the *third*
+item, so the third is what moves down; the label and its amount are one phrase
+and stay together. Breaking them apart to line the figures up down the list is
+the worse trade.
 
-The marker rides on the label line rather than taking a third: the label is
-short, and a third line would make multi-currency rows stand taller than their
-neighbours in the list.
+The row does not grow when the marker appears: the identity beside it is
+already two lines tall (name over handle), so a one-line and a two-line balance
+measure the same.
 
 The row keeps the primary-plus-count form rather than the sheet's chips: it is
 a dense list row, and a count marker is an honest "there is more here" without
