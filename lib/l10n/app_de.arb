@@ -115,6 +115,8 @@
   "expenseRatePreview": "= {amount}",
   "expenseRateReset": "Gespeicherten Kurs löschen",
   "expenseRateResetDone": "Gespeicherter Kurs gelöscht.",
+  "expenseRatePrefilledOn": "Kurs vom {date}",
+  "expenseRateUnavailable": "Für dieses Datum ist kein Kurs verfügbar. Bitte manuell eingeben.",
   "expenseProvenanceEntered": "Eingegeben als",
   "expenseProvenanceRate": "Kurs",
   "expenseRateDirection": "1 {from} = {rate} {to}",

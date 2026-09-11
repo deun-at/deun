@@ -788,6 +788,18 @@ abstract class AppLocalizations {
   /// **'Saved rate cleared.'**
   String get expenseRateResetDone;
 
+  /// Shown under a prefilled conversion rate, naming the day the rate is actually attributed to. Reference rates publish on business days, so a weekend expense carries the previous business day's rate — the user sees which day before it is frozen on the row.
+  ///
+  /// In en, this message translates to:
+  /// **'Rate for {date}'**
+  String expenseRatePrefilledOn(String date);
+
+  /// Shown when the rate prefill could not be fetched — the service was unreachable, or the date has no published rate. The app never substitutes 1:1 and never substitutes another day's rate, so it says so and falls back to manual entry. Saving is not blocked.
+  ///
+  /// In en, this message translates to:
+  /// **'No rate available for this date. Enter it manually.'**
+  String get expenseRateUnavailable;
+
   /// Read view, provenance block: row label for the amount the user originally typed, before conversion.
   ///
   /// In en, this message translates to:

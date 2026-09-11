@@ -413,6 +413,15 @@ class AppLocalizationsEn extends AppLocalizations {
   String get expenseRateResetDone => 'Saved rate cleared.';
 
   @override
+  String expenseRatePrefilledOn(String date) {
+    return 'Rate for $date';
+  }
+
+  @override
+  String get expenseRateUnavailable =>
+      'No rate available for this date. Enter it manually.';
+
+  @override
   String get expenseProvenanceEntered => 'Entered as';
 
   @override

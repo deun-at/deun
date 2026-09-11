@@ -132,9 +132,41 @@ carry `[human]` criteria that nobody has ever observed. Check here before shippi
     the census. Run the `group by` once if the 110-row claim matters.
 
 - [ ] **proves** · multi-currency-rate-source: rates are fetched through a Supabase Edge Function
-  rather than directly from the client · Edge Function must be deployed to the self-hosted instance,
-  which updates by force-recreate rather than in place · ? — the feature is still `planned`; fill
-  this in when it is built.
+  rather than directly from the client, so the web build is unaffected by CORS or by the provider
+  changing hostnames · Edge Function must be deployed to the self-hosted instance, which updates by
+  force-recreate rather than in place · deploy `supabase/functions/exchange-rate/` (force-recreate,
+  not an in-place update). It needs outbound network access to `api.frankfurter.dev` and no secrets
+  — the source has no API key. Then verify:
+  1. A weekday: in a EUR group, add an expense dated a recent **Tuesday** and pick CHF. The rate
+     field fills on its own and the line under it reads "Rate for" that same Tuesday.
+  2. A weekend: change that expense's date to the following **Saturday**. The field refills and the
+     line names the **Friday** — the day the rate was actually published, not the Saturday. This is
+     the whole point of returning the effective date; a Saturday shown here means the function is
+     echoing the request.
+  3. A future date: change the date to next month. The field empties and "No rate available for this
+     date. Enter it manually." appears. It must **not** silently fill with today's rate.
+  4. Typing a rate over any of the above and saving stores the typed rate, and the read view shows
+     it with the date it was attributed to.
+  5. Cache: repeat step 1 twice for the same pair and date. The second is served from the function's
+     in-memory cache — confirm in the function logs (the cached response carries `"cached": true`),
+     not by timing.
+  6. **Web build specifically** (this is the criterion): run the web build, repeat step 1 in a
+     browser, and confirm the browser console shows no CORS error and the rate arrives. A
+     client-side fetch is what this design exists to avoid, so the web path is the one that proves
+     it.
+  7. Offline: put the device in airplane mode, pick a foreign currency, and confirm the same visible
+     explanation as step 3 and that a manually typed rate still saves.
+  8. Every supported currency: the in-repo sweep runs against a hand-authored table, so it proves
+     the client resolves all 31 codes, not that the provider quotes them. Call the deployed
+     function once per code — `for c in USD JPY BGN CZK DKK GBP HUF PLN RON SEK CHF ISK NOK TRY AUD
+     BRL CAD CNY HKD IDR ILS INR KRW MXN MYR NZD PHP SGD THB ZAR; do` … `{"base":"$c","quote":"EUR",
+     "date":"<a recent Tuesday>"}` — and confirm each returns a `rate`. Any code that returns
+     `no_rate` is a currency the app offers and the prefill silently cannot serve: record which.
+  9. **Timezone** (the bug the review caught): the client sends the DEVICE's local date and the
+     function's clock is UTC, so the future-date refusal carries one day of slack. Set the device to
+     Asia/Tokyo, set the clock to 08:00, and add a same-day expense in a foreign currency. The rate
+     must fill. Before the slack existed this returned "No rate available for this date" for every
+     user east of UTC during their morning — if you see that, the deployed function is the old one.
 
 - [ ] **proves** · group-member-add-flow: a member added by one client appears on another client's
   open group detail through the existing realtime path · needs two live clients against the
