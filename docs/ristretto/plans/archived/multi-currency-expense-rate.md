@@ -83,12 +83,12 @@
   - Expense read view: show the amount as entered, the rate, and the rate's date.
   - Sticky per-group rate prefill and reset.
   - Wire `canChangeGroupCurrency` to real expense currencies so the group picker locks correctly.
-- Manual-Checks: [manual-checks.md](../manual-checks.md) — apply and verify `20260816020000_expense_entry_currency_rate.sql`
+- Manual-Checks: [manual-checks.md](../../manual-checks.md) — apply and verify `20260816020000_expense_entry_currency_rate.sql`
 - Blockers: —
 - Deferred DB work: needs new columns for the entry's original currency, the frozen rate and the
   converted amount. Author the migration, write the model and editor against its post-migration
   shape, test the conversion and freezing logic as pure functions with fixtures, mark the
-  persistence criteria `[deferred]`, and append to [manual-checks.md](../manual-checks.md). The rate maths
+  persistence criteria `[deferred]`, and append to [manual-checks.md](../../manual-checks.md). The rate maths
   is the risky part and it is fully testable without a database — put the effort there.
 
 ## Approach

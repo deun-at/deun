@@ -89,7 +89,7 @@ per-group value. Neither should be pulled until this is applied.
 - **No gates were run** — this feature changed no Dart, so `flutter analyze` / `flutter test` have
   nothing to say about it. Every acceptance criterion is `[deferred]` and none has been reported as
   walked, so they are all *assumed*, not *observed*. The cheapest confirmation is recorded in
-  [manual-checks.md](../manual-checks.md).
+  [manual-checks.md](../../manual-checks.md).
 - `review: skipped (migration only, no code)`.
 
 status: done
