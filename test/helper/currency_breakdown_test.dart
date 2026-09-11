@@ -112,7 +112,7 @@ void main() {
           CurrencyAmount(Currency.eur, 10),
           CurrencyAmount(Currency.jpy, 3000),
         ], const Locale('en')),
-        '€10.00 + ¥3,000',
+        'EUR 10.00 + JPY 3,000',
       );
     });
 

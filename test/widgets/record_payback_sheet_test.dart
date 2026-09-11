@@ -390,16 +390,16 @@ void main() {
           expect(l10n.paybackRecordedBy('Ann'), contains('Ann'));
           expect(l10n.paybackRecordNotMemberError('Carol'), contains('Carol'));
           expect(
-            l10n.paybackRecordSuccess('Ann', 'Bob', '10,00 €'),
-            allOf(contains('Ann'), contains('Bob'), contains('10,00 €')),
+            l10n.paybackRecordSuccess('Ann', 'Bob', 'EUR 10,00'),
+            allOf(contains('Ann'), contains('Bob'), contains('EUR 10,00')),
           );
           expect(
             l10n.groupPayBackOnBehalfNotificationTitle('Me', 'Trip'),
             allOf(contains('Me'), contains('Trip')),
           );
           expect(
-            l10n.groupPayBackOnBehalfNotificationBody('Ann', 'Bob', '10,00 €'),
-            allOf(contains('Ann'), contains('Bob'), contains('10,00 €')),
+            l10n.groupPayBackOnBehalfNotificationBody('Ann', 'Bob', 'EUR 10,00'),
+            allOf(contains('Ann'), contains('Bob'), contains('EUR 10,00')),
           );
         }
       },

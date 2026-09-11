@@ -617,7 +617,7 @@ void _convertedRowTests() {
     );
 
     // The ledger value stays the headline — it is what the balances use.
-    expect(find.text('€4.24'), findsOneWidget);
+    expect(find.text('EUR 4.24'), findsOneWidget);
     // …and the row says where it came from, without a tap.
     expect(find.text('CHF 4.50'), findsOneWidget);
   });
@@ -628,7 +628,7 @@ void _convertedRowTests() {
       expenses: [_quick(id: 'q1', date: '2026-09-11')],
     );
 
-    expect(find.text('€20.00'), findsOneWidget);
+    expect(find.text('EUR 20.00'), findsOneWidget);
     expect(find.textContaining('CHF'), findsNothing);
   });
 

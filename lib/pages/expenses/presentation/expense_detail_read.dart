@@ -316,7 +316,7 @@ class _SummaryCard extends StatelessWidget {
                 children: [
                   _ProvenanceRow(
                     label: l10n.expenseProvenanceEntered,
-                    value: formatMoneyQualified(
+                    value: formatMoney(
                       expense.originalAmount ?? 0,
                       expense.entryCurrency,
                       Localizations.localeOf(context),

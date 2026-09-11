@@ -177,13 +177,17 @@ void main() {
     expect(find.text('3,000.00'), findsNothing);
   });
 
-  testWidgets('the hero symbol comes from the group currency', (tester) async {
+  testWidgets('the hero names the group currency by its code', (tester) async {
     await pumpEditor(
       tester,
       locale: const Locale('en'),
       currencyCode: 'JPY',
       initialAmount: 3000,
     );
-    expect(find.text('¥'), findsOneWidget);
+    // The hero renders the currency as its own glyph beside the amount, so it
+    // is the bare code here — not "¥", which JPY shares with CNY. Two matches:
+    // the hero, and the "Entered in" row that names the same currency. Losing
+    // the hero's leaves one, so this still catches the regression it guards.
+    expect(find.text('JPY'), findsNWidgets(2));
   });
 }

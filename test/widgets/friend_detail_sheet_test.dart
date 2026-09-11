@@ -325,7 +325,7 @@ void main() {
       );
 
       // Header renders the primary only.
-      expect(find.text('¥3,000'), findsOneWidget);
+      expect(find.text('JPY 3,000'), findsOneWidget);
       expect(find.text(l10n.currencyBreakdownMore(1)), findsOneWidget);
 
       await tester.tap(find.text(l10n.currencyBreakdownMore(1)));
@@ -382,7 +382,7 @@ void main() {
       await tester.pump();
 
       expect(
-        find.text(l10n.payBackSuccess('sam#0001', '¥3,000 + €25.50')),
+        find.text(l10n.payBackSuccess('sam#0001', 'JPY 3,000 + EUR 25.50')),
         findsOneWidget,
         reason:
             'the confirmation names the per-currency amounts, not one merged '

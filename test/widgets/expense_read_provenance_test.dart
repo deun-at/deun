@@ -145,7 +145,7 @@ void main() {
       findsOneWidget,
     );
     // Code-qualified: "¥" is shared with CNY, so it cannot identify a currency
-    // on its own (see formatMoneyQualified).
+    // on its own (see formatMoney).
     expect(find.text('JPY 3,000'), findsOneWidget);
   });
 
@@ -162,7 +162,7 @@ void main() {
     tester,
   ) async {
     await pumpRead(tester, expense: convertedExpense());
-    expect(find.text('€17.40'), findsOneWidget);
+    expect(find.text('EUR 17.40'), findsOneWidget);
   });
 
   testWidgets('the applied rate states its DIRECTION and its date', (
@@ -187,7 +187,7 @@ void main() {
     tester,
   ) async {
     await pumpRead(tester, expense: convertedExpense());
-    expect(find.textContaining('¥3,000.00'), findsNothing);
+    expect(find.textContaining('JPY 3,000.00'), findsNothing);
   });
 
   testWidgets(
@@ -201,7 +201,7 @@ void main() {
           shareStat: const {'a@test.com': 8.70, 'b@test.com': 8.70},
         ),
       );
-      expect(find.text('€8.70'), findsNWidgets(2));
+      expect(find.text('EUR 8.70'), findsNWidgets(2));
       expect(find.textContaining('1,500'), findsNothing);
     },
   );

@@ -731,7 +731,7 @@ class _ExpenseDetailState extends ConsumerState<ExpenseDetail> {
                     textBaseline: TextBaseline.alphabetic,
                     children: [
                       Text(
-                        currencySymbolFor(l10n.localeName, _entryCurrency.code),
+                        _entryCurrency.code,
                         style: amountStyle?.copyWith(
                           color: colorScheme.onSurfaceVariant,
                         ),
@@ -1108,7 +1108,7 @@ class _ExpenseDetailState extends ConsumerState<ExpenseDetail> {
                 ),
               ),
               Text(
-                _entryCurrency.pickerLabel,
+                _entryCurrency.code,
                 style: theme.textTheme.titleSmall,
               ),
               const SizedBox(width: 4),

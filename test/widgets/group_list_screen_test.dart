@@ -1059,7 +1059,7 @@ void main() {
       );
 
       // JPY is the largest absolute balance, so it is the inline primary.
-      expect(find.text('¥3,000'), findsWidgets);
+      expect(find.text('JPY 3,000'), findsWidgets);
       // The remainder is stated outright, not hidden behind a disclosure: a
       // balance the user cannot see is a balance they forget they owe.
       expect(find.byType(CurrencyBreakdownDisclosure), findsNothing);
@@ -1142,9 +1142,9 @@ void main() {
     );
 
     // ¥3,000 next to €25.50 — the JPY row carries no fractional part.
-    expect(find.text('¥3,000'), findsWidgets);
-    expect(find.text('€25.50'), findsWidgets);
-    expect(find.text('¥3,000.00'), findsNothing);
+    expect(find.text('JPY 3,000'), findsWidgets);
+    expect(find.text('EUR 25.50'), findsWidgets);
+    expect(find.text('JPY 3,000.00'), findsNothing);
   });
 }
 

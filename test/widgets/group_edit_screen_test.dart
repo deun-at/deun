@@ -499,7 +499,7 @@ void main() {
     expect(find.text(l10n.groupCurrencyLabel), findsOneWidget);
     expect(find.byType(GroupCurrencyField), findsOneWidget);
     // A new group defaults to EUR (curated codes: EUR, USD, GBP, CHF...).
-    expect(find.text('EUR · €'), findsOneWidget);
+    expect(find.text('EUR'), findsOneWidget);
   });
 
   testWidgets(
@@ -515,7 +515,7 @@ void main() {
 
       final l10n = await AppLocalizations.delegate.load(const Locale('en'));
 
-      expect(find.text('USD · \$'), findsOneWidget);
+      expect(find.text('USD'), findsOneWidget);
       // Changing currency relabels amounts without converting — the UI says so.
       expect(find.text(l10n.groupCurrencyRelabelNote), findsOneWidget);
     },
@@ -1174,10 +1174,10 @@ void main() {
 
     await tester.tap(find.byType(GroupCurrencyField));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('USD · \$'));
+    await tester.tap(find.text('USD'));
     await tester.pumpAndSettle();
 
-    expect(find.text('USD · \$'), findsOneWidget);
+    expect(find.text('USD'), findsOneWidget);
     final form = tester.state<FormBuilderState>(find.byType(FormBuilder));
     expect(form.saveAndValidate(), isTrue);
     expect(form.value['currency_code'], 'USD');
@@ -1215,7 +1215,7 @@ void main() {
     // Disabled: tapping opens nothing.
     await tester.tap(find.byType(GroupCurrencyField));
     await tester.pumpAndSettle();
-    expect(find.text('USD · \$'), findsNothing);
+    expect(find.text('USD'), findsNothing);
   });
 
   testWidgets(

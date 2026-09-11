@@ -580,9 +580,10 @@ void main() {
     );
     final l10n = await AppLocalizations.delegate.load(const Locale('de'));
 
-    // German renders "6,00 €" (with a non-breaking space), so compare against
-    // the pipeline's own output rather than a hand-typed literal.
-    expect(l10n.toCurrency(6), startsWith('6,00'));
+    // German renders "EUR 6,00" — the code leads in every locale, only the
+    // decimal separator follows it. Compare against the pipeline's own output
+    // rather than a hand-typed literal.
+    expect(l10n.toCurrency(6), 'EUR 6,00');
     expect(find.text(l10n.toCurrency(6)), findsNWidgets(2));
     expect(tester.takeException(), isNull);
   });

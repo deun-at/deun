@@ -582,7 +582,7 @@ class _ExpenseEntryWidgetState extends State<ExpenseEntryWidget> {
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               Text(
-                currencySymbolFor(l10n.localeName, widget.currency.code),
+                widget.currency.code,
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                   color: colorScheme.onSurfaceVariant,
                   fontWeight: FontWeight.w700,
@@ -1129,10 +1129,7 @@ class _ExpenseEntryWidgetState extends State<ExpenseEntryWidget> {
           mainAxisSize: MainAxisSize.min,
           children: [
             Text(
-              currencySymbolFor(
-                AppLocalizations.of(context)!.localeName,
-                widget.currency.code,
-              ),
+              widget.currency.code,
               style: Theme.of(context).textTheme.bodyLarge,
             ),
             // Tap-to-open keypad (F158): per-member exact amount is money, so it

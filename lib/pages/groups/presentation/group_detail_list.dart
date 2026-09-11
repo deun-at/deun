@@ -365,7 +365,7 @@ class LedgerQuickRow extends StatelessWidget {
 /// recognises from their own evening, and without it a converted row is
 /// indistinguishable from a native one: on a trip abroad that is every row in
 /// the list. It is code-qualified rather than symbolised — see
-/// [formatMoneyQualified].
+/// [formatMoney].
 class _LedgerAmount extends StatelessWidget {
   const _LedgerAmount({required this.expense});
 
@@ -390,7 +390,7 @@ class _LedgerAmount extends StatelessWidget {
         amount,
         const SizedBox(height: 2),
         Text(
-          formatMoneyQualified(
+          formatMoney(
             entered,
             expense.entryCurrency,
             Localizations.localeOf(context),
