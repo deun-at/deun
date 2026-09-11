@@ -63,8 +63,8 @@ locale decide something it should not have:
   "Overall, you're owed €10.59" with "You owe €0.00" beside it.
 - **Constraint:** the remaining currencies are always visible. They were behind
   a "+2 more currencies" disclosure; a debt you have to tap to discover is a
-  debt you forget. The disclosure widget survives for the friend sheet and the
-  statistics hero, where the list can run long.
+  debt you forget. The disclosure widget survives only on statistics, where the
+  list is genuinely unbounded and it doubles as the trend chart's selector.
 
 ## 2. Group ledger — a converted row says so
 
@@ -127,11 +127,28 @@ locale decide something it should not have:
 - The picker **locks** once any expense in the group carries a different
   original currency (`canChangeGroupCurrency`).
 
-## 7. Friends · statistics
+## 7. Friend sheet — the same rule as the hero
 
-Per-currency, same as the hero: no conversion, no approximate marker, each
-figure exact in its own currency. Both keep the collapsing disclosure — their
-lists are unbounded in a way the hero's is not.
+A friendship held in one currency keeps its net inline beside the name. Held in
+several, the inline figure **goes away** and every currency gets a chip.
+
+`shareAmount` is the primary currency's net, so "JPY 3,000" beside Sam's name
+read as the state of the friendship when the truth was that you are owed in JPY
+and owe in EUR — the identical defect the home hero had. Both surfaces now
+share one widget, `CurrencyChips`, so the treatment cannot drift apart again.
+
+The disclosure went with it. A friendship spans only the groups two people
+share, so its currency list is strictly shorter than the hero's — there was
+never anything here worth collapsing. The primary still drives the pay-back
+flow (which methods appear, and the amount the confirmation names); it simply
+no longer stands in for the whole balance visually.
+
+## 8. Statistics
+
+Per-currency, same rule: no conversion, no approximate marker, each figure
+exact in its own currency. Keeps the collapsing disclosure — its list is
+genuinely unbounded, and there the disclosure doubles as the currency selector
+for the trend chart.
 
 ## Sheets and lists — two layout rules
 
@@ -149,9 +166,6 @@ lists are unbounded in a way the hero's is not.
 
 ## Not done
 
-- The friend sheet's header renders its primary amount inline; the rows below
-  it are code-column plus bare amount. Consistent within itself, a different
-  shape from the hero.
 - Receipt scanning is currency-blind: the parse happens server-side, so what a
   CHF or GBP receipt yields is untested. Pre-existing, not introduced here, but
   it will read as a conversion bug to anyone scanning a receipt abroad. Note
