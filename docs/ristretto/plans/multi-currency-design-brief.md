@@ -1,92 +1,118 @@
 # multi-currency — Design brief (by surface)
 
-> **⚠️ SUPERSEDED 2026-08-15 — do not design against the product model below.**
-> The 2026-08-11 replan reverses it on competitor and user-sentiment research. Two rules here are
-> now wrong: (1) "the app **never** converts ledger values" — expenses will be enterable in another
-> currency with a manual, frozen rate, see
-> [multi-currency-expense-rate](multi-currency-expense-rate.md); (2) the cross-group **home
-> currency** and its "≈ approximate" treatment are cut entirely and replaced by a per-currency
-> breakdown, see [multi-currency-group](multi-currency-group.md). Surfaces 1, 2 and 4 below are
-> still broadly useful as a description of what shipped; surfaces 3, 5, 6 and 7 and the whole
-> "Cross-cutting design decisions" section describe a model the app is moving away from.
+> Rewritten 2026-09-11. The previous version of this file described the
+> pre-2026-08-11 product model (one currency per group, never converted; a
+> cross-group **home currency** marked "≈ approximate"). Both halves of that
+> model are gone: expenses are enterable in another currency with a manual
+> frozen rate ([multi-currency-expense-rate](multi-currency-expense-rate.md)),
+> and the home currency was deleted outright in `730b410` in favour of a
+> per-currency breakdown ([multi-currency-group](archived/multi-currency-group.md)).
+> That brief also forbade, in bold, the exact expense-editor UI that later
+> shipped — which is how four features reached production with no design pass.
 
-Handoff doc for visual design against the running app mockup. Engineering specs live in two
-phase-ordered plans ([foundation](archived/multi-currency-foundation.md) →
-[home-aggregates](archived/multi-currency-home-aggregates.md)); this file re-pivots them by **screen/surface**
-so each surface is designed once. Apply changes to the existing screens — don't rebuild.
-
-**Product model (the one rule everything follows):** a group has exactly one currency, and every
-amount in it is a real ledger value in that currency. Users always enter the group-currency amount —
-their bank already converted it (fees, spread and all), better than any fetched rate could. The app
-**never converts ledger values**. The only conversion anywhere is display-only: cross-group totals
-shown in the user's home currency, marked approximate.
-
-Phase tags: **[P1]** foundation · **[P2]** home-aggregates.
+**Product model (the one rule everything follows):** a group has exactly one
+currency and every balance in it is a real ledger value in that currency. An
+expense may be *entered* in another currency; it is converted once, at a rate
+the user supplies, and only the converted value reaches the ledger. The
+original amount, currency, rate and rate date ride along as **provenance** —
+read, never computed with. Across groups nothing is converted at all: totals
+are reported per currency.
 
 ---
 
-## 1. Currency picker — shared control  [P1 group, P2 home]
-One picker, two homes: group create/edit currency (P1) and settings home currency (P2).
+## The currency atom — settled, and used everywhere
 
-- **States:** default (EUR preselected) · open/expanded · searching/filtering.
-- **Open questions:**
-  - Searchable list, flag grid, or short curated favourites + "more"? Curated list is EUR/USD/GBP/CHF
-    + other major ISO codes `intl` can format — dozens, not hundreds.
-  - Show flag, ISO code, symbol, full name — which combination? (e.g. "🇺🇸 USD · $ · US Dollar")
-  - Inline in the form vs. bottom-sheet vs. full page?
-- **Constraints:** curated ISO 4217 list only; identical picker in both places.
+This is the decision the old brief listed as an open "cross-cutting" question
+and never made; three surfaces then improvised it differently.
 
-## 2. Group create / edit  [P1]
-- **What changes:** add the currency picker (surface 1). Edit mode adds a **relabel warning**.
-- **States:** create (default EUR) · edit same currency · edit changing currency (warning visible).
-- **Open questions:** how loud is the warning? Inline helper text vs. confirm dialog on change.
-  Copy for "this relabels existing amounts, it does **not** convert their value."
-- **Constraints:** changing currency **relabels only, never converts**. The warning must say so.
+**A currency is identified by its ISO code, not its symbol.** Symbols cannot
+do the job: seven supported currencies render as `$`, four as `kr`, two as `¥`
+— and CHF and RON use their *code* as their symbol, so pairing the two prints
+it twice ("CHF · CHF").
 
-## 3. Group list + balance hero  [P1 symbols, P2 home total]
-- **What changes:** every row formats in its **own** group currency — a USD group and a EUR group sit
-  side by side with different symbols (P1). The overall balance **hero** sums across groups → one
-  **home-currency** total (P2).
-- **States:** all groups in home currency (exact, no marker) · mixed currencies (≈ approximate) ·
-  rates unavailable/offline (fallback: home-currency groups only + "others excluded" indicator).
-- **Open questions:**
-  - How to mark the hero total approximate — "≈" prefix, footnote, tooltip, muted style?
-  - The "some groups excluded, rates unavailable" indicator: badge, subtext, icon?
-- **Constraints:** per-group rows always exact in their own currency; only the cross-group hero is
-  approximate. Symbol placement is locale-aware ("$1,234.56" vs "1.234,56 €").
+Three forms, one rule — the code identifies, the symbol only decorates:
 
-## 4. Expense editor & read view  [P1 — formatting only]
-- **What changes:** amounts, totals and share previews format with the group's currency symbol
-  instead of hardcoded €. **No currency picker here, no rate field, no dual amounts** — an expense is
-  always in its group's currency, per the product model above.
-- **States:** none new — same screens, correct symbol.
-- **Constraints:** if a design iteration sprouts per-expense currency UI, that's out of scope — cut.
+| Where | Form | Helper |
+|---|---|---|
+| Inside a group (one currency is possible, so the symbol is unambiguous) | `€4.24` | `formatMoney` |
+| A foreign amount, or any list where currencies sit side by side | `CHF 4.50` | `formatMoneyQualified` |
+| A picker row or a selected-value row | `EUR · €`, and `CHF` where the halves would repeat | `Currency.pickerLabel` |
 
-## 5. Friends  [P1 symbols, P2 home total]
-- **What changes:** shared amounts format per group currency (P1); cross-group friendship totals
-  convert to home currency (P2, same ≈ treatment as the hero).
-- **States / questions / constraints:** mirror surface 3 — reuse the same approximate marker so the
-  app reads as one system.
+A surface that prints its own code column (the hero chips, the cross-group
+breakdown rows) passes `showSymbol: false` to `MoneyText` so the amount stays
+bare — the column has already done the identifying.
 
-## 6. Statistics / personal summary  [P1 symbols, P2 home total]
-- **What changes:** personal-summary and statistics figures convert mixed-currency contributions into
-  home currency before summing.
-- **Open questions:** where does an ≈ marker go on a stat tile or chart without clutter?
-- **Constraints:** informational, current rates, display-only.
+## 1. Home hero — reports per currency, never "overall"
 
-## 7. Settings — home currency  [P2]
-- **What changes:** a home-currency picker (surface 1), persisted across restarts, alongside the
-  existing locale/language setting.
-- **Open questions:** grouping/placement next to language; one-line explainer of what "home currency"
-  affects (hero, friends, statistics)?
-- **Constraints:** same curated list as group currencies; default EUR.
+- **Single currency:** unchanged. "Overall, you're owed €10.59" over the
+  owed/owe stat pair. With one currency "overall" is exactly true.
+- **Several currencies:** the lead **names the currency it is reporting**
+  ("You're owed in EUR") and the owed/owe pair is **replaced** by one chip per
+  remaining currency — code over bare amount, tinted by direction.
+- **Constraint:** the hero must never state a cross-currency total, because
+  none exists. The old hero claimed one: `overall` is computed in the primary
+  currency only, so a user owed €10.59 while owing $4.00 and CHF2.14 read
+  "Overall, you're owed €10.59" with "You owe €0.00" beside it.
+- **Constraint:** the remaining currencies are always visible. They were behind
+  a "+2 more currencies" disclosure; a debt you have to tap to discover is a
+  debt you forget. The disclosure widget survives for the friend sheet and the
+  statistics hero, where the list can run long.
+
+## 2. Group ledger — a converted row says so
+
+- **What it shows:** the group-currency ledger value stays the headline (every
+  balance on screen derives from it), with the entered amount beneath it,
+  code-qualified and muted: `€4.24` over `CHF 4.50`.
+- **Constraint:** never show only the ledger value. Abroad, *every* row is
+  converted; without the entered amount the list is unrecognisable against the
+  evening the user actually remembers.
+- **States:** group-currency row (nothing added) · converted row (two lines).
+
+## 3. Expense read view — provenance is a block, not a footnote
+
+- **What it shows:** a labelled two-row block under the amount —
+  `Entered as · CHF 4.50` and `Rate · 1 CHF = 0.9432 EUR · 11.09.2026`.
+- **Constraint:** the rate always carries its **direction**. A bare `0.9432`
+  can be read either way round, and the reader cannot tell which without doing
+  the arithmetic.
+- **Constraint:** the rate is a ratio, not money — it keeps its own precision
+  and is never formatted at a currency's decimal digits (`€0.94` would be a
+  different, wrong number).
+- **Constraint:** read-only. Nothing here is ever recomputed.
+
+## 4. Expense editor — the rate field reads as a sentence
+
+- **What it shows:** "Entered in" picker (`Currency.pickerLabel`), then, only
+  for a foreign currency, the rate inside a card like every other control on
+  the screen: `Rate`, `1 CHF = [ 0.9432 ] EUR`, the live converted preview, and
+  the clear action.
+- **Constraint:** no `?` placeholder in a label. The old label read
+  "Rate: 1 CHF = ? EUR" and kept the `?` after a rate had been typed.
+- **Constraint:** actions name their object — "Clear saved rate", not "Reset",
+  which sits beside the converted preview and reads as though it would reset
+  the amount.
+- **Constraint:** no implicit rate, ever. An empty rate blocks the save with a
+  visible reason; there is no 1:1 fallback.
+
+## 5. Group create / edit
+
+- Currency picker via the shared atom; the relabel warning stays as written.
+- The picker **locks** once any expense in the group carries a different
+  original currency (`canChangeGroupCurrency`).
+
+## 6. Friends · statistics
+
+Per-currency, same as the hero: no conversion, no approximate marker, each
+figure exact in its own currency. Both keep the collapsing disclosure — their
+lists are unbounded in a way the hero's is not.
 
 ---
 
-## Cross-cutting design decisions (settle these first — they propagate everywhere)
-1. **Approximate marker** ("≈" style/placement) — used on hero, friends, statistics. One treatment.
-2. **Currency display atom** — flag/symbol/code combination, reused in picker, rows, group headers.
-3. **Amount + symbol formatting** — locale-aware placement; today this is `MoneyText` /
-   `widgets/restyle/`. New visuals stay consistent with that existing language.
-4. **Exact vs approximate signalling** — always clear when a number is a real ledger value
-   (everything inside a group) vs a display-only estimate (cross-group aggregates).
+## Not done
+
+- The friend sheet's header still renders its primary with a symbol (`¥3,000`)
+  while the rows below it are code-qualified. Consistent within itself, not yet
+  consistent with the atom.
+- Receipt scanning is currency-blind: the parse happens server-side, so what a
+  CHF or GBP receipt yields is untested. Pre-existing, not introduced here, but
+  it will read as a conversion bug to anyone scanning a receipt abroad.
