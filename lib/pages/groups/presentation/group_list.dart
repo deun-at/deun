@@ -232,7 +232,12 @@ class _GroupListState extends ConsumerState<GroupList> {
 
     final listView = ListView(
       controller: _scrollController,
-      padding: const EdgeInsets.fromLTRB(16, 0, 16, 110),
+      // 16 at the bottom, not 110: the shell is a plain Scaffold with a
+      // bottomNavigationBar and no extendBody, so the list already stops above
+      // the nav. The 110 was clearance for the standalone FAB that F91
+      // removed, and outlived it as dead space under the last card. The friend
+      // list, same shell, has always used 16.
+      padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
       children: listChildren,
     );
 
