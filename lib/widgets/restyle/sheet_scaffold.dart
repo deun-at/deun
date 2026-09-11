@@ -40,15 +40,21 @@ class SheetScaffold extends StatelessWidget {
     final colorScheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
 
-    return SafeArea(
-      top: false,
-      // Material (not a bare DecoratedBox) so the inner ListTiles paint their
-      // ink on this surface instead of a hidden Material ancestor above the
-      // colored box — see Flutter's "ListTile ... DecoratedBox will hide ink"
-      // assertion. Identical idle look; ink now clips to the rounded surface.
-      child: Material(
-        color: colorScheme.surfaceContainerLow,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(30)),
+    // Material (not a bare DecoratedBox) so the inner ListTiles paint their
+    // ink on this surface instead of a hidden Material ancestor above the
+    // colored box — see Flutter's "ListTile ... DecoratedBox will hide ink"
+    // assertion. Identical idle look; ink now clips to the rounded surface.
+    //
+    // The SafeArea sits INSIDE the Material, not around it. Around it, the
+    // bottom inset became a gap between the sheet and the screen edge, and the
+    // scrim — and whatever was behind it — showed through underneath. The sheet
+    // surface now runs to the very bottom while the content still clears the
+    // gesture bar.
+    return Material(
+      color: colorScheme.surfaceContainerLow,
+      borderRadius: const BorderRadius.vertical(top: Radius.circular(30)),
+      child: SafeArea(
+        top: false,
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -83,10 +89,7 @@ class SheetScaffold extends StatelessWidget {
                 ),
               ),
             Flexible(
-              child: SingleChildScrollView(
-                padding: padding,
-                child: body,
-              ),
+              child: SingleChildScrollView(padding: padding, child: body),
             ),
             if (footer != null)
               Padding(
