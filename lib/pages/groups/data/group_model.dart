@@ -315,7 +315,9 @@ class Group {
   };
 }
 
-/// Whether [group]'s currency may still be changed.
+/// Whether [group]'s currency may still be changed, given [expenses] — the
+/// group's expense rows as probed by
+/// [ExpenseRepository.fetchCurrencyProbeRows].
 ///
 /// The rule (Kittysplit's guardrail): a group's currency may be changed only
 /// while every expense in it shares that currency; once any expense carries a
@@ -323,9 +325,8 @@ class Group {
 /// silently moves other people's settled balances is the single angriest review
 /// class in the research.
 ///
-/// An expense has no currency of its own yet — multi-currency-expense-rate adds
-/// one — so today every expense in a group is by construction in the group's
-/// currency and this is true for every group. The guard is wired into the
-/// picker NOW so that feature only has to change this body, not retrofit a
-/// disabled state, its copy and its tests.
-bool canChangeGroupCurrency(Group group) => true;
+/// With no evidence supplied the answer is "yes" — that is the honest reading of
+/// "no expense is known to diverge", and it is what a pre-migration server (and
+/// the group-create form, which has no expenses at all) produces.
+bool canChangeGroupCurrency(Group group, {List<Expense> expenses = const []}) =>
+    !expenses.any((e) => e.isForeignCurrencyIn(group.currency));

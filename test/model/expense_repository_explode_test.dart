@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:deun/helper/currency.dart';
+import 'package:deun/helper/helper.dart';
+import 'package:deun/pages/expenses/data/expense_conversion.dart';
 import 'package:deun/pages/expenses/data/expense_repository.dart';
 
 void main() {
@@ -131,5 +132,131 @@ void main() {
       expect(units.length, 1);
       expect(((units[0]['shares'] as List)[0] as Map)['email'], 'a@test.com');
     });
+  });
+
+  group('ExpenseRepository.explodeItemizedEntry converts the LINE once', () {
+    const chfIntoEur = ExpenseConversion(
+      groupCurrency: Currency.eur,
+      entryCurrency: Currency.chf,
+      rate: 0.9432,
+      rateDate: '2026-08-16',
+    );
+
+    test(
+      '3 x 10.00 CHF at 0.9432 stores units summing to 28.30, not 28.29',
+      () {
+        final units = ExpenseRepository.explodeItemizedEntry(
+          name: 'Beer',
+          unitPrice: 10.0,
+          quantity: 3,
+          itemGroupSeq: 1,
+          sortIdStart: 10,
+          currency: Currency.eur,
+          conversion: chfIntoEur,
+        );
+        final amounts = units
+            .map((u) => (u['entry'] as Map)['amount'] as double)
+            .toList();
+        expect(amounts, [9.44, 9.43, 9.43]);
+        expect(amounts.reduce((a, b) => a + b), closeTo(28.30, 1e-9));
+      },
+    );
+
+    test('each unit records its ORIGINAL amount in the entry currency', () {
+      final units = ExpenseRepository.explodeItemizedEntry(
+        name: 'Beer',
+        unitPrice: 10.0,
+        quantity: 3,
+        itemGroupSeq: 1,
+        sortIdStart: 10,
+        currency: Currency.eur,
+        conversion: chfIntoEur,
+      );
+      for (final unit in units) {
+        expect((unit['entry'] as Map)['original_amount'], 10.0);
+      }
+    });
+
+    test('with no conversion the unit rows carry a null original amount', () {
+      final units = ExpenseRepository.explodeItemizedEntry(
+        name: 'Beer',
+        unitPrice: 5.0,
+        quantity: 2,
+        itemGroupSeq: 1,
+        sortIdStart: 10,
+        currency: Currency.eur,
+      );
+      for (final unit in units) {
+        expect((unit['entry'] as Map)['original_amount'], isNull);
+        expect((unit['entry'] as Map)['amount'], 5.0);
+      }
+    });
+
+    test('a foreign currency with no rate refuses to explode', () {
+      const noRate = ExpenseConversion(
+        groupCurrency: Currency.eur,
+        entryCurrency: Currency.chf,
+        rate: null,
+        rateDate: null,
+      );
+      expect(
+        () => ExpenseRepository.explodeItemizedEntry(
+          name: 'Beer',
+          unitPrice: 10.0,
+          quantity: 3,
+          itemGroupSeq: 1,
+          sortIdStart: 10,
+          currency: Currency.eur,
+          conversion: noRate,
+        ),
+        throwsA(isA<MissingConversionRateException>()),
+      );
+    });
+
+    test(
+      'a switched-back line re-explodes into the SAME units it had while converted',
+      () {
+        // A qty-3 CHF line at 0.9432: 10.00 x3 -> 28.30 EUR, distributed.
+        final converted = ExpenseRepository.explodeItemizedEntry(
+          name: 'Beer',
+          unitPrice: 10.0,
+          quantity: 3,
+          itemGroupSeq: 1,
+          sortIdStart: 10,
+          currency: Currency.eur,
+          conversion: chfIntoEur,
+        );
+        // Switching the expense back to EUR rewrites the amount field. Feeding
+        // that text back through an IDENTITY save must reproduce the ledger to
+        // the cent — this is the whole point of the switch-back rule.
+        final text = switchBackAmountTexts(
+          enteredTexts: ['10.00'],
+          rate: 0.9432,
+          groupCurrency: Currency.eur,
+          quantities: [3],
+        ).single;
+        final switchedBack = ExpenseRepository.explodeItemizedEntry(
+          name: 'Beer',
+          unitPrice: double.parse(text),
+          quantity: 3,
+          itemGroupSeq: 1,
+          sortIdStart: 10,
+          currency: Currency.eur,
+        );
+
+        List<double> amountsOf(List<Map<String, dynamic>> units) =>
+            units.map((u) => (u['entry'] as Map)['amount'] as double).toList();
+        expect(amountsOf(converted), [9.44, 9.43, 9.43]);
+        expect(amountsOf(switchedBack), amountsOf(converted));
+        expect(
+          amountsOf(switchedBack).reduce((a, b) => a + b),
+          closeTo(28.30, 1e-9),
+        );
+        // The provenance is gone, the ledger value is not.
+        for (final unit in switchedBack) {
+          expect((unit['entry'] as Map)['original_amount'], isNull);
+        }
+      },
+    );
   });
 }

@@ -1,5 +1,6 @@
 import '../../../helper/helper.dart';
 import '../../groups/data/group_model.dart';
+import 'expense_conversion.dart';
 import 'expense_entry_model.dart';
 import 'expense_category.dart';
 
@@ -31,6 +32,20 @@ class Expense {
   String? recordedByEmail;
   String? recordedByDisplayName;
 
+  /// ISO 4217 code the amounts were ENTERED in, when that differs from the
+  /// group's currency. Null means the expense is in the group's own currency.
+  /// PROVENANCE ONLY — no balance path reads it.
+  String? originalCurrencyCode;
+
+  /// The frozen rate applied at entry: 1 [originalCurrencyCode] =
+  /// [conversionRate] group currency. Never recomputed.
+  double? conversionRate;
+
+  /// `yyyy-MM-dd` the [conversionRate] is attributed to. Stamped when the entry
+  /// currency was chosen, and never re-stamped by an edit to anything else — a
+  /// rate only gets a new date when it is a new rate for a new currency pair.
+  String? rateDate;
+
   static const expenseSelectString =
       '*, ...paid_by(paid_by_display_name:display_name), ...user_id(recorded_by_email:email, recorded_by_display_name:display_name), expense_entry(*, expense_entry_share(*, ...email(display_name:display_name))), group!expense_group_id_fkey(*, group_shares_summary(*, ...paid_by(paid_by_display_name:display_name), ...paid_for(paid_for_display_name:display_name)), group_member(*, ...user(display_name:display_name, is_guest:is_guest)))';
 
@@ -45,6 +60,12 @@ class Expense {
   /// already hold.
   static const paybackSelectString =
       'id, group_id, name, expense_date, created_at, is_paid_back_row';
+
+  /// Lean select for the group-currency lock probe: only what
+  /// [loadDataFromJson] needs for its non-nullable `late` fields, plus the
+  /// original currency the lock decides on. No `group` embed, no entry tree.
+  static const currencyProbeSelectString =
+      'id, group_id, name, expense_date, created_at, is_paid_back_row, original_currency_code';
 
   void loadDataFromJson(Map<String, dynamic> json) {
     id = json["id"];
@@ -63,6 +84,11 @@ class Expense {
     createdAt = json["created_at"];
     isPaidBackRow = json["is_paid_back_row"];
     category = ExpenseCategory.fromString(json["category"]);
+    originalCurrencyCode = json["original_currency_code"];
+    conversionRate = json["conversion_rate"] != null
+        ? double.parse(json["conversion_rate"].toString())
+        : null;
+    rateDate = json["rate_date"]?.toString();
 
     amount = 0.0;
     expenseEntries = <String, ExpenseEntry>{};
@@ -105,6 +131,35 @@ class Expense {
       (recordedByEmail ?? '').isNotEmpty &&
       recordedByEmail != paidBy;
 
+  /// The currency the amounts were ENTERED in: the frozen original currency
+  /// when this expense was converted, otherwise the group's own.
+  Currency get entryCurrency => originalCurrencyCode != null
+      ? Currency.fromCode(originalCurrencyCode)
+      : group.currency;
+
+  /// This expense's total AS ENTERED, in [entryCurrency]. Null when the expense
+  /// was not converted.
+  double? get originalAmount {
+    if (originalCurrencyCode == null) return null;
+    double sum = 0;
+    var seen = false;
+    for (final entry in expenseEntries.values) {
+      final original = entry.originalAmount;
+      if (original == null) continue;
+      seen = true;
+      sum += original;
+    }
+    return seen ? roundCurrency(sum, entryCurrency) : null;
+  }
+
+  /// True when this expense was entered in a currency other than
+  /// [groupCurrency]. The evidence `canChangeGroupCurrency` locks a group's
+  /// picker on. Compared against the passed currency rather than the embedded
+  /// [group], because the lock probe reads rows on a lean select with no group.
+  bool isForeignCurrencyIn(Currency groupCurrency) =>
+      originalCurrencyCode != null &&
+      Currency.fromCode(originalCurrencyCode) != groupCurrency;
+
   /// Entries grouped per item card, insertion-ordered: per-unit claim entries
   /// (split_mode 'claim', quantity 1) group by item_group_id — a standalone
   /// unit (no group id) forms a group of one — and every other entry passes
@@ -140,6 +195,9 @@ class Expense {
             ..expenseId = first.expenseId
             ..name = first.name
             ..amount = group.fold(0.0, (sum, e) => sum + e.amount)
+            ..originalAmount = group.every((e) => e.originalAmount != null)
+                ? group.fold<double>(0.0, (sum, e) => sum + e.originalAmount!)
+                : null
             ..quantity = group.length
             ..splitMode = first.splitMode
             ..createdAt = first.createdAt
@@ -173,12 +231,20 @@ class Expense {
     for (final value in editorEntries) {
       jsonValue.addAll({"expense_entry[${value.index}][name]": value.name});
       jsonValue.addAll({
-        // Machine round-trip text at the group currency's precision, so a JPY
-        // expense seeds the editor field with "3000" and not "3000.00". A
-        // group-less Expense keeps the default Group's EUR precision.
-        "expense_entry[${value.index}][amount]": amountToFieldText(
-          value.unitPrice,
-          group.currency,
+        // Machine round-trip text at the ENTRY currency's precision, so a JPY
+        // expense seeds the editor field with "3000" and not "3000.00", and a
+        // converted expense seeds from the amount AS ENTERED rather than the
+        // ledger value. A group-less Expense keeps the default Group's EUR
+        // precision.
+        //
+        // Through [unitPriceFieldTextForTotal] rather than a plain division so
+        // a multi-unit line whose total did not divide evenly reloads with the
+        // digits that multiply back to it — the save reads unit price x
+        // quantity, and "9.43" x 3 stores 28.29 for a 28.30 line.
+        "expense_entry[${value.index}][amount]": unitPriceFieldTextForTotal(
+          value.enteredLineTotal,
+          value.quantity,
+          entryCurrency,
         ),
       });
       jsonValue.addAll({

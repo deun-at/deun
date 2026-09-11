@@ -722,6 +722,54 @@ abstract class AppLocalizations {
   /// **'Add expense'**
   String get expenseAddButton;
 
+  /// Label on the expense editor's entry-currency selector row.
+  ///
+  /// In en, this message translates to:
+  /// **'Entered in'**
+  String get expenseEntryCurrencyLabel;
+
+  /// Label on the conversion-rate text field, naming both currencies.
+  ///
+  /// In en, this message translates to:
+  /// **'Rate: 1 {from} = ? {to}'**
+  String expenseRateLabel(String from, String to);
+
+  /// Helper text shown while the rate field is empty, and the refusal snackbar shown on a save attempt with no rate.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter the rate you actually got. There is no default rate.'**
+  String get expenseRateRequired;
+
+  /// Live preview of the converted group-currency amount, shown once a rate is entered.
+  ///
+  /// In en, this message translates to:
+  /// **'= {amount}'**
+  String expenseRatePreview(String amount);
+
+  /// Button that clears the remembered sticky rate for the current entry currency.
+  ///
+  /// In en, this message translates to:
+  /// **'Reset'**
+  String get expenseRateReset;
+
+  /// Snackbar confirming the sticky rate was cleared.
+  ///
+  /// In en, this message translates to:
+  /// **'Saved rate cleared.'**
+  String get expenseRateResetDone;
+
+  /// Read view: the amount as the user originally typed it, before conversion.
+  ///
+  /// In en, this message translates to:
+  /// **'{amount} as entered'**
+  String expenseOriginalAmountEntered(String amount);
+
+  /// Read view: the frozen conversion rate and the date it is attributed to.
+  ///
+  /// In en, this message translates to:
+  /// **'Rate {rate} · {date}'**
+  String expenseRateApplied(String rate, String date);
+
   /// App-bar title for the expense detail (read) screen.
   ///
   /// In en, this message translates to:

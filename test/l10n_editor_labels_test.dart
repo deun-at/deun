@@ -109,4 +109,16 @@ void main() {
       'Speichern & zum Beanspruchen teilen',
     );
   });
+
+  test('the rate copy is real German, not the English string copied over', () {
+    expect(en.expenseRateReset, 'Reset');
+    expect(de.expenseRateReset, 'Zurücksetzen');
+    expect(en.expenseEntryCurrencyLabel, isNot(de.expenseEntryCurrencyLabel));
+    expect(en.expenseRateRequired, isNot(de.expenseRateRequired));
+  });
+
+  test('the rate label names both currencies', () {
+    expect(en.expenseRateLabel('JPY', 'EUR'), contains('JPY'));
+    expect(en.expenseRateLabel('JPY', 'EUR'), contains('EUR'));
+  });
 }

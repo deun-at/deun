@@ -357,3 +357,114 @@ abstract class _$NotificationsEnabledNotifier extends $Notifier<bool> {
     element.handleCreate(ref, build);
   }
 }
+
+/// The last rate the user entered manually, per group and source currency. A
+/// LOCAL prefill only: it seeds the next expense entered in that currency in
+/// that group so a trip can hold one agreed rate, and it is deliberately not
+/// synced — correctness lives in the frozen per-row value, and two members
+/// legitimately get different rates for the same day (exchange office vs card).
+///
+/// [hydrated] is stored and awaited by every mutation, and by the editor before
+/// it reads a prefill. Two failures come from not doing that:
+///   * hydration REPLACES the map wholesale, so a merge cannot resurrect a
+///     cleared entry — but only if a `clear` that lands first is not then
+///     overwritten by a late hydrate. Awaiting [hydrated] first orders them.
+///   * this is a keepAlive provider, and the editor reads a prefill
+///     synchronously right after its first build. Without awaiting, the first
+///     foreign-currency pick after app start never prefills.
+
+@ProviderFor(StickyRateNotifier)
+final stickyRateProvider = StickyRateNotifierProvider._();
+
+/// The last rate the user entered manually, per group and source currency. A
+/// LOCAL prefill only: it seeds the next expense entered in that currency in
+/// that group so a trip can hold one agreed rate, and it is deliberately not
+/// synced — correctness lives in the frozen per-row value, and two members
+/// legitimately get different rates for the same day (exchange office vs card).
+///
+/// [hydrated] is stored and awaited by every mutation, and by the editor before
+/// it reads a prefill. Two failures come from not doing that:
+///   * hydration REPLACES the map wholesale, so a merge cannot resurrect a
+///     cleared entry — but only if a `clear` that lands first is not then
+///     overwritten by a late hydrate. Awaiting [hydrated] first orders them.
+///   * this is a keepAlive provider, and the editor reads a prefill
+///     synchronously right after its first build. Without awaiting, the first
+///     foreign-currency pick after app start never prefills.
+final class StickyRateNotifierProvider
+    extends $NotifierProvider<StickyRateNotifier, Map<String, double>> {
+  /// The last rate the user entered manually, per group and source currency. A
+  /// LOCAL prefill only: it seeds the next expense entered in that currency in
+  /// that group so a trip can hold one agreed rate, and it is deliberately not
+  /// synced — correctness lives in the frozen per-row value, and two members
+  /// legitimately get different rates for the same day (exchange office vs card).
+  ///
+  /// [hydrated] is stored and awaited by every mutation, and by the editor before
+  /// it reads a prefill. Two failures come from not doing that:
+  ///   * hydration REPLACES the map wholesale, so a merge cannot resurrect a
+  ///     cleared entry — but only if a `clear` that lands first is not then
+  ///     overwritten by a late hydrate. Awaiting [hydrated] first orders them.
+  ///   * this is a keepAlive provider, and the editor reads a prefill
+  ///     synchronously right after its first build. Without awaiting, the first
+  ///     foreign-currency pick after app start never prefills.
+  StickyRateNotifierProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'stickyRateProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$stickyRateNotifierHash();
+
+  @$internal
+  @override
+  StickyRateNotifier create() => StickyRateNotifier();
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(Map<String, double> value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<Map<String, double>>(value),
+    );
+  }
+}
+
+String _$stickyRateNotifierHash() =>
+    r'c50bccb2ff878586e1b0cd34516e080806ede5f2';
+
+/// The last rate the user entered manually, per group and source currency. A
+/// LOCAL prefill only: it seeds the next expense entered in that currency in
+/// that group so a trip can hold one agreed rate, and it is deliberately not
+/// synced — correctness lives in the frozen per-row value, and two members
+/// legitimately get different rates for the same day (exchange office vs card).
+///
+/// [hydrated] is stored and awaited by every mutation, and by the editor before
+/// it reads a prefill. Two failures come from not doing that:
+///   * hydration REPLACES the map wholesale, so a merge cannot resurrect a
+///     cleared entry — but only if a `clear` that lands first is not then
+///     overwritten by a late hydrate. Awaiting [hydrated] first orders them.
+///   * this is a keepAlive provider, and the editor reads a prefill
+///     synchronously right after its first build. Without awaiting, the first
+///     foreign-currency pick after app start never prefills.
+
+abstract class _$StickyRateNotifier extends $Notifier<Map<String, double>> {
+  Map<String, double> build();
+  @$mustCallSuper
+  @override
+  void runBuild() {
+    final ref = this.ref as $Ref<Map<String, double>, Map<String, double>>;
+    final element =
+        ref.element
+            as $ClassProviderElement<
+              AnyNotifier<Map<String, double>, Map<String, double>>,
+              Map<String, double>,
+              Object?,
+              Object?
+            >;
+    element.handleCreate(ref, build);
+  }
+}

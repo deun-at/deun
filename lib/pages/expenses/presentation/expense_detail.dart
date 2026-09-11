@@ -11,12 +11,16 @@ import 'package:form_builder_validators/form_builder_validators.dart';
 
 import '../../../constants.dart';
 import '../../../main.dart';
+import '../../../provider.dart';
+import '../../../widgets/currency_picker_sheet.dart';
+import '../../../widgets/decimal_text_input_formatter.dart';
 import '../../../widgets/theme_builder.dart';
 import '../../groups/data/group_model.dart';
 import 'expense_entry_widget.dart';
 import 'receipt_scanner_sheet.dart';
 import '../data/claimable_form.dart';
 import '../data/editor_mode.dart';
+import '../data/expense_conversion.dart';
 import '../data/expense_deletion_impact.dart';
 import '../data/expense_entry_model.dart';
 import '../data/expense_model.dart';
@@ -55,6 +59,23 @@ class ExpenseEntryData {
   });
 }
 
+/// The editor's write, as an injectable function.
+///
+/// Signature-compatible with [ExpenseRepository.saveAll] so production passes
+/// the repository method itself. Its point is testability: the save payload —
+/// the form values AND the [ExpenseConversion] the provenance is written from —
+/// is otherwise unreachable from a widget test, which is what let a
+/// re-conversion on reload survive review.
+typedef ExpenseSaver =
+    Future<void> Function(
+      BuildContext context,
+      String groupId,
+      String? expenseId,
+      Map<String, dynamic> formResponse, {
+      required Currency currency,
+      ExpenseConversion? conversion,
+    });
+
 class ExpenseDetail extends ConsumerStatefulWidget {
   const ExpenseDetail({
     super.key,
@@ -62,6 +83,7 @@ class ExpenseDetail extends ConsumerStatefulWidget {
     this.expense,
     this.receiptResult,
     this.loadGroupPaybacks,
+    this.saveExpense,
   });
 
   final Group group;
@@ -71,6 +93,10 @@ class ExpenseDetail extends ConsumerStatefulWidget {
   /// Test seam for the group's payback probe. Null in production →
   /// [ExpenseRepository.fetchPaybackRows].
   final GroupPaybackLoader? loadGroupPaybacks;
+
+  /// Test seam for the expense write. Null in production →
+  /// [ExpenseRepository.saveAll].
+  final ExpenseSaver? saveExpense;
 
   @override
   ConsumerState<ExpenseDetail> createState() => _ExpenseDetailState();
@@ -125,9 +151,45 @@ class _ExpenseDetailState extends ConsumerState<ExpenseDetail> {
 
   ExpenseCategory? _detectedCategory;
 
+  /// The currency the amounts on this screen are TYPED in. Defaults to the
+  /// group's; an existing converted expense opens on its frozen original.
+  late Currency _entryCurrency;
+
+  final _rateController = TextEditingController();
+
+  /// `yyyy-MM-dd` the rate is attributed to. Stamped when a foreign currency is
+  /// chosen and carried unchanged through every later edit of a non-amount
+  /// field — nothing in this feature ever re-stamps a saved expense on its own.
+  /// Changing the entry currency does re-stamp it: the rate then belongs to a
+  /// different currency pair and is quoted today. See
+  /// [rateDateForPickedCurrency].
+  String? _rateDate;
+
+  bool get _isForeignCurrency => _entryCurrency != widget.group.currency;
+
+  double? get _rate => parseConversionRate(_rateController.text);
+
+  /// The conversion this save will apply. Identity while the amounts are in the
+  /// group's own currency.
+  ExpenseConversion get _conversion => _isForeignCurrency
+      ? ExpenseConversion(
+          groupCurrency: widget.group.currency,
+          entryCurrency: _entryCurrency,
+          rate: _rate,
+          rateDate: _rateDate,
+        )
+      : ExpenseConversion.identity(widget.group.currency);
+
   @override
   void initState() {
     super.initState();
+
+    _entryCurrency = widget.expense?.originalCurrencyCode != null
+        ? Currency.fromCode(widget.expense!.originalCurrencyCode)
+        : widget.group.currency;
+    _rateDate = widget.expense?.rateDate;
+    final loadedRate = widget.expense?.conversionRate;
+    if (loadedRate != null) _rateController.text = formatRate(loadedRate);
 
     groupMembers = widget.group.activeMembers;
     _detectedCategory = widget.expense?.category;
@@ -152,9 +214,16 @@ class _ExpenseDetailState extends ConsumerState<ExpenseDetail> {
             // Seed the item card and the itemized total header directly from
             // the loaded entry — claim units have no shares, so the widget's
             // shares-gated seeding showed €0.00 line totals before.
-            initialAmount: amountToFieldText(
-              expenseEntry.unitPrice,
-              widget.group.currency,
+            //
+            // The seed is the exact inverse of the save: a line whose total did
+            // not divide evenly over its units keeps the digits that multiply
+            // back to it. Rounding here instead would reopen a 28.30 qty-3 line
+            // as "9.43" and the next name-only save would store 28.29 — the
+            // same one-sided rounding the switch-back already avoids.
+            initialAmount: unitPriceFieldTextForTotal(
+              expenseEntry.enteredLineTotal,
+              expenseEntry.quantity,
+              _entryCurrency,
             ),
             initialQuantity: expenseEntry.quantity.toString(),
           ),
@@ -173,10 +242,7 @@ class _ExpenseDetailState extends ConsumerState<ExpenseDetail> {
             onRemove: () => _removeEntry(expenseEntry),
             groupMembers: groupMembers,
             initialName: item.name,
-            initialAmount: amountToFieldText(
-              item.amount,
-              widget.group.currency,
-            ),
+            initialAmount: amountToFieldText(item.amount, _entryCurrency),
           ),
         );
       }
@@ -191,7 +257,7 @@ class _ExpenseDetailState extends ConsumerState<ExpenseDetail> {
           groupMembers: groupMembers,
           initialAmount: amountToFieldText(
             widget.receiptResult!.total!,
-            widget.group.currency,
+            _entryCurrency,
           ),
         ),
       );
@@ -210,16 +276,17 @@ class _ExpenseDetailState extends ConsumerState<ExpenseDetail> {
     // Initialize amount controller from first entry data
     if (widget.expense != null && widget.expense!.expenseEntries.isNotEmpty) {
       final firstEntry = widget.expense!.expenseEntries.values.first;
-      _amountController.text = amountToFieldText(
-        firstEntry.unitPrice,
-        widget.group.currency,
+      _amountController.text = unitPriceFieldTextForTotal(
+        firstEntry.enteredLineTotal,
+        firstEntry.quantity,
+        _entryCurrency,
       );
     } else if (widget.receiptResult != null &&
         widget.receiptResult!.total != null &&
         widget.receiptResult!.lineItems.isEmpty) {
       _amountController.text = amountToFieldText(
         widget.receiptResult!.total!,
-        widget.group.currency,
+        _entryCurrency,
       );
     }
 
@@ -261,6 +328,7 @@ class _ExpenseDetailState extends ConsumerState<ExpenseDetail> {
   void dispose() {
     _nameController.dispose();
     _amountController.dispose();
+    _rateController.dispose();
     super.dispose();
   }
 
@@ -429,7 +497,7 @@ class _ExpenseDetailState extends ConsumerState<ExpenseDetail> {
               const SizedBox(height: 4),
               MoneyText(
                 total,
-                currency: widget.group.currency,
+                currency: _entryCurrency,
                 style: Theme.of(context).textTheme.displaySmall?.copyWith(
                   color: colorScheme.onSurface,
                 ),
@@ -663,10 +731,7 @@ class _ExpenseDetailState extends ConsumerState<ExpenseDetail> {
                     textBaseline: TextBaseline.alphabetic,
                     children: [
                       Text(
-                        currencySymbolFor(
-                          l10n.localeName,
-                          widget.group.currencyCode,
-                        ),
+                        currencySymbolFor(l10n.localeName, _entryCurrency.code),
                         style: amountStyle?.copyWith(
                           color: colorScheme.onSurfaceVariant,
                         ),
@@ -675,7 +740,7 @@ class _ExpenseDetailState extends ConsumerState<ExpenseDetail> {
                       Text(
                         formatAmountOnly(
                           amount,
-                          widget.group.currency,
+                          _entryCurrency,
                           Localizations.localeOf(context),
                         ),
                         textAlign: TextAlign.center,
@@ -689,7 +754,7 @@ class _ExpenseDetailState extends ConsumerState<ExpenseDetail> {
             const SizedBox(height: 8),
             Text(
               l10n.expenseSplitEach(
-                l10n.toCurrency(perHead, widget.group.currencyCode),
+                l10n.toCurrency(perHead, _entryCurrency.code),
               ),
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                 color: colorScheme.onSurfaceVariant,
@@ -715,10 +780,10 @@ class _ExpenseDetailState extends ConsumerState<ExpenseDetail> {
     final picked = await showAmountKeypadSheet(
       context,
       initialAmount: current,
-      currency: widget.group.currency,
+      currency: _entryCurrency,
     );
     if (picked == null || !mounted) return;
-    final text = amountToFieldText(picked, widget.group.currency);
+    final text = amountToFieldText(picked, _entryCurrency);
     setState(() {
       _amountController.text = text;
     });
@@ -798,7 +863,7 @@ class _ExpenseDetailState extends ConsumerState<ExpenseDetail> {
           _entries.removeRange(1, _entries.length);
         }
         final amount = summedTotal > 0
-            ? amountToFieldText(summedTotal, widget.group.currency)
+            ? amountToFieldText(summedTotal, _entryCurrency)
             : _formKey
                   .currentState
                   ?.fields["expense_entry[${_entries.first.index}][amount]"]
@@ -819,30 +884,60 @@ class _ExpenseDetailState extends ConsumerState<ExpenseDetail> {
     }
   }
 
-  /// Sum of the current item line totals, read live from the form fields so the
-  /// header tracks edits. Uses the pure [itemizedTotal] helper.
-  double _itemizedTotalFromForm() {
-    final formState = _formKey.currentState;
+  /// The current item lines, read live from the form fields so everything
+  /// derived from them tracks edits. THE one reader of the amount and quantity
+  /// fields: the itemized header, the converted preview and the switch-back all
+  /// go through it, so they cannot disagree about what is on screen.
+  List<ItemLine> _formLines() {
     final lines = <ItemLine>[];
     for (final data in _entries) {
-      double unitPrice = double.tryParse(data.initialAmount ?? '') ?? 0;
-      int quantity = int.tryParse(data.initialQuantity ?? '') ?? 1;
-      if (formState != null) {
-        final amountVal =
-            formState.fields["expense_entry[${data.index}][amount]"]?.value;
-        if (amountVal != null) {
-          unitPrice = double.tryParse(amountVal.toString()) ?? unitPrice;
-        }
-        final qtyVal =
-            formState.fields["expense_entry[${data.index}][quantity]"]?.value;
-        if (qtyVal != null) {
-          quantity = int.tryParse(qtyVal.toString()) ?? quantity;
-        }
-      }
-      lines.add(ItemLine(unitPrice: unitPrice, quantity: quantity));
+      lines.add(
+        ItemLine(
+          unitPrice: _unitPriceFor(data) ?? 0,
+          quantity: _quantityFor(data),
+        ),
+      );
     }
-    return itemizedTotal(lines);
+    return lines;
   }
+
+  /// This entry's live unit price, or null when neither the field nor the
+  /// seeded value holds anything parseable (an empty or half-typed amount).
+  double? _unitPriceFor(ExpenseEntryData data) {
+    final seeded = double.tryParse(data.initialAmount ?? '');
+    final value = _formKey
+        .currentState
+        ?.fields["expense_entry[${data.index}][amount]"]
+        ?.value;
+    if (value == null) return seeded;
+    return double.tryParse(value.toString()) ?? seeded;
+  }
+
+  /// This entry's live amount-field text, falling back to the seeded value
+  /// before the field registers.
+  String _unitPriceTextFor(ExpenseEntryData data) {
+    final value = _formKey
+        .currentState
+        ?.fields["expense_entry[${data.index}][amount]"]
+        ?.value;
+    return value?.toString() ?? data.initialAmount ?? '';
+  }
+
+  /// This entry's live quantity, defaulting to a single unit.
+  int _quantityFor(ExpenseEntryData data) {
+    final value = _formKey
+        .currentState
+        ?.fields["expense_entry[${data.index}][quantity]"]
+        ?.value;
+    return int.tryParse(value?.toString() ?? '') ??
+        int.tryParse(data.initialQuantity ?? '') ??
+        1;
+  }
+
+  /// Sum of the current item line totals in the ENTRY currency, read live from
+  /// the form fields so the header tracks edits. Uses the pure [itemizedTotal]
+  /// helper.
+  double _itemizedTotalFromForm() => itemizedTotal(_formLines());
 
   Future<void> _scanReceipt() async {
     final result = await showModalBottomSheet<ReceiptScanResult>(
@@ -874,17 +969,14 @@ class _ExpenseDetailState extends ConsumerState<ExpenseDetail> {
               onRemove: () => _removeEntry(expenseEntry),
               groupMembers: groupMembers,
               initialName: item.name,
-              initialAmount: amountToFieldText(
-                item.amount,
-                widget.group.currency,
-              ),
+              initialAmount: amountToFieldText(item.amount, _entryCurrency),
             ),
           );
         }
       } else if (result.total != null && _entries.isNotEmpty) {
         _entries.first.initialAmount = amountToFieldText(
           result.total!,
-          widget.group.currency,
+          _entryCurrency,
         );
       }
       _isDirty = true;
@@ -910,6 +1002,16 @@ class _ExpenseDetailState extends ConsumerState<ExpenseDetail> {
         );
         return;
       }
+      // No implicit rate: an expense in a currency other than the group's
+      // cannot be saved without one. No 1:1 fallback, no silent substitution.
+      final conversion = _conversion;
+      if (!conversion.isIdentity && conversion.rate == null) {
+        showSnackBar(
+          context,
+          AppLocalizations.of(context)!.expenseRateRequired,
+        );
+        return;
+      }
       try {
         final formValue = claimable
             ? markEntriesClaimable(
@@ -931,13 +1033,25 @@ class _ExpenseDetailState extends ConsumerState<ExpenseDetail> {
             }
           }
         }
-        await ExpenseRepository.saveAll(
+        await (widget.saveExpense ?? ExpenseRepository.saveAll)(
           context,
           widget.group.id,
           widget.expense?.id,
           formValue,
           currency: widget.group.currency,
+          conversion: conversion,
         );
+        if (!conversion.isIdentity) {
+          // Remember the rate for the next expense in this currency in this
+          // group — a trip holds one agreed rate with no separate concept.
+          await ref
+              .read(stickyRateProvider.notifier)
+              .setStickyRate(
+                widget.group.id,
+                conversion.entryCurrency,
+                conversion.rate!,
+              );
+        }
         if (context.mounted) {
           showSnackBar(
             context,
@@ -960,6 +1074,204 @@ class _ExpenseDetailState extends ConsumerState<ExpenseDetail> {
         }
       }
     }
+  }
+
+  /// Entry-currency selector plus, when it differs from the group's, the rate
+  /// field and the live converted preview. This is the whole of the
+  /// no-implicit-rate guard's UI surface.
+  Widget _buildCurrencyAndRate() {
+    final l10n = AppLocalizations.of(context)!;
+    final theme = Theme.of(context);
+    final rate = _rate;
+    final stickyRates = ref.watch(stickyRateProvider);
+    final hasSticky = stickyRates.containsKey(
+      stickyRateKey(widget.group.id, _entryCurrency),
+    );
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        SoftCard(
+          key: const ValueKey('expense_entry_currency'),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+          borderRadius: 16,
+          onTap: _pickEntryCurrency,
+          child: Row(
+            children: [
+              Expanded(
+                child: Text(
+                  l10n.expenseEntryCurrencyLabel,
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+              Text(
+                '${_entryCurrency.code} · ${_entryCurrency.symbol}',
+                style: theme.textTheme.titleSmall,
+              ),
+              const SizedBox(width: 4),
+              Icon(
+                Icons.expand_more,
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
+            ],
+          ),
+        ),
+        if (_isForeignCurrency) ...[
+          const SizedBox(height: 8),
+          TextField(
+            key: const ValueKey('expense_rate_field'),
+            controller: _rateController,
+            keyboardType: const TextInputType.numberWithOptions(decimal: true),
+            inputFormatters: [DecimalTextInputFormatter(decimalRange: 6)],
+            onChanged: (_) => setState(() => _isDirty = true),
+            decoration: InputDecoration(
+              labelText: l10n.expenseRateLabel(
+                _entryCurrency.code,
+                widget.group.currency.code,
+              ),
+              // No rate => the hint, never a "= EUR 0.00" preview. An emptied
+              // field reads back as "0" from the formatter, and
+              // parseConversionRate maps that to null, so the refusal is
+              // visible while typing rather than only on save.
+              helperText: rate == null ? l10n.expenseRateRequired : null,
+              helperMaxLines: 3,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              Expanded(
+                child: rate == null
+                    ? const SizedBox.shrink()
+                    : Text(
+                        key: const ValueKey('expense_rate_preview'),
+                        l10n.expenseRatePreview(
+                          formatMoney(
+                            // Per LINE, accumulated exactly as the save
+                            // accumulates it — converting the summed itemized
+                            // total once instead would preview a cent the
+                            // ledger never stores (3 x 1.50 CHF at 0.9432 is
+                            // 4.23, not 4.24).
+                            ledgerTotalOfLines(_formLines(), _conversion),
+                            widget.group.currency,
+                            Localizations.localeOf(context),
+                          ),
+                        ),
+                        style: theme.textTheme.titleSmall,
+                      ),
+              ),
+              // Reset clears the REMEMBERED rate, so it only exists once one is
+              // remembered — never as a companion to an empty field.
+              if (hasSticky)
+                TextButton(
+                  key: const ValueKey('expense_rate_reset'),
+                  onPressed: _resetStickyRate,
+                  child: Text(l10n.expenseRateReset),
+                ),
+            ],
+          ),
+        ],
+      ],
+    );
+  }
+
+  Future<void> _pickEntryCurrency() async {
+    final picked = await showCurrencyPicker(context, initial: _entryCurrency);
+    if (picked == null || !mounted || picked == _entryCurrency) return;
+
+    if (picked == widget.group.currency) {
+      _switchBackToGroupCurrency();
+      return;
+    }
+
+    // Await hydration before reading: this is a keepAlive provider and the
+    // editor may be the first thing to touch it after app start.
+    final sticky = ref.read(stickyRateProvider.notifier);
+    await sticky.hydrated;
+    final prefill = sticky.stickyRate(widget.group.id, picked);
+    if (!mounted) return;
+
+    setState(() {
+      _entryCurrency = picked;
+      // A rate is per source currency — a CHF rate is meaningless for JPY, so
+      // the field always follows the newly picked currency's remembered rate,
+      // and the date follows it too: a rate typed after switching JPY -> CHF is
+      // a CHF rate quoted today, never the old JPY rate's date. Only re-picking
+      // the currency the expense was loaded with keeps its frozen date.
+      _rateController.text = prefill != null ? formatRate(prefill) : '';
+      // The date is a fact about the RATE, so the frozen one survives only
+      // while the frozen rate is what the field will hold. Gating on the
+      // currency alone misdates a round trip: CHF -> EUR -> CHF clears the
+      // field and refills it from the sticky rate, which may never have been
+      // quoted on the loaded date.
+      _rateDate = rateDateForPickedCurrency(
+        picked: picked,
+        loadedOriginalCurrencyCode: widget.expense?.originalCurrencyCode,
+        loadedRateDate: widget.expense?.rateDate,
+        loadedRate: widget.expense?.conversionRate,
+        pickedRate: prefill,
+        today: DateTime.now(),
+      );
+      _isDirty = true;
+    });
+  }
+
+  Future<void> _resetStickyRate() async {
+    final sticky = ref.read(stickyRateProvider.notifier);
+    await sticky.clearStickyRate(widget.group.id, _entryCurrency);
+    if (!mounted) return;
+    setState(() => _rateController.text = '');
+    if (context.mounted) {
+      showSnackBar(context, AppLocalizations.of(context)!.expenseRateResetDone);
+    }
+  }
+
+  /// Switches the editor back to the group's own currency.
+  ///
+  /// The amount fields hold amounts in the ENTRY currency, so leaving them as
+  /// typed would save a 3000 JPY expense as 3000 EUR, and clearing them would
+  /// silently discard the user's numbers. Each field is re-converted at the
+  /// FROZEN rate the expense is already carrying, which preserves the value the
+  /// ledger holds today: a converted 17.40 EUR expense switched back to EUR
+  /// stays 17.40, not 3000. The provenance clears in the same step.
+  ///
+  /// With no rate in effect nothing was ever converted, so the typed numbers
+  /// pass through untouched.
+  void _switchBackToGroupCurrency() {
+    final formState = _formKey.currentState;
+    final rate = _rate;
+    final groupCurrency = widget.group.currency;
+
+    final texts = <String>[
+      for (final data in _entries) _unitPriceTextFor(data),
+    ];
+    // Amount fields hold UNIT prices, so the quantities ride along: each line
+    // converts once and its remainder distributes across its units, exactly as
+    // the save does. Re-converting the unit price alone would drop the
+    // remainder — a qty-3 10.00 CHF line at 0.9432 is 28.30 in the ledger and
+    // 9.43 x3 = 28.29 without it.
+    final converted = switchBackAmountTexts(
+      enteredTexts: texts,
+      rate: rate,
+      groupCurrency: groupCurrency,
+      quantities: [for (final data in _entries) _quantityFor(data)],
+    );
+
+    setState(() {
+      for (var i = 0; i < _entries.length; i++) {
+        _entries[i].initialAmount = converted[i];
+        formState?.fields['expense_entry[${_entries[i].index}][amount]']
+            ?.didChange(converted[i]);
+      }
+      if (converted.isNotEmpty) _amountController.text = converted.first;
+      _entryCurrency = groupCurrency;
+      _rateController.text = '';
+      _rateDate = null;
+      _isDirty = true;
+    });
   }
 
   @override
@@ -1067,9 +1379,13 @@ class _ExpenseDetailState extends ConsumerState<ExpenseDetail> {
                                       ),
                                       const SizedBox(height: spacing),
                                       _buildExpenseLevelAmount(),
+                                      const SizedBox(height: spacing * 2),
+                                      _buildCurrencyAndRate(),
                                     ] else ...[
                                       const SizedBox(height: spacing * 2),
                                       _buildItemizedTotalHeader(),
+                                      const SizedBox(height: spacing * 2),
+                                      _buildCurrencyAndRate(),
                                     ],
                                     // v3: inset name/description field below the
                                     // amount/category block (name stays persisted).
@@ -1138,7 +1454,7 @@ class _ExpenseDetailState extends ConsumerState<ExpenseDetail> {
                                           index: data.index,
                                           onRemove: data.onRemove,
                                           groupMembers: data.groupMembers,
-                                          currency: widget.group.currency,
+                                          currency: _entryCurrency,
                                           initialName: data.initialName,
                                           initialAmount: _isSingleEntry
                                               ? null

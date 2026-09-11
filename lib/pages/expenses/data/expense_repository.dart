@@ -1,6 +1,8 @@
 import 'package:deun/helper/helper.dart';
+import 'package:deun/pages/expenses/data/expense_conversion.dart';
 import 'package:deun/pages/expenses/data/expense_model.dart';
 import 'package:deun/pages/expenses/data/expense_category.dart';
+import 'package:deun/pages/expenses/data/itemized_totals.dart';
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -127,8 +129,24 @@ class ExpenseRepository {
     required int sortIdStart,
     required Currency currency,
     List<List<String>>? unitClaims,
+    ExpenseConversion? conversion,
   }) {
     final qty = quantity > 0 ? quantity : 1;
+    // [unitPrice] is in the ENTRY currency. The LINE total converts once and
+    // the remainder is distributed, so the units sum to exactly the figure the
+    // preview and the notification quote.
+    final conv = conversion ?? ExpenseConversion.identity(currency);
+    final enteredLineTotal = unitPrice * qty;
+    final ledger = unitLedgerAmounts(
+      enteredLineTotal: enteredLineTotal,
+      quantity: qty,
+      conversion: conv,
+    );
+    final originals = unitOriginalAmounts(
+      enteredLineTotal: enteredLineTotal,
+      quantity: qty,
+      conversion: conv,
+    );
     final units = <Map<String, dynamic>>[];
     for (int i = 0; i < qty; i++) {
       final claimers = (unitClaims != null && i < unitClaims.length)
@@ -137,7 +155,8 @@ class ExpenseRepository {
       units.add({
         'entry': {
           'name': name,
-          'amount': roundCurrency(unitPrice, currency),
+          'amount': ledger[i],
+          'original_amount': originals?[i],
           'quantity': 1,
           'split_mode': 'claim',
           'item_group_seq': itemGroupSeq,
@@ -166,7 +185,9 @@ class ExpenseRepository {
     String? expenseId,
     Map<String, dynamic> formResponse, {
     required Currency currency,
+    ExpenseConversion? conversion,
   }) async {
+    final conv = conversion ?? ExpenseConversion.identity(currency);
     try {
       Map<String, dynamic> upsertVals = {
         'name': formResponse['name'],
@@ -175,6 +196,7 @@ class ExpenseRepository {
         'group_id': groupId,
         'user_id': supabase.auth.currentUser?.id,
         'category': (formResponse['category'] as ExpenseCategory?)?.name,
+        ...conv.expenseProvenance,
       };
 
       if (expenseId != null) {
@@ -208,7 +230,15 @@ class ExpenseRepository {
         int qty =
             int.tryParse(expenseEntry['quantity']?.toString() ?? '1') ?? 1;
         double unitPrice = double.parse(expenseEntry['amount']);
-        double entryTotal = roundCurrency(unitPrice * qty, currency);
+        // Entered amounts are in the ENTRY currency; the ledger value is the
+        // converted one. The LINE converts once, through the same
+        // [ledgerLineTotal] the editor's preview reads, so the figure previewed
+        // and the figure stored are the same number by construction.
+        // `toLedger` throws MissingConversionRateException when a foreign
+        // currency carries no rate — no 1:1 fallback ever.
+        final line = ItemLine(unitPrice: unitPrice, quantity: qty);
+        double enteredTotal = line.lineTotal;
+        double entryTotal = ledgerLineTotal(line, conv);
         amount = roundCurrency(amount + entryTotal, currency);
 
         String splitMode = expenseEntry['split_mode'] ?? 'equal';
@@ -248,6 +278,7 @@ class ExpenseRepository {
               sortIdStart: sortId,
               currency: currency,
               unitClaims: unitClaims,
+              conversion: conv,
             ),
           );
           sortId += qty * 10; // leave room between groups
@@ -274,13 +305,22 @@ class ExpenseRepository {
           for (var entry in shareData.entries) {
             double percentage;
             double? fixedAmount;
+            double? originalFixedAmount;
             int? parts;
 
             switch (splitMode) {
               case 'exact':
-                fixedAmount = (entry.value as num).toDouble();
-                percentage = entryTotal > 0
-                    ? (fixedAmount / entryTotal) * 100
+                final enteredFixed = (entry.value as num).toDouble();
+                fixedAmount = conv.toLedger(enteredFixed);
+                // The entry-currency twin of the ledger `fixed_amount`, so the
+                // editor can reload this share into an entry-currency field
+                // without inverting the conversion. Same rule (and same null
+                // on an identity conversion) as `original_amount` below.
+                originalFixedAmount = conv.isIdentity
+                    ? null
+                    : roundCurrency(enteredFixed, conv.entryCurrency);
+                percentage = enteredTotal > 0
+                    ? (enteredFixed / enteredTotal) * 100
                     : 0;
                 break;
               case 'percentage':
@@ -298,6 +338,7 @@ class ExpenseRepository {
               "email": entry.key,
               "percentage": percentage,
               "fixed_amount": fixedAmount,
+              "original_fixed_amount": originalFixedAmount,
               "parts": parts,
               "is_locked": lockedMembers.contains(entry.key),
             });
@@ -316,6 +357,9 @@ class ExpenseRepository {
           'entry': {
             'name': expenseEntry['name'],
             'amount': entryTotal,
+            'original_amount': conv.isIdentity
+                ? null
+                : roundCurrency(enteredTotal, conv.entryCurrency),
             'quantity': qty,
             'split_mode': splitMode,
             'sort_id': sortId,
@@ -359,6 +403,14 @@ class ExpenseRepository {
 
   /// Legacy non-atomic write path for servers without the save_expense_all
   /// RPC. Performs the same writes as the RPC, one statement at a time.
+  ///
+  /// The provenance columns are STRIPPED here — on the expense row, on every
+  /// entry row and on every share row. This path only runs against a server
+  /// that lacks the RPC, which by construction also lacks this feature's
+  /// migration — and PostgREST rejects an unknown column with PGRST204 rather
+  /// than ignoring it, so leaving the keys in would break every expense save,
+  /// not just converted ones. The ledger amount is already converted, so the
+  /// balances stay correct; only the provenance is lost on such a server.
   static Future<String> _saveAllLegacy(
     String groupId,
     Map<String, dynamic> upsertVals,
@@ -366,7 +418,7 @@ class ExpenseRepository {
   ) async {
     Map<String, dynamic> expenseInsertResponse = await supabase
         .from('expense')
-        .upsert(upsertVals)
+        .upsert(stripProvenance(upsertVals, kExpenseProvenanceKeys))
         .select('id')
         .single();
     final savedExpenseId = expenseInsertResponse['id'] as String;
@@ -380,7 +432,10 @@ class ExpenseRepository {
       Map<String, dynamic> expenseEntryResult = await supabase
           .from('expense_entry')
           .insert({
-            ...item['entry'] as Map<String, dynamic>,
+            ...stripProvenance(
+              item['entry'] as Map<String, dynamic>,
+              kEntryProvenanceKeys,
+            ),
             'expense_id': savedExpenseId,
           })
           .select('id')
@@ -389,7 +444,10 @@ class ExpenseRepository {
       final shareRows = (item['shares'] as List)
           .map(
             (s) => {
-              ...s as Map<String, dynamic>,
+              ...stripProvenance(
+                s as Map<String, dynamic>,
+                kShareProvenanceKeys,
+              ),
               'expense_entry_id': expenseEntryResult['id'],
             },
           )
@@ -469,6 +527,28 @@ class ExpenseRepository {
       'update_group_member_shares',
       params: {"_group_id": groupId, "_expense_id": expenseId},
     );
+  }
+
+  /// Every expense of [groupId] that could carry its own currency, on the lean
+  /// [Expense.currencyProbeSelectString]. Feeds `canChangeGroupCurrency`.
+  ///
+  /// Pre-migration tolerance: `original_currency_code` does not exist on a
+  /// server without this feature's migration, and PostgREST answers an unknown
+  /// column with 42703 / PGRST204. On that server no expense CAN carry a
+  /// foreign currency, so an empty list is the correct answer — the picker
+  /// stays unlocked rather than erroring.
+  static Future<List<Expense>> fetchCurrencyProbeRows(String groupId) async {
+    try {
+      final List<Map<String, dynamic>> data = await supabase
+          .from('expense')
+          .select(Expense.currencyProbeSelectString)
+          .eq('group_id', groupId)
+          .not('original_currency_code', 'is', null);
+      return [for (final element in data) Expense()..loadDataFromJson(element)];
+    } on PostgrestException catch (e) {
+      if (!isMissingColumnError(e)) rethrow;
+      return const [];
+    }
   }
 
   static Future<void> delete(String expenseId, String groupId) async {
