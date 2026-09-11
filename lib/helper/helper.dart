@@ -19,6 +19,12 @@ export 'currency.dart';
 bool isMissingFunctionError(PostgrestException e) =>
     e.code == 'PGRST202' || e.code == '42883';
 
+/// True when a PostgREST call failed because a column doesn't exist on the
+/// server yet (an older database without a feature's migration applied).
+/// 42703 = Postgres undefined column, PGRST204 = PostgREST schema-cache miss.
+bool isMissingColumnError(PostgrestException e) =>
+    e.code == '42703' || e.code == 'PGRST204';
+
 /// Build a "username#code" string from a raw JSON map, falling back to display_name.
 String fullUsernameFromJson(Map<String, dynamic> json) {
   final username = json['username'];
@@ -40,6 +46,93 @@ String sanitizeFilterValue(String value) =>
 double roundCurrency(double value, Currency currency) {
   final factor = math.pow(10, currency.decimalDigits).toDouble();
   return (value * factor).roundToDouble() / factor;
+}
+
+/// `yyyy-MM-dd` for [date] — the shape every date column in this app is
+/// written and read as (`expense.expense_date`, `expense.rate_date`).
+///
+/// One definition so a hand-rolled `'${d.year}-${...}'` cannot drift on a
+/// single-digit month or day.
+String ymd(DateTime date) => DateFormat('yyyy-MM-dd').format(date);
+
+/// The ledger value of [amount] (expressed in some other currency) converted at
+/// [rate] into [target], rounded to [target]'s own minor unit.
+///
+/// The single conversion primitive of this feature: 3000 JPY at 0.0058 into a
+/// EUR group is 17.40; 20 EUR at 172 into a JPY group is 3440 with no
+/// fractional part. Conversion happens ONCE, at entry, client-side — the stored
+/// value is an ordinary group-currency amount and nothing downstream of the
+/// write knows a conversion happened.
+double convertToGroupCurrency(double amount, double rate, Currency target) =>
+    roundCurrency(amount * rate, target);
+
+/// Splits [total] into [parts] amounts in [currency] that sum to EXACTLY
+/// [total], spreading the indivisible remainder one minor unit at a time over
+/// the leading parts.
+///
+/// The settle-residue invariant: parts sum to the whole. Converting a
+/// multi-quantity line per unit instead would disagree with the preview and the
+/// notification — 3 x 10.00 CHF at 0.9432 is 28.30 as a line, but 3 x 9.43 =
+/// 28.29 per unit. Here the line converts once and this distributes the result
+/// as 9.44 / 9.43 / 9.43.
+///
+/// Floor division, not truncation, so a negative total (a discount line) also
+/// sums back exactly: -7 minor units over 3 parts is -3/-2/-2, not -2/-2/-1.
+List<double> distributeCurrency(double total, int parts, Currency currency) {
+  if (parts <= 1) return [roundCurrency(total, currency)];
+  final unit = currency.minorUnit;
+  final units = (roundCurrency(total, currency) / unit).round();
+  final base = (units / parts).floor();
+  final remainder = units - base * parts;
+  return [
+    for (var i = 0; i < parts; i++)
+      roundCurrency((base + (i < remainder ? 1 : 0)) * unit, currency),
+  ];
+}
+
+/// Parses a user-typed conversion rate, returning null for anything that is not
+/// a usable positive rate.
+///
+/// Emptying the rate field yields the string "0" (see
+/// [DecimalTextInputFormatter], which rewrites an empty value to "0"), so a
+/// non-positive parse MUST map to null. Otherwise clearing the field replaces
+/// the "rate required" hint with a `= EUR 0.00` preview and a live Reset
+/// button, and the refusal only surfaces on save.
+double? parseConversionRate(String? text) {
+  final value = double.tryParse((text ?? '').trim().replaceAll(',', '.'));
+  if (value == null || !value.isFinite || value <= 0) return null;
+  return value;
+}
+
+/// A conversion rate as text: up to 6 fractional digits, trailing zeros
+/// trimmed, always `.`-separated. 0.0058 renders "0.0058" and 172 renders
+/// "172". A rate is a technical figure, not money — it is deliberately NOT
+/// locale-formatted, so the string round-trips through
+/// [parseConversionRate] unchanged.
+String formatRate(double rate) {
+  var text = rate.toStringAsFixed(6);
+  if (text.contains('.')) {
+    text = text
+        .replaceFirst(RegExp(r'0+$'), '')
+        .replaceFirst(RegExp(r'\.$'), '');
+  }
+  return text;
+}
+
+/// Thrown when an expense entered in a currency other than its group's is saved
+/// with no explicit rate. There is no 1:1 fallback and no silent substitution —
+/// a silent 1:1 is a confirmed, repeated failure in shipped competitors and
+/// destroys trust in every number in the group.
+class MissingConversionRateException implements Exception {
+  const MissingConversionRateException(this.from, this.to);
+
+  final Currency from;
+  final Currency to;
+
+  @override
+  String toString() =>
+      'MissingConversionRateException: no rate supplied for '
+      '${from.code} -> ${to.code}';
 }
 
 /// EUR's half-minor-unit, and the SMALLEST settled epsilon in

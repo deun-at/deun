@@ -297,6 +297,52 @@
   },
   "expenseAddButton": "Add expense",
   "@expenseAddButton": {},
+  "expenseEntryCurrencyLabel": "Entered in",
+  "@expenseEntryCurrencyLabel": {
+    "description": "Label on the expense editor's entry-currency selector row."
+  },
+  "expenseRateLabel": "Rate: 1 {from} = ? {to}",
+  "@expenseRateLabel": {
+    "description": "Label on the conversion-rate text field, naming both currencies.",
+    "placeholders": {
+      "from": { "type": "String" },
+      "to": { "type": "String" }
+    }
+  },
+  "expenseRateRequired": "Enter the rate you actually got. There is no default rate.",
+  "@expenseRateRequired": {
+    "description": "Helper text shown while the rate field is empty, and the refusal snackbar shown on a save attempt with no rate."
+  },
+  "expenseRatePreview": "= {amount}",
+  "@expenseRatePreview": {
+    "description": "Live preview of the converted group-currency amount, shown once a rate is entered.",
+    "placeholders": {
+      "amount": { "type": "String" }
+    }
+  },
+  "expenseRateReset": "Reset",
+  "@expenseRateReset": {
+    "description": "Button that clears the remembered sticky rate for the current entry currency."
+  },
+  "expenseRateResetDone": "Saved rate cleared.",
+  "@expenseRateResetDone": {
+    "description": "Snackbar confirming the sticky rate was cleared."
+  },
+  "expenseOriginalAmountEntered": "{amount} as entered",
+  "@expenseOriginalAmountEntered": {
+    "description": "Read view: the amount as the user originally typed it, before conversion.",
+    "placeholders": {
+      "amount": { "type": "String" }
+    }
+  },
+  "expenseRateApplied": "Rate {rate} · {date}",
+  "@expenseRateApplied": {
+    "description": "Read view: the frozen conversion rate and the date it is attributed to.",
+    "placeholders": {
+      "rate": { "type": "String" },
+      "date": { "type": "String" }
+    }
+  },
   "expenseDetailTitle": "Expense",
   "@expenseDetailTitle": {
     "description": "App-bar title for the expense detail (read) screen."

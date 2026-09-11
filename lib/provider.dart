@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:async_preferences/async_preferences.dart';
 import 'package:deun/main.dart';
 import 'package:deun/pages/friends/provider/friendship_list.dart';
@@ -8,6 +10,7 @@ import 'package:flutter/material.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import 'helper/helper.dart';
 import 'pages/users/user_model.dart';
 
 // Necessary for code-generation to work
@@ -19,6 +22,15 @@ const String kThemeModePrefKey = 'theme_mode';
 /// Persisted-preferences key for the in-app notifications toggle (E7-T3 v0:
 /// stores the user's preference; does not yet gate FCM).
 const String kNotificationsEnabledPrefKey = 'notifications_enabled';
+
+/// Persisted-preferences key holding every sticky conversion rate as one JSON
+/// object. ONE blob rather than a key per pair, so a cleared rate is
+/// representable: a per-key store cannot express "this entry is gone" against a
+/// merge-based hydration.
+const String kStickyRatesPrefKey = 'sticky_conversion_rates';
+
+/// Map key for one (group, source currency) pair.
+String stickyRateKey(String groupId, Currency from) => '$groupId|${from.code}';
 
 /// The Supabase auth-state change stream. Isolated behind a provider so the
 /// central user-switch listener ([AuthUserSwitchListener]) can be driven with a
@@ -153,5 +165,75 @@ class NotificationsEnabledNotifier extends _$NotificationsEnabledNotifier {
   Future<void> setEnabled(bool enabled) async {
     state = enabled;
     await _preferences.setBool(kNotificationsEnabledPrefKey, value: enabled);
+  }
+}
+
+/// The last rate the user entered manually, per group and source currency. A
+/// LOCAL prefill only: it seeds the next expense entered in that currency in
+/// that group so a trip can hold one agreed rate, and it is deliberately not
+/// synced — correctness lives in the frozen per-row value, and two members
+/// legitimately get different rates for the same day (exchange office vs card).
+///
+/// [hydrated] is stored and awaited by every mutation, and by the editor before
+/// it reads a prefill. Two failures come from not doing that:
+///   * hydration REPLACES the map wholesale, so a merge cannot resurrect a
+///     cleared entry — but only if a `clear` that lands first is not then
+///     overwritten by a late hydrate. Awaiting [hydrated] first orders them.
+///   * this is a keepAlive provider, and the editor reads a prefill
+///     synchronously right after its first build. Without awaiting, the first
+///     foreign-currency pick after app start never prefills.
+@Riverpod(keepAlive: true)
+class StickyRateNotifier extends _$StickyRateNotifier {
+  final AsyncPreferences _preferences = AsyncPreferences();
+
+  late final Future<void> _hydration;
+
+  /// Resolves once the stored rates have been loaded into [state]. Await this
+  /// before reading [stickyRate].
+  Future<void> get hydrated => _hydration;
+
+  @override
+  Map<String, double> build() {
+    // The synchronous default keeps the first frame off storage; every reader
+    // and writer awaits [hydrated] before it acts on the map.
+    _hydration = _hydrate();
+    return const {};
+  }
+
+  Future<void> _hydrate() async {
+    final stored = await _preferences.getString(kStickyRatesPrefKey);
+    if (stored == null || stored.isEmpty) return;
+    try {
+      final decoded = jsonDecode(stored) as Map<String, dynamic>;
+      // REPLACE, never merge: a merge cannot represent a deletion.
+      state = {
+        for (final entry in decoded.entries)
+          if (entry.value is num) entry.key: (entry.value as num).toDouble(),
+      };
+    } catch (_) {
+      // A hand-edited or corrupt blob is inert, not fatal — a prefill is a
+      // convenience and must never block the editor.
+    }
+  }
+
+  Future<void> _persist() =>
+      _preferences.setString(kStickyRatesPrefKey, jsonEncode(state));
+
+  /// The remembered rate for [groupId] and [from], or null. Synchronous by
+  /// design (the Contract's shape) — await [hydrated] before calling it.
+  double? stickyRate(String groupId, Currency from) =>
+      state[stickyRateKey(groupId, from)];
+
+  Future<void> setStickyRate(String groupId, Currency from, double rate) async {
+    await _hydration;
+    state = {...state, stickyRateKey(groupId, from): rate};
+    await _persist();
+  }
+
+  Future<void> clearStickyRate(String groupId, Currency from) async {
+    await _hydration;
+    final next = {...state}..remove(stickyRateKey(groupId, from));
+    state = next;
+    await _persist();
   }
 }

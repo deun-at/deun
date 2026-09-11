@@ -295,6 +295,38 @@ class _SummaryCard extends StatelessWidget {
               color: colorScheme.onSurface,
             ),
           ),
+          // Provenance (multi-currency-expense-rate): what the user actually
+          // typed, and the frozen rate it was converted at. Read-only and never
+          // recomputed — the big figure above stays the ledger value.
+          if (expense.originalCurrencyCode != null) ...[
+            const SizedBox(height: 6),
+            Text(
+              l10n.expenseOriginalAmountEntered(
+                formatMoney(
+                  expense.originalAmount ?? 0,
+                  expense.entryCurrency,
+                  Localizations.localeOf(context),
+                ),
+              ),
+              key: const ValueKey('expense_original_amount'),
+              style: textTheme.bodyMedium?.copyWith(
+                color: colorScheme.onSurfaceVariant,
+              ),
+            ),
+            if (expense.conversionRate != null) ...[
+              const SizedBox(height: 2),
+              Text(
+                l10n.expenseRateApplied(
+                  formatRate(expense.conversionRate!),
+                  toHumanDateString(expense.rateDate),
+                ),
+                key: const ValueKey('expense_rate_applied'),
+                style: textTheme.bodySmall?.copyWith(
+                  color: colorScheme.onSurfaceVariant,
+                ),
+              ),
+            ],
+          ],
           const SizedBox(height: 16),
           _PaidNetRow(
             expense: expense,

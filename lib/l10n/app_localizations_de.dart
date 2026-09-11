@@ -373,6 +373,39 @@ class AppLocalizationsDe extends AppLocalizations {
   String get expenseAddButton => 'Ausgabe hinzufügen';
 
   @override
+  String get expenseEntryCurrencyLabel => 'Eingegeben in';
+
+  @override
+  String expenseRateLabel(String from, String to) {
+    return 'Kurs: 1 $from = ? $to';
+  }
+
+  @override
+  String get expenseRateRequired =>
+      'Gib den Kurs ein, den du tatsächlich bekommen hast. Es gibt keinen Standardkurs.';
+
+  @override
+  String expenseRatePreview(String amount) {
+    return '= $amount';
+  }
+
+  @override
+  String get expenseRateReset => 'Zurücksetzen';
+
+  @override
+  String get expenseRateResetDone => 'Gespeicherter Kurs gelöscht.';
+
+  @override
+  String expenseOriginalAmountEntered(String amount) {
+    return '$amount wie eingegeben';
+  }
+
+  @override
+  String expenseRateApplied(String rate, String date) {
+    return 'Kurs $rate · $date';
+  }
+
+  @override
   String get expenseDetailTitle => 'Ausgabe';
 
   @override

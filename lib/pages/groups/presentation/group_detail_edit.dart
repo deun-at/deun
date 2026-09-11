@@ -16,6 +16,8 @@ import 'package:go_router/go_router.dart';
 
 import '../../../constants.dart';
 import '../../../widgets/currency_picker_sheet.dart';
+import '../../expenses/data/expense_model.dart';
+import '../../expenses/data/expense_repository.dart';
 import '../data/group_model.dart';
 import '../data/member_removal.dart';
 import 'group_member_search.dart';
@@ -26,6 +28,7 @@ class GroupEdit extends ConsumerStatefulWidget {
     this.group,
     this.removeMemberOverride,
     this.saveOverride,
+    this.loadGroupExpenseCurrencies,
   });
 
   final Group? group;
@@ -44,6 +47,11 @@ class GroupEdit extends ConsumerStatefulWidget {
   final Future<Group> Function(String? groupId, Map<String, dynamic> formValue)?
   saveOverride;
 
+  /// Test seam for the group-currency lock probe. Null uses
+  /// [ExpenseRepository.fetchCurrencyProbeRows].
+  final Future<List<Expense>> Function(String groupId)?
+  loadGroupExpenseCurrencies;
+
   @override
   ConsumerState<GroupEdit> createState() => _GroupEditState();
 }
@@ -54,6 +62,34 @@ class _GroupEditState extends ConsumerState<GroupEdit> {
   bool _isSaving = false;
 
   bool get _isEdit => widget.group != null;
+
+  /// True once the probe has found an expense in a currency other than the
+  /// group's. Starts false so the picker is usable while the probe is in
+  /// flight — an unlocked picker that locks a moment later is strictly better
+  /// than a locked one on a group that never diverged.
+  bool _currencyLocked = false;
+
+  @override
+  void initState() {
+    super.initState();
+    final group = widget.group;
+    if (group != null) unawaited(_probeCurrencyLock(group));
+  }
+
+  Future<void> _probeCurrencyLock(Group group) async {
+    try {
+      final expenses =
+          await (widget.loadGroupExpenseCurrencies ??
+              ExpenseRepository.fetchCurrencyProbeRows)(group.id);
+      if (!mounted) return;
+      setState(() {
+        _currencyLocked = !canChangeGroupCurrency(group, expenses: expenses);
+      });
+    } catch (_) {
+      // A failed probe leaves the picker usable — same degrade-to-today shape
+      // as the expense delete guard's payback probe.
+    }
+  }
 
   Future<void> _save() async {
     if (_isSaving) return;
@@ -194,9 +230,7 @@ class _GroupEditState extends ConsumerState<GroupEdit> {
                                   const SizedBox(height: 8),
                                   GroupCurrencyField(
                                     group: widget.group,
-                                    locked:
-                                        widget.group != null &&
-                                        !canChangeGroupCurrency(widget.group!),
+                                    locked: _currencyLocked,
                                   ),
                                   if (_isEdit) ...[
                                     const SizedBox(height: 24),

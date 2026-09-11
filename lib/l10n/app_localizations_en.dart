@@ -369,6 +369,39 @@ class AppLocalizationsEn extends AppLocalizations {
   String get expenseAddButton => 'Add expense';
 
   @override
+  String get expenseEntryCurrencyLabel => 'Entered in';
+
+  @override
+  String expenseRateLabel(String from, String to) {
+    return 'Rate: 1 $from = ? $to';
+  }
+
+  @override
+  String get expenseRateRequired =>
+      'Enter the rate you actually got. There is no default rate.';
+
+  @override
+  String expenseRatePreview(String amount) {
+    return '= $amount';
+  }
+
+  @override
+  String get expenseRateReset => 'Reset';
+
+  @override
+  String get expenseRateResetDone => 'Saved rate cleared.';
+
+  @override
+  String expenseOriginalAmountEntered(String amount) {
+    return '$amount as entered';
+  }
+
+  @override
+  String expenseRateApplied(String rate, String date) {
+    return 'Rate $rate · $date';
+  }
+
+  @override
   String get expenseDetailTitle => 'Expense';
 
   @override

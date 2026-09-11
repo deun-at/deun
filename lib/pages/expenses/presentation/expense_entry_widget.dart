@@ -17,6 +17,7 @@ import '../../../widgets/restyle/section_label.dart';
 import '../../../widgets/restyle/soft_card.dart';
 import '../../../widgets/restyle/stepper_control.dart';
 import '../../groups/data/group_member_model.dart';
+import '../data/expense_conversion.dart';
 import '../data/expense_entry_model.dart';
 import '../data/item_icon.dart';
 import '../data/split_allocation.dart';
@@ -112,7 +113,11 @@ class _ExpenseEntryWidgetState extends State<ExpenseEntryWidget> {
     String amountStr =
         widget.initialAmount ??
         (widget.expenseEntry.expenseEntryShares.isNotEmpty
-            ? amountToFieldText(widget.expenseEntry.unitPrice, widget.currency)
+            // [widget.currency] is the ENTRY currency, so the seed has to be
+            // the ENTERED line, not the ledger one: on a converted expense
+            // `unitPrice` is the group-currency value and feeding it in here
+            // would price every split preview in the wrong currency.
+            ? _seedAmountText(widget.expenseEntry)
             // Single-entry mode: seed from the expense-level amount so the
             // split previews are correct before the first keystroke.
             : (widget.expenseLevelAmountController?.text ?? "0"));
@@ -139,10 +144,19 @@ class _ExpenseEntryWidgetState extends State<ExpenseEntryWidget> {
     _memberParts = {};
 
     if (widget.expenseEntry.expenseEntryShares.isNotEmpty) {
+      final isConverted = widget.expenseEntry.isConverted;
       for (var share in widget.expenseEntry.expenseEntryShares) {
         _memberPercentages[share.email] = share.percentage;
+        // Every value in this widget is in the ENTRY currency, so an exact
+        // share reloads from its entry-currency twin. `fixed_amount` alone is
+        // the ledger value on a converted expense; re-saving would convert it a
+        // second time and derive `percentage = fixed / entered total` across
+        // two currencies. The percentage fallback is currency-free, so it also
+        // covers a converted share written before `original_fixed_amount`
+        // existed.
         _memberAmounts[share.email] =
-            share.fixedAmount ?? (_entryTotal * share.percentage / 100);
+            share.enteredFixedAmount(isConverted: isConverted) ??
+            (_entryTotal * share.percentage / 100);
         _memberParts[share.email] = share.parts ?? 1;
         if (share.isLocked) {
           _lockedMembers.add(share.email);
@@ -158,6 +172,45 @@ class _ExpenseEntryWidgetState extends State<ExpenseEntryWidget> {
     widget.expenseLevelAmountController?.addListener(
       _onExpenseLevelAmountChanged,
     );
+  }
+
+  /// The amount-field text for [entry] in the ENTRY currency
+  /// ([ExpenseEntryWidget.currency]).
+  ///
+  /// Goes through [unitPriceFieldTextForTotal] so a multi-unit line whose total
+  /// did not divide evenly keeps the digits that multiply back to it — the save
+  /// reads unit price x quantity, and a plain "9.43" stores 28.29 for a 28.30
+  /// line.
+  String _seedAmountText(ExpenseEntry entry) => unitPriceFieldTextForTotal(
+    entry.enteredLineTotal,
+    entry.quantity,
+    widget.currency,
+  );
+
+  @override
+  void didUpdateWidget(covariant ExpenseEntryWidget oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // The parent re-seeds every [initialAmount] when the entry currency
+    // changes: switching back to the group's currency re-converts each line at
+    // the frozen rate. This widget survives that change — its
+    // `ValueKey(data.index)` is unchanged — so without adopting the new seed the
+    // item row would keep rendering, and every split would keep computing from,
+    // the pre-switch entry-currency amount while the header and the save used
+    // the converted one.
+    //
+    // No setState: a rebuild of this widget is already in flight, and
+    // [_updateSplitState] pushes the recomputed split into the form fields so
+    // the save sees the same numbers the row now shows.
+    if (widget.currency == oldWidget.currency &&
+        widget.initialAmount == oldWidget.initialAmount) {
+      return;
+    }
+    final seeded = double.tryParse(widget.initialAmount ?? '');
+    if (seeded == null || seeded == _unitPrice) return;
+    final oldTotal = _entryTotal;
+    _unitPrice = seeded;
+    _scaleLockedMembers(oldTotal, _entryTotal);
+    _updateSplitState();
   }
 
   void _onExpenseLevelAmountChanged() {
@@ -499,10 +552,7 @@ class _ExpenseEntryWidgetState extends State<ExpenseEntryWidget> {
       initialValue:
           widget.initialAmount ??
           (widget.expenseEntry.expenseEntryShares.isNotEmpty
-              ? amountToFieldText(
-                  widget.expenseEntry.unitPrice,
-                  widget.currency,
-                )
+              ? _seedAmountText(widget.expenseEntry)
               : null),
       autovalidateMode: AutovalidateMode.onUserInteraction,
       validator: FormBuilderValidators.compose([
