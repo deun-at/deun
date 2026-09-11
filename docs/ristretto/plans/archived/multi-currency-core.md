@@ -35,7 +35,7 @@ feature survives almost intact, with these corrections:
     `Currency.fromCode('EUR').decimalDigits` is 2. An unknown or null code resolves to EUR rather
     than throwing.
   - The curated list is exactly the ECB/Frankfurter reference set (the ~30 codes the rate source in
-    [multi-currency-rate-source](../multi-currency-rate-source.md) can quote), so every listed currency
+    [multi-currency-rate-source](multi-currency-rate-source.md) can quote), so every listed currency
     is convertible later. It contains at least EUR, USD, GBP, CHF and JPY.
   - Rounding is currency-aware: rounding 2500.4 in JPY yields 2500, rounding 2500.6 in JPY yields
     2501, and rounding 12.345 in EUR yields 12.35. The existing 2-decimal behaviour is preserved

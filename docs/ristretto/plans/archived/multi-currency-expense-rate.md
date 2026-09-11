@@ -67,7 +67,7 @@
   - The rate is user-supplied in this feature, with no automatic source -> a fetched mid-market rate
     never matches what the member's bank actually charged, which is the most-cited complaint in the
     category; the override is the feature, and prefill
-    ([multi-currency-rate-source](../multi-currency-rate-source.md)) is the convenience on top.
+    ([multi-currency-rate-source](multi-currency-rate-source.md)) is the convenience on top.
   - The sticky rate is a local prefill, persisted with `async_preferences` alongside theme and
     notification preferences, not synced -> it only seeds the next form; correctness lives in the
     frozen per-row value, and two members legitimately get different rates for the same day
@@ -171,7 +171,7 @@ gap was confined to the unread `fixed_amount` column.
 **Scope note.** The Approach asks for a decision on widening the receipt parser's currency regex.
 There is no such regex in `lib/` — receipt parsing happens server-side in the Gemini function — so
 the question is not answerable from this repo and moves to
-[multi-currency-rate-source](../multi-currency-rate-source.md)'s orbit. Scanning a CHF or GBP receipt
+[multi-currency-rate-source](multi-currency-rate-source.md)'s orbit. Scanning a CHF or GBP receipt
 remains untested; pre-existing, not introduced here.
 
 Design: the surfaces this feature added had no design pass at first — the flight's brief predated the
