@@ -189,6 +189,53 @@ void main() {
       expect(roundCurrency(owed, Currency.eur), payer.net);
     });
 
+    test('nothing is lost across a run of uneven splits', () {
+      // The cent that cannot be divided has to land on somebody — what must
+      // never happen is that it lands on nobody. Stated exactly: for every
+      // expense the members' nets sum to zero, so the books balance however
+      // badly the amount divides, and a long run of awkward splits cannot
+      // drift.
+      const currency = Currency.eur;
+      const totals = [10.00, 0.01, 0.05, 100.01, 45.00, 33.33, 20.00, 0.03];
+      const sizes = [2, 3, 4, 5, 6, 7];
+
+      var runningNet = 0.0;
+      for (final total in totals) {
+        for (final n in sizes) {
+          final emails = [for (var i = 0; i < n; i++) 'm$i@test.com'];
+          final e = _expense(
+            amount: total,
+            paidBy: emails.first,
+            // An equal split as the ledger stores it: percentage-derived, so
+            // every share carries the same unrepresentable fraction.
+            shareStat: {for (final m in emails) m: total / n},
+          );
+
+          final rows = buildMemberBreakdown(expense: e, memberEmails: emails);
+
+          final shares = rows.fold<double>(0, (s, r) => s + r.share);
+          expect(
+            roundCurrency(shares, currency),
+            roundCurrency(total, currency),
+            reason: '$total across $n must be fully allocated',
+          );
+
+          final nets = rows.fold<double>(0, (s, r) => s + r.net);
+          expect(
+            roundCurrency(nets, currency),
+            0.0,
+            reason: 'nets for $total across $n must cancel',
+          );
+          runningNet += nets;
+        }
+      }
+
+      // The whole run together, not just each expense on its own: a residue
+      // that leaked a fraction each time would show up here even if every
+      // individual assertion rounded away.
+      expect(roundCurrency(runningNet, currency), 0.0);
+    });
+
     test('apportioning ignores members the caller did not ask for', () {
       // The read view asks for a single member to compute their own net; the
       // residue must still be spread across everyone who holds a share, not
