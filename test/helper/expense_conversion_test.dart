@@ -4,6 +4,74 @@ import 'package:deun/pages/expenses/data/itemized_totals.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
+  group('ledgerFixedAmounts', () {
+    const chfToEur = ExpenseConversion(
+      groupCurrency: Currency.eur,
+      entryCurrency: Currency.chf,
+      rate: 0.9432,
+      rateDate: '2026-09-11',
+    );
+
+    test('a converted exact split allocates the whole entry total', () {
+      // 3 x 1.50 CHF at 0.9432. The line converts once to 4.24; converting each
+      // share on its own gives 1.41 three times, which is 4.23 — a cent adrift
+      // from the very entry those shares belong to.
+      final out = ledgerFixedAmounts(
+        enteredByEmail: const {'a@x': 1.50, 'b@x': 1.50, 'c@x': 1.50},
+        entryTotal: 4.24,
+        conv: chfToEur,
+        payer: 'c@x',
+      );
+
+      expect(out.values.fold<double>(0, (s, v) => s + v), 4.24);
+      expect(out['c@x'], 1.42, reason: 'the payer carries the spare cent');
+      expect(out['a@x'], 1.41);
+      expect(out['b@x'], 1.41);
+    });
+
+    test('an uneven converted split keeps each share proportional', () {
+      final out = ledgerFixedAmounts(
+        enteredByEmail: const {'a@x': 1.00, 'b@x': 3.50},
+        entryTotal: roundCurrency(4.50 * 0.9432, Currency.eur),
+        conv: chfToEur,
+        payer: 'a@x',
+      );
+
+      expect(out.values.fold<double>(0, (s, v) => s + v), 4.24);
+      // 1.00 -> 0.9432 and 3.50 -> 3.3012, which round to 0.94 and 3.30 and
+      // already account for the whole 4.24 — an uneven split need not produce a
+      // spare unit at all, and when it doesn't, nobody is nudged.
+      expect(out['a@x'], 0.94);
+      expect(out['b@x'], 3.30);
+    });
+
+    test('an unconverted exact split keeps the amounts the user typed', () {
+      final out = ledgerFixedAmounts(
+        enteredByEmail: const {'a@x': 1.50, 'b@x': 1.25, 'c@x': 1.75},
+        entryTotal: 4.50,
+        conv: ExpenseConversion.identity(Currency.eur),
+        payer: 'a@x',
+      );
+
+      expect(out['a@x'], 1.50);
+      expect(out['b@x'], 1.25);
+      expect(out['c@x'], 1.75);
+    });
+
+    test('an unconverted split that does not add up is left alone', () {
+      // The user's own numbers are theirs. Only a conversion may reshape them.
+      final out = ledgerFixedAmounts(
+        enteredByEmail: const {'a@x': 1.00, 'b@x': 1.00},
+        entryTotal: 5.00,
+        conv: ExpenseConversion.identity(Currency.eur),
+        payer: 'a@x',
+      );
+
+      expect(out['a@x'], 1.00);
+      expect(out['b@x'], 1.00);
+    });
+  });
+
   group('ymd', () {
     test('pads single-digit month and day', () {
       expect(ymd(DateTime(2026, 8, 6)), '2026-08-06');
