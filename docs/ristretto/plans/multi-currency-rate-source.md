@@ -9,24 +9,24 @@
 
 ## Contract
 - Acceptance:
-  - Creating an expense in a currency other than the group's prefills the rate for the **expense's
+  - [auto] Creating an expense in a currency other than the group's prefills the rate for the **expense's
     date**, not today's, and the form states which date the rate is attributed to.
-  - The prefilled value is editable. A user-entered rate always wins and is what gets frozen on the
+  - [auto] The prefilled value is editable. A user-entered rate always wins and is what gets frozen on the
     row; nothing in this feature can overwrite a rate the user typed.
-  - Changing the expense's date re-fetches the prefill for the new date. Editing any other field
+  - [auto] Changing the expense's date re-fetches the prefill for the new date. Editing any other field
     never triggers a fetch and never changes a displayed or stored rate.
-  - A saved expense's stored rate and converted amount are never altered by this feature, including
+  - [auto] A saved expense's stored rate and converted amount are never altered by this feature, including
     when rates later move or the expense is reopened for editing.
-  - When the rate service is unreachable, returns no rate for the requested pair, or the date has no
+  - [auto] When the rate service is unreachable, returns no rate for the requested pair, or the date has no
     published rate (weekends, holidays, future dates), the form falls back to manual entry with a
     visible explanation. It never substitutes 1:1, never silently uses today's rate in place of the
     requested date, and never blocks saving with a manually entered rate.
-  - Rates are fetched through a Supabase Edge Function rather than directly from the client, so the
+  - [human] Rates are fetched through a Supabase Edge Function rather than directly from the client, so the
     web build is unaffected by CORS or by the provider changing hostnames.
-  - Repeated requests for the same currency pair and date are served from cache rather than refetched.
-  - Every code in `kSupportedCurrencies` returns a rate for a recent weekday, verified by a test
+  - [auto] Repeated requests for the same currency pair and date are served from cache rather than refetched.
+  - [auto] Every code in `kSupportedCurrencies` returns a rate for a recent weekday, verified by a test
     against the live function or a recorded fixture.
-  - `flutter analyze` and `flutter test` pass, including tests for the unavailable-service fallback
+  - [auto] `flutter analyze` and `flutter test` pass, including tests for the unavailable-service fallback
     and for date-change-triggers-refetch / other-edits-do-not.
 - Provides:
   - `fetchRate({required Currency base, required Currency quote, required DateTime date}) -> Future<RateQuote?>`
@@ -60,12 +60,13 @@
   - Wire prefill into the expense editor, including the effective-date label and the
     date-change-only refetch.
   - Fallback UX for unavailable rates, plus a check that every supported currency resolves.
+- Manual-Checks: [manual-checks.md](../manual-checks.md) — deploy the `exchange-rate` Edge Function to the self-hosted instance
 - Blockers: —
 - Deferred DB work: needs an Edge Function deployed to the self-hosted instance, which updates by
   force-recreate rather than in place. Write the function source into the repo and the client against
   its contract, test the client against a faked response including the failure and offline paths,
   mark anything requiring the deployed function `[deferred]`, and append to
-  [MANUAL_OPS.md](../MANUAL_OPS.md). A prefill that silently fails must degrade to manual entry —
+  [manual-checks.md](../manual-checks.md). A prefill that silently fails must degrade to manual entry —
   that behaviour is testable without deploying anything, and is the one that matters most.
 
 ## Approach
