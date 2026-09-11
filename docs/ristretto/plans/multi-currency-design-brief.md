@@ -4,7 +4,7 @@
 > pre-2026-08-11 product model (one currency per group, never converted; a
 > cross-group **home currency** marked "≈ approximate"). Both halves of that
 > model are gone: expenses are enterable in another currency with a manual
-> frozen rate ([multi-currency-expense-rate](multi-currency-expense-rate.md)),
+> frozen rate ([multi-currency-expense-rate](archived/multi-currency-expense-rate.md)),
 > and the home currency was deleted outright in `730b410` in favour of a
 > per-currency breakdown ([multi-currency-group](archived/multi-currency-group.md)).
 > That brief also forbade, in bold, the exact expense-editor UI that later

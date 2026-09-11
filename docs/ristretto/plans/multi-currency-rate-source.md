@@ -34,7 +34,7 @@
   - Supabase Edge Function `exchange-rate`
 - Consumes: `Currency`, `kSupportedCurrencies` (from [multi-currency-core](multi-currency-core.md));
   the editor's rate field and `setStickyRate` (from
-  [multi-currency-expense-rate](multi-currency-expense-rate.md))
+  [multi-currency-expense-rate](archived/multi-currency-expense-rate.md))
 - Decisions:
   - Frankfurter (frankfurter.dev, ECB reference data, free, no API key) is the source -> it is what
     both open-source competitors use, it covers historical rates back decades, and
@@ -47,7 +47,7 @@
     time is the mechanism behind the largest single quantified harm found in the research (a member
     overpaying by ~$100 on a months-old trip).
   - Prefill only; the manual rate always wins -> this feature is convenience layered on
-    [multi-currency-expense-rate](multi-currency-expense-rate.md), which must remain fully usable
+    [multi-currency-expense-rate](archived/multi-currency-expense-rate.md), which must remain fully usable
     without it.
   - Only a date change re-fetches (Kittysplit's rule) -> any broader trigger reintroduces surprise
     rate movement on expenses the user thought were settled.
@@ -71,7 +71,7 @@
 
 ## Approach
 Small and self-contained compared to the rest of the flight, because everything it feeds already
-exists: [multi-currency-expense-rate](multi-currency-expense-rate.md) ships a working manual rate
+exists: [multi-currency-expense-rate](archived/multi-currency-expense-rate.md) ships a working manual rate
 field, and this only changes what that field starts out containing.
 
 The Edge Function follows the pattern already used for `push`, `send-contact-email` and the Gemini

@@ -246,7 +246,7 @@ of state, noted so it is not rediscovered.
 | settle-residue | `20260815020000_settle_residue_exact_payback.sql` — adds `pay_back_exact`; `pay_back` unchanged. Applied by Jakob against the live instance. | 2026-08-16 |
 | group-currency-persist | `20260816000000_group_currency_code_persist.sql` — `currency_code` added to `save_group_all`'s UPDATE SET and INSERT column list; no backfill. Applied by Jakob against the live instance. | 2026-08-16 |
 | payback-on-behalf | `20260816010000_payback_on_behalf.sql` — `pay_back` gains payer≠payee + both-current-member validation and records `auth.uid()` into `expense.user_id`. Applied by Jakob against the live instance. | 2026-08-16 |
-| multi-currency-expense-rate | `20260816020000_expense_entry_currency_rate.sql` — the five provenance columns and `save_expense_all` re-stated to thread them. Applied by Jakob against the live instance. Steps 1–6 of its check then passed; step 7 did not (see Findings). | 2026-09-11 |
+| multi-currency-expense-rate | `20260816020000_expense_entry_currency_rate.sql` — the five provenance columns and `save_expense_all` re-stated to thread them. Applied by Jakob against the live instance. Steps 1–6 of its check then passed; step 7 failed, was fixed in `9bcd1bf`, and was re-verified by SQL the same day — all seven now pass (see Findings). | 2026-09-11 |
 
 The migrations above are **applied**, which is what unblocked the dependent features. Their numbered
 verification steps have **not** been reported as run — that is what the corresponding open `proves`

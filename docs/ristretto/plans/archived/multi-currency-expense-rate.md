@@ -67,7 +67,7 @@
   - The rate is user-supplied in this feature, with no automatic source -> a fetched mid-market rate
     never matches what the member's bank actually charged, which is the most-cited complaint in the
     category; the override is the feature, and prefill
-    ([multi-currency-rate-source](multi-currency-rate-source.md)) is the convenience on top.
+    ([multi-currency-rate-source](../multi-currency-rate-source.md)) is the convenience on top.
   - The sticky rate is a local prefill, persisted with `async_preferences` alongside theme and
     notification preferences, not synced -> it only seeds the next form; correctness lives in the
     frozen per-row value, and two members legitimately get different rates for the same day
@@ -116,4 +116,66 @@ whether to widen the regex here or leave it.
 - Depends: multi-currency-group
 - Parallel-with: —
 
-status: planned
+## Evidence
+
+Built across three commits rather than one brew run, so there is no `review: clean (n rounds)` line
+to record: `a8fd49a` (the feature), `9bcd1bf` (the exact-split fix found by the manual check) and
+`12a5f84` (the design pass over the surfaces it added). `7379a01` and `b574e2f` carry the
+cent-conservation work the exact-split fix rests on.
+
+`Provides:` checked line-by-line against the built code at close, all present with the promised
+shapes: `Expense.originalCurrencyCode`/`.conversionRate`/`.rateDate`
+(`lib/pages/expenses/data/expense_model.dart:38-47`), `ExpenseEntry.originalAmount`
+(`expense_entry_model.dart:15`), `convertToGroupCurrency` (`lib/helper/helper.dart`),
+`stickyRate`/`setStickyRate` (`lib/provider.dart`, wired at
+`expense_detail.dart:1194`/`:1049`). One addition beyond the contract: `ExpenseConversion` and the
+`lib/pages/expenses/data/expense_conversion.dart` helpers (`ledgerFixedAmounts`,
+`switchBackAmountTexts`, `unitLedgerAmounts`, `stripProvenance`) — the conversion arithmetic needed a
+home that both the editor and the repository could share.
+
+- **Converted amount is the ledger value; nothing downstream knows** — `test/model/expense_provenance_test.dart`;
+  `test/model/expense_repository_explode_test.dart`. Confirmed on the live instance: step 6 of the
+  manual check read `group_shares_summary` totalling `17.40`, not `3000`.
+- **No implicit rate** — `test/widgets/expense_editor_currency_rate_test.dart` "choosing a different
+  currency reveals the rate field and the required hint", "emptying the rate field restores the hint
+  — no '= €0.00' preview, no Reset". `MissingConversionRateException` refuses the save.
+- **Decimal digits respected in both directions** — `test/helper/expense_conversion_test.dart`;
+  `test/pages/groups/multi_currency_core_test.dart` (no 0-decimal currency renders a fractional part).
+- **Freeze across non-amount edits** — `test/widgets/expense_editor_currency_rate_test.dart`
+  ("editing a converted expense opens on its frozen currency and rate", the round-trip rate-date
+  tests). Confirmed on the instance: step 5 of the manual check, byte-identical after a rename.
+- **Sticky prefill, per group AND currency, surviving restart** — `test/provider/sticky_rate_test.dart`
+  ("a stored rate hydrates into a fresh container", "the FIRST read after app start prefills —
+  hydration is awaited, not raced").
+- **Group currency picker locks** — `test/pages/groups/expense_currency_lock_test.dart` ("ONE expense
+  in another currency locks the group", "a JPY group is locked by a EUR expense, not only the other
+  way round").
+- **Migration shape** — `test/pages/expenses/expense_rate_migration_test.dart` ("adds all five
+  provenance columns, nullable", "every LEDGER money column the editor reloads has an entry-currency
+  twin", "save_expense_all threads the provenance on insert AND update").
+
+**Two defects the manual check caught that no test could have.** Step 7 failed on the first walk: a
+converted **exact** split wrote its shares through `conv.toLedger` per row, so three 1.50 CHF shares
+at 0.9432 stored 1.41 each — 4.23 against an entry of 4.24, one unit short. `ledgerFixedAmounts`
+apportions the shares over the entry total instead (`9bcd1bf`). The fix lives inside
+`ExpenseRepository.saveAll`, which no widget or unit test executes, so it was verified by SQL against
+the live instance: a pre-fix row (`CHF-Exact`) still reports `0.01` unallocated and a post-fix row
+(`Exact-Fixed`) reports `0`, which is what makes the result discriminating rather than vacuous.
+Related and fixed alongside: the indivisible unit went to whoever sorted first rather than the payer
+(`7379a01`).
+
+Pre-fix rows are not self-healing and are left as they are. Nothing is lost by them — every ledger
+figure derives from `percentage`, which sums to 100, so the shares always add up to the expense; the
+gap was confined to the unread `fixed_amount` column.
+
+**Scope note.** The Approach asks for a decision on widening the receipt parser's currency regex.
+There is no such regex in `lib/` — receipt parsing happens server-side in the Gemini function — so
+the question is not answerable from this repo and moves to
+[multi-currency-rate-source](../multi-currency-rate-source.md)'s orbit. Scanning a CHF or GBP receipt
+remains untested; pre-existing, not introduced here.
+
+Design: the surfaces this feature added had no design pass at first — the flight's brief predated the
+replan and explicitly forbade an expense-level currency picker. `12a5f84` closed that, and
+[multi-currency-design-brief](../multi-currency-design-brief.md) was rewritten against what shipped.
+
+status: done
