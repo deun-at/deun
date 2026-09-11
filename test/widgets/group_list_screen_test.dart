@@ -1019,7 +1019,7 @@ void main() {
     expect(heroColumn.children.last, isA<Row>());
   });
 
-  testWidgets('a mixed-currency hero appends the spacer and the disclosure', (
+  testWidgets('a mixed-currency hero names the currency it is reporting', (
     tester,
   ) async {
     await _pumpScreen(
@@ -1036,26 +1036,15 @@ void main() {
     );
 
     final l10n = await AppLocalizations.delegate.load(const Locale('en'));
-    final heroColumn = tester.widget<Column>(
-      find
-          .ancestor(
-            of: find.text(l10n.homeOverallOwed),
-            matching: find.byType(Column),
-          )
-          .first,
-    );
-    // The spacer only exists when the disclosure does.
-    expect(heroColumn.children.last, isA<CurrencyBreakdownDisclosure>());
-    expect(
-      (heroColumn.children[heroColumn.children.length - 2] as SizedBox).height,
-      8,
-    );
+    // "Overall" is a claim the hero cannot make across currencies: the big
+    // number is one currency's net, so the lead says which.
+    expect(find.text(l10n.homeOverallOwedIn('JPY')), findsOneWidget);
+    expect(find.text(l10n.homeOverallOwed), findsNothing);
   });
 
   testWidgets(
-    'a EUR + JPY home shows the primary inline and discloses one currency',
+    'a mixed-currency hero shows every other currency without a tap',
     (tester) async {
-      final l10n = await AppLocalizations.delegate.load(const Locale('en'));
       await _pumpScreen(
         tester,
         groups: [
@@ -1071,11 +1060,49 @@ void main() {
 
       // JPY is the largest absolute balance, so it is the inline primary.
       expect(find.text('¥3,000'), findsWidgets);
-      expect(find.text(l10n.currencyBreakdownMore(1)), findsOneWidget);
+      // The remainder is stated outright, not hidden behind a disclosure: a
+      // balance the user cannot see is a balance they forget they owe.
+      expect(find.byType(CurrencyBreakdownDisclosure), findsNothing);
+      expect(find.text('EUR'), findsOneWidget);
+      expect(find.text('25.50'), findsOneWidget);
+    },
+  );
 
-      await tester.tap(find.text(l10n.currencyBreakdownMore(1)));
-      await tester.pumpAndSettle();
-      expect(find.text('€25.50'), findsWidgets);
+  testWidgets(
+    'a mixed-currency hero drops the owed/owe chips, which cover one currency only',
+    (tester) async {
+      final l10n = await AppLocalizations.delegate.load(const Locale('en'));
+      await _pumpScreen(
+        tester,
+        groups: [
+          // Owed in JPY, owing in EUR: the chips would have read
+          // "You're owed ¥3,000 / You owe ¥0" and hidden the EUR debt entirely.
+          _group(id: 'eur', name: 'Flat', totalShareAmount: -25.50),
+          _group(
+            id: 'jpy',
+            name: 'Tokyo',
+            totalShareAmount: 3000,
+            currencyCode: 'JPY',
+          ),
+        ],
+      );
+
+      // The stat-chip Row gives way to the per-currency Wrap. (The bare
+      // "You're owed" string can't be asserted on directly — the group CARDS
+      // use the same label, so it is on screen either way.)
+      final heroColumn = tester.widget<Column>(
+        find
+            .ancestor(
+              of: find.text(l10n.homeOverallOwedIn('JPY')),
+              matching: find.byType(Column),
+            )
+            .first,
+      );
+      expect(heroColumn.children.last, isA<Wrap>());
+
+      // The EUR debt is on screen instead of a "You owe ¥0" that hides it.
+      expect(find.text('EUR'), findsOneWidget);
+      expect(find.text('-25.50'), findsOneWidget);
     },
   );
 
