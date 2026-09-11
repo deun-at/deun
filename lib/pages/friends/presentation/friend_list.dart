@@ -471,38 +471,42 @@ class _FriendCard extends StatelessWidget {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
-                // Two lines, never three: the context line, then the figure.
-                // The label is short, so the other-currency marker rides with
-                // it rather than claiming a line of its own — and the amount,
-                // the thing being scanned for, stays alone and uncrowded.
+                // "You owe USD 4.00" stays on one line: it is one phrase, and
+                // breaking it to give the amount a line of its own reads worse
+                // than keeping it whole. What made the row crowded was the
+                // THIRD item, so that is the one that moves down.
                 Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Text(label, style: balanceStyle),
-                    if (state != BalanceState.settled &&
-                        friendship.breakdown.hiddenCount > 0) ...[
+                    if (state != BalanceState.settled) ...[
                       const SizedBox(width: 6),
-                      // Non-interactive marker: plain Text inside the row's
-                      // InkWell, so the row has no expand target of its own
-                      // and its whole area still opens the detail sheet.
-                      Text(
-                        l10n.friendOtherCurrencies(
-                          friendship.breakdown.hiddenCount,
-                        ),
-                        style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                          color: colorScheme.onSurfaceVariant,
-                        ),
+                      MoneyText(
+                        friendship.shareAmount.abs(),
+                        currency: friendship.currency,
+                        semantic: moneySemantic,
+                        style: balanceStyle,
                       ),
                     ],
                   ],
                 ),
-                if (state != BalanceState.settled) ...[
+                // The marker is the secondary fact, so it takes the second
+                // line. The row does not grow: the identity beside it is
+                // already two lines tall (name over handle), so a one- and a
+                // two-line balance measure the same.
+                if (state != BalanceState.settled &&
+                    friendship.breakdown.hiddenCount > 0) ...[
                   const SizedBox(height: 2),
-                  MoneyText(
-                    friendship.shareAmount.abs(),
-                    currency: friendship.currency,
-                    semantic: moneySemantic,
-                    style: balanceStyle,
+                  // Non-interactive marker: plain Text inside the row's
+                  // InkWell, so the row has no expand target of its own and
+                  // its whole area still opens the detail sheet.
+                  Text(
+                    l10n.friendOtherCurrencies(
+                      friendship.breakdown.hiddenCount,
+                    ),
+                    style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                      color: colorScheme.onSurfaceVariant,
+                    ),
                   ),
                 ],
               ],

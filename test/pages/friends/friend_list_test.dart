@@ -522,8 +522,9 @@ void main() {
     );
   });
 
-  testWidgets('the balance stacks under its label instead of running along '
-      'the row', (tester) async {
+  testWidgets('the label and its amount stay on one line — one phrase', (
+    tester,
+  ) async {
     final l10n = await AppLocalizations.delegate.load(const Locale('en'));
     await _pumpFriendList(
       tester,
@@ -532,12 +533,12 @@ void main() {
       ),
     );
 
-    // Label, then amount beneath it — not side by side. Laid out along the
-    // row, label + amount + marker crowded the identity until the handle
-    // ellipsised.
-    final labelY = tester.getTopLeft(find.text(l10n.balanceOwe)).dy;
-    final amountY = tester.getTopLeft(find.text('EUR 25.00')).dy;
-    expect(amountY, greaterThan(labelY));
+    // "You owe EUR 25.00" reads as one thing; splitting it across lines to
+    // line the figures up down the list is the worse trade.
+    expect(
+      tester.getTopLeft(find.text('EUR 25.00')).dy,
+      tester.getTopLeft(find.text(l10n.balanceOwe)).dy,
+    );
   });
 
   testWidgets('the balance is two lines even with an other-currency marker', (
@@ -551,16 +552,15 @@ void main() {
     ];
     await _pumpFriendList(tester, FriendshipListState(acceptedFriends: [f]));
 
-    // The marker rides on the LABEL line — the label is short, and a third
-    // line would make the row taller than any other in the list.
+    // Line one is the phrase; the marker — the secondary fact — takes line two.
     final labelY = tester.getTopLeft(find.text(l10n.balanceOwed)).dy;
+    final amountY = tester.getTopLeft(find.text('JPY 3,000')).dy;
     final markerY = tester
         .getTopLeft(find.text(l10n.friendOtherCurrencies(1)))
         .dy;
-    final amountY = tester.getTopLeft(find.text('JPY 3,000')).dy;
 
-    expect(markerY, labelY, reason: 'marker shares the label line');
-    expect(amountY, greaterThan(labelY), reason: 'the amount is line two');
+    expect(amountY, labelY, reason: 'label and amount are one line');
+    expect(markerY, greaterThan(amountY), reason: 'the marker is line two');
   });
 
   testWidgets('a multi-currency row is no taller than a single-currency one', (
