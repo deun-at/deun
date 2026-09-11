@@ -330,7 +330,7 @@ void main() {
 
       await tester.tap(find.text(l10n.currencyBreakdownMore(1)));
       await tester.pumpAndSettle();
-      expect(find.text('-€25.50'), findsOneWidget);
+      expect(find.text('-25.50'), findsOneWidget);
     },
   );
 

@@ -37,6 +37,7 @@ class MoneyText extends StatelessWidget {
     this.semantic = MoneySemantic.neutral,
     this.style,
     this.showSign = false,
+    this.showSymbol = true,
     this.textAlign,
     this.animate = false,
   });
@@ -61,6 +62,17 @@ class MoneyText extends StatelessWidget {
   /// When true, prefixes a leading "+" for positive amounts (negatives already
   /// carry their "−" from the formatter).
   final bool showSign;
+
+  /// When false the amount renders with no currency symbol at all — just the
+  /// locale-formatted number at this currency's decimal digits.
+  ///
+  /// For the surfaces that identify the currency themselves, in their own
+  /// column: a symbol there is at best a duplicate (CHF, RON, whose symbol is
+  /// their code) and at worst a false distinction (seven supported currencies
+  /// share "$", four share "kr"). Inside a group, where exactly one currency is
+  /// possible, the symbol still does the identifying — so this defaults to true
+  /// and every existing call site is unchanged.
+  final bool showSymbol;
 
   final TextAlign? textAlign;
 
@@ -90,11 +102,10 @@ class MoneyText extends StatelessWidget {
 
   Text _buildText(BuildContext context, double displayAmount) {
     final resolved = currency ?? CurrencyScope.of(context);
-    final formatted = formatMoney(
-      displayAmount,
-      resolved,
-      Localizations.localeOf(context),
-    );
+    final locale = Localizations.localeOf(context);
+    final formatted = showSymbol
+        ? formatMoney(displayAmount, resolved, locale)
+        : formatAmountOnly(displayAmount, resolved, locale);
     // showSign uses the final amount (not intermediate) so the "+" appears
     // exactly when the final value is positive — color and sign are consistent.
     final signed = (showSign && amount > 0) ? '+$formatted' : formatted;

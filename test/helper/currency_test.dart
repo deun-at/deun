@@ -111,4 +111,28 @@ void main() {
     expect(Currency.usd == Currency.eur, isFalse);
     expect({Currency.usd, Currency.fromCode('USD')}, hasLength(1));
   });
+
+  group('pickerLabel', () {
+    test('pairs the code with the symbol when they differ', () {
+      expect(Currency.eur.pickerLabel, 'EUR · €');
+      expect(Currency.usd.pickerLabel, r'USD · $');
+    });
+
+    test('collapses to the code alone when the symbol IS the code', () {
+      // CHF and RON are their own symbols; "CHF · CHF" is the bug this fixes.
+      expect(Currency.chf.pickerLabel, 'CHF');
+      expect(Currency.fromCode('RON').pickerLabel, 'RON');
+    });
+
+    test('no supported currency repeats a half of its own label', () {
+      for (final c in kSupportedCurrencies) {
+        final halves = c.pickerLabel.split(' · ');
+        expect(
+          halves.toSet(),
+          hasLength(halves.length),
+          reason: '${c.code} repeats a half in "${c.pickerLabel}"',
+        );
+      }
+    });
+  });
 }

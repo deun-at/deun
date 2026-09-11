@@ -32,6 +32,16 @@ class Currency {
   /// precision, which is exactly what "settled" means. See [isSettled].
   double get settledEpsilon => minorUnit / 2;
 
+  /// How this currency names itself in a picker or a selected-value row:
+  /// "EUR · €", "USD · $" — but "CHF", not "CHF · CHF".
+  ///
+  /// Two of the supported currencies (CHF, RON) use their own code as their
+  /// symbol, so pairing the halves unconditionally renders the code twice. The
+  /// pairing exists to disambiguate a symbol that several currencies share
+  /// ($ covers seven of them); when the symbol IS the code there is nothing
+  /// left to disambiguate.
+  String get pickerLabel => code == symbol ? code : '$code · $symbol';
+
   /// Resolves an ISO code to a supported [Currency], falling back to [eur] for
   /// null, empty or unknown codes rather than throwing. Legacy rows, a hand-
   /// edited preference and a future server value all land on EUR instead of

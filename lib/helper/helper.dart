@@ -252,6 +252,20 @@ String formatMoney(double amount, Currency currency, Locale locale) =>
       decimalDigits: currency.decimalDigits,
     ).format(amount);
 
+/// Money that has to IDENTIFY its currency rather than merely decorate it:
+/// the ISO code, a space, then the bare amount — "CHF 4.50", "JPY 3,000".
+///
+/// The symbol is the wrong tool wherever more than one currency can appear at
+/// once. Seven supported currencies render as "$" and four as "kr", so a symbol
+/// does not say which; and CHF and RON use their code AS their symbol, so
+/// pairing the two repeats it. The code is unique by construction.
+///
+/// Use this for foreign amounts (an expense's entered amount, a cross-currency
+/// list) and keep [formatMoney] for amounts inside a group, where the group's
+/// single currency is already established and the symbol reads more naturally.
+String formatMoneyQualified(double amount, Currency currency, Locale locale) =>
+    '${currency.code} ${formatAmountOnly(amount, currency, locale)}';
+
 /// The same number without a symbol, for the few places that render the symbol
 /// themselves as a separate, differently-styled glyph (the expense-editor hero,
 /// the itemized unit-price chips). "12,50" in `de`, "12.50" in `en`.
