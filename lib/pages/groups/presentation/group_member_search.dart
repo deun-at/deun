@@ -62,6 +62,19 @@ class _GroupMemberSearchState extends ConsumerState<GroupMemberSearch> {
   final SearchController _searchAnchorController = SearchController();
   final ValueNotifier<String> _searchQueryNotifier = ValueNotifier<String>("");
 
+  /// Sequence token for [_buildSuggestions]. `SearchAnchor` awaits every
+  /// suggestions build and renders whichever finishes last, so a slow build for
+  /// an older query can repaint over a newer one. That is not cosmetic: the
+  /// "add as guest" tile closes over the query text it was built with, so a
+  /// stale repaint saves a stale display name. Each build claims a number and a
+  /// superseded one yields [_lastSuggestions] rather than its own tiles.
+  int _suggestionSeq = 0;
+
+  /// Tiles from the newest build that ran to completion while still current.
+  /// A superseded build returns these instead of an empty list, so a late
+  /// finisher repaints the newest result rather than clearing the view.
+  Iterable<Widget> _lastSuggestions = const <Widget>[];
+
   /// Members soft-removed in this session. `widget.group` is the roster as it was
   /// loaded, so it does not know about them until the next fetch.
   final Set<String> _softRemovedEmails = {};
@@ -267,6 +280,7 @@ class _GroupMemberSearchState extends ConsumerState<GroupMemberSearch> {
   Future<Iterable<Widget>> _buildSuggestions(
     SearchController controller,
   ) async {
+    final int seq = ++_suggestionSeq;
     final String input = controller.value.text.trim();
     List<dynamic> nbs = GroupRepository.decodeGroupMembersString(
       widget.field.value,
@@ -290,6 +304,7 @@ class _GroupMemberSearchState extends ConsumerState<GroupMemberSearch> {
       selectedUsers,
       99,
     );
+    if (seq != _suggestionSeq) return _lastSuggestions;
 
     // Fetch other users by exact email/username match (excluding friends and selected)
     List<String> excludeEmails = [
@@ -299,6 +314,7 @@ class _GroupMemberSearchState extends ConsumerState<GroupMemberSearch> {
     List<SupaUser> otherUsers = input.isNotEmpty
         ? await UserRepository.fetchData(input, excludeEmails, 20)
         : [];
+    if (seq != _suggestionSeq) return _lastSuggestions;
 
     final List<Widget> tiles = [];
 
@@ -399,6 +415,7 @@ class _GroupMemberSearchState extends ConsumerState<GroupMemberSearch> {
       );
     }
 
+    _lastSuggestions = tiles;
     return tiles;
   }
 

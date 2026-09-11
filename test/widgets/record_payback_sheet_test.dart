@@ -5,6 +5,7 @@ import 'package:deun/pages/groups/data/group_member_model.dart';
 import 'package:deun/pages/groups/data/group_model.dart';
 import 'package:deun/pages/groups/data/payback_request.dart';
 import 'package:deun/pages/groups/presentation/record_payback_sheet.dart';
+import 'package:deun/widgets/restyle/sheet_scaffold.dart';
 import 'package:deun/widgets/restyle/primary_button.dart';
 import 'package:deun/widgets/theme_builder.dart';
 import 'package:flutter/material.dart';
@@ -238,6 +239,33 @@ void main() {
     expect(find.text('Ann'), findsWidgets);
     expect(find.text('Bob'), findsWidgets);
     expect(find.text('Carol'), findsNothing);
+  });
+
+  testWidgets('each member picker is titled for the side it is picking', (
+    tester,
+  ) async {
+    final l10n = await AppLocalizations.delegate.load(const Locale('en'));
+    await _pump(
+      tester,
+      group: _group(
+        members: [
+          _member('ann@test.com', 'Ann'),
+          _member('bob@test.com', 'Bob'),
+        ],
+      ),
+    );
+
+    await tester.tap(find.byKey(const ValueKey('record_payback_paid_to')));
+    await tester.pumpAndSettle();
+
+    // Both sides reuse PaidBySheet, which hardcoded the "Paid by" title — so
+    // picking the payee announced itself as picking the payer.
+    final titles = tester
+        .widgetList<SheetScaffold>(find.byType(SheetScaffold))
+        .map((s) => s.title)
+        .toList();
+    expect(titles, contains(l10n.paybackRecordPaidToLabel));
+    expect(titles, isNot(contains(l10n.paidBySheetTitle)));
   });
 
   // 38 — the recorded payment names both parties back to the user.

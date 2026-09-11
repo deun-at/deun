@@ -126,14 +126,18 @@ class _BreakdownRow extends StatelessWidget {
         padding: const EdgeInsets.symmetric(vertical: 6),
         child: Row(
           children: [
-            Text(
-              entry.currency.code,
-              style: theme.textTheme.labelMedium?.copyWith(
-                color: foreground,
-                fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+            // A currency whose symbol IS its code — CHF, RON — would otherwise
+            // read "CHF  -CHF2.14". The amount already identifies it.
+            if (entry.currency.code != entry.currency.symbol) ...[
+              Text(
+                entry.currency.code,
+                style: theme.textTheme.labelMedium?.copyWith(
+                  color: foreground,
+                  fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+                ),
               ),
-            ),
-            const SizedBox(width: 10),
+              const SizedBox(width: 10),
+            ],
             MoneyText(
               entry.amount,
               currency: entry.currency,

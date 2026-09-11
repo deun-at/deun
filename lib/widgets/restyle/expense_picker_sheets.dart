@@ -154,6 +154,7 @@ Future<String?> showPaidBySheet(
   required List<GroupMember> members,
   required String? selectedEmail,
   required String? currentUserEmail,
+  String? title,
 }) {
   return _showSheet<String>(
     context,
@@ -161,6 +162,7 @@ Future<String?> showPaidBySheet(
       members: members,
       selectedEmail: selectedEmail,
       currentUserEmail: currentUserEmail,
+      title: title,
     ),
   );
 }
@@ -173,11 +175,16 @@ class PaidBySheet extends StatelessWidget {
     required this.members,
     required this.selectedEmail,
     required this.currentUserEmail,
+    this.title,
   });
 
   final List<GroupMember> members;
   final String? selectedEmail;
   final String? currentUserEmail;
+
+  /// What this picker is choosing. Both sides of a payback reuse this sheet, so
+  /// the payee picker has to be able to say so rather than announcing "Paid by".
+  final String? title;
 
   @override
   Widget build(BuildContext context) {
@@ -185,7 +192,7 @@ class PaidBySheet extends StatelessWidget {
     final colorScheme = Theme.of(context).colorScheme;
 
     return SheetScaffold(
-      title: l10n.paidBySheetTitle,
+      title: title ?? l10n.paidBySheetTitle,
       body: Column(
         mainAxisSize: MainAxisSize.min,
         children: [

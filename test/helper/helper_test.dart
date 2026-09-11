@@ -194,4 +194,75 @@ void main() {
       expect(paypalMeAmountSegment(3000, Currency.jpy), '3000JPY');
     });
   });
+
+  group('apportionCurrency', () {
+    test('parts sum to exactly the total when the split is indivisible', () {
+      final out = apportionCurrency(
+        {'a': 25.0025, 'b': 25.0025, 'c': 25.0025, 'd': 25.0025},
+        100.01,
+        Currency.eur,
+      );
+
+      final sum = out.values.fold<double>(0, (s, v) => s + v);
+      expect(roundCurrency(sum, Currency.eur), 100.01);
+      expect(
+        out.values.every((v) => v == roundCurrency(v, Currency.eur)),
+        true,
+      );
+    });
+
+    test('an equal tie gives the spare unit to the first key in sort order', () {
+      // All four discard the same fraction, so the tie-break has to be the key
+      // itself — otherwise which member is a cent heavier changes per render.
+      final out = apportionCurrency(
+        {'d': 25.0025, 'c': 25.0025, 'b': 25.0025, 'a': 25.0025},
+        100.01,
+        Currency.eur,
+      );
+
+      expect(out['a'], 25.01);
+      expect(out['b'], 25.00);
+      expect(out['c'], 25.00);
+      expect(out['d'], 25.00);
+    });
+
+    test('the largest discarded fraction is served first', () {
+      // 10.00 over shares of 1/3 and 2/3: 3.3333 and 6.6667.
+      final out = apportionCurrency(
+        {'a': 10 / 3, 'b': 20 / 3},
+        10.00,
+        Currency.eur,
+      );
+
+      expect(out['a'], 3.33);
+      expect(out['b'], 6.67);
+    });
+
+    test('a zero-decimal currency apportions whole units', () {
+      final out = apportionCurrency(
+        {'a': 1000.5, 'b': 1000.5},
+        2001,
+        Currency.jpy,
+      );
+
+      expect(out['a']! + out['b']!, 2001);
+      expect(out['a'], 1001);
+      expect(out['b'], 1000);
+    });
+
+    test('a negative total sums back exactly', () {
+      final out = apportionCurrency(
+        {'a': -2.335, 'b': -2.335, 'c': -2.33},
+        -7.00,
+        Currency.eur,
+      );
+
+      final sum = out.values.fold<double>(0, (s, v) => s + v);
+      expect(roundCurrency(sum, Currency.eur), -7.00);
+    });
+
+    test('an empty map apportions nothing', () {
+      expect(apportionCurrency(<String, double>{}, 10, Currency.eur), isEmpty);
+    });
+  });
 }

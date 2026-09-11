@@ -1,3 +1,4 @@
+import '../../../helper/helper.dart';
 import '../../../l10n/app_localizations.dart';
 import 'expense_model.dart';
 
@@ -71,23 +72,39 @@ List<MemberBreakdownEntry> buildMemberBreakdown({
   required Expense expense,
   required List<String> memberEmails,
 }) {
-  final shareStat = expense.groupMemberShareStatistic;
+  final currency = expense.group.currency;
+  final raw = expense.groupMemberShareStatistic;
+  // Apportioned across EVERY member who holds a share, not just the requested
+  // ones: the read view asks about a single member to get their own net, and
+  // the spare cent must not land on them merely for being the one asked about.
+  // The target is the shares' own total rather than the expense's — an expense
+  // with unclaimed units splits less than it cost, and the payer carries the
+  // rest.
+  final shareStat = apportionCurrency(
+    raw,
+    raw.values.fold<double>(0, (sum, value) => sum + value),
+    currency,
+  );
   final payer = expense.paidBy;
   final result = <MemberBreakdownEntry>[];
 
   for (final email in memberEmails) {
     final isPayer = email == payer;
-    final hasShare = shareStat.containsKey(email);
+    final hasShare = raw.containsKey(email);
     if (!hasShare && !isPayer) continue;
 
     final share = shareStat[email] ?? 0;
-    final net = isPayer ? (expense.amount - share) : -share;
-    result.add(MemberBreakdownEntry(
-      email: email,
-      share: share,
-      net: net,
-      isPayer: isPayer,
-    ));
+    final net = isPayer
+        ? roundCurrency(expense.amount - share, currency)
+        : -share;
+    result.add(
+      MemberBreakdownEntry(
+        email: email,
+        share: share,
+        net: net,
+        isPayer: isPayer,
+      ),
+    );
   }
 
   return result;
