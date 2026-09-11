@@ -6,6 +6,7 @@ import 'package:deun/l10n/app_localizations.dart';
 import 'package:deun/pages/expenses/data/expense_conversion.dart';
 import 'package:deun/pages/expenses/data/expense_model.dart';
 import 'package:deun/pages/expenses/presentation/expense_detail.dart';
+import 'package:deun/pages/expenses/service/rate_source.dart';
 import 'package:deun/pages/groups/data/group_member_model.dart';
 import 'package:deun/pages/groups/data/group_model.dart';
 import 'package:deun/provider.dart';
@@ -257,6 +258,7 @@ class _FakePrefs {
         });
   }
 }
+
 /// The code shown in the editor's "Entered in" row.
 ///
 /// Targeted rather than a bare `find.text(code)`: the amount hero renders the
@@ -265,7 +267,6 @@ Finder _entryCurrencyLabel(String code) => find.descendant(
   of: find.byKey(const ValueKey('expense_entry_currency')),
   matching: find.text(code),
 );
-
 
 Future<void> _pickCurrency(WidgetTester tester, String code) async {
   await tester.tap(find.byKey(const ValueKey('expense_entry_currency')));
@@ -286,11 +287,22 @@ Future<void> _pickCurrency(WidgetTester tester, String code) async {
   await tester.pumpAndSettle();
 }
 
+/// A prefill that never answers. The default for both harnesses, so these tests
+/// exercise the manual rate field exactly as they always have — without it, the
+/// real [fetchRate] would reach for `functions.invoke` against the fake
+/// Supabase URL and let a network stub decide what they see.
+Future<RateQuote?> _noPrefill({
+  required Currency base,
+  required Currency quote,
+  required DateTime date,
+}) async => null;
+
 Future<void> pumpEditor(
   WidgetTester tester, {
   required String currencyCode,
   double? initialAmount,
   Expense? expense,
+  RateLookup? lookupRate,
 }) async {
   await tester.pumpWidget(
     ProviderScope(
@@ -312,6 +324,7 @@ Future<void> pumpEditor(
             child: ExpenseDetail(
               group: _group(currencyCode),
               expense: expense ?? _expense(initialAmount ?? 12.5),
+              lookupRate: lookupRate ?? _noPrefill,
             ),
           ),
         ),
@@ -323,6 +336,40 @@ Future<void> pumpEditor(
     Navigator.of(tester.element(find.byType(AmountKeypadSheet))).pop();
     await tester.pumpAndSettle();
   }
+}
+
+/// Public re-exports of this file's harness, so a sibling suite can drive the
+/// same editor without a second copy of these fixtures. The call sites in this
+/// file keep the private names; only the seam is new.
+Future<void> pickCurrency(WidgetTester tester, String code) =>
+    _pickCurrency(tester, code);
+
+/// Taps the save CTA and drains the success SnackBar's timer.
+Future<void> saveEditor(WidgetTester tester) => _save(tester);
+
+/// The in-memory `async_preferences` store behind the sticky-rate provider.
+Map<String, String> get prefsValues => _prefs.values;
+
+/// Installs a fresh fake preference store. Call from `setUp`.
+void installFakePrefs() {
+  _prefs = _FakePrefs()..install();
+}
+
+/// Initialises the mocked Supabase client the editor reaches for. Call from
+/// `setUpAll`.
+Future<void> initTestSupabase() async {
+  TestWidgetsFlutterBinding.ensureInitialized().defaultBinaryMessenger
+      .setMockMethodCallHandler(
+        const MethodChannel('plugins.flutter.io/shared_preferences'),
+        (call) async {
+          if (call.method == 'getAll') return <String, Object>{};
+          return null;
+        },
+      );
+  await Supabase.initialize(
+    url: 'http://localhost:54321',
+    anonKey: 'test-anon-key',
+  );
 }
 
 /// Pumps the editor with its WRITE stubbed, on a pushed route so a successful
@@ -337,7 +384,8 @@ Future<void> pumpEditor(
 Future<List<SavedExpense>> pumpEditorWithSaveSeam(
   WidgetTester tester, {
   required String currencyCode,
-  required Expense expense,
+  Expense? expense,
+  RateLookup? lookupRate,
 }) async {
   final captured = <SavedExpense>[];
   await tester.pumpWidget(
@@ -363,7 +411,8 @@ Future<List<SavedExpense>> pumpEditorWithSaveSeam(
             ).copyWith(splashFactory: NoSplash.splashFactory),
             child: ExpenseDetail(
               group: _group(currencyCode),
-              expense: expense,
+              expense: expense ?? _expense(12.5),
+              lookupRate: lookupRate ?? _noPrefill,
               saveExpense:
                   (
                     context,
@@ -398,28 +447,13 @@ Future<void> _save(WidgetTester tester) async {
 }
 
 void main() {
-  setUpAll(() async {
-    TestWidgetsFlutterBinding.ensureInitialized().defaultBinaryMessenger
-        .setMockMethodCallHandler(
-          const MethodChannel('plugins.flutter.io/shared_preferences'),
-          (call) async {
-            if (call.method == 'getAll') return <String, Object>{};
-            return null;
-          },
-        );
-    await Supabase.initialize(
-      url: 'http://localhost:54321',
-      anonKey: 'test-anon-key',
-    );
-  });
+  setUpAll(initTestSupabase);
 
   tearDownAll(() async {
     await Supabase.instance.dispose();
   });
 
-  setUp(() {
-    _prefs = _FakePrefs()..install();
-  });
+  setUp(installFakePrefs);
 
   testWidgets(
     'the editor defaults to the group currency and shows no rate field',

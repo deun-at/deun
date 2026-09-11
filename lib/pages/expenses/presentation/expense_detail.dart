@@ -18,6 +18,7 @@ import '../../../widgets/theme_builder.dart';
 import '../../groups/data/group_model.dart';
 import 'expense_entry_widget.dart';
 import 'receipt_scanner_sheet.dart';
+import '../service/rate_source.dart';
 import '../data/claimable_form.dart';
 import '../data/editor_mode.dart';
 import '../data/expense_conversion.dart';
@@ -84,6 +85,7 @@ class ExpenseDetail extends ConsumerStatefulWidget {
     this.receiptResult,
     this.loadGroupPaybacks,
     this.saveExpense,
+    this.lookupRate,
   });
 
   final Group group;
@@ -98,9 +100,21 @@ class ExpenseDetail extends ConsumerStatefulWidget {
   /// [ExpenseRepository.saveAll].
   final ExpenseSaver? saveExpense;
 
+  /// Test seam for the historical-rate prefill. Null in production →
+  /// [fetchRate].
+  final RateLookup? lookupRate;
+
   @override
   ConsumerState<ExpenseDetail> createState() => _ExpenseDetailState();
 }
+
+/// Where the rate currently in the editor's rate field came from.
+///
+/// The whole of "a user-entered rate always wins": a prefill may only ever
+/// write into a field that is [none] or already [prefilled]. A [user] rate — one
+/// typed this session, one a saved expense froze, or one remembered from a rate
+/// the user typed before — is never overwritten and never even refetched for.
+enum _RateOrigin { none, user, prefilled }
 
 class _ExpenseDetailState extends ConsumerState<ExpenseDetail> {
   final _formKey = GlobalKey<FormBuilderState>();
@@ -165,6 +179,23 @@ class _ExpenseDetailState extends ConsumerState<ExpenseDetail> {
   /// [rateDateForPickedCurrency].
   String? _rateDate;
 
+  _RateOrigin _rateOrigin = _RateOrigin.none;
+
+  /// `yyyy-MM-dd` the PREFILLED rate is effective for — the day the source
+  /// actually quoted it, which for a weekend or holiday expense is earlier than
+  /// the expense's own date. Non-null exactly while [_rateOrigin] is
+  /// [_RateOrigin.prefilled].
+  String? _prefilledRateDate;
+
+  /// True when the last prefill attempt for the current pair and date came back
+  /// with nothing. Drives the visible explanation; never blocks a save.
+  bool _rateUnavailable = false;
+
+  /// Monotonic request token. The fetch is asynchronous, so a response for a
+  /// date or currency the user has already moved off must be discarded rather
+  /// than dropped into the field.
+  int _rateRequestId = 0;
+
   bool get _isForeignCurrency => _entryCurrency != widget.group.currency;
 
   double? get _rate => parseConversionRate(_rateController.text);
@@ -176,9 +207,70 @@ class _ExpenseDetailState extends ConsumerState<ExpenseDetail> {
           groupCurrency: widget.group.currency,
           entryCurrency: _entryCurrency,
           rate: _rate,
-          rateDate: _rateDate,
+          // A prefilled rate is attributed to the day it was actually quoted,
+          // not the day the currency was picked.
+          rateDate: _prefilledRateDate ?? _rateDate,
         )
       : ExpenseConversion.identity(widget.group.currency);
+
+  /// The date the expense carries right now — what a historical rate is asked
+  /// for. Reads the live form field so a date change is visible immediately,
+  /// falling back to the loaded expense and then to today.
+  DateTime get _expenseDate {
+    final field = _formKey.currentState?.fields['expense_date']?.value;
+    if (field is DateTime) return field;
+    final loaded = widget.expense?.expenseDate;
+    return loaded != null ? DateTime.parse(loaded) : DateTime.now();
+  }
+
+  /// Fetches the historical rate for the expense's own date and drops it into
+  /// the rate field as a suggestion.
+  ///
+  /// Refuses to run at all unless the field is free: a rate the user typed, a
+  /// rate a saved expense froze and a rate remembered from one they typed
+  /// before are all [_RateOrigin.user], and this feature can neither overwrite
+  /// nor refetch for any of them. The check runs twice — before the request and
+  /// again after it resolves — because the user can type while it is in flight.
+  Future<void> _prefillRate() async {
+    if (!_isForeignCurrency || _rateOrigin == _RateOrigin.user) return;
+
+    final base = _entryCurrency;
+    final quote = widget.group.currency;
+    final date = _expenseDate;
+    final id = ++_rateRequestId;
+
+    final result = await (widget.lookupRate ?? fetchRate)(
+      base: base,
+      quote: quote,
+      date: date,
+    );
+
+    // Superseded by a later pick or date change, the user has since made the
+    // rate their own, or they switched back to the group currency and there is
+    // no rate field left to write into. Either way this answer is stale.
+    if (!mounted ||
+        id != _rateRequestId ||
+        !_isForeignCurrency ||
+        _rateOrigin == _RateOrigin.user) {
+      return;
+    }
+
+    setState(() {
+      if (result == null) {
+        _rateUnavailable = true;
+        // A prefill for the PREVIOUS date must not stand under the new one —
+        // that is the silent wrong-date substitution, arrived at by omission.
+        _rateController.text = '';
+        _prefilledRateDate = null;
+        _rateOrigin = _RateOrigin.none;
+      } else {
+        _rateUnavailable = false;
+        _rateController.text = formatRate(result.rate);
+        _prefilledRateDate = ymd(result.effectiveDate);
+        _rateOrigin = _RateOrigin.prefilled;
+      }
+    });
+  }
 
   @override
   void initState() {
@@ -190,6 +282,9 @@ class _ExpenseDetailState extends ConsumerState<ExpenseDetail> {
     _rateDate = widget.expense?.rateDate;
     final loadedRate = widget.expense?.conversionRate;
     if (loadedRate != null) _rateController.text = formatRate(loadedRate);
+    // A saved expense opens on its FROZEN rate. Nothing in the prefill may
+    // touch it — not on open, not on a later date change.
+    _rateOrigin = loadedRate != null ? _RateOrigin.user : _RateOrigin.none;
 
     groupMembers = widget.group.activeMembers;
     _detectedCategory = widget.expense?.category;
@@ -554,6 +649,7 @@ class _ExpenseDetailState extends ConsumerState<ExpenseDetail> {
     return FormBuilderField(
       name: "name",
       builder: (FormFieldState<dynamic> field) => TextFormField(
+        key: const ValueKey('expense_name_field'),
         controller: _nameController,
         validator: FormBuilderValidators.required(
           errorText: l10n.expenseNameValidationEmpty,
@@ -618,6 +714,11 @@ class _ExpenseDetailState extends ConsumerState<ExpenseDetail> {
     return FormBuilderField<DateTime>(
       name: "expense_date",
       initialValue: initial,
+      // THE only refetch trigger. A historical rate is a fact about the
+      // expense's day, so changing the day changes the rate; changing anything
+      // else does not, and any broader trigger reintroduces surprise rate
+      // movement on an expense the user thought was settled.
+      onChanged: (_) => unawaited(_prefillRate()),
       builder: (FormFieldState<DateTime?> field) {
         final value = field.value ?? initial;
         return _PaidWhenRow(
@@ -1041,9 +1142,14 @@ class _ExpenseDetailState extends ConsumerState<ExpenseDetail> {
           currency: widget.group.currency,
           conversion: conversion,
         );
-        if (!conversion.isIdentity) {
+        if (!conversion.isIdentity && _rateOrigin == _RateOrigin.user) {
           // Remember the rate for the next expense in this currency in this
           // group — a trip holds one agreed rate with no separate concept.
+          //
+          // Only a rate the USER supplied. Remembering a prefill would make the
+          // suggestion its own successor: the fetch would fire once per group
+          // and currency and then be shadowed forever by its first answer,
+          // which is the opposite of a rate for each expense's own date.
           await ref
               .read(stickyRateProvider.notifier)
               .setStickyRate(
@@ -1107,10 +1213,7 @@ class _ExpenseDetailState extends ConsumerState<ExpenseDetail> {
                   ),
                 ),
               ),
-              Text(
-                _entryCurrency.code,
-                style: theme.textTheme.titleSmall,
-              ),
+              Text(_entryCurrency.code, style: theme.textTheme.titleSmall),
               const SizedBox(width: 4),
               Icon(
                 Icons.expand_more,
@@ -1137,7 +1240,16 @@ class _ExpenseDetailState extends ConsumerState<ExpenseDetail> {
                     decimal: true,
                   ),
                   inputFormatters: [DecimalTextInputFormatter(decimalRange: 6)],
-                  onChanged: (_) => setState(() => _isDirty = true),
+                  onChanged: (_) => setState(() {
+                    _isDirty = true;
+                    // The user has taken ownership. Nothing refetches for this
+                    // field again, and the rate date reverts to the pick-time
+                    // stamp — the effective date belonged to the suggestion,
+                    // not to the number they just typed.
+                    _rateOrigin = _RateOrigin.user;
+                    _prefilledRateDate = null;
+                    _rateUnavailable = false;
+                  }),
                   decoration: InputDecoration(
                     border: InputBorder.none,
                     labelText: l10n.expenseRateFieldLabel,
@@ -1163,6 +1275,34 @@ class _ExpenseDetailState extends ConsumerState<ExpenseDetail> {
                     helperMaxLines: 3,
                   ),
                 ),
+                if (_prefilledRateDate != null)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 6),
+                    child: Text(
+                      key: const ValueKey('expense_rate_prefill_date'),
+                      // The user sees which day the rate belongs to BEFORE it
+                      // is frozen on the row — a Saturday expense carries
+                      // Friday's rate, and that is a fact about the rate, not a
+                      // rounding error.
+                      l10n.expenseRatePrefilledOn(
+                        formatDate(_prefilledRateDate, context),
+                      ),
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: theme.colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                  )
+                else if (_rateUnavailable)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 6),
+                    child: Text(
+                      key: const ValueKey('expense_rate_unavailable'),
+                      l10n.expenseRateUnavailable,
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: theme.colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                  ),
                 if (rate != null) ...[
                   const Divider(height: 1),
                   Padding(
@@ -1232,6 +1372,11 @@ class _ExpenseDetailState extends ConsumerState<ExpenseDetail> {
       // a CHF rate quoted today, never the old JPY rate's date. Only re-picking
       // the currency the expense was loaded with keeps its frozen date.
       _rateController.text = prefill != null ? formatRate(prefill) : '';
+      // A remembered rate is a rate the user typed, so it owns the field and
+      // no prefill is fetched for it. Nothing remembered leaves the field free.
+      _rateOrigin = prefill != null ? _RateOrigin.user : _RateOrigin.none;
+      _prefilledRateDate = null;
+      _rateUnavailable = false;
       // The date is a fact about the RATE, so the frozen one survives only
       // while the frozen rate is what the field will hold. Gating on the
       // currency alone misdates a round trip: CHF -> EUR -> CHF clears the
@@ -1247,13 +1392,23 @@ class _ExpenseDetailState extends ConsumerState<ExpenseDetail> {
       );
       _isDirty = true;
     });
+
+    unawaited(_prefillRate());
   }
 
   Future<void> _resetStickyRate() async {
     final sticky = ref.read(stickyRateProvider.notifier);
     await sticky.clearStickyRate(widget.group.id, _entryCurrency);
     if (!mounted) return;
-    setState(() => _rateController.text = '');
+    // The field is emptied, so ownership goes back to free and a later date
+    // change may prefill into it. No fetch is issued here: clearing a
+    // remembered rate is the user saying they intend to type one.
+    setState(() {
+      _rateController.text = '';
+      _rateOrigin = _RateOrigin.none;
+      _prefilledRateDate = null;
+      _rateUnavailable = false;
+    });
     if (context.mounted) {
       showSnackBar(context, AppLocalizations.of(context)!.expenseRateResetDone);
     }
@@ -1300,6 +1455,9 @@ class _ExpenseDetailState extends ConsumerState<ExpenseDetail> {
       _entryCurrency = groupCurrency;
       _rateController.text = '';
       _rateDate = null;
+      _rateOrigin = _RateOrigin.none;
+      _prefilledRateDate = null;
+      _rateUnavailable = false;
       _isDirty = true;
     });
   }

@@ -417,6 +417,15 @@ class AppLocalizationsDe extends AppLocalizations {
   String get expenseRateResetDone => 'Gespeicherter Kurs gelöscht.';
 
   @override
+  String expenseRatePrefilledOn(String date) {
+    return 'Kurs vom $date';
+  }
+
+  @override
+  String get expenseRateUnavailable =>
+      'Für dieses Datum ist kein Kurs verfügbar. Bitte manuell eingeben.';
+
+  @override
   String get expenseProvenanceEntered => 'Eingegeben als';
 
   @override
