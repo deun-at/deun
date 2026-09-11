@@ -111,14 +111,25 @@ void main() {
   });
 
   test('the rate copy is real German, not the English string copied over', () {
-    expect(en.expenseRateReset, 'Reset');
-    expect(de.expenseRateReset, 'Zurücksetzen');
+    expect(en.expenseRateReset, 'Clear saved rate');
+    expect(de.expenseRateReset, 'Gespeicherten Kurs löschen');
     expect(en.expenseEntryCurrencyLabel, isNot(de.expenseEntryCurrencyLabel));
     expect(en.expenseRateRequired, isNot(de.expenseRateRequired));
   });
 
-  test('the rate label names both currencies', () {
-    expect(en.expenseRateLabel('JPY', 'EUR'), contains('JPY'));
-    expect(en.expenseRateLabel('JPY', 'EUR'), contains('EUR'));
+  test('the reset action names what it clears', () {
+    // "Reset" alone sits next to the converted-amount preview and reads as
+    // though it would reset the amount.
+    for (final l10n in [en, de]) {
+      expect(l10n.expenseRateReset.split(' ').length, greaterThan(1));
+    }
+  });
+
+  test('the rate field names its source currency and holds no "?"', () {
+    // The old label was "Rate: 1 {from} = ? {to}" — the "?" was empty-state
+    // copy that stayed on screen once a rate had been typed.
+    expect(en.expenseRatePrefix('JPY'), contains('JPY'));
+    expect(en.expenseRatePrefix('JPY'), isNot(contains('?')));
+    expect(en.expenseRateFieldLabel, isNot(contains('?')));
   });
 }

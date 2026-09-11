@@ -176,6 +176,18 @@ abstract class AppLocalizations {
   /// **'You\'re all settled up'**
   String get homeOverallSettled;
 
+  /// Lead label on the overall-balance hero when the user holds balances in more than one currency and the largest is positive. Names the currency instead of claiming an 'overall' total, which cannot exist across currencies.
+  ///
+  /// In en, this message translates to:
+  /// **'You\'re owed in {code}'**
+  String homeOverallOwedIn(String code);
+
+  /// Lead label on the overall-balance hero when the user holds balances in more than one currency and the largest is negative.
+  ///
+  /// In en, this message translates to:
+  /// **'You owe in {code}'**
+  String homeOverallOweIn(String code);
+
   /// Stat-chip label on the hero for the total the user is owed.
   ///
   /// In en, this message translates to:
@@ -728,11 +740,17 @@ abstract class AppLocalizations {
   /// **'Entered in'**
   String get expenseEntryCurrencyLabel;
 
-  /// Label on the conversion-rate text field, naming both currencies.
+  /// Label of the conversion-rate field in the expense editor. The two currencies are named by the field's own prefix and suffix, so the label says only what the field is.
   ///
   /// In en, this message translates to:
-  /// **'Rate: 1 {from} = ? {to}'**
-  String expenseRateLabel(String from, String to);
+  /// **'Rate'**
+  String get expenseRateFieldLabel;
+
+  /// Prefix inside the rate field, so the field reads as a sentence: '1 CHF = [0.9432] EUR'. Replaces a static label containing a '?' placeholder that stayed on screen after a rate was entered.
+  ///
+  /// In en, this message translates to:
+  /// **'1 {from} ='**
+  String expenseRatePrefix(String from);
 
   /// Helper text shown while the rate field is empty, and the refusal snackbar shown on a save attempt with no rate.
   ///
@@ -746,10 +764,10 @@ abstract class AppLocalizations {
   /// **'= {amount}'**
   String expenseRatePreview(String amount);
 
-  /// Button that clears the remembered sticky rate for the current entry currency.
+  /// Button that clears the remembered sticky rate for the current entry currency. Names what it clears — a bare "Reset" sitting beside the converted-amount preview reads as though it would reset the amount.
   ///
   /// In en, this message translates to:
-  /// **'Reset'**
+  /// **'Clear saved rate'**
   String get expenseRateReset;
 
   /// Snackbar confirming the sticky rate was cleared.
@@ -758,17 +776,29 @@ abstract class AppLocalizations {
   /// **'Saved rate cleared.'**
   String get expenseRateResetDone;
 
-  /// Read view: the amount as the user originally typed it, before conversion.
+  /// Read view, provenance block: row label for the amount the user originally typed, before conversion.
   ///
   /// In en, this message translates to:
-  /// **'{amount} as entered'**
-  String expenseOriginalAmountEntered(String amount);
+  /// **'Entered as'**
+  String get expenseProvenanceEntered;
 
-  /// Read view: the frozen conversion rate and the date it is attributed to.
+  /// Read view, provenance block: row label for the frozen conversion rate.
   ///
   /// In en, this message translates to:
-  /// **'Rate {rate} · {date}'**
-  String expenseRateApplied(String rate, String date);
+  /// **'Rate'**
+  String get expenseProvenanceRate;
+
+  /// A conversion rate stated with its direction, so a bare number like 0.9432 cannot be read backwards. Both currencies are ISO codes and the rate keeps its own precision — it is a ratio, not an amount of money, so it is never rounded to a currency's decimal digits.
+  ///
+  /// In en, this message translates to:
+  /// **'1 {from} = {rate} {to}'**
+  String expenseRateDirection(String from, String rate, String to);
+
+  /// Read view, provenance block: the directed rate followed by the date it is attributed to.
+  ///
+  /// In en, this message translates to:
+  /// **'{rate} · {date}'**
+  String expenseRateAppliedOn(String rate, String date);
 
   /// App-bar title for the expense detail (read) screen.
   ///

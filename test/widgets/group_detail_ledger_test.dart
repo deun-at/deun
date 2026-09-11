@@ -218,6 +218,8 @@ void main() {
     await Supabase.instance.dispose();
   });
 
+  _convertedRowTests();
+
   testWidgets('renders a day header for the ledger', (tester) async {
     await _pump(
       tester,
@@ -563,4 +565,86 @@ Future<void> _expectOpenRoute(
   await tester.pumpAndSettle();
 
   expect(visited, expectedRoute);
+}
+
+// ---------------------------------------------------------------------------
+// multi-currency-expense-rate: a converted expense must be recognisable from
+// the ledger, not only after opening it. Abroad, every row is converted, and
+// the list is the surface people actually read.
+// ---------------------------------------------------------------------------
+
+Expense _converted({
+  required String id,
+  required String date,
+  String code = 'CHF',
+  double entered = 4.50,
+  double ledger = 4.24,
+}) {
+  final e = Expense();
+  e.id = id;
+  e.groupId = 'g';
+  e.name = 'Trip $id';
+  e.amount = ledger;
+  e.paidBy = 'sam@test.com';
+  e.expenseDate = date;
+  e.createdAt = date;
+  e.isPaidBackRow = false;
+  e.category = null;
+  e.paidByDisplayName = 'sam';
+  e.originalCurrencyCode = code;
+  e.conversionRate = 0.9432;
+  e.rateDate = date;
+  final entry = _entry(0, ledger, [
+    _share(_myEmail, 50),
+    _share('sam@test.com', 50),
+  ]);
+  entry.originalAmount = entered;
+  e.expenseEntries = {'e0': entry};
+  e.groupMemberShareStatistic = {
+    _myEmail: ledger / 2,
+    'sam@test.com': ledger / 2,
+  };
+  return e;
+}
+
+void _convertedRowTests() {
+  testWidgets('a converted row states what was actually entered', (
+    tester,
+  ) async {
+    await _pump(
+      tester,
+      expenses: [_converted(id: 'c1', date: '2026-09-11')],
+    );
+
+    // The ledger value stays the headline — it is what the balances use.
+    expect(find.text('€4.24'), findsOneWidget);
+    // …and the row says where it came from, without a tap.
+    expect(find.text('CHF 4.50'), findsOneWidget);
+  });
+
+  testWidgets('a group-currency row gains nothing', (tester) async {
+    await _pump(
+      tester,
+      expenses: [_quick(id: 'q1', date: '2026-09-11')],
+    );
+
+    expect(find.text('€20.00'), findsOneWidget);
+    expect(find.textContaining('CHF'), findsNothing);
+  });
+
+  testWidgets('the entered amount is code-qualified, never symbol-only', (
+    tester,
+  ) async {
+    // USD, AUD, CAD, HKD, MXN, NZD and SGD all render as "$": a symbol here
+    // would tell the user nothing about which currency they spent.
+    await _pump(
+      tester,
+      expenses: [
+        _converted(id: 'c2', date: '2026-09-11', code: 'USD', entered: 5),
+      ],
+    );
+
+    expect(find.text('USD 5.00'), findsOneWidget);
+    expect(find.text('\$5.00'), findsNothing);
+  });
 }

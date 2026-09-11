@@ -265,7 +265,9 @@ Future<void> _pickCurrency(WidgetTester tester, String code) async {
   // further down the ECB order (e.g. CHF) is off-screen at the default test
   // viewport, so scroll it into view before tapping — an out-of-bounds tap
   // silently misses and leaves the sheet open, blocking every later tap.
-  final target = find.textContaining('$code · ');
+  // Look the row up by the label the picker actually renders: CHF and RON are
+  // their own symbols, so they have no " · " half to match on.
+  final target = find.text(Currency.fromCode(code).pickerLabel);
   await tester.scrollUntilVisible(
     target,
     100,
@@ -428,6 +430,46 @@ void main() {
       expect(find.byKey(const ValueKey('expense_rate_field')), findsOneWidget);
       expect(find.text(l10n.expenseRateRequired), findsOneWidget);
       expect(find.byKey(const ValueKey('expense_rate_preview')), findsNothing);
+    },
+  );
+
+  testWidgets(
+    'an EMPTY rate field still states which way round the rate goes',
+    (tester) async {
+      // The first foreign expense in a group has no remembered rate, so the
+      // field is empty and unfocused — and that is exactly when the user needs
+      // to know whether to type CHF-per-EUR or EUR-per-CHF. Flutter hides
+      // prefix and suffix on an empty unfocused field unless the label is
+      // pinned, so this is a real regression risk, not a theoretical one.
+      final l10n = await AppLocalizations.delegate.load(const Locale('en'));
+      await pumpEditor(tester, currencyCode: 'EUR');
+      await _pickCurrency(tester, 'JPY');
+
+      expect(
+        tester
+            .widget<TextField>(find.byKey(const ValueKey('expense_rate_field')))
+            .controller
+            ?.text,
+        isEmpty,
+        reason: 'the precondition: no remembered rate to prefill',
+      );
+      // Presence is not visibility: InputDecorator BUILDS prefix and suffix
+      // either way and fades them with an AnimatedOpacity, so find.text alone
+      // would pass against an invisible prefix. Assert the opacity.
+      for (final text in ['${l10n.expenseRatePrefix('JPY')} ', ' EUR']) {
+        final finder = find.text(text);
+        expect(finder, findsOneWidget);
+        final opacities = tester
+            .widgetList<AnimatedOpacity>(
+              find.ancestor(of: finder, matching: find.byType(AnimatedOpacity)),
+            )
+            .map((w) => w.opacity);
+        expect(
+          opacities.every((o) => o == 1.0),
+          isTrue,
+          reason: '"$text" is built but faded out: ${opacities.toList()}',
+        );
+      }
     },
   );
 

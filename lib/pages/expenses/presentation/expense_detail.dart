@@ -1108,7 +1108,7 @@ class _ExpenseDetailState extends ConsumerState<ExpenseDetail> {
                 ),
               ),
               Text(
-                '${_entryCurrency.code} · ${_entryCurrency.symbol}',
+                _entryCurrency.pickerLabel,
                 style: theme.textTheme.titleSmall,
               ),
               const SizedBox(width: 4),
@@ -1121,57 +1121,87 @@ class _ExpenseDetailState extends ConsumerState<ExpenseDetail> {
         ),
         if (_isForeignCurrency) ...[
           const SizedBox(height: 8),
-          TextField(
-            key: const ValueKey('expense_rate_field'),
-            controller: _rateController,
-            keyboardType: const TextInputType.numberWithOptions(decimal: true),
-            inputFormatters: [DecimalTextInputFormatter(decimalRange: 6)],
-            onChanged: (_) => setState(() => _isDirty = true),
-            decoration: InputDecoration(
-              labelText: l10n.expenseRateLabel(
-                _entryCurrency.code,
-                widget.group.currency.code,
-              ),
-              // No rate => the hint, never a "= EUR 0.00" preview. An emptied
-              // field reads back as "0" from the formatter, and
-              // parseConversionRate maps that to null, so the refusal is
-              // visible while typing rather than only on save.
-              helperText: rate == null ? l10n.expenseRateRequired : null,
-              helperMaxLines: 3,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Row(
-            children: [
-              Expanded(
-                child: rate == null
-                    ? const SizedBox.shrink()
-                    : Text(
-                        key: const ValueKey('expense_rate_preview'),
-                        l10n.expenseRatePreview(
-                          formatMoney(
-                            // Per LINE, accumulated exactly as the save
-                            // accumulates it — converting the summed itemized
-                            // total once instead would preview a cent the
-                            // ledger never stores (3 x 1.50 CHF at 0.9432 is
-                            // 4.23, not 4.24).
-                            ledgerTotalOfLines(_formLines(), _conversion),
-                            widget.group.currency,
-                            Localizations.localeOf(context),
+          // The rate lives in a card like every other control on this screen.
+          // As a bare underlined field it was the only element with that
+          // treatment and read as unfinished rather than deliberate.
+          SoftCard(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+            borderRadius: 16,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                TextField(
+                  key: const ValueKey('expense_rate_field'),
+                  controller: _rateController,
+                  keyboardType: const TextInputType.numberWithOptions(
+                    decimal: true,
+                  ),
+                  inputFormatters: [DecimalTextInputFormatter(decimalRange: 6)],
+                  onChanged: (_) => setState(() => _isDirty = true),
+                  decoration: InputDecoration(
+                    border: InputBorder.none,
+                    labelText: l10n.expenseRateFieldLabel,
+                    // InputDecorator fades prefix and suffix out whenever the
+                    // label is inline — i.e. on an empty, unfocused field,
+                    // which is precisely the FIRST foreign expense in a group,
+                    // where nothing is remembered yet and the user has no way
+                    // to know which way round to type the rate. Pinning the
+                    // label keeps "1 JPY = … EUR" on screen from the start and
+                    // stops the row reflowing when the field takes focus.
+                    floatingLabelBehavior: FloatingLabelBehavior.always,
+                    // The field reads as a sentence — "1 CHF = [0.9432] EUR" —
+                    // so the direction is never ambiguous and no "?" is left
+                    // standing once a rate has been typed.
+                    prefixText:
+                        '${l10n.expenseRatePrefix(_entryCurrency.code)} ',
+                    suffixText: ' ${widget.group.currency.code}',
+                    // No rate => the hint, never a "= EUR 0.00" preview. An
+                    // emptied field reads back as "0" from the formatter, and
+                    // parseConversionRate maps that to null, so the refusal is
+                    // visible while typing rather than only on save.
+                    helperText: rate == null ? l10n.expenseRateRequired : null,
+                    helperMaxLines: 3,
+                  ),
+                ),
+                if (rate != null) ...[
+                  const Divider(height: 1),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 4),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            key: const ValueKey('expense_rate_preview'),
+                            l10n.expenseRatePreview(
+                              formatMoney(
+                                // Per LINE, accumulated exactly as the save
+                                // accumulates it — converting the summed
+                                // itemized total once instead would preview a
+                                // cent the ledger never stores (3 x 1.50 CHF
+                                // at 0.9432 is 4.23, not 4.24).
+                                ledgerTotalOfLines(_formLines(), _conversion),
+                                widget.group.currency,
+                                Localizations.localeOf(context),
+                              ),
+                            ),
+                            style: theme.textTheme.titleSmall,
                           ),
                         ),
-                        style: theme.textTheme.titleSmall,
-                      ),
-              ),
-              // Reset clears the REMEMBERED rate, so it only exists once one is
-              // remembered — never as a companion to an empty field.
-              if (hasSticky)
-                TextButton(
-                  key: const ValueKey('expense_rate_reset'),
-                  onPressed: _resetStickyRate,
-                  child: Text(l10n.expenseRateReset),
-                ),
-            ],
+                        // Clearing the REMEMBERED rate, so it only exists once
+                        // one is remembered — never as a companion to an empty
+                        // field.
+                        if (hasSticky)
+                          TextButton(
+                            key: const ValueKey('expense_rate_reset'),
+                            onPressed: _resetStickyRate,
+                            child: Text(l10n.expenseRateReset),
+                          ),
+                      ],
+                    ),
+                  ),
+                ],
+              ],
+            ),
           ),
         ],
       ],

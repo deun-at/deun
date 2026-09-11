@@ -349,13 +349,58 @@ class LedgerQuickRow extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 10),
-          MoneyText(
-            expense.amount,
-            currency: expense.group.currency,
-            style: Theme.of(context).textTheme.titleMedium,
-          ),
+          _LedgerAmount(expense: expense),
         ],
       ),
+    );
+  }
+}
+
+/// The trailing amount of a ledger row: the group-currency ledger value, and —
+/// only when the expense was entered in another currency — what was actually
+/// typed, underneath it.
+///
+/// The ledger value stays the headline because it is the number every balance
+/// on the screen is computed from. The entered amount is the one the user
+/// recognises from their own evening, and without it a converted row is
+/// indistinguishable from a native one: on a trip abroad that is every row in
+/// the list. It is code-qualified rather than symbolised — see
+/// [formatMoneyQualified].
+class _LedgerAmount extends StatelessWidget {
+  const _LedgerAmount({required this.expense});
+
+  final Expense expense;
+
+  @override
+  Widget build(BuildContext context) {
+    final textTheme = Theme.of(context).textTheme;
+    final amount = MoneyText(
+      expense.amount,
+      currency: expense.group.currency,
+      style: textTheme.titleMedium,
+    );
+
+    final entered = expense.originalAmount;
+    if (entered == null || expense.originalCurrencyCode == null) return amount;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.end,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        amount,
+        const SizedBox(height: 2),
+        Text(
+          formatMoneyQualified(
+            entered,
+            expense.entryCurrency,
+            Localizations.localeOf(context),
+          ),
+          style: textTheme.labelMedium?.copyWith(
+            color: Theme.of(context).colorScheme.onSurfaceVariant,
+            fontFeatures: const [FontFeature.tabularFigures()],
+          ),
+        ),
+      ],
     );
   }
 }
@@ -493,11 +538,7 @@ class _ItemizedRow extends StatelessWidget {
                           ),
                         ),
                         const SizedBox(width: 10),
-                        MoneyText(
-                          expense.amount,
-                          currency: expense.group.currency,
-                          style: Theme.of(context).textTheme.titleMedium,
-                        ),
+                        _LedgerAmount(expense: expense),
                       ],
                     ),
                     if (youClaimed) ...[
