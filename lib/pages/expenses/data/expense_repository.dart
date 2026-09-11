@@ -302,6 +302,21 @@ class ExpenseRepository {
               ? shareData.values.fold(0, (sum, v) => sum + (v as int))
               : 0;
 
+          // An exact split's ledger amounts come out of the already-converted
+          // line, not from converting each share on its own — otherwise they
+          // sum to a cent less than the entry they belong to.
+          final exactLedger = splitMode == 'exact'
+              ? ledgerFixedAmounts(
+                  enteredByEmail: {
+                    for (final e in shareData.entries)
+                      e.key: (e.value as num).toDouble(),
+                  },
+                  entryTotal: entryTotal,
+                  conv: conv,
+                  payer: formResponse['paid_by'] as String?,
+                )
+              : const <String, double>{};
+
           for (var entry in shareData.entries) {
             double percentage;
             double? fixedAmount;
@@ -311,7 +326,7 @@ class ExpenseRepository {
             switch (splitMode) {
               case 'exact':
                 final enteredFixed = (entry.value as num).toDouble();
-                fixedAmount = conv.toLedger(enteredFixed);
+                fixedAmount = exactLedger[entry.key];
                 // The entry-currency twin of the ledger `fixed_amount`, so the
                 // editor can reload this share into an entry-currency field
                 // without inverting the conversion. Same rule (and same null

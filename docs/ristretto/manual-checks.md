@@ -53,8 +53,13 @@ carry `[human]` criteria that nobody has ever observed. Check here before shippi
   6. Confirm `group_shares_summary` for the group totals `17.40`, not `3000`.
   7. In a EUR group, add a 4.50 CHF expense at rate 0.9432 split **exact** 1.50/1.50/1.50; confirm
      `select fixed_amount, original_fixed_amount from public.expense_entry_share where expense_entry_id = '<entry id>';`
-     is `1.41` / `1.50` per row, then edit only its name, save, and confirm all three `fixed_amount`
-     values and the entry `amount` (4.23) are byte-identical.
+     is `1.42` / `1.50` for the payer's row and `1.41` / `1.50` for the other two — the three
+     `fixed_amount` values summing to the entry `amount` of `4.24` — then edit only its name, save,
+     and confirm all three and the entry `amount` are byte-identical.
+     *(Expected values corrected 2026-09-11. They previously read `1.41` per row against an entry of
+     `4.23`, which no code path produced: the entry converted as a line to 4.24 while the shares
+     converted one by one to 4.23. The shares are now apportioned out of the converted line, so they
+     sum to it — see the finding below.)*
 
   **Walked 2026-09-11, migration applied. Steps 1–6 pass; step 7 does not — leaving this open.**
   Verified through the app rather than by SQL (no database access from here), so each assertion
@@ -163,9 +168,21 @@ settle-up figures are a different path: they come from the server view `group_sh
 self-hosted instance — a schema change, not a Dart change, which is why it is parked here rather
 than done.
 
-### A converted exact split leaves a cent unallocated
+### A converted exact split leaves a cent unallocated — FIXED, one query short of proven
 
-Found 2026-09-11 by step 7 of the expense-rate check — the check did its job.
+Found 2026-09-11 by step 7 of the expense-rate check — the check did its job. Fixed the same day in
+`ledgerFixedAmounts` (`expense_conversion.dart`): an exact split's ledger amounts are now
+apportioned out of the already-converted line instead of each share converting on its own, so they
+sum to the entry by construction, with the payer carrying the indivisible unit as everywhere else.
+An identity conversion still returns the typed numbers untouched — only a conversion earns the right
+to reshape someone's exact split.
+
+**What is not yet proven:** `saveAll` writes to Supabase, so no test calls it and the ~15 lines
+wiring the new function into the save path are covered by the analyzer and by the pure function's
+own tests, not by an executed save. Running step 7 once against the live instance closes that gap —
+it is the only thing between this and done.
+
+The original diagnosis follows, kept because it explains why the two numbers ever differed.
 
 A 4.50 CHF expense at 0.9432 in a EUR group, split **exact** 1.50/1.50/1.50, stores an entry
 `amount` of **4.24** but three `fixed_amount` values of **1.41**, summing to **4.23**.

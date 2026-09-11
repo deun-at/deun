@@ -133,6 +133,48 @@ List<double> unitLedgerAmounts({
   conversion.groupCurrency,
 );
 
+/// The ledger `fixed_amount` for every member of an **exact** split, given what
+/// each of them was assigned in the entry currency.
+///
+/// The same line-once rule the rest of this file follows: [entryTotal] has
+/// already converted as a single line, and the shares are apportioned out of
+/// *that*, rather than each converting on its own. Converting each share
+/// separately is what left 3 x 1.50 CHF at 0.9432 storing 1.41 three times —
+/// 4.23 against an entry of 4.24, a cent belonging to nobody. Here they sum to
+/// the entry by construction, and [payer] carries the indivisible unit for the
+/// same reason they do everywhere else.
+///
+/// On an identity conversion the entered amounts ARE the ledger amounts: they
+/// are the numbers the user typed, so they are returned untouched even when
+/// they do not add up to [entryTotal]. Only a conversion earns the right to
+/// reshape someone's exact split.
+Map<String, double> ledgerFixedAmounts({
+  required Map<String, double> enteredByEmail,
+  required double entryTotal,
+  required ExpenseConversion conv,
+  String? payer,
+}) {
+  if (conv.isIdentity) {
+    return {
+      for (final e in enteredByEmail.entries)
+        e.key: roundCurrency(e.value, conv.groupCurrency),
+    };
+  }
+  final rate = conv.rate;
+  if (rate == null || rate <= 0) {
+    throw MissingConversionRateException(
+      conv.entryCurrency,
+      conv.groupCurrency,
+    );
+  }
+  return apportionCurrency(
+    {for (final e in enteredByEmail.entries) e.key: e.value * rate},
+    entryTotal,
+    conv.groupCurrency,
+    priority: payer,
+  );
+}
+
 /// The matching per-unit ORIGINAL amounts, distributed in the ENTRY currency so
 /// they sum to [enteredLineTotal] exactly. Null on an identity conversion —
 /// there is no provenance to record.
