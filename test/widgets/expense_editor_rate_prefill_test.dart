@@ -436,6 +436,42 @@ void main() {
     },
   );
 
+  // Half a precision fix is none: `formatRate` can now render ten decimals for
+  // a small rate, but the field's input formatter decides whether one survives
+  // being edited. Capped at six, touching a prefilled IDR rate would silently
+  // round it back and reintroduce the 0.87% the fix removed.
+  testWidgets('a small rate keeps its precision through the rate field', (
+    tester,
+  ) async {
+    // IDR -> GBP, the weakest quote in kSupportedCurrencies into the strongest.
+    const tiny = 0.0000494306;
+    // Deliberately NO prefill, so the field starts empty. The formatter rejects
+    // by reverting to the field's previous text — prefilling the same number
+    // first would make a rejection indistinguishable from an acceptance.
+    final saved = await pumpEditorWithSaveSeam(
+      tester,
+      currencyCode: 'EUR',
+      lookupRate: _StubLookup(const {}).call,
+    );
+    await pickCurrency(tester, 'CHF');
+    await tester.pumpAndSettle();
+    expect(_rateText(tester), '');
+
+    await tester.enterText(
+      find.byKey(const ValueKey('expense_rate_field')),
+      '0.0000494306',
+    );
+    await tester.pumpAndSettle();
+    expect(
+      _rateText(tester),
+      '0.0000494306',
+      reason: 'the input formatter must not round a small rate away',
+    );
+
+    await saveEditor(tester);
+    expect(saved.single.conversion!.rate, closeTo(tiny, tiny * 0.00001));
+  });
+
   test(
     'both new strings exist in both locales and the German is German',
     () async {

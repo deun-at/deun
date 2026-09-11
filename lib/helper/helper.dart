@@ -170,13 +170,31 @@ double? parseConversionRate(String? text) {
   return value;
 }
 
-/// A conversion rate as text: up to 6 fractional digits, trailing zeros
+/// A conversion rate as text: at least 6 significant digits, trailing zeros
 /// trimmed, always `.`-separated. 0.0058 renders "0.0058" and 172 renders
 /// "172". A rate is a technical figure, not money — it is deliberately NOT
 /// locale-formatted, so the string round-trips through
 /// [parseConversionRate] unchanged.
+///
+/// **Significant digits, not decimal places**, because a rate is a multiplier
+/// and only its relative precision matters. A flat 6 decimals is fine at
+/// 0.9432 and badly wrong at 0.0000494306 — IDR into GBP, the weakest quote in
+/// `kSupportedCurrencies` into the strongest — where it renders "0.000049" and
+/// throws away 0.87%. On a 5,000,000 IDR expense that is over two pounds. The
+/// error was invisible while every rate was typed by hand; a fetched rate lands
+/// in the field ready to be accepted unread.
+///
+/// Large rates keep every digit they had: the decimal count only ever grows
+/// from 6, so 17264.19 does not become 17264.2.
 String formatRate(double rate) {
-  var text = rate.toStringAsFixed(6);
+  // Digits after the point needed for 6 significant ones: a rate below 1 needs
+  // an extra place per leading zero. At or above 1, the integer part already
+  // carries the significant digits, so 6 stays 6 and nothing that formats
+  // correctly today changes.
+  final decimals = rate > 0
+      ? math.max(6, 6 - (math.log(rate) / math.ln10).floor() - 1).clamp(0, 20)
+      : 6;
+  var text = rate.toStringAsFixed(decimals);
   if (text.contains('.')) {
     text = text
         .replaceFirst(RegExp(r'0+$'), '')
