@@ -298,34 +298,49 @@ class _SummaryCard extends StatelessWidget {
           // Provenance (multi-currency-expense-rate): what the user actually
           // typed, and the frozen rate it was converted at. Read-only and never
           // recomputed — the big figure above stays the ledger value.
+          //
+          // A labelled block rather than two grey footnotes: this is the most
+          // interesting fact about the expense (it happened somewhere else, at
+          // a rate a person chose), and it used to be set in the smallest,
+          // lightest type on the screen. The rate carries its direction —
+          // "0.9432" alone can be read either way round.
           if (expense.originalCurrencyCode != null) ...[
-            const SizedBox(height: 6),
-            Text(
-              l10n.expenseOriginalAmountEntered(
-                formatMoney(
-                  expense.originalAmount ?? 0,
-                  expense.entryCurrency,
-                  Localizations.localeOf(context),
-                ),
+            const SizedBox(height: 14),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+              decoration: BoxDecoration(
+                color: colorScheme.surfaceContainerHighest,
+                borderRadius: BorderRadius.circular(14),
               ),
-              key: const ValueKey('expense_original_amount'),
-              style: textTheme.bodyMedium?.copyWith(
-                color: colorScheme.onSurfaceVariant,
+              child: Column(
+                children: [
+                  _ProvenanceRow(
+                    label: l10n.expenseProvenanceEntered,
+                    value: formatMoneyQualified(
+                      expense.originalAmount ?? 0,
+                      expense.entryCurrency,
+                      Localizations.localeOf(context),
+                    ),
+                    valueKey: const ValueKey('expense_original_amount'),
+                  ),
+                  if (expense.conversionRate != null) ...[
+                    const SizedBox(height: 8),
+                    _ProvenanceRow(
+                      label: l10n.expenseProvenanceRate,
+                      value: l10n.expenseRateAppliedOn(
+                        l10n.expenseRateDirection(
+                          expense.entryCurrency.code,
+                          formatRate(expense.conversionRate!),
+                          expense.group.currency.code,
+                        ),
+                        toHumanDateString(expense.rateDate),
+                      ),
+                      valueKey: const ValueKey('expense_rate_applied'),
+                    ),
+                  ],
+                ],
               ),
             ),
-            if (expense.conversionRate != null) ...[
-              const SizedBox(height: 2),
-              Text(
-                l10n.expenseRateApplied(
-                  formatRate(expense.conversionRate!),
-                  toHumanDateString(expense.rateDate),
-                ),
-                key: const ValueKey('expense_rate_applied'),
-                style: textTheme.bodySmall?.copyWith(
-                  color: colorScheme.onSurfaceVariant,
-                ),
-              ),
-            ],
           ],
           const SizedBox(height: 16),
           _PaidNetRow(
@@ -631,6 +646,51 @@ class _MemberRow extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+/// One label/value line of the read view's conversion provenance block.
+///
+/// The label is muted and the value is not: the value is the fact, the label
+/// only says which fact it is.
+class _ProvenanceRow extends StatelessWidget {
+  const _ProvenanceRow({
+    required this.label,
+    required this.value,
+    required this.valueKey,
+  });
+
+  final String label;
+  final String value;
+  final Key valueKey;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: theme.textTheme.bodySmall?.copyWith(
+            color: theme.colorScheme.onSurfaceVariant,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        const SizedBox(width: 16),
+        Expanded(
+          child: Text(
+            value,
+            key: valueKey,
+            textAlign: TextAlign.end,
+            style: theme.textTheme.bodyMedium?.copyWith(
+              color: theme.colorScheme.onSurface,
+              fontFeatures: const [FontFeature.tabularFigures()],
+            ),
+          ),
+        ),
+      ],
     );
   }
 }

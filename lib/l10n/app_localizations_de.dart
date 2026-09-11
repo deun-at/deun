@@ -50,6 +50,16 @@ class AppLocalizationsDe extends AppLocalizations {
   String get homeOverallSettled => 'Alles ausgeglichen';
 
   @override
+  String homeOverallOwedIn(String code) {
+    return 'In $code bekommst du';
+  }
+
+  @override
+  String homeOverallOweIn(String code) {
+    return 'In $code schuldest du';
+  }
+
+  @override
   String get homeStatOwed => 'Dir wird geschuldet';
 
   @override
@@ -376,8 +386,11 @@ class AppLocalizationsDe extends AppLocalizations {
   String get expenseEntryCurrencyLabel => 'Eingegeben in';
 
   @override
-  String expenseRateLabel(String from, String to) {
-    return 'Kurs: 1 $from = ? $to';
+  String get expenseRateFieldLabel => 'Kurs';
+
+  @override
+  String expenseRatePrefix(String from) {
+    return '1 $from =';
   }
 
   @override
@@ -390,19 +403,25 @@ class AppLocalizationsDe extends AppLocalizations {
   }
 
   @override
-  String get expenseRateReset => 'Zurücksetzen';
+  String get expenseRateReset => 'Gespeicherten Kurs löschen';
 
   @override
   String get expenseRateResetDone => 'Gespeicherter Kurs gelöscht.';
 
   @override
-  String expenseOriginalAmountEntered(String amount) {
-    return '$amount wie eingegeben';
+  String get expenseProvenanceEntered => 'Eingegeben als';
+
+  @override
+  String get expenseProvenanceRate => 'Kurs';
+
+  @override
+  String expenseRateDirection(String from, String rate, String to) {
+    return '1 $from = $rate $to';
   }
 
   @override
-  String expenseRateApplied(String rate, String date) {
-    return 'Kurs $rate · $date';
+  String expenseRateAppliedOn(String rate, String date) {
+    return '$rate · $date';
   }
 
   @override

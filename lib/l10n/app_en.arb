@@ -47,6 +47,26 @@
   "@homeOverallSettled": {
     "description": "Lead label on the overall-balance hero when nothing is owed in either direction."
   },
+  "homeOverallOwedIn": "You're owed in {code}",
+  "@homeOverallOwedIn": {
+    "description": "Lead label on the overall-balance hero when the user holds balances in more than one currency and the largest is positive. Names the currency instead of claiming an 'overall' total, which cannot exist across currencies.",
+    "placeholders": {
+      "code": {
+        "type": "String",
+        "example": "EUR"
+      }
+    }
+  },
+  "homeOverallOweIn": "You owe in {code}",
+  "@homeOverallOweIn": {
+    "description": "Lead label on the overall-balance hero when the user holds balances in more than one currency and the largest is negative.",
+    "placeholders": {
+      "code": {
+        "type": "String",
+        "example": "CHF"
+      }
+    }
+  },
   "homeStatOwed": "You're owed",
   "@homeStatOwed": {
     "description": "Stat-chip label on the hero for the total the user is owed."
@@ -301,12 +321,15 @@
   "@expenseEntryCurrencyLabel": {
     "description": "Label on the expense editor's entry-currency selector row."
   },
-  "expenseRateLabel": "Rate: 1 {from} = ? {to}",
-  "@expenseRateLabel": {
-    "description": "Label on the conversion-rate text field, naming both currencies.",
+  "expenseRateFieldLabel": "Rate",
+  "@expenseRateFieldLabel": {
+    "description": "Label of the conversion-rate field in the expense editor. The two currencies are named by the field's own prefix and suffix, so the label says only what the field is."
+  },
+  "expenseRatePrefix": "1 {from} =",
+  "@expenseRatePrefix": {
+    "description": "Prefix inside the rate field, so the field reads as a sentence: '1 CHF = [0.9432] EUR'. Replaces a static label containing a '?' placeholder that stayed on screen after a rate was entered.",
     "placeholders": {
-      "from": { "type": "String" },
-      "to": { "type": "String" }
+      "from": { "type": "String", "example": "CHF" }
     }
   },
   "expenseRateRequired": "Enter the rate you actually got. There is no default rate.",
@@ -320,24 +343,34 @@
       "amount": { "type": "String" }
     }
   },
-  "expenseRateReset": "Reset",
+  "expenseRateReset": "Clear saved rate",
   "@expenseRateReset": {
-    "description": "Button that clears the remembered sticky rate for the current entry currency."
+    "description": "Button that clears the remembered sticky rate for the current entry currency. Names what it clears — a bare \"Reset\" sitting beside the converted-amount preview reads as though it would reset the amount."
   },
   "expenseRateResetDone": "Saved rate cleared.",
   "@expenseRateResetDone": {
     "description": "Snackbar confirming the sticky rate was cleared."
   },
-  "expenseOriginalAmountEntered": "{amount} as entered",
-  "@expenseOriginalAmountEntered": {
-    "description": "Read view: the amount as the user originally typed it, before conversion.",
+  "expenseProvenanceEntered": "Entered as",
+  "@expenseProvenanceEntered": {
+    "description": "Read view, provenance block: row label for the amount the user originally typed, before conversion."
+  },
+  "expenseProvenanceRate": "Rate",
+  "@expenseProvenanceRate": {
+    "description": "Read view, provenance block: row label for the frozen conversion rate."
+  },
+  "expenseRateDirection": "1 {from} = {rate} {to}",
+  "@expenseRateDirection": {
+    "description": "A conversion rate stated with its direction, so a bare number like 0.9432 cannot be read backwards. Both currencies are ISO codes and the rate keeps its own precision — it is a ratio, not an amount of money, so it is never rounded to a currency's decimal digits.",
     "placeholders": {
-      "amount": { "type": "String" }
+      "from": { "type": "String", "example": "CHF" },
+      "rate": { "type": "String", "example": "0.9432" },
+      "to": { "type": "String", "example": "EUR" }
     }
   },
-  "expenseRateApplied": "Rate {rate} · {date}",
-  "@expenseRateApplied": {
-    "description": "Read view: the frozen conversion rate and the date it is attributed to.",
+  "expenseRateAppliedOn": "{rate} · {date}",
+  "@expenseRateAppliedOn": {
+    "description": "Read view, provenance block: the directed rate followed by the date it is attributed to.",
     "placeholders": {
       "rate": { "type": "String" },
       "date": { "type": "String" }

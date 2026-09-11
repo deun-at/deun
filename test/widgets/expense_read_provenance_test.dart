@@ -144,7 +144,18 @@ void main() {
       find.byKey(const ValueKey('expense_original_amount')),
       findsOneWidget,
     );
-    expect(find.textContaining('¥3,000'), findsOneWidget);
+    // Code-qualified: "¥" is shared with CNY, so it cannot identify a currency
+    // on its own (see formatMoneyQualified).
+    expect(find.text('JPY 3,000'), findsOneWidget);
+  });
+
+  testWidgets('the provenance rows are labelled, not left to be inferred', (
+    tester,
+  ) async {
+    final l10n = await AppLocalizations.delegate.load(const Locale('en'));
+    await pumpRead(tester, expense: convertedExpense());
+    expect(find.text(l10n.expenseProvenanceEntered), findsOneWidget);
+    expect(find.text(l10n.expenseProvenanceRate), findsOneWidget);
   });
 
   testWidgets('the big figure stays the LEDGER value in the group currency', (
@@ -154,9 +165,14 @@ void main() {
     expect(find.text('€17.40'), findsOneWidget);
   });
 
-  testWidgets('the applied rate and its date are shown', (tester) async {
+  testWidgets('the applied rate states its DIRECTION and its date', (
+    tester,
+  ) async {
     await pumpRead(tester, expense: convertedExpense());
-    expect(find.text('Rate 0.0058 · 16.08.2026'), findsOneWidget);
+    // A bare "0.0058" can be read in either direction; naming both currencies
+    // is the whole point, and the rate keeps its own precision rather than
+    // being rounded to EUR's two digits (which would render it as 0.01).
+    expect(find.text('1 JPY = 0.0058 EUR · 16.08.2026'), findsOneWidget);
   });
 
   testWidgets('an unconverted expense shows no provenance rows at all', (
