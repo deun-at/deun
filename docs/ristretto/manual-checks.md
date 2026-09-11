@@ -182,6 +182,23 @@ carry `[human]` criteria that nobody has ever observed. Check here before shippi
     publication day, so the slack is visible rather than silent). UTC+2 days → `{"error":"no_rate"}`.
   - Also: `XYZ` → `unsupported_currency`, `"not-a-date"` → `bad_date`.
 
+  **Steps 1, 2 and 4 re-walked in the app** (emulator-5554, debug build of this branch, live
+  function), 2026-09-11:
+  - Group `EUR-Test`, new expense GBP 100.00. Picking GBP filled the rate on its own with
+    `1 GBP = 1.1653` under a `Rate for Today` line and a live `= EUR 116.53` preview. No
+    `Clear saved rate` button appeared — a prefill is correctly never remembered.
+  - Changing the date to **Saturday 5 Sep** refetched: the rate moved to `1.1642` and the line
+    read **`Rate for 4 Sep`** — the Friday. Step 2 through the UI, not just the wire.
+  - Saved. The ledger row reads `EUR 116.42` over `GBP 100.00`; the read view's provenance block
+    reads `Entered as GBP 100.00` and `Rate 1 GBP = 1.1642 EUR · 04.09.2026` — the **effective**
+    date frozen on the row, not the expense's own 5 Sep. Splits 38.81 / 38.81 / 38.80 = 116.42.
+  - Left behind: one expense named `RateSource-Check` in `EUR-Test`, which moved that group's
+    balance from EUR 10.59 to 88.20. Delete when the test data is next cleared.
+  - **Not covered by this walk:** CHF still has a saved rate of 0.9432 from August, and it
+    correctly shadows the prefill — no fetch is issued and no `Rate for …` line shows. Worth
+    knowing that any user with a saved rate sees no prefill for that pair until they clear it.
+    That is the designed precedence, not a defect, but it is invisible until you look for it.
+
 - [ ] **fix** · multi-currency-rate-source: **`BGN` has no rate from 2026 onward.** Found by step 8.
   `{"base":"BGN","quote":"EUR"}` returns `upstream_error` for 2026-06-01 and 2026-09-08, but
   succeeds for 2025-11-14 and 2024-06-14 — both at exactly `0.5113`, the fixed lev peg. The provider
