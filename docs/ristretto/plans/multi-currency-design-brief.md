@@ -143,6 +143,24 @@ never anything here worth collapsing. The primary still drives the pay-back
 flow (which methods appear, and the amount the confirmation names); it simply
 no longer stands in for the whole balance visually.
 
+## 7b. Friend list row — the balance stacks
+
+Label over amount, right-aligned, with the other-currency marker on a third
+line when there is one. Laid out along the row — label, amount and marker side
+by side — the balance took enough width to ellipsise the friend's handle
+(`jaggkovsky#92…`): the identity was losing room to the money. A stacked column
+is only as wide as its widest line.
+
+This is also what the group card already does, so the two lists read the same
+way.
+
+A multi-currency row is therefore one line taller than a single-currency one.
+That is information, not inconsistency — the row is carrying more.
+
+The row keeps the primary-plus-count form rather than the sheet's chips: it is
+a dense list row, and a count marker is an honest "there is more here" without
+claiming the figure beside it is the whole story.
+
 ## 8. Statistics
 
 Per-currency, same rule: no conversion, no approximate marker, each figure

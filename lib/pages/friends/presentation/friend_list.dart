@@ -435,13 +435,22 @@ class _FriendCard extends StatelessWidget {
         child: Row(
           children: [
             Expanded(child: _FriendIdentity(user: friendship.user)),
-            const SizedBox(width: 8),
-            Row(
+            const SizedBox(width: 12),
+            // The balance stacks instead of running along the row. Laid out
+            // inline, the label, the amount and the other-currency marker
+            // together took enough width to ellipsise the friend's handle —
+            // the identity lost room to the money. Stacked, the column is only
+            // as wide as its widest line and the name gets the rest.
+            //
+            // Label over amount is also what the group card already does, so
+            // the two lists now read the same way.
+            Column(
               mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.end,
               children: [
                 Text(label, style: balanceStyle),
                 if (state != BalanceState.settled) ...[
-                  const SizedBox(width: 6),
+                  const SizedBox(height: 2),
                   MoneyText(
                     friendship.shareAmount.abs(),
                     currency: friendship.currency,
@@ -449,10 +458,15 @@ class _FriendCard extends StatelessWidget {
                     style: balanceStyle,
                   ),
                   if (friendship.breakdown.hiddenCount > 0) ...[
-                    const SizedBox(width: 6),
+                    const SizedBox(height: 2),
                     // Non-interactive marker: plain Text inside the row's
                     // InkWell, so the row has no expand target of its own and
                     // its whole area still opens the detail sheet.
+                    //
+                    // On its own line, which makes a multi-currency row one
+                    // line taller than a single-currency one. That is worth
+                    // it: the row IS carrying more, and the alternative was
+                    // squeezing three facts onto one line.
                     Text(
                       l10n.friendOtherCurrencies(
                         friendship.breakdown.hiddenCount,
