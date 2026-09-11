@@ -1,4 +1,5 @@
 import 'package:deun/constants.dart';
+import 'package:deun/widgets/restyle/soft_card.dart';
 import 'package:deun/l10n/app_localizations.dart';
 import 'package:deun/pages/settings/setting.dart';
 import 'package:deun/pages/users/user_model.dart';
@@ -94,5 +95,19 @@ void main() {
     await tester.tap(find.byType(Switch));
     await tester.pumpAndSettle();
     expect(container.read(notificationsEnabledProvider), isFalse);
+  });
+
+  testWidgets('the screen title lines up with the cards beneath it', (
+    tester,
+  ) async {
+    final l10n = await AppLocalizations.delegate.load(const Locale('en'));
+    await _pumpSettings(tester);
+
+    // A stray 4px of header padding sat on top of the ListView's 16, putting
+    // the title 4px right of everything else on the screen.
+    expect(
+      tester.getTopLeft(find.text(l10n.settings)).dx,
+      tester.getTopLeft(find.byType(SoftCard).first).dx,
+    );
   });
 }

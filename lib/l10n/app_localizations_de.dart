@@ -914,6 +914,9 @@ class AppLocalizationsDe extends AppLocalizations {
   String get friends => 'Freunde';
 
   @override
+  String get friendsAllSection => 'Alle Freunde';
+
+  @override
   String get addFriends => 'Freunde hinzufügen';
 
   @override

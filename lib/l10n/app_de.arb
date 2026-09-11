@@ -240,6 +240,7 @@
   "resetPasswordInstructions": "Gib die E-Mail-Adresse deines Kontos ein und wir senden dir einen Link zum Zurücksetzen.",
   "resetPasswordSendLink": "Link senden",
   "friends": "Freunde",
+  "friendsAllSection": "Alle Freunde",
   "friendsNoEntries": "Keine Freunde gefunden.",
   "friendDecline": "Ablehnen",
   "friendRequests": "{count, plural, one{{count} Freundschaftsanfrage} other{{count} Freundschaftsanfragen}}",

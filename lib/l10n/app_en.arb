@@ -875,6 +875,10 @@
   "@resetPasswordSendLink": {"description": "Primary button on the reset-password screen."},
   "friends": "Friends",
   "@friends": {},
+  "friendsAllSection": "All friends",
+  "@friendsAllSection": {
+    "description": "Section label above the accepted-friends card. Not just \"Friends\" — that repeats the screen title verbatim, and this section sits alongside the two request sections."
+  },
   "addFriends": "Add friends",
   "@addFriends": {},
   "friendsNoEntries": "No friends yet",

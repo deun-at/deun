@@ -11,6 +11,7 @@ import 'package:deun/widgets/restyle/member_avatar.dart';
 import 'package:deun/widgets/restyle/money_text.dart';
 import 'package:deun/widgets/restyle/primary_button.dart';
 import 'package:deun/widgets/restyle/section_label.dart';
+import 'package:deun/widgets/restyle/screen_gutter.dart';
 import 'package:deun/widgets/restyle/soft_card.dart';
 import 'package:deun/widgets/restyle/spaced_card_list.dart';
 import 'package:deun/widgets/staggered_list.dart';
@@ -85,7 +86,9 @@ class _FriendListState extends ConsumerState<FriendList> {
     AppLocalizations l10n,
   ) {
     final children = <Widget>[
-      _FriendsHeader(),
+      // Bare: this one lives inside the padded ListView below, which already
+      // supplies the gutter.
+      const _FriendsHeader(),
       const SizedBox(height: 12),
       // SPACED list preset (F143): sections render their cards through
       // spacedCardItems so every card gap matches the group list's rhythm.
@@ -126,7 +129,11 @@ class _FriendListState extends ConsumerState<FriendList> {
         const SizedBox(height: 16),
       ],
       if (value.acceptedFriends.isNotEmpty) ...[
-        SectionLabel(l10n.friends),
+        // "All friends", not "Friends": this section sits alongside the two
+        // request sections above, so it keeps its label — but labelling it with
+        // the screen's own title printed the word twice, once as the heading
+        // and again immediately under it.
+        SectionLabel(l10n.friendsAllSection),
         const SizedBox(height: 8),
         // F167: all-friends is ONE SoftCard holding its rows joined (no inter-row
         // gaps) — same _DaySection pattern as the group-detail ledger, and the
@@ -183,7 +190,12 @@ class _FriendListState extends ConsumerState<FriendList> {
                 ? Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      _FriendsHeader(),
+                      const Padding(
+                        padding: EdgeInsets.symmetric(
+                          horizontal: kScreenGutter,
+                        ),
+                        child: _FriendsHeader(),
+                      ),
                       const SizedBox(height: 8),
                       Expanded(
                         child: EmptyListWidget(
@@ -198,7 +210,10 @@ class _FriendListState extends ConsumerState<FriendList> {
           AsyncError() => Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              _FriendsHeader(),
+              const Padding(
+                padding: EdgeInsets.symmetric(horizontal: kScreenGutter),
+                child: _FriendsHeader(),
+              ),
               const SizedBox(height: 8),
               Expanded(
                 child: EmptyListWidget(
@@ -209,11 +224,14 @@ class _FriendListState extends ConsumerState<FriendList> {
               ),
             ],
           ),
-          _ => Column(
+          _ => const Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              _FriendsHeader(),
-              const Expanded(
+              Padding(
+                padding: EdgeInsets.symmetric(horizontal: kScreenGutter),
+                child: _FriendsHeader(),
+              ),
+              Expanded(
                 child: ShimmerCardList(
                   height: 70,
                   listEntryLength: 12,
@@ -230,13 +248,18 @@ class _FriendListState extends ConsumerState<FriendList> {
 
 /// Screen title with QR + person-add actions.
 class _FriendsHeader extends StatelessWidget {
+  const _FriendsHeader();
+
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     final textTheme = Theme.of(context).textTheme;
 
+    // No horizontal padding of its own: the screen's scroll view owns the
+    // gutter, and adding 16 here on top of the list's 16 is what pushed the
+    // title 32px in while the cards beneath it sat at 16. See [kScreenGutter].
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 14, 11, 0),
+      padding: const EdgeInsets.fromLTRB(0, 14, 0, 0),
       child: Row(
         children: [
           Expanded(
@@ -448,7 +471,31 @@ class _FriendCard extends StatelessWidget {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
-                Text(label, style: balanceStyle),
+                // Two lines, never three: the context line, then the figure.
+                // The label is short, so the other-currency marker rides with
+                // it rather than claiming a line of its own — and the amount,
+                // the thing being scanned for, stays alone and uncrowded.
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(label, style: balanceStyle),
+                    if (state != BalanceState.settled &&
+                        friendship.breakdown.hiddenCount > 0) ...[
+                      const SizedBox(width: 6),
+                      // Non-interactive marker: plain Text inside the row's
+                      // InkWell, so the row has no expand target of its own
+                      // and its whole area still opens the detail sheet.
+                      Text(
+                        l10n.friendOtherCurrencies(
+                          friendship.breakdown.hiddenCount,
+                        ),
+                        style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                          color: colorScheme.onSurfaceVariant,
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
                 if (state != BalanceState.settled) ...[
                   const SizedBox(height: 2),
                   MoneyText(
@@ -457,25 +504,6 @@ class _FriendCard extends StatelessWidget {
                     semantic: moneySemantic,
                     style: balanceStyle,
                   ),
-                  if (friendship.breakdown.hiddenCount > 0) ...[
-                    const SizedBox(height: 2),
-                    // Non-interactive marker: plain Text inside the row's
-                    // InkWell, so the row has no expand target of its own and
-                    // its whole area still opens the detail sheet.
-                    //
-                    // On its own line, which makes a multi-currency row one
-                    // line taller than a single-currency one. That is worth
-                    // it: the row IS carrying more, and the alternative was
-                    // squeezing three facts onto one line.
-                    Text(
-                      l10n.friendOtherCurrencies(
-                        friendship.breakdown.hiddenCount,
-                      ),
-                      style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                        color: colorScheme.onSurfaceVariant,
-                      ),
-                    ),
-                  ],
                 ],
               ],
             ),

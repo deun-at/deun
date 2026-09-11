@@ -4,6 +4,7 @@ import 'package:deun/helper/currency_breakdown.dart';
 import 'package:deun/widgets/restyle/member_avatar.dart';
 import 'package:deun/widgets/restyle/money_text.dart';
 import 'package:deun/widgets/restyle/primary_button.dart';
+import 'package:deun/widgets/restyle/screen_gutter.dart';
 import 'package:deun/widgets/restyle/section_label.dart';
 import 'package:deun/widgets/restyle/currency_chips.dart';
 import 'package:deun/widgets/restyle/spaced_card_list.dart';
@@ -89,6 +90,11 @@ class _GroupListState extends ConsumerState<GroupList> {
                     // (F91: the standalone FAB was removed as redundant when
                     // groups exist).
                     child: ListView(
+                      // This branch's list has no padding of its own, so the
+                      // header supplies the gutter here.
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: kScreenGutter,
+                      ),
                       children: [
                         _GreetingHeader(),
                         const SizedBox(height: 100),
@@ -104,7 +110,7 @@ class _GroupListState extends ConsumerState<GroupList> {
                           textAlign: TextAlign.center,
                         ),
                         Padding(
-                          padding: const EdgeInsets.fromLTRB(16, 24, 16, 24),
+                          padding: const EdgeInsets.symmetric(vertical: 24),
                           child: PrimaryButton(
                             label: l10n.addNewGroup,
                             icon: Icons.add,
@@ -123,6 +129,7 @@ class _GroupListState extends ConsumerState<GroupList> {
             // here — nesting two vertical viewports gives unbounded height and
             // crashes layout. Same rule as the empty-state branch above.
             child: ListView(
+              padding: const EdgeInsets.symmetric(horizontal: kScreenGutter),
               children: [
                 _GreetingHeader(),
                 const SizedBox(height: 100),
@@ -143,7 +150,10 @@ class _GroupListState extends ConsumerState<GroupList> {
           _ => Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              _GreetingHeader(),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: kScreenGutter),
+                child: _GreetingHeader(),
+              ),
               const SizedBox(height: 12),
               const Expanded(
                 child: ShimmerCardList(
@@ -297,8 +307,11 @@ class _GreetingHeader extends ConsumerWidget {
       greetingBucketForHour(DateTime.now().hour),
     );
 
+    // No horizontal padding of its own: the screen's scroll view owns the
+    // gutter. Adding 16 here on top of the list's 16 pushed the greeting 32px
+    // in while the hero card beneath it sat at 16. See [kScreenGutter].
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 14, 16, 0),
+      padding: const EdgeInsets.fromLTRB(0, 14, 0, 0),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
