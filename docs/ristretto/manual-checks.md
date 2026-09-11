@@ -168,6 +168,34 @@ carry `[human]` criteria that nobody has ever observed. Check here before shippi
      must fill. Before the slack existed this returned "No rate available for this date" for every
      user east of UTC during their morning — if you see that, the deployed function is the old one.
 
+  **Walked 2026-09-11, steps 1/2/3/5/8/9, against the live function.** Not assumed — the instance
+  answers HTTPS from the build machine, so these were executed with `curl` and these are the
+  responses. The box stays unticked: steps 4, 6 and 7 need the app, a browser and a device, and
+  ticking is Jakob's signature, not mine.
+  - 1 · Tuesday 2026-09-08, CHF→EUR → `{"rate":1.061,"date":"2026-09-08"}`.
+  - 2 · **The discriminating one.** Saturday 2026-09-05 → `{"rate":1.0633,"date":"2026-09-04"}` —
+    Friday's date, not an echo of the request. A deployment echoing the request back fails here.
+  - 3 · 2026-10-15 → `{"error":"no_rate"}`. No silent substitution of today's rate.
+  - 5 · NOK→EUR 2026-09-08 twice → identical rate, second carries `"cached":true`.
+  - 8 · **30 of 31 codes resolve. `BGN` does not** — see the open finding below.
+  - 9 · UTC+1 day → `{"rate":1.0581,"date":"2026-09-11"}` (allowed, and labelled with the real
+    publication day, so the slack is visible rather than silent). UTC+2 days → `{"error":"no_rate"}`.
+  - Also: `XYZ` → `unsupported_currency`, `"not-a-date"` → `bad_date`.
+
+- [ ] **fix** · multi-currency-rate-source: **`BGN` has no rate from 2026 onward.** Found by step 8.
+  `{"base":"BGN","quote":"EUR"}` returns `upstream_error` for 2026-06-01 and 2026-09-08, but
+  succeeds for 2025-11-14 and 2024-06-14 — both at exactly `0.5113`, the fixed lev peg. The provider
+  answers `{"message":"not found"}`, consistent with Bulgaria having adopted the euro and the ECB
+  having stopped publishing the reference rate; the cutoff is somewhere between those dates and was
+  not narrowed further. Two decisions, neither urgent — a user picking BGN today gets the visible
+  manual-entry fallback, never a wrong rate:
+  1. Whether `BGN` stays in `kSupportedCurrencies`. Historical BGN expenses still resolve, so
+     removing it would break dates that currently work.
+  2. The function returns `upstream_error` (502) where it should return `no_rate` (404): a 404 from
+     the provider means "no rate for this pair", not "the provider is broken". User-invisible — the
+     client maps both to null — but it misreports the cause in the function logs, which is where
+     anyone would look next.
+
 - [ ] **proves** · group-member-add-flow: a member added by one client appears on another client's
   open group detail through the existing realtime path · needs two live clients against the
   self-hosted instance · ? — the feature is still `planned`; fill this in when it is built.
