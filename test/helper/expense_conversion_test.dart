@@ -166,6 +166,36 @@ void main() {
         expect(parseConversionRate(formatRate(0.0058)), 0.0058);
       },
     );
+
+    // A rate is a MULTIPLIER, so what matters is relative precision, not
+    // decimal places. Six fixed decimals is ~0.9% off for the smallest rate
+    // the app can produce — IDR into GBP, the weakest quote into the
+    // strongest — which on a 5,000,000 IDR expense is over two pounds.
+    test('keeps small rates accurate to a fraction of a percent', () {
+      const pairs = <double>[
+        0.85338 /
+            17264.19, // IDR -> GBP, the worst case in kSupportedCurrencies
+        1 / 17264.19, // IDR -> EUR
+        1 / 1478.62, // KRW -> EUR
+        1 / 161.23, // JPY -> EUR
+      ];
+      for (final rate in pairs) {
+        final shown = parseConversionRate(formatRate(rate))!;
+        expect(
+          (shown - rate).abs() / rate,
+          lessThan(0.00001),
+          reason: 'formatRate($rate) = ${formatRate(rate)} loses too much',
+        );
+      }
+    });
+
+    test('large rates keep every digit of their integer part', () {
+      // The counterpart trap: chasing significant figures must not start
+      // rounding 17264.19 to 17264.2.
+      expect(formatRate(17264.19), '17264.19');
+      expect(formatRate(1478.62), '1478.62');
+      expect(parseConversionRate(formatRate(17264.19)), 17264.19);
+    });
   });
 
   group('ExpenseConversion', () {

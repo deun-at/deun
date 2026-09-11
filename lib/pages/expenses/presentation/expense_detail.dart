@@ -1239,7 +1239,16 @@ class _ExpenseDetailState extends ConsumerState<ExpenseDetail> {
                   keyboardType: const TextInputType.numberWithOptions(
                     decimal: true,
                   ),
-                  inputFormatters: [DecimalTextInputFormatter(decimalRange: 6)],
+                  // Twelve, not six, and it has to match what [formatRate] can
+                  // render: a rate is a multiplier, so a small one needs
+                  // decimals to carry its significant digits. The smallest pair
+                  // the app can produce — IDR into GBP — is 0.0000494306, which
+                  // needs ten. Capping at six would round a fetched rate away
+                  // the moment the user touched the field, which is the same
+                  // 0.87% error formatRate was fixed to stop.
+                  inputFormatters: [
+                    DecimalTextInputFormatter(decimalRange: 12),
+                  ],
                   onChanged: (_) => setState(() {
                     _isDirty = true;
                     // The user has taken ownership. Nothing refetches for this
