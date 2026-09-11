@@ -134,9 +134,26 @@ is its own `groupSharesSummary` entry, rounded on its own. Sub-minor-unit residu
 in the total but not in the parts, and the two disagree by a minor unit.
 
 **Not a dead end, and not data loss.** Paying the displayed per-person amounts settles the group to
-exactly $0.00 — verified twice, at $10.00/3 and at €100.01/4 — because the settle path carries a
-sub-minor-unit tolerance. The harm is a user reconciling by hand and finding the column doesn't add
-up.
+exactly $0.00 — because the settle path carries a sub-minor-unit tolerance. The harm is a user
+reconciling by hand and finding the column doesn't add up.
+
+**Conservation was tested directly, because "does the cent vanish" is the question that matters.**
+A group carrying four stacked uneven splits — 10.00, 20.00, 0.05 and 100.01, every one of them
+divided three ways — accumulated to €86.71 owed against rows of €43.35 + €43.35. Both members paid
+the €43.35 the app displayed and the group closed on **exactly €0.00**, confirmed independently on
+two devices on 2026-09-11. Residue does not accumulate across expenses and no run of awkward splits
+strands a balance.
+
+`test/model/expense_detail_view_model_test.dart` pins the invariant that makes this true: across 48
+combinations (eight awkward totals x six group sizes) every expense's shares sum to its total and
+the members' nets cancel, with the running net over the whole run at zero. A change that started
+leaking a fraction would fail there rather than in somebody's group.
+
+One consequence worth knowing: within a single expense the spare minor unit always falls on the same
+member, because `apportionCurrency` breaks ties on the key so the breakdown is stable between
+renders. It does not rotate across expenses. This costs nobody anything — settlement runs off the
+equal `percentage`, not off the displayed share — but the same name will read a cent heavier
+whenever a split does not divide.
 
 **Client-side is already fixed; the server half is not.** `buildMemberBreakdown` now apportions with
 `apportionCurrency`, so an expense's own breakdown sums to its total (commit `4e26d5f`). The
@@ -150,8 +167,16 @@ than done.
 Found 2026-09-11 by step 7 of the expense-rate check — the check did its job.
 
 A 4.50 CHF expense at 0.9432 in a EUR group, split **exact** 1.50/1.50/1.50, stores an entry
-`amount` of **4.24** but three `fixed_amount` values of **1.41**, summing to **4.23**. One cent is
-allocated to nobody, even though the user allocated the whole expense.
+`amount` of **4.24** but three `fixed_amount` values of **1.41**, summing to **4.23**.
+
+**No money is lost by this, and balances are not affected.** Every ledger figure — client and
+server — is derived from `percentage`, never from `fixed_amount`: the server's
+`group_shares_summary` and `update_group_member_shares` both sum
+`ee.amount * (ees.percentage / 100)`, and the client's `groupMemberShareStatistic` does the same.
+Percentages sum to 100, so the shares sum to the entry. `fixed_amount` is the entry-currency twin
+kept so the editor can reload an exact split without inverting the conversion — provenance, not
+money. The defect is that the two representations of the same split disagree by a minor unit, which
+will bite whoever next treats `fixed_amount` as authoritative.
 
 The two halves convert by different rules, both deliberate in isolation:
 - `expense_repository.dart:314` converts each exact share on its own — `conv.toLedger(1.50)` = 1.41.
