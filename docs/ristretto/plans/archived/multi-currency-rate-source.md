@@ -101,8 +101,11 @@ asynchronous, so a rate arriving after the user has already typed one must not o
 Built in one pull on 2026-09-11, 28 new tests across 4 units, whole-repo gate green
 (`gate.js verify` exit 0 — `flutter analyze` clean, 1510 tests pass, up from 1482).
 
-review: notes-only · rounds: 2 · open: 0 block, 3 note, 4 lean
+review: notes-only · rounds: 2 · open: 0 block, 3 note, 3 lean
 tier: normal
+
+*(Closed at review: 0 block, 3 note, 4 lean. One lean — `formatRate`'s precision — was fixed
+afterwards on Jakob's call in `f6a9ec9`; see the strikethrough under `## Open findings`.)*
 
 **The one defect review caught, and it would have shipped.** The Edge Function refused a future
 date with `date > today()`, where `today()` is UTC (`new Date().toISOString()`) but the client sends
@@ -202,8 +205,21 @@ to the `SUPPORTED` set literal.
 lean · `supabase/functions/exchange-rate/index.ts:104` · expired `cache` entries are never deleted,
 so a long-lived isolate grows one entry per pair-and-date forever · drop the key on a miss-by-expiry.
 
-lean · `lib/helper/helper.dart:178` (untouched — reported, not a round) · `formatRate`'s fixed 6
+~~lean · `lib/helper/helper.dart:178` (untouched — reported, not a round) · `formatRate`'s fixed 6
 decimals costs ~1% on an IDR→EUR prefill (0.0000579 → "0.000058"); pre-existing, but this feature is
-the first to put a *computed* rate in that field, where it's likelier to be accepted unread.
+the first to put a *computed* rate in that field, where it's likelier to be accepted unread.~~
+**Fixed 2026-09-11 on Jakob's call, commit `f6a9ec9`.** Measured before changing anything: the
+worst pair is IDR→GBP (the weakest quote in `kSupportedCurrencies` into the strongest) at
+**0.871%**, not the ~1% estimated — 0.0000494306 rendered "0.000049". `formatRate` now keeps 6
+*significant* digits rather than 6 decimal places, growing the decimal count only for rates below 1
+so large rates are untouched (17264.19 must not become 17264.2, which a naive
+`toStringAsPrecision(6)` would have done — that is its own regression test now).
+
+The fix needed a second half the finding did not name: the rate field's
+`DecimalTextInputFormatter(decimalRange: 6)` would have rounded a small rate straight back the
+moment the user touched the field, so it is now 12. The first version of that test passed
+vacuously — the formatter rejects input by reverting to the field's previous text, and the test had
+prefilled the same number, making a rejection indistinguishable from an acceptance. Rewritten to
+type into an empty field, it went red with `'0'` before the cap was raised.
 
 status: needs-human
