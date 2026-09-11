@@ -1,3 +1,4 @@
+import 'package:flutter/rendering.dart';
 import 'package:deun/constants.dart';
 import 'package:deun/helper/currency_breakdown.dart';
 import 'package:deun/helper/helper.dart';
@@ -518,6 +519,70 @@ void main() {
       ),
       findsNothing,
     );
+  });
+
+  testWidgets('the balance stacks under its label instead of running along '
+      'the row', (tester) async {
+    final l10n = await AppLocalizations.delegate.load(const Locale('en'));
+    await _pumpFriendList(
+      tester,
+      FriendshipListState(
+        acceptedFriends: [_friend('Sam', 'sam@x.com', shareAmount: -25.0)],
+      ),
+    );
+
+    // Label, then amount beneath it — not side by side. Laid out along the
+    // row, label + amount + marker crowded the identity until the handle
+    // ellipsised.
+    final labelY = tester.getTopLeft(find.text(l10n.balanceOwe)).dy;
+    final amountY = tester.getTopLeft(find.text('EUR 25.00')).dy;
+    expect(amountY, greaterThan(labelY));
+  });
+
+  testWidgets('the other-currency marker gets its own line under the amount', (
+    tester,
+  ) async {
+    final l10n = await AppLocalizations.delegate.load(const Locale('en'));
+    final f = _friend('Mixed', 'mixed@x.com');
+    f.balances = const [
+      CurrencyAmount(Currency.jpy, 3000),
+      CurrencyAmount(Currency.eur, -25.50),
+    ];
+    await _pumpFriendList(tester, FriendshipListState(acceptedFriends: [f]));
+
+    final amountY = tester.getTopLeft(find.text('JPY 3,000')).dy;
+    final markerY = tester
+        .getTopLeft(find.text(l10n.friendOtherCurrencies(1)))
+        .dy;
+    expect(markerY, greaterThan(amountY));
+  });
+
+  testWidgets('the balance column never crowds the identity off the row', (
+    tester,
+  ) async {
+    // The regression: a long handle beside a three-part inline balance
+    // ellipsised to "jaggkovsky#92…". The identity keeps the row's width now.
+    await _pumpFriendList(
+      tester,
+      FriendshipListState(
+        acceptedFriends: [
+          _friend('jaggkovsky', 'jaggkovsky@x.com', shareAmount: -4.0),
+        ],
+      ),
+    );
+
+    final handle = tester.widget<Text>(find.text('jaggkovsky#0001'));
+    expect(
+      tester.getSize(find.text('jaggkovsky#0001')).width,
+      greaterThan(0),
+      reason: 'the handle must render, not collapse',
+    );
+    expect(handle.overflow, TextOverflow.ellipsis);
+    // It fits: no ellipsis is actually painted.
+    final painted = tester.renderObject<RenderParagraph>(
+      find.text('jaggkovsky#0001'),
+    );
+    expect(painted.didExceedMaxLines, isFalse);
   });
 
   testWidgets(
