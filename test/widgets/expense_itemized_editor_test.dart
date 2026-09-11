@@ -384,7 +384,7 @@ void main() {
       // which appears twice: the item card's line total + the expense total.
       expect(find.text('2.50'), findsWidgets);
       expect(find.text(l10n.toCurrency(5)), findsNWidgets(2));
-      expect(find.textContaining('€0.00'), findsNothing);
+      expect(find.textContaining('EUR 0.00'), findsNothing);
     },
   );
 

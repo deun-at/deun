@@ -374,8 +374,8 @@ void main() {
           const PersonalSummarySection(range: StatsRange.sixMonths),
         );
         // JPY has the largest absolute share, so it is the primary.
-        expect(find.text('¥60,000'), findsOneWidget); // your share
-        expect(find.text('¥90,000'), findsOneWidget); // you paid, same currency
+        expect(find.text('JPY 60,000'), findsOneWidget); // your share
+        expect(find.text('JPY 90,000'), findsOneWidget); // you paid, same currency
         // Exactly two currencies means exactly one is hidden inline, and the
         // disclosure says one — selector mode changes the wording, never the
         // count, so it can list the primary too without overstating.
@@ -468,8 +468,8 @@ void main() {
         tester,
         const PersonalGroupsSection(range: StatsRange.sixMonths),
       );
-      expect(find.text('€300.00'), findsOneWidget);
-      expect(find.text('¥60,000'), findsOneWidget);
+      expect(find.text('EUR 300.00'), findsOneWidget);
+      expect(find.text('JPY 60,000'), findsOneWidget);
     });
   });
 

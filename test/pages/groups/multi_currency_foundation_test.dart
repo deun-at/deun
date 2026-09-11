@@ -92,28 +92,30 @@ void main() {
       en = await AppLocalizations.delegate.load(const Locale('en'));
       de = await AppLocalizations.delegate.load(const Locale('de'));
     });
-
-    test('USD in en-US renders "\$1,234.56"', () {
-      expect(en.toCurrency(1234.56, 'USD'), '\$1,234.56');
+    test('USD renders "USD 1,234.56" in en', () {
+      expect(en.toCurrency(1234.56, 'USD'), 'USD 1,234.56');
     });
 
-    test('EUR in de-DE renders symbol after the amount ("1.234,56 €")', () {
-      final s = de.toCurrency(1234.56, 'EUR');
-      expect(s, contains('1.234,56'));
-      expect(s.trimRight().endsWith('€'), isTrue);
-    });
-
-    test('symbol differs by currency within the same locale (USD vs EUR)', () {
-      expect(en.toCurrency(1234.56, 'USD'), startsWith('\$'));
-      expect(en.toCurrency(1234.56, 'EUR'), startsWith('€'));
-      expect(
-        en.toCurrency(1234.56, 'USD'),
-        isNot(en.toCurrency(1234.56, 'EUR')),
-      );
+    test('de keeps the code in front and changes only the separators', () {
+      // Symbol placement used to flip per locale ("1.234,56 €"); the ISO code
+      // never does, so the reading order is the same in every locale.
+      expect(de.toCurrency(1234.56, 'EUR'), 'EUR 1.234,56');
     });
 
     test(
-      'relabel-not-convert: same amount, same digits, only the symbol changes',
+      'the code differs by currency within the same locale (USD vs EUR)',
+      () {
+        expect(en.toCurrency(1234.56, 'USD'), startsWith('USD '));
+        expect(en.toCurrency(1234.56, 'EUR'), startsWith('EUR '));
+        expect(
+          en.toCurrency(1234.56, 'USD'),
+          isNot(en.toCurrency(1234.56, 'EUR')),
+        );
+      },
+    );
+
+    test(
+      'relabel-not-convert: same amount, same digits, only the code changes',
       () {
         // Changing a group's currency relabels amounts without converting values.
         expect(en.toCurrency(1234.56, 'USD'), contains('1,234.56'));
@@ -121,14 +123,14 @@ void main() {
       },
     );
 
-    test(
-      'no amount is formatted with a hardcoded € — default code drives the symbol',
-      () {
-        // The default (EUR) still yields €, but via the currency code path.
-        expect(en.toCurrency(5), en.toCurrency(5, 'EUR'));
-        expect(en.toCurrency(5, 'USD'), isNot(contains('€')));
-      },
-    );
+    test('no amount carries a currency symbol at all', () {
+      expect(en.toCurrency(5), en.toCurrency(5, 'EUR'));
+      for (final code in const ['EUR', 'USD', 'GBP', 'JPY', 'CHF']) {
+        final s = en.toCurrency(5, code);
+        expect(RegExp(r'[^\x00-\x7F]').hasMatch(s), isFalse, reason: s);
+        expect(s, isNot(contains(r'$')));
+      }
+    });
   });
 
   group('MoneyText renders per-group currency', () {
@@ -143,7 +145,7 @@ void main() {
     );
 
     testWidgets(
-      'a USD group and an EUR group show their own symbols side by side',
+      'a USD group and an EUR group show their own codes side by side',
       (tester) async {
         await tester.pumpWidget(
           _harness(
@@ -157,17 +159,17 @@ void main() {
         );
         await tester.pump();
 
-        expect(find.text('\$1,234.56'), findsOneWidget);
-        expect(find.text('€1,234.56'), findsOneWidget);
+        expect(find.text('USD 1,234.56'), findsOneWidget);
+        expect(find.text('EUR 1,234.56'), findsOneWidget);
       },
     );
 
-    testWidgets('MoneyText defaults to the EUR symbol when no code is given', (
+    testWidgets('MoneyText defaults to EUR when no currency is given', (
       tester,
     ) async {
       await tester.pumpWidget(_harness(const MoneyText(1234.56)));
       await tester.pump();
-      expect(find.text('€1,234.56'), findsOneWidget);
+      expect(find.text('EUR 1,234.56'), findsOneWidget);
     });
   });
 }

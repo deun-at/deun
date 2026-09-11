@@ -861,7 +861,7 @@ void main() {
       );
       expect(
         formatCurrencyAmounts(result.settledAmounts, const Locale('en')),
-        '¥3,000 + €30.00',
+        'JPY 3,000 + EUR 30.00',
       );
       expect(result.isComplete, isTrue);
     });
@@ -876,7 +876,7 @@ void main() {
       );
       expect(
         formatCurrencyAmounts(result.settledAmounts, const Locale('en')),
-        '€25.50',
+        'EUR 25.50',
       );
     });
   });

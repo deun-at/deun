@@ -233,37 +233,21 @@ bool isSettled(double amount, Currency currency) =>
 /// any amount rendered without an explicit group currency falls back to it.
 const String kDefaultCurrencyCode = 'EUR';
 
-/// The locale-aware currency symbol for [currencyCode] (e.g. "$", "£", "€"),
-/// used for bare amount-input adornments.
-String currencySymbolFor(String localeName, String currencyCode) =>
-    NumberFormat.simpleCurrency(
-      locale: localeName,
-      name: currencyCode,
-    ).currencySymbol;
-
-/// The canonical money string: [amount] in [currency], with [locale]'s grouping,
-/// decimal separator and symbol placement, at the currency's own decimal digits.
-/// "¥3,000" in `en` and "3.000 ¥" in `de`; "$1,234.56" and "1.234,56 $". A
-/// 0-decimal currency never renders a fractional part.
+/// The canonical money string: the currency's ISO code, a space, then [amount]
+/// with [locale]'s grouping and decimal separator at the currency's own
+/// decimal digits. "JPY 3,000" in `en`, "JPY 3.000" in `de`; "EUR 1,234.56" and
+/// "EUR 1.234,56". A 0-decimal currency never renders a fractional part.
+///
+/// The app renders no currency symbols anywhere. A symbol cannot identify a
+/// currency: seven supported currencies render as "$", four as "kr" and two as
+/// "¥". The two whose symbol IS unique (CHF, RON) achieve that by being their
+/// own ISO code. So the code does the job in every case and the symbol in none
+/// of them, and one form everywhere beats a rule about where a symbol is safe.
+///
+/// Unlike symbol placement, which flips per locale ("$1,234.56" vs
+/// "1.234,56 $"), the code always leads. Only the separators follow the locale,
+/// so the reading order is one thing the user never has to relearn.
 String formatMoney(double amount, Currency currency, Locale locale) =>
-    NumberFormat.simpleCurrency(
-      locale: locale.toString(),
-      name: currency.code,
-      decimalDigits: currency.decimalDigits,
-    ).format(amount);
-
-/// Money that has to IDENTIFY its currency rather than merely decorate it:
-/// the ISO code, a space, then the bare amount — "CHF 4.50", "JPY 3,000".
-///
-/// The symbol is the wrong tool wherever more than one currency can appear at
-/// once. Seven supported currencies render as "$" and four as "kr", so a symbol
-/// does not say which; and CHF and RON use their code AS their symbol, so
-/// pairing the two repeats it. The code is unique by construction.
-///
-/// Use this for foreign amounts (an expense's entered amount, a cross-currency
-/// list) and keep [formatMoney] for amounts inside a group, where the group's
-/// single currency is already established and the symbol reads more naturally.
-String formatMoneyQualified(double amount, Currency currency, Locale locale) =>
     '${currency.code} ${formatAmountOnly(amount, currency, locale)}';
 
 /// The same number without a symbol, for the few places that render the symbol

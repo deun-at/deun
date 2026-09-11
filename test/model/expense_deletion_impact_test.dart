@@ -215,12 +215,12 @@ void main() {
       expect(de.expenseDeleteSettledTitle, isNotEmpty);
       expect(de.expenseDeleteSettledTitle, isNot(en.expenseDeleteSettledTitle));
 
-      final dePayback = de.expenseDeletePaybackMessage('12,50 €', 'Bob');
+      final dePayback = de.expenseDeletePaybackMessage('EUR 12,50', 'Bob');
       expect(dePayback, contains('Bob'));
-      expect(dePayback, contains('12,50 €'));
+      expect(dePayback, contains('EUR 12,50'));
       expect(
         dePayback,
-        isNot(en.expenseDeletePaybackMessage('12,50 €', 'Bob')),
+        isNot(en.expenseDeletePaybackMessage('EUR 12,50', 'Bob')),
       );
 
       expect(de.expenseDeleteSettledMessage(2), contains('2'));

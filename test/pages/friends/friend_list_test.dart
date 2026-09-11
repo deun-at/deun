@@ -505,7 +505,7 @@ void main() {
     await _pumpFriendList(tester, FriendshipListState(acceptedFriends: [f]));
 
     // The primary (JPY) is inline; one other currency is marked.
-    expect(find.text('¥3,000'), findsOneWidget);
+    expect(find.text('JPY 3,000'), findsOneWidget);
     expect(find.text(l10n.friendOtherCurrencies(1)), findsOneWidget);
 
     // The row has NO expand target of its own: exactly one InkWell, the row's.

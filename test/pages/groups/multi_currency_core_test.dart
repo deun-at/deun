@@ -15,50 +15,45 @@ void main() {
   const en = Locale('en');
   const de = Locale('de');
 
-  group('formatMoney is currency- and locale-aware', () {
-    // German currency formatting places a NO-BREAK SPACE (U+00A0), not a
-    // plain space, between the amount and a trailing symbol — standard `intl`
-    // German locale data.
-    test('JPY renders "¥3,000" in en and "3.000 ¥" in de', () {
-      expect(formatMoney(3000, Currency.jpy, en), '¥3,000');
-      expect(formatMoney(3000, Currency.jpy, de), '3.000 ¥');
+  group('formatMoney names the currency by its ISO code', () {
+    // The app renders NO currency symbols. A symbol cannot identify a
+    // currency — seven supported currencies render as "$", four as "kr" and
+    // two as "¥" — and the two that could (CHF, RON) are their own code
+    // anyway. One form everywhere beats a rule about when a symbol is safe.
+    test('the code leads, in both locales', () {
+      expect(formatMoney(3000, Currency.jpy, en), 'JPY 3,000');
+      expect(formatMoney(3000, Currency.jpy, de), 'JPY 3.000');
+      expect(formatMoney(1234.56, Currency.usd, en), 'USD 1,234.56');
+      expect(formatMoney(1234.56, Currency.usd, de), 'USD 1.234,56');
+      expect(formatMoney(1234.56, Currency.eur, en), 'EUR 1,234.56');
+      expect(formatMoney(1234.56, Currency.eur, de), 'EUR 1.234,56');
     });
 
-    test('USD renders "\$1,234.56" in en and "1.234,56 \$" in de', () {
-      expect(formatMoney(1234.56, Currency.usd, en), r'$1,234.56');
-      expect(formatMoney(1234.56, Currency.usd, de), '1.234,56 \$');
-    });
-
-    test('EUR is unchanged in both locales', () {
-      expect(formatMoney(1234.56, Currency.eur, en), '€1,234.56');
-      expect(formatMoney(1234.56, Currency.eur, de), '1.234,56 €');
-    });
-
-    test('formatMoneyQualified leads with the ISO code, never the symbol', () {
-      expect(formatMoneyQualified(4.50, Currency.chf, en), 'CHF 4.50');
-      expect(formatMoneyQualified(3000, Currency.jpy, en), 'JPY 3,000');
-    });
-
-    test(
-      'formatMoneyQualified never repeats a code that is its own symbol',
-      () {
-        // "CHF CHF4.50" is the shape this exists to make impossible — and the
-        // seven currencies sharing "$" are the reason a symbol cannot identify
-        // a currency on its own.
+    test('placement does not flip with the locale, only the separators', () {
+      // Symbol placement is locale-dependent ("$1,234.56" vs "1.234,56 $");
+      // code placement deliberately is not, so one reading order holds
+      // everywhere.
+      for (final l in const [en, de]) {
         for (final c in kSupportedCurrencies) {
-          final s = formatMoneyQualified(1, c, en);
-          expect(
-            c.code.allMatches(s).length,
-            1,
-            reason: '${c.code} rendered "$s"',
-          );
-          expect(s.startsWith('${c.code} '), isTrue, reason: s);
+          final s = formatMoney(1234.56, c, l);
+          expect(s.startsWith('${c.code} '), isTrue, reason: '$c in $l: "$s"');
         }
-      },
-    );
+      }
+    });
 
-    test('formatMoneyQualified keeps the currency\'s own decimal digits', () {
-      expect(formatMoneyQualified(1234.56, Currency.jpy, en), 'JPY 1,235');
+    test('no symbol glyph survives anywhere in the output', () {
+      for (final l in const [en, de]) {
+        for (final c in kSupportedCurrencies) {
+          final s = formatMoney(1234.56, c, l);
+          expect(
+            RegExp(r'[^\x00-\x7F]').hasMatch(s),
+            isFalse,
+            reason: '${c.code} in $l rendered a non-ASCII glyph: "$s"',
+          );
+          // And never twice: "CHF CHF1,234.56" is the shape to make impossible.
+          expect(c.code.allMatches(s).length, 1, reason: s);
+        }
+      }
     });
 
     test('no 0-decimal currency ever renders a fractional part', () {
@@ -97,8 +92,8 @@ void main() {
     });
 
     test('a 0-decimal code loses its fractional digits', () {
-      expect(enL10n.toCurrency(3000, 'JPY'), '¥3,000');
-      expect(deL10n.toCurrency(3000, 'JPY'), '3.000 ¥');
+      expect(enL10n.toCurrency(3000, 'JPY'), 'JPY 3,000');
+      expect(deL10n.toCurrency(3000, 'JPY'), 'JPY 3.000');
     });
 
     test('an unknown code falls back to EUR instead of throwing', () {
@@ -106,8 +101,8 @@ void main() {
     });
 
     test('2-decimal formatting is unchanged', () {
-      expect(enL10n.toCurrency(1234.56, 'USD'), r'$1,234.56');
-      expect(deL10n.toCurrency(1234.56, 'EUR'), '1.234,56 €');
+      expect(enL10n.toCurrency(1234.56, 'USD'), 'USD 1,234.56');
+      expect(deL10n.toCurrency(1234.56, 'EUR'), 'EUR 1.234,56');
     });
   });
 
@@ -191,7 +186,7 @@ void main() {
         ),
       );
       await tester.pump();
-      expect(find.text(r'$1,234.56'), findsOneWidget);
+      expect(find.text('USD 1,234.56'), findsOneWidget);
     });
 
     testWidgets('an omitted currency falls back to the scope', (tester) async {
@@ -201,7 +196,7 @@ void main() {
         ),
       );
       await tester.pump();
-      expect(find.text('¥3,000'), findsOneWidget);
+      expect(find.text('JPY 3,000'), findsOneWidget);
     });
 
     testWidgets('with no scope mounted it falls back to EUR, not a throw', (
@@ -209,7 +204,7 @@ void main() {
     ) async {
       await tester.pumpWidget(harness(const MoneyText(1234.56)));
       await tester.pump();
-      expect(find.text('€1,234.56'), findsOneWidget);
+      expect(find.text('EUR 1,234.56'), findsOneWidget);
     });
 
     testWidgets('a 0-decimal currency renders no fractional part', (
@@ -219,7 +214,7 @@ void main() {
         harness(const MoneyText(2500.6, currency: Currency.jpy)),
       );
       await tester.pump();
-      expect(find.text('¥2,501'), findsOneWidget);
+      expect(find.text('JPY 2,501'), findsOneWidget);
     });
 
     testWidgets('the German locale places the symbol after the amount', (
@@ -232,7 +227,7 @@ void main() {
         ),
       );
       await tester.pump();
-      expect(find.text('3.000 ¥'), findsOneWidget);
+      expect(find.text('JPY 3.000'), findsOneWidget);
     });
 
     testWidgets('a USD group and an EUR group show their own symbols', (
@@ -249,8 +244,8 @@ void main() {
         ),
       );
       await tester.pump();
-      expect(find.text(r'$1,234.56'), findsOneWidget);
-      expect(find.text('€1,234.56'), findsOneWidget);
+      expect(find.text('USD 1,234.56'), findsOneWidget);
+      expect(find.text('EUR 1,234.56'), findsOneWidget);
     });
   });
 }

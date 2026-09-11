@@ -545,7 +545,7 @@ class GroupCurrencyField extends StatelessWidget {
                 children: [
                   Expanded(
                     child: Text(
-                      selected.pickerLabel,
+                      selected.code,
                       style: theme.textTheme.titleMedium?.copyWith(
                         color: locked
                             ? theme.colorScheme.onSurfaceVariant

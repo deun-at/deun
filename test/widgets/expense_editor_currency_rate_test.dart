@@ -257,6 +257,15 @@ class _FakePrefs {
         });
   }
 }
+/// The code shown in the editor's "Entered in" row.
+///
+/// Targeted rather than a bare `find.text(code)`: the amount hero renders the
+/// same code beside the figure, so an unqualified finder matches twice.
+Finder _entryCurrencyLabel(String code) => find.descendant(
+  of: find.byKey(const ValueKey('expense_entry_currency')),
+  matching: find.text(code),
+);
+
 
 Future<void> _pickCurrency(WidgetTester tester, String code) async {
   await tester.tap(find.byKey(const ValueKey('expense_entry_currency')));
@@ -267,7 +276,7 @@ Future<void> _pickCurrency(WidgetTester tester, String code) async {
   // silently misses and leaves the sheet open, blocking every later tap.
   // Look the row up by the label the picker actually renders: CHF and RON are
   // their own symbols, so they have no " · " half to match on.
-  final target = find.text(Currency.fromCode(code).pickerLabel);
+  final target = find.text(Currency.fromCode(code).code);
   await tester.scrollUntilVisible(
     target,
     100,
@@ -416,7 +425,7 @@ void main() {
     'the editor defaults to the group currency and shows no rate field',
     (tester) async {
       await pumpEditor(tester, currencyCode: 'EUR');
-      expect(find.text('EUR · €'), findsOneWidget);
+      expect(_entryCurrencyLabel('EUR'), findsOneWidget);
       expect(find.byKey(const ValueKey('expense_rate_field')), findsNothing);
     },
   );
@@ -483,7 +492,7 @@ void main() {
       '0.0058',
     );
     await tester.pumpAndSettle();
-    expect(find.textContaining('€17.40'), findsOneWidget);
+    expect(find.textContaining('EUR 17.40'), findsOneWidget);
   });
 
   testWidgets(
@@ -510,7 +519,7 @@ void main() {
       await tester.pumpAndSettle();
       final l10n = await AppLocalizations.delegate.load(const Locale('en'));
       expect(find.byKey(const ValueKey('expense_rate_preview')), findsNothing);
-      expect(find.textContaining('€0.00'), findsNothing);
+      expect(find.textContaining('EUR 0.00'), findsNothing);
       expect(find.text(l10n.expenseRateRequired), findsOneWidget);
       expect(find.byKey(const ValueKey('expense_rate_reset')), findsNothing);
     },
@@ -536,7 +545,7 @@ void main() {
     await pumpEditor(tester, currencyCode: 'EUR', initialAmount: 3000);
     await _pickCurrency(tester, 'JPY');
     // JPY has 0 decimal digits: the hero drops the fractional part.
-    expect(find.text('¥'), findsOneWidget);
+    expect(find.text('JPY'), findsWidgets);
     expect(find.text('3,000'), findsOneWidget);
     expect(find.text('3,000.00'), findsNothing);
   });
@@ -549,7 +558,7 @@ void main() {
         currencyCode: 'EUR',
         expense: convertedExpense(), // JPY / 0.0058 / 2026-08-16, amount 17.40
       );
-      expect(find.text('JPY · ¥'), findsOneWidget);
+      expect(_entryCurrencyLabel('JPY'), findsOneWidget);
       expect(
         tester
             .widget<TextField>(find.byKey(const ValueKey('expense_rate_field')))
@@ -634,7 +643,7 @@ void main() {
       // not a cleared field.
       expect(find.text('17.40'), findsOneWidget);
       expect(find.text('3,000'), findsNothing);
-      expect(find.text('EUR · €'), findsOneWidget);
+      expect(_entryCurrencyLabel('EUR'), findsOneWidget);
     },
   );
 
@@ -674,8 +683,8 @@ void main() {
 
       // The save converts each entry on its own (1.41 x3). Converting the
       // summed 4.50 once would preview 4.24 — a cent the ledger never stores.
-      expect(find.textContaining('€4.23'), findsOneWidget);
-      expect(find.textContaining('€4.24'), findsNothing);
+      expect(find.textContaining('EUR 4.23'), findsOneWidget);
+      expect(find.textContaining('EUR 4.24'), findsNothing);
     },
   );
 
@@ -701,7 +710,7 @@ void main() {
       );
       // The quantity survives the switch — the units are still claimable.
       expect(form.fields['expense_entry[0][quantity]']?.value, '3');
-      expect(find.text('EUR · €'), findsOneWidget);
+      expect(_entryCurrencyLabel('EUR'), findsOneWidget);
     },
   );
 
