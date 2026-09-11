@@ -81,7 +81,7 @@ already-shipped cross-group "home currency" conversion is **retired here** for t
   - The `http: ^1.2.0` dependency is removed from `pubspec.yaml`. `exchange_rate_service.dart` is its
     only importer in `lib/`, verified at prep time, so nothing else breaks — and after this the app
     genuinely has no HTTP client, which is the premise
-    [multi-currency-rate-source](../multi-currency-rate-source.md) rests its Edge Function decision on.
+    [multi-currency-rate-source](multi-currency-rate-source.md) rests its Edge Function decision on.
   - A user who had set a home currency, or who has a cached rates blob under
     `kExchangeRatesCachePrefKey`, sees no error and no empty state. Both stored preferences are ignored
     on read and never written again; leftover values are inert rather than migrated.
