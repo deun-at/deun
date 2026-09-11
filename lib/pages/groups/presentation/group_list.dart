@@ -1,7 +1,6 @@
 import 'dart:io';
 
 import 'package:deun/helper/currency_breakdown.dart';
-import 'package:deun/widgets/restyle/currency_breakdown_disclosure.dart';
 import 'package:deun/widgets/restyle/member_avatar.dart';
 import 'package:deun/widgets/restyle/money_text.dart';
 import 'package:deun/widgets/restyle/primary_button.dart';
@@ -162,8 +161,8 @@ class _GroupListState extends ConsumerState<GroupList> {
   Widget _buildList(List<Group> allGroups) {
     final l10n = AppLocalizations.of(context)!;
     final sorted = sortGroups(allGroups, isFavorite: (g) => g.isFavorite);
-    // Per-currency, never converted: the primary currency is rendered inline
-    // and the rest collapse behind the hero's disclosure.
+    // Per-currency, never converted: the primary currency is the hero's big
+    // number and the rest are stated beside it, one chip each.
     final breakdown = balancesByCurrency(allGroups);
     final overall = aggregateOverallBalance(
       allGroups,
@@ -364,13 +363,25 @@ class _OverallBalanceHero extends StatelessWidget {
 
     // Lead label only — the hero amount is now always white-on-ink (F90), so the
     // net sign drives just the wording, not a semantic color on the big number.
+    //
+    // Across currencies the label also NAMES the currency it is reporting.
+    // "Overall, you're owed €10.59" is false when the same user owes $4.00 and
+    // CHF2.14: there is no overall total across currencies, only a per-currency
+    // net, and the big number is whichever one is largest. Single-currency
+    // wording is untouched — there "overall" is exactly true.
+    final bool multiCurrency = !breakdown.isSingleCurrency;
+    final String code = overall.currency.code;
     final String leadLabel;
     if (settled) {
       leadLabel = l10n.homeOverallSettled;
     } else if (net > 0) {
-      leadLabel = l10n.homeOverallOwed;
+      leadLabel = multiCurrency
+          ? l10n.homeOverallOwedIn(code)
+          : l10n.homeOverallOwed;
     } else {
-      leadLabel = l10n.homeOverallOwe;
+      leadLabel = multiCurrency
+          ? l10n.homeOverallOweIn(code)
+          : l10n.homeOverallOwe;
     }
 
     return Container(
@@ -419,48 +430,64 @@ class _OverallBalanceHero extends StatelessWidget {
               animate: true,
             ),
           const SizedBox(height: 18),
-          Row(
-            children: [
-              Expanded(
-                child: _HeroStat(
-                  label: l10n.homeStatOwed,
-                  amount: overall.owed,
-                  currency: overall.currency,
-                  semantic: MoneySemantic.positive,
-                  onHero: onHero,
-                  onHeroMuted: onHeroMuted,
-                  background: semantic.success.withValues(
-                    alpha: isDark ? 0.18 : 0.16,
+          // Single currency: the owed/owe split, exactly as before.
+          //
+          // Several currencies: that split is dropped. `overall` is computed in
+          // the primary currency ONLY, so the chips would report "you owe 0"
+          // to a user who does owe money — just not in the currency that
+          // happened to be largest. The honest replacement is the other
+          // currencies themselves, stated outright rather than folded behind a
+          // disclosure: a debt the user has to tap to discover is a debt they
+          // forget. The disclosure widget stays in use on the friend sheet and
+          // the statistics hero, where the list can run long.
+          if (multiCurrency)
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                for (final entry in breakdown.others)
+                  _HeroCurrencyChip(
+                    entry: entry,
+                    onHero: onHero,
+                    onHeroMuted: onHeroMuted,
+                    background:
+                        (entry.amount < 0 ? semantic.danger : semantic.success)
+                            .withValues(alpha: isDark ? 0.18 : 0.16),
+                  ),
+              ],
+            )
+          else
+            Row(
+              children: [
+                Expanded(
+                  child: _HeroStat(
+                    label: l10n.homeStatOwed,
+                    amount: overall.owed,
+                    currency: overall.currency,
+                    semantic: MoneySemantic.positive,
+                    onHero: onHero,
+                    onHeroMuted: onHeroMuted,
+                    background: semantic.success.withValues(
+                      alpha: isDark ? 0.18 : 0.16,
+                    ),
                   ),
                 ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: _HeroStat(
-                  label: l10n.homeStatOwe,
-                  amount: overall.owe,
-                  currency: overall.currency,
-                  semantic: MoneySemantic.negative,
-                  onHero: onHero,
-                  onHeroMuted: onHeroMuted,
-                  background: semantic.danger.withValues(
-                    alpha: isDark ? 0.18 : 0.16,
+                const SizedBox(width: 12),
+                Expanded(
+                  child: _HeroStat(
+                    label: l10n.homeStatOwe,
+                    amount: overall.owe,
+                    currency: overall.currency,
+                    semantic: MoneySemantic.negative,
+                    onHero: onHero,
+                    onHeroMuted: onHeroMuted,
+                    background: semantic.danger.withValues(
+                      alpha: isDark ? 0.18 : 0.16,
+                    ),
                   ),
                 ),
-              ),
-            ],
-          ),
-          // Guarded, like the friend sheet and the personal hero: the spacer
-          // has to collapse with the disclosure, or an all-EUR hero grows 8px
-          // against "renders exactly as today". The widget also renders nothing
-          // when single-currency, so the two agree.
-          if (!breakdown.isSingleCurrency) ...[
-            const SizedBox(height: 8),
-            CurrencyBreakdownDisclosure(
-              breakdown: breakdown,
-              foreground: onHeroMuted,
+              ],
             ),
-          ],
         ],
       ),
     );
@@ -513,6 +540,61 @@ class _HeroStat extends StatelessWidget {
             amount,
             currency: currency,
             semantic: semantic,
+            style: textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// One currency's net inside the multi-currency hero: its ISO code over its
+/// bare amount, tinted by direction.
+///
+/// Shares [_HeroStat]'s shape so the hero reads as one family in both modes,
+/// but the label is the CURRENCY rather than a direction — the direction is
+/// already in the sign and the tint, and the currency is the thing the user
+/// cannot otherwise tell. The amount carries no symbol: the code above it has
+/// done the identifying, and seven supported currencies share "$".
+class _HeroCurrencyChip extends StatelessWidget {
+  const _HeroCurrencyChip({
+    required this.entry,
+    required this.onHero,
+    required this.onHeroMuted,
+    required this.background,
+  });
+
+  final CurrencyAmount entry;
+  final Color onHero;
+  final Color onHeroMuted;
+  final Color background;
+
+  @override
+  Widget build(BuildContext context) {
+    final textTheme = Theme.of(context).textTheme;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      decoration: BoxDecoration(
+        color: background,
+        borderRadius: BorderRadius.circular(14),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            entry.currency.code,
+            style: textTheme.labelMedium?.copyWith(
+              color: onHeroMuted,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          const SizedBox(height: 4),
+          MoneyText(
+            entry.amount,
+            currency: entry.currency,
+            semantic: MoneySemantic.auto,
+            showSymbol: false,
             style: textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
           ),
         ],
