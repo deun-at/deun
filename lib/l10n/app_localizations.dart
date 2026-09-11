@@ -296,6 +296,18 @@ abstract class AppLocalizations {
   /// **'Color'**
   String get groupColorLabel;
 
+  /// Placeholder in the currency picker's search field. Names both things the field accepts, since the list is 31 currencies long.
+  ///
+  /// In en, this message translates to:
+  /// **'Search code or name'**
+  String get currencyPickerSearchHint;
+
+  /// Empty state in the currency picker when the search matches nothing.
+  ///
+  /// In en, this message translates to:
+  /// **'No currency matches \"{query}\"'**
+  String currencyPickerNoMatches(String query);
+
   /// Section label above the group currency picker.
   ///
   /// In en, this message translates to:

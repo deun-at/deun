@@ -33,6 +33,8 @@
   "groupCreateTitle": "Neue Gruppe",
   "groupEditTitle": "Gruppe bearbeiten",
   "groupColorLabel": "Farbe",
+  "currencyPickerSearchHint": "Code oder Name suchen",
+  "currencyPickerNoMatches": "Keine Währung passt zu \"{query}\"",
   "groupCurrencyLabel": "Währung",
   "groupCurrencyRelabelNote": "Das Ändern der Währung beschriftet bestehende Beträge neu. Werte werden nicht umgerechnet.",
   "groupCurrencyLockedNote": "Die Währung ist gesperrt: Ausgaben in dieser Gruppe wurden in mehr als einer Währung erfasst.",

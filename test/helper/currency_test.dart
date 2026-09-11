@@ -112,26 +112,55 @@ void main() {
     expect({Currency.usd, Currency.fromCode('USD')}, hasLength(1));
   });
 
-  group('pickerLabel', () {
-    test('pairs the code with the symbol when they differ', () {
-      expect(Currency.eur.pickerLabel, 'EUR · €');
-      expect(Currency.usd.pickerLabel, r'USD · $');
-    });
-
-    test('collapses to the code alone when the symbol IS the code', () {
-      // CHF and RON are their own symbols; "CHF · CHF" is the bug this fixes.
-      expect(Currency.chf.pickerLabel, 'CHF');
-      expect(Currency.fromCode('RON').pickerLabel, 'RON');
-    });
-
-    test('no supported currency repeats a half of its own label', () {
+  group('name', () {
+    test('every supported currency has a non-empty, distinct name', () {
+      final names = <String>{};
       for (final c in kSupportedCurrencies) {
-        final halves = c.pickerLabel.split(' · ');
+        expect(c.name.trim(), isNotEmpty, reason: c.code);
+        expect(names.add(c.name), isTrue, reason: '${c.name} is duplicated');
+      }
+    });
+
+    test('the name is not just the code back again', () {
+      for (final c in kSupportedCurrencies) {
+        expect(c.name.toUpperCase(), isNot(c.code), reason: c.code);
+      }
+    });
+  });
+
+  group('matches — the picker search', () {
+    test('matches the ISO code, case-insensitively', () {
+      expect(Currency.chf.matches('chf'), isTrue);
+      expect(Currency.chf.matches('CHF'), isTrue);
+      expect(Currency.chf.matches('usd'), isFalse);
+    });
+
+    test('matches the name on any substring', () {
+      // Someone who knows "Swiss Franc" but not "CHF" still finds it.
+      expect(Currency.chf.matches('swiss'), isTrue);
+      expect(Currency.chf.matches('franc'), isTrue);
+      expect(Currency.chf.matches('Franc'), isTrue);
+    });
+
+    test('an empty or blank query matches everything', () {
+      // Clearing the field restores the list; it must not empty it.
+      for (final q in const ['', '   ', '\t']) {
         expect(
-          halves.toSet(),
-          hasLength(halves.length),
-          reason: '${c.code} repeats a half in "${c.pickerLabel}"',
+          kSupportedCurrencies.where((c) => c.matches(q)).length,
+          kSupportedCurrencies.length,
+          reason: 'query "$q"',
         );
+      }
+    });
+
+    test('a query matching nothing yields an empty list, not everything', () {
+      expect(kSupportedCurrencies.where((c) => c.matches('zzzz')), isEmpty);
+    });
+
+    test('every supported currency is reachable by its own code', () {
+      for (final c in kSupportedCurrencies) {
+        final hits = kSupportedCurrencies.where((x) => x.matches(c.code));
+        expect(hits, contains(c), reason: '${c.code} cannot find itself');
       }
     });
   });

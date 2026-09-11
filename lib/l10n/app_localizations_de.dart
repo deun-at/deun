@@ -114,6 +114,14 @@ class AppLocalizationsDe extends AppLocalizations {
   String get groupColorLabel => 'Farbe';
 
   @override
+  String get currencyPickerSearchHint => 'Code oder Name suchen';
+
+  @override
+  String currencyPickerNoMatches(String query) {
+    return 'Keine Währung passt zu \"$query\"';
+  }
+
+  @override
   String get groupCurrencyLabel => 'Währung';
 
   @override
