@@ -185,18 +185,21 @@ void main() {
         await tester.pumpAndSettle();
 
         expect(find.text('EUR'), findsOneWidget);
-        expect(find.text('-€25.50'), findsOneWidget);
+        // The code identifies the row, so the amount is bare — a symbol here
+        // would either duplicate the code (CHF) or fail to distinguish the
+        // seven currencies that share "$".
+        expect(find.text('-25.50'), findsOneWidget);
         // The primary is NOT repeated in the expanded list when there is no
         // selector.
         expect(find.text('JPY'), findsNothing);
       },
     );
 
-    testWidgets('a currency whose symbol is its code is not labelled twice', (
+    testWidgets('a currency whose symbol is its code is labelled once', (
       tester,
     ) async {
-      // CHF (and RON) render their symbol as the code itself, so printing the
-      // code beside the amount reads "CHF  -CHF2.14".
+      // CHF (and RON) render their symbol as the code itself. The code column
+      // carries the identity; the amount must not repeat it.
       final l10n = await AppLocalizations.delegate.load(const Locale('en'));
       await tester.pumpWidget(
         harness(
@@ -214,28 +217,39 @@ void main() {
       await tester.tap(find.text(l10n.currencyBreakdownMore(1)));
       await tester.pumpAndSettle();
 
-      expect(find.textContaining('2.14'), findsOneWidget);
-      expect(find.text('CHF'), findsNothing);
+      expect(find.text('CHF'), findsOneWidget);
+      expect(find.text('-2.14'), findsOneWidget);
     });
 
-    testWidgets('a currency with a distinct symbol keeps its code label', (
+    testWidgets('every disclosed row carries its own code label', (
       tester,
     ) async {
+      // The regression this guards: an unlabelled row reads as a continuation
+      // of the row above it.
       final l10n = await AppLocalizations.delegate.load(const Locale('en'));
       await tester.pumpWidget(
         harness(
           const CurrencyBreakdownDisclosure(
-            breakdown: twoCurrencies,
+            breakdown: CurrencyBreakdown(
+              primary: CurrencyAmount(Currency.eur, 10.59),
+              others: [
+                CurrencyAmount(Currency.usd, -4),
+                CurrencyAmount(Currency.chf, -2.14),
+              ],
+            ),
             foreground: Colors.black,
           ),
         ),
       );
       await tester.pump();
 
-      await tester.tap(find.text(l10n.currencyBreakdownMore(1)));
+      await tester.tap(find.text(l10n.currencyBreakdownMore(2)));
       await tester.pumpAndSettle();
 
-      expect(find.text('EUR'), findsOneWidget);
+      expect(find.text('USD'), findsOneWidget);
+      expect(find.text('CHF'), findsOneWidget);
+      expect(find.text('-4.00'), findsOneWidget);
+      expect(find.text('-2.14'), findsOneWidget);
     });
 
     testWidgets('collapsing restores the inline state', (tester) async {
@@ -281,11 +295,11 @@ void main() {
       final ctx = tester.element(find.byType(CurrencyBreakdownDisclosure));
       final semantic = Theme.of(ctx).extension<SemanticColors>()!;
       expect(
-        tester.widget<Text>(find.text('-€25.50')).style?.color,
+        tester.widget<Text>(find.text('-25.50')).style?.color,
         semantic.danger,
       );
       expect(
-        tester.widget<Text>(find.text('\$40.00')).style?.color,
+        tester.widget<Text>(find.text('40.00')).style?.color,
         semantic.success,
       );
     });

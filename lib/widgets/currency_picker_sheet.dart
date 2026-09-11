@@ -54,7 +54,7 @@ class _CurrencyPickerSheet extends StatelessWidget {
                     children: [
                       Expanded(
                         child: Text(
-                          '${c.code} · ${c.symbol}',
+                          c.pickerLabel,
                           style: Theme.of(context).textTheme.titleSmall,
                         ),
                       ),

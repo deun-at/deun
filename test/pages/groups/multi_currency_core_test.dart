@@ -34,6 +34,33 @@ void main() {
       expect(formatMoney(1234.56, Currency.eur, de), '1.234,56 €');
     });
 
+    test('formatMoneyQualified leads with the ISO code, never the symbol', () {
+      expect(formatMoneyQualified(4.50, Currency.chf, en), 'CHF 4.50');
+      expect(formatMoneyQualified(3000, Currency.jpy, en), 'JPY 3,000');
+    });
+
+    test(
+      'formatMoneyQualified never repeats a code that is its own symbol',
+      () {
+        // "CHF CHF4.50" is the shape this exists to make impossible — and the
+        // seven currencies sharing "$" are the reason a symbol cannot identify
+        // a currency on its own.
+        for (final c in kSupportedCurrencies) {
+          final s = formatMoneyQualified(1, c, en);
+          expect(
+            c.code.allMatches(s).length,
+            1,
+            reason: '${c.code} rendered "$s"',
+          );
+          expect(s.startsWith('${c.code} '), isTrue, reason: s);
+        }
+      },
+    );
+
+    test('formatMoneyQualified keeps the currency\'s own decimal digits', () {
+      expect(formatMoneyQualified(1234.56, Currency.jpy, en), 'JPY 1,235');
+    });
+
     test('no 0-decimal currency ever renders a fractional part', () {
       for (final c in kSupportedCurrencies.where((c) => c.decimalDigits == 0)) {
         for (final l in const [en, de]) {

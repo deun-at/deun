@@ -124,24 +124,31 @@ class _BreakdownRow extends StatelessWidget {
       onTap: onTap,
       child: Padding(
         padding: const EdgeInsets.symmetric(vertical: 6),
+        // A two-column table, not a label glued to an amount: the code column
+        // is fixed-width so codes and amounts each align down the list, and
+        // EVERY row carries its code. An unlabelled row (CHF, RON, whose
+        // symbol is their own code) used to read as a continuation of the row
+        // above it. The amount is correspondingly bare — see
+        // [MoneyText.showSymbol].
         child: Row(
           children: [
-            // A currency whose symbol IS its code — CHF, RON — would otherwise
-            // read "CHF  -CHF2.14". The amount already identifies it.
-            if (entry.currency.code != entry.currency.symbol) ...[
-              Text(
+            SizedBox(
+              width: 44,
+              child: Text(
                 entry.currency.code,
                 style: theme.textTheme.labelMedium?.copyWith(
                   color: foreground,
                   fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+                  fontFeatures: const [FontFeature.tabularFigures()],
                 ),
               ),
-              const SizedBox(width: 10),
-            ],
+            ),
+            const SizedBox(width: 10),
             MoneyText(
               entry.amount,
               currency: entry.currency,
               semantic: MoneySemantic.auto,
+              showSymbol: false,
               style: theme.textTheme.titleSmall,
             ),
           ],
