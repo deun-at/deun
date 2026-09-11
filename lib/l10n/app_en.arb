@@ -119,6 +119,17 @@
   "@groupEditTitle": {},
   "groupColorLabel": "Color",
   "@groupColorLabel": {},
+  "currencyPickerSearchHint": "Search code or name",
+  "@currencyPickerSearchHint": {
+    "description": "Placeholder in the currency picker's search field. Names both things the field accepts, since the list is 31 currencies long."
+  },
+  "currencyPickerNoMatches": "No currency matches \"{query}\"",
+  "@currencyPickerNoMatches": {
+    "description": "Empty state in the currency picker when the search matches nothing.",
+    "placeholders": {
+      "query": { "type": "String" }
+    }
+  },
   "groupCurrencyLabel": "Currency",
   "@groupCurrencyLabel": {
     "description": "Section label above the group currency picker."
