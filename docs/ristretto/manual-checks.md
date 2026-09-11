@@ -149,11 +149,12 @@ combinations (eight awkward totals x six group sizes) every expense's shares sum
 the members' nets cancel, with the running net over the whole run at zero. A change that started
 leaking a fraction would fail there rather than in somebody's group.
 
-One consequence worth knowing: within a single expense the spare minor unit always falls on the same
-member, because `apportionCurrency` breaks ties on the key so the breakdown is stable between
-renders. It does not rotate across expenses. This costs nobody anything — settlement runs off the
-equal `percentage`, not off the displayed share — but the same name will read a cent heavier
-whenever a split does not divide.
+Who carries the indivisible unit is decided, not incidental: **the payer does** (Jakob, 2026-09-11).
+They are already fronting the money, and the first implementation broke the tie on the member's key,
+which would have quietly taxed whoever's address sorted first in every group they were in. The rule
+is a tie-break only — a member with a genuinely larger discarded fraction still has the better claim,
+so the payer never distorts an uneven split. A payer who holds no share in the expense absorbs
+nothing, since there is nothing of theirs to absorb it with.
 
 **Client-side is already fixed; the server half is not.** `buildMemberBreakdown` now apportions with
 `apportionCurrency`, so an expense's own breakdown sums to its total (commit `4e26d5f`). The

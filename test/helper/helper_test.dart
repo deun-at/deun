@@ -261,6 +261,46 @@ void main() {
       expect(roundCurrency(sum, Currency.eur), -7.00);
     });
 
+    test('priority takes the spare unit when the fractions tie', () {
+      final out = apportionCurrency(
+        {'a': 10 / 3, 'b': 10 / 3, 'c': 10 / 3},
+        10.00,
+        Currency.eur,
+        priority: 'c',
+      );
+
+      expect(out['c'], 3.34);
+      expect(out['a'], 3.33);
+      expect(out['b'], 3.33);
+    });
+
+    test('priority never overrides a larger discarded fraction', () {
+      // 'b' discards .67 against 'a''s .33, so 'b' has the better claim on the
+      // cent whoever paid. Priority is a tie-break, not a veto — otherwise the
+      // payer would distort a genuinely uneven split.
+      final out = apportionCurrency(
+        {'a': 10 / 3, 'b': 20 / 3},
+        10.00,
+        Currency.eur,
+        priority: 'a',
+      );
+
+      expect(out['b'], 6.67);
+      expect(out['a'], 3.33);
+    });
+
+    test('a priority key that holds no share changes nothing', () {
+      final out = apportionCurrency(
+        {'a': 10 / 3, 'b': 10 / 3, 'c': 10 / 3},
+        10.00,
+        Currency.eur,
+        priority: 'someone-else',
+      );
+
+      expect(out.values.fold<double>(0, (s, v) => s + v), 10.00);
+      expect(out['a'], 3.34);
+    });
+
     test('an empty map apportions nothing', () {
       expect(apportionCurrency(<String, double>{}, 10, Currency.eur), isEmpty);
     });
