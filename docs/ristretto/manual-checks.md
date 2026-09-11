@@ -194,10 +194,14 @@ carry `[human]` criteria that nobody has ever observed. Check here before shippi
     date frozen on the row, not the expense's own 5 Sep. Splits 38.81 / 38.81 / 38.80 = 116.42.
   - Left behind: one expense named `RateSource-Check` in `EUR-Test`, which moved that group's
     balance from EUR 10.59 to 88.20. Delete when the test data is next cleared.
-  - **Not covered by this walk:** CHF still has a saved rate of 0.9432 from August, and it
-    correctly shadows the prefill — no fetch is issued and no `Rate for …` line shows. Worth
-    knowing that any user with a saved rate sees no prefill for that pair until they clear it.
-    That is the designed precedence, not a defect, but it is invisible until you look for it.
+  - CHF still had a saved rate of 0.9432 from August, and it correctly shadowed the prefill — no
+    fetch, no `Rate for …` line. The precedence is by design: a remembered rate is one the user
+    typed, so it wins.
+  - **A defect that walk missed, and Jakob found: `Clear saved rate` did not then fetch.** The
+    field just emptied. Re-walked after the fix on the same emulator: with a saved 0.95 showing,
+    tapping `Clear saved rate` now fills `1 CHF = 1.0581` under `Rate for Today` with a
+    `= EUR 105.81` preview, and the button disappears. Fixed in `2d6caf7`; the editor test suite
+    covers it as "clearing a saved rate fetches a fresh one".
 
 - [ ] **fix** · multi-currency-rate-source: **`BGN` has no rate from 2026 onward.** Found by step 8.
   `{"base":"BGN","quote":"EUR"}` returns `upstream_error` for 2026-06-01 and 2026-09-08, but
