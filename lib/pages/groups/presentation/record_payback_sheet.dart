@@ -96,11 +96,15 @@ class _RecordPaybackSheetState extends State<RecordPaybackSheet> {
   }
 
   Future<void> _pickMember(bool isPayer) async {
+    final l10n = AppLocalizations.of(context)!;
     final picked = await showPaidBySheet(
       context,
       members: widget.group.activeMembers,
       selectedEmail: isPayer ? _paidBy : _paidFor,
       currentUserEmail: _currentUserEmail,
+      title: isPayer
+          ? l10n.paybackRecordPaidByLabel
+          : l10n.paybackRecordPaidToLabel,
     );
     if (picked == null || !mounted) return;
     setState(() {

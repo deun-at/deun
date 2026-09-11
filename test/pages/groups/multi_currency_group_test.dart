@@ -192,6 +192,52 @@ void main() {
       },
     );
 
+    testWidgets('a currency whose symbol is its code is not labelled twice', (
+      tester,
+    ) async {
+      // CHF (and RON) render their symbol as the code itself, so printing the
+      // code beside the amount reads "CHF  -CHF2.14".
+      final l10n = await AppLocalizations.delegate.load(const Locale('en'));
+      await tester.pumpWidget(
+        harness(
+          const CurrencyBreakdownDisclosure(
+            breakdown: CurrencyBreakdown(
+              primary: CurrencyAmount(Currency.eur, 10),
+              others: [CurrencyAmount(Currency.chf, -2.14)],
+            ),
+            foreground: Colors.black,
+          ),
+        ),
+      );
+      await tester.pump();
+
+      await tester.tap(find.text(l10n.currencyBreakdownMore(1)));
+      await tester.pumpAndSettle();
+
+      expect(find.textContaining('2.14'), findsOneWidget);
+      expect(find.text('CHF'), findsNothing);
+    });
+
+    testWidgets('a currency with a distinct symbol keeps its code label', (
+      tester,
+    ) async {
+      final l10n = await AppLocalizations.delegate.load(const Locale('en'));
+      await tester.pumpWidget(
+        harness(
+          const CurrencyBreakdownDisclosure(
+            breakdown: twoCurrencies,
+            foreground: Colors.black,
+          ),
+        ),
+      );
+      await tester.pump();
+
+      await tester.tap(find.text(l10n.currencyBreakdownMore(1)));
+      await tester.pumpAndSettle();
+
+      expect(find.text('EUR'), findsOneWidget);
+    });
+
     testWidgets('collapsing restores the inline state', (tester) async {
       final l10n = await AppLocalizations.delegate.load(const Locale('en'));
       await tester.pumpWidget(

@@ -90,6 +90,63 @@ List<double> distributeCurrency(double total, int parts, Currency currency) {
   ];
 }
 
+/// Rounds every value in [values] to a whole minor unit of [currency] so the
+/// results sum to EXACTLY [total], handing the indivisible units to the values
+/// that discarded the most in rounding (largest remainder).
+///
+/// [distributeCurrency] is the equal-parts case of this. This one takes a split
+/// that is *already* uneven — percentages, shares, a manual split — and is what
+/// keeps a per-member breakdown adding up to the expense it belongs to. Rounding
+/// each share on its own instead is what made 100.01 across four members read
+/// 25.00 four times, a cent short of the expense it was describing.
+///
+/// Ties break on the key, not on map order: with four equal shares *somebody*
+/// has to carry the spare cent, and it must be the same somebody on every
+/// render.
+Map<K, double> apportionCurrency<K extends Comparable>(
+  Map<K, double> values,
+  double total,
+  Currency currency,
+) {
+  if (values.isEmpty) return <K, double>{};
+  final unit = currency.minorUnit;
+  // Nudge past float error (25.00 / 0.01 can land on 2499.999…) before flooring.
+  const epsilon = 1e-9;
+
+  final keys = values.keys.toList()..sort();
+  final units = <K, int>{};
+  final fractions = <K, double>{};
+  var assigned = 0;
+  for (final key in keys) {
+    final exact = (values[key] ?? 0) / unit + epsilon;
+    final floored = exact.floor();
+    units[key] = floored;
+    fractions[key] = exact - floored;
+    assigned += floored;
+  }
+
+  final order = [...keys]
+    ..sort((a, b) {
+      final byFraction = fractions[b]!.compareTo(fractions[a]!);
+      return byFraction != 0 ? byFraction : a.compareTo(b);
+    });
+
+  // Round-robin so the sum is exact even if the values never summed to [total].
+  var leftover = (roundCurrency(total, currency) / unit).round() - assigned;
+  for (var i = 0; leftover > 0; i++, leftover--) {
+    final key = order[i % order.length];
+    units[key] = units[key]! + 1;
+  }
+  for (var i = 0; leftover < 0; i++, leftover++) {
+    final key = order[order.length - 1 - (i % order.length)];
+    units[key] = units[key]! - 1;
+  }
+
+  return {
+    for (final key in keys) key: roundCurrency(units[key]! * unit, currency),
+  };
+}
+
 /// Parses a user-typed conversion rate, returning null for anything that is not
 /// a usable positive rate.
 ///

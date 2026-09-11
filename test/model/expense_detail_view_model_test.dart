@@ -1,3 +1,4 @@
+import 'package:deun/helper/helper.dart';
 import 'package:deun/pages/expenses/data/expense_entry_model.dart';
 import 'package:deun/pages/expenses/data/expense_detail_view_model.dart';
 import 'package:deun/pages/expenses/data/expense_model.dart';
@@ -56,11 +57,7 @@ void main() {
       final e = _expense(
         amount: 30,
         paidBy: 'a@test.com',
-        shareStat: const {
-          'a@test.com': 10,
-          'b@test.com': 10,
-          'c@test.com': 10,
-        },
+        shareStat: const {'a@test.com': 10, 'b@test.com': 10, 'c@test.com': 10},
       );
 
       final rows = buildMemberBreakdown(
@@ -127,6 +124,93 @@ void main() {
       final payer = rows.firstWhere((r) => r.email == 'a@test.com');
       expect(payer.share, 0);
       expect(payer.net, 10);
+    });
+
+    test('shares are whole minor units that sum to the expense total', () {
+      // 100.01 split four ways is 25.0025 each. Rounded independently for
+      // display that reads 25.00 four times — a cent less than the expense,
+      // which is what the read view showed before the residue was distributed.
+      final e = _expense(
+        amount: 100.01,
+        paidBy: 'a@test.com',
+        shareStat: const {
+          'a@test.com': 25.0025,
+          'b@test.com': 25.0025,
+          'c@test.com': 25.0025,
+          'd@test.com': 25.0025,
+        },
+      );
+
+      final rows = buildMemberBreakdown(
+        expense: e,
+        memberEmails: const [
+          'a@test.com',
+          'b@test.com',
+          'c@test.com',
+          'd@test.com',
+        ],
+      );
+
+      final sum = rows.fold<double>(0, (s, r) => s + r.share);
+      expect(roundCurrency(sum, Currency.eur), 100.01);
+      for (final r in rows) {
+        expect(r.share, roundCurrency(r.share, Currency.eur));
+      }
+    });
+
+    test('the payer net stays total minus their own apportioned share', () {
+      final e = _expense(
+        amount: 100.01,
+        paidBy: 'a@test.com',
+        shareStat: const {
+          'a@test.com': 25.0025,
+          'b@test.com': 25.0025,
+          'c@test.com': 25.0025,
+          'd@test.com': 25.0025,
+        },
+      );
+
+      final rows = buildMemberBreakdown(
+        expense: e,
+        memberEmails: const [
+          'a@test.com',
+          'b@test.com',
+          'c@test.com',
+          'd@test.com',
+        ],
+      );
+
+      final payer = rows.firstWhere((r) => r.email == 'a@test.com');
+      expect(payer.net, roundCurrency(100.01 - payer.share, Currency.eur));
+      // What the payer lent is exactly what the others owe.
+      final owed = rows
+          .where((r) => !r.isPayer)
+          .fold<double>(0, (s, r) => s + r.share);
+      expect(roundCurrency(owed, Currency.eur), payer.net);
+    });
+
+    test('apportioning ignores members the caller did not ask for', () {
+      // The read view asks for a single member to compute their own net; the
+      // residue must still be spread across everyone who holds a share, not
+      // dumped on whoever was requested.
+      final e = _expense(
+        amount: 100.01,
+        paidBy: 'a@test.com',
+        shareStat: const {
+          'a@test.com': 25.0025,
+          'b@test.com': 25.0025,
+          'c@test.com': 25.0025,
+          'd@test.com': 25.0025,
+        },
+      );
+
+      final rows = buildMemberBreakdown(
+        expense: e,
+        memberEmails: const ['b@test.com'],
+      );
+
+      expect(rows.length, 1);
+      expect(rows.single.share, closeTo(25.0, 0.011));
     });
   });
 }
