@@ -35,7 +35,7 @@ feature survives almost intact, with these corrections:
     `Currency.fromCode('EUR').decimalDigits` is 2. An unknown or null code resolves to EUR rather
     than throwing.
   - The curated list is exactly the ECB/Frankfurter reference set (the ~30 codes the rate source in
-    [multi-currency-rate-source](multi-currency-rate-source.md) can quote), so every listed currency
+    [multi-currency-rate-source](../multi-currency-rate-source.md) can quote), so every listed currency
     is convertible later. It contains at least EUR, USD, GBP, CHF and JPY.
   - Rounding is currency-aware: rounding 2500.4 in JPY yields 2500, rounding 2500.6 in JPY yields
     2501, and rounding 12.345 in EUR yields 12.35. The existing 2-decimal behaviour is preserved
@@ -164,7 +164,7 @@ expense-editor hero stops showing a period-separated amount to German users.
   `lib/pages/friends/data/friendship_repository.dart`, `lib/pages/groups/presentation/payment_view_model.dart`
 - Depends: settle-residue *(its **client half** only — the single settled predicate. This feature does
   not need settle-residue's deferred server-side exact-settlement fix, so it is **not** blocked if
-  that half is waiting in [manual-checks.md](../manual-checks.md). Pull this as soon as the predicate is
+  that half is waiting in [manual-checks.md](../../manual-checks.md). Pull this as soon as the predicate is
   unified.)*
 - Parallel-with: expense-notification-route, expense-editor-edit-labels
 

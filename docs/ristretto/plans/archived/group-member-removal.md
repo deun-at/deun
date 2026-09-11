@@ -39,7 +39,7 @@
 - Blockers: —
 - Deferred DB work: this feature runs through green without a database. Author the migration, write
   the Dart against its post-migration shape, test with fakes, and append an entry to
-  [manual-checks.md](../manual-checks.md) rather than waiting. Two changes are deferred:
+  [manual-checks.md](../../manual-checks.md) rather than waiting. Two changes are deferred:
   (1) `group_member.removed_at timestamptz null`; (2) `update_group_member_shares` — its
   `total_share_amount` subquery must join `group_member` so shares belonging to a removed member stop
   counting toward everyone else's balance. Criteria marked `[deferred]` above cannot be observed until

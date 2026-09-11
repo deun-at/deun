@@ -1,7 +1,7 @@
 # group-membership — Design brief (by surface)
 
 Handoff doc for the design session on group membership. Engineering contracts live in three plans
-([member-removal](group-member-removal.md) · [create-simplify](group-create-simplify.md) →
+([member-removal](archived/group-member-removal.md) · [create-simplify](archived/group-create-simplify.md) →
 [add-flow](group-member-add-flow.md)); this file pivots them by **surface** so each screen is
 designed once. Apply changes to the existing screens — don't rebuild.
 
@@ -66,7 +66,7 @@ Today this is a `SearchAnchor` embedded as a form field inside group edit. It be
    past expenses, and the balance list. This is the decision the other three surfaces hang off.
 2. **Guest vs real user** — how visibly the two are distinguished, now that guests get a first-class
    creation path and can have paybacks recorded on their behalf (see
-   [payback-on-behalf](payback-on-behalf.md)).
+   [payback-on-behalf](archived/payback-on-behalf.md)).
 3. **Immediate-save feedback** — membership writes commit instantly; what confirms that, given the
    rest of the app uses form-save semantics? Must not read as "unsaved".
 4. **Blocked-action pattern** — the "you can't do this yet, here's why, here's the way out" shape

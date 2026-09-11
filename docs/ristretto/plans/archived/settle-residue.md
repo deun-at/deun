@@ -83,7 +83,7 @@
   the per-counterparty and group-total roundings consistent — needs no database and must genuinely
   pass. The server half — deriving the settled amount from the exact outstanding value — changes
   `pay_back` or adds a settle-in-full RPC; author that migration, mark its criteria `[deferred]`,
-  append an entry to [manual-checks.md](../manual-checks.md), and keep going. Do **not** report the
+  append an entry to [manual-checks.md](../../manual-checks.md), and keep going. Do **not** report the
   remainder bug fixed on green gates alone: the gates cannot observe it.
 
 ## Confirmed mechanism (2026-08-15)

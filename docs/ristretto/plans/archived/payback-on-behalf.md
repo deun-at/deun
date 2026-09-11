@@ -41,7 +41,7 @@
 - Deferred DB work: **minimal here.** The core capability needs no migration — `pay_back` already
   takes `_paid_by`, so recording someone else's payback is a client change and its criteria must
   genuinely pass. Only the validation (payer ≠ payee, both current non-removed members) is deferred:
-  author it, mark those criteria `[deferred]`, append to [manual-checks.md](../manual-checks.md), continue.
+  author it, mark those criteria `[deferred]`, append to [manual-checks.md](../../manual-checks.md), continue.
 
 ## Approach
 - **The RPC already supports this.** `pay_back(_group_id, _paid_by, _paid_for, _amount)` takes the payer as a parameter and writes it straight to `expense.paid_by` — recovered 2026-08-15, now in `supabase/migrations/20260815000000_baseline_ledger_functions.sql`. The restriction to "me" is purely client-side: `group_repository.dart:213` hardcodes `supabase.auth.currentUser?.email`. **The core capability is a one-line client change**, not a migration. Scope the feature accordingly and spend the effort on attribution, notification and validation instead.

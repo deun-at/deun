@@ -32,13 +32,13 @@
   - `fetchRate({required Currency base, required Currency quote, required DateTime date}) -> Future<RateQuote?>`
   - `RateQuote` — `.rate -> double`, `.effectiveDate -> DateTime`
   - Supabase Edge Function `exchange-rate`
-- Consumes: `Currency`, `kSupportedCurrencies` (from [multi-currency-core](multi-currency-core.md));
+- Consumes: `Currency`, `kSupportedCurrencies` (from [multi-currency-core](archived/multi-currency-core.md));
   the editor's rate field and `setStickyRate` (from
   [multi-currency-expense-rate](archived/multi-currency-expense-rate.md))
 - Decisions:
   - Frankfurter (frankfurter.dev, ECB reference data, free, no API key) is the source -> it is what
     both open-source competitors use, it covers historical rates back decades, and
-    [multi-currency-core](multi-currency-core.md)'s curated list is already pinned to its coverage.
+    [multi-currency-core](archived/multi-currency-core.md)'s curated list is already pinned to its coverage.
   - Fetch server-side through an Edge Function -> the app has no HTTP client and no declared `http`
     dependency today, every external call already goes through Supabase, and a client-side fetch
     broke conversion outright for the one competitor that tried it when the provider issued a
