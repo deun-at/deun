@@ -80,12 +80,16 @@ List<MemberBreakdownEntry> buildMemberBreakdown({
   // The target is the shares' own total rather than the expense's — an expense
   // with unclaimed units splits less than it cost, and the payer carries the
   // rest.
+  final payer = expense.paidBy;
   final shareStat = apportionCurrency(
     raw,
     raw.values.fold<double>(0, (sum, value) => sum + value),
     currency,
+    // The payer absorbs the indivisible cent: they are already fronting the
+    // money, and it keeps the rounding off whichever member's address happens
+    // to sort first.
+    priority: payer,
   );
-  final payer = expense.paidBy;
   final result = <MemberBreakdownEntry>[];
 
   for (final email in memberEmails) {

@@ -189,6 +189,64 @@ void main() {
       expect(roundCurrency(owed, Currency.eur), payer.net);
     });
 
+    test('the spare cent falls on the payer, not on whoever sorts first', () {
+      // 10.00 across three is 3.3333 each, so exactly one share rounds up. The
+      // payer carries it: they are already fronting the money, and breaking the
+      // tie alphabetically would quietly tax the same member in every group
+      // they are in.
+      final e = _expense(
+        amount: 10.00,
+        paidBy: 'zoe@test.com',
+        shareStat: const {
+          'ann@test.com': 10 / 3,
+          'bob@test.com': 10 / 3,
+          'zoe@test.com': 10 / 3,
+        },
+      );
+
+      final rows = buildMemberBreakdown(
+        expense: e,
+        memberEmails: const ['ann@test.com', 'bob@test.com', 'zoe@test.com'],
+      );
+
+      expect(rows.firstWhere((r) => r.email == 'zoe@test.com').share, 3.34);
+      expect(rows.firstWhere((r) => r.email == 'ann@test.com').share, 3.33);
+      expect(rows.firstWhere((r) => r.email == 'bob@test.com').share, 3.33);
+      // Still fully allocated, and the payer is owed a cent less for it.
+      expect(rows.fold<double>(0, (s, r) => s + r.share), 10.00);
+      expect(rows.firstWhere((r) => r.email == 'zoe@test.com').net, 6.66);
+    });
+
+    test('a payer who is not in the split does not take the spare cent', () {
+      // Nothing to absorb it with: the payer holds no share, so the remainder
+      // has to fall on a participant and the key order decides.
+      final e = _expense(
+        amount: 10.00,
+        paidBy: 'zoe@test.com',
+        shareStat: const {
+          'ann@test.com': 10 / 3,
+          'bob@test.com': 10 / 3,
+          'cid@test.com': 10 / 3,
+        },
+      );
+
+      final rows = buildMemberBreakdown(
+        expense: e,
+        memberEmails: const [
+          'ann@test.com',
+          'bob@test.com',
+          'cid@test.com',
+          'zoe@test.com',
+        ],
+      );
+
+      final shares = rows
+          .where((r) => r.email != 'zoe@test.com')
+          .fold<double>(0, (s, r) => s + r.share);
+      expect(shares, 10.00);
+      expect(rows.firstWhere((r) => r.email == 'zoe@test.com').share, 0);
+    });
+
     test('nothing is lost across a run of uneven splits', () {
       // The cent that cannot be divided has to land on somebody — what must
       // never happen is that it lands on nobody. Stated exactly: for every

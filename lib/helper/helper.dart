@@ -100,14 +100,17 @@ List<double> distributeCurrency(double total, int parts, Currency currency) {
 /// each share on its own instead is what made 100.01 across four members read
 /// 25.00 four times, a cent short of the expense it was describing.
 ///
-/// Ties break on the key, not on map order: with four equal shares *somebody*
-/// has to carry the spare cent, and it must be the same somebody on every
-/// render.
+/// With an equal split *somebody* has to carry the spare cent, and it must be
+/// the same somebody on every render. [priority] is served first among equals —
+/// pass the payer, so the person already fronting the money absorbs the
+/// rounding instead of whoever happens to sort first. Falling back to the key
+/// would quietly tax the same member in every group they are in.
 Map<K, double> apportionCurrency<K extends Comparable>(
   Map<K, double> values,
   double total,
-  Currency currency,
-) {
+  Currency currency, {
+  K? priority,
+}) {
   if (values.isEmpty) return <K, double>{};
   final unit = currency.minorUnit;
   // Nudge past float error (25.00 / 0.01 can land on 2499.999…) before flooring.
@@ -127,8 +130,14 @@ Map<K, double> apportionCurrency<K extends Comparable>(
 
   final order = [...keys]
     ..sort((a, b) {
+      // Largest discarded fraction first — that part is the apportionment
+      // itself and [priority] never overrides it. Only a tie is the payer's to
+      // win, which in an equal split is every time.
       final byFraction = fractions[b]!.compareTo(fractions[a]!);
-      return byFraction != 0 ? byFraction : a.compareTo(b);
+      if (byFraction != 0) return byFraction;
+      if (a == priority) return -1;
+      if (b == priority) return 1;
+      return a.compareTo(b);
     });
 
   // Round-robin so the sum is exact even if the values never summed to [total].
