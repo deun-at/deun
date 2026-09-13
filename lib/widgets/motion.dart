@@ -7,7 +7,7 @@
 ///
 /// Usage:
 /// ```dart
-/// AnimationController(vsync: this, duration: Motion.screenForward)
+/// AnimationController(vsync: this, duration: Motion.listItem)
 ///   ..drive(CurveTween(curve: Motion.screenPush));
 ///
 /// // Respect reduced-motion:
@@ -53,8 +53,12 @@ abstract final class Motion {
   // Durations — §1 Screen transitions
   // -------------------------------------------------------------------------
 
-  /// Forward / back screen transition.  Also used for [screenPush].
-  static const Duration screenForward = Duration(milliseconds: 360);
+  // Full-screen drill-downs no longer have a constant here. ANIMATIONS.md §1
+  // specified 360 ms, but every route now returns a plain MaterialPage so the
+  // motion comes from PageTransitionsTheme (see theme_builder.dart) — that buys
+  // predictive back on Android, and the SDK owns the duration (450 ms for
+  // FadeForwardsPageTransitionsBuilder). Hard-coding 360 ms anywhere would
+  // desync from it.
 
   /// Home-tab switch (vertical fade-up, no X slide).
   static const Duration tabSwitch = Duration(milliseconds: 260);

@@ -93,7 +93,11 @@ class SemanticColors extends ThemeExtension<SemanticColors> {
       success: Color.lerp(success, other.success, t)!,
       danger: Color.lerp(danger, other.danger, t)!,
       warning: Color.lerp(warning, other.warning, t)!,
-      paybackBackground: Color.lerp(paybackBackground, other.paybackBackground, t)!,
+      paybackBackground: Color.lerp(
+        paybackBackground,
+        other.paybackBackground,
+        t,
+      )!,
       paybackText: Color.lerp(paybackText, other.paybackText, t)!,
       ink: Color.lerp(ink, other.ink, t)!,
       onInk: Color.lerp(onInk, other.onInk, t)!,
@@ -102,7 +106,11 @@ class SemanticColors extends ThemeExtension<SemanticColors> {
 }
 
 class ThemeBuilder extends StatelessWidget {
-  const ThemeBuilder({super.key, required this.colorValue, required this.builder});
+  const ThemeBuilder({
+    super.key,
+    required this.colorValue,
+    required this.builder,
+  });
 
   final int colorValue;
   final Widget Function(BuildContext) builder;
@@ -150,19 +158,51 @@ TextTheme _buildTextTheme() {
 
   return base.copyWith(
     // Hero amounts / display (spec: 57 / 45 / 40).
-    displayLarge: bricolage(base.displayLarge, fontSize: 57, fontWeight: FontWeight.w700),
-    displayMedium: bricolage(base.displayMedium, fontSize: 45, fontWeight: FontWeight.w700),
-    displaySmall: bricolage(base.displaySmall, fontSize: 40, fontWeight: FontWeight.w600),
+    displayLarge: bricolage(
+      base.displayLarge,
+      fontSize: 57,
+      fontWeight: FontWeight.w700,
+    ),
+    displayMedium: bricolage(
+      base.displayMedium,
+      fontSize: 45,
+      fontWeight: FontWeight.w700,
+    ),
+    displaySmall: bricolage(
+      base.displaySmall,
+      fontSize: 40,
+      fontWeight: FontWeight.w600,
+    ),
     // Screen titles / headlines (spec: 30 / 28 / 24).
-    headlineLarge: bricolage(base.headlineLarge, fontSize: 30, fontWeight: FontWeight.w600),
-    headlineMedium: bricolage(base.headlineMedium, fontSize: 28, fontWeight: FontWeight.w600),
-    headlineSmall: bricolage(base.headlineSmall, fontSize: 24, fontWeight: FontWeight.w600),
+    headlineLarge: bricolage(
+      base.headlineLarge,
+      fontSize: 30,
+      fontWeight: FontWeight.w600,
+    ),
+    headlineMedium: bricolage(
+      base.headlineMedium,
+      fontSize: 28,
+      fontWeight: FontWeight.w600,
+    ),
+    headlineSmall: bricolage(
+      base.headlineSmall,
+      fontSize: 24,
+      fontWeight: FontWeight.w600,
+    ),
     // titleLarge: app-bar/screen titles, card/group names (spec: ~19).
-    titleLarge: bricolage(base.titleLarge, fontSize: 19, fontWeight: FontWeight.w600),
+    titleLarge: bricolage(
+      base.titleLarge,
+      fontSize: 19,
+      fontWeight: FontWeight.w600,
+    ),
   );
 }
 
-ThemeData getThemeData(BuildContext context, Color seedColor, Brightness brightness) {
+ThemeData getThemeData(
+  BuildContext context,
+  Color seedColor,
+  Brightness brightness,
+) {
   // Light: warm-neutral surfaces from the prototype palette.
   Color surface = const Color(0xFFF4F3EF);
   Color surfaceBright = const Color(0xFFFBFAF7);
@@ -208,57 +248,90 @@ ThemeData getThemeData(BuildContext context, Color seedColor, Brightness brightn
     // shader the test engine can't decode).
     splashFactory: Theme.of(context).splashFactory,
     extensions: <ThemeExtension<dynamic>>[
-      brightness == Brightness.dark ? SemanticColors.dark : SemanticColors.light,
+      brightness == Brightness.dark
+          ? SemanticColors.dark
+          : SemanticColors.light,
     ],
-    colorScheme: ColorScheme.fromSeed(seedColor: seedColor, brightness: brightness).copyWith(
-      surface: surface,
-      surfaceBright: surfaceBright,
-      surfaceDim: surfaceDim,
-      onSurface: onSurface,
-      onSurfaceVariant: onSurfaceVariant,
-      surfaceContainerHighest: surfaceContainerHighest,
-      surfaceContainerHigh: surfaceContainerHigh,
-      surfaceContainer: surfaceContainer,
-      surfaceContainerLow: surfaceContainerLow,
-      surfaceContainerLowest: surfaceContainerLowest,
-      inverseSurface: inverseSurface,
-      surfaceTint: surfaceTint,
-    ),
+    colorScheme:
+        ColorScheme.fromSeed(
+          seedColor: seedColor,
+          brightness: brightness,
+        ).copyWith(
+          surface: surface,
+          surfaceBright: surfaceBright,
+          surfaceDim: surfaceDim,
+          onSurface: onSurface,
+          onSurfaceVariant: onSurfaceVariant,
+          surfaceContainerHighest: surfaceContainerHighest,
+          surfaceContainerHigh: surfaceContainerHigh,
+          surfaceContainer: surfaceContainer,
+          surfaceContainerLow: surfaceContainerLow,
+          surfaceContainerLowest: surfaceContainerLowest,
+          inverseSurface: inverseSurface,
+          surfaceTint: surfaceTint,
+        ),
+    // Every full-screen drill-down route returns a plain MaterialPage, so this
+    // is the one place screen motion is defined — see page_transitions.dart.
+    //
+    // Android gets predictive back: the page shrinks toward the edge under the
+    // back-drag, and any other navigation (forward push, button pop) falls back
+    // to FadeForwardsPageTransitionsBuilder. The desktop targets carry that same
+    // fade-forwards explicitly so the web build matches Android rather than
+    // inheriting Flutter's Zoom default. iOS is left unregistered on purpose: it
+    // falls back to CupertinoPageTransitionsBuilder, the right feel there.
     pageTransitionsTheme: const PageTransitionsTheme(
       builders: <TargetPlatform, PageTransitionsBuilder>{
-        // Set the predictive back transitions for Android.
         TargetPlatform.android: PredictiveBackPageTransitionsBuilder(),
+        TargetPlatform.windows: FadeForwardsPageTransitionsBuilder(),
+        TargetPlatform.macOS: FadeForwardsPageTransitionsBuilder(),
+        TargetPlatform.linux: FadeForwardsPageTransitionsBuilder(),
+        TargetPlatform.fuchsia: FadeForwardsPageTransitionsBuilder(),
       },
     ),
     appBarTheme: Theme.of(context).appBarTheme.copyWith(
-          surfaceTintColor: Colors.transparent,
-          backgroundColor: appBarBackgroundColor,
-        ),
-    cardTheme: Theme.of(context).cardTheme.copyWith(margin: const EdgeInsets.fromLTRB(10, 1, 10, 1)),
-    listTileTheme:
-        Theme.of(context).listTileTheme.copyWith(contentPadding: const EdgeInsetsDirectional.only(start: 16.0, end: 16.0)),
-    searchViewTheme: Theme.of(context).searchViewTheme.copyWith(
-          dividerColor: Colors.transparent,
-        ),
+      surfaceTintColor: Colors.transparent,
+      backgroundColor: appBarBackgroundColor,
+    ),
+    cardTheme: Theme.of(
+      context,
+    ).cardTheme.copyWith(margin: const EdgeInsets.fromLTRB(10, 1, 10, 1)),
+    listTileTheme: Theme.of(context).listTileTheme.copyWith(
+      contentPadding: const EdgeInsetsDirectional.only(start: 16.0, end: 16.0),
+    ),
+    searchViewTheme: Theme.of(
+      context,
+    ).searchViewTheme.copyWith(dividerColor: Colors.transparent),
     filledButtonTheme: FilledButtonThemeData(
       style: FilledButton.styleFrom(
         shape: const StadiumBorder(),
         padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
-        textStyle: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600, letterSpacing: 0.1),
+        textStyle: const TextStyle(
+          fontSize: 15,
+          fontWeight: FontWeight.w600,
+          letterSpacing: 0.1,
+        ),
       ),
     ),
     textButtonTheme: TextButtonThemeData(
       style: TextButton.styleFrom(
         shape: const StadiumBorder(),
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-        textStyle: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600, letterSpacing: 0.1),
+        textStyle: const TextStyle(
+          fontSize: 15,
+          fontWeight: FontWeight.w600,
+          letterSpacing: 0.1,
+        ),
       ),
     ),
     floatingActionButtonTheme: const FloatingActionButtonThemeData(
       shape: StadiumBorder(),
       elevation: 3,
       extendedPadding: EdgeInsets.symmetric(horizontal: 20),
-      extendedTextStyle: TextStyle(fontSize: 15, fontWeight: FontWeight.w600, letterSpacing: 0.1),
+      extendedTextStyle: TextStyle(
+        fontSize: 15,
+        fontWeight: FontWeight.w600,
+        letterSpacing: 0.1,
+      ),
     ),
     chipTheme: const ChipThemeData(
       shape: StadiumBorder(),

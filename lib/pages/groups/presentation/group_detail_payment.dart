@@ -32,7 +32,7 @@ import 'record_payback_sheet.dart';
 /// [Group.groupSharesSummary] / [Group.totalShareAmount] computed in
 /// `group_model.dart`; nothing is recomputed here.
 ///
-/// F155/F58: this is a full-page drill-down (routed via [sharedAxisPage] like
+/// F155/F58: this is a full-page drill-down (a plain MaterialPage, like
 /// the edit/statistics screens) with a [DeunHeader] back-arrow — not a routed
 /// bottom sheet — so there is no drag-to-close ambiguity.
 class GroupPaymentBottomSheet extends ConsumerWidget {

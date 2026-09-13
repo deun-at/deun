@@ -12,11 +12,11 @@ void main() {
   // ---------------------------------------------------------------------------
   group('Motion curves — boundary values', () {
     final cases = <String, Cubic>{
-      'screenPush':  Motion.screenPush,
-      'barGrow':     Motion.barGrow,
-      'sheetRise':   Motion.sheetRise,
-      'successPop':  Motion.successPop,
-      'tabPill':     Motion.tabPill,
+      'screenPush': Motion.screenPush,
+      'barGrow': Motion.barGrow,
+      'sheetRise': Motion.sheetRise,
+      'successPop': Motion.successPop,
+      'tabPill': Motion.tabPill,
     };
 
     for (final entry in cases.entries) {
@@ -53,9 +53,9 @@ void main() {
   // Duration constants — value equality against spec ms.
   // ---------------------------------------------------------------------------
   group('Motion durations — screen transitions', () {
-    test('screenForward is 360 ms', () {
-      expect(Motion.screenForward, const Duration(milliseconds: 360));
-    });
+    // No screenForward constant: drill-down motion comes from
+    // PageTransitionsTheme now, and its duration belongs to the SDK.
+    // See screen_transition_test.dart.
 
     test('tabSwitch is 260 ms', () {
       expect(Motion.tabSwitch, const Duration(milliseconds: 260));
@@ -153,7 +153,10 @@ void main() {
     });
 
     test('works with Duration.zero base and reduceMotion false', () {
-      expect(reducedIfNeeded(Duration.zero, reduceMotion: false), Duration.zero);
+      expect(
+        reducedIfNeeded(Duration.zero, reduceMotion: false),
+        Duration.zero,
+      );
     });
 
     test('works with long duration and reduceMotion true', () {

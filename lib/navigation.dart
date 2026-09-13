@@ -125,7 +125,7 @@ class _NavigationScreenState extends ConsumerState<NavigationScreen>
                         var extra = state.extra as Map<String, dynamic>;
                         var group = extra['group'] as Group;
 
-                        return sharedAxisPage(
+                        return MaterialPage(
                           key: state.pageKey,
                           child: GroupDetail(group: group),
                         );
@@ -141,7 +141,7 @@ class _NavigationScreenState extends ConsumerState<NavigationScreen>
                             var receiptResult =
                                 extra['receiptResult'] as ReceiptScanResult?;
 
-                            return sharedAxisPage(
+                            return MaterialPage(
                               key: state.pageKey,
                               child: ExpenseDetail(
                                 group: group,
@@ -159,7 +159,7 @@ class _NavigationScreenState extends ConsumerState<NavigationScreen>
                             var group = extra['group'] as Group;
                             var expense = extra['expense'] as Expense;
 
-                            return sharedAxisPage(
+                            return MaterialPage(
                               key: state.pageKey,
                               child: ExpenseDetailRead(
                                 group: group,
@@ -176,7 +176,7 @@ class _NavigationScreenState extends ConsumerState<NavigationScreen>
                             var group = extra['group'] as Group;
                             var expense = extra['expense'] as Expense;
 
-                            return sharedAxisPage(
+                            return MaterialPage(
                               key: state.pageKey,
                               child: ClaimPage(group: group, expense: expense),
                             );
@@ -189,7 +189,7 @@ class _NavigationScreenState extends ConsumerState<NavigationScreen>
                             var extra = state.extra as Map<String, dynamic>;
                             var group = extra['group'] as Group;
 
-                            return sharedAxisPage(
+                            return MaterialPage(
                               key: state.pageKey,
                               child: GroupStatisticsPage(group: group),
                             );
@@ -249,7 +249,7 @@ class _NavigationScreenState extends ConsumerState<NavigationScreen>
                             // back-arrow header instead of a non-draggable
                             // modal sheet. Same shared-axis transition as
                             // the edit/statistics routes.
-                            return sharedAxisPage(
+                            return MaterialPage(
                               key: state.pageKey,
                               child: GroupPaymentBottomSheet(group: group),
                             );
@@ -264,7 +264,7 @@ class _NavigationScreenState extends ConsumerState<NavigationScreen>
                         var extra = state.extra as Map<String, dynamic>?;
                         var group = extra?['group'] as Group?;
 
-                        return sharedAxisPage(
+                        return MaterialPage(
                           key: state.pageKey,
                           child: GroupEdit(group: group),
                         );
@@ -288,7 +288,7 @@ class _NavigationScreenState extends ConsumerState<NavigationScreen>
                       pageBuilder: (context, state) {
                         final groupId = state.uri.queryParameters['groupId'];
                         final groupName = state.uri.queryParameters['name'];
-                        return sharedAxisPage(
+                        return MaterialPage(
                           key: state.pageKey,
                           child: GroupJoinPage(
                             groupId: groupId ?? '',
@@ -314,7 +314,7 @@ class _NavigationScreenState extends ConsumerState<NavigationScreen>
                     GoRoute(
                       path: 'add',
                       parentNavigatorKey: _rootNavigatorKey,
-                      pageBuilder: (context, state) => sharedAxisPage(
+                      pageBuilder: (context, state) => MaterialPage(
                         key: state.pageKey,
                         child: const FriendAddPage(),
                       ),
@@ -322,7 +322,7 @@ class _NavigationScreenState extends ConsumerState<NavigationScreen>
                     GoRoute(
                       path: 'qr',
                       parentNavigatorKey: _rootNavigatorKey,
-                      pageBuilder: (context, state) => sharedAxisPage(
+                      pageBuilder: (context, state) => MaterialPage(
                         key: state.pageKey,
                         child: const FriendQrPage(),
                       ),
@@ -334,7 +334,7 @@ class _NavigationScreenState extends ConsumerState<NavigationScreen>
                         final email = state.uri.queryParameters['email'];
                         final username = state.uri.queryParameters['u'];
                         final code = state.uri.queryParameters['c'];
-                        return sharedAxisPage(
+                        return MaterialPage(
                           key: state.pageKey,
                           child: FriendAcceptPage(
                             email: email,
@@ -362,7 +362,7 @@ class _NavigationScreenState extends ConsumerState<NavigationScreen>
                     GoRoute(
                       path: 'privacy-policy',
                       parentNavigatorKey: _rootNavigatorKey,
-                      pageBuilder: (context, state) => sharedAxisPage(
+                      pageBuilder: (context, state) => MaterialPage(
                         key: state.pageKey,
                         child: const PrivacyPolicy(),
                       ),
@@ -370,7 +370,7 @@ class _NavigationScreenState extends ConsumerState<NavigationScreen>
                     GoRoute(
                       path: 'statistics',
                       parentNavigatorKey: _rootNavigatorKey,
-                      pageBuilder: (context, state) => sharedAxisPage(
+                      pageBuilder: (context, state) => MaterialPage(
                         key: state.pageKey,
                         child: const PersonalStatisticsPage(),
                       ),
@@ -379,7 +379,7 @@ class _NavigationScreenState extends ConsumerState<NavigationScreen>
                     GoRoute(
                       path: 'contact',
                       parentNavigatorKey: _rootNavigatorKey,
-                      pageBuilder: (context, state) => sharedAxisPage(
+                      pageBuilder: (context, state) => MaterialPage(
                         key: state.pageKey,
                         child: const Contact(),
                       ),
@@ -393,17 +393,17 @@ class _NavigationScreenState extends ConsumerState<NavigationScreen>
         GoRoute(
           path: '/privacy-policy',
           pageBuilder: (context, state) =>
-              sharedAxisPage(key: state.pageKey, child: const PrivacyPolicy()),
+              MaterialPage(key: state.pageKey, child: const PrivacyPolicy()),
         ),
         GoRoute(
           path: '/contact',
           pageBuilder: (context, state) =>
-              sharedAxisPage(key: state.pageKey, child: const Contact()),
+              MaterialPage(key: state.pageKey, child: const Contact()),
         ),
         GoRoute(
           path: '/update-password',
           pageBuilder: (context, state) =>
-              sharedAxisPage(key: state.pageKey, child: const UpdatePassword()),
+              MaterialPage(key: state.pageKey, child: const UpdatePassword()),
         ),
         // Throwaway dev/QA route for the E0-T4 shared restyle widgets.
         GoRoute(
