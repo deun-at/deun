@@ -75,7 +75,12 @@ class Expense {
     if (json["group"] != null) {
       group.loadDataFromJson(json["group"]);
     }
-    name = json["name"];
+    // Defensive, mirroring Group.loadDataFromJson: a row with a null name must
+    // not throw here. Expenses are parsed in a loop over a group's rows, so one
+    // bad row would fail the whole list fetch rather than just itself — the
+    // expense list would go down for that group entirely. Fall back to an empty
+    // name so the row still loads and can be renamed or deleted in-app.
+    name = json["name"] ?? '';
     expenseDate = json["expense_date"];
     paidBy = json["paid_by"];
     paidByDisplayName = json["paid_by_display_name"];
