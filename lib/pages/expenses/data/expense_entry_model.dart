@@ -113,7 +113,11 @@ class ExpenseEntryShare {
   void loadDataFromJson(Map<String, dynamic> json) {
     expenseEntryId = json["expense_entry_id"];
     email = json["email"];
-    displayName = json["display_name"];
+    // Same guard as GroupMember: display_name is joined from the user table, so
+    // a deleted user yields null while this share row still carries the email
+    // the balance math keys on. Shares are parsed in a loop nested two deep
+    // inside the group fetch — throwing here would fail the whole load.
+    displayName = json["display_name"] ?? email;
     percentage = double.parse((json["percentage"] ?? 0).toString());
     fixedAmount = json["fixed_amount"] != null
         ? double.parse(json["fixed_amount"].toString())

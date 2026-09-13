@@ -22,7 +22,13 @@ class GroupMember {
   void loadDataFromJson(Map<String, dynamic> json) {
     groupId = json["group_id"];
     email = json["email"];
-    displayName = json["display_name"];
+    // Defensive: display_name is joined from the user table, not stored on the
+    // membership row, so a deleted user (or a guest who never had a profile)
+    // returns null while this row is otherwise intact. Members are parsed in a
+    // loop inside the group fetch, so throwing here would fail the whole load.
+    // Fall back to the email — it still identifies the person, and it is what
+    // group_list.dart already shows for a blank name.
+    displayName = json["display_name"] ?? email;
     username = json["username"];
     usernameCode = json["username_code"];
     isGuest = json["is_guest"];
