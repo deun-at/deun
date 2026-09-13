@@ -759,4 +759,83 @@ void main() {
       expect(find.text(l10n.editorModeCollapseNotice), findsOneWidget);
     },
   );
+
+  // -------------------------------------------------------------------------
+  // Regression: the expense name must survive the Quick → Itemized flip.
+  //
+  // The Quick branch contributes 6 children to the form Column and the Itemized
+  // branch 4, and `_buildNameField()` sits AFTER that branch — so flipping
+  // shifts the name field two positions up in an unkeyed children list. Flutter
+  // reconciles unkeyed children positionally, the FormBuilderField is
+  // deactivated and re-inflated, and `clearValueOnUnregister: true` wipes the
+  // stored value. `_nameController` is State, so the text stays on screen the
+  // whole time and the loss is invisible until the row is written with a null
+  // name — which then breaks the expense list.
+  // -------------------------------------------------------------------------
+  group('expense name survives the editor-mode flip', () {
+    Finder nameField(AppLocalizations l10n) => find.byWidgetPredicate(
+      (w) =>
+          w is TextField &&
+          w.decoration?.hintText == l10n.expenseDescriptionHint,
+    );
+
+    String? savedName(WidgetTester tester) {
+      final formState = tester.state<FormBuilderState>(find.byType(FormBuilder));
+      formState.save();
+      return formState.value['name'] as String?;
+    }
+
+    testWidgets('a name typed in Quick is still there after switching to '
+        'Itemized', (tester) async {
+      await _pump(tester);
+      final l10n = await _l10n();
+
+      await tester.enterText(nameField(l10n), 'Dinner');
+      await tester.pumpAndSettle();
+      expect(savedName(tester), 'Dinner', reason: 'control: Quick holds it');
+
+      await tester.tap(find.text(l10n.editorModeItemized));
+      await tester.pumpAndSettle();
+
+      expect(
+        savedName(tester),
+        'Dinner',
+        reason: 'the flip must not clear the name the user already typed',
+      );
+    });
+
+    testWidgets('the name the user still sees on screen is the name that '
+        'would be saved', (tester) async {
+      await _pump(tester);
+      final l10n = await _l10n();
+
+      await tester.enterText(nameField(l10n), 'Dinner');
+      await tester.pumpAndSettle();
+      await tester.tap(find.text(l10n.editorModeItemized));
+      await tester.pumpAndSettle();
+
+      // The field visibly still reads "Dinner" — the form must agree.
+      expect(find.text('Dinner'), findsOneWidget);
+      expect(savedName(tester), 'Dinner');
+    });
+
+    testWidgets('a name typed in Itemized survives adding a second item', (
+      tester,
+    ) async {
+      await _pump(tester);
+      final l10n = await _l10n();
+
+      await tester.tap(find.text(l10n.editorModeItemized));
+      await tester.pumpAndSettle();
+      await tester.enterText(nameField(l10n), 'Groceries');
+      await tester.pumpAndSettle();
+
+      await tester.ensureVisible(find.text(l10n.addItemByHand));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text(l10n.addItemByHand));
+      await tester.pumpAndSettle();
+
+      expect(savedName(tester), 'Groceries');
+    });
+  });
 }

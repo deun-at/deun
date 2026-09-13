@@ -665,6 +665,21 @@ class _ExpenseDetailState extends ConsumerState<ExpenseDetail> {
     final radius = BorderRadius.circular(12);
     return FormBuilderField(
       name: "name",
+      // Seeded from the controller, which is the value actually on screen.
+      //
+      // Without this the field's only source of truth was the onChanged
+      // callback below, and its element lifetime is not stable: the Quick
+      // branch above contributes 6 children to this Column and the Itemized
+      // branch 4, so switching modes shifts this field two positions up an
+      // unkeyed children list. Flutter reconciles unkeyed children by
+      // position, so the field is deactivated and re-inflated, and
+      // `clearValueOnUnregister: true` wipes whatever the user had typed —
+      // while _nameController keeps the text visibly on screen. The expense
+      // then saved with a null name and broke the expense list.
+      //
+      // expense_date next to it never had this problem precisely because it
+      // carries an initialValue to re-register with.
+      initialValue: _nameController.text,
       builder: (FormFieldState<dynamic> field) => TextFormField(
         key: const ValueKey('expense_name_field'),
         controller: _nameController,
