@@ -1,4 +1,12 @@
+import 'package:deun/widgets/motion.dart';
 import 'package:flutter/material.dart';
+
+/// Identifies the success check's own scale animation on a [PrimaryButton].
+///
+/// The button's press feedback is an [AnimatedScale], which renders a
+/// [ScaleTransition] too, so a test asking "did the check pop?" has to name
+/// this one specifically rather than searching by type.
+const Key kPrimaryButtonCheckPopKey = ValueKey('primary-button-check-pop');
 
 /// The v3 primary CTA button (COMPONENTS §1).
 ///
@@ -30,6 +38,8 @@ class PrimaryButton extends StatefulWidget {
     this.icon,
     this.fullWidth = true,
     this.loading = false,
+    this.succeeded = false,
+    this.successLabel,
     this.compact = false,
     this.background,
     this.foreground,
@@ -51,6 +61,21 @@ class PrimaryButton extends StatefulWidget {
   /// disabled. Allows the caller to show in-progress state without managing
   /// `onPressed: null` separately.
   final bool loading;
+
+  /// When `true`, a popping check replaces the label and the button stops
+  /// accepting taps — the third state after idle and [loading].
+  ///
+  /// Unlike [loading] the button keeps its full accent fill: a completed
+  /// action should read as done, not as disabled.
+  ///
+  /// This is where a "saved" confirmation belongs. Popping the route first and
+  /// then firing a snackbar shows the confirmation on a screen the user has
+  /// already left; holding it on the button they pressed does not.
+  final bool succeeded;
+
+  /// Optional text shown beside the check while [succeeded]. When null the
+  /// check stands alone.
+  final String? successLabel;
 
   /// Compact variant: a smaller inline pill (StadiumBorder, tighter padding,
   /// no drop-shadow, intrinsic width) for list-tile / trailing-row actions.
@@ -74,7 +99,12 @@ class PrimaryButton extends StatefulWidget {
 class _PrimaryButtonState extends State<PrimaryButton> {
   bool _pressed = false;
 
-  bool get _enabled => widget.onPressed != null && !widget.loading;
+  bool get _enabled =>
+      widget.onPressed != null && !widget.loading && !widget.succeeded;
+
+  /// Whether the button should be painted at reduced opacity. A succeeded
+  /// button is untappable but must still look like the accent CTA it is.
+  bool get _dimmed => !_enabled && !widget.succeeded;
 
   void _handleTapDown(TapDownDetails _) {
     if (_enabled) setState(() => _pressed = true);
@@ -100,9 +130,9 @@ class _PrimaryButtonState extends State<PrimaryButton> {
     final baseFg = widget.foreground ?? colorScheme.onPrimary;
 
     // Colors
-    final bgColor = _enabled ? baseBg : baseBg.withValues(alpha: 0.4);
+    final bgColor = _dimmed ? baseBg.withValues(alpha: 0.4) : baseBg;
 
-    final fgColor = baseFg.withValues(alpha: _enabled ? 1.0 : 0.6);
+    final fgColor = baseFg.withValues(alpha: _dimmed ? 0.6 : 1.0);
 
     // Shadow: colored in light; softened in dark; omitted when disabled or
     // compact. The shadow tint tracks the (possibly overridden) fill so a
@@ -138,14 +168,36 @@ class _PrimaryButtonState extends State<PrimaryButton> {
     );
 
     Widget content;
-    if (widget.loading) {
+    if (widget.succeeded) {
+      // Checked before loading: a save that lands while the spinner is still
+      // on screen should read as done, not keep spinning.
+      final check = _CheckPop(
+        color: fgColor,
+        reduceMotion: MediaQuery.of(context).disableAnimations,
+      );
+      content = widget.successLabel == null
+          ? check
+          : Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                check,
+                SizedBox(width: widget.compact ? 5 : 8),
+                Flexible(
+                  child: Text(
+                    widget.successLabel!,
+                    style: labelStyle,
+                    maxLines: 1,
+                    softWrap: false,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              ],
+            );
+    } else if (widget.loading) {
       content = SizedBox(
         width: 20,
         height: 20,
-        child: CircularProgressIndicator(
-          strokeWidth: 2,
-          color: baseFg,
-        ),
+        child: CircularProgressIndicator(strokeWidth: 2, color: baseFg),
       );
     } else if (widget.icon != null) {
       content = Row(
@@ -168,8 +220,9 @@ class _PrimaryButtonState extends State<PrimaryButton> {
       child: Container(
         decoration: BoxDecoration(
           color: bgColor,
-          borderRadius:
-              widget.compact ? BorderRadius.circular(999) : BorderRadius.circular(15),
+          borderRadius: widget.compact
+              ? BorderRadius.circular(999)
+              : BorderRadius.circular(15),
           boxShadow: shadows,
         ),
         padding: widget.compact
@@ -192,6 +245,63 @@ class _PrimaryButtonState extends State<PrimaryButton> {
       return SizedBox(width: double.infinity, child: button);
     }
     return button;
+  }
+}
+
+/// The check that appears on a [PrimaryButton] once its action has succeeded.
+///
+/// Scales 0 → 1 once on mount with the [Motion.successPop] overshoot curve —
+/// the same pop [SuccessBadge] uses for ANIMATIONS §4, minus the ring, which
+/// would not fit inside a button. Mounting *is* the trigger: the widget is
+/// built only while `succeeded` is true, so the pop plays exactly once per
+/// completed action.
+///
+/// With reduced motion the check is rendered statically at full scale.
+class _CheckPop extends StatefulWidget {
+  const _CheckPop({required this.color, required this.reduceMotion});
+
+  final Color color;
+  final bool reduceMotion;
+
+  @override
+  State<_CheckPop> createState() => _CheckPopState();
+}
+
+class _CheckPopState extends State<_CheckPop>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _controller;
+  late final Animation<double> _scale;
+
+  @override
+  void initState() {
+    super.initState();
+    // Built eagerly, not as a lazy `late final` initialiser: under reduced
+    // motion nothing else would ever touch the controller, so it would first
+    // be constructed inside dispose(), where the ancestor lookup a Ticker
+    // needs is no longer safe.
+    _controller = AnimationController(
+      vsync: this,
+      duration: Motion.successPopDuration,
+    );
+    _scale = _controller.drive(CurveTween(curve: Motion.successPop));
+    if (!widget.reduceMotion) _controller.forward();
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final icon = Icon(Icons.check_rounded, size: 20, color: widget.color);
+    if (widget.reduceMotion) return icon;
+    return ScaleTransition(
+      key: kPrimaryButtonCheckPopKey,
+      scale: _scale,
+      child: icon,
+    );
   }
 }
 
@@ -303,11 +413,11 @@ class _SecondaryButtonState extends State<SecondaryButton> {
     // A foreground override (e.g. danger) tints border, label AND icon so the
     // whole outlined pill reads in the contextual color.
     final baseFg = widget.foreground ?? colorScheme.onSurface;
-    final borderColor =
-        (widget.foreground ?? colorScheme.outlineVariant).withValues(alpha: opacity);
+    final borderColor = (widget.foreground ?? colorScheme.outlineVariant)
+        .withValues(alpha: opacity);
     final fgColor = baseFg.withValues(alpha: opacity);
-    final iconColor =
-        (widget.foreground ?? colorScheme.onSurfaceVariant).withValues(alpha: opacity);
+    final iconColor = (widget.foreground ?? colorScheme.onSurfaceVariant)
+        .withValues(alpha: opacity);
 
     final labelStyle = (textTheme.bodyLarge ?? const TextStyle()).copyWith(
       fontWeight: FontWeight.w700,
@@ -323,7 +433,8 @@ class _SecondaryButtonState extends State<SecondaryButton> {
     );
 
     // Brand mark (untinted) takes precedence over the theme-tinted icon.
-    final Widget? mark = widget.leading ??
+    final Widget? mark =
+        widget.leading ??
         (widget.icon != null
             ? Icon(widget.icon, size: 18, color: iconColor)
             : null);
@@ -331,8 +442,7 @@ class _SecondaryButtonState extends State<SecondaryButton> {
     Widget content;
     if (mark != null) {
       content = Row(
-        mainAxisSize:
-            widget.alignStart ? MainAxisSize.max : MainAxisSize.min,
+        mainAxisSize: widget.alignStart ? MainAxisSize.max : MainAxisSize.min,
         children: [
           mark,
           const SizedBox(width: 9),
@@ -349,8 +459,9 @@ class _SecondaryButtonState extends State<SecondaryButton> {
       child: Container(
         decoration: BoxDecoration(
           color: bgColor,
-          borderRadius:
-              widget.compact ? BorderRadius.circular(999) : BorderRadius.circular(15),
+          borderRadius: widget.compact
+              ? BorderRadius.circular(999)
+              : BorderRadius.circular(15),
           border: tonal ? null : Border.all(color: borderColor, width: 1.5),
         ),
         padding: widget.compact

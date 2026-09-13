@@ -32,6 +32,7 @@ import '../data/receipt_scan_result.dart';
 import '../../../widgets/category_selector.dart';
 import '../../../widgets/restyle/app_segmented_control.dart';
 import '../../../widgets/restyle/discard_sheet.dart';
+import '../../../widgets/motion.dart';
 import '../../../widgets/restyle/expense_picker_sheets.dart';
 import '../../../widgets/restyle/soft_card.dart';
 import '../../../widgets/restyle/section_label.dart';
@@ -76,6 +77,15 @@ typedef ExpenseSaver =
       required Currency currency,
       ExpenseConversion? conversion,
     });
+
+/// The save CTA's three states. See [_ExpenseDetailState._saveStatus].
+enum _SaveStatus { idle, busy, done }
+
+/// How long the check stays on the CTA before the route pops.
+///
+/// Long enough to register as a confirmation, short enough not to feel like a
+/// stall. Collapses to zero under reduced motion via [reducedIfNeeded].
+const Duration _kSaveConfirmationHold = Duration(milliseconds: 700);
 
 class ExpenseDetail extends ConsumerStatefulWidget {
   const ExpenseDetail({
@@ -130,6 +140,13 @@ class _ExpenseDetailState extends ConsumerState<ExpenseDetail> {
   /// toggle force the Itemized layout while only one entry exists, without
   /// inventing a parallel data model. See [resolveEditorMode].
   bool _itemizedOverride = false;
+
+  /// Where the save CTA is in its idle → busy → done cycle.
+  ///
+  /// The confirmation used to be a snackbar fired *after* `Navigator.pop`, so
+  /// it appeared on the screen behind; and nothing marked the write in flight,
+  /// so a second tap could start a second one. Both live on the button now.
+  _SaveStatus _saveStatus = _SaveStatus.idle;
 
   /// Quick layout is shown only for a single entry with no itemized override.
   bool get _isSingleEntry => isSingleEntryQuick(
@@ -1113,6 +1130,11 @@ class _ExpenseDetailState extends ConsumerState<ExpenseDetail> {
         );
         return;
       }
+      // Past every validation gate — from here a write is actually going out,
+      // so the CTA takes over as the progress indicator.
+      if (_saveStatus != _SaveStatus.idle) return;
+      setState(() => _saveStatus = _SaveStatus.busy);
+
       try {
         final formValue = claimable
             ? markEntriesClaimable(
@@ -1158,13 +1180,22 @@ class _ExpenseDetailState extends ConsumerState<ExpenseDetail> {
                 conversion.rate!,
               );
         }
+        // The confirmation is the check on the CTA, held long enough to read
+        // before the route goes. No snackbar: the old one fired after the pop
+        // and so was shown over the group detail behind.
+        if (mounted) setState(() => _saveStatus = _SaveStatus.done);
         if (context.mounted) {
-          showSnackBar(
-            context,
-            AppLocalizations.of(context)!.expenseCreateSuccess,
+          await Future<void>.delayed(
+            reducedIfNeeded(
+              _kSaveConfirmationHold,
+              reduceMotion: MediaQuery.of(context).disableAnimations,
+            ),
           );
         }
       } catch (e) {
+        // Failures still need words — a check would be a lie, and "something
+        // went wrong" can't be mimed.
+        if (mounted) setState(() => _saveStatus = _SaveStatus.idle);
         if (context.mounted) {
           showSnackBar(
             context,
@@ -1764,6 +1795,9 @@ class _ExpenseDetailState extends ConsumerState<ExpenseDetail> {
                     color: colorScheme.surface,
                     padding: const EdgeInsets.fromLTRB(20, 14, 20, 20),
                     child: PrimaryButton(
+                      loading: _saveStatus == _SaveStatus.busy,
+                      succeeded: _saveStatus == _SaveStatus.done,
+                      successLabel: l10n.expenseCreateSuccess,
                       onPressed: _isSingleEntry
                           ? () => _saveExpense(context)
                           : () => _saveExpense(context, claimable: true),

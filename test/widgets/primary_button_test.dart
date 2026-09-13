@@ -13,7 +13,10 @@ Future<void> _pump(
 }) async {
   await tester.pumpWidget(
     MaterialApp(
-      theme: ThemeData(brightness: Brightness.light, splashFactory: NoSplash.splashFactory),
+      theme: ThemeData(
+        brightness: Brightness.light,
+        splashFactory: NoSplash.splashFactory,
+      ),
       localizationsDelegates: const [
         GlobalMaterialLocalizations.delegate,
         GlobalWidgetsLocalizations.delegate,
@@ -21,8 +24,11 @@ Future<void> _pump(
       ],
       home: Builder(
         builder: (context) => Theme(
-          data: getThemeData(context, kBrandSeed, brightness)
-              .copyWith(splashFactory: NoSplash.splashFactory),
+          data: getThemeData(
+            context,
+            kBrandSeed,
+            brightness,
+          ).copyWith(splashFactory: NoSplash.splashFactory),
           child: Scaffold(body: Center(child: child)),
         ),
       ),
@@ -35,10 +41,14 @@ Future<void> _pump(
 /// button's colored shadow (the one whose [BoxDecoration.boxShadow] is
 /// non-null or whose [BoxDecoration.color] equals the primary color).
 BoxDecoration? _buttonDecoration(WidgetTester tester) {
-  final containers = tester.widgetList<Container>(find.byType(Container)).toList();
+  final containers = tester
+      .widgetList<Container>(find.byType(Container))
+      .toList();
   for (final c in containers) {
     final deco = c.decoration;
-    if (deco is BoxDecoration && deco.boxShadow != null && deco.boxShadow!.isNotEmpty) {
+    if (deco is BoxDecoration &&
+        deco.boxShadow != null &&
+        deco.boxShadow!.isNotEmpty) {
       return deco;
     }
   }
@@ -58,7 +68,10 @@ void main() {
 
     testWidgets('fires onPressed when tapped (enabled)', (tester) async {
       var tapped = 0;
-      await _pump(tester, PrimaryButton(label: 'Save', onPressed: () => tapped++));
+      await _pump(
+        tester,
+        PrimaryButton(label: 'Save', onPressed: () => tapped++),
+      );
       await tester.tap(find.byType(PrimaryButton));
       await tester.pumpAndSettle();
       expect(tapped, 1);
@@ -76,7 +89,9 @@ void main() {
       expect(tapped, 0);
     });
 
-    testWidgets('disabled → no BoxShadow in container decoration', (tester) async {
+    testWidgets('disabled → no BoxShadow in container decoration', (
+      tester,
+    ) async {
       await _pump(tester, const PrimaryButton(label: 'Save', onPressed: null));
       final deco = _buttonDecoration(tester);
       expect(
@@ -90,76 +105,117 @@ void main() {
     // Enabled light: colored shadow
     // -------------------------------------------------------------------------
 
-    testWidgets('enabled light → container has a BoxShadow with positive y offset', (tester) async {
-      await _pump(tester, PrimaryButton(label: 'Save', onPressed: () {}));
-      final deco = _buttonDecoration(tester);
-      expect(deco, isNotNull, reason: 'Enabled PrimaryButton must have a BoxShadow decoration');
-      final shadow = deco!.boxShadow!.first;
-      expect(shadow.offset.dy, greaterThan(0),
-          reason: 'Shadow y offset must be positive (≈12)');
-    });
+    testWidgets(
+      'enabled light → container has a BoxShadow with positive y offset',
+      (tester) async {
+        await _pump(tester, PrimaryButton(label: 'Save', onPressed: () {}));
+        final deco = _buttonDecoration(tester);
+        expect(
+          deco,
+          isNotNull,
+          reason: 'Enabled PrimaryButton must have a BoxShadow decoration',
+        );
+        final shadow = deco!.boxShadow!.first;
+        expect(
+          shadow.offset.dy,
+          greaterThan(0),
+          reason: 'Shadow y offset must be positive (≈12)',
+        );
+      },
+    );
 
-    testWidgets('enabled light → shadow color is derived from colorScheme.primary', (tester) async {
-      late Color primary;
-      await tester.pumpWidget(
-        MaterialApp(
-          theme: ThemeData(brightness: Brightness.light, splashFactory: NoSplash.splashFactory),
-          home: Builder(builder: (context) {
-            final theme = getThemeData(context, kBrandSeed, Brightness.light);
-            primary = theme.colorScheme.primary;
-            return Theme(
-              data: theme.copyWith(splashFactory: NoSplash.splashFactory),
-              child: Scaffold(body: Center(child: PrimaryButton(label: 'Go', onPressed: () {}))),
-            );
-          }),
-        ),
-      );
-      await tester.pumpAndSettle();
+    testWidgets(
+      'enabled light → shadow color is derived from colorScheme.primary',
+      (tester) async {
+        late Color primary;
+        await tester.pumpWidget(
+          MaterialApp(
+            theme: ThemeData(
+              brightness: Brightness.light,
+              splashFactory: NoSplash.splashFactory,
+            ),
+            home: Builder(
+              builder: (context) {
+                final theme = getThemeData(
+                  context,
+                  kBrandSeed,
+                  Brightness.light,
+                );
+                primary = theme.colorScheme.primary;
+                return Theme(
+                  data: theme.copyWith(splashFactory: NoSplash.splashFactory),
+                  child: Scaffold(
+                    body: Center(
+                      child: PrimaryButton(label: 'Go', onPressed: () {}),
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
+        );
+        await tester.pumpAndSettle();
 
-      final deco = _buttonDecoration(tester);
-      expect(deco, isNotNull);
-      final shadowColor = deco!.boxShadow!.first.color;
-      // Shadow must share the same red, green, blue channels as primary.
-      expect(shadowColor.r, closeTo(primary.r, 0.01));
-      expect(shadowColor.g, closeTo(primary.g, 0.01));
-      expect(shadowColor.b, closeTo(primary.b, 0.01));
-    });
+        final deco = _buttonDecoration(tester);
+        expect(deco, isNotNull);
+        final shadowColor = deco!.boxShadow!.first.color;
+        // Shadow must share the same red, green, blue channels as primary.
+        expect(shadowColor.r, closeTo(primary.r, 0.01));
+        expect(shadowColor.g, closeTo(primary.g, 0.01));
+        expect(shadowColor.b, closeTo(primary.b, 0.01));
+      },
+    );
 
     // -------------------------------------------------------------------------
     // Full-width default
     // -------------------------------------------------------------------------
 
-    testWidgets('fullWidth:true (default) expands to available width', (tester) async {
+    testWidgets('fullWidth:true (default) expands to available width', (
+      tester,
+    ) async {
       await tester.pumpWidget(
         MaterialApp(
-          theme: ThemeData(brightness: Brightness.light, splashFactory: NoSplash.splashFactory),
-          home: Builder(builder: (context) {
-            return Theme(
-              data: getThemeData(context, kBrandSeed, Brightness.light)
-                  .copyWith(splashFactory: NoSplash.splashFactory),
-              child: Scaffold(
-                body: Padding(
-                  padding: const EdgeInsets.all(20),
-                  child: PrimaryButton(label: 'Go', onPressed: () {}),
+          theme: ThemeData(
+            brightness: Brightness.light,
+            splashFactory: NoSplash.splashFactory,
+          ),
+          home: Builder(
+            builder: (context) {
+              return Theme(
+                data: getThemeData(
+                  context,
+                  kBrandSeed,
+                  Brightness.light,
+                ).copyWith(splashFactory: NoSplash.splashFactory),
+                child: Scaffold(
+                  body: Padding(
+                    padding: const EdgeInsets.all(20),
+                    child: PrimaryButton(label: 'Go', onPressed: () {}),
+                  ),
                 ),
-              ),
-            );
-          }),
+              );
+            },
+          ),
         ),
       );
       await tester.pumpAndSettle();
 
       final buttonSize = tester.getSize(find.byType(PrimaryButton));
       // On a ~360-wide viewport minus 40 padding = ~320 wide.
-      expect(buttonSize.width, greaterThan(200),
-          reason: 'fullWidth PrimaryButton must expand horizontally');
+      expect(
+        buttonSize.width,
+        greaterThan(200),
+        reason: 'fullWidth PrimaryButton must expand horizontally',
+      );
     });
 
     // -------------------------------------------------------------------------
     // Optional icon
     // -------------------------------------------------------------------------
 
-    testWidgets('icon param renders an Icon widget alongside the label', (tester) async {
+    testWidgets('icon param renders an Icon widget alongside the label', (
+      tester,
+    ) async {
       await _pump(
         tester,
         PrimaryButton(label: 'Share', onPressed: () {}, icon: Icons.ios_share),
@@ -168,24 +224,33 @@ void main() {
       expect(find.text('Share'), findsOneWidget);
     });
 
-    testWidgets('label stays single-line + ellipsizes so it cannot overflow (F153)',
-        (tester) async {
-      // "Begleichen" (DE "Settle up") in the tight hero pill previously
-      // overflowed because the label was a bare Text with no maxLines.
-      await _pump(
-        tester,
-        const SizedBox(
-          width: 90,
-          child: PrimaryButton(label: 'Begleichen', onPressed: null, compact: true),
-        ),
-      );
-      expect(tester.takeException(), isNull,
-          reason: 'compact PrimaryButton must not overflow at a tight width');
-      final text = tester.widget<Text>(find.text('Begleichen'));
-      expect(text.maxLines, 1);
-      expect(text.softWrap, isFalse);
-      expect(text.overflow, TextOverflow.ellipsis);
-    });
+    testWidgets(
+      'label stays single-line + ellipsizes so it cannot overflow (F153)',
+      (tester) async {
+        // "Begleichen" (DE "Settle up") in the tight hero pill previously
+        // overflowed because the label was a bare Text with no maxLines.
+        await _pump(
+          tester,
+          const SizedBox(
+            width: 90,
+            child: PrimaryButton(
+              label: 'Begleichen',
+              onPressed: null,
+              compact: true,
+            ),
+          ),
+        );
+        expect(
+          tester.takeException(),
+          isNull,
+          reason: 'compact PrimaryButton must not overflow at a tight width',
+        );
+        final text = tester.widget<Text>(find.text('Begleichen'));
+        expect(text.maxLines, 1);
+        expect(text.softWrap, isFalse);
+        expect(text.overflow, TextOverflow.ellipsis);
+      },
+    );
 
     // -------------------------------------------------------------------------
     // Builds in dark mode
@@ -201,7 +266,9 @@ void main() {
       expect(find.text('Save'), findsOneWidget);
     });
 
-    testWidgets('dark mode disabled also builds without throwing', (tester) async {
+    testWidgets('dark mode disabled also builds without throwing', (
+      tester,
+    ) async {
       await _pump(
         tester,
         const PrimaryButton(label: 'Save', onPressed: null),
@@ -217,12 +284,16 @@ void main() {
     testWidgets('hit target height is at least 48dp', (tester) async {
       await _pump(tester, PrimaryButton(label: 'Save', onPressed: () {}));
       final size = tester.getSize(find.byType(PrimaryButton));
-      expect(size.height, greaterThanOrEqualTo(48.0),
-          reason: 'Primary CTA must have at least 48dp hit height');
+      expect(
+        size.height,
+        greaterThanOrEqualTo(48.0),
+        reason: 'Primary CTA must have at least 48dp hit height',
+      );
     });
 
-    testWidgets('uses a radius-15 rounded rectangle (not a stadium pill)',
-        (tester) async {
+    testWidgets('uses a radius-15 rounded rectangle (not a stadium pill)', (
+      tester,
+    ) async {
       await _pump(tester, PrimaryButton(label: 'Save', onPressed: () {}));
       final deco = _buttonDecoration(tester);
       expect(deco, isNotNull);
@@ -240,8 +311,9 @@ void main() {
     /// Returns the fill of the button's colored container (shadow-bearing when
     /// enabled; else the first colored Container).
     Color? fillColor(WidgetTester tester) {
-      final containers =
-          tester.widgetList<Container>(find.byType(Container)).toList();
+      final containers = tester
+          .widgetList<Container>(find.byType(Container))
+          .toList();
       for (final c in containers) {
         final deco = c.decoration;
         if (deco is BoxDecoration && deco.color != null) return deco.color;
@@ -249,34 +321,43 @@ void main() {
       return null;
     }
 
-    testWidgets('background override tints the fill with the danger color',
-        (tester) async {
+    testWidgets('background override tints the fill with the danger color', (
+      tester,
+    ) async {
       late Color error;
       await tester.pumpWidget(
         MaterialApp(
-          theme: ThemeData(brightness: Brightness.light, splashFactory: NoSplash.splashFactory),
-          home: Builder(builder: (context) {
-            final theme = getThemeData(context, kBrandSeed, Brightness.light);
-            error = theme.colorScheme.error;
-            return Theme(
-              data: theme.copyWith(splashFactory: NoSplash.splashFactory),
-              child: Scaffold(
-                body: Center(
-                  child: PrimaryButton(
-                    label: 'Delete',
-                    onPressed: () {},
-                    background: error,
-                    foreground: theme.colorScheme.onError,
+          theme: ThemeData(
+            brightness: Brightness.light,
+            splashFactory: NoSplash.splashFactory,
+          ),
+          home: Builder(
+            builder: (context) {
+              final theme = getThemeData(context, kBrandSeed, Brightness.light);
+              error = theme.colorScheme.error;
+              return Theme(
+                data: theme.copyWith(splashFactory: NoSplash.splashFactory),
+                child: Scaffold(
+                  body: Center(
+                    child: PrimaryButton(
+                      label: 'Delete',
+                      onPressed: () {},
+                      background: error,
+                      foreground: theme.colorScheme.onError,
+                    ),
                   ),
                 ),
-              ),
-            );
-          }),
+              );
+            },
+          ),
         ),
       );
       await tester.pumpAndSettle();
-      expect(fillColor(tester), error,
-          reason: 'background override must drive the fill (danger = error)');
+      expect(
+        fillColor(tester),
+        error,
+        reason: 'background override must drive the fill (danger = error)',
+      );
       // Shadow tint must track the danger fill, not the default primary.
       final deco = _buttonDecoration(tester);
       expect(deco!.boxShadow!.first.color.r, closeTo(error.r, 0.01));
@@ -286,15 +367,19 @@ void main() {
     // Compact variant: smaller pill, no shadow, intrinsic width
     // -------------------------------------------------------------------------
 
-    testWidgets('compact renders a stadium pill with no drop-shadow',
-        (tester) async {
+    testWidgets('compact renders a stadium pill with no drop-shadow', (
+      tester,
+    ) async {
       await _pump(
         tester,
         PrimaryButton(label: 'Add', onPressed: () {}, compact: true),
       );
       // No shadow-bearing container.
-      expect(_buttonDecoration(tester), isNull,
-          reason: 'compact PrimaryButton must not carry a drop-shadow');
+      expect(
+        _buttonDecoration(tester),
+        isNull,
+        reason: 'compact PrimaryButton must not carry a drop-shadow',
+      );
     });
 
     testWidgets('compact is shorter than the default full CTA', (tester) async {
@@ -304,19 +389,27 @@ void main() {
           mainAxisSize: MainAxisSize.min,
           children: [
             PrimaryButton(
-                key: const Key('full'), label: 'Add', onPressed: () {}, fullWidth: false),
+              key: const Key('full'),
+              label: 'Add',
+              onPressed: () {},
+              fullWidth: false,
+            ),
             PrimaryButton(
-                key: const Key('compact'),
-                label: 'Add',
-                onPressed: () {},
-                compact: true),
+              key: const Key('compact'),
+              label: 'Add',
+              onPressed: () {},
+              compact: true,
+            ),
           ],
         ),
       );
       final full = tester.getSize(find.byKey(const Key('full'))).height;
       final compact = tester.getSize(find.byKey(const Key('compact'))).height;
-      expect(compact, lessThan(full),
-          reason: 'compact PrimaryButton must be shorter than the default CTA');
+      expect(
+        compact,
+        lessThan(full),
+        reason: 'compact PrimaryButton must be shorter than the default CTA',
+      );
     });
   });
 
@@ -341,7 +434,10 @@ void main() {
 
     testWidgets('fires onPressed when tapped (enabled)', (tester) async {
       var tapped = 0;
-      await _pump(tester, SecondaryButton(label: 'Copy', onPressed: () => tapped++));
+      await _pump(
+        tester,
+        SecondaryButton(label: 'Copy', onPressed: () => tapped++),
+      );
       await tester.tap(find.byType(SecondaryButton));
       await tester.pumpAndSettle();
       expect(tapped, 1);
@@ -349,46 +445,75 @@ void main() {
 
     testWidgets('onPressed null → tap does nothing', (tester) async {
       var tapped = 0;
-      await _pump(tester, const SecondaryButton(label: 'Copy', onPressed: null));
+      await _pump(
+        tester,
+        const SecondaryButton(label: 'Copy', onPressed: null),
+      );
       await tester.tap(find.byType(SecondaryButton), warnIfMissed: false);
       await tester.pumpAndSettle();
       expect(tapped, 0);
     });
 
-    testWidgets('is a radius-15 rectangle with a white fill and hairline border',
-        (tester) async {
-      late ColorScheme scheme;
-      await tester.pumpWidget(
-        MaterialApp(
-          theme: ThemeData(brightness: Brightness.light, splashFactory: NoSplash.splashFactory),
-          home: Builder(builder: (context) {
-            final theme = getThemeData(context, kBrandSeed, Brightness.light);
-            scheme = theme.colorScheme;
-            return Theme(
-              data: theme.copyWith(splashFactory: NoSplash.splashFactory),
-              child: Scaffold(
-                body: Center(child: SecondaryButton(label: 'Copy', onPressed: () {})),
-              ),
-            );
-          }),
-        ),
-      );
-      await tester.pumpAndSettle();
+    testWidgets(
+      'is a radius-15 rectangle with a white fill and hairline border',
+      (tester) async {
+        late ColorScheme scheme;
+        await tester.pumpWidget(
+          MaterialApp(
+            theme: ThemeData(
+              brightness: Brightness.light,
+              splashFactory: NoSplash.splashFactory,
+            ),
+            home: Builder(
+              builder: (context) {
+                final theme = getThemeData(
+                  context,
+                  kBrandSeed,
+                  Brightness.light,
+                );
+                scheme = theme.colorScheme;
+                return Theme(
+                  data: theme.copyWith(splashFactory: NoSplash.splashFactory),
+                  child: Scaffold(
+                    body: Center(
+                      child: SecondaryButton(label: 'Copy', onPressed: () {}),
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
+        );
+        await tester.pumpAndSettle();
 
-      final deco = secondaryDecoration(tester);
-      expect(deco.borderRadius, BorderRadius.circular(15),
-          reason: 'Secondary button must be a 15-radius rectangle');
-      expect(deco.color, scheme.surfaceContainerLowest,
-          reason: 'Secondary button fill is the card-white surface');
-      final border = deco.border! as Border;
-      expect(border.top.width, 1.5,
-          reason: 'Secondary button has a 1.5px hairline border');
-      expect(border.top.color, scheme.outlineVariant,
-          reason: 'Border routes through the outlineVariant hairline token');
-    });
+        final deco = secondaryDecoration(tester);
+        expect(
+          deco.borderRadius,
+          BorderRadius.circular(15),
+          reason: 'Secondary button must be a 15-radius rectangle',
+        );
+        expect(
+          deco.color,
+          scheme.surfaceContainerLowest,
+          reason: 'Secondary button fill is the card-white surface',
+        );
+        final border = deco.border! as Border;
+        expect(
+          border.top.width,
+          1.5,
+          reason: 'Secondary button has a 1.5px hairline border',
+        );
+        expect(
+          border.top.color,
+          scheme.outlineVariant,
+          reason: 'Border routes through the outlineVariant hairline token',
+        );
+      },
+    );
 
-    testWidgets('icon param renders an Icon widget alongside the label',
-        (tester) async {
+    testWidgets('icon param renders an Icon widget alongside the label', (
+      tester,
+    ) async {
       await _pump(
         tester,
         SecondaryButton(label: 'Copy', onPressed: () {}, icon: Icons.copy),
@@ -397,14 +522,19 @@ void main() {
       expect(find.text('Copy'), findsOneWidget);
     });
 
-    testWidgets('label stays single-line (no soft-wrap) so it cannot wrap',
-        (tester) async {
+    testWidgets('label stays single-line (no soft-wrap) so it cannot wrap', (
+      tester,
+    ) async {
       // "Link kopieren" is the DE label that previously wrapped to two lines.
       await _pump(
         tester,
         const SizedBox(
           width: 150,
-          child: SecondaryButton(label: 'Link kopieren', onPressed: null, icon: Icons.copy),
+          child: SecondaryButton(
+            label: 'Link kopieren',
+            onPressed: null,
+            icon: Icons.copy,
+          ),
         ),
       );
       final text = tester.widget<Text>(find.text('Link kopieren'));
@@ -428,79 +558,297 @@ void main() {
       expect(size.height, greaterThanOrEqualTo(48.0));
     });
 
-    testWidgets('foreground override tints the border + label (danger)',
-        (tester) async {
+    testWidgets('foreground override tints the border + label (danger)', (
+      tester,
+    ) async {
       late Color error;
       await tester.pumpWidget(
         MaterialApp(
-          theme: ThemeData(brightness: Brightness.light, splashFactory: NoSplash.splashFactory),
-          home: Builder(builder: (context) {
-            final theme = getThemeData(context, kBrandSeed, Brightness.light);
-            error = theme.colorScheme.error;
-            return Theme(
-              data: theme.copyWith(splashFactory: NoSplash.splashFactory),
-              child: Scaffold(
-                body: Center(
-                  child: SecondaryButton(
-                      label: 'Cancel', onPressed: () {}, foreground: error),
+          theme: ThemeData(
+            brightness: Brightness.light,
+            splashFactory: NoSplash.splashFactory,
+          ),
+          home: Builder(
+            builder: (context) {
+              final theme = getThemeData(context, kBrandSeed, Brightness.light);
+              error = theme.colorScheme.error;
+              return Theme(
+                data: theme.copyWith(splashFactory: NoSplash.splashFactory),
+                child: Scaffold(
+                  body: Center(
+                    child: SecondaryButton(
+                      label: 'Cancel',
+                      onPressed: () {},
+                      foreground: error,
+                    ),
+                  ),
                 ),
-              ),
-            );
-          }),
+              );
+            },
+          ),
         ),
       );
       await tester.pumpAndSettle();
       final deco = secondaryDecoration(tester);
-      expect((deco.border! as Border).top.color, error,
-          reason: 'foreground override must tint the hairline border');
+      expect(
+        (deco.border! as Border).top.color,
+        error,
+        reason: 'foreground override must tint the hairline border',
+      );
     });
 
-    testWidgets('background override drops the border (tonal fill)',
-        (tester) async {
+    testWidgets('background override drops the border (tonal fill)', (
+      tester,
+    ) async {
       late Color fill;
       await tester.pumpWidget(
         MaterialApp(
-          theme: ThemeData(brightness: Brightness.light, splashFactory: NoSplash.splashFactory),
-          home: Builder(builder: (context) {
-            final theme = getThemeData(context, kBrandSeed, Brightness.light);
-            fill = theme.colorScheme.surfaceContainer;
-            return Theme(
-              data: theme.copyWith(splashFactory: NoSplash.splashFactory),
-              child: Scaffold(
-                body: Center(
-                  child: SecondaryButton(
-                      label: 'Remind', onPressed: () {}, background: fill, compact: true),
+          theme: ThemeData(
+            brightness: Brightness.light,
+            splashFactory: NoSplash.splashFactory,
+          ),
+          home: Builder(
+            builder: (context) {
+              final theme = getThemeData(context, kBrandSeed, Brightness.light);
+              fill = theme.colorScheme.surfaceContainer;
+              return Theme(
+                data: theme.copyWith(splashFactory: NoSplash.splashFactory),
+                child: Scaffold(
+                  body: Center(
+                    child: SecondaryButton(
+                      label: 'Remind',
+                      onPressed: () {},
+                      background: fill,
+                      compact: true,
+                    ),
+                  ),
                 ),
-              ),
-            );
-          }),
+              );
+            },
+          ),
         ),
       );
       await tester.pumpAndSettle();
       final deco = secondaryDecoration(tester);
-      expect(deco.color, fill,
-          reason: 'background override must drive the tonal fill');
-      expect(deco.border, isNull,
-          reason: 'a tonal SecondaryButton drops the hairline border');
+      expect(
+        deco.color,
+        fill,
+        reason: 'background override must drive the tonal fill',
+      );
+      expect(
+        deco.border,
+        isNull,
+        reason: 'a tonal SecondaryButton drops the hairline border',
+      );
     });
 
-    testWidgets('compact is shorter than the default secondary', (tester) async {
+    testWidgets('compact is shorter than the default secondary', (
+      tester,
+    ) async {
       await _pump(
         tester,
         Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             SecondaryButton(
-                key: const Key('sfull'), label: 'Copy', onPressed: () {}, fullWidth: false),
+              key: const Key('sfull'),
+              label: 'Copy',
+              onPressed: () {},
+              fullWidth: false,
+            ),
             SecondaryButton(
-                key: const Key('scompact'), label: 'Copy', onPressed: () {}, compact: true),
+              key: const Key('scompact'),
+              label: 'Copy',
+              onPressed: () {},
+              compact: true,
+            ),
           ],
         ),
       );
       final full = tester.getSize(find.byKey(const Key('sfull'))).height;
       final compact = tester.getSize(find.byKey(const Key('scompact'))).height;
-      expect(compact, lessThan(full),
-          reason: 'compact SecondaryButton must be shorter than the default');
+      expect(
+        compact,
+        lessThan(full),
+        reason: 'compact SecondaryButton must be shorter than the default',
+      );
     });
   });
+
+  // -------------------------------------------------------------------------
+  // Save status: idle → busy → succeeded, all on the button the user pressed.
+  //
+  // The expense editor used to pop the route and then fire a snackbar, so the
+  // confirmation landed on a screen the user had already left, and nothing at
+  // all marked the in-flight save. `succeeded` is the third state that lets a
+  // caller keep all of it on the CTA itself.
+  // -------------------------------------------------------------------------
+  group('PrimaryButton — succeeded state', () {
+    testWidgets('shows a check instead of the label', (tester) async {
+      await _pump(
+        tester,
+        const PrimaryButton(
+          onPressed: null,
+          label: 'Add expense',
+          succeeded: true,
+          successLabel: 'Expense created!',
+        ),
+      );
+
+      expect(find.byIcon(Icons.check_rounded), findsOneWidget);
+      expect(find.text('Add expense'), findsNothing);
+      expect(find.text('Expense created!'), findsOneWidget);
+    });
+
+    testWidgets('renders the check alone when no successLabel is given', (
+      tester,
+    ) async {
+      await _pump(
+        tester,
+        const PrimaryButton(
+          onPressed: null,
+          label: 'Add expense',
+          succeeded: true,
+        ),
+      );
+
+      expect(find.byIcon(Icons.check_rounded), findsOneWidget);
+      expect(find.text('Add expense'), findsNothing);
+    });
+
+    testWidgets('is not tappable while succeeded', (tester) async {
+      var taps = 0;
+      await _pump(
+        tester,
+        PrimaryButton(
+          onPressed: () => taps++,
+          label: 'Add expense',
+          succeeded: true,
+        ),
+      );
+
+      await tester.tap(find.byType(PrimaryButton));
+      await tester.pump();
+
+      expect(taps, 0);
+    });
+
+    testWidgets('keeps the full accent fill — done is not disabled', (
+      tester,
+    ) async {
+      await _pump(
+        tester,
+        const PrimaryButton(
+          onPressed: null,
+          label: 'Add expense',
+          succeeded: true,
+        ),
+      );
+      final doneFill = _fillOf(tester);
+
+      await _pump(
+        tester,
+        const PrimaryButton(onPressed: null, label: 'Add expense'),
+      );
+      final disabledFill = _fillOf(tester);
+
+      expect(
+        doneFill!.a,
+        1.0,
+        reason: 'a completed save must not look greyed out',
+      );
+      expect(disabledFill!.a, lessThan(1.0));
+    });
+
+    testWidgets('succeeded wins over loading', (tester) async {
+      await _pump(
+        tester,
+        const PrimaryButton(
+          onPressed: null,
+          label: 'Add expense',
+          loading: true,
+          succeeded: true,
+        ),
+      );
+
+      expect(find.byIcon(Icons.check_rounded), findsOneWidget);
+      expect(find.byType(CircularProgressIndicator), findsNothing);
+    });
+
+    testWidgets('check pops from zero scale when animations are enabled', (
+      tester,
+    ) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Builder(
+            builder: (context) => Theme(
+              data: getThemeData(context, kBrandSeed, Brightness.light),
+              child: const Scaffold(
+                body: Center(
+                  child: PrimaryButton(
+                    onPressed: null,
+                    label: 'Add expense',
+                    succeeded: true,
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.pump();
+
+      final pop = tester.widget<ScaleTransition>(
+        find.byKey(kPrimaryButtonCheckPopKey),
+      );
+      expect(
+        pop.scale.value,
+        lessThan(1.0),
+        reason: 'expected a mid-pop scale, got ${pop.scale.value}',
+      );
+    });
+
+    testWidgets('reduced motion renders the check at rest, no pop', (
+      tester,
+    ) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Builder(
+            builder: (context) => Theme(
+              data: getThemeData(context, kBrandSeed, Brightness.light),
+              child: const MediaQuery(
+                data: MediaQueryData(disableAnimations: true),
+                child: Scaffold(
+                  body: Center(
+                    child: PrimaryButton(
+                      onPressed: null,
+                      label: 'Add expense',
+                      succeeded: true,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.pump();
+
+      expect(find.byKey(kPrimaryButtonCheckPopKey), findsNothing);
+      expect(find.byIcon(Icons.check_rounded), findsOneWidget);
+    });
+  });
+}
+
+/// The resolved fill color of the single [PrimaryButton] in the tree.
+Color? _fillOf(WidgetTester tester) {
+  final container = tester.widget<Container>(
+    find
+        .descendant(
+          of: find.byType(PrimaryButton),
+          matching: find.byType(Container),
+        )
+        .first,
+  );
+  return (container.decoration as BoxDecoration?)?.color;
 }
