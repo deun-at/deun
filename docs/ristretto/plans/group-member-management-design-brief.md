@@ -2,7 +2,7 @@
 
 Handoff doc for the design session on group membership. Engineering contracts live in three plans
 ([member-removal](archived/group-member-removal.md) · [create-simplify](archived/group-create-simplify.md) →
-[add-flow](group-member-add-flow.md)); this file pivots them by **surface** so each screen is
+[add-flow](archived/group-member-add-flow.md)); this file pivots them by **surface** so each screen is
 designed once. Apply changes to the existing screens — don't rebuild.
 
 **Product model (the rules everything follows):**
