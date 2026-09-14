@@ -238,6 +238,19 @@ carry `[human]` criteria that nobody has ever observed. Check here before shippi
   the removal half was already walked on 2026-09-11, so a working removal with a stuck add points
   at `addMember`'s `update_group_member_shares` call, not at the subscription.
 
+- [ ] **proves** · payback-row-delete: deleting a payback row leaves `group_shares_summary` agreeing
+  with the ledger — the settlement is reopened, not merely hidden · the row is written by the
+  `pay_back` RPC and removed by a plain row delete; only the live self-hosted instance can show what
+  the derived summary does afterwards, and the build cannot reach it · **no migration to apply** —
+  this is a verification walk only. In a throwaway test group (never real data): note the balance
+  and each member's share, record a payment, confirm the balance moves, then tap the green PAYMENT
+  row in the ledger and delete it from the sheet. Confirm (1) the row disappears from the ledger,
+  (2) the group balance and every member's share return to *exactly* the values noted before the
+  payment, and (3) `select paid_by, paid_for, total_share_amount from public.group_shares_summary
+  where group_id = '<id>';` carries no leftover row from the deleted payback. Repeat once for a
+  payback recorded **on someone else's behalf** (payer ≠ you) — it must behave identically, with no
+  special case. If any share is stale, the delete needs its own RPC and this feature is not small.
+
 ## Findings from verification
 
 Defects turned up while walking the checks. These are not checks themselves — nobody ticks them —

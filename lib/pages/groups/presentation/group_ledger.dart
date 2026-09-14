@@ -1,4 +1,6 @@
 import '../../../helper/helper.dart';
+import '../../../l10n/app_localizations.dart';
+import '../../expenses/data/expense_entry_model.dart';
 import '../../expenses/data/expense_model.dart';
 
 /// The three ledger row presentations on the group-detail screen.
@@ -62,4 +64,41 @@ List<LedgerDaySection> groupExpensesByDay(List<Expense> expenses) {
   }
 
   return sections;
+}
+
+/// The single share a payback row settles with: `pay_back` writes exactly one
+/// entry carrying exactly one share (see
+/// `20260815000000_baseline_ledger_functions.sql`). Null on a row that carries
+/// none, which a real payback never does.
+ExpenseEntryShare? paybackCounterpartyShare(Expense expense) {
+  for (final entry in expense.expenseEntries.values) {
+    for (final share in entry.expenseEntryShares) {
+      return share;
+    }
+  }
+  return null;
+}
+
+/// The "{payer} paid back {amount} to {payee}" sentence a payback states, with
+/// either side rendered as "you" when it is [currentUserEmail]. One derivation
+/// for the ledger chip and the payback sheet — they must never disagree about
+/// who paid whom.
+String paybackSummaryLine(
+  Expense expense,
+  AppLocalizations l10n, {
+  required String currencyCode,
+  String? currentUserEmail,
+}) {
+  final counterparty = paybackCounterpartyShare(expense);
+  final paidByIsYou =
+      currentUserEmail != null && expense.paidBy == currentUserEmail;
+  final paidToIsYou =
+      currentUserEmail != null && counterparty?.email == currentUserEmail;
+  return l10n.groupDisplayPaidBack(
+    paidByIsYou ? 'yes' : '',
+    paidByIsYou ? l10n.you : (expense.paidByDisplayName ?? ''),
+    paidToIsYou ? 'yes' : '',
+    paidToIsYou ? l10n.you : (counterparty?.displayName ?? ''),
+    l10n.toCurrency(expense.amount, currencyCode),
+  );
 }
