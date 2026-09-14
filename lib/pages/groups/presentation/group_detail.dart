@@ -90,14 +90,16 @@ class _GroupDetailState extends ConsumerState<GroupDetail> {
     return ThemeBuilder(
       colorValue: widget.group.colorValue,
       builder: (context) {
-        // Both header actions open the same surface: the group form is where
-        // members are added until group-member-add-flow gives them their own.
-        // One closure, two entry points — the icons stay distinct because the
-        // affordances are (nobody looking to add a member reads "edit group").
         void openGroupForm() {
           GoRouter.of(
             context,
           ).push("/group/edit", extra: {'group': widget.group});
+        }
+
+        void openMembersPage() {
+          GoRouter.of(
+            context,
+          ).push("/group/members", extra: {'group': widget.group});
         }
 
         return Scaffold(
@@ -120,15 +122,13 @@ class _GroupDetailState extends ConsumerState<GroupDetail> {
                     // group-create-simplify: create no longer collects members,
                     // so the group's own surface carries the add-members entry
                     // point — one tap from the page the user lands on after
-                    // creating. It opens the group form, where the member
-                    // section still lives; group-member-add-flow repoints this
-                    // at the standalone add flow without moving the affordance.
+                    // creating.
                     HeaderIconButton(
                       icon: Icons.group_add,
                       tooltip: AppLocalizations.of(
                         context,
                       )!.groupAddMembersAction,
-                      onTap: openGroupForm,
+                      onTap: openMembersPage,
                     ),
                     HeaderIconButton(
                       icon: Icons.tune,
@@ -184,6 +184,10 @@ class _GroupDetailState extends ConsumerState<GroupDetail> {
                                       _GroupBalanceHero(group: groupDetail),
                                       const SizedBox(height: 14),
                                       _GroupQuickActions(group: groupDetail),
+                                      if (groupDetail.isSolo) ...[
+                                        const SizedBox(height: 14),
+                                        AddMembersCta(onTap: openMembersPage),
+                                      ],
                                     ],
                                   ),
                                 );
@@ -541,6 +545,68 @@ class _GroupQuickActions extends StatelessWidget {
           ),
         ),
       ],
+    );
+  }
+}
+
+/// The solo-group call to action: a group nobody else has joined yet has
+/// exactly one thing worth doing. One card, no second button; it disappears
+/// the moment a second active member exists ([Group.isSolo]).
+///
+/// Public so a widget test can pump it without the whole detail page.
+class AddMembersCta extends StatelessWidget {
+  const AddMembersCta({super.key, required this.onTap});
+
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    final colorScheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
+
+    return SoftCard(
+      onTap: onTap,
+      child: Row(
+        children: [
+          Container(
+            width: 44,
+            height: 44,
+            decoration: BoxDecoration(
+              color: colorScheme.primaryContainer,
+              borderRadius: BorderRadius.circular(14),
+            ),
+            alignment: Alignment.center,
+            child: Icon(
+              Icons.group_add,
+              color: colorScheme.onPrimaryContainer,
+              size: 22,
+            ),
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  l10n.groupMembersEmptyCtaTitle,
+                  style: textTheme.titleSmall?.copyWith(
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  l10n.groupMembersEmptyCtaBody,
+                  style: textTheme.bodySmall?.copyWith(
+                    color: colorScheme.onSurfaceVariant,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Icon(Icons.chevron_right, color: colorScheme.onSurfaceVariant),
+        ],
+      ),
     );
   }
 }

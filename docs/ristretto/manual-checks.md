@@ -231,7 +231,12 @@ carry `[human]` criteria that nobody has ever observed. Check here before shippi
 
 - [ ] **proves** · group-member-add-flow: a member added by one client appears on another client's
   open group detail through the existing realtime path · needs two live clients against the
-  self-hosted instance · ? — the feature is still `planned`; fill this in when it is built.
+  self-hosted instance, which the build cannot reach · open the same group's detail page on two
+  signed-in clients (emulator + web build is enough). On client A open Members and add someone.
+  Without touching client B, confirm its roster and its hero avatar stack gain the new member
+  within a few seconds. Then remove them on A and confirm B drops them again — same channel, and
+  the removal half was already walked on 2026-09-11, so a working removal with a stuck add points
+  at `addMember`'s `update_group_member_shares` call, not at the subscription.
 
 ## Findings from verification
 

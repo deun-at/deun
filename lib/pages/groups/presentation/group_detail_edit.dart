@@ -19,27 +19,16 @@ import '../../../widgets/currency_picker_sheet.dart';
 import '../../expenses/data/expense_model.dart';
 import '../../expenses/data/expense_repository.dart';
 import '../data/group_model.dart';
-import '../data/member_removal.dart';
-import 'group_member_search.dart';
 
 class GroupEdit extends ConsumerStatefulWidget {
   const GroupEdit({
     super.key,
     this.group,
-    this.removeMemberOverride,
     this.saveOverride,
     this.loadGroupExpenseCurrencies,
   });
 
   final Group? group;
-
-  /// Test seam forwarded to [GroupMemberSearch]; null uses the real repository.
-  final Future<MemberRemovalOutcome> Function(
-    String groupId,
-    String email, {
-    required Currency currency,
-  })?
-  removeMemberOverride;
 
   /// Test seam for the whole write path: persists [formValue] and returns the
   /// saved group exactly as the repository round-trip would. Null uses
@@ -138,7 +127,7 @@ class _GroupEditState extends ConsumerState<GroupEdit> {
     String? groupId,
     Map<String, dynamic> formValue,
   ) async {
-    final savedId = await GroupRepository.saveAll(context, groupId, formValue);
+    final savedId = await GroupRepository.saveAll(groupId, formValue);
     return GroupRepository.fetchDetail(savedId);
   }
 
@@ -199,26 +188,32 @@ class _GroupEditState extends ConsumerState<GroupEdit> {
                                   // that must be made up front (name + colour,
                                   // tracking mode, currency); members are added on
                                   // the group's own surface once the group exists.
-                                  // Create and edit diverge on purpose for one
-                                  // release — group-member-add-flow takes members
-                                  // off this form entirely.
                                   //
-                                  // Safe under clearValueOnUnregister: true. The
-                                  // branch is fixed for the lifetime of this
-                                  // GroupEdit (widget.group never changes), so this
-                                  // field is never unregistered mid-form; on create
-                                  // it simply never registers.
+                                  // group-member-add-flow: membership left this
+                                  // form entirely — this is a read-only link to
+                                  // the standalone Members page, which owns every
+                                  // membership write.
                                   if (_isEdit) ...[
-                                    FormBuilderField(
-                                      name: "group_members",
-                                      builder: (FormFieldState<dynamic> field) {
-                                        return GroupMemberSearch(
-                                          field: field,
-                                          group: widget.group,
-                                          removeMemberOverride:
-                                              widget.removeMemberOverride,
-                                        );
-                                      },
+                                    SoftCard(
+                                      padding: EdgeInsets.zero,
+                                      child: ListTile(
+                                        leading: const Icon(Icons.group),
+                                        title: Text(
+                                          l10n.groupMemberSectionTitle,
+                                        ),
+                                        subtitle: Text(
+                                          l10n.groupMemberCountLabel(
+                                            widget.group!.activeMembers.length,
+                                          ),
+                                        ),
+                                        trailing: const Icon(
+                                          Icons.chevron_right,
+                                        ),
+                                        onTap: () => GoRouter.of(context).push(
+                                          "/group/members",
+                                          extra: {'group': widget.group},
+                                        ),
+                                      ),
                                     ),
                                     const SizedBox(height: 24),
                                   ],
@@ -513,7 +508,7 @@ class GroupCurrencyField extends StatelessWidget {
   /// `!canChangeGroupCurrency(group)`. It is a parameter rather than an internal
   /// call so the locked branch is renderable in a widget test while
   /// [canChangeGroupCurrency] is still vacuously true — the same test-seam shape
-  /// as `GroupEdit.saveOverride` and `removeMemberOverride`.
+  /// as `GroupEdit.saveOverride`.
   final bool locked;
 
   @override

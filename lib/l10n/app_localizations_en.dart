@@ -197,30 +197,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get groupEntriesError => 'Something went wrong with loading Groups.';
 
   @override
-  String get groupMemberSelectionEmpty => 'Search friends';
-
-  @override
-  String get groupMemberAddFriends => 'Add friends';
-
-  @override
-  String get groupMemberSelectionTitle => 'Added friends';
-
-  @override
-  String get groupMemberResultEmpty => 'No friends found!';
-
-  @override
   String groupMemberAddGuestOption(String name) {
     return 'Add $name as guest';
   }
 
   @override
   String get groupMemberIsGuest => 'Guest';
-
-  @override
-  String get groupMemberOwnerTag => 'Owner';
-
-  @override
-  String get groupMemberAddGuestLink => 'Add guest';
 
   @override
   String get groupExpenseNoEntries => 'Add an expense to get started';
@@ -1955,26 +1937,52 @@ class AppLocalizationsEn extends AppLocalizations {
   String get groupMemberRemoveConfirm => 'Remove';
 
   @override
-  String groupMemberRemoveBlocked(String name, String amount) {
-    return '$name still has $amount outstanding in this group. Settle up first, then remove them.';
-  }
-
-  @override
-  String groupMemberRemoveSuccess(String name) {
-    return '$name was removed from the group.';
-  }
-
-  @override
   String groupMemberRemoveError(String name) {
     return '$name could not be removed. Please try again.';
   }
 
   @override
-  String get groupMemberRemovedSectionTitle => 'Removed';
-
-  @override
-  String get groupMemberReAdd => 'Add back';
-
-  @override
   String get groupAddMembersAction => 'Add members';
+
+  @override
+  String get groupMembersSearchHint => 'Search by name, username or email';
+
+  @override
+  String groupMemberCountLabel(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count members',
+      one: '1 member',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String groupMemberAddError(String name) {
+    return '$name could not be added. Please try again.';
+  }
+
+  @override
+  String groupMemberAlreadyInGroup(String name) {
+    return '$name is already in this group.';
+  }
+
+  @override
+  String get groupMemberGuestNameLabel => 'Guest name';
+
+  @override
+  String get groupMemberGuestCreateButton => 'Create guest';
+
+  @override
+  String groupMemberGuestCreateError(String name) {
+    return '$name could not be created. Please try again.';
+  }
+
+  @override
+  String get groupMembersEmptyCtaTitle =>
+      'Add the people you\'re splitting with';
+
+  @override
+  String get groupMembersEmptyCtaBody => 'A group of one has nothing to split.';
 }

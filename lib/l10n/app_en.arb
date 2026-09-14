@@ -182,14 +182,6 @@
   "@groupNoEntries": {},
   "groupEntriesError": "Something went wrong with loading Groups.",
   "@groupEntriesError": {},
-  "groupMemberSelectionEmpty": "Search friends",
-  "@groupMemberSelectionEmpty": {},
-  "groupMemberAddFriends": "Add friends",
-  "@groupMemberAddFriends": {},
-  "groupMemberSelectionTitle": "Added friends",
-  "@groupMemberSelectionTitle": {},
-  "groupMemberResultEmpty": "No friends found!",
-  "@groupMemberResultEmpty": {},
   "groupMemberAddGuestOption": "Add {name} as guest",
   "@groupMemberAddGuestOption": {
     "description": "Option in member search to add the typed name as a guest.",
@@ -199,10 +191,6 @@
   },
   "groupMemberIsGuest": "Guest",
   "@groupMemberIsGuest": {},
-  "groupMemberOwnerTag": "Owner",
-  "@groupMemberOwnerTag": {},
-  "groupMemberAddGuestLink": "Add guest",
-  "@groupMemberAddGuestLink": {},
   "groupExpenseNoEntries": "Add an expense to get started",
   "@groupExpenseNoEntries": {},
   "groupDeleteError": "Error while deleting group!",
@@ -1932,21 +1920,6 @@
   "@groupMemberRemoveConfirm": {
     "description": "Destructive confirm button in the remove-member dialog."
   },
-  "groupMemberRemoveBlocked": "{name} still has {amount} outstanding in this group. Settle up first, then remove them.",
-  "@groupMemberRemoveBlocked": {
-    "description": "Shown when a member cannot be removed because their group balance is not settled.",
-    "placeholders": {
-      "name": {"type": "String", "example": "Ann"},
-      "amount": {"type": "String", "example": "€12.50"}
-    }
-  },
-  "groupMemberRemoveSuccess": "{name} was removed from the group.",
-  "@groupMemberRemoveSuccess": {
-    "description": "Snackbar confirming a member was removed.",
-    "placeholders": {
-      "name": {"type": "String", "example": "Ann"}
-    }
-  },
   "groupMemberRemoveError": "{name} could not be removed. Please try again.",
   "@groupMemberRemoveError": {
     "description": "Snackbar shown when the removal write failed.",
@@ -1954,16 +1927,56 @@
       "name": {"type": "String", "example": "Ann"}
     }
   },
-  "groupMemberRemovedSectionTitle": "Removed",
-  "@groupMemberRemovedSectionTitle": {
-    "description": "Section label above members removed from the group, with an add-back action."
-  },
-  "groupMemberReAdd": "Add back",
-  "@groupMemberReAdd": {
-    "description": "Action that returns a removed member to the group."
-  },
   "groupAddMembersAction": "Add members",
   "@groupAddMembersAction": {
     "description": "Group-detail header action that opens the surface where members are added."
+  },
+  "groupMembersSearchHint": "Search by name, username or email",
+  "@groupMembersSearchHint": {
+    "description": "Placeholder in the Members page search field."
+  },
+  "groupMemberCountLabel": "{count, plural, =1{1 member} other{{count} members}}",
+  "@groupMemberCountLabel": {
+    "description": "Member-count subtitle on the read-only members row in the group-edit form.",
+    "placeholders": {
+      "count": {"type": "int"}
+    }
+  },
+  "groupMemberAddError": "{name} could not be added. Please try again.",
+  "@groupMemberAddError": {
+    "description": "Snackbar shown when adding a member to the group failed.",
+    "placeholders": {
+      "name": {"type": "String", "example": "Ann"}
+    }
+  },
+  "groupMemberAlreadyInGroup": "{name} is already in this group.",
+  "@groupMemberAlreadyInGroup": {
+    "description": "Snackbar shown when the tapped candidate is already an active member.",
+    "placeholders": {
+      "name": {"type": "String", "example": "Ann"}
+    }
+  },
+  "groupMemberGuestNameLabel": "Guest name",
+  "@groupMemberGuestNameLabel": {
+    "description": "Label of the name field in the create-guest step of the Members page."
+  },
+  "groupMemberGuestCreateButton": "Create guest",
+  "@groupMemberGuestCreateButton": {
+    "description": "Confirm button of the create-guest step."
+  },
+  "groupMemberGuestCreateError": "{name} could not be created. Please try again.",
+  "@groupMemberGuestCreateError": {
+    "description": "Snackbar shown when creating a guest user failed. The name stays in the field for a retry.",
+    "placeholders": {
+      "name": {"type": "String", "example": "Max"}
+    }
+  },
+  "groupMembersEmptyCtaTitle": "Add the people you're splitting with",
+  "@groupMembersEmptyCtaTitle": {
+    "description": "Title of the solo-group add-members call to action on group detail."
+  },
+  "groupMembersEmptyCtaBody": "A group of one has nothing to split.",
+  "@groupMembersEmptyCtaBody": {
+    "description": "Body of the solo-group add-members call to action on group detail."
   }
 }

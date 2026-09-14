@@ -1,15 +1,13 @@
-import 'dart:convert';
-
 import 'package:deun/helper/currency_breakdown.dart';
 import 'package:deun/helper/helper.dart';
 import 'package:deun/pages/groups/data/group_model.dart';
-import 'package:deun/pages/users/user_repository.dart';
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../constants.dart';
 import '../../../main.dart';
 import 'group_member_model.dart';
+import 'member_add.dart';
 import 'member_removal.dart';
 import 'payback_request.dart';
 
@@ -147,29 +145,18 @@ class GroupRepository {
     return group;
   }
 
-  /// Decodes the `group_members` form value. A missing or empty payload decodes
-  /// to NO members.
-  ///
-  /// group-create-simplify: this used to inject
-  /// `{'email': <current user>, 'display_name': ''}` whenever the list came out
-  /// empty — that is how a placeholder member row with an empty display name
-  /// reached the database on create. The creator is now added explicitly, and
-  /// only on the create path, by [resolveSaveMembers].
-  static List<Map<String, dynamic>> decodeGroupMembersString(
-    String? jsonValue,
-  ) {
-    return List<Map<String, dynamic>>.from(jsonDecode(jsonValue ?? "[]"));
-  }
-
   /// The `group_member` rows a group save submits, decided before anything is
   /// written.
   ///
   /// * **create** ([isCreate]) — exactly ONE row: the creator, carrying nothing
-  ///   but their email. The create form has no member field any more, so
-  ///   [membersJson] is deliberately not read here; members are added afterwards
-  ///   on the group's own surface. `group_member` stores no display name, so
-  ///   there is none to invent — and no placeholder to write.
-  /// * **edit** — exactly the roster the form carries, unchanged.
+  ///   but their email. The create form has no member field any more; members
+  ///   are added afterwards on the group's own surface. `group_member` stores
+  ///   no display name, so there is none to invent — and no placeholder to
+  ///   write.
+  /// * **edit** — NO rows at all. group-member-add-flow: membership is not a
+  ///   group attribute any more, so an edit save must never read or write it —
+  ///   the Members page (`GroupRepository.addMember` / `removeMember`) is the
+  ///   only membership writer once a group exists.
   ///
   /// A client with no signed-in user ([currentUserEmail] null or empty) yields
   /// NO rows rather than a row with an empty email.
@@ -177,10 +164,9 @@ class GroupRepository {
   /// Pure: no Supabase, no context — the caller passes the current user in.
   static List<Map<String, dynamic>> resolveSaveMembers({
     required bool isCreate,
-    required String? membersJson,
     required String? currentUserEmail,
   }) {
-    if (!isCreate) return decodeGroupMembersString(membersJson);
+    if (!isCreate) return const <Map<String, dynamic>>[];
 
     final email = currentUserEmail ?? '';
     if (email.isEmpty) return <Map<String, dynamic>>[];
@@ -218,46 +204,6 @@ class GroupRepository {
     return GroupMemberWrite(inserts: inserts, reAddEmails: reAddEmails);
   }
 
-  /// Who a group save pushes a "you were added to a group" notification to:
-  /// submitted members who are real users (guests have no device) and who were
-  /// not already in the group.
-  ///
-  /// group-create-simplify: members join through the **edit** save now, so this
-  /// diff is what makes the push reach them. A create submits nothing but the
-  /// creator, whom [sendNotification] strips from every receiver set — which is
-  /// why the create path no longer raises one at all.
-  ///
-  /// Pure: no Supabase. The caller passes the group's current [existingEmails].
-  static Set<String> resolveNotificationReceivers({
-    required List<Map<String, dynamic>> members,
-    required Set<String> existingEmails,
-  }) {
-    final receivers = <String>{};
-    for (final member in members) {
-      final email = (member['email'] as String?) ?? '';
-      if (email.isEmpty) continue;
-      if ((member['is_guest'] ?? false) == true) continue;
-      if ((member['is_guest_pending'] ?? false) == true) continue;
-      if (existingEmails.contains(email)) continue;
-      receivers.add(email);
-    }
-    return receivers;
-  }
-
-  /// Emails of the group's **active** members (soft-removed rows are not
-  /// active: re-adding one is a join, so it both inserts nothing and notifies).
-  static Future<Set<String>> _activeMemberEmails(String groupId) async {
-    final rows = await supabase
-        .from('group_member')
-        .select('email, removed_at')
-        .eq('group_id', groupId);
-    return rows
-        .where((row) => row['removed_at'] == null)
-        .map((row) => (row['email'] as String?) ?? '')
-        .where((email) => email.isNotEmpty)
-        .toSet();
-  }
-
   /// The group's FULL `group_member` roster as models, soft-removed rows
   /// included. [resolvePayback] needs the removed rows to tell "not a member"
   /// from "removed", and needs `is_guest` to decide whether the payer can be
@@ -281,7 +227,6 @@ class GroupRepository {
   /// creation). Falls back to the legacy multi-step write path when the
   /// database doesn't have the RPC yet.
   static Future<String> saveAll(
-    BuildContext context,
     String? groupId,
     Map<String, dynamic> formValue,
   ) async {
@@ -299,23 +244,12 @@ class GroupRepository {
         upsertVals.addAll({'id': groupId});
       }
 
+      // group-member-add-flow: membership is not a group attribute any more —
+      // an edit submits NO members, and a create submits the creator alone.
       final List<Map<String, dynamic>> groupMembers = resolveSaveMembers(
         isCreate: groupId == null,
-        membersJson: formValue['group_members'] as String?,
         currentUserEmail: supabase.auth.currentUser?.email,
       );
-
-      // group-create-simplify: a group gains members through the EDIT save now
-      // (create submits the creator alone), so the "you were added to a group"
-      // push is raised here, for the members this save actually adds. The old
-      // create-only call could never reach anybody: its receiver set was the
-      // creator, whom sendNotification strips.
-      final Set<String> notificationReceiver = groupId == null
-          ? const <String>{}
-          : resolveNotificationReceivers(
-              members: groupMembers,
-              existingEmails: await _activeMemberEmails(groupId),
-            );
 
       String savedGroupId;
       try {
@@ -328,10 +262,6 @@ class GroupRepository {
       } on PostgrestException catch (e) {
         if (!isMissingFunctionError(e)) rethrow;
         savedGroupId = await _saveAllLegacy(upsertVals, groupMembers);
-      }
-
-      if (notificationReceiver.isNotEmpty && context.mounted) {
-        sendGroupNotification(context, savedGroupId, notificationReceiver);
       }
 
       return savedGroupId;
@@ -354,28 +284,10 @@ class GroupRepository {
         .single();
     final savedGroupId = groupInsertResponse['id'] as String;
 
-    // Resolve any pending guest members by creating guest user records and replacing entries
+    // group-member-add-flow: a save submits at most the creator row (create) or
+    // nothing at all (edit) — no guest-pending entries reach this path any
+    // more, so there is nothing left to resolve here.
     final members = List<Map<String, dynamic>>.from(groupMembers);
-    for (int i = 0; i < members.length; i++) {
-      final member = members[i];
-      if ((member['is_guest_pending'] ?? false) == true) {
-        final displayName = (member['display_name'] ?? '').toString();
-        if (displayName.isNotEmpty) {
-          try {
-            final guestUser = await UserRepository.createGuest(displayName);
-            members[i] = {
-              'email': guestUser.email,
-              'display_name': guestUser.displayName,
-              'is_guest': guestUser.isGuest,
-            };
-          } catch (e) {
-            debugPrint('Failed to create guest "$displayName": $e');
-          }
-        }
-      }
-    }
-    // Remove entries that failed guest creation (still have is_guest_pending)
-    members.removeWhere((m) => (m['is_guest_pending'] ?? false) == true);
 
     // group-member-removal: never delete here. Membership shrinks only through
     // GroupRepository.removeMember; a member merely absent from `members` keeps
@@ -440,12 +352,9 @@ class GroupRepository {
     String email, {
     required Currency currency,
   }) async {
-    final balance = await _memberGroupBalance(groupId, email);
-    final hasHistory = await _hasExpenseHistory(groupId, email);
-
-    final outcome = resolveMemberRemoval(
-      balance: balance,
-      hasExpenseHistory: hasHistory,
+    final outcome = await previewMemberRemoval(
+      groupId,
+      email,
       currency: currency,
     );
 
@@ -474,6 +383,71 @@ class GroupRepository {
 
     return outcome;
   }
+
+  /// Adds [email] to [groupId] **on its own**: one decision, one statement, no
+  /// group attributes, no form submission, no transaction shared with [saveAll].
+  ///
+  /// The share recalculation at the end also bumps `group_update_checker`, the
+  /// table `GroupDetailNotifier` subscribes to — so another client's open group
+  /// detail picks the new member up through the existing realtime path, exactly
+  /// as [removeMember] does.
+  static Future<MemberAddOutcome> addMember(
+    String groupId,
+    String email,
+  ) async {
+    final rows = await supabase
+        .from('group_member')
+        .select('email, removed_at')
+        .eq('group_id', groupId)
+        .eq('email', email)
+        .limit(1);
+
+    final outcome = resolveMemberAdd(
+      existingMembership: rows.isEmpty ? null : rows.first,
+    );
+
+    switch (outcome) {
+      case MemberAddOutcome.alreadyMember:
+        // No write of any kind: the guard is the early return itself.
+        return outcome;
+      case MemberAddOutcome.reAdded:
+        await supabase
+            .from('group_member')
+            .update({'removed_at': null})
+            .eq('group_id', groupId)
+            .eq('email', email);
+      case MemberAddOutcome.inserted:
+        await supabase.from('group_member').insert({
+          'group_id': groupId,
+          'email': email,
+          'is_favorite': false,
+        });
+    }
+
+    await supabase.rpc(
+      'update_group_member_shares',
+      params: {"_group_id": groupId, "_expense_id": null},
+    );
+
+    return outcome;
+  }
+
+  /// [removeMember]'s decision without its write: the same two reads and the
+  /// same [resolveMemberRemoval] call, returning the outcome so a caller can
+  /// decide whether to confirm BEFORE anything is written.
+  ///
+  /// [removeMember] re-resolves rather than taking this result, so a balance
+  /// that moves between the preview and the confirmation is still caught by the
+  /// guard.
+  static Future<MemberRemovalOutcome> previewMemberRemoval(
+    String groupId,
+    String email, {
+    required Currency currency,
+  }) async => resolveMemberRemoval(
+    balance: await _memberGroupBalance(groupId, email),
+    hasExpenseHistory: await _hasExpenseHistory(groupId, email),
+    currency: currency,
+  );
 
   /// The member's own net position in the group — `group_shares_summary`'s
   /// `total_share_amount` for `paid_for = email` (identical across their rows).

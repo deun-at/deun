@@ -5,9 +5,7 @@ import 'package:deun/pages/friends/data/friendship_model.dart';
 import 'package:deun/pages/friends/provider/friendship_list.dart';
 import 'package:deun/pages/groups/data/group_member_model.dart';
 import 'package:deun/pages/groups/data/group_model.dart';
-import 'package:deun/pages/groups/data/member_removal.dart';
 import 'package:deun/pages/groups/presentation/group_detail_edit.dart';
-import 'package:deun/pages/groups/presentation/group_member_search.dart';
 import 'package:deun/pages/users/user_model.dart';
 import 'package:deun/widgets/restyle/primary_button.dart';
 import 'package:deun/widgets/restyle/soft_card.dart';
@@ -18,6 +16,7 @@ import 'package:flutter_form_builder/flutter_form_builder.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 /// Fake friends notifier that returns a fixed accepted-friends list without the
@@ -71,12 +70,6 @@ Future<void> _pump(
   Group? group,
   Brightness brightness = Brightness.light,
   List<dynamic> overrides = const [],
-  Future<MemberRemovalOutcome> Function(
-    String groupId,
-    String email, {
-    required Currency currency,
-  })?
-  removeMemberOverride,
 }) async {
   await tester.pumpWidget(
     ProviderScope(
@@ -103,7 +96,6 @@ Future<void> _pump(
               // per push) instead of Flutter's default in-place widget update.
               key: ValueKey(group?.id ?? 'create'),
               group: group,
-              removeMemberOverride: removeMemberOverride,
             ),
           ),
         ),
@@ -113,24 +105,39 @@ Future<void> _pump(
   await tester.pumpAndSettle();
 }
 
-/// Pumps [GroupMemberSearch] with NO group — the way the group form hosts it
-/// while the group is not persisted yet — as the builder of a `group_members`
-/// FormBuilderField, so its own create-vs-edit branch stays under test now that
-/// the create FORM no longer hosts it (group-create-simplify).
-Future<void> _pumpMemberSearch(
+/// Pumps the edit form inside a GoRouter carrying the `/group/members` probe
+/// route, so the read-only members row's navigation can be observed landing
+/// on the member surface.
+Future<void> _pumpEditWithRouter(
   WidgetTester tester, {
-  List<dynamic> overrides = const [],
-  Future<MemberRemovalOutcome> Function(
-    String groupId,
-    String email, {
-    required Currency currency,
-  })?
-  removeMemberOverride,
+  required Group group,
 }) async {
+  final router = GoRouter(
+    initialLocation: '/group/edit',
+    routes: [
+      GoRoute(
+        path: '/group/edit',
+        builder: (context, state) => Theme(
+          data: getThemeData(
+            context,
+            kBrandSeed,
+            Brightness.light,
+          ).copyWith(splashFactory: NoSplash.splashFactory),
+          child: GroupEdit(group: group),
+        ),
+      ),
+      GoRoute(
+        path: '/group/members',
+        builder: (context, state) =>
+            const Scaffold(body: Text('MEMBER SURFACE')),
+      ),
+    ],
+  );
+
   await tester.pumpWidget(
     ProviderScope(
-      overrides: overrides.cast(),
-      child: MaterialApp(
+      child: MaterialApp.router(
+        routerConfig: router,
         localizationsDelegates: const [
           AppLocalizations.delegate,
           GlobalMaterialLocalizations.delegate,
@@ -138,83 +145,10 @@ Future<void> _pumpMemberSearch(
           GlobalCupertinoLocalizations.delegate,
         ],
         supportedLocales: AppLocalizations.supportedLocales,
-        home: Builder(
-          builder: (context) => Theme(
-            data: getThemeData(
-              context,
-              kBrandSeed,
-              Brightness.light,
-            ).copyWith(splashFactory: NoSplash.splashFactory),
-            child: Scaffold(
-              body: FormBuilder(
-                child: FormBuilderField(
-                  name: 'group_members',
-                  builder: (FormFieldState<dynamic> field) =>
-                      SingleChildScrollView(
-                        child: GroupMemberSearch(
-                          field: field,
-                          removeMemberOverride: removeMemberOverride,
-                        ),
-                      ),
-                ),
-              ),
-            ),
-          ),
-        ),
       ),
     ),
   );
   await tester.pumpAndSettle();
-}
-
-GroupMember _memberOf(String email, String display, {DateTime? removedAt}) {
-  final m = GroupMember();
-  m.groupId = 'g1';
-  m.email = email;
-  m.displayName = display;
-  m.isGuest = false;
-  m.isFavorite = false;
-  m.removedAt = removedAt;
-  return m;
-}
-
-/// An existing group with Me + Ann, and optionally a removed Carol.
-Group _groupWithRoster({bool carolRemoved = false}) {
-  final g = _group();
-  g.groupMembers = [
-    _memberOf('me@test.com', 'Me'),
-    _memberOf('ann@test.com', 'Ann'),
-    if (carolRemoved)
-      _memberOf(
-        'carol@test.com',
-        'Carol',
-        removedAt: DateTime.utc(2026, 8, 15),
-      ),
-  ];
-  return g;
-}
-
-/// A roster row's *title* Text, specifically — not a bare `find.text(name)`.
-/// GroupMemberSearch's subtitle falls back to displayName when a member has no
-/// username (as these test fixtures don't), so the name would otherwise match
-/// both the title and the subtitle Text under the same ListTile.
-bool _hasTitle(Widget w, String text) =>
-    w is ListTile && w.title is Text && (w.title as Text).data == text;
-
-Finder _rowTitle(String name) =>
-    find.byWidgetPredicate((w) => _hasTitle(w, name));
-
-/// The trailing remove action on a roster row (icon unchanged by this feature).
-Finder _removeActionFor(String name) => find.descendant(
-  of: _rowTitle(name),
-  matching: find.byIcon(Icons.check_circle),
-);
-
-/// The group_members form value as GroupRepository.saveAll would receive it.
-String _submittedMembers(WidgetTester tester) {
-  final form = tester.state<FormBuilderState>(find.byType(FormBuilder));
-  expect(form.saveAndValidate(), isTrue);
-  return form.value['group_members'] as String;
 }
 
 /// Finds the selectable color swatches: AnimatedContainers whose decoration is a
@@ -521,98 +455,6 @@ void main() {
     },
   );
 
-  // F71: hybrid inline roster — You(Owner) row, greyed candidate toggle rows
-  // from the friends provider, and an "Add guest" section-header link.
-  testWidgets(
-    'members section shows Owner tag, Add guest link and inline greyed friend rows (F71)',
-    (tester) async {
-      // group-create-simplify: the member section is edit-only now, so this
-      // F71 roster criterion is asserted on the edit form. Assertions unchanged.
-      await _pump(
-        tester,
-        group: _group(),
-        overrides: [
-          friendshipListProvider.overrideWith(
-            () => _FakeFriendshipListNotifier([
-              _friend('sam@test.com', 'Sam', 'sam'),
-            ]),
-          ),
-        ],
-      );
-
-      final l10n = await AppLocalizations.delegate.load(const Locale('en'));
-
-      // "You" row with an "Owner" trailing tag.
-      expect(find.text(l10n.you), findsOneWidget);
-      expect(find.text(l10n.groupMemberOwnerTag), findsOneWidget);
-
-      // "Add guest" section-header link.
-      expect(find.text(l10n.groupMemberAddGuestLink), findsOneWidget);
-
-      // The friend from the provider renders inline as a greyed toggle row: an
-      // Opacity(0.45) ancestor wrapping the row, with an add-circle affordance.
-      final samRow = find.text('Sam');
-      expect(samRow, findsOneWidget);
-      final greyed = find.ancestor(
-        of: samRow,
-        matching: find.byWidgetPredicate(
-          (w) => w is Opacity && w.opacity == 0.45,
-        ),
-      );
-      expect(
-        greyed,
-        findsOneWidget,
-        reason: 'not-added friend must be greyed at .45 opacity',
-      );
-      expect(find.byIcon(Icons.add_circle_outline), findsOneWidget);
-    },
-  );
-
-  testWidgets(
-    'tapping an inline friend row adds them (removes from candidates) (F71)',
-    (tester) async {
-      // group-create-simplify: the member section is edit-only now, so this
-      // F71 roster criterion is asserted on the edit form. Assertions unchanged.
-      await _pump(
-        tester,
-        group: _group(),
-        overrides: [
-          friendshipListProvider.overrideWith(
-            () => _FakeFriendshipListNotifier([
-              _friend('sam@test.com', 'Sam', 'sam'),
-            ]),
-          ),
-        ],
-      );
-
-      // Tapping the greyed candidate routes through the same add path the
-      // SearchAnchor uses: Sam becomes a selected member (check_circle remove
-      // action) and is no longer offered as a greyed add candidate.
-      await tester.ensureVisible(find.text('Sam'));
-      await tester.pumpAndSettle();
-      await tester.tap(find.text('Sam'));
-      await tester.pumpAndSettle();
-
-      // Sam is no longer offered as a greyed add candidate...
-      expect(find.byIcon(Icons.add_circle_outline), findsNothing);
-      // ...and now renders as a selected member row carrying a check_circle
-      // remove action.
-      expect(find.text('Sam'), findsOneWidget);
-      final samCheck = find.descendant(
-        of: find.ancestor(
-          of: find.text('Sam'),
-          matching: find.byType(ListTile),
-        ),
-        matching: find.byIcon(Icons.check_circle),
-      );
-      expect(
-        samCheck,
-        findsOneWidget,
-        reason: 'added friend shows a check_circle remove action',
-      );
-    },
-  );
-
   // -------------------------------------------------------------------------
   // group-form-field-structure: the form's fields live in a Column under one
   // outer scroller, so scrolling can never unregister a field and wipe its
@@ -763,7 +605,6 @@ void main() {
       expect(form.value['color_value'], kGroupColorPalette.first.toARGB32());
       expect(form.value['simplified_expenses'], isFalse);
       expect(form.value['currency_code'], 'USD');
-      expect(form.value['group_members'] as String, contains('me@test.com'));
     },
   );
 
@@ -833,8 +674,9 @@ void main() {
 
       expect(tester.getSize(find.byType(FormBuilder)).width, 760);
 
-      // The EDIT form is unchanged: same fields, same order, member section
-      // still sitting between colour and tracking mode.
+      // The EDIT form is unchanged in shape: same fields, same order — a
+      // read-only members row (group-member-add-flow) now sits in the same
+      // slot the member section used to, still carrying the same label.
       expect(
         dyOf(find.text('Trip to Rome')),
         lessThan(dyOf(find.text(l10n.groupColorLabel))),
@@ -913,13 +755,9 @@ void main() {
       expect(find.text(l10n.groupTrackingModeDetailedTitle), findsOneWidget);
       expect(find.byType(GroupCurrencyField), findsOneWidget);
 
-      // No member section in ANY of its forms: no search widget, no roster row,
-      // no guest-add link, no inline friend candidate.
-      expect(find.byType(GroupMemberSearch), findsNothing);
+      // No member section in ANY of its forms: no roster row, no inline
+      // friend candidate.
       expect(find.text(l10n.groupMemberSectionTitle), findsNothing);
-      expect(find.text(l10n.groupMemberAddGuestLink), findsNothing);
-      expect(find.text(l10n.groupMemberAddFriends), findsNothing);
-      expect(find.text(l10n.groupMemberOwnerTag), findsNothing);
       expect(find.text(l10n.you), findsNothing);
       expect(find.text('Sam'), findsNothing);
       expect(find.byIcon(Icons.add_circle_outline), findsNothing);
@@ -933,6 +771,32 @@ void main() {
         'simplified_expenses',
         'currency_code',
       });
+    },
+  );
+
+  // group-member-add-flow: the edit form carries no member field either — it
+  // links out to the standalone Members page instead.
+  testWidgets(
+    'the edit form registers no member field and links to the Members page',
+    (tester) async {
+      await _pumpEditWithRouter(tester, group: _group());
+      final l10n = await AppLocalizations.delegate.load(const Locale('en'));
+
+      final form = tester.state<FormBuilderState>(find.byType(FormBuilder));
+      expect(form.fields.keys.toSet(), {
+        'name',
+        'color_value',
+        'simplified_expenses',
+        'currency_code',
+      });
+      expect(form.value.containsKey('group_members'), isFalse);
+      // _group() carries exactly one active member (the creator).
+      expect(find.text(l10n.groupMemberCountLabel(1)), findsOneWidget);
+
+      await tester.tap(find.text(l10n.groupMemberSectionTitle));
+      await tester.pumpAndSettle();
+
+      expect(find.text('MEMBER SURFACE'), findsOneWidget);
     },
   );
 
@@ -964,190 +828,6 @@ void main() {
       expect(form.value.containsKey('group_members'), isFalse);
     },
   );
-
-  // -------------------------------------------------------------------------
-  // group-member-removal: removing a member is an explicit, defined operation.
-  // Each test restates one acceptance criterion.
-  // -------------------------------------------------------------------------
-
-  final noFriends = [
-    friendshipListProvider.overrideWith(
-      () => _FakeFriendshipListNotifier(const []),
-    ),
-  ];
-
-  // 21
-  testWidgets(
-    'an unsettled member is not removed and the block names the outstanding amount',
-    (tester) async {
-      final calls = <String>[];
-      await _pump(
-        tester,
-        group: _groupWithRoster(),
-        overrides: noFriends,
-        removeMemberOverride: (groupId, email, {required currency}) async {
-          calls.add('$groupId/$email');
-          return const MemberRemovalOutcome.blocked(outstanding: 12.5);
-        },
-      );
-      final l10n = await AppLocalizations.delegate.load(const Locale('en'));
-
-      await tester.ensureVisible(_rowTitle('Ann'));
-      await tester.pumpAndSettle();
-      await tester.tap(_removeActionFor('Ann'));
-      await tester.pumpAndSettle();
-      await tester.tap(find.text(l10n.groupMemberRemoveConfirm));
-      await tester.pumpAndSettle();
-
-      expect(calls, ['g1/ann@test.com']);
-      expect(
-        find.text(
-          l10n.groupMemberRemoveBlocked('Ann', l10n.toCurrency(12.5, 'EUR')),
-        ),
-        findsOneWidget,
-        reason:
-            'the block must name the outstanding amount in the group currency',
-      );
-
-      await tester.tap(find.text(l10n.close));
-      await tester.pumpAndSettle();
-
-      // Nothing changed client-side either: the member is still submitted.
-      expect(_rowTitle('Ann'), findsOneWidget);
-      expect(_submittedMembers(tester), contains('ann@test.com'));
-    },
-  );
-
-  // 22
-  testWidgets(
-    'confirming a settled removal drops the member from the roster and the submitted list',
-    (tester) async {
-      await _pump(
-        tester,
-        group: _groupWithRoster(),
-        overrides: noFriends,
-        removeMemberOverride: (groupId, email, {required currency}) async =>
-            MemberRemovalOutcome.softRemoved,
-      );
-      final l10n = await AppLocalizations.delegate.load(const Locale('en'));
-
-      expect(_submittedMembers(tester), contains('ann@test.com'));
-
-      await tester.ensureVisible(_rowTitle('Ann'));
-      await tester.pumpAndSettle();
-      await tester.tap(_removeActionFor('Ann'));
-      await tester.pumpAndSettle();
-      await tester.tap(find.text(l10n.groupMemberRemoveConfirm));
-      await tester.pumpAndSettle();
-
-      // Ann is now listed under "Removed" (with an add-back action), never as an
-      // active roster row, and she is out of the submitted list.
-      expect(find.text(l10n.groupMemberRemovedSectionTitle), findsWidgets);
-      expect(_removeActionFor('Ann'), findsNothing);
-      expect(find.byIcon(Icons.person_add_alt_1), findsOneWidget);
-      expect(_submittedMembers(tester), isNot(contains('ann@test.com')));
-    },
-  );
-
-  // 23
-  testWidgets(
-    'a member loaded as removed sits in the Removed section, and Add back returns them',
-    (tester) async {
-      await _pump(
-        tester,
-        group: _groupWithRoster(carolRemoved: true),
-        overrides: noFriends,
-        removeMemberOverride: (groupId, email, {required currency}) async =>
-            MemberRemovalOutcome.softRemoved,
-      );
-      final l10n = await AppLocalizations.delegate.load(const Locale('en'));
-
-      // Not an active member: no remove action, and not in the submitted list.
-      expect(_removeActionFor('Carol'), findsNothing);
-      expect(_submittedMembers(tester), isNot(contains('carol@test.com')));
-      expect(find.text(l10n.groupMemberRemovedSectionTitle), findsWidgets);
-
-      final addBack = find.byIcon(Icons.person_add_alt_1);
-      expect(addBack, findsOneWidget);
-      await tester.ensureVisible(addBack);
-      await tester.pumpAndSettle();
-      await tester.tap(addBack);
-      await tester.pumpAndSettle();
-
-      // Back in the submitted list (the save path clears removed_at) and back to
-      // being a normal, removable roster row.
-      expect(_submittedMembers(tester), contains('carol@test.com'));
-      expect(find.byIcon(Icons.person_add_alt_1), findsNothing);
-      expect(_removeActionFor('Carol'), findsOneWidget);
-    },
-  );
-
-  // 24 (group-member-removal criterion, rebased by group-create-simplify: the
-  // create FORM no longer hosts the member section, so the not-yet-persisted
-  // branch is asserted on GroupMemberSearch itself). Assertions unchanged.
-  testWidgets(
-    'with no persisted group, removing a chip never calls the removal path',
-    (tester) async {
-      var calls = 0;
-      await _pumpMemberSearch(
-        tester,
-        overrides: [
-          friendshipListProvider.overrideWith(
-            () => _FakeFriendshipListNotifier([
-              _friend('sam@test.com', 'Sam', 'sam'),
-            ]),
-          ),
-        ],
-        removeMemberOverride: (groupId, email, {required currency}) async {
-          calls++;
-          return MemberRemovalOutcome.softRemoved;
-        },
-      );
-      final l10n = await AppLocalizations.delegate.load(const Locale('en'));
-
-      // Add Sam to the not-yet-persisted group, then take him back off.
-      await tester.tap(find.text('Sam'));
-      await tester.pumpAndSettle();
-      await tester.ensureVisible(_rowTitle('Sam'));
-      await tester.pumpAndSettle();
-      await tester.tap(_removeActionFor('Sam'));
-      await tester.pumpAndSettle();
-      await tester.tap(find.text(l10n.groupMemberRemoveConfirm));
-      await tester.pumpAndSettle();
-
-      expect(
-        calls,
-        0,
-        reason: 'nothing is persisted yet, so there is no membership to remove',
-      );
-      expect(find.byIcon(Icons.add_circle_outline), findsOneWidget);
-    },
-  );
-
-  // 25
-  testWidgets('cancelling the confirm dialog removes nothing', (tester) async {
-    var calls = 0;
-    await _pump(
-      tester,
-      group: _groupWithRoster(),
-      overrides: noFriends,
-      removeMemberOverride: (groupId, email, {required currency}) async {
-        calls++;
-        return MemberRemovalOutcome.softRemoved;
-      },
-    );
-    final l10n = await AppLocalizations.delegate.load(const Locale('en'));
-
-    await tester.ensureVisible(_rowTitle('Ann'));
-    await tester.pumpAndSettle();
-    await tester.tap(_removeActionFor('Ann'));
-    await tester.pumpAndSettle();
-    await tester.tap(find.text(l10n.cancel));
-    await tester.pumpAndSettle();
-
-    expect(calls, 0);
-    expect(_submittedMembers(tester), contains('ann@test.com'));
-  });
 
   // -------------------------------------------------------------------------
   // multi-currency-group: the shared currency picker replaces the DropdownButton,

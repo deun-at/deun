@@ -1,5 +1,3 @@
-import 'dart:convert';
-
 import 'package:flutter/material.dart';
 
 import '../../../constants.dart';
@@ -63,6 +61,24 @@ class Group {
       if (member.isRemoved) member.email,
   };
 
+  /// Every member's OWN net position in the group, keyed by email — the same
+  /// `group_shares_summary.total_share_amount` `GroupRepository.removeMember`
+  /// reads one row of, parsed from rows the detail fetch ALREADY returns.
+  ///
+  /// The value is identical across a member's rows (one net per `paid_for`), so
+  /// this is a keyed read, not a sum. Deliberately NOT rounded: [isSettled] owns
+  /// the epsilon, so the threshold is applied to one value in one place.
+  ///
+  /// Default-initialised (not `late`) so a Group built without JSON — every test
+  /// fixture in this repo — still reads as all-zero rather than throwing.
+  Map<String, double> memberBalances = {};
+
+  /// A group nobody else has joined yet. The group-detail add-members call to
+  /// action hangs off this: a solo group has exactly one thing worth doing.
+  /// Counts ACTIVE members, so a group whose only other member was soft-removed
+  /// is solo again.
+  bool get isSolo => activeMembers.length < 2;
+
   /// The amount the current user should settle with [email] in this group, or
   /// null when there is nothing to settle — either the pair reads settled or the
   /// balance runs the other way (they owe the user).
@@ -103,6 +119,19 @@ class Group {
         GroupMember groupMember = GroupMember();
         groupMember.loadDataFromJson(element);
         groupMembers.add(groupMember);
+      }
+    }
+
+    // group-member-add-flow: a bad row must never fail the whole group load —
+    // the same rule the `name` and `display_name` fallbacks follow.
+    memberBalances = {};
+    if (json["group_shares_summary"] != null) {
+      for (var element in json["group_shares_summary"]) {
+        final email = element['paid_for'] as String?;
+        if (email == null || email.isEmpty) continue;
+        memberBalances[email] =
+            double.tryParse((element['total_share_amount'] ?? 0).toString()) ??
+            0;
       }
     }
 
@@ -306,12 +335,6 @@ class Group {
     'color_value': colorValue,
     'simplified_expenses': simplifiedExpenses,
     'currency_code': currencyCode,
-    'group_members': jsonEncode(
-      // Active members only: this map seeds the group-edit form, and the save
-      // path upserts everything it is handed (clearing removed_at). Feeding it a
-      // removed member would silently resurrect them.
-      activeMembers.map((groupMember) => groupMember.toJson()).toList(),
-    ),
   };
 }
 

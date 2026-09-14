@@ -1,7 +1,5 @@
 import 'package:deun/helper/helper.dart';
 
-import 'group_member_model.dart';
-
 /// What removing a member from a group should do, decided before anything is
 /// written. `blocked` carries the amount to name in the message.
 sealed class MemberRemovalOutcome {
@@ -94,21 +92,4 @@ GroupJoinPlan resolveGroupJoin({
         existingMembership != null && existingMembership['removed_at'] != null,
     mergeGuest: selectedGuestEmail != null,
   );
-}
-
-/// Emails that must not be offered as "add" candidates in the group-member
-/// search: everyone already in the submitted roster, the current user, and every
-/// **removed** member. A removed member still has a `group_member` row, so the
-/// add path would collide with it; they come back through the roster's explicit
-/// "Add back" action, which clears `removed_at`.
-Set<String> excludedCandidateEmails({
-  required List<Map<String, dynamic>> submittedMembers,
-  required String? currentUserEmail,
-  required List<GroupMember> allMembers,
-}) {
-  return {
-    ...submittedMembers.map((m) => (m['email'] as String?) ?? ''),
-    currentUserEmail ?? '',
-    ...allMembers.where((m) => m.isRemoved).map((m) => m.email),
-  };
 }

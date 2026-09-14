@@ -410,30 +410,6 @@ abstract class AppLocalizations {
   /// **'Something went wrong with loading Groups.'**
   String get groupEntriesError;
 
-  /// No description provided for @groupMemberSelectionEmpty.
-  ///
-  /// In en, this message translates to:
-  /// **'Search friends'**
-  String get groupMemberSelectionEmpty;
-
-  /// No description provided for @groupMemberAddFriends.
-  ///
-  /// In en, this message translates to:
-  /// **'Add friends'**
-  String get groupMemberAddFriends;
-
-  /// No description provided for @groupMemberSelectionTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Added friends'**
-  String get groupMemberSelectionTitle;
-
-  /// No description provided for @groupMemberResultEmpty.
-  ///
-  /// In en, this message translates to:
-  /// **'No friends found!'**
-  String get groupMemberResultEmpty;
-
   /// Option in member search to add the typed name as a guest.
   ///
   /// In en, this message translates to:
@@ -445,18 +421,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Guest'**
   String get groupMemberIsGuest;
-
-  /// No description provided for @groupMemberOwnerTag.
-  ///
-  /// In en, this message translates to:
-  /// **'Owner'**
-  String get groupMemberOwnerTag;
-
-  /// No description provided for @groupMemberAddGuestLink.
-  ///
-  /// In en, this message translates to:
-  /// **'Add guest'**
-  String get groupMemberAddGuestLink;
 
   /// No description provided for @groupExpenseNoEntries.
   ///
@@ -3381,41 +3345,71 @@ abstract class AppLocalizations {
   /// **'Remove'**
   String get groupMemberRemoveConfirm;
 
-  /// Shown when a member cannot be removed because their group balance is not settled.
-  ///
-  /// In en, this message translates to:
-  /// **'{name} still has {amount} outstanding in this group. Settle up first, then remove them.'**
-  String groupMemberRemoveBlocked(String name, String amount);
-
-  /// Snackbar confirming a member was removed.
-  ///
-  /// In en, this message translates to:
-  /// **'{name} was removed from the group.'**
-  String groupMemberRemoveSuccess(String name);
-
   /// Snackbar shown when the removal write failed.
   ///
   /// In en, this message translates to:
   /// **'{name} could not be removed. Please try again.'**
   String groupMemberRemoveError(String name);
 
-  /// Section label above members removed from the group, with an add-back action.
-  ///
-  /// In en, this message translates to:
-  /// **'Removed'**
-  String get groupMemberRemovedSectionTitle;
-
-  /// Action that returns a removed member to the group.
-  ///
-  /// In en, this message translates to:
-  /// **'Add back'**
-  String get groupMemberReAdd;
-
   /// Group-detail header action that opens the surface where members are added.
   ///
   /// In en, this message translates to:
   /// **'Add members'**
   String get groupAddMembersAction;
+
+  /// Placeholder in the Members page search field.
+  ///
+  /// In en, this message translates to:
+  /// **'Search by name, username or email'**
+  String get groupMembersSearchHint;
+
+  /// Member-count subtitle on the read-only members row in the group-edit form.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 member} other{{count} members}}'**
+  String groupMemberCountLabel(int count);
+
+  /// Snackbar shown when adding a member to the group failed.
+  ///
+  /// In en, this message translates to:
+  /// **'{name} could not be added. Please try again.'**
+  String groupMemberAddError(String name);
+
+  /// Snackbar shown when the tapped candidate is already an active member.
+  ///
+  /// In en, this message translates to:
+  /// **'{name} is already in this group.'**
+  String groupMemberAlreadyInGroup(String name);
+
+  /// Label of the name field in the create-guest step of the Members page.
+  ///
+  /// In en, this message translates to:
+  /// **'Guest name'**
+  String get groupMemberGuestNameLabel;
+
+  /// Confirm button of the create-guest step.
+  ///
+  /// In en, this message translates to:
+  /// **'Create guest'**
+  String get groupMemberGuestCreateButton;
+
+  /// Snackbar shown when creating a guest user failed. The name stays in the field for a retry.
+  ///
+  /// In en, this message translates to:
+  /// **'{name} could not be created. Please try again.'**
+  String groupMemberGuestCreateError(String name);
+
+  /// Title of the solo-group add-members call to action on group detail.
+  ///
+  /// In en, this message translates to:
+  /// **'Add the people you\'re splitting with'**
+  String get groupMembersEmptyCtaTitle;
+
+  /// Body of the solo-group add-members call to action on group detail.
+  ///
+  /// In en, this message translates to:
+  /// **'A group of one has nothing to split.'**
+  String get groupMembersEmptyCtaBody;
 }
 
 class _AppLocalizationsDelegate
