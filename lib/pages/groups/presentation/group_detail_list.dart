@@ -3,9 +3,9 @@ import 'package:deun/main.dart';
 import 'package:deun/pages/expenses/data/expense_entry_model.dart';
 import 'package:deun/pages/groups/data/group_model.dart';
 import 'package:deun/pages/groups/presentation/group_ledger.dart';
-import 'package:deun/widgets/empty_list_widget.dart';
 import 'package:deun/widgets/restyle/avatar_stack.dart';
 import 'package:deun/widgets/restyle/deun_header.dart';
+import 'package:deun/widgets/restyle/empty_state.dart';
 import 'package:deun/widgets/restyle/money_text.dart';
 import 'package:deun/widgets/restyle/section_label.dart';
 import 'package:deun/widgets/restyle/soft_card.dart';
@@ -78,10 +78,16 @@ class _GroupDetailListState extends ConsumerState<GroupDetailList> {
         }
 
         if (expenses == null || expenses.isEmpty) {
-          return EmptyListWidget(
+          final l10n = AppLocalizations.of(context)!;
+          // No CTA: the screen already carries an extended, labelled
+          // "Add expense" FAB (group_detail.dart), so a button here would be a
+          // third way to do one thing. The body names the FAB instead, which
+          // also teaches the affordance the user will keep using.
+          return EmptyState.refreshable(
+            onRefresh: updateExpenseList,
             icon: Icons.receipt_long_outlined,
-            label: AppLocalizations.of(context)!.groupExpenseNoEntries,
-            onRefresh: () => updateExpenseList(),
+            headline: l10n.emptyExpensesHeadline,
+            body: l10n.emptyExpensesBody,
           );
         }
 

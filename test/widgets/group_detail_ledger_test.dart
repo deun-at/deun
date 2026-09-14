@@ -9,6 +9,8 @@ import 'package:deun/pages/groups/data/group_model.dart';
 import 'package:deun/pages/groups/presentation/group_detail_list.dart';
 import 'package:deun/widgets/restyle/avatar_stack.dart';
 import 'package:deun/widgets/restyle/deun_header.dart';
+import 'package:deun/widgets/restyle/empty_state.dart';
+import 'package:deun/widgets/restyle/primary_button.dart';
 import 'package:deun/widgets/restyle/soft_card.dart';
 import 'package:deun/widgets/theme_builder.dart';
 import 'package:flutter/material.dart';
@@ -422,12 +424,24 @@ void main() {
     },
   );
 
-  testWidgets('shows the empty state when there are no expenses', (
-    tester,
-  ) async {
+  // AC7 — the group-expenses empty state renders NO action button: the screen
+  // already carries an extended, labelled "Add expense" FAB.
+  testWidgets('shows the shared empty state, without a CTA, when there are no '
+      'expenses', (tester) async {
     final l10n = await AppLocalizations.delegate.load(const Locale('en'));
     await _pump(tester, expenses: []);
-    expect(find.text(l10n.groupExpenseNoEntries), findsOneWidget);
+
+    expect(find.byType(EmptyState), findsOneWidget);
+    expect(find.text(l10n.emptyExpensesHeadline), findsOneWidget);
+    expect(find.text(l10n.emptyExpensesBody), findsOneWidget);
+    expect(
+      find.descendant(
+        of: find.byType(EmptyState),
+        matching: find.byType(PrimaryButton),
+      ),
+      findsNothing,
+      reason: 'the always-present Add expense FAB is the affordance here',
+    );
   });
 
   // The expense search reuses LedgerQuickRow and routes via openLedgerExpense,

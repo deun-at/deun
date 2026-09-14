@@ -398,11 +398,29 @@ abstract class AppLocalizations {
   /// **'Delete this group?'**
   String get groupDeleteItemTitle;
 
-  /// No description provided for @groupNoEntries.
+  /// Headline of the shared empty state on the groups home.
   ///
   /// In en, this message translates to:
-  /// **'Add a group to get started.'**
-  String get groupNoEntries;
+  /// **'No groups yet'**
+  String get emptyGroupsHeadline;
+
+  /// Body copy of the shared empty state on the groups home.
+  ///
+  /// In en, this message translates to:
+  /// **'Start one for a trip, a flat, or a night out.'**
+  String get emptyGroupsBody;
+
+  /// Headline of the shared empty state's error tone — a load that failed, not an empty account.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t load this'**
+  String get emptyErrorHeadline;
+
+  /// Body copy of the shared empty state's error tone, above a Retry action.
+  ///
+  /// In en, this message translates to:
+  /// **'Check your connection and try again.'**
+  String get emptyErrorBody;
 
   /// No description provided for @groupEntriesError.
   ///
@@ -422,11 +440,17 @@ abstract class AppLocalizations {
   /// **'Guest'**
   String get groupMemberIsGuest;
 
-  /// No description provided for @groupExpenseNoEntries.
+  /// Headline of the shared empty state in a group's expense ledger.
   ///
   /// In en, this message translates to:
-  /// **'Add an expense to get started'**
-  String get groupExpenseNoEntries;
+  /// **'No expenses yet'**
+  String get emptyExpensesHeadline;
+
+  /// Body copy of the group-expenses empty state. Names the always-present Add expense FAB instead of repeating it as a CTA.
+  ///
+  /// In en, this message translates to:
+  /// **'Add the first one and Deun works out who owes what.'**
+  String get emptyExpensesBody;
 
   /// No description provided for @groupDeleteError.
   ///
@@ -1184,12 +1208,6 @@ abstract class AppLocalizations {
   /// **'Expense created!'**
   String get expenseCreateSuccess;
 
-  /// No description provided for @expenseNoEntries.
-  ///
-  /// In en, this message translates to:
-  /// **'So empty here :('**
-  String get expenseNoEntries;
-
   /// Lable in the expense list of what you are owed/what you owe per user.
   ///
   /// In en, this message translates to:
@@ -1537,11 +1555,17 @@ abstract class AppLocalizations {
   /// **'Add friends'**
   String get addFriends;
 
-  /// No description provided for @friendsNoEntries.
+  /// Headline of the shared empty state on the friends screen.
   ///
   /// In en, this message translates to:
   /// **'No friends yet'**
-  String get friendsNoEntries;
+  String get emptyFriendsHeadline;
+
+  /// Body copy of the friends empty state.
+  ///
+  /// In en, this message translates to:
+  /// **'Add people you split with often to settle up across groups.'**
+  String get emptyFriendsBody;
 
   /// Tooltip/label for declining an incoming friend request.
   ///

@@ -191,7 +191,17 @@ class AppLocalizationsDe extends AppLocalizations {
   String get groupDeleteItemTitle => 'Diese Gruppe löschen?';
 
   @override
-  String get groupNoEntries => 'Füge eine Gruppe hinzu, um zu starten.';
+  String get emptyGroupsHeadline => 'Noch keine Gruppen';
+
+  @override
+  String get emptyGroupsBody =>
+      'Erstelle eine für eine Reise, eine WG oder einen Abend.';
+
+  @override
+  String get emptyErrorHeadline => 'Konnte nicht geladen werden';
+
+  @override
+  String get emptyErrorBody => 'Prüfe deine Verbindung und versuche es erneut.';
 
   @override
   String get groupEntriesError =>
@@ -206,7 +216,11 @@ class AppLocalizationsDe extends AppLocalizations {
   String get groupMemberIsGuest => 'Gast';
 
   @override
-  String get groupExpenseNoEntries => 'Füge eine Ausgabe hinzu, um zu starten.';
+  String get emptyExpensesHeadline => 'Noch keine Ausgaben';
+
+  @override
+  String get emptyExpensesBody =>
+      'Füge die erste hinzu — Deun rechnet aus, wer wem was schuldet.';
 
   @override
   String get groupDeleteError => 'Fehler beim Löschen der Gruppe!';
@@ -689,9 +703,6 @@ class AppLocalizationsDe extends AppLocalizations {
   String get expenseCreateSuccess => 'Ausgabe erstellt!';
 
   @override
-  String get expenseNoEntries => 'So leer hier :(';
-
-  @override
   String expenseDisplayAmount(
     String displayNameYourself,
     String displayName,
@@ -911,7 +922,11 @@ class AppLocalizationsDe extends AppLocalizations {
   String get addFriends => 'Freunde hinzufügen';
 
   @override
-  String get friendsNoEntries => 'Keine Freunde gefunden.';
+  String get emptyFriendsHeadline => 'Noch keine Freunde';
+
+  @override
+  String get emptyFriendsBody =>
+      'Füge Personen hinzu, mit denen du oft teilst, um gruppenübergreifend abzurechnen.';
 
   @override
   String get friendDecline => 'Ablehnen';

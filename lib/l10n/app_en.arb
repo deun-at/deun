@@ -178,8 +178,22 @@
   "@expenseDateValidationEmpty": {},
   "groupDeleteItemTitle": "Delete this group?",
   "@groupDeleteItemTitle": {},
-  "groupNoEntries": "Add a group to get started.",
-  "@groupNoEntries": {},
+  "emptyGroupsHeadline": "No groups yet",
+  "@emptyGroupsHeadline": {
+    "description": "Headline of the shared empty state on the groups home."
+  },
+  "emptyGroupsBody": "Start one for a trip, a flat, or a night out.",
+  "@emptyGroupsBody": {
+    "description": "Body copy of the shared empty state on the groups home."
+  },
+  "emptyErrorHeadline": "Couldn't load this",
+  "@emptyErrorHeadline": {
+    "description": "Headline of the shared empty state's error tone — a load that failed, not an empty account."
+  },
+  "emptyErrorBody": "Check your connection and try again.",
+  "@emptyErrorBody": {
+    "description": "Body copy of the shared empty state's error tone, above a Retry action."
+  },
   "groupEntriesError": "Something went wrong with loading Groups.",
   "@groupEntriesError": {},
   "groupMemberAddGuestOption": "Add {name} as guest",
@@ -191,8 +205,14 @@
   },
   "groupMemberIsGuest": "Guest",
   "@groupMemberIsGuest": {},
-  "groupExpenseNoEntries": "Add an expense to get started",
-  "@groupExpenseNoEntries": {},
+  "emptyExpensesHeadline": "No expenses yet",
+  "@emptyExpensesHeadline": {
+    "description": "Headline of the shared empty state in a group's expense ledger."
+  },
+  "emptyExpensesBody": "Add the first one and Deun works out who owes what.",
+  "@emptyExpensesBody": {
+    "description": "Body copy of the group-expenses empty state. Names the always-present Add expense FAB instead of repeating it as a CTA."
+  },
   "groupDeleteError": "Error while deleting group!",
   "@groupDeleteError": {},
   "groupDeleteSuccess": "Group deleted!",
@@ -698,8 +718,6 @@
   "@expenseCreateError": {},
   "expenseCreateSuccess": "Expense created!",
   "@expenseCreateSuccess": {},
-  "expenseNoEntries": "So empty here :(",
-  "@expenseNoEntries": {},
   "expenseDisplayAmount": "{displayName} {expenseType, select, paid{paid} lent{lent} borrowed{borrowed} other{}} {amount}",
   "@expenseDisplayAmount": {
     "description": "Lable in the expense list of what you are owed/what you owe per user.",
@@ -880,8 +898,14 @@
   },
   "addFriends": "Add friends",
   "@addFriends": {},
-  "friendsNoEntries": "No friends yet",
-  "@friendsNoEntries": {},
+  "emptyFriendsHeadline": "No friends yet",
+  "@emptyFriendsHeadline": {
+    "description": "Headline of the shared empty state on the friends screen."
+  },
+  "emptyFriendsBody": "Add people you split with often to settle up across groups.",
+  "@emptyFriendsBody": {
+    "description": "Body copy of the friends empty state."
+  },
   "friendDecline": "Decline",
   "@friendDecline": {
     "description": "Tooltip/label for declining an incoming friend request."

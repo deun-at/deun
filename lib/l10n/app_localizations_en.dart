@@ -191,7 +191,16 @@ class AppLocalizationsEn extends AppLocalizations {
   String get groupDeleteItemTitle => 'Delete this group?';
 
   @override
-  String get groupNoEntries => 'Add a group to get started.';
+  String get emptyGroupsHeadline => 'No groups yet';
+
+  @override
+  String get emptyGroupsBody => 'Start one for a trip, a flat, or a night out.';
+
+  @override
+  String get emptyErrorHeadline => 'Couldn\'t load this';
+
+  @override
+  String get emptyErrorBody => 'Check your connection and try again.';
 
   @override
   String get groupEntriesError => 'Something went wrong with loading Groups.';
@@ -205,7 +214,11 @@ class AppLocalizationsEn extends AppLocalizations {
   String get groupMemberIsGuest => 'Guest';
 
   @override
-  String get groupExpenseNoEntries => 'Add an expense to get started';
+  String get emptyExpensesHeadline => 'No expenses yet';
+
+  @override
+  String get emptyExpensesBody =>
+      'Add the first one and Deun works out who owes what.';
 
   @override
   String get groupDeleteError => 'Error while deleting group!';
@@ -681,9 +694,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get expenseCreateSuccess => 'Expense created!';
 
   @override
-  String get expenseNoEntries => 'So empty here :(';
-
-  @override
   String expenseDisplayAmount(
     String displayNameYourself,
     String displayName,
@@ -887,7 +897,11 @@ class AppLocalizationsEn extends AppLocalizations {
   String get addFriends => 'Add friends';
 
   @override
-  String get friendsNoEntries => 'No friends yet';
+  String get emptyFriendsHeadline => 'No friends yet';
+
+  @override
+  String get emptyFriendsBody =>
+      'Add people you split with often to settle up across groups.';
 
   @override
   String get friendDecline => 'Decline';

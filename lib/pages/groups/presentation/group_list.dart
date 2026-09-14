@@ -1,9 +1,9 @@
 import 'dart:io';
 
 import 'package:deun/helper/currency_breakdown.dart';
+import 'package:deun/widgets/restyle/empty_state.dart';
 import 'package:deun/widgets/restyle/member_avatar.dart';
 import 'package:deun/widgets/restyle/money_text.dart';
-import 'package:deun/widgets/restyle/primary_button.dart';
 import 'package:deun/widgets/restyle/screen_gutter.dart';
 import 'package:deun/widgets/restyle/section_label.dart';
 import 'package:deun/widgets/restyle/currency_chips.dart';
@@ -82,13 +82,14 @@ class _GroupListState extends ConsumerState<GroupList> {
             value.isEmpty
                 ? RefreshIndicator(
                     onRefresh: updateGroupList,
-                    // Single scroll view: the empty content + create-first-group
-                    // CTA are laid out inline (not via EmptyListWidget's own inner
-                    // ListView, which would nest an unbounded viewport). With no
-                    // group list to head, the "+ New" section-header action isn't
-                    // rendered, so the empty state carries the create affordance
-                    // (F91: the standalone FAB was removed as redundant when
-                    // groups exist).
+                    // The greeting header has to stay above the empty state, so
+                    // this branch keeps its own scroll view and drops in the
+                    // *bare* EmptyState — the constructor that owns no
+                    // scrollable, precisely so it can nest here. With no group
+                    // list to head, the "+ New" section-header action isn't
+                    // rendered, so the empty state carries the create
+                    // affordance (F91: the standalone FAB was removed as
+                    // redundant when groups exist).
                     child: ListView(
                       // This branch's list has no padding of its own, so the
                       // header supplies the gutter here.
@@ -98,25 +99,13 @@ class _GroupListState extends ConsumerState<GroupList> {
                       children: [
                         _GreetingHeader(),
                         const SizedBox(height: 100),
-                        Icon(
-                          Icons.group_outlined,
-                          size: 48,
-                          color: Theme.of(context).colorScheme.outline,
-                        ),
-                        const SizedBox(height: 16),
-                        Text(
-                          l10n.groupNoEntries,
-                          style: Theme.of(context).textTheme.headlineMedium,
-                          textAlign: TextAlign.center,
-                        ),
-                        Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 24),
-                          child: PrimaryButton(
-                            label: l10n.addNewGroup,
-                            icon: Icons.add,
-                            onPressed: () =>
-                                GoRouter.of(context).push("/group/edit"),
-                          ),
+                        EmptyState(
+                          icon: Icons.group_outlined,
+                          headline: l10n.emptyGroupsHeadline,
+                          body: l10n.emptyGroupsBody,
+                          actionLabel: l10n.addNewGroup,
+                          onAction: () =>
+                              GoRouter.of(context).push("/group/edit"),
                         ),
                       ],
                     ),
@@ -124,10 +113,11 @@ class _GroupListState extends ConsumerState<GroupList> {
                 : _buildList(value),
           AsyncError() => RefreshIndicator(
             onRefresh: updateGroupList,
-            // Single scroll view: greeting + error laid out inline. Do NOT wrap
-            // EmptyListWidget (it has its own inner ListView) in another ListView
-            // here — nesting two vertical viewports gives unbounded height and
-            // crashes layout. Same rule as the empty-state branch above.
+            // Single scroll view: greeting + error laid out inline. Anything
+            // dropped in here must own no scrollable of its own — nesting two
+            // vertical viewports gives unbounded height and crashes layout.
+            // Same rule as the empty-state branch above, which is why that one
+            // uses the bare EmptyState and not EmptyState.refreshable.
             child: ListView(
               padding: const EdgeInsets.symmetric(horizontal: kScreenGutter),
               children: [
