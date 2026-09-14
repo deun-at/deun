@@ -233,6 +233,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get groupCreateSuccess => 'Group created!';
 
   @override
+  String get groupSaveSuccess => 'Group saved!';
+
+  @override
   String get groupInviteTitle => 'Invite Friends';
 
   @override
@@ -1851,9 +1854,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get paybackRecordAmountError => 'Enter an amount greater than zero.';
 
   @override
-  String paybackRecordSuccess(String paidBy, String paidFor, String amount) {
-    return 'Recorded: $paidBy paid $paidFor $amount';
-  }
+  String get paybackRecordedShort => 'Recorded';
 
   @override
   String paybackRecordedBy(String displayName) {

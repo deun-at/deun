@@ -235,6 +235,9 @@ class AppLocalizationsDe extends AppLocalizations {
   String get groupCreateSuccess => 'Gruppe erstellt!';
 
   @override
+  String get groupSaveSuccess => 'Gruppe gespeichert!';
+
+  @override
   String get groupInviteTitle => 'Freunde einladen';
 
   @override
@@ -1886,9 +1889,7 @@ class AppLocalizationsDe extends AppLocalizations {
       'Gib einen Betrag größer als null ein.';
 
   @override
-  String paybackRecordSuccess(String paidBy, String paidFor, String amount) {
-    return 'Erfasst: $paidBy hat $paidFor $amount gezahlt';
-  }
+  String get paybackRecordedShort => 'Erfasst';
 
   @override
   String paybackRecordedBy(String displayName) {

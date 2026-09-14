@@ -476,6 +476,12 @@ abstract class AppLocalizations {
   /// **'Group created!'**
   String get groupCreateSuccess;
 
+  /// No description provided for @groupSaveSuccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Group saved!'**
+  String get groupSaveSuccess;
+
   /// No description provided for @groupInviteTitle.
   ///
   /// In en, this message translates to:
@@ -3195,11 +3201,11 @@ abstract class AppLocalizations {
   /// **'Enter an amount greater than zero.'**
   String get paybackRecordAmountError;
 
-  /// Snackbar shown after a payback was recorded on someone's behalf.
+  /// Success label on the record-a-payment CTA once the payback is written. Short enough to sit on a button; who paid whom and how much are still on the sheet.
   ///
   /// In en, this message translates to:
-  /// **'Recorded: {paidBy} paid {paidFor} {amount}'**
-  String paybackRecordSuccess(String paidBy, String paidFor, String amount);
+  /// **'Recorded'**
+  String get paybackRecordedShort;
 
   /// Attribution line on a payback that somebody other than the payer recorded.
   ///

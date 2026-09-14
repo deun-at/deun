@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:deun/helper/helper.dart';
 import 'package:deun/pages/groups/data/group_repository.dart';
+import 'package:deun/widgets/motion.dart';
 import 'package:deun/widgets/restyle/deun_header.dart';
 import 'package:deun/widgets/restyle/section_label.dart';
 import 'package:deun/widgets/restyle/primary_button.dart';
@@ -19,6 +20,9 @@ import '../../../widgets/currency_picker_sheet.dart';
 import '../../expenses/data/expense_model.dart';
 import '../../expenses/data/expense_repository.dart';
 import '../data/group_model.dart';
+
+/// The sticky-footer CTA's three states. See [_GroupEditState._saveStatus].
+enum _SaveStatus { idle, busy, done }
 
 class GroupEdit extends ConsumerStatefulWidget {
   const GroupEdit({
@@ -48,7 +52,7 @@ class GroupEdit extends ConsumerStatefulWidget {
 class _GroupEditState extends ConsumerState<GroupEdit> {
   final _formKey = GlobalKey<FormBuilderState>();
 
-  bool _isSaving = false;
+  _SaveStatus _saveStatus = _SaveStatus.idle;
 
   bool get _isEdit => widget.group != null;
 
@@ -81,43 +85,54 @@ class _GroupEditState extends ConsumerState<GroupEdit> {
   }
 
   Future<void> _save() async {
-    if (_isSaving) return;
+    if (_saveStatus != _SaveStatus.idle) return;
     if (!(_formKey.currentState?.saveAndValidate() ?? false)) return;
 
-    setState(() => _isSaving = true);
+    // Past the validation gate — from here a write is actually going out, so
+    // the CTA takes over as the progress indicator.
+    setState(() => _saveStatus = _SaveStatus.busy);
 
     final l10n = AppLocalizations.of(context)!;
     final messenger = ScaffoldMessenger.of(context);
 
-    void showMessage(String message) {
-      messenger.hideCurrentSnackBar();
-      messenger.showSnackBar(
-        SnackBar(content: Text(message), duration: const Duration(seconds: 2)),
-      );
-    }
-
-    Group? newGroup;
+    Group newGroup;
     try {
       newGroup = await (widget.saveOverride ?? _persist)(
         widget.group?.id,
         _formKey.currentState!.value,
       );
-      showMessage(l10n.groupCreateSuccess);
     } catch (e) {
-      showMessage(l10n.groupCreateError);
-    } finally {
-      if (mounted) {
-        setState(() => _isSaving = false);
-        if (context.mounted && newGroup != null) {
-          GoRouter.of(context).go("/group");
-          unawaited(
-            GoRouter.of(
-              context,
-            ).push("/group/details", extra: {'group': newGroup}),
-          );
-        }
-      }
+      // Failures still need words — a check would be a lie.
+      if (!mounted) return;
+      setState(() => _saveStatus = _SaveStatus.idle);
+      messenger.hideCurrentSnackBar();
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text(l10n.groupCreateError),
+          duration: const Duration(seconds: 2),
+        ),
+      );
+      return;
     }
+
+    // The confirmation is the check on the CTA, held long enough to read
+    // before the route changes. No snackbar: the old one fired one line
+    // before the navigation and so landed on the group's detail page.
+    // Outside the try: a throw from GoRouter navigation itself must never be
+    // reported as a save failure for a write that already landed.
+    if (!mounted) return;
+    setState(() => _saveStatus = _SaveStatus.done);
+    await Future<void>.delayed(
+      reducedIfNeeded(
+        Motion.saveConfirmationHold,
+        reduceMotion: MediaQuery.of(context).disableAnimations,
+      ),
+    );
+    if (!mounted) return;
+    GoRouter.of(context).go("/group");
+    unawaited(
+      GoRouter.of(context).push("/group/details", extra: {'group': newGroup}),
+    );
   }
 
   /// The real write path: one atomic save, then re-read the saved group so the
@@ -239,7 +254,13 @@ class _GroupEditState extends ConsumerState<GroupEdit> {
                       ),
                       _StickyFooter(
                         label: _isEdit ? l10n.save : l10n.createGroup,
-                        isBusy: _isSaving,
+                        isBusy: _saveStatus == _SaveStatus.busy,
+                        succeeded: _saveStatus == _SaveStatus.done,
+                        // The verb has to match the action: editing a group
+                        // used to confirm that one had been created.
+                        successLabel: _isEdit
+                            ? l10n.groupSaveSuccess
+                            : l10n.groupCreateSuccess,
                         onPressed: _save,
                         background: colorScheme.surface,
                       ),
@@ -704,12 +725,23 @@ class _StickyFooter extends StatelessWidget {
   const _StickyFooter({
     required this.label,
     required this.isBusy,
+    required this.succeeded,
+    required this.successLabel,
     required this.onPressed,
     required this.background,
   });
 
   final String label;
   final bool isBusy;
+
+  /// The save landed. Carried through to [PrimaryButton.succeeded] so the
+  /// confirmation shows on the CTA the user pressed, not on the screen the
+  /// navigation takes them to.
+  final bool succeeded;
+
+  /// Copy shown beside the check while [succeeded].
+  final String successLabel;
+
   final VoidCallback onPressed;
   final Color background;
 
@@ -719,9 +751,11 @@ class _StickyFooter extends StatelessWidget {
       color: background,
       padding: const EdgeInsets.fromLTRB(20, 14, 20, 20),
       child: PrimaryButton(
-        onPressed: isBusy ? null : onPressed,
+        onPressed: onPressed,
         label: label,
         loading: isBusy,
+        succeeded: succeeded,
+        successLabel: successLabel,
       ),
     );
   }

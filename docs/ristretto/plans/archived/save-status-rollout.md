@@ -36,8 +36,10 @@
   - [auto] `dart format`, `flutter analyze` and `flutter test` pass.
 - Provides:
   - `Motion.saveConfirmationHold` — the promoted hold duration (700 ms).
-  - `_StickyFooter({required String label, required bool isBusy, required bool succeeded, required VoidCallback onPressed, required Color background})`
-    — private to `group_detail_edit.dart`, listed because the added parameter is the contract.
+  - `_StickyFooter({required String label, required bool isBusy, required bool succeeded, required String successLabel, required VoidCallback onPressed, required Color background})`
+    — private to `group_detail_edit.dart`, listed because the added parameters are the contract. `successLabel` was
+    added beyond the plan: the `_isEdit`-branched copy needs a route to the button and the widget is private, so no
+    public surface was added.
 - Consumes: `PrimaryButton.succeeded` / `PrimaryButton.successLabel`,
   `kPrimaryButtonCheckPopKey` (`lib/widgets/restyle/primary_button.dart`, commit `33c7d2a`);
   `reducedIfNeeded` (`lib/widgets/motion.dart`)
@@ -119,4 +121,53 @@ the test holds open.
 - Depends: —
 - Parallel-with: empty-states
 
-status: planned
+## Evidence
+- Payback sheet check on CTA before close, no success snackbar: `test/widgets/record_payback_sheet_test.dart` —
+  `the check lands on the CTA before the sheet closes`, `a recorded payback fires no success snackbar`.
+- Group save check on sticky CTA before route change, no success message:
+  `test/widgets/group_edit_screen_test.dart` — `the check lands on the sticky CTA before the route changes`,
+  `saving a group fires no success message`.
+- Failed payback/group save still raises its `SnackBar`, CTA returns to idle, no check, each failure path keeps its
+  own wording: `test/widgets/record_payback_sheet_test.dart` — `a rejection from the write says why, not "could not
+  pay back"`, `an unexpected write failure keeps the generic error`; `test/widgets/group_edit_screen_test.dart` —
+  `a failed save keeps its error, stays put and shows no check`.
+- No second write on a second tap in flight: `test/widgets/record_payback_sheet_test.dart` —
+  `a second tap while the write is in flight writes once`; `test/widgets/group_edit_screen_test.dart` —
+  `a second tap while saving does not fire a second write`.
+- Editing a group confirms "Group saved!", not "Group created!":
+  `test/widgets/group_edit_screen_test.dart:1031` (`succeeded`-state assertion on the create-copy test's
+  edit counterpart) and `groupSaveSuccess is translated, not copied, in German` (line 1151).
+- **Round 1 (`blocking (1)`)**: the deferred pop on the payback sheet could pop the group detail page underneath
+  when the user dismissed the sheet mid-hold. Fixed by capturing `ModalRoute.of(context)` before the hold and
+  popping only `if (sheetRoute?.isCurrent ?? false)`, proven red→green by
+  `test/widgets/record_payback_sheet_test.dart:350` — `a user dismissal mid-hold never pops the screen underneath`.
+  Round 1's two notes and two leans were applied in the same pass: succeeded-state assertion on the create-copy
+  test, a German-translation test for `groupSaveSuccess`, navigation hoisted out of the `try` in
+  `group_detail_edit._save`, and `_StickyFooter.onPressed` passed through unchanged. Round 2 re-review came back
+  clean — nothing left open.
+- `_StickyFooter` exposes `succeeded`, passed through to `PrimaryButton` alongside `isBusy` as `loading`; it also
+  gained a private `successLabel` parameter beyond the plan — the `_isEdit`-branched copy has no other route to the
+  button, the widget is private, so no public surface was added (reviewer-approved; see `Provides:` above).
+- Hold read from one place: `Motion.saveConfirmationHold` (`lib/widgets/motion.dart`), consumed by all three call
+  sites; `expense_detail.dart`'s private `_kSaveConfirmationHold` deleted. `test/widgets/motion_test.dart` —
+  `saveConfirmationHold is 700 ms`; expense editor's six existing tests in
+  `test/widgets/expense_save_status_test.dart` still pass untouched, proving the repoint is behaviour-neutral.
+- Reduced motion collapses the hold to zero on both new surfaces via `reducedIfNeeded`, matching
+  `expense_detail.dart`: exercised with `MediaQuery(disableAnimations: true)` in both
+  `test/widgets/record_payback_sheet_test.dart` and `test/widgets/group_edit_screen_test.dart`.
+- New ARB keys exist in both locales, no orphaned key: `paybackRecordedShort` / `groupSaveSuccess` added to
+  `app_en.arb` and `app_de.arb`; `paybackRecordSuccess` retired from both once its last reader was removed —
+  covered by each file's `copy exists in both languages` suite.
+- Gates: `dart format --set-exit-if-changed` clean on all 7 touched feature files; `flutter analyze` — "No issues
+  found!"; `flutter test` — 1590 tests, all passed, exit code 0. `dart format --set-exit-if-changed` on the full
+  `lib`/`test` tree separately reports 112 pre-existing unformatted files repo-wide (confirmed by name), none of
+  them touched by this feature.
+- Not a finding, recorded for the record: the round-2 reviewer noted a pre-existing race it deliberately did not
+  raise — if a picker sheet is open on top of the payback sheet when the hold expires, `isCurrent` is false and the
+  payback sheet stays open on a dead, checked CTA until dismissed by hand; identical end state under the pre-fix
+  code, so not introduced here.
+
+review: resolved · rounds: 2 · open: 0 block, 0 note, 0 lean
+tier: easy
+
+status: done

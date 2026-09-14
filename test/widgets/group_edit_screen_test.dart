@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:deun/constants.dart';
 import 'package:deun/helper/helper.dart';
 import 'package:deun/l10n/app_localizations.dart';
@@ -150,6 +152,92 @@ Future<void> _pumpEditWithRouter(
   );
   await tester.pumpAndSettle();
 }
+
+/// A group save the test holds open, so the in-flight CTA state is observable —
+/// the same gated-[Completer] seam `expense_save_status_test.dart` uses.
+class _GatedGroupSave {
+  _GatedGroupSave({this.throwing});
+
+  final gate = Completer<void>();
+  final Object? throwing;
+  int calls = 0;
+
+  Future<Group> call(String? groupId, Map<String, dynamic> formValue) async {
+    calls++;
+    await gate.future;
+    final failure = throwing;
+    if (failure != null) throw failure;
+    return _group();
+  }
+}
+
+/// Pumps the edit form inside a router carrying the two destinations `_save`
+/// navigates to, so a confirmation held on the CTA can be told apart from one
+/// that lands after the route has already changed.
+Future<void> _pumpSave(
+  WidgetTester tester, {
+  Group? group,
+  required _GatedGroupSave save,
+  bool reduceMotion = false,
+}) async {
+  final router = GoRouter(
+    initialLocation: '/group/edit',
+    routes: [
+      GoRoute(
+        path: '/group',
+        builder: (context, state) => const Scaffold(body: Text('GROUP LIST')),
+      ),
+      GoRoute(
+        path: '/group/edit',
+        builder: (context, state) => Theme(
+          data: getThemeData(
+            context,
+            kBrandSeed,
+            Brightness.light,
+          ).copyWith(splashFactory: NoSplash.splashFactory),
+          child: GroupEdit(
+            group: group,
+            saveOverride: save.call,
+            loadGroupExpenseCurrencies: (_) async => const [],
+          ),
+        ),
+      ),
+      GoRoute(
+        path: '/group/details',
+        builder: (context, state) => const Scaffold(body: Text('GROUP DETAIL')),
+      ),
+    ],
+  );
+
+  await tester.pumpWidget(
+    ProviderScope(
+      child: MaterialApp.router(
+        routerConfig: router,
+        localizationsDelegates: const [
+          AppLocalizations.delegate,
+          GlobalMaterialLocalizations.delegate,
+          GlobalWidgetsLocalizations.delegate,
+          GlobalCupertinoLocalizations.delegate,
+        ],
+        supportedLocales: AppLocalizations.supportedLocales,
+        builder: reduceMotion
+            ? (context, child) => MediaQuery(
+                data: MediaQuery.of(context).copyWith(disableAnimations: true),
+                child: child!,
+              )
+            : null,
+      ),
+    ),
+  );
+  await tester.pumpAndSettle();
+}
+
+/// The sticky-footer CTA — the last [PrimaryButton] in the tree (the only other
+/// one lives inside the delete dialog).
+Finder get _stickyCta => find.byType(PrimaryButton).last;
+
+PrimaryButton _footerButton(WidgetTester tester) =>
+    tester.widget<PrimaryButton>(_stickyCta);
 
 /// Finds the selectable color swatches: AnimatedContainers whose decoration is a
 /// circle filled with a palette color.
@@ -912,4 +1000,159 @@ void main() {
       expect(find.text(l10n.groupCurrencyLockedNote), findsNothing);
     },
   );
+
+  // -------------------------------------------------------------------------
+  // save-status-rollout — the save confirmation lives on the sticky-footer CTA.
+  // It used to be a snackbar fired from `_save`, with the `finally` navigating
+  // away one line later, so it landed on the new group's detail page.
+  // -------------------------------------------------------------------------
+
+  testWidgets('the check lands on the sticky CTA before the route changes', (
+    tester,
+  ) async {
+    final l10n = await AppLocalizations.delegate.load(const Locale('en'));
+    final save = _GatedGroupSave();
+    await _pumpSave(tester, group: _group(), save: save);
+
+    await tester.tap(_stickyCta);
+    await tester.pump();
+
+    expect(find.byType(CircularProgressIndicator), findsWidgets);
+    expect(_footerButton(tester).loading, isTrue);
+    expect(find.byIcon(Icons.check_rounded), findsNothing);
+
+    save.gate.complete();
+    await tester.pump(); // the save resolves, the CTA flips to done
+    await tester.pump();
+
+    expect(find.byKey(kPrimaryButtonCheckPopKey), findsOneWidget);
+    // _StickyFooter has to carry the third state through to its PrimaryButton.
+    expect(_footerButton(tester).succeeded, isTrue);
+    expect(_footerButton(tester).successLabel, l10n.groupSaveSuccess);
+    expect(
+      find.text('GROUP DETAIL'),
+      findsNothing,
+      reason: 'the form must still be on screen while the check shows',
+    );
+
+    // …and the navigation still happens once the confirmation has been seen.
+    await tester.pumpAndSettle(const Duration(seconds: 5));
+    expect(find.text('GROUP DETAIL'), findsOneWidget);
+  });
+
+  testWidgets('saving a group fires no success message', (tester) async {
+    final save = _GatedGroupSave();
+    await _pumpSave(tester, group: _group(), save: save);
+
+    await tester.tap(_stickyCta);
+    await tester.pump();
+    save.gate.complete();
+    await tester.pumpAndSettle(const Duration(seconds: 5));
+
+    expect(save.calls, 1);
+    expect(find.byType(SnackBar), findsNothing);
+  });
+
+  testWidgets('a second tap while saving does not fire a second write', (
+    tester,
+  ) async {
+    final save = _GatedGroupSave();
+    await _pumpSave(tester, group: _group(), save: save);
+
+    await tester.tap(_stickyCta);
+    await tester.pump();
+    await tester.tap(_stickyCta, warnIfMissed: false);
+    await tester.pump();
+
+    expect(save.calls, 1);
+
+    save.gate.complete();
+    await tester.pumpAndSettle(const Duration(seconds: 5));
+  });
+
+  testWidgets('creating a group still confirms "Group created!"', (
+    tester,
+  ) async {
+    final l10n = await AppLocalizations.delegate.load(const Locale('en'));
+    final save = _GatedGroupSave();
+    await _pumpSave(tester, save: save);
+
+    await tester.enterText(find.byType(TextFormField), 'Trip to Rome');
+    await tester.pump();
+
+    await tester.tap(_stickyCta);
+    await tester.pump();
+    save.gate.complete();
+    await tester.pump();
+    await tester.pump();
+
+    // The copy branches on _isEdit: editing a group used to report that one had
+    // been created.
+    expect(_footerButton(tester).succeeded, isTrue);
+    expect(_footerButton(tester).successLabel, l10n.groupCreateSuccess);
+    expect(_footerButton(tester).successLabel, isNot(l10n.groupSaveSuccess));
+
+    await tester.pumpAndSettle(const Duration(seconds: 5));
+  });
+
+  testWidgets('a failed save keeps its error, stays put and shows no check', (
+    tester,
+  ) async {
+    final l10n = await AppLocalizations.delegate.load(const Locale('en'));
+    final save = _GatedGroupSave(throwing: Exception('offline'));
+    await _pumpSave(tester, group: _group(), save: save);
+
+    await tester.tap(_stickyCta);
+    await tester.pump();
+    save.gate.complete();
+    await tester.pump();
+    await tester.pump();
+
+    expect(find.text(l10n.groupCreateError), findsOneWidget);
+    expect(find.byIcon(Icons.check_rounded), findsNothing);
+    expect(_footerButton(tester).succeeded, isFalse);
+    expect(_footerButton(tester).loading, isFalse);
+    expect(_footerButton(tester).onPressed, isNotNull);
+
+    await tester.pumpAndSettle(const Duration(seconds: 5));
+    expect(
+      find.text('GROUP DETAIL'),
+      findsNothing,
+      reason: 'a failed save must not navigate anywhere',
+    );
+  });
+
+  testWidgets('reduced motion collapses the confirmation hold', (tester) async {
+    final save = _GatedGroupSave();
+    await _pumpSave(tester, group: _group(), save: save, reduceMotion: true);
+
+    await tester.tap(_stickyCta);
+    await tester.pump();
+    save.gate.complete();
+    await tester.pump(); // the save resolves, the CTA flips to done
+
+    // 200 ms of frames — well inside Motion.saveConfirmationHold, so with an
+    // uncollapsed hold the form would still be sitting on its check here.
+    for (var i = 0; i < 10; i++) {
+      await tester.pump(const Duration(milliseconds: 20));
+    }
+
+    expect(
+      find.text('GROUP DETAIL'),
+      findsOneWidget,
+      reason: 'with the hold collapsed the route changes straight away',
+    );
+  });
+
+  // save-status-rollout — groupSaveSuccess is new copy; assert it has real
+  // German coverage rather than a carried-over English string, matching the
+  // en≠de pair assertion record_payback_sheet_test.dart runs for
+  // paybackRecordedShort.
+  test('groupSaveSuccess is translated, not copied, in German', () async {
+    final en = await AppLocalizations.delegate.load(const Locale('en'));
+    final de = await AppLocalizations.delegate.load(const Locale('de'));
+
+    expect(de.groupSaveSuccess, isNotEmpty);
+    expect(de.groupSaveSuccess, isNot(en.groupSaveSuccess));
+  });
 }

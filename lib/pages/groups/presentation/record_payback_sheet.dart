@@ -2,6 +2,7 @@ import 'package:deun/constants.dart';
 import 'package:deun/helper/helper.dart';
 import 'package:deun/l10n/app_localizations.dart';
 import 'package:deun/main.dart';
+import 'package:deun/widgets/motion.dart';
 import 'package:deun/widgets/restyle/expense_picker_sheets.dart';
 import 'package:deun/widgets/restyle/member_avatar.dart';
 import 'package:deun/widgets/restyle/money_text.dart';
@@ -24,6 +25,9 @@ typedef PaybackRecorder =
       required String paidFor,
       required double amount,
     });
+
+/// The confirm CTA's three states. See [_RecordPaybackSheetState._status].
+enum _SaveStatus { idle, busy, done }
 
 /// Opens the record-a-payment sheet.
 ///
@@ -76,7 +80,7 @@ class _RecordPaybackSheetState extends State<RecordPaybackSheet> {
   String? _paidBy;
   String? _paidFor;
   double _amount = 0;
-  bool _saving = false;
+  _SaveStatus _status = _SaveStatus.idle;
 
   String? get _currentUserEmail => supabase.auth.currentUser?.email;
 
@@ -127,6 +131,7 @@ class _RecordPaybackSheetState extends State<RecordPaybackSheet> {
   }
 
   Future<void> _submit() async {
+    if (_status != _SaveStatus.idle) return;
     final l10n = AppLocalizations.of(context)!;
 
     // Decided before anything is written. The same rule runs again inside
@@ -149,7 +154,9 @@ class _RecordPaybackSheetState extends State<RecordPaybackSheet> {
         accepted = plan;
     }
 
-    setState(() => _saving = true);
+    // Past the only validation gate — from here a write is actually going out,
+    // so the CTA takes over as the progress indicator.
+    setState(() => _status = _SaveStatus.busy);
     try {
       final recorder = widget.recordPayback;
       if (recorder != null) {
@@ -171,25 +178,37 @@ class _RecordPaybackSheetState extends State<RecordPaybackSheet> {
           // member removed in the meantime.
         );
       }
+      // The confirmation is the check on the CTA, held long enough to read
+      // before the sheet goes. No snackbar: the old one fired one line before
+      // the pop and so was painted over the group detail behind.
       if (!mounted) return;
-      showSnackBar(
-        context,
-        l10n.paybackRecordSuccess(
-          accepted.paidByDisplayName,
-          accepted.paidForDisplayName,
-          l10n.toCurrency(accepted.amount, widget.group.currencyCode),
+      // Captured before the hold: if the user dismisses the sheet themselves
+      // (swipe/barrier tap) mid-hold, this route enters
+      // _RouteLifecycle.popping and ModalRoute.isCurrent goes false while the
+      // widget is still `mounted` for the ~200ms reverse-animation window —
+      // `mounted` alone doesn't cover that, and an unconditional pop would
+      // dismiss the route underneath instead.
+      final sheetRoute = ModalRoute.of(context);
+      setState(() => _status = _SaveStatus.done);
+      await Future<void>.delayed(
+        reducedIfNeeded(
+          Motion.saveConfirmationHold,
+          reduceMotion: MediaQuery.of(context).disableAnimations,
         ),
       );
-      Navigator.of(context).pop();
+      if (!mounted) return;
+      if (sheetRoute?.isCurrent ?? false) Navigator.of(context).pop();
     } on PaybackRejectedException catch (e) {
       // The repository re-resolves the plan, so it can reject what the sheet
       // accepted. Say why, not the generic write error.
-      if (mounted) showSnackBar(context, e.rejection.message(l10n));
+      if (!mounted) return;
+      setState(() => _status = _SaveStatus.idle);
+      showSnackBar(context, e.rejection.message(l10n));
     } catch (e) {
       debugPrint('Failed to record payback in ${widget.group.id}: $e');
-      if (mounted) showSnackBar(context, l10n.payBackError);
-    } finally {
-      if (mounted) setState(() => _saving = false);
+      if (!mounted) return;
+      setState(() => _status = _SaveStatus.idle);
+      showSnackBar(context, l10n.payBackError);
     }
   }
 
@@ -246,8 +265,12 @@ class _RecordPaybackSheetState extends State<RecordPaybackSheet> {
       ),
       footer: PrimaryButton(
         key: const ValueKey('record_payback_submit'),
-        onPressed: _saving ? null : _submit,
-        loading: _saving,
+        onPressed: _status == _SaveStatus.idle ? _submit : null,
+        loading: _status == _SaveStatus.busy,
+        succeeded: _status == _SaveStatus.done,
+        // Not the full "X paid Y Z" sentence — that will not fit a button, and
+        // the three facts it drops are all still on the sheet being looked at.
+        successLabel: l10n.paybackRecordedShort,
         label: l10n.paybackRecordSubmit,
       ),
     );

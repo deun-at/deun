@@ -221,6 +221,8 @@
   "@groupCreateError": {},
   "groupCreateSuccess": "Group created!",
   "@groupCreateSuccess": {},
+  "groupSaveSuccess": "Group saved!",
+  "@groupSaveSuccess": {},
   "groupInviteTitle": "Invite Friends",
   "@groupInviteTitle": {},
   "groupInviteTitleNamed": "Invite to {group}",
@@ -1800,20 +1802,9 @@
   "@paybackRecordAmountError": {
     "description": "Block message when the record-a-payment amount is zero or negative."
   },
-  "paybackRecordSuccess": "Recorded: {paidBy} paid {paidFor} {amount}",
-  "@paybackRecordSuccess": {
-    "description": "Snackbar shown after a payback was recorded on someone's behalf.",
-    "placeholders": {
-      "paidBy": {
-        "type": "String",
-        "example": "Max Muster"
-      },
-      "paidFor": {
-        "type": "String",
-        "example": "Erika Muster"
-      },
-      "amount": { "type": "String" }
-    }
+  "paybackRecordedShort": "Recorded",
+  "@paybackRecordedShort": {
+    "description": "Success label on the record-a-payment CTA once the payback is written. Short enough to sit on a button; who paid whom and how much are still on the sheet."
   },
   "paybackRecordedBy": "Recorded by {displayName}",
   "@paybackRecordedBy": {
