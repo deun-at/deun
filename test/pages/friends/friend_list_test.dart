@@ -12,7 +12,9 @@ import 'package:deun/widgets/restyle/balance_pill.dart';
 import 'package:deun/widgets/restyle/soft_card.dart';
 import 'package:deun/widgets/restyle/section_label.dart';
 import 'package:deun/widgets/restyle/deun_header.dart';
+import 'package:deun/widgets/restyle/empty_state.dart';
 import 'package:deun/widgets/restyle/member_avatar.dart';
+import 'package:deun/widgets/restyle/primary_button.dart';
 import 'package:deun/widgets/restyle/money_text.dart';
 import 'package:deun/widgets/theme_builder.dart';
 import 'package:flutter/material.dart';
@@ -76,6 +78,56 @@ Future<void> _pumpFriendList(
     ),
   );
   await tester.pumpAndSettle();
+}
+
+/// A notifier whose fetch always fails, driving the screen's [AsyncError]
+/// branch. Counts explicit [reload] calls — not `build`, which Riverpod's own
+/// auto-retry also drives — so a Retry tap can be attributed to the button.
+class _FailingFriendshipListNotifier extends FriendshipListNotifier {
+  _FailingFriendshipListNotifier(this.reloads);
+
+  final ValueNotifier<int> reloads;
+
+  @override
+  Future<FriendshipListState> build() async => throw Exception('offline');
+
+  @override
+  Future<void> reload() async => reloads.value++;
+}
+
+/// Pumps the friend list with a fetch that always fails. Returns the counter of
+/// explicit reload requests.
+Future<ValueNotifier<int>> _pumpFailingFriendList(WidgetTester tester) async {
+  final reloads = ValueNotifier<int>(0);
+  await tester.pumpWidget(
+    ProviderScope(
+      // No auto-retry: the error branch must stay on screen for the assertions
+      // instead of being rebuilt out from under them.
+      retry: (_, _) => null,
+      overrides: [
+        friendshipListProvider.overrideWith(
+          () => _FailingFriendshipListNotifier(reloads),
+        ),
+      ],
+      child: MaterialApp(
+        localizationsDelegates: const [
+          AppLocalizations.delegate,
+          GlobalMaterialLocalizations.delegate,
+          GlobalWidgetsLocalizations.delegate,
+          GlobalCupertinoLocalizations.delegate,
+        ],
+        supportedLocales: AppLocalizations.supportedLocales,
+        home: Builder(
+          builder: (context) => Theme(
+            data: getThemeData(context, kBrandSeed, Brightness.light),
+            child: const FriendList(),
+          ),
+        ),
+      ),
+    ),
+  );
+  await tester.pumpAndSettle();
+  return reloads;
 }
 
 /// The [SemanticColors] theme extension resolved from the friend list subtree.
@@ -388,10 +440,60 @@ void main() {
     );
   });
 
-  testWidgets('empty state shows the no-friends message', (tester) async {
+  // AC7 — the friends empty state carries a CTA: the only other affordance on
+  // this screen is a small HeaderIconButton.
+  testWidgets('empty state shows the shared empty state with an add CTA', (
+    tester,
+  ) async {
     await _pumpFriendList(tester, const FriendshipListState());
     final l10n = await AppLocalizations.delegate.load(const Locale('en'));
-    expect(find.text(l10n.friendsNoEntries), findsOneWidget);
+
+    expect(find.byType(EmptyState), findsOneWidget);
+    expect(find.text(l10n.emptyFriendsHeadline), findsOneWidget);
+    expect(find.text(l10n.emptyFriendsBody), findsOneWidget);
+
+    // AC5 — the empty tone never renders Retry.
+    expect(find.text(l10n.retry), findsNothing);
+    expect(
+      find.descendant(
+        of: find.byType(EmptyState),
+        matching: find.byType(PrimaryButton),
+      ),
+      findsOneWidget,
+    );
+    expect(
+      find.descendant(
+        of: find.byType(EmptyState),
+        matching: find.text(l10n.addFriends),
+      ),
+      findsOneWidget,
+    );
+  });
+
+  // AC6 — a failed fetch and an empty account must not produce the same screen.
+  // They used to: the AsyncError branch rendered the empty widget with
+  // `friendsNoEntries`, so a network blink told the user they had no friends.
+  testWidgets('a failed load shows the error tone, not the no-friends copy', (
+    tester,
+  ) async {
+    await _pumpFailingFriendList(tester);
+    final l10n = await AppLocalizations.delegate.load(const Locale('en'));
+
+    expect(find.text(l10n.emptyErrorHeadline), findsOneWidget);
+    expect(find.text(l10n.emptyErrorBody), findsOneWidget);
+    expect(find.text(l10n.emptyFriendsHeadline), findsNothing);
+    expect(find.text(l10n.emptyFriendsBody), findsNothing);
+  });
+
+  // AC5 — the error tone renders a Retry wired to the caller's refresh.
+  testWidgets('the error Retry re-runs the fetch', (tester) async {
+    final reloads = await _pumpFailingFriendList(tester);
+    final l10n = await AppLocalizations.delegate.load(const Locale('en'));
+
+    expect(reloads.value, 0);
+    await tester.tap(find.text(l10n.retry));
+    await tester.pumpAndSettle();
+    expect(reloads.value, 1, reason: 'Retry must actually re-run the load');
   });
 
   testWidgets('renders in dark mode', (tester) async {

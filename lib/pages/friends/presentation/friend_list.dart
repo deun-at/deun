@@ -1,12 +1,14 @@
+import 'dart:async';
+
 import 'package:deun/helper/helper.dart';
 import 'package:deun/pages/friends/data/friendship_model.dart';
 import 'package:deun/pages/friends/data/friendship_repository.dart';
 import 'package:deun/pages/friends/presentation/friend_balance.dart';
 import 'package:deun/pages/friends/presentation/friend_detail_sheet.dart';
 import 'package:deun/pages/users/user_model.dart';
-import 'package:deun/widgets/empty_list_widget.dart';
 import 'package:deun/widgets/restyle/balance_pill.dart' show BalanceState;
 import 'package:deun/widgets/restyle/deun_header.dart' show HeaderIconButton;
+import 'package:deun/widgets/restyle/empty_state.dart';
 import 'package:deun/widgets/restyle/member_avatar.dart';
 import 'package:deun/widgets/restyle/money_text.dart';
 import 'package:deun/widgets/restyle/primary_button.dart';
@@ -198,10 +200,16 @@ class _FriendListState extends ConsumerState<FriendList> {
                       ),
                       const SizedBox(height: 8),
                       Expanded(
-                        child: EmptyListWidget(
-                          icon: Icons.group_outlined,
-                          label: l10n.friendsNoEntries,
+                        // The only other affordance on this screen is a small
+                        // HeaderIconButton, so the empty state carries the CTA.
+                        child: EmptyState.refreshable(
                           onRefresh: updateFriendshipList,
+                          icon: Icons.group_outlined,
+                          headline: l10n.emptyFriendsHeadline,
+                          body: l10n.emptyFriendsBody,
+                          actionLabel: l10n.addFriends,
+                          onAction: () =>
+                              GoRouter.of(context).push('/friend/add'),
                         ),
                       ),
                     ],
@@ -216,10 +224,17 @@ class _FriendListState extends ConsumerState<FriendList> {
               ),
               const SizedBox(height: 8),
               Expanded(
-                child: EmptyListWidget(
-                  icon: Icons.group_outlined,
-                  label: l10n.friendsNoEntries,
+                // The error tone, NOT the empty copy: a failed fetch used to
+                // render "no friends", telling the user their friends were gone
+                // when the network had merely blinked.
+                child: EmptyState.refreshable(
                   onRefresh: updateFriendshipList,
+                  icon: Icons.cloud_off,
+                  headline: l10n.emptyErrorHeadline,
+                  body: l10n.emptyErrorBody,
+                  actionLabel: l10n.retry,
+                  onAction: () => unawaited(updateFriendshipList()),
+                  tone: EmptyStateTone.error,
                 ),
               ),
             ],

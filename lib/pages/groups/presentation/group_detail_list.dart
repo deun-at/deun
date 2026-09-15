@@ -1,11 +1,11 @@
 import 'package:deun/helper/helper.dart';
 import 'package:deun/main.dart';
-import 'package:deun/pages/expenses/data/expense_entry_model.dart';
 import 'package:deun/pages/groups/data/group_model.dart';
 import 'package:deun/pages/groups/presentation/group_ledger.dart';
-import 'package:deun/widgets/empty_list_widget.dart';
+import 'package:deun/pages/groups/presentation/payback_detail_sheet.dart';
 import 'package:deun/widgets/restyle/avatar_stack.dart';
 import 'package:deun/widgets/restyle/deun_header.dart';
+import 'package:deun/widgets/restyle/empty_state.dart';
 import 'package:deun/widgets/restyle/money_text.dart';
 import 'package:deun/widgets/restyle/section_label.dart';
 import 'package:deun/widgets/restyle/soft_card.dart';
@@ -39,6 +39,9 @@ class _GroupDetailListState extends ConsumerState<GroupDetailList> {
 
   void _openExpense(Expense expense) =>
       openLedgerExpense(context, widget.group, expense);
+
+  void _openPayback(Expense expense) =>
+      showPaybackDetailSheet(context, group: widget.group, expense: expense);
 
   /// Combined-list index for the inline ad: right after the day section that
   /// contains the 5th expense, so it appears near the top regardless of how the
@@ -78,10 +81,16 @@ class _GroupDetailListState extends ConsumerState<GroupDetailList> {
         }
 
         if (expenses == null || expenses.isEmpty) {
-          return EmptyListWidget(
+          final l10n = AppLocalizations.of(context)!;
+          // No CTA: the screen already carries an extended, labelled
+          // "Add expense" FAB (group_detail.dart), so a button here would be a
+          // third way to do one thing. The body names the FAB instead, which
+          // also teaches the affordance the user will keep using.
+          return EmptyState.refreshable(
+            onRefresh: updateExpenseList,
             icon: Icons.receipt_long_outlined,
-            label: AppLocalizations.of(context)!.groupExpenseNoEntries,
-            onRefresh: () => updateExpenseList(),
+            headline: l10n.emptyExpensesHeadline,
+            body: l10n.emptyExpensesBody,
           );
         }
 
@@ -114,6 +123,7 @@ class _GroupDetailListState extends ConsumerState<GroupDetailList> {
                   section: section,
                   group: widget.group,
                   onOpenExpense: _openExpense,
+                  onOpenPayback: _openPayback,
                 );
               },
             ),
@@ -146,11 +156,13 @@ class _DaySection extends StatelessWidget {
     required this.section,
     required this.group,
     required this.onOpenExpense,
+    required this.onOpenPayback,
   });
 
   final LedgerDaySection section;
   final Group group;
   final void Function(Expense) onOpenExpense;
+  final void Function(Expense) onOpenPayback;
 
   @override
   Widget build(BuildContext context) {
@@ -177,6 +189,7 @@ class _DaySection extends StatelessWidget {
                     expense: expense,
                     group: group,
                     onOpenExpense: onOpenExpense,
+                    onOpenPayback: onOpenPayback,
                   ),
               ],
             ),
@@ -193,17 +206,22 @@ class _LedgerRow extends StatelessWidget {
     required this.expense,
     required this.group,
     required this.onOpenExpense,
+    required this.onOpenPayback,
   });
 
   final Expense expense;
   final Group group;
   final void Function(Expense) onOpenExpense;
+  final void Function(Expense) onOpenPayback;
 
   @override
   Widget build(BuildContext context) {
     switch (classifyLedgerRow(expense)) {
       case LedgerRowType.payback:
-        return _PaybackRow(expense: expense);
+        return _PaybackRow(
+          expense: expense,
+          onTap: () => onOpenPayback(expense),
+        );
       case LedgerRowType.itemized:
         return _ItemizedRow(
           expense: expense,
@@ -646,10 +664,13 @@ class _ItemizedRow extends StatelessWidget {
 }
 
 /// Payback / settlement: green inset "{from} paid {to} €X · PAYMENT".
+/// Tappable — opens [PaybackDetailSheet], the surface a payback can be
+/// deleted from.
 class _PaybackRow extends StatelessWidget {
-  const _PaybackRow({required this.expense});
+  const _PaybackRow({required this.expense, required this.onTap});
 
   final Expense expense;
+  final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
@@ -657,78 +678,73 @@ class _PaybackRow extends StatelessWidget {
     final semantic = Theme.of(context).extension<SemanticColors>()!;
     final currentUserEmail = supabase.auth.currentUser?.email;
 
-    final ExpenseEntryShare paidBackEntryShare =
-        expense.expenseEntries.entries.first.value.expenseEntryShares.first;
-
-    final paidByYourself = expense.paidBy == currentUserEmail ? 'yes' : '';
-    final paidByDisplayName = expense.paidBy == currentUserEmail
-        ? l10n.you
-        : (expense.paidByDisplayName ?? "");
-    final paidToYourself = paidBackEntryShare.email == currentUserEmail
-        ? 'yes'
-        : '';
-    final paidToDisplayName = paidBackEntryShare.email == currentUserEmail
-        ? l10n.you
-        : paidBackEntryShare.displayName;
-
     // v3 inset payback chip: sits inside the joined date-group card with a
-    // small margin, so its green surface floats within the row stack.
-    return Container(
-      width: double.infinity,
-      margin: const EdgeInsets.fromLTRB(10, 4, 10, 4),
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-      decoration: BoxDecoration(
+    // small margin, so its green surface floats within the row stack. The
+    // chip is its own Material/InkWell so the tap splash lands on the chip
+    // itself rather than the SoftCard Material hidden beneath it.
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(10, 4, 10, 4),
+      child: Material(
         color: semantic.paybackBackground,
         borderRadius: BorderRadius.circular(14),
-      ),
-      child: Row(
-        children: [
-          Icon(Icons.swap_horiz, size: 18, color: semantic.paybackText),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+          onTap: onTap,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+            child: Row(
               children: [
-                Text(
-                  l10n.groupDisplayPaidBack(
-                    paidByYourself,
-                    paidByDisplayName,
-                    paidToYourself,
-                    paidToDisplayName,
-                    l10n.toCurrency(expense.amount, expense.group.currencyCode),
+                Icon(Icons.swap_horiz, size: 18, color: semantic.paybackText),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        paybackSummaryLine(
+                          expense,
+                          l10n,
+                          currencyCode: expense.group.currencyCode,
+                          currentUserEmail: currentUserEmail,
+                        ),
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          color: semantic.paybackText,
+                        ),
+                      ),
+                      // payback-on-behalf: no owner concept means the
+                      // deterrent is visibility — a payback somebody else
+                      // recorded says so, right in the ledger.
+                      if (expense.isRecordedOnBehalf)
+                        Padding(
+                          padding: const EdgeInsets.only(top: 2),
+                          child: Text(
+                            l10n.paybackRecordedBy(
+                              expense.recordedByDisplayName ?? '',
+                            ),
+                            style: Theme.of(context).textTheme.labelSmall
+                                ?.copyWith(
+                                  color: semantic.paybackText.withValues(
+                                    alpha: 0.8,
+                                  ),
+                                ),
+                          ),
+                        ),
+                    ],
                   ),
-                  style: Theme.of(
-                    context,
-                  ).textTheme.bodyMedium?.copyWith(color: semantic.paybackText),
                 ),
-                // payback-on-behalf: no owner concept means the deterrent is
-                // visibility — a payback somebody else recorded says so, right
-                // in the ledger.
-                if (expense.isRecordedOnBehalf)
-                  Padding(
-                    padding: const EdgeInsets.only(top: 2),
-                    child: Text(
-                      l10n.paybackRecordedBy(
-                        expense.recordedByDisplayName ?? '',
-                      ),
-                      style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                        color: semantic.paybackText.withValues(alpha: 0.8),
-                      ),
-                    ),
+                const SizedBox(width: 10),
+                Text(
+                  l10n.groupDetailPaymentTag,
+                  style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                    color: semantic.paybackText,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: 0.6,
                   ),
+                ),
               ],
             ),
           ),
-          const SizedBox(width: 10),
-          Text(
-            l10n.groupDetailPaymentTag,
-            style: Theme.of(context).textTheme.labelSmall?.copyWith(
-              color: semantic.paybackText,
-              fontWeight: FontWeight.w700,
-              letterSpacing: 0.6,
-            ),
-          ),
-        ],
+        ),
       ),
     );
   }

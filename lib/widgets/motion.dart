@@ -99,6 +99,14 @@ abstract final class Motion {
   /// Delay before the ring starts expanding.
   static const Duration successRingDelay = Duration(milliseconds: 100);
 
+  /// How long a completed-save check stays on its CTA before the surface
+  /// that owns it closes.
+  ///
+  /// Long enough to register as a confirmation, short enough not to feel
+  /// like a stall. Every save CTA reads this one value; collapse it to zero
+  /// under reduced motion with [reducedIfNeeded].
+  static const Duration saveConfirmationHold = Duration(milliseconds: 700);
+
   // -------------------------------------------------------------------------
   // Durations — §5 Charts & progress grow
   // -------------------------------------------------------------------------

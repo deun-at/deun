@@ -141,9 +141,9 @@ Future<void> _createNamed(WidgetTester tester, String name) async {
   await tester.pumpAndSettle();
 }
 
-/// Pumps the group detail page inside a GoRouter whose `/group/edit` route is a
-/// probe, so a tap on the add-members affordance can be observed landing on the
-/// member surface.
+/// Pumps the group detail page inside a GoRouter whose `/group/members` route is
+/// a probe, so a tap on the add-members affordance can be observed landing on
+/// the member surface.
 Future<void> _pumpGroupDetail(WidgetTester tester) async {
   final router = GoRouter(
     initialLocation: '/group/details',
@@ -160,7 +160,7 @@ Future<void> _pumpGroupDetail(WidgetTester tester) async {
         ),
       ),
       GoRoute(
-        path: '/group/edit',
+        path: '/group/members',
         builder: (context, state) =>
             const Scaffold(body: Text('MEMBER SURFACE')),
       ),
@@ -266,7 +266,12 @@ void main() {
         reason: 'it sits in the always-visible header row',
       );
       expect(
-        find.byIcon(Icons.group_add).hitTestable(),
+        find
+            .descendant(
+              of: find.byType(DeunHeader),
+              matching: find.byIcon(Icons.group_add),
+            )
+            .hitTestable(),
         findsOneWidget,
         reason: 'visible and tappable without scrolling',
       );

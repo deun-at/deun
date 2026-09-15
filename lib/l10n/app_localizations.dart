@@ -398,41 +398,35 @@ abstract class AppLocalizations {
   /// **'Delete this group?'**
   String get groupDeleteItemTitle;
 
-  /// No description provided for @groupNoEntries.
+  /// Headline of the shared empty state on the groups home.
   ///
   /// In en, this message translates to:
-  /// **'Add a group to get started.'**
-  String get groupNoEntries;
+  /// **'No groups yet'**
+  String get emptyGroupsHeadline;
+
+  /// Body copy of the shared empty state on the groups home.
+  ///
+  /// In en, this message translates to:
+  /// **'Start one for a trip, a flat, or a night out.'**
+  String get emptyGroupsBody;
+
+  /// Headline of the shared empty state's error tone — a load that failed, not an empty account.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t load this'**
+  String get emptyErrorHeadline;
+
+  /// Body copy of the shared empty state's error tone, above a Retry action.
+  ///
+  /// In en, this message translates to:
+  /// **'Check your connection and try again.'**
+  String get emptyErrorBody;
 
   /// No description provided for @groupEntriesError.
   ///
   /// In en, this message translates to:
   /// **'Something went wrong with loading Groups.'**
   String get groupEntriesError;
-
-  /// No description provided for @groupMemberSelectionEmpty.
-  ///
-  /// In en, this message translates to:
-  /// **'Search friends'**
-  String get groupMemberSelectionEmpty;
-
-  /// No description provided for @groupMemberAddFriends.
-  ///
-  /// In en, this message translates to:
-  /// **'Add friends'**
-  String get groupMemberAddFriends;
-
-  /// No description provided for @groupMemberSelectionTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Added friends'**
-  String get groupMemberSelectionTitle;
-
-  /// No description provided for @groupMemberResultEmpty.
-  ///
-  /// In en, this message translates to:
-  /// **'No friends found!'**
-  String get groupMemberResultEmpty;
 
   /// Option in member search to add the typed name as a guest.
   ///
@@ -446,23 +440,17 @@ abstract class AppLocalizations {
   /// **'Guest'**
   String get groupMemberIsGuest;
 
-  /// No description provided for @groupMemberOwnerTag.
+  /// Headline of the shared empty state in a group's expense ledger.
   ///
   /// In en, this message translates to:
-  /// **'Owner'**
-  String get groupMemberOwnerTag;
+  /// **'No expenses yet'**
+  String get emptyExpensesHeadline;
 
-  /// No description provided for @groupMemberAddGuestLink.
+  /// Body copy of the group-expenses empty state. Names the always-present Add expense FAB instead of repeating it as a CTA.
   ///
   /// In en, this message translates to:
-  /// **'Add guest'**
-  String get groupMemberAddGuestLink;
-
-  /// No description provided for @groupExpenseNoEntries.
-  ///
-  /// In en, this message translates to:
-  /// **'Add an expense to get started'**
-  String get groupExpenseNoEntries;
+  /// **'Add the first one and Deun works out who owes what.'**
+  String get emptyExpensesBody;
 
   /// No description provided for @groupDeleteError.
   ///
@@ -487,6 +475,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Group created!'**
   String get groupCreateSuccess;
+
+  /// No description provided for @groupSaveSuccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Group saved!'**
+  String get groupSaveSuccess;
 
   /// No description provided for @groupInviteTitle.
   ///
@@ -1220,12 +1214,6 @@ abstract class AppLocalizations {
   /// **'Expense created!'**
   String get expenseCreateSuccess;
 
-  /// No description provided for @expenseNoEntries.
-  ///
-  /// In en, this message translates to:
-  /// **'So empty here :('**
-  String get expenseNoEntries;
-
   /// Lable in the expense list of what you are owed/what you owe per user.
   ///
   /// In en, this message translates to:
@@ -1573,11 +1561,17 @@ abstract class AppLocalizations {
   /// **'Add friends'**
   String get addFriends;
 
-  /// No description provided for @friendsNoEntries.
+  /// Headline of the shared empty state on the friends screen.
   ///
   /// In en, this message translates to:
   /// **'No friends yet'**
-  String get friendsNoEntries;
+  String get emptyFriendsHeadline;
+
+  /// Body copy of the friends empty state.
+  ///
+  /// In en, this message translates to:
+  /// **'Add people you split with often to settle up across groups.'**
+  String get emptyFriendsBody;
 
   /// Tooltip/label for declining an incoming friend request.
   ///
@@ -3207,11 +3201,11 @@ abstract class AppLocalizations {
   /// **'Enter an amount greater than zero.'**
   String get paybackRecordAmountError;
 
-  /// Snackbar shown after a payback was recorded on someone's behalf.
+  /// Success label on the record-a-payment CTA once the payback is written. Short enough to sit on a button; who paid whom and how much are still on the sheet.
   ///
   /// In en, this message translates to:
-  /// **'Recorded: {paidBy} paid {paidFor} {amount}'**
-  String paybackRecordSuccess(String paidBy, String paidFor, String amount);
+  /// **'Recorded'**
+  String get paybackRecordedShort;
 
   /// Attribution line on a payback that somebody other than the payer recorded.
   ///
@@ -3381,41 +3375,71 @@ abstract class AppLocalizations {
   /// **'Remove'**
   String get groupMemberRemoveConfirm;
 
-  /// Shown when a member cannot be removed because their group balance is not settled.
-  ///
-  /// In en, this message translates to:
-  /// **'{name} still has {amount} outstanding in this group. Settle up first, then remove them.'**
-  String groupMemberRemoveBlocked(String name, String amount);
-
-  /// Snackbar confirming a member was removed.
-  ///
-  /// In en, this message translates to:
-  /// **'{name} was removed from the group.'**
-  String groupMemberRemoveSuccess(String name);
-
   /// Snackbar shown when the removal write failed.
   ///
   /// In en, this message translates to:
   /// **'{name} could not be removed. Please try again.'**
   String groupMemberRemoveError(String name);
 
-  /// Section label above members removed from the group, with an add-back action.
-  ///
-  /// In en, this message translates to:
-  /// **'Removed'**
-  String get groupMemberRemovedSectionTitle;
-
-  /// Action that returns a removed member to the group.
-  ///
-  /// In en, this message translates to:
-  /// **'Add back'**
-  String get groupMemberReAdd;
-
   /// Group-detail header action that opens the surface where members are added.
   ///
   /// In en, this message translates to:
   /// **'Add members'**
   String get groupAddMembersAction;
+
+  /// Placeholder in the Members page search field.
+  ///
+  /// In en, this message translates to:
+  /// **'Search by name, username or email'**
+  String get groupMembersSearchHint;
+
+  /// Member-count subtitle on the read-only members row in the group-edit form.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 member} other{{count} members}}'**
+  String groupMemberCountLabel(int count);
+
+  /// Snackbar shown when adding a member to the group failed.
+  ///
+  /// In en, this message translates to:
+  /// **'{name} could not be added. Please try again.'**
+  String groupMemberAddError(String name);
+
+  /// Snackbar shown when the tapped candidate is already an active member.
+  ///
+  /// In en, this message translates to:
+  /// **'{name} is already in this group.'**
+  String groupMemberAlreadyInGroup(String name);
+
+  /// Label of the name field in the create-guest step of the Members page.
+  ///
+  /// In en, this message translates to:
+  /// **'Guest name'**
+  String get groupMemberGuestNameLabel;
+
+  /// Confirm button of the create-guest step.
+  ///
+  /// In en, this message translates to:
+  /// **'Create guest'**
+  String get groupMemberGuestCreateButton;
+
+  /// Snackbar shown when creating a guest user failed. The name stays in the field for a retry.
+  ///
+  /// In en, this message translates to:
+  /// **'{name} could not be created. Please try again.'**
+  String groupMemberGuestCreateError(String name);
+
+  /// Title of the solo-group add-members call to action on group detail.
+  ///
+  /// In en, this message translates to:
+  /// **'Add the people you\'re splitting with'**
+  String get groupMembersEmptyCtaTitle;
+
+  /// Body of the solo-group add-members call to action on group detail.
+  ///
+  /// In en, this message translates to:
+  /// **'A group of one has nothing to split.'**
+  String get groupMembersEmptyCtaBody;
 }
 
 class _AppLocalizationsDelegate

@@ -180,20 +180,6 @@ void main() {
       },
     );
 
-    // 19
-    test(
-      'toJson hands the edit form active members only, so a save cannot resurrect one',
-      () {
-        final g = Group()
-          ..loadDataFromJson(groupJson(carolRemovedAt: '2026-08-15T09:30:00Z'));
-
-        final encoded = g.toJson()['group_members'] as String;
-
-        expect(encoded, contains('a@test.com'));
-        expect(encoded, isNot(contains('c@test.com')));
-      },
-    );
-
     // 20
     testWidgets(
       'the paid-by picker fed activeMembers omits the removed member',

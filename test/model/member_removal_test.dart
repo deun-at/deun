@@ -1,18 +1,6 @@
-import 'package:deun/pages/groups/data/group_member_model.dart';
 import 'package:deun/helper/currency.dart';
 import 'package:deun/pages/groups/data/member_removal.dart';
 import 'package:flutter_test/flutter_test.dart';
-
-GroupMember _member(String email, {DateTime? removedAt}) {
-  final m = GroupMember();
-  m.groupId = 'g1';
-  m.email = email;
-  m.displayName = email;
-  m.isGuest = false;
-  m.isFavorite = false;
-  m.removedAt = removedAt;
-  return m;
-}
 
 void main() {
   group('resolveMemberRemoval', () {
@@ -184,54 +172,6 @@ void main() {
       expect(plan.insertMembership, isFalse);
       expect(plan.clearRemovedAt, isFalse);
       expect(plan.mergeGuest, isFalse);
-    });
-  });
-
-  group('excludedCandidateEmails', () {
-    // 9
-    test('excludes every submitted member and the current user', () {
-      final excluded = excludedCandidateEmails(
-        submittedMembers: [
-          {'email': 'a@test.com'},
-          {'email': 'b@test.com'},
-        ],
-        currentUserEmail: 'me@test.com',
-        allMembers: [_member('a@test.com'), _member('b@test.com')],
-      );
-
-      expect(
-        excluded,
-        containsAll(['a@test.com', 'b@test.com', 'me@test.com']),
-      );
-    });
-
-    // 10
-    test('excludes a removed member, so search cannot re-add them', () {
-      final excluded = excludedCandidateEmails(
-        submittedMembers: [
-          {'email': 'a@test.com'},
-        ],
-        currentUserEmail: 'me@test.com',
-        allMembers: [
-          _member('a@test.com'),
-          _member('c@test.com', removedAt: DateTime.utc(2026, 8, 15)),
-        ],
-      );
-
-      expect(excluded, contains('c@test.com'));
-    });
-
-    // 11
-    test('does not exclude an unrelated friend', () {
-      final excluded = excludedCandidateEmails(
-        submittedMembers: [
-          {'email': 'a@test.com'},
-        ],
-        currentUserEmail: 'me@test.com',
-        allMembers: [_member('a@test.com')],
-      );
-
-      expect(excluded, isNot(contains('sam@test.com')));
     });
   });
 }

@@ -178,18 +178,24 @@
   "@expenseDateValidationEmpty": {},
   "groupDeleteItemTitle": "Delete this group?",
   "@groupDeleteItemTitle": {},
-  "groupNoEntries": "Add a group to get started.",
-  "@groupNoEntries": {},
+  "emptyGroupsHeadline": "No groups yet",
+  "@emptyGroupsHeadline": {
+    "description": "Headline of the shared empty state on the groups home."
+  },
+  "emptyGroupsBody": "Start one for a trip, a flat, or a night out.",
+  "@emptyGroupsBody": {
+    "description": "Body copy of the shared empty state on the groups home."
+  },
+  "emptyErrorHeadline": "Couldn't load this",
+  "@emptyErrorHeadline": {
+    "description": "Headline of the shared empty state's error tone — a load that failed, not an empty account."
+  },
+  "emptyErrorBody": "Check your connection and try again.",
+  "@emptyErrorBody": {
+    "description": "Body copy of the shared empty state's error tone, above a Retry action."
+  },
   "groupEntriesError": "Something went wrong with loading Groups.",
   "@groupEntriesError": {},
-  "groupMemberSelectionEmpty": "Search friends",
-  "@groupMemberSelectionEmpty": {},
-  "groupMemberAddFriends": "Add friends",
-  "@groupMemberAddFriends": {},
-  "groupMemberSelectionTitle": "Added friends",
-  "@groupMemberSelectionTitle": {},
-  "groupMemberResultEmpty": "No friends found!",
-  "@groupMemberResultEmpty": {},
   "groupMemberAddGuestOption": "Add {name} as guest",
   "@groupMemberAddGuestOption": {
     "description": "Option in member search to add the typed name as a guest.",
@@ -199,12 +205,14 @@
   },
   "groupMemberIsGuest": "Guest",
   "@groupMemberIsGuest": {},
-  "groupMemberOwnerTag": "Owner",
-  "@groupMemberOwnerTag": {},
-  "groupMemberAddGuestLink": "Add guest",
-  "@groupMemberAddGuestLink": {},
-  "groupExpenseNoEntries": "Add an expense to get started",
-  "@groupExpenseNoEntries": {},
+  "emptyExpensesHeadline": "No expenses yet",
+  "@emptyExpensesHeadline": {
+    "description": "Headline of the shared empty state in a group's expense ledger."
+  },
+  "emptyExpensesBody": "Add the first one and Deun works out who owes what.",
+  "@emptyExpensesBody": {
+    "description": "Body copy of the group-expenses empty state. Names the always-present Add expense FAB instead of repeating it as a CTA."
+  },
   "groupDeleteError": "Error while deleting group!",
   "@groupDeleteError": {},
   "groupDeleteSuccess": "Group deleted!",
@@ -213,6 +221,8 @@
   "@groupCreateError": {},
   "groupCreateSuccess": "Group created!",
   "@groupCreateSuccess": {},
+  "groupSaveSuccess": "Group saved!",
+  "@groupSaveSuccess": {},
   "groupInviteTitle": "Invite Friends",
   "@groupInviteTitle": {},
   "groupInviteTitleNamed": "Invite to {group}",
@@ -710,8 +720,6 @@
   "@expenseCreateError": {},
   "expenseCreateSuccess": "Expense created!",
   "@expenseCreateSuccess": {},
-  "expenseNoEntries": "So empty here :(",
-  "@expenseNoEntries": {},
   "expenseDisplayAmount": "{displayName} {expenseType, select, paid{paid} lent{lent} borrowed{borrowed} other{}} {amount}",
   "@expenseDisplayAmount": {
     "description": "Lable in the expense list of what you are owed/what you owe per user.",
@@ -892,8 +900,14 @@
   },
   "addFriends": "Add friends",
   "@addFriends": {},
-  "friendsNoEntries": "No friends yet",
-  "@friendsNoEntries": {},
+  "emptyFriendsHeadline": "No friends yet",
+  "@emptyFriendsHeadline": {
+    "description": "Headline of the shared empty state on the friends screen."
+  },
+  "emptyFriendsBody": "Add people you split with often to settle up across groups.",
+  "@emptyFriendsBody": {
+    "description": "Body copy of the friends empty state."
+  },
   "friendDecline": "Decline",
   "@friendDecline": {
     "description": "Tooltip/label for declining an incoming friend request."
@@ -1788,20 +1802,9 @@
   "@paybackRecordAmountError": {
     "description": "Block message when the record-a-payment amount is zero or negative."
   },
-  "paybackRecordSuccess": "Recorded: {paidBy} paid {paidFor} {amount}",
-  "@paybackRecordSuccess": {
-    "description": "Snackbar shown after a payback was recorded on someone's behalf.",
-    "placeholders": {
-      "paidBy": {
-        "type": "String",
-        "example": "Max Muster"
-      },
-      "paidFor": {
-        "type": "String",
-        "example": "Erika Muster"
-      },
-      "amount": { "type": "String" }
-    }
+  "paybackRecordedShort": "Recorded",
+  "@paybackRecordedShort": {
+    "description": "Success label on the record-a-payment CTA once the payback is written. Short enough to sit on a button; who paid whom and how much are still on the sheet."
   },
   "paybackRecordedBy": "Recorded by {displayName}",
   "@paybackRecordedBy": {
@@ -1932,21 +1935,6 @@
   "@groupMemberRemoveConfirm": {
     "description": "Destructive confirm button in the remove-member dialog."
   },
-  "groupMemberRemoveBlocked": "{name} still has {amount} outstanding in this group. Settle up first, then remove them.",
-  "@groupMemberRemoveBlocked": {
-    "description": "Shown when a member cannot be removed because their group balance is not settled.",
-    "placeholders": {
-      "name": {"type": "String", "example": "Ann"},
-      "amount": {"type": "String", "example": "€12.50"}
-    }
-  },
-  "groupMemberRemoveSuccess": "{name} was removed from the group.",
-  "@groupMemberRemoveSuccess": {
-    "description": "Snackbar confirming a member was removed.",
-    "placeholders": {
-      "name": {"type": "String", "example": "Ann"}
-    }
-  },
   "groupMemberRemoveError": "{name} could not be removed. Please try again.",
   "@groupMemberRemoveError": {
     "description": "Snackbar shown when the removal write failed.",
@@ -1954,16 +1942,56 @@
       "name": {"type": "String", "example": "Ann"}
     }
   },
-  "groupMemberRemovedSectionTitle": "Removed",
-  "@groupMemberRemovedSectionTitle": {
-    "description": "Section label above members removed from the group, with an add-back action."
-  },
-  "groupMemberReAdd": "Add back",
-  "@groupMemberReAdd": {
-    "description": "Action that returns a removed member to the group."
-  },
   "groupAddMembersAction": "Add members",
   "@groupAddMembersAction": {
     "description": "Group-detail header action that opens the surface where members are added."
+  },
+  "groupMembersSearchHint": "Search by name, username or email",
+  "@groupMembersSearchHint": {
+    "description": "Placeholder in the Members page search field."
+  },
+  "groupMemberCountLabel": "{count, plural, =1{1 member} other{{count} members}}",
+  "@groupMemberCountLabel": {
+    "description": "Member-count subtitle on the read-only members row in the group-edit form.",
+    "placeholders": {
+      "count": {"type": "int"}
+    }
+  },
+  "groupMemberAddError": "{name} could not be added. Please try again.",
+  "@groupMemberAddError": {
+    "description": "Snackbar shown when adding a member to the group failed.",
+    "placeholders": {
+      "name": {"type": "String", "example": "Ann"}
+    }
+  },
+  "groupMemberAlreadyInGroup": "{name} is already in this group.",
+  "@groupMemberAlreadyInGroup": {
+    "description": "Snackbar shown when the tapped candidate is already an active member.",
+    "placeholders": {
+      "name": {"type": "String", "example": "Ann"}
+    }
+  },
+  "groupMemberGuestNameLabel": "Guest name",
+  "@groupMemberGuestNameLabel": {
+    "description": "Label of the name field in the create-guest step of the Members page."
+  },
+  "groupMemberGuestCreateButton": "Create guest",
+  "@groupMemberGuestCreateButton": {
+    "description": "Confirm button of the create-guest step."
+  },
+  "groupMemberGuestCreateError": "{name} could not be created. Please try again.",
+  "@groupMemberGuestCreateError": {
+    "description": "Snackbar shown when creating a guest user failed. The name stays in the field for a retry.",
+    "placeholders": {
+      "name": {"type": "String", "example": "Max"}
+    }
+  },
+  "groupMembersEmptyCtaTitle": "Add the people you're splitting with",
+  "@groupMembersEmptyCtaTitle": {
+    "description": "Title of the solo-group add-members call to action on group detail."
+  },
+  "groupMembersEmptyCtaBody": "A group of one has nothing to split.",
+  "@groupMembersEmptyCtaBody": {
+    "description": "Body of the solo-group add-members call to action on group detail."
   }
 }

@@ -81,12 +81,6 @@ typedef ExpenseSaver =
 /// The save CTA's three states. See [_ExpenseDetailState._saveStatus].
 enum _SaveStatus { idle, busy, done }
 
-/// How long the check stays on the CTA before the route pops.
-///
-/// Long enough to register as a confirmation, short enough not to feel like a
-/// stall. Collapses to zero under reduced motion via [reducedIfNeeded].
-const Duration _kSaveConfirmationHold = Duration(milliseconds: 700);
-
 class ExpenseDetail extends ConsumerStatefulWidget {
   const ExpenseDetail({
     super.key,
@@ -1202,7 +1196,7 @@ class _ExpenseDetailState extends ConsumerState<ExpenseDetail> {
         if (context.mounted) {
           await Future<void>.delayed(
             reducedIfNeeded(
-              _kSaveConfirmationHold,
+              Motion.saveConfirmationHold,
               reduceMotion: MediaQuery.of(context).disableAnimations,
             ),
           );

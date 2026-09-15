@@ -34,6 +34,7 @@ import 'pages/groups/presentation/group_invite_page.dart';
 import 'pages/groups/presentation/group_join_page.dart';
 import 'pages/groups/presentation/group_detail_edit.dart';
 import 'pages/groups/presentation/group_list.dart';
+import 'pages/groups/presentation/group_members_page.dart';
 import 'pages/statistics/category_detail_bottom_sheet.dart';
 import 'pages/statistics/group_statistics_page.dart';
 import 'pages/statistics/month_detail_bottom_sheet.dart';
@@ -279,6 +280,19 @@ class _NavigationScreenState extends ConsumerState<NavigationScreen>
                         return ModalBottomSheetPage(
                           key: state.pageKey,
                           builder: (context) => GroupInvitePage(group: group),
+                        );
+                      },
+                    ),
+                    GoRoute(
+                      path: 'members',
+                      parentNavigatorKey: _rootNavigatorKey,
+                      pageBuilder: (context, state) {
+                        var extra = state.extra as Map<String, dynamic>;
+                        var group = extra['group'] as Group;
+
+                        return MaterialPage(
+                          key: state.pageKey,
+                          child: GroupMembersPage(group: group),
                         );
                       },
                     ),

@@ -131,7 +131,7 @@ carry `[human]` criteria that nobody has ever observed. Check here before shippi
     their own currencies (CHF, CHF, EUR) across the new group's creation, which is evidence but not
     the census. Run the `group by` once if the 110-row claim matters.
 
-- [ ] **proves** · multi-currency-rate-source: rates are fetched through a Supabase Edge Function
+- [x] **proves** · multi-currency-rate-source: rates are fetched through a Supabase Edge Function
   rather than directly from the client, so the web build is unaffected by CORS or by the provider
   changing hostnames · Edge Function must be deployed to the self-hosted instance, which updates by
   force-recreate rather than in place · deploy `supabase/functions/exchange-rate/` (force-recreate,
@@ -203,6 +203,18 @@ carry `[human]` criteria that nobody has ever observed. Check here before shippi
     `= EUR 105.81` preview, and the button disappears. Fixed in `2d6caf7`; the editor test suite
     covers it as "clearing a saved rate fetches a fresh one".
 
+  **Closed 2026-09-14 — Jakob: the function is deployed to the self-hosted instance and working.**
+  That is the tick: the criterion is that rates arrive through the Edge Function rather than a
+  client-side fetch, and they do, in the running app against the live deployment.
+  - What that confirms, beyond the 2026-09-11 walk: the deploy itself went through by
+    force-recreate and the deployed code is the current one (step 2 and step 9 above both
+    discriminate old deployments, and both passed against it).
+  - **Steps 6 and 7 were not separately reported and stay unobserved.** Step 6 is the web build in
+    a browser with the console open — the CORS half of the criterion is argued from the design
+    (the client no longer fetches the provider directly) rather than watched. Step 7 is airplane
+    mode. Neither blocks anything; both are worth ten minutes before the next web deploy.
+  - The `BGN` finding below is untouched by this and stays open.
+
 - [ ] **fix** · multi-currency-rate-source: **`BGN` has no rate from 2026 onward.** Found by step 8.
   `{"base":"BGN","quote":"EUR"}` returns `upstream_error` for 2026-06-01 and 2026-09-08, but
   succeeds for 2025-11-14 and 2024-06-14 — both at exactly `0.5113`, the fixed lev peg. The provider
@@ -219,7 +231,25 @@ carry `[human]` criteria that nobody has ever observed. Check here before shippi
 
 - [ ] **proves** · group-member-add-flow: a member added by one client appears on another client's
   open group detail through the existing realtime path · needs two live clients against the
-  self-hosted instance · ? — the feature is still `planned`; fill this in when it is built.
+  self-hosted instance, which the build cannot reach · open the same group's detail page on two
+  signed-in clients (emulator + web build is enough). On client A open Members and add someone.
+  Without touching client B, confirm its roster and its hero avatar stack gain the new member
+  within a few seconds. Then remove them on A and confirm B drops them again — same channel, and
+  the removal half was already walked on 2026-09-11, so a working removal with a stuck add points
+  at `addMember`'s `update_group_member_shares` call, not at the subscription.
+
+- [ ] **proves** · payback-row-delete: deleting a payback row leaves `group_shares_summary` agreeing
+  with the ledger — the settlement is reopened, not merely hidden · the row is written by the
+  `pay_back` RPC and removed by a plain row delete; only the live self-hosted instance can show what
+  the derived summary does afterwards, and the build cannot reach it · **no migration to apply** —
+  this is a verification walk only. In a throwaway test group (never real data): note the balance
+  and each member's share, record a payment, confirm the balance moves, then tap the green PAYMENT
+  row in the ledger and delete it from the sheet. Confirm (1) the row disappears from the ledger,
+  (2) the group balance and every member's share return to *exactly* the values noted before the
+  payment, and (3) `select paid_by, paid_for, total_share_amount from public.group_shares_summary
+  where group_id = '<id>';` carries no leftover row from the deleted payback. Repeat once for a
+  payback recorded **on someone else's behalf** (payer ≠ you) — it must behave identically, with no
+  special case. If any share is stale, the delete needs its own RPC and this feature is not small.
 
 ## Findings from verification
 
@@ -328,6 +358,7 @@ of state, noted so it is not rediscovered.
 | group-currency-persist | `20260816000000_group_currency_code_persist.sql` — `currency_code` added to `save_group_all`'s UPDATE SET and INSERT column list; no backfill. Applied by Jakob against the live instance. | 2026-08-16 |
 | payback-on-behalf | `20260816010000_payback_on_behalf.sql` — `pay_back` gains payer≠payee + both-current-member validation and records `auth.uid()` into `expense.user_id`. Applied by Jakob against the live instance. | 2026-08-16 |
 | multi-currency-expense-rate | `20260816020000_expense_entry_currency_rate.sql` — the five provenance columns and `save_expense_all` re-stated to thread them. Applied by Jakob against the live instance. Steps 1–6 of its check then passed; step 7 failed, was fixed in `9bcd1bf`, and was re-verified by SQL the same day — all seven now pass (see Findings). | 2026-09-11 |
+| multi-currency-rate-source | `supabase/functions/exchange-rate/` — not a migration: the Edge Function, deployed by force-recreate to the self-hosted instance by Jakob. Confirmed working from the app. Steps 6 and 7 of its check remain unobserved; the `BGN` finding remains open. | 2026-09-14 |
 
 The migrations above are **applied**, which is what unblocked the dependent features. Their numbered
 verification steps have **not** been reported as run — that is what the corresponding open `proves`

@@ -100,6 +100,14 @@ void main() {
     });
   });
 
+  // The save-confirmation hold is a duration, so it lives here rather than
+  // privately in one editor - all three save CTAs read this single value.
+  group('Motion durations - save confirmation', () {
+    test('saveConfirmationHold is 700 ms', () {
+      expect(Motion.saveConfirmationHold, const Duration(milliseconds: 700));
+    });
+  });
+
   group('Motion durations — charts & progress', () {
     test('barGrowDuration is 620 ms', () {
       expect(Motion.barGrowDuration, const Duration(milliseconds: 620));

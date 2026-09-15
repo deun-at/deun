@@ -7,8 +7,11 @@ import 'package:deun/pages/expenses/provider/expense_list.dart';
 import 'package:deun/pages/groups/data/group_member_model.dart';
 import 'package:deun/pages/groups/data/group_model.dart';
 import 'package:deun/pages/groups/presentation/group_detail_list.dart';
+import 'package:deun/pages/groups/presentation/payback_detail_sheet.dart';
 import 'package:deun/widgets/restyle/avatar_stack.dart';
 import 'package:deun/widgets/restyle/deun_header.dart';
+import 'package:deun/widgets/restyle/empty_state.dart';
+import 'package:deun/widgets/restyle/primary_button.dart';
 import 'package:deun/widgets/restyle/soft_card.dart';
 import 'package:deun/widgets/theme_builder.dart';
 import 'package:flutter/material.dart';
@@ -321,6 +324,31 @@ void main() {
     expect(find.text(l10n.groupDetailPaymentTag), findsOneWidget);
   });
 
+  // payback-row-delete criterion 1 — the row is reachable, and what it opens
+  // is somewhere a delete can be issued from.
+  testWidgets('tapping a payback row opens the payback detail sheet', (
+    tester,
+  ) async {
+    final l10n = await AppLocalizations.delegate.load(const Locale('en'));
+    await _pump(
+      tester,
+      expenses: [_payback(id: '3', date: '2026-01-02T10:00:00')],
+    );
+
+    await tester.tap(find.text(l10n.groupDetailPaymentTag));
+    await tester.pumpAndSettle();
+
+    expect(find.byType(PaybackDetailSheet), findsOneWidget);
+    expect(find.byKey(const ValueKey('payback_detail_delete')), findsOneWidget);
+    // The sheet restates the row's own sentence — one derivation, two renderers.
+    expect(
+      find.text(
+        l10n.groupDisplayPaidBack('', 'sam', '', 'me', l10n.toCurrency(40)),
+      ),
+      findsNWidgets(2),
+    );
+  });
+
   testWidgets('tapping a quick row navigates to the read expense detail', (
     tester,
   ) async {
@@ -422,12 +450,24 @@ void main() {
     },
   );
 
-  testWidgets('shows the empty state when there are no expenses', (
-    tester,
-  ) async {
+  // AC7 — the group-expenses empty state renders NO action button: the screen
+  // already carries an extended, labelled "Add expense" FAB.
+  testWidgets('shows the shared empty state, without a CTA, when there are no '
+      'expenses', (tester) async {
     final l10n = await AppLocalizations.delegate.load(const Locale('en'));
     await _pump(tester, expenses: []);
-    expect(find.text(l10n.groupExpenseNoEntries), findsOneWidget);
+
+    expect(find.byType(EmptyState), findsOneWidget);
+    expect(find.text(l10n.emptyExpensesHeadline), findsOneWidget);
+    expect(find.text(l10n.emptyExpensesBody), findsOneWidget);
+    expect(
+      find.descendant(
+        of: find.byType(EmptyState),
+        matching: find.byType(PrimaryButton),
+      ),
+      findsNothing,
+      reason: 'the always-present Add expense FAB is the affordance here',
+    );
   });
 
   // The expense search reuses LedgerQuickRow and routes via openLedgerExpense,
