@@ -18,6 +18,8 @@ import '../../main.dart';
 import 'package:deun/l10n/app_localizations.dart';
 
 import 'settings_profile_form.dart';
+import 'package:deun/helper/helper.dart';
+import 'package:deun/pages/settings/card_fee_sheet.dart';
 
 class Setting extends ConsumerStatefulWidget {
   const Setting({super.key});
@@ -112,6 +114,7 @@ class _SettingState extends ConsumerState<Setting> {
     final l10n = AppLocalizations.of(context)!;
     final notificationsEnabled = ref.watch(notificationsEnabledProvider);
     final themeMode = ref.watch(themeModeProvider);
+    final cardFee = ref.watch(cardFeeProvider);
 
     final String appearanceLabel = switch (themeMode) {
       ThemeMode.system => l10n.settingsAppearanceSystem,
@@ -128,6 +131,21 @@ class _SettingState extends ConsumerState<Setting> {
             iconColor: Theme.of(context).colorScheme.primary,
             label: l10n.statisticsPersonalOverviewEntry,
             onTap: () => GoRouter.of(context).push('/setting/statistics'),
+          ),
+          const _RowDivider(),
+          _SettingsRow(
+            icon: Icons.credit_card_outlined,
+            label: l10n.settingsCardFee,
+            subtitle: l10n.settingsCardFeeSubtitle,
+            valueLabel: cardFee == null
+                ? l10n.settingsCardFeeNone
+                : l10n.cardFeePercentValue(
+                    formatPercentValue(
+                      cardFee,
+                      Localizations.localeOf(context),
+                    ),
+                  ),
+            onTap: () => showCardFeeSheet(context, initial: cardFee),
           ),
           const _RowDivider(),
           _SettingsRow(
@@ -365,6 +383,7 @@ class _SettingsRow extends StatelessWidget {
     this.valueLabel,
     this.iconColor,
     this.labelColor,
+    this.subtitle,
   });
 
   final IconData icon;
@@ -372,6 +391,10 @@ class _SettingsRow extends StatelessWidget {
   final VoidCallback? onTap;
   final Widget? trailing;
   final String? valueLabel;
+
+  /// Optional second line under [label], for a row whose name does not say
+  /// what the setting does on its own.
+  final String? subtitle;
   final Color? iconColor;
   final Color? labelColor;
 
@@ -407,10 +430,29 @@ class _SettingsRow extends StatelessWidget {
             Icon(icon, color: iconColor ?? colorScheme.onSurfaceVariant),
             const SizedBox(width: 16),
             Expanded(
-              child: Text(
-                label,
-                style: textTheme.titleSmall?.copyWith(color: labelColor),
-              ),
+              child: subtitle == null
+                  ? Text(
+                      label,
+                      style: textTheme.titleSmall?.copyWith(color: labelColor),
+                    )
+                  : Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          label,
+                          style: textTheme.titleSmall?.copyWith(
+                            color: labelColor,
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          subtitle!,
+                          style: textTheme.bodySmall?.copyWith(
+                            color: colorScheme.onSurfaceVariant,
+                          ),
+                        ),
+                      ],
+                    ),
             ),
             ?trailingWidget,
           ],

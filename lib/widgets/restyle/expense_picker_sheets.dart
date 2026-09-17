@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'package:deun/constants.dart';
-import 'package:deun/helper/currency.dart';
+import 'package:deun/helper/helper.dart';
 import 'package:deun/l10n/app_localizations.dart';
 import 'package:deun/pages/expenses/data/date_option.dart';
 import 'package:deun/pages/expenses/data/expense_category.dart';
@@ -9,7 +9,10 @@ import 'package:deun/pages/expenses/data/keypad_amount.dart';
 import 'package:deun/pages/expenses/data/keypad_calculator.dart';
 import 'package:deun/pages/groups/data/group_member_model.dart';
 
+import 'package:deun/widgets/decimal_text_input_formatter.dart';
+
 import 'member_avatar.dart';
+import 'soft_card.dart';
 import 'money_text.dart';
 import 'primary_button.dart';
 import 'sheet_scaffold.dart';
@@ -576,6 +579,321 @@ class _KeypadButton extends StatelessWidget {
           ),
         ),
       ),
+    );
+  }
+}
+
+/// Everything the conversion sheet renders that only the expense editor knows,
+/// read fresh on every rebuild.
+@immutable
+class ConversionSheetData {
+  const ConversionSheetData({
+    required this.enteredTotal,
+    required this.convertedTotal,
+    required this.baseRate,
+    required this.prefilledRateDate,
+    required this.rateUnavailable,
+    required this.cardFeePercent,
+    required this.hasSavedRate,
+  });
+
+  /// The expense total in the ENTRY currency.
+  final double enteredTotal;
+
+  /// The same total in the GROUP currency; null while there is no usable rate.
+  final double? convertedTotal;
+
+  /// The rate as the source quoted it, before the fee. Non-null only while the
+  /// field holds a FETCHED rate.
+  final double? baseRate;
+
+  /// `yyyy-MM-dd` the fetched rate is effective for.
+  final String? prefilledRateDate;
+
+  final bool rateUnavailable;
+
+  /// The saved card fee, or null. Non-null AND [baseRate] non-null is exactly
+  /// the state in which a fee was applied.
+  final double? cardFeePercent;
+
+  /// Whether a sticky rate is remembered for this group and currency — the
+  /// condition on "Clear saved rate".
+  final bool hasSavedRate;
+}
+
+/// Opens the conversion sheet: the conversion stated, the rate field, the
+/// source line, the card-fee row, "Clear saved rate" and Done.
+///
+/// This is where the rate field lives now. It was on the editor's main screen,
+/// where the currency/rate block already ran to two cards and three tap
+/// targets; the fee could not become a fourth.
+///
+/// [data] is a getter, not a value: the sheet is a separate route and re-reads
+/// the editor's state on every rebuild, driven by [rateState].
+Future<void> showConversionSheet(
+  BuildContext context, {
+  required Currency entryCurrency,
+  required Currency groupCurrency,
+  required TextEditingController rateController,
+  required Listenable rateState,
+  required ConversionSheetData Function() data,
+  required VoidCallback onRateTyped,
+  required VoidCallback onClearSavedRate,
+  required VoidCallback onEditCardFee,
+}) => _showSheet<void>(
+  context,
+  ConversionSheet(
+    entryCurrency: entryCurrency,
+    groupCurrency: groupCurrency,
+    rateController: rateController,
+    rateState: rateState,
+    data: data,
+    onRateTyped: onRateTyped,
+    onClearSavedRate: onClearSavedRate,
+    onEditCardFee: onEditCardFee,
+  ),
+);
+
+/// The conversion sheet body. Provider-free by construction: everything
+/// Riverpod-shaped arrives through [data] or a callback, which is what keeps
+/// this file free of `provider.dart`.
+class ConversionSheet extends StatelessWidget {
+  const ConversionSheet({
+    super.key,
+    required this.entryCurrency,
+    required this.groupCurrency,
+    required this.rateController,
+    required this.rateState,
+    required this.data,
+    required this.onRateTyped,
+    required this.onClearSavedRate,
+    required this.onEditCardFee,
+  });
+
+  final Currency entryCurrency;
+  final Currency groupCurrency;
+  final TextEditingController rateController;
+
+  /// Ticks whenever anything this sheet renders changes: a rate landing from a
+  /// fetch, a fee change, a cleared sticky rate.
+  final Listenable rateState;
+
+  final ConversionSheetData Function() data;
+  final VoidCallback onRateTyped;
+  final VoidCallback onClearSavedRate;
+  final VoidCallback onEditCardFee;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    final theme = Theme.of(context);
+    final locale = Localizations.localeOf(context);
+
+    return ListenableBuilder(
+      listenable: rateState,
+      builder: (context, _) {
+        final d = data();
+        final rate = parseConversionRate(rateController.text);
+
+        return SheetScaffold(
+          title: l10n.expenseConversionSheetTitle,
+          footer: PrimaryButton(
+            key: const ValueKey('expense_conversion_done'),
+            label: l10n.close,
+            onPressed: () => Navigator.of(context).pop(),
+          ),
+          body: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // 1. The conversion, stated.
+              SoftCard(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 12,
+                ),
+                borderRadius: 16,
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        key: const ValueKey('expense_conversion_entered'),
+                        formatMoney(d.enteredTotal, entryCurrency, locale),
+                        style: theme.textTheme.titleSmall,
+                      ),
+                    ),
+                    if (d.convertedTotal != null)
+                      Text(
+                        key: const ValueKey('expense_rate_preview'),
+                        l10n.expenseRatePreview(
+                          formatMoney(d.convertedTotal!, groupCurrency, locale),
+                        ),
+                        style: theme.textTheme.titleSmall,
+                      ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 8),
+              // 2. The rate field — moved here verbatim from the editor.
+              SoftCard(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 6,
+                ),
+                borderRadius: 16,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    TextField(
+                      key: const ValueKey('expense_rate_field'),
+                      controller: rateController,
+                      keyboardType: const TextInputType.numberWithOptions(
+                        decimal: true,
+                      ),
+                      // Twelve, not six, and it has to match what [formatRate]
+                      // can render: a rate is a multiplier, so a small one
+                      // needs decimals to carry its significant digits. The
+                      // smallest pair the app can produce — IDR into GBP — is
+                      // 0.0000494306, which needs ten. Capping at six would
+                      // round a fetched rate away the moment the user touched
+                      // the field, which is the same 0.87% error formatRate was
+                      // fixed to stop.
+                      inputFormatters: [
+                        DecimalTextInputFormatter(decimalRange: 12),
+                      ],
+                      onChanged: (_) => onRateTyped(),
+                      decoration: InputDecoration(
+                        border: InputBorder.none,
+                        labelText: l10n.expenseRateFieldLabel,
+                        // InputDecorator fades prefix and suffix out whenever
+                        // the label is inline — i.e. on an empty, unfocused
+                        // field, which is precisely the FIRST foreign expense
+                        // in a group, where nothing is remembered yet and the
+                        // user has no way to know which way round to type the
+                        // rate.
+                        floatingLabelBehavior: FloatingLabelBehavior.always,
+                        // The field reads as a sentence — "1 CHF = [0.9432]
+                        // EUR" — so the direction is never ambiguous.
+                        prefixText:
+                            '${l10n.expenseRatePrefix(entryCurrency.code)} ',
+                        suffixText: ' ${groupCurrency.code}',
+                        // No rate => the hint, never a "= EUR 0.00" preview.
+                        helperText: rate == null
+                            ? l10n.expenseRateRequired
+                            : null,
+                        helperMaxLines: 3,
+                      ),
+                    ),
+                    // 3. The prefill-date line, or the unavailable line.
+                    if (d.prefilledRateDate != null)
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 6),
+                        child: Text(
+                          key: const ValueKey('expense_rate_prefill_date'),
+                          // The user sees which day the rate belongs to BEFORE
+                          // it is frozen on the row — a Saturday expense
+                          // carries Friday's rate, and that is a fact about the
+                          // rate, not a rounding error.
+                          l10n.expenseRatePrefilledOn(
+                            formatDate(d.prefilledRateDate, context),
+                          ),
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: theme.colorScheme.onSurfaceVariant,
+                          ),
+                        ),
+                      )
+                    else if (d.rateUnavailable)
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 6),
+                        child: Text(
+                          key: const ValueKey('expense_rate_unavailable'),
+                          l10n.expenseRateUnavailable,
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: theme.colorScheme.onSurfaceVariant,
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+              // 4. The source line: both numbers on screen, so the user can see
+              // the percent between them. With no fee the base and the
+              // effective rate are the same number and this would be pure
+              // duplication of the prefill-date line.
+              if (d.baseRate != null && d.cardFeePercent != null) ...[
+                const SizedBox(height: 8),
+                Text(
+                  key: const ValueKey('expense_conversion_source'),
+                  l10n.expenseConversionSourceLine(
+                    formatDate(d.prefilledRateDate, context),
+                    formatRate(d.baseRate!),
+                  ),
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
+                ),
+              ],
+              const SizedBox(height: 8),
+              // 5. The card-fee row.
+              SoftCard(
+                key: const ValueKey('expense_conversion_fee_row'),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 14,
+                ),
+                borderRadius: 16,
+                onTap: onEditCardFee,
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        l10n.cardFeeSheetTitle,
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          color: theme.colorScheme.onSurfaceVariant,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                    Text(
+                      d.cardFeePercent == null
+                          ? l10n.settingsCardFeeNone
+                          : l10n.cardFeePercentValue(
+                              formatPercentValue(d.cardFeePercent!, locale),
+                            ),
+                      style: theme.textTheme.titleSmall,
+                    ),
+                    const SizedBox(width: 4),
+                    Icon(
+                      Icons.chevron_right,
+                      color: theme.colorScheme.onSurfaceVariant,
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 8),
+              // 6. The honesty copy. Load-bearing: card networks convert at
+              // their own wholesale rate and then add the fee, so this must not
+              // imply it reconciles a statement.
+              Text(
+                l10n.cardFeeSheetHelper,
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
+              ),
+              // 7. Clearing the REMEMBERED rate, so it only exists once one is
+              // remembered — never as a companion to an empty field.
+              if (d.hasSavedRate)
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: TextButton(
+                    key: const ValueKey('expense_rate_reset'),
+                    onPressed: onClearSavedRate,
+                    child: Text(l10n.expenseRateReset),
+                  ),
+                ),
+            ],
+          ),
+        );
+      },
     );
   }
 }

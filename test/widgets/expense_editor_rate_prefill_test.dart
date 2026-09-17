@@ -14,37 +14,17 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 // rather than copied. `show` keeps that file's own `main` out of this one.
 import 'expense_editor_currency_rate_test.dart'
     show
+        StubLookup,
+        closeConversionSheet,
         convertedExpense,
         initTestSupabase,
         installFakePrefs,
+        openConversionSheet,
         pickCurrency,
         prefsValues,
         pumpEditor,
         pumpEditorWithSaveSeam,
         saveEditor;
-
-/// A rate lookup that answers off a table keyed by `yyyy-MM-dd` and records
-/// every call, so "was it refetched, and for which date" is directly assertable.
-class _StubLookup {
-  _StubLookup(this.byDate, {this.gate});
-
-  final Map<String, RateQuote> byDate;
-
-  /// When set, responses wait on it — how "a late answer never wins" is staged.
-  final Completer<void>? gate;
-
-  final List<DateTime> calls = [];
-
-  Future<RateQuote?> call({
-    required Currency base,
-    required Currency quote,
-    required DateTime date,
-  }) async {
-    calls.add(date);
-    if (gate != null) await gate!.future;
-    return byDate[ymd(date)];
-  }
-}
 
 String _rateText(WidgetTester tester) => tester
     .widget<TextField>(find.byKey(const ValueKey('expense_rate_field')))
@@ -100,7 +80,7 @@ void main() {
   testWidgets(
     'choosing a foreign currency prefills the rate for the expense date',
     (tester) async {
-      final lookup = _StubLookup({
+      final lookup = StubLookup({
         '2026-07-01': RateQuote(
           rate: 0.9432,
           effectiveDate: DateTime(2026, 6, 30),
@@ -110,6 +90,7 @@ void main() {
       await pumpEditor(tester, currencyCode: 'EUR', lookupRate: lookup.call);
       await pickCurrency(tester, 'CHF');
       await tester.pumpAndSettle();
+      await openConversionSheet(tester);
 
       expect(lookup.calls.single, DateTime(2026, 7, 1));
       expect(_rateText(tester), '0.9432');
@@ -121,7 +102,7 @@ void main() {
     tester,
   ) async {
     final l10n = await AppLocalizations.delegate.load(const Locale('en'));
-    final lookup = _StubLookup({
+    final lookup = StubLookup({
       // A Wednesday expense; the rate quoted the previous Tuesday.
       '2026-07-01': RateQuote(
         rate: 0.9432,
@@ -131,7 +112,10 @@ void main() {
     await pumpEditor(tester, currencyCode: 'EUR', lookupRate: lookup.call);
     await pickCurrency(tester, 'CHF');
     await tester.pumpAndSettle();
+    await openConversionSheet(tester);
 
+    // expenseRatePrefilledOn is still the sheet's own line; the row's source
+    // chip reads 'ECB {date}', a different string.
     expect(
       find.byKey(const ValueKey('expense_rate_prefill_date')),
       findsOneWidget,
@@ -146,7 +130,7 @@ void main() {
   testWidgets(
     'a rate typed over the prefill is what gets frozen, with its own date',
     (tester) async {
-      final lookup = _StubLookup({
+      final lookup = StubLookup({
         '2026-07-01': RateQuote(
           rate: 0.9432,
           effectiveDate: DateTime(2026, 6, 30),
@@ -159,20 +143,26 @@ void main() {
       );
       await pickCurrency(tester, 'CHF');
       await tester.pumpAndSettle();
+      await openConversionSheet(tester);
       await tester.enterText(
         find.byKey(const ValueKey('expense_rate_field')),
         '0.91',
       );
       await tester.pumpAndSettle();
+      // Moved up so it runs while the sheet is open — closing it first would
+      // make the assertion vacuous.
+      expect(
+        find.byKey(const ValueKey('expense_rate_prefill_date')),
+        findsNothing,
+      );
+      // saveEditor taps find.byType(PrimaryButton).last, and the sheet's Done
+      // button would be the last one.
+      await closeConversionSheet(tester);
       await saveEditor(tester);
 
       expect(saved.single.conversion!.rate, 0.91);
       // The effective date belonged to the suggestion, not to the typed number.
       expect(saved.single.conversion!.rateDate, ymd(DateTime.now()));
-      expect(
-        find.byKey(const ValueKey('expense_rate_prefill_date')),
-        findsNothing,
-      );
     },
   );
 
@@ -181,7 +171,7 @@ void main() {
     tester,
   ) async {
     final gate = Completer<void>();
-    final lookup = _StubLookup({
+    final lookup = StubLookup({
       '2026-07-01': RateQuote(
         rate: 0.9432,
         effectiveDate: DateTime(2026, 6, 30),
@@ -190,6 +180,9 @@ void main() {
     await pumpEditor(tester, currencyCode: 'EUR', lookupRate: lookup.call);
     await pickCurrency(tester, 'CHF');
     await tester.pump(); // request in flight
+    // pumpAndSettle does not complete the gate — a pending Future schedules
+    // no frames — so the sheet opens with the request still outstanding.
+    await openConversionSheet(tester);
 
     await tester.enterText(
       find.byKey(const ValueKey('expense_rate_field')),
@@ -210,7 +203,7 @@ void main() {
   testWidgets(
     'changing the expense date refetches the prefill for the new date',
     (tester) async {
-      final lookup = _StubLookup({
+      final lookup = StubLookup({
         '2026-07-01': RateQuote(
           rate: 0.9432,
           effectiveDate: DateTime(2026, 6, 30),
@@ -220,9 +213,13 @@ void main() {
       await pumpEditor(tester, currencyCode: 'EUR', lookupRate: lookup.call);
       await pickCurrency(tester, 'CHF');
       await tester.pumpAndSettle();
+      await openConversionSheet(tester);
       expect(_rateText(tester), '0.9432');
+      // The date row lives on the editor's own screen, behind the sheet.
+      await closeConversionSheet(tester);
 
       await _pickYesterday(tester);
+      await openConversionSheet(tester);
 
       expect(lookup.calls.map(ymd).toList(), ['2026-07-01', ymd(_yesterday)]);
       expect(_rateText(tester), '0.9611');
@@ -233,7 +230,7 @@ void main() {
   testWidgets('editing another field neither refetches nor moves the rate', (
     tester,
   ) async {
-    final lookup = _StubLookup({
+    final lookup = StubLookup({
       '2026-07-01': RateQuote(
         rate: 0.9432,
         effectiveDate: DateTime(2026, 6, 30),
@@ -243,11 +240,13 @@ void main() {
     await pickCurrency(tester, 'CHF');
     await tester.pumpAndSettle();
 
+    // The name field is on the editor's own screen, so this runs first.
     await tester.enterText(
       find.byKey(const ValueKey('expense_name_field')),
       'Hotel',
     );
     await tester.pumpAndSettle();
+    await openConversionSheet(tester);
 
     expect(lookup.calls, hasLength(1));
     expect(_rateText(tester), '0.9432');
@@ -257,7 +256,7 @@ void main() {
   testWidgets(
     'a saved converted expense is never refetched for, even on a date change',
     (tester) async {
-      final lookup = _StubLookup({
+      final lookup = StubLookup({
         '2026-07-01': RateQuote(
           rate: 0.9999,
           effectiveDate: DateTime(2026, 6, 30),
@@ -271,16 +270,20 @@ void main() {
         lookupRate: lookup.call,
       );
       await tester.pumpAndSettle();
+      await openConversionSheet(tester);
       expect(lookup.calls, isEmpty);
       expect(_rateText(tester), '0.0058');
+      await closeConversionSheet(tester);
 
       await _pickYesterday(tester);
+      await openConversionSheet(tester);
       expect(
         lookup.calls,
         isEmpty,
         reason: 'a frozen rate is never refetched for',
       );
       expect(_rateText(tester), '0.0058');
+      await closeConversionSheet(tester);
 
       await saveEditor(tester);
       expect(saved.single.conversion!.rate, 0.0058);
@@ -293,7 +296,7 @@ void main() {
     tester,
   ) async {
     prefsValues[kStickyRatesPrefKey] = jsonEncode({'g1|CHF': 0.9432});
-    final lookup = _StubLookup({
+    final lookup = StubLookup({
       '2026-07-01': RateQuote(
         rate: 0.8000,
         effectiveDate: DateTime(2026, 6, 30),
@@ -302,6 +305,7 @@ void main() {
     await pumpEditor(tester, currencyCode: 'EUR', lookupRate: lookup.call);
     await pickCurrency(tester, 'CHF');
     await tester.pumpAndSettle();
+    await openConversionSheet(tester);
 
     expect(lookup.calls, isEmpty);
     expect(_rateText(tester), '0.9432');
@@ -313,7 +317,7 @@ void main() {
   testWidgets('an accepted prefill is saved but never remembered', (
     tester,
   ) async {
-    final lookup = _StubLookup({
+    final lookup = StubLookup({
       '2026-07-01': RateQuote(
         rate: 0.9432,
         effectiveDate: DateTime(2026, 6, 30),
@@ -333,7 +337,7 @@ void main() {
   });
 
   testWidgets('a rate typed over the prefill IS remembered', (tester) async {
-    final lookup = _StubLookup({
+    final lookup = StubLookup({
       '2026-07-01': RateQuote(
         rate: 0.9432,
         effectiveDate: DateTime(2026, 6, 30),
@@ -346,11 +350,13 @@ void main() {
     );
     await pickCurrency(tester, 'CHF');
     await tester.pumpAndSettle();
+    await openConversionSheet(tester);
     await tester.enterText(
       find.byKey(const ValueKey('expense_rate_field')),
       '0.91',
     );
     await tester.pumpAndSettle();
+    await closeConversionSheet(tester);
     await saveEditor(tester);
 
     expect(jsonDecode(prefsValues[kStickyRatesPrefKey]!), {'g1|CHF': 0.91});
@@ -362,11 +368,14 @@ void main() {
     tester,
   ) async {
     final l10n = await AppLocalizations.delegate.load(const Locale('en'));
-    final lookup = _StubLookup(const {}); // nothing for any date
+    final lookup = StubLookup(const {}); // nothing for any date
     await pumpEditor(tester, currencyCode: 'EUR', lookupRate: lookup.call);
     await pickCurrency(tester, 'CHF');
     await tester.pumpAndSettle();
+    await openConversionSheet(tester);
 
+    // expenseRateUnavailable and expenseRateRequired are the SHEET's; the row
+    // behind shows expenseNoRateChip and expenseConversionRateNeeded.
     expect(lookup.calls, hasLength(1));
     expect(
       find.byKey(const ValueKey('expense_rate_unavailable')),
@@ -386,22 +395,25 @@ void main() {
       final saved = await pumpEditorWithSaveSeam(
         tester,
         currencyCode: 'EUR',
-        lookupRate: _StubLookup(const {}).call,
+        lookupRate: StubLookup(const {}).call,
       );
       await pickCurrency(tester, 'CHF');
       await tester.pumpAndSettle();
+      await openConversionSheet(tester);
       await tester.enterText(
         find.byKey(const ValueKey('expense_rate_field')),
         '0.9432',
       );
       await tester.pumpAndSettle();
-      await saveEditor(tester);
-
-      expect(saved.single.conversion!.rate, 0.9432);
+      // Moved up so it runs while the sheet is open.
       expect(
         find.byKey(const ValueKey('expense_rate_unavailable')),
         findsNothing,
       );
+      await closeConversionSheet(tester);
+      await saveEditor(tester);
+
+      expect(saved.single.conversion!.rate, 0.9432);
     },
   );
 
@@ -410,7 +422,7 @@ void main() {
   testWidgets(
     'a failed refetch clears the stale prefill rather than misdating it',
     (tester) async {
-      final lookup = _StubLookup({
+      final lookup = StubLookup({
         '2026-07-01': RateQuote(
           rate: 0.9432,
           effectiveDate: DateTime(2026, 6, 30),
@@ -420,9 +432,12 @@ void main() {
       await pumpEditor(tester, currencyCode: 'EUR', lookupRate: lookup.call);
       await pickCurrency(tester, 'CHF');
       await tester.pumpAndSettle();
+      await openConversionSheet(tester);
       expect(_rateText(tester), '0.9432');
+      await closeConversionSheet(tester);
 
       await _pickYesterday(tester);
+      await openConversionSheet(tester);
 
       expect(_rateText(tester), '');
       expect(
@@ -443,7 +458,7 @@ void main() {
   // just asked to be rid of a stale number.
   testWidgets('clearing a saved rate fetches a fresh one', (tester) async {
     prefsValues[kStickyRatesPrefKey] = jsonEncode({'g1|CHF': 0.9432});
-    final lookup = _StubLookup({
+    final lookup = StubLookup({
       '2026-07-01': RateQuote(
         rate: 0.8123,
         effectiveDate: DateTime(2026, 6, 30),
@@ -452,6 +467,7 @@ void main() {
     await pumpEditor(tester, currencyCode: 'EUR', lookupRate: lookup.call);
     await pickCurrency(tester, 'CHF');
     await tester.pumpAndSettle();
+    await openConversionSheet(tester);
     // The remembered rate wins on the way in, and is not fetched for.
     expect(_rateText(tester), '0.9432');
     expect(lookup.calls, isEmpty);
@@ -483,10 +499,11 @@ void main() {
     final saved = await pumpEditorWithSaveSeam(
       tester,
       currencyCode: 'EUR',
-      lookupRate: _StubLookup(const {}).call,
+      lookupRate: StubLookup(const {}).call,
     );
     await pickCurrency(tester, 'CHF');
     await tester.pumpAndSettle();
+    await openConversionSheet(tester);
     expect(_rateText(tester), '');
 
     await tester.enterText(
@@ -499,6 +516,7 @@ void main() {
       '0.0000494306',
       reason: 'the input formatter must not round a small rate away',
     );
+    await closeConversionSheet(tester);
 
     await saveEditor(tester);
     expect(saved.single.conversion!.rate, closeTo(tiny, tiny * 0.00001));

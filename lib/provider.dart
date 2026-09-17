@@ -29,6 +29,13 @@ const String kNotificationsEnabledPrefKey = 'notifications_enabled';
 /// merge-based hydration.
 const String kStickyRatesPrefKey = 'sticky_conversion_rates';
 
+/// Persisted-preferences key holding the device owner's card foreign-transaction
+/// fee, as a percent (`1.4` means 1.4%). ONE value, stored as its plain
+/// `toString()` text rather than JSON: [AsyncPreferences] has no double accessor
+/// (only String/Bool/Int/Long), and `double.toString()` round-trips exactly and
+/// is locale-independent, so the stored text is always `.`-separated.
+const String kCardFeePrefKey = 'card_fee_percent';
+
 /// Map key for one (group, source currency) pair.
 String stickyRateKey(String groupId, Currency from) => '$groupId|${from.code}';
 
@@ -43,8 +50,8 @@ Stream<AuthState> authStateChanges(Ref ref) => supabase.auth.onAuthStateChange;
 /// referenced by [AuthUserSwitchListener].
 ///
 /// Device-scoped preference providers ([ThemeModeNotifier],
-/// [NotificationsEnabledNotifier]) are intentionally excluded: they survive a
-/// user switch on the same device.
+/// [NotificationsEnabledNotifier], [CardFeeNotifier]) are intentionally
+/// excluded: they survive a user switch on the same device.
 void invalidateUserScopedProviders(Ref ref) {
   ref.invalidate(userDetailProvider);
   ref.invalidate(groupListProvider);
@@ -235,5 +242,69 @@ class StickyRateNotifier extends _$StickyRateNotifier {
     final next = {...state}..remove(stickyRateKey(groupId, from));
     state = next;
     await _persist();
+  }
+}
+
+/// The foreign-transaction fee the device owner's payment card charges, as a
+/// percent. Applied to every rate Deun FETCHES, never to one the user typed —
+/// the invariant lives in `ExpenseDetail._prefillRate`, not here.
+///
+/// **Device-scoped, not user-scoped.** It is a fact about the card in this
+/// person's pocket, so it survives a user switch exactly as [ThemeModeNotifier]
+/// and [NotificationsEnabledNotifier] do, and is excluded from
+/// [invalidateUserScopedProviders] for the same reason.
+///
+/// **0 and unset are the same state.** [setCardFeePercent] collapses a
+/// non-positive or non-finite percent into [clearCardFee], so `state` is either
+/// null or a positive number and every downstream condition is `fee != null`.
+///
+/// [hydrated] is stored and awaited by every mutation, and by the editor before
+/// a fetched rate lands in the field — this is a keepAlive provider and the
+/// editor may be the first thing to touch it after app start.
+@Riverpod(keepAlive: true)
+class CardFeeNotifier extends _$CardFeeNotifier {
+  final AsyncPreferences _preferences = AsyncPreferences();
+
+  late final Future<void> _hydration;
+
+  /// Resolves once the stored fee has been loaded into [state]. Await this
+  /// before reading [cardFeePercent].
+  Future<void> get hydrated => _hydration;
+
+  @override
+  double? build() {
+    _hydration = _hydrate();
+    return null;
+  }
+
+  Future<void> _hydrate() async {
+    final stored = await _preferences.getString(kCardFeePrefKey);
+    if (stored == null || stored.isEmpty) return;
+    final value = double.tryParse(stored);
+    // A hand-edited or corrupt value is inert, not fatal — a fee is a
+    // convenience and must never block the editor.
+    if (value != null && value.isFinite && value > 0) state = value;
+  }
+
+  /// The saved fee, or null when none is. Synchronous by design (the Contract's
+  /// shape) — await [hydrated] before calling it.
+  double? get cardFeePercent => state;
+
+  Future<void> setCardFeePercent(double percent) async {
+    await _hydration;
+    if (!percent.isFinite || percent <= 0) {
+      // 0 IS "no fee": one state, so the chip has one condition and Settings
+      // has one empty value.
+      await clearCardFee();
+      return;
+    }
+    state = percent;
+    await _preferences.setString(kCardFeePrefKey, percent.toString());
+  }
+
+  Future<void> clearCardFee() async {
+    await _hydration;
+    state = null;
+    await _preferences.remove(kCardFeePrefKey);
   }
 }

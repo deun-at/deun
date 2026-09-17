@@ -74,6 +74,16 @@ class _CountingNotificationsNotifier extends NotificationsEnabledNotifier {
   }
 }
 
+class _CountingCardFeeNotifier extends CardFeeNotifier {
+  _CountingCardFeeNotifier(this.log);
+  final List<String> log;
+  @override
+  double? build() {
+    log.add('cardFee');
+    return null;
+  }
+}
+
 int _count(List<String> log, String tag) => log.where((e) => e == tag).length;
 
 /// A minimal [AuthState] carrying a [Session] whose user has the given [userId],
@@ -111,6 +121,7 @@ ProviderContainer _container(
       notificationsEnabledProvider.overrideWith(
         () => _CountingNotificationsNotifier(log),
       ),
+      cardFeeProvider.overrideWith(() => _CountingCardFeeNotifier(log)),
     ],
   );
 }
@@ -123,6 +134,7 @@ void _mountAll(ProviderContainer container) {
   container.listen(friendshipListProvider, (_, _) {}, onError: (_, _) {});
   container.listen(themeModeProvider, (_, _) {});
   container.listen(notificationsEnabledProvider, (_, _) {});
+  container.listen(cardFeeProvider, (_, _) {});
 }
 
 void main() {
@@ -182,30 +194,30 @@ void main() {
     },
   );
 
-  test(
-    'signedOut leaves device-scoped preference providers untouched',
-    () async {
-      final controller = StreamController<AuthState>.broadcast();
-      addTearDown(controller.close);
-      final log = <String>[];
-      final container = _container(controller, log);
+  test('signedOut leaves device-scoped preference providers untouched', () async {
+    final controller = StreamController<AuthState>.broadcast();
+    addTearDown(controller.close);
+    final log = <String>[];
+    final container = _container(controller, log);
 
-      _mountAll(container);
-      await container.pump();
+    _mountAll(container);
+    await container.pump();
 
-      expect(_count(log, 'theme'), 1);
-      expect(_count(log, 'notifications'), 1);
+    expect(_count(log, 'theme'), 1);
+    expect(_count(log, 'notifications'), 1);
+    expect(_count(log, 'cardFee'), 1);
 
-      controller.add(const AuthState(AuthChangeEvent.signedOut, null));
-      await pumpEventQueue();
-      await container.pump();
+    controller.add(const AuthState(AuthChangeEvent.signedOut, null));
+    await pumpEventQueue();
+    await container.pump();
 
-      // Theme mode + notifications toggle are device-scoped; a user switch must
-      // not rebuild them.
-      expect(_count(log, 'theme'), 1);
-      expect(_count(log, 'notifications'), 1);
-    },
-  );
+    // Theme mode, the notifications toggle and the card fee are device-scoped;
+    // a user switch must not rebuild them. The fee is a fact about the card in
+    // this device owner's pocket, not about the account.
+    expect(_count(log, 'theme'), 1);
+    expect(_count(log, 'notifications'), 1);
+    expect(_count(log, 'cardFee'), 1);
+  });
 
   test(
     'signedIn as a DIFFERENT user invalidates; the same user does not',

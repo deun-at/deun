@@ -3440,6 +3440,96 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'A group of one has nothing to split.'**
   String get groupMembersEmptyCtaBody;
+
+  /// Settings row opening the card foreign-transaction fee sheet.
+  ///
+  /// In en, this message translates to:
+  /// **'Foreign transaction fee'**
+  String get settingsCardFee;
+
+  /// Subtitle of the foreign-transaction fee settings row.
+  ///
+  /// In en, this message translates to:
+  /// **'Added to exchange rates Deun looks up'**
+  String get settingsCardFeeSubtitle;
+
+  /// Value shown on the fee settings row and in the conversion sheet when no fee is saved.
+  ///
+  /// In en, this message translates to:
+  /// **'None'**
+  String get settingsCardFeeNone;
+
+  /// A fee percent with its unit. {percent} arrives already formatted for the locale.
+  ///
+  /// In en, this message translates to:
+  /// **'{percent} %'**
+  String cardFeePercentValue(String percent);
+
+  /// Title of the card-fee entry sheet, and the label of the fee row in the conversion sheet.
+  ///
+  /// In en, this message translates to:
+  /// **'Card fee'**
+  String get cardFeeSheetTitle;
+
+  /// Label of the percent field in the card-fee sheet.
+  ///
+  /// In en, this message translates to:
+  /// **'Fee'**
+  String get cardFeeSheetFieldLabel;
+
+  /// Honesty copy under the card-fee field: the fee approximates a statement, it does not reconcile one.
+  ///
+  /// In en, this message translates to:
+  /// **'Added to rates Deun looks up, never to a rate you type yourself. Your bank converts at its own rate, so treat this as close, not exact.'**
+  String get cardFeeSheetHelper;
+
+  /// Title of the expense editor's conversion sheet, where the rate field lives.
+  ///
+  /// In en, this message translates to:
+  /// **'Conversion'**
+  String get expenseConversionSheetTitle;
+
+  /// Shown on the editor's conversion row when no rate is available yet, in place of the converted amount.
+  ///
+  /// In en, this message translates to:
+  /// **'Rate needed'**
+  String get expenseConversionRateNeeded;
+
+  /// Names the base rate behind a fee-adjusted rate, so the user can see the percent between the two numbers.
+  ///
+  /// In en, this message translates to:
+  /// **'ECB reference for {date} was {rate}.'**
+  String expenseConversionSourceLine(String date, String rate);
+
+  /// Provenance chip on the conversion row for a fetched rate, carrying its effective date.
+  ///
+  /// In en, this message translates to:
+  /// **'ECB {date}'**
+  String expenseSourceChip(String date);
+
+  /// Provenance chip shown only when a non-zero card fee was applied to a fetched rate. {percent} arrives already formatted with its unit.
+  ///
+  /// In en, this message translates to:
+  /// **'+{percent} card fee'**
+  String expenseFeeChip(String percent);
+
+  /// Provenance chip on the conversion row for a rate the user typed themselves.
+  ///
+  /// In en, this message translates to:
+  /// **'Your rate'**
+  String get expenseTypedRateChip;
+
+  /// Provenance chip on the conversion row when no rate could be fetched for the expense date.
+  ///
+  /// In en, this message translates to:
+  /// **'No ECB rate for {date}'**
+  String expenseNoRateChip(String date);
+
+  /// Shown under the card-fee field when the typed text is not a number. A typo must never silently delete a saved fee.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a number, like 1.4'**
+  String get cardFeeSheetInvalid;
 }
 
 class _AppLocalizationsDelegate

@@ -468,3 +468,121 @@ abstract class _$StickyRateNotifier extends $Notifier<Map<String, double>> {
     element.handleCreate(ref, build);
   }
 }
+
+/// The foreign-transaction fee the device owner's payment card charges, as a
+/// percent. Applied to every rate Deun FETCHES, never to one the user typed —
+/// the invariant lives in `ExpenseDetail._prefillRate`, not here.
+///
+/// **Device-scoped, not user-scoped.** It is a fact about the card in this
+/// person's pocket, so it survives a user switch exactly as [ThemeModeNotifier]
+/// and [NotificationsEnabledNotifier] do, and is excluded from
+/// [invalidateUserScopedProviders] for the same reason.
+///
+/// **0 and unset are the same state.** [setCardFeePercent] collapses a
+/// non-positive or non-finite percent into [clearCardFee], so `state` is either
+/// null or a positive number and every downstream condition is `fee != null`.
+///
+/// [hydrated] is stored and awaited by every mutation, and by the editor before
+/// a fetched rate lands in the field — this is a keepAlive provider and the
+/// editor may be the first thing to touch it after app start.
+
+@ProviderFor(CardFeeNotifier)
+final cardFeeProvider = CardFeeNotifierProvider._();
+
+/// The foreign-transaction fee the device owner's payment card charges, as a
+/// percent. Applied to every rate Deun FETCHES, never to one the user typed —
+/// the invariant lives in `ExpenseDetail._prefillRate`, not here.
+///
+/// **Device-scoped, not user-scoped.** It is a fact about the card in this
+/// person's pocket, so it survives a user switch exactly as [ThemeModeNotifier]
+/// and [NotificationsEnabledNotifier] do, and is excluded from
+/// [invalidateUserScopedProviders] for the same reason.
+///
+/// **0 and unset are the same state.** [setCardFeePercent] collapses a
+/// non-positive or non-finite percent into [clearCardFee], so `state` is either
+/// null or a positive number and every downstream condition is `fee != null`.
+///
+/// [hydrated] is stored and awaited by every mutation, and by the editor before
+/// a fetched rate lands in the field — this is a keepAlive provider and the
+/// editor may be the first thing to touch it after app start.
+final class CardFeeNotifierProvider
+    extends $NotifierProvider<CardFeeNotifier, double?> {
+  /// The foreign-transaction fee the device owner's payment card charges, as a
+  /// percent. Applied to every rate Deun FETCHES, never to one the user typed —
+  /// the invariant lives in `ExpenseDetail._prefillRate`, not here.
+  ///
+  /// **Device-scoped, not user-scoped.** It is a fact about the card in this
+  /// person's pocket, so it survives a user switch exactly as [ThemeModeNotifier]
+  /// and [NotificationsEnabledNotifier] do, and is excluded from
+  /// [invalidateUserScopedProviders] for the same reason.
+  ///
+  /// **0 and unset are the same state.** [setCardFeePercent] collapses a
+  /// non-positive or non-finite percent into [clearCardFee], so `state` is either
+  /// null or a positive number and every downstream condition is `fee != null`.
+  ///
+  /// [hydrated] is stored and awaited by every mutation, and by the editor before
+  /// a fetched rate lands in the field — this is a keepAlive provider and the
+  /// editor may be the first thing to touch it after app start.
+  CardFeeNotifierProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'cardFeeProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$cardFeeNotifierHash();
+
+  @$internal
+  @override
+  CardFeeNotifier create() => CardFeeNotifier();
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(double? value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<double?>(value),
+    );
+  }
+}
+
+String _$cardFeeNotifierHash() => r'fb884fde7ee0e214a42e11ecb779c2f443ad54a8';
+
+/// The foreign-transaction fee the device owner's payment card charges, as a
+/// percent. Applied to every rate Deun FETCHES, never to one the user typed —
+/// the invariant lives in `ExpenseDetail._prefillRate`, not here.
+///
+/// **Device-scoped, not user-scoped.** It is a fact about the card in this
+/// person's pocket, so it survives a user switch exactly as [ThemeModeNotifier]
+/// and [NotificationsEnabledNotifier] do, and is excluded from
+/// [invalidateUserScopedProviders] for the same reason.
+///
+/// **0 and unset are the same state.** [setCardFeePercent] collapses a
+/// non-positive or non-finite percent into [clearCardFee], so `state` is either
+/// null or a positive number and every downstream condition is `fee != null`.
+///
+/// [hydrated] is stored and awaited by every mutation, and by the editor before
+/// a fetched rate lands in the field — this is a keepAlive provider and the
+/// editor may be the first thing to touch it after app start.
+
+abstract class _$CardFeeNotifier extends $Notifier<double?> {
+  double? build();
+  @$mustCallSuper
+  @override
+  void runBuild() {
+    final ref = this.ref as $Ref<double?, double?>;
+    final element =
+        ref.element
+            as $ClassProviderElement<
+              AnyNotifier<double?, double?>,
+              double?,
+              Object?,
+              Object?
+            >;
+    element.handleCreate(ref, build);
+  }
+}

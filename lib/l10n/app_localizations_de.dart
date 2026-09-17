@@ -2036,4 +2036,61 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get groupMembersEmptyCtaBody => 'Allein gibt es nichts zu teilen.';
+
+  @override
+  String get settingsCardFee => 'Auslandseinsatzentgelt';
+
+  @override
+  String get settingsCardFeeSubtitle =>
+      'Wird auf Wechselkurse aufgeschlagen, die Deun abruft';
+
+  @override
+  String get settingsCardFeeNone => 'Keine';
+
+  @override
+  String cardFeePercentValue(String percent) {
+    return '$percent %';
+  }
+
+  @override
+  String get cardFeeSheetTitle => 'Kartengebühr';
+
+  @override
+  String get cardFeeSheetFieldLabel => 'Gebühr';
+
+  @override
+  String get cardFeeSheetHelper =>
+      'Wird auf Kurse aufgeschlagen, die Deun abruft — nie auf einen Kurs, den du selbst eingibst. Deine Bank rechnet mit ihrem eigenen Kurs um, sieh das also als ungefähr, nicht exakt.';
+
+  @override
+  String get expenseConversionSheetTitle => 'Umrechnung';
+
+  @override
+  String get expenseConversionRateNeeded => 'Kurs nötig';
+
+  @override
+  String expenseConversionSourceLine(String date, String rate) {
+    return 'EZB-Referenzkurs für $date war $rate.';
+  }
+
+  @override
+  String expenseSourceChip(String date) {
+    return 'EZB $date';
+  }
+
+  @override
+  String expenseFeeChip(String percent) {
+    return '+$percent Kartengebühr';
+  }
+
+  @override
+  String get expenseTypedRateChip => 'Dein Kurs';
+
+  @override
+  String expenseNoRateChip(String date) {
+    return 'Kein EZB-Kurs für $date';
+  }
+
+  @override
+  String get cardFeeSheetInvalid => 'Gib eine Zahl ein, zum Beispiel 1,4';
 }

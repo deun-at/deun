@@ -13,7 +13,6 @@ import '../../../constants.dart';
 import '../../../main.dart';
 import '../../../provider.dart';
 import '../../../widgets/currency_picker_sheet.dart';
-import '../../../widgets/decimal_text_input_formatter.dart';
 import '../../../widgets/theme_builder.dart';
 import '../../groups/data/group_model.dart';
 import 'expense_entry_widget.dart';
@@ -40,6 +39,7 @@ import '../../../widgets/restyle/member_avatar.dart';
 import '../../../widgets/restyle/money_text.dart';
 import '../../../widgets/restyle/dashed_ghost_button.dart';
 import '../../../widgets/restyle/primary_button.dart';
+import 'package:deun/pages/settings/card_fee_sheet.dart';
 
 class ExpenseEntryData {
   final int index;
@@ -207,6 +207,25 @@ class _ExpenseDetailState extends ConsumerState<ExpenseDetail> {
   /// than dropped into the field.
   int _rateRequestId = 0;
 
+  /// The rate exactly as the source quoted it, BEFORE the card fee. Non-null
+  /// exactly while [_rateOrigin] is [_RateOrigin.prefilled].
+  ///
+  /// The editor keeps it so a fee change recomputes rather than refetches: the
+  /// rate for a pair and a date is immutable, so a refetch would return the
+  /// same number, and the flight's only refetch trigger is a date change.
+  double? _baseRate;
+
+  /// Ticks whenever anything the conversion sheet renders changes. The sheet
+  /// is a separate route, so a `setState` here does not reach it — this does.
+  final _conversionRevision = ValueNotifier<int>(0);
+
+  /// What the conversion sheet listens to: the rate text and everything else
+  /// it renders. Built once — the sheet can be opened many times.
+  late final Listenable _conversionListenable = Listenable.merge([
+    _rateController,
+    _conversionRevision,
+  ]);
+
   bool get _isForeignCurrency => _entryCurrency != widget.group.currency;
 
   double? get _rate => parseConversionRate(_rateController.text);
@@ -245,6 +264,14 @@ class _ExpenseDetailState extends ConsumerState<ExpenseDetail> {
   Future<void> _prefillRate() async {
     if (!_isForeignCurrency || _rateOrigin == _RateOrigin.user) return;
 
+    // The fee rides on the rate that is about to land, so it has to be loaded
+    // before the answer arrives. Awaited HERE, before the request token, so the
+    // existing staleness guard still covers the whole in-flight window.
+    await ref.read(cardFeeProvider.notifier).hydrated;
+    if (!mounted || !_isForeignCurrency || _rateOrigin == _RateOrigin.user) {
+      return;
+    }
+
     final base = _entryCurrency;
     final quote = widget.group.currency;
     final date = _expenseDate;
@@ -272,14 +299,22 @@ class _ExpenseDetailState extends ConsumerState<ExpenseDetail> {
         // A prefill for the PREVIOUS date must not stand under the new one —
         // that is the silent wrong-date substitution, arrived at by omission.
         _rateController.text = '';
+        _baseRate = null;
         _prefilledRateDate = null;
         _rateOrigin = _RateOrigin.none;
       } else {
         _rateUnavailable = false;
-        _rateController.text = formatRate(result.rate);
+        // The fee applies to a SUGGESTION and to nothing else: this is the one
+        // place _RateOrigin.prefilled is written, so it is the one place the
+        // fee can enter a rate.
+        _baseRate = result.rate;
+        _rateController.text = formatRate(
+          applyCardFee(result.rate, ref.read(cardFeeProvider)),
+        );
         _prefilledRateDate = ymd(result.effectiveDate);
         _rateOrigin = _RateOrigin.prefilled;
       }
+      _conversionRevision.value++;
     });
   }
 
@@ -435,6 +470,7 @@ class _ExpenseDetailState extends ConsumerState<ExpenseDetail> {
     _nameController.dispose();
     _amountController.dispose();
     _rateController.dispose();
+    _conversionRevision.dispose();
     super.dispose();
   }
 
@@ -1222,178 +1258,219 @@ class _ExpenseDetailState extends ConsumerState<ExpenseDetail> {
     }
   }
 
-  /// Entry-currency selector plus, when it differs from the group's, the rate
-  /// field and the live converted preview. This is the whole of the
-  /// no-implicit-rate guard's UI surface.
+  /// Entry currency plus, when it differs from the group's, the conversion
+  /// stated as a RESULT: the ledger amount and its provenance, with the rate
+  /// itself one tap away in [showConversionSheet].
+  ///
+  /// Two rows, two tap targets. The rate was a form field here and the fee
+  /// could not become a second one — a per-user constant with an input on the
+  /// expense screen implies it is per-expense, which is the wrong model.
   Widget _buildCurrencyAndRate() {
     final l10n = AppLocalizations.of(context)!;
     final theme = Theme.of(context);
+    final locale = Localizations.localeOf(context);
     final rate = _rate;
-    final stickyRates = ref.watch(stickyRateProvider);
-    final hasSticky = stickyRates.containsKey(
-      stickyRateKey(widget.group.id, _entryCurrency),
-    );
+    final fee = ref.watch(cardFeeProvider);
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        SoftCard(
-          key: const ValueKey('expense_entry_currency'),
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-          borderRadius: 16,
-          onTap: _pickEntryCurrency,
-          child: Row(
-            children: [
-              Expanded(
-                child: Text(
-                  l10n.expenseEntryCurrencyLabel,
-                  style: theme.textTheme.bodyMedium?.copyWith(
+    return SoftCard(
+      padding: EdgeInsets.zero,
+      borderRadius: 16,
+      child: Column(
+        children: [
+          InkWell(
+            key: const ValueKey('expense_entry_currency'),
+            onTap: _pickEntryCurrency,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      l10n.expenseEntryCurrencyLabel,
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        color: theme.colorScheme.onSurfaceVariant,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                  Text(_entryCurrency.code, style: theme.textTheme.titleSmall),
+                  const SizedBox(width: 4),
+                  Icon(
+                    Icons.expand_more,
                     color: theme.colorScheme.onSurfaceVariant,
-                    fontWeight: FontWeight.w600,
                   ),
-                ),
+                ],
               ),
-              Text(_entryCurrency.code, style: theme.textTheme.titleSmall),
-              const SizedBox(width: 4),
-              Icon(
-                Icons.expand_more,
-                color: theme.colorScheme.onSurfaceVariant,
-              ),
-            ],
+            ),
           ),
-        ),
-        if (_isForeignCurrency) ...[
-          const SizedBox(height: 8),
-          // The rate lives in a card like every other control on this screen.
-          // As a bare underlined field it was the only element with that
-          // treatment and read as unfinished rather than deliberate.
-          SoftCard(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-            borderRadius: 16,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                TextField(
-                  key: const ValueKey('expense_rate_field'),
-                  controller: _rateController,
-                  keyboardType: const TextInputType.numberWithOptions(
-                    decimal: true,
-                  ),
-                  // Twelve, not six, and it has to match what [formatRate] can
-                  // render: a rate is a multiplier, so a small one needs
-                  // decimals to carry its significant digits. The smallest pair
-                  // the app can produce — IDR into GBP — is 0.0000494306, which
-                  // needs ten. Capping at six would round a fetched rate away
-                  // the moment the user touched the field, which is the same
-                  // 0.87% error formatRate was fixed to stop.
-                  inputFormatters: [
-                    DecimalTextInputFormatter(decimalRange: 12),
-                  ],
-                  onChanged: (_) => setState(() {
-                    _isDirty = true;
-                    // The user has taken ownership. Nothing refetches for this
-                    // field again, and the rate date reverts to the pick-time
-                    // stamp — the effective date belonged to the suggestion,
-                    // not to the number they just typed.
-                    _rateOrigin = _RateOrigin.user;
-                    _prefilledRateDate = null;
-                    _rateUnavailable = false;
-                  }),
-                  decoration: InputDecoration(
-                    border: InputBorder.none,
-                    labelText: l10n.expenseRateFieldLabel,
-                    // InputDecorator fades prefix and suffix out whenever the
-                    // label is inline — i.e. on an empty, unfocused field,
-                    // which is precisely the FIRST foreign expense in a group,
-                    // where nothing is remembered yet and the user has no way
-                    // to know which way round to type the rate. Pinning the
-                    // label keeps "1 JPY = … EUR" on screen from the start and
-                    // stops the row reflowing when the field takes focus.
-                    floatingLabelBehavior: FloatingLabelBehavior.always,
-                    // The field reads as a sentence — "1 CHF = [0.9432] EUR" —
-                    // so the direction is never ambiguous and no "?" is left
-                    // standing once a rate has been typed.
-                    prefixText:
-                        '${l10n.expenseRatePrefix(_entryCurrency.code)} ',
-                    suffixText: ' ${widget.group.currency.code}',
-                    // No rate => the hint, never a "= EUR 0.00" preview. An
-                    // emptied field reads back as "0" from the formatter, and
-                    // parseConversionRate maps that to null, so the refusal is
-                    // visible while typing rather than only on save.
-                    helperText: rate == null ? l10n.expenseRateRequired : null,
-                    helperMaxLines: 3,
-                  ),
-                ),
-                if (_prefilledRateDate != null)
-                  Padding(
-                    padding: const EdgeInsets.only(bottom: 6),
-                    child: Text(
-                      key: const ValueKey('expense_rate_prefill_date'),
-                      // The user sees which day the rate belongs to BEFORE it
-                      // is frozen on the row — a Saturday expense carries
-                      // Friday's rate, and that is a fact about the rate, not a
-                      // rounding error.
-                      l10n.expenseRatePrefilledOn(
-                        formatDate(_prefilledRateDate, context),
-                      ),
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        color: theme.colorScheme.onSurfaceVariant,
-                      ),
-                    ),
-                  )
-                else if (_rateUnavailable)
-                  Padding(
-                    padding: const EdgeInsets.only(bottom: 6),
-                    child: Text(
-                      key: const ValueKey('expense_rate_unavailable'),
-                      l10n.expenseRateUnavailable,
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        color: theme.colorScheme.onSurfaceVariant,
-                      ),
-                    ),
-                  ),
-                if (rate != null) ...[
-                  const Divider(height: 1),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 4),
-                    child: Row(
-                      children: [
-                        Expanded(
-                          child: Text(
-                            key: const ValueKey('expense_rate_preview'),
-                            l10n.expenseRatePreview(
+          if (_isForeignCurrency) ...[
+            const Divider(height: 1),
+            InkWell(
+              key: const ValueKey('expense_conversion_row'),
+              onTap: _openConversionSheet,
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          if (rate == null)
+                            Text(
+                              key: const ValueKey(
+                                'expense_conversion_rate_needed',
+                              ),
+                              l10n.expenseConversionRateNeeded,
+                              style: theme.textTheme.headlineSmall?.copyWith(
+                                color: theme.colorScheme.onSurfaceVariant,
+                              ),
+                            )
+                          else
+                            Text(
+                              key: const ValueKey('expense_conversion_amount'),
                               formatMoney(
                                 // Per LINE, accumulated exactly as the save
                                 // accumulates it — converting the summed
-                                // itemized total once instead would preview a
+                                // itemized total once instead would state a
                                 // cent the ledger never stores (3 x 1.50 CHF
                                 // at 0.9432 is 4.23, not 4.24).
                                 ledgerTotalOfLines(_formLines(), _conversion),
                                 widget.group.currency,
-                                Localizations.localeOf(context),
+                                locale,
+                              ),
+                              style: theme.textTheme.headlineSmall?.copyWith(
+                                fontWeight: FontWeight.w700,
                               ),
                             ),
-                            style: theme.textTheme.titleSmall,
+                          const SizedBox(height: 6),
+                          Wrap(
+                            spacing: 6,
+                            runSpacing: 6,
+                            children: [
+                              ?_sourceChip(l10n),
+                              ?_feeChip(l10n, locale, fee),
+                            ],
                           ),
-                        ),
-                        // Clearing the REMEMBERED rate, so it only exists once
-                        // one is remembered — never as a companion to an empty
-                        // field.
-                        if (hasSticky)
-                          TextButton(
-                            key: const ValueKey('expense_rate_reset'),
-                            onPressed: _resetStickyRate,
-                            child: Text(l10n.expenseRateReset),
-                          ),
-                      ],
+                        ],
+                      ),
                     ),
-                  ),
-                ],
-              ],
+                    Icon(
+                      Icons.chevron_right,
+                      color: theme.colorScheme.onSurfaceVariant,
+                    ),
+                  ],
+                ),
+              ),
             ),
-          ),
+          ],
         ],
-      ],
+      ),
+    );
+  }
+
+  /// Where the rate in the field came from, as one chip. Mutually exclusive
+  /// states, so one key carries all of them and the tests read one thing.
+  Widget? _sourceChip(AppLocalizations l10n) {
+    if (_rateUnavailable) {
+      return _ProvenanceChip(
+        key: const ValueKey('expense_conversion_source_chip'),
+        label: l10n.expenseNoRateChip(formatDate(ymd(_expenseDate), context)),
+        tone: _ChipTone.warning,
+      );
+    }
+    switch (_rateOrigin) {
+      case _RateOrigin.prefilled:
+        return _ProvenanceChip(
+          key: const ValueKey('expense_conversion_source_chip'),
+          label: l10n.expenseSourceChip(
+            formatDate(_prefilledRateDate, context),
+          ),
+          tone: _ChipTone.neutral,
+        );
+      case _RateOrigin.user:
+        return _ProvenanceChip(
+          key: const ValueKey('expense_conversion_source_chip'),
+          label: l10n.expenseTypedRateChip,
+          tone: _ChipTone.neutral,
+        );
+      case _RateOrigin.none:
+        return null; // a fetch in flight: nothing true to say yet
+    }
+  }
+
+  /// The fee chip, and the whole of its condition: a NON-ZERO fee that was
+  /// actually applied, which is only ever to a fetched rate.
+  Widget? _feeChip(AppLocalizations l10n, Locale locale, double? fee) {
+    // `fee` is null-or-positive: CardFeeNotifier collapses every non-positive
+    // value to null, in both its hydrate and its setter, so "a fee of 0" and
+    // "no fee saved" reach here as the same state.
+    if (fee == null || _rateOrigin != _RateOrigin.prefilled) {
+      return null;
+    }
+    return _ProvenanceChip(
+      key: const ValueKey('expense_conversion_fee_chip'),
+      label: l10n.expenseFeeChip(
+        l10n.cardFeePercentValue(formatPercentValue(fee, locale)),
+      ),
+      tone: _ChipTone.accent,
+    );
+  }
+
+  Future<void> _openConversionSheet() async {
+    await showConversionSheet(
+      context,
+      entryCurrency: _entryCurrency,
+      groupCurrency: widget.group.currency,
+      rateController: _rateController,
+      rateState: _conversionListenable,
+      data: () => ConversionSheetData(
+        enteredTotal: _itemizedTotalFromForm(),
+        convertedTotal: _rate == null
+            ? null
+            : ledgerTotalOfLines(_formLines(), _conversion),
+        baseRate: _baseRate,
+        prefilledRateDate: _prefilledRateDate,
+        rateUnavailable: _rateUnavailable,
+        cardFeePercent: ref.read(cardFeeProvider),
+        hasSavedRate: ref
+            .read(stickyRateProvider)
+            .containsKey(stickyRateKey(widget.group.id, _entryCurrency)),
+      ),
+      onRateTyped: _onRateTyped,
+      onClearSavedRate: _resetStickyRate,
+      onEditCardFee: () =>
+          showCardFeeSheet(context, initial: ref.read(cardFeeProvider)),
+    );
+    // The sheet writes through the callbacks above; this is the row catching up
+    // after a dismiss.
+    if (mounted) setState(() {});
+  }
+
+  /// The user has taken ownership of the rate. Lifted out of the field's
+  /// `onChanged` because the field now lives in the sheet — the state it
+  /// mutates still lives here.
+  void _onRateTyped() {
+    setState(() {
+      _isDirty = true;
+      // Nothing refetches for this field again, and the rate date reverts to
+      // the pick-time stamp — the effective date belonged to the suggestion,
+      // not to the number they just typed.
+      _rateOrigin = _RateOrigin.user;
+      _baseRate = null;
+      _prefilledRateDate = null;
+      _rateUnavailable = false;
+      _conversionRevision.value++;
+    });
+  }
+
+  /// Re-applies a changed fee to the base rate already fetched. No
+  /// `_rateRequestId` bump and no [_prefillRate] call — recompute only.
+  void _reapplyCardFee(double? feePercent) {
+    final base = _baseRate;
+    if (base == null || _rateOrigin != _RateOrigin.prefilled) return;
+    setState(
+      () => _rateController.text = formatRate(applyCardFee(base, feePercent)),
     );
   }
 
@@ -1424,8 +1501,10 @@ class _ExpenseDetailState extends ConsumerState<ExpenseDetail> {
       // A remembered rate is a rate the user typed, so it owns the field and
       // no prefill is fetched for it. Nothing remembered leaves the field free.
       _rateOrigin = prefill != null ? _RateOrigin.user : _RateOrigin.none;
+      _baseRate = null;
       _prefilledRateDate = null;
       _rateUnavailable = false;
+      _conversionRevision.value++;
       // The date is a fact about the RATE, so the frozen one survives only
       // while the frozen rate is what the field will hold. Gating on the
       // currency alone misdates a round trip: CHF -> EUR -> CHF clears the
@@ -1460,8 +1539,12 @@ class _ExpenseDetailState extends ConsumerState<ExpenseDetail> {
     setState(() {
       _rateController.text = '';
       _rateOrigin = _RateOrigin.none;
+      _baseRate = null;
       _prefilledRateDate = null;
       _rateUnavailable = false;
+      // The open sheet drops "Clear saved rate" the moment the sticky rate is
+      // gone.
+      _conversionRevision.value++;
     });
     if (context.mounted) {
       showSnackBar(context, AppLocalizations.of(context)!.expenseRateResetDone);
@@ -1511,8 +1594,10 @@ class _ExpenseDetailState extends ConsumerState<ExpenseDetail> {
       _rateController.text = '';
       _rateDate = null;
       _rateOrigin = _RateOrigin.none;
+      _baseRate = null;
       _prefilledRateDate = null;
       _rateUnavailable = false;
+      _conversionRevision.value++;
       _isDirty = true;
     });
   }
@@ -1520,6 +1605,16 @@ class _ExpenseDetailState extends ConsumerState<ExpenseDetail> {
   @override
   Widget build(BuildContext context) {
     const double spacing = 8;
+
+    // A fee change re-applies to the base rate already fetched and issues NO
+    // new request: the rate for a pair and a date is immutable, so a refetch
+    // would return the same number.
+    ref.listen<double?>(cardFeeProvider, (_, next) {
+      _reapplyCardFee(next);
+      // The fee row and the fee chip refresh even when there is no prefilled
+      // rate to rewrite (a typed rate still shows the current fee in the sheet).
+      _conversionRevision.value++;
+    });
 
     return ThemeBuilder(
       colorValue: widget.group.colorValue,
@@ -1891,6 +1986,57 @@ class _PaidWhenRow extends StatelessWidget {
             const SizedBox(width: 4),
             Icon(Icons.chevron_right, color: colorScheme.outline, size: 20),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Tone of a provenance chip on the conversion row.
+enum _ChipTone { neutral, accent, warning }
+
+/// A stadium chip stating one fact about the rate in the field.
+///
+/// Colours come from the theme (and [SemanticColors], the repo's token
+/// channel), never from fixed hexes, so the card reads correctly in dark mode
+/// like every other surface in the app.
+class _ProvenanceChip extends StatelessWidget {
+  const _ProvenanceChip({super.key, required this.label, required this.tone});
+
+  final String label;
+  final _ChipTone tone;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final semantic = theme.extension<SemanticColors>()!;
+
+    final (Color background, Color foreground) = switch (tone) {
+      _ChipTone.neutral => (
+        theme.colorScheme.surfaceContainerHighest,
+        theme.colorScheme.onSurfaceVariant,
+      ),
+      _ChipTone.accent => (
+        theme.colorScheme.primaryContainer,
+        theme.colorScheme.onPrimaryContainer,
+      ),
+      _ChipTone.warning => (
+        semantic.warning.withValues(alpha: 0.16),
+        semantic.warning,
+      ),
+    };
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: background,
+        borderRadius: BorderRadius.circular(999),
+      ),
+      child: Text(
+        label,
+        style: theme.textTheme.labelSmall?.copyWith(
+          color: foreground,
+          fontWeight: FontWeight.w600,
         ),
       ),
     );

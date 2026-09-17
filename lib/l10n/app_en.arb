@@ -1993,5 +1993,81 @@
   "groupMembersEmptyCtaBody": "A group of one has nothing to split.",
   "@groupMembersEmptyCtaBody": {
     "description": "Body of the solo-group add-members call to action on group detail."
+  },
+  "settingsCardFee": "Foreign transaction fee",
+  "@settingsCardFee": {
+    "description": "Settings row opening the card foreign-transaction fee sheet."
+  },
+  "settingsCardFeeSubtitle": "Added to exchange rates Deun looks up",
+  "@settingsCardFeeSubtitle": {
+    "description": "Subtitle of the foreign-transaction fee settings row."
+  },
+  "settingsCardFeeNone": "None",
+  "@settingsCardFeeNone": {
+    "description": "Value shown on the fee settings row and in the conversion sheet when no fee is saved."
+  },
+  "cardFeePercentValue": "{percent} %",
+  "@cardFeePercentValue": {
+    "description": "A fee percent with its unit. {percent} arrives already formatted for the locale.",
+    "placeholders": {
+      "percent": {"type": "String", "example": "1.4"}
+    }
+  },
+  "cardFeeSheetTitle": "Card fee",
+  "@cardFeeSheetTitle": {
+    "description": "Title of the card-fee entry sheet, and the label of the fee row in the conversion sheet."
+  },
+  "cardFeeSheetFieldLabel": "Fee",
+  "@cardFeeSheetFieldLabel": {
+    "description": "Label of the percent field in the card-fee sheet."
+  },
+  "cardFeeSheetHelper": "Added to rates Deun looks up, never to a rate you type yourself. Your bank converts at its own rate, so treat this as close, not exact.",
+  "@cardFeeSheetHelper": {
+    "description": "Honesty copy under the card-fee field: the fee approximates a statement, it does not reconcile one."
+  },
+  "expenseConversionSheetTitle": "Conversion",
+  "@expenseConversionSheetTitle": {
+    "description": "Title of the expense editor's conversion sheet, where the rate field lives."
+  },
+  "expenseConversionRateNeeded": "Rate needed",
+  "@expenseConversionRateNeeded": {
+    "description": "Shown on the editor's conversion row when no rate is available yet, in place of the converted amount."
+  },
+  "expenseConversionSourceLine": "ECB reference for {date} was {rate}.",
+  "@expenseConversionSourceLine": {
+    "description": "Names the base rate behind a fee-adjusted rate, so the user can see the percent between the two numbers.",
+    "placeholders": {
+      "date": {"type": "String", "example": "1 Jul 2026"},
+      "rate": {"type": "String", "example": "0.0027405"}
+    }
+  },
+  "expenseSourceChip": "ECB {date}",
+  "@expenseSourceChip": {
+    "description": "Provenance chip on the conversion row for a fetched rate, carrying its effective date.",
+    "placeholders": {
+      "date": {"type": "String", "example": "1 Jul 2026"}
+    }
+  },
+  "expenseFeeChip": "+{percent} card fee",
+  "@expenseFeeChip": {
+    "description": "Provenance chip shown only when a non-zero card fee was applied to a fetched rate. {percent} arrives already formatted with its unit.",
+    "placeholders": {
+      "percent": {"type": "String", "example": "1.4 %"}
+    }
+  },
+  "expenseTypedRateChip": "Your rate",
+  "@expenseTypedRateChip": {
+    "description": "Provenance chip on the conversion row for a rate the user typed themselves."
+  },
+  "expenseNoRateChip": "No ECB rate for {date}",
+  "@expenseNoRateChip": {
+    "description": "Provenance chip on the conversion row when no rate could be fetched for the expense date.",
+    "placeholders": {
+      "date": {"type": "String", "example": "1 Jul 2026"}
+    }
+  },
+  "cardFeeSheetInvalid": "Enter a number, like 1.4",
+  "@cardFeeSheetInvalid": {
+    "description": "Shown under the card-fee field when the typed text is not a number. A typo must never silently delete a saved fee."
   }
 }

@@ -2000,4 +2000,60 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get groupMembersEmptyCtaBody => 'A group of one has nothing to split.';
+
+  @override
+  String get settingsCardFee => 'Foreign transaction fee';
+
+  @override
+  String get settingsCardFeeSubtitle => 'Added to exchange rates Deun looks up';
+
+  @override
+  String get settingsCardFeeNone => 'None';
+
+  @override
+  String cardFeePercentValue(String percent) {
+    return '$percent %';
+  }
+
+  @override
+  String get cardFeeSheetTitle => 'Card fee';
+
+  @override
+  String get cardFeeSheetFieldLabel => 'Fee';
+
+  @override
+  String get cardFeeSheetHelper =>
+      'Added to rates Deun looks up, never to a rate you type yourself. Your bank converts at its own rate, so treat this as close, not exact.';
+
+  @override
+  String get expenseConversionSheetTitle => 'Conversion';
+
+  @override
+  String get expenseConversionRateNeeded => 'Rate needed';
+
+  @override
+  String expenseConversionSourceLine(String date, String rate) {
+    return 'ECB reference for $date was $rate.';
+  }
+
+  @override
+  String expenseSourceChip(String date) {
+    return 'ECB $date';
+  }
+
+  @override
+  String expenseFeeChip(String percent) {
+    return '+$percent card fee';
+  }
+
+  @override
+  String get expenseTypedRateChip => 'Your rate';
+
+  @override
+  String expenseNoRateChip(String date) {
+    return 'No ECB rate for $date';
+  }
+
+  @override
+  String get cardFeeSheetInvalid => 'Enter a number, like 1.4';
 }

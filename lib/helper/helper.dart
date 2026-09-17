@@ -170,6 +170,48 @@ double? parseConversionRate(String? text) {
   return value;
 }
 
+/// [baseRate] with the card's foreign-transaction fee folded in.
+///
+/// Pure and total: a null, zero or non-finite [feePercent] returns [baseRate]
+/// untouched, so "no fee saved" and "a fee of 0" are one code path.
+///
+/// Applied to the RAW rate, before [formatRate] renders it: [formatRate] keeps
+/// significant digits rather than six decimals, so multiplying an
+/// already-rendered rate would round twice.
+double applyCardFee(double baseRate, double? feePercent) {
+  final fee = feePercent;
+  if (fee == null || !fee.isFinite || fee == 0) return baseRate;
+  return baseRate * (1 + fee / 100);
+}
+
+/// Per-locale [NumberFormat] cache for [formatPercentValue]. The fee renders
+/// on every build of the conversion row, the conversion sheet's fee row and
+/// the Settings row, and constructing a NumberFormat parses a pattern.
+final Map<String, NumberFormat> _percentFormats = {};
+
+/// A percent as the user reads it in [locale] — `1.4` in `en`, `1,4` in `de`.
+/// The `%` itself comes from l10n (`cardFeePercentValue`), so the unit's
+/// spacing is translatable and this stays a pure number formatter.
+///
+/// [NumberFormat.percentPattern] is deliberately NOT used: it multiplies by
+/// 100, so 1.4 would render "140%".
+String formatPercentValue(double percent, Locale locale) => _percentFormats
+    .putIfAbsent(
+      locale.toString(),
+      () => NumberFormat.decimalPattern(locale.toString()),
+    )
+    .format(percent);
+
+/// Parses a typed fee percent, accepting either separator. Null for blank,
+/// unparseable or negative input; **0 is valid** and means "no fee" — which is
+/// why this cannot reuse [parseConversionRate], whose non-positive parse must
+/// map to null.
+double? parseCardFeePercent(String? text) {
+  final value = double.tryParse((text ?? '').trim().replaceAll(',', '.'));
+  if (value == null || !value.isFinite || value < 0) return null;
+  return value;
+}
+
 /// A conversion rate as text: at least 6 significant digits, trailing zeros
 /// trimmed, always `.`-separated. 0.0058 renders "0.0058" and 172 renders
 /// "172". A rate is a technical figure, not money — it is deliberately NOT

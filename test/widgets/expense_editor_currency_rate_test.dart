@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:deun/constants.dart';
@@ -347,6 +348,62 @@ Future<void> pickCurrency(WidgetTester tester, String code) =>
 /// Taps the save CTA and drains the success SnackBar's timer.
 Future<void> saveEditor(WidgetTester tester) => _save(tester);
 
+/// A rate lookup answering off a table keyed by `yyyy-MM-dd`, recording every
+/// call so "was it refetched, and for which date" is directly assertable.
+///
+/// Shared by every suite that drives the prefill, rather than copied into
+/// each.
+class StubLookup {
+  StubLookup(this.byDate, {this.gate});
+
+  final Map<String, RateQuote> byDate;
+
+  /// When set, responses wait on it — how "a late answer never wins" is
+  /// staged.
+  final Completer<void>? gate;
+
+  final List<DateTime> calls = [];
+
+  Future<RateQuote?> call({
+    required Currency base,
+    required Currency quote,
+    required DateTime date,
+  }) async {
+    calls.add(date);
+    if (gate != null) await gate!.future;
+    return byDate[ymd(date)];
+  }
+}
+
+/// Opens the conversion sheet — where the rate field, its helper text, the
+/// prefill-date line and "Clear saved rate" now live.
+Future<void> openConversionSheet(WidgetTester tester) async {
+  final row = find.byKey(const ValueKey('expense_conversion_row'));
+  // A date change drags the editor, which can leave the row under the sticky
+  // header — an out-of-bounds tap silently misses and the sheet never opens.
+  await tester.ensureVisible(row);
+  await tester.pumpAndSettle();
+  await tester.tap(row);
+  await tester.pumpAndSettle();
+}
+
+/// Closes it again, for the steps that belong to the editor's own screen: the
+/// save CTA, the date row and the currency row are all behind the sheet.
+Future<void> closeConversionSheet(WidgetTester tester) async {
+  await tester.tap(find.byKey(const ValueKey('expense_conversion_done')));
+  await tester.pumpAndSettle();
+}
+
+/// Scopes a finder to the sheet. The editor screen stays mounted behind a
+/// modal sheet and its conversion row states the same converted amount, so an
+/// unscoped finder for one matches twice.
+Finder inConversionSheet(Finder matching) =>
+    find.descendant(of: find.byType(ConversionSheet), matching: matching);
+
+/// An itemized 3-line expense, re-exported so a sibling suite can pin the
+/// Itemized layout against the same fixture the Quick one uses.
+Expense itemizedExpense(List<double> amounts) => _itemizedExpense(amounts);
+
 /// The in-memory `async_preferences` store behind the sticky-rate provider.
 Map<String, String> get prefsValues => _prefs.values;
 
@@ -384,6 +441,7 @@ Future<void> initTestSupabase() async {
 Future<List<SavedExpense>> pumpEditorWithSaveSeam(
   WidgetTester tester, {
   required String currencyCode,
+  double? initialAmount,
   Expense? expense,
   RateLookup? lookupRate,
 }) async {
@@ -411,7 +469,7 @@ Future<List<SavedExpense>> pumpEditorWithSaveSeam(
             ).copyWith(splashFactory: NoSplash.splashFactory),
             child: ExpenseDetail(
               group: _group(currencyCode),
-              expense: expense ?? _expense(12.5),
+              expense: expense ?? _expense(initialAmount ?? 12.5),
               lookupRate: lookupRate ?? _noPrefill,
               saveExpense:
                   (
@@ -469,8 +527,11 @@ void main() {
     (tester) async {
       await pumpEditor(tester, currencyCode: 'EUR');
       await _pickCurrency(tester, 'JPY');
+      await openConversionSheet(tester);
       final l10n = await AppLocalizations.delegate.load(const Locale('en'));
       expect(find.byKey(const ValueKey('expense_rate_field')), findsOneWidget);
+      // expenseRateRequired is the SHEET's helper only — the row behind it
+      // shows expenseConversionRateNeeded, a different string.
       expect(find.text(l10n.expenseRateRequired), findsOneWidget);
       expect(find.byKey(const ValueKey('expense_rate_preview')), findsNothing);
     },
@@ -487,6 +548,7 @@ void main() {
       final l10n = await AppLocalizations.delegate.load(const Locale('en'));
       await pumpEditor(tester, currencyCode: 'EUR');
       await _pickCurrency(tester, 'JPY');
+      await openConversionSheet(tester);
 
       expect(
         tester
@@ -521,12 +583,14 @@ void main() {
   ) async {
     await pumpEditor(tester, currencyCode: 'EUR', initialAmount: 3000);
     await _pickCurrency(tester, 'JPY');
+    await openConversionSheet(tester);
     await tester.enterText(
       find.byKey(const ValueKey('expense_rate_field')),
       '0.0058',
     );
     await tester.pumpAndSettle();
-    expect(find.textContaining('EUR 17.40'), findsOneWidget);
+    // Scoped: the conversion row behind the sheet states the same amount.
+    expect(inConversionSheet(find.textContaining('EUR 17.40')), findsOneWidget);
   });
 
   testWidgets(
@@ -534,6 +598,7 @@ void main() {
     (tester) async {
       await pumpEditor(tester, currencyCode: 'EUR', initialAmount: 3000);
       await _pickCurrency(tester, 'JPY');
+      await openConversionSheet(tester);
       await tester.enterText(
         find.byKey(const ValueKey('expense_rate_field')),
         '0.0058',
@@ -593,6 +658,7 @@ void main() {
         expense: convertedExpense(), // JPY / 0.0058 / 2026-08-16, amount 17.40
       );
       expect(_entryCurrencyLabel('JPY'), findsOneWidget);
+      await openConversionSheet(tester);
       expect(
         tester
             .widget<TextField>(find.byKey(const ValueKey('expense_rate_field')))
@@ -601,6 +667,8 @@ void main() {
         '0.0058',
       );
       // The amount field is seeded from the ORIGINAL amount, not the ledger one.
+      // Both finders are exact-match and the sheet renders 'JPY 3,000' /
+      // '= EUR 17.40', so neither collides with the sheet's own text.
       expect(find.text('3,000'), findsOneWidget);
       expect(find.text('17.40'), findsNothing);
     },
@@ -613,6 +681,7 @@ void main() {
     _prefs.values[kStickyRatesPrefKey] = jsonEncode({'g1|CHF': 0.9432});
     await pumpEditor(tester, currencyCode: 'EUR');
     await _pickCurrency(tester, 'CHF');
+    await openConversionSheet(tester);
     expect(
       tester
           .widget<TextField>(find.byKey(const ValueKey('expense_rate_field')))
@@ -628,7 +697,11 @@ void main() {
       _prefs.values[kStickyRatesPrefKey] = jsonEncode({'g1|CHF': 0.9432});
       await pumpEditor(tester, currencyCode: 'EUR');
       await _pickCurrency(tester, 'CHF');
+      // Only the SECOND pick's field is read, so the sheet is opened once, at
+      // the end: opening it after the first pick scrolls the editor and the
+      // second pick can no longer reach the picker's list.
       await _pickCurrency(tester, 'JPY');
+      await openConversionSheet(tester);
       expect(
         tester
             .widget<TextField>(find.byKey(const ValueKey('expense_rate_field')))
@@ -645,8 +718,12 @@ void main() {
     _prefs.values[kStickyRatesPrefKey] = jsonEncode({'g1|CHF': 0.9432});
     await pumpEditor(tester, currencyCode: 'EUR');
     await _pickCurrency(tester, 'CHF');
+    await openConversionSheet(tester);
     await tester.tap(find.byKey(const ValueKey('expense_rate_reset')));
     await tester.pumpAndSettle();
+    // All three assertions run with the sheet still open: it re-reads
+    // hasSavedRate on the _conversionRevision tick, so the button goes on its
+    // own.
     expect(
       tester
           .widget<TextField>(find.byKey(const ValueKey('expense_rate_field')))
@@ -688,6 +765,10 @@ void main() {
     await _pickCurrency(tester, 'EUR');
     expect(find.byKey(const ValueKey('expense_rate_field')), findsNothing);
     expect(find.byKey(const ValueKey('expense_rate_preview')), findsNothing);
+    // The conversion row is what carries the rate UI now, so without this the
+    // test would be vacuous — the two above pass for a foreign currency too,
+    // merely because the sheet is closed. An addition, never a weakening.
+    expect(find.byKey(const ValueKey('expense_conversion_row')), findsNothing);
   });
 
   testWidgets(
@@ -709,6 +790,7 @@ void main() {
         expense: _itemizedExpense(const [1.50, 1.50, 1.50]),
       );
       await _pickCurrency(tester, 'CHF');
+      await openConversionSheet(tester);
       await tester.enterText(
         find.byKey(const ValueKey('expense_rate_field')),
         '0.9432',
@@ -717,7 +799,12 @@ void main() {
 
       // The save converts each entry on its own (1.41 x3). Converting the
       // summed 4.50 once would preview 4.24 — a cent the ledger never stores.
-      expect(find.textContaining('EUR 4.23'), findsOneWidget);
+      // 4.23 is scoped (the row behind states it too); the 4.24 absence stays
+      // unscoped, which is strictly stronger.
+      expect(
+        inConversionSheet(find.textContaining('EUR 4.23')),
+        findsOneWidget,
+      );
       expect(find.textContaining('EUR 4.24'), findsNothing);
     },
   );
