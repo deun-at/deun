@@ -375,17 +375,7 @@ class _ExpenseDetailState extends ConsumerState<ExpenseDetail> {
       // A scanned receipt with itemized lines opens in the Itemized layout.
       _itemizedOverride = true;
       for (final item in widget.receiptResult!.lineItems) {
-        final expenseEntry = ExpenseEntry(index: _newTextFieldId++);
-        _entries.add(
-          ExpenseEntryData(
-            index: expenseEntry.index,
-            expenseEntry: expenseEntry,
-            onRemove: () => _removeEntry(expenseEntry),
-            groupMembers: groupMembers,
-            initialName: item.name,
-            initialAmount: amountToFieldText(item.amount, _entryCurrency),
-          ),
-        );
+        _entries.add(_entryFromReceiptLine(item));
       }
     } else if (widget.receiptResult != null &&
         widget.receiptResult!.total != null) {
@@ -478,6 +468,27 @@ class _ExpenseDetailState extends ConsumerState<ExpenseDetail> {
     setState(() {
       _entries.removeWhere((e) => e.index == expenseEntry.index);
     });
+  }
+
+  /// An item row seeded from a scanned receipt line. The scan's `amount` is
+  /// the LINE total ("5x Pita 12,50"), while the editor's amount field holds
+  /// the unit price, so the quantity has to travel with it — dropping it
+  /// turned every multi-unit line into a single unit priced at the line total.
+  ExpenseEntryData _entryFromReceiptLine(ReceiptLineItem item) {
+    final expenseEntry = ExpenseEntry(index: _newTextFieldId++);
+    return ExpenseEntryData(
+      index: expenseEntry.index,
+      expenseEntry: expenseEntry,
+      onRemove: () => _removeEntry(expenseEntry),
+      groupMembers: groupMembers,
+      initialName: item.name,
+      initialAmount: unitPriceFieldTextForTotal(
+        item.amount,
+        item.quantity,
+        _entryCurrency,
+      ),
+      initialQuantity: item.quantity.toString(),
+    );
   }
 
   void detectAndUpdateCategory(String title) {
@@ -1124,17 +1135,7 @@ class _ExpenseDetailState extends ConsumerState<ExpenseDetail> {
         // Replace the current items with the scanned lines.
         _entries.clear();
         for (final item in result.lineItems) {
-          final expenseEntry = ExpenseEntry(index: _newTextFieldId++);
-          _entries.add(
-            ExpenseEntryData(
-              index: expenseEntry.index,
-              expenseEntry: expenseEntry,
-              onRemove: () => _removeEntry(expenseEntry),
-              groupMembers: groupMembers,
-              initialName: item.name,
-              initialAmount: amountToFieldText(item.amount, _entryCurrency),
-            ),
-          );
+          _entries.add(_entryFromReceiptLine(item));
         }
       } else if (result.total != null && _entries.isNotEmpty) {
         _entries.first.initialAmount = amountToFieldText(
