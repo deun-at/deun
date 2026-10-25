@@ -14,6 +14,16 @@ import 'expense_repository.dart';
 /// never reach the network.
 typedef GroupPaybackLoader = Future<List<Expense>> Function(String groupId);
 
+/// An expense delete, as an injectable function.
+///
+/// Signature-compatible with [ExpenseRepository.delete], so production passes
+/// the repository method itself; widget tests inject a stub so they never
+/// reach the network. Shared by `PaybackDetailSheet` and the expense editor,
+/// and kept here in data/ so expenses/presentation never imports
+/// groups/presentation for it.
+typedef ExpenseDeleter =
+    Future<void> Function(String expenseId, String groupId);
+
 /// What deleting an expense will do to balances that were already settled,
 /// decided before the confirmation is shown.
 ///

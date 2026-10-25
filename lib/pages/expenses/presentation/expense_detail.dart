@@ -90,6 +90,7 @@ class ExpenseDetail extends ConsumerStatefulWidget {
     this.loadGroupPaybacks,
     this.saveExpense,
     this.lookupRate,
+    this.deleteExpense,
   });
 
   final Group group;
@@ -108,6 +109,10 @@ class ExpenseDetail extends ConsumerStatefulWidget {
   /// [fetchRate].
   final RateLookup? lookupRate;
 
+  /// Test seam for the delete write. Null in production →
+  /// [ExpenseRepository.delete].
+  final ExpenseDeleter? deleteExpense;
+
   @override
   ConsumerState<ExpenseDetail> createState() => _ExpenseDetailState();
 }
@@ -124,8 +129,7 @@ class _ExpenseDetailState extends ConsumerState<ExpenseDetail> {
   final _formKey = GlobalKey<FormBuilderState>();
   final _nameController = TextEditingController();
   final _amountController = TextEditingController(text: "0");
-  List<GroupMember> groupMembers = [];
-  ColorSeed groupColor = ColorSeed.baseColor;
+  List<GroupMember> _groupMembers = [];
   final List<ExpenseEntryData> _entries = [];
   int _newTextFieldId = 0;
 
@@ -162,17 +166,18 @@ class _ExpenseDetailState extends ConsumerState<ExpenseDetail> {
   /// Whether the user has touched the form (drives the discard guard).
   bool _isDirty = false;
 
-  /// Set once a save succeeds (or the expense is deleted) so the post-action
-  /// `Navigator.pop` is not intercepted by the dirty guard.
+  /// Set only on the success path of [_writeThenClose], immediately before its
+  /// pop, and by the discard sheet's own confirm. A failed write never sets
+  /// it, so closing after a failure still asks before dropping the form.
   bool _bypassDiscardGuard = false;
 
-  /// True while the delete guard's payback probe is in flight. A slow/hanging
-  /// fetch must not leave the header delete action tappable — a repeat tap
-  /// would start a second probe and, once both resolve, stack a second
-  /// `AlertDialog` on top of the first. The action shows progress and ignores
-  /// taps for exactly this window; once the dialog appears it is itself
-  /// modal, so no further guard is needed past this point.
-  bool _deleteProbeInFlight = false;
+  /// True while a delete is out: the payback probe before the confirmation,
+  /// and the delete write after it. A slow probe must not leave the header
+  /// delete tappable (a repeat tap would stack a second dialog), and the write
+  /// runs with the editor uncovered, so the header shows progress and ignores
+  /// taps, and a save tap is refused, for both windows. Within a delete it is
+  /// false only while the confirmation dialog is up, and that dialog is modal.
+  bool _deleteInFlight = false;
 
   ExpenseCategory? _detectedCategory;
 
@@ -332,7 +337,7 @@ class _ExpenseDetailState extends ConsumerState<ExpenseDetail> {
     // touch it — not on open, not on a later date change.
     _rateOrigin = loadedRate != null ? _RateOrigin.user : _RateOrigin.none;
 
-    groupMembers = widget.group.activeMembers;
+    _groupMembers = widget.group.activeMembers;
     _detectedCategory = widget.expense?.category;
     _nameController.text = widget.expense?.name ?? '';
     if (widget.expense != null && widget.expense!.expenseEntries.isNotEmpty) {
@@ -350,7 +355,7 @@ class _ExpenseDetailState extends ConsumerState<ExpenseDetail> {
             index: expenseEntry.index,
             expenseEntry: expenseEntry,
             onRemove: () => _removeEntry(expenseEntry),
-            groupMembers: groupMembers,
+            groupMembers: _groupMembers,
             initialName: expenseEntry.name,
             // Seed the item card and the itemized total header directly from
             // the loaded entry — claim units have no shares, so the widget's
@@ -385,7 +390,7 @@ class _ExpenseDetailState extends ConsumerState<ExpenseDetail> {
           index: expenseEntry.index,
           expenseEntry: expenseEntry,
           onRemove: () => _removeEntry(expenseEntry),
-          groupMembers: groupMembers,
+          groupMembers: _groupMembers,
           initialAmount: amountToFieldText(
             widget.receiptResult!.total!,
             _entryCurrency,
@@ -399,7 +404,7 @@ class _ExpenseDetailState extends ConsumerState<ExpenseDetail> {
           index: expenseEntry.index,
           expenseEntry: expenseEntry,
           onRemove: () => _removeEntry(expenseEntry),
-          groupMembers: groupMembers,
+          groupMembers: _groupMembers,
         ),
       );
     }
@@ -444,7 +449,7 @@ class _ExpenseDetailState extends ConsumerState<ExpenseDetail> {
           _formKey.currentState?.fields['name']?.didChange(
             receipt.merchantName,
           );
-          detectAndUpdateCategory(receipt.merchantName!);
+          _detectAndUpdateCategory(receipt.merchantName!);
         }
         if (receipt.date != null) {
           _formKey.currentState?.fields['expense_date']?.didChange(
@@ -480,7 +485,7 @@ class _ExpenseDetailState extends ConsumerState<ExpenseDetail> {
       index: expenseEntry.index,
       expenseEntry: expenseEntry,
       onRemove: () => _removeEntry(expenseEntry),
-      groupMembers: groupMembers,
+      groupMembers: _groupMembers,
       initialName: item.name,
       initialAmount: unitPriceFieldTextForTotal(
         item.amount,
@@ -491,7 +496,7 @@ class _ExpenseDetailState extends ConsumerState<ExpenseDetail> {
     );
   }
 
-  void detectAndUpdateCategory(String title) {
+  void _detectAndUpdateCategory(String title) {
     if (title.isNotEmpty) {
       final detectedCategory = CategoryDetector.detectCategory(title);
       final currentCategory =
@@ -511,75 +516,67 @@ class _ExpenseDetailState extends ConsumerState<ExpenseDetail> {
     }
   }
 
-  Future<void> openDeleteItemDialog(
-    BuildContext modalContext,
-    Expense expense,
-  ) async {
-    if (_deleteProbeInFlight) return;
+  Future<void> _openDeleteItemDialog(Expense expense) async {
+    // Single flight across both writes: no delete while a probe or a delete is
+    // already out, nor while a save is in flight or showing its check.
+    // Checked before any state flips.
+    if (_deleteInFlight || _saveStatus != _SaveStatus.idle) return;
 
     // Presentation-level guard, same rule as the read view: warn, then allow.
     // A failed probe degrades to today's plain prompt.
-    setState(() => _deleteProbeInFlight = true);
+    setState(() => _deleteInFlight = true);
     final impact = await probeDeletionImpact(
       expense,
       loader: widget.loadGroupPaybacks,
     );
     if (!mounted) return;
-    setState(() => _deleteProbeInFlight = false);
+    setState(() => _deleteInFlight = false);
 
-    unawaited(
-      showDialog<void>(
-        context: context,
-        builder: (context) => AlertDialog(
-          title: Text(impact.confirmTitle(AppLocalizations.of(context)!)),
-          content: Text(
-            impact.confirmMessage(
-              AppLocalizations.of(context)!,
-              widget.group.currencyCode,
-            ),
-          ),
+    // The dialog only asks: it closes itself and answers. The write runs
+    // below, through the same rule the save follows. Cancel, a barrier tap and
+    // a null result all delete nothing.
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) {
+        final l10n = AppLocalizations.of(dialogContext)!;
+        final colorScheme = Theme.of(dialogContext).colorScheme;
+        return AlertDialog(
+          title: Text(impact.confirmTitle(l10n)),
+          content: Text(impact.confirmMessage(l10n, widget.group.currencyCode)),
           actions: <Widget>[
             TextButton(
-              child: Text(AppLocalizations.of(context)!.cancel),
-              onPressed: () => Navigator.pop(context),
+              child: Text(l10n.cancel),
+              onPressed: () => Navigator.pop(dialogContext, false),
             ),
             PrimaryButton(
               compact: true,
-              background: Theme.of(context).colorScheme.error,
-              foreground: Theme.of(context).colorScheme.onError,
-              label: AppLocalizations.of(context)!.delete,
-              onPressed: () async {
-                try {
-                  await ExpenseRepository.delete(
-                    widget.expense!.id,
-                    widget.expense!.groupId,
-                  );
-                  if (context.mounted) {
-                    showSnackBar(
-                      context,
-                      AppLocalizations.of(context)!.expenseDeleteSuccess,
-                    );
-                  }
-                } catch (e) {
-                  if (context.mounted) {
-                    showSnackBar(
-                      context,
-                      AppLocalizations.of(context)!.expenseDeleteError,
-                    );
-                  }
-                } finally {
-                  //pop both dialog and edit page, because this item is not existing anymore
-                  if (context.mounted) {
-                    _bypassDiscardGuard = true;
-                    Navigator.pop(context);
-                    Navigator.pop(modalContext);
-                  }
-                }
-              },
+              background: colorScheme.error,
+              foreground: colorScheme.onError,
+              label: l10n.delete,
+              onPressed: () => Navigator.pop(dialogContext, true),
             ),
           ],
-        ),
+        );
+      },
+    );
+    if (confirmed != true || !mounted) return;
+
+    setState(() => _deleteInFlight = true);
+    final l10n = AppLocalizations.of(context)!;
+    await _writeThenClose(
+      write: () => (widget.deleteExpense ?? ExpenseRepository.delete)(
+        expense.id,
+        expense.groupId,
       ),
+      onFailure: () => _deleteInFlight = false,
+      errorMessage: l10n.expenseDeleteError,
+      onSuccess: () async {
+        // Before the pop on purpose: the messenger is an ancestor of the
+        // editor route, so the confirmation outlives it and lands on the
+        // screen behind. Deletes keep a SnackBar because no CTA survives the
+        // confirmation (save-status-rollout).
+        showSnackBar(context, l10n.expenseDeleteSuccess);
+      },
     );
   }
 
@@ -748,7 +745,7 @@ class _ExpenseDetailState extends ConsumerState<ExpenseDetail> {
         onChanged: (value) {
           field.didChange(value);
           if (value.isNotEmpty) {
-            detectAndUpdateCategory(value);
+            _detectAndUpdateCategory(value);
           }
         },
       ),
@@ -880,7 +877,7 @@ class _ExpenseDetailState extends ConsumerState<ExpenseDetail> {
         // v3 quick block: unboxed icon+amount sit directly on the page
         // background (no SoftCard), tap opens the keypad (F100), and a
         // per-person split preview sits directly below the amount.
-        final memberCount = groupMembers.isNotEmpty ? groupMembers.length : 1;
+        final memberCount = _groupMembers.isNotEmpty ? _groupMembers.length : 1;
         final perHead = amount / memberCount;
         final l10n = AppLocalizations.of(context)!;
         return Column(
@@ -992,7 +989,7 @@ class _ExpenseDetailState extends ConsumerState<ExpenseDetail> {
           index: expenseEntry.index,
           expenseEntry: expenseEntry,
           onRemove: () => _removeEntry(expenseEntry),
-          groupMembers: groupMembers,
+          groupMembers: _groupMembers,
         ),
       );
     });
@@ -1126,7 +1123,7 @@ class _ExpenseDetailState extends ConsumerState<ExpenseDetail> {
       if (result.merchantName != null) {
         _nameController.text = result.merchantName!;
         _formKey.currentState?.fields['name']?.didChange(result.merchantName);
-        detectAndUpdateCategory(result.merchantName!);
+        _detectAndUpdateCategory(result.merchantName!);
       }
       if (result.date != null) {
         _formKey.currentState?.fields['expense_date']?.didChange(result.date);
@@ -1147,6 +1144,48 @@ class _ExpenseDetailState extends ConsumerState<ExpenseDetail> {
     });
   }
 
+  /// The one rule both writes follow: only a write that completes closes the
+  /// editor.
+  ///
+  /// Runs [write]. If it throws, the error is logged, [onFailure] puts the
+  /// caller's in-flight state back to idle (inside `setState`), [errorMessage]
+  /// is shown, and the editor stays. Every typed value is intact and the
+  /// discard guard is still armed, so a retry sends the same form. If it
+  /// completes, [onSuccess] runs. Then, only while the editor is still
+  /// mounted, the discard guard is bypassed and the editor's own route pops.
+  ///
+  /// There is deliberately no `finally`: a failure must have no route to
+  /// [Navigator.pop].
+  ///
+  /// The form stays live while a write is out, and its sheets (date, paid by,
+  /// amount, currency) open on the same root navigator as the editor's route.
+  /// A bare pop would close such a sheet instead and leave the editor stuck in
+  /// flight, so whatever sits above the editor is closed first.
+  Future<void> _writeThenClose({
+    required Future<void> Function() write,
+    required VoidCallback onFailure,
+    required String errorMessage,
+    required Future<void> Function() onSuccess,
+  }) async {
+    try {
+      await write();
+    } catch (e) {
+      debugPrint('Expense write failed: $e');
+      if (!mounted) return;
+      setState(onFailure);
+      showSnackBar(context, errorMessage);
+      return;
+    }
+    if (!mounted) return;
+    await onSuccess();
+    if (!mounted) return;
+    _bypassDiscardGuard = true;
+    final navigator = Navigator.of(context);
+    final route = ModalRoute.of(context);
+    if (route != null) navigator.popUntil((r) => r == route);
+    navigator.pop();
+  }
+
   /// Saves the expense. When [claimable] is true (the itemized
   /// "Add & share for claiming" CTA) every entry is flagged claimable so
   /// [ExpenseRepository.saveAll] explodes the lines into per-unit claim
@@ -1155,6 +1194,10 @@ class _ExpenseDetailState extends ConsumerState<ExpenseDetail> {
     BuildContext context, {
     bool claimable = false,
   }) async {
+    // Single flight across both writes: no save while a delete is out. Checked
+    // before the form is touched, so a refused tap leaves the CTA and the
+    // header exactly as they were.
+    if (_deleteInFlight) return;
     if (_formKey.currentState!.saveAndValidate()) {
       // Individual lines may be negative (discounts), but the expense total
       // must stay positive — a non-positive total collapses every member's
@@ -1181,81 +1224,82 @@ class _ExpenseDetailState extends ConsumerState<ExpenseDetail> {
       if (_saveStatus != _SaveStatus.idle) return;
       setState(() => _saveStatus = _SaveStatus.busy);
 
-      try {
-        final formValue = claimable
-            ? markEntriesClaimable(
-                _formKey.currentState!.value,
-                // Share with the whole group so everyone is notified that
-                // there are items to claim (claim units start unclaimed).
-                notifyEmails: groupMembers.map((m) => m.email).toSet(),
-              )
-            : _formKey.currentState!.value;
-        if (claimable) {
-          // Re-saving a shared expense re-explodes its items into fresh
-          // claim units — thread each item's existing per-unit claims
-          // through so they are preserved (F146). Positional: shrinking an
-          // item's quantity drops the last units' claims.
-          for (final data in _entries) {
-            if (data.expenseEntry.unitClaims.isNotEmpty) {
-              formValue['expense_entry[${data.index}][existing_claims]'] =
-                  data.expenseEntry.unitClaims;
+      final errorMessage = AppLocalizations.of(context)!.expenseCreateError;
+      final reduceMotion = MediaQuery.of(context).disableAnimations;
+      await _writeThenClose(
+        write: () async {
+          final formValue = claimable
+              ? markEntriesClaimable(
+                  _formKey.currentState!.value,
+                  // Share with the whole group so everyone is notified that
+                  // there are items to claim (claim units start unclaimed).
+                  notifyEmails: _groupMembers.map((m) => m.email).toSet(),
+                )
+              : _formKey.currentState!.value;
+          if (claimable) {
+            // Re-saving a shared expense re-explodes its items into fresh
+            // claim units — thread each item's existing per-unit claims
+            // through so they are preserved (F146). Positional: shrinking an
+            // item's quantity drops the last units' claims.
+            for (final data in _entries) {
+              if (data.expenseEntry.unitClaims.isNotEmpty) {
+                formValue['expense_entry[${data.index}][existing_claims]'] =
+                    data.expenseEntry.unitClaims;
+              }
             }
           }
-        }
-        await (widget.saveExpense ?? ExpenseRepository.saveAll)(
-          context,
-          widget.group.id,
-          widget.expense?.id,
-          formValue,
-          currency: widget.group.currency,
-          conversion: conversion,
-        );
-        if (!conversion.isIdentity && _rateOrigin == _RateOrigin.user) {
-          // Remember the rate for the next expense in this currency in this
-          // group — a trip holds one agreed rate with no separate concept.
-          //
-          // Only a rate the USER supplied. Remembering a prefill would make the
-          // suggestion its own successor: the fetch would fire once per group
-          // and currency and then be shadowed forever by its first answer,
-          // which is the opposite of a rate for each expense's own date.
-          await ref
-              .read(stickyRateProvider.notifier)
-              .setStickyRate(
-                widget.group.id,
-                conversion.entryCurrency,
-                conversion.rate!,
-              );
-        }
-        // The confirmation is the check on the CTA, held long enough to read
-        // before the route goes. No snackbar: the old one fired after the pop
-        // and so was shown over the group detail behind.
-        if (mounted) setState(() => _saveStatus = _SaveStatus.done);
-        if (context.mounted) {
+          await (widget.saveExpense ?? ExpenseRepository.saveAll)(
+            context,
+            widget.group.id,
+            widget.expense?.id,
+            formValue,
+            currency: widget.group.currency,
+            conversion: conversion,
+          );
+        },
+        // Failures still need words — a check would be a lie, and "something
+        // went wrong" can't be mimed.
+        onFailure: () => _saveStatus = _SaveStatus.idle,
+        errorMessage: errorMessage,
+        onSuccess: () async {
+          if (!conversion.isIdentity && _rateOrigin == _RateOrigin.user) {
+            // Remember the rate for the next expense in this currency in this
+            // group — a trip holds one agreed rate with no separate concept.
+            //
+            // Only a rate the USER supplied. Remembering a prefill would make
+            // the suggestion its own successor: the fetch would fire once per
+            // group and currency and then be shadowed forever by its first
+            // answer, which is the opposite of a rate for each expense's own
+            // date.
+            //
+            // The write has already committed, so failing to remember the
+            // rate is not a failed save: reporting it as one would invite a
+            // duplicate. Logged only.
+            try {
+              await ref
+                  .read(stickyRateProvider.notifier)
+                  .setStickyRate(
+                    widget.group.id,
+                    conversion.entryCurrency,
+                    conversion.rate!,
+                  );
+            } catch (e) {
+              debugPrint('Could not remember the typed rate: $e');
+            }
+          }
+          if (!mounted) return;
+          // The confirmation is the check on the CTA, held long enough to
+          // read before the route goes. No snackbar: the old one fired after
+          // the pop and so was shown over the group detail behind.
+          setState(() => _saveStatus = _SaveStatus.done);
           await Future<void>.delayed(
             reducedIfNeeded(
               Motion.saveConfirmationHold,
-              reduceMotion: MediaQuery.of(context).disableAnimations,
+              reduceMotion: reduceMotion,
             ),
           );
-        }
-      } catch (e) {
-        // Failures still need words — a check would be a lie, and "something
-        // went wrong" can't be mimed.
-        if (mounted) setState(() => _saveStatus = _SaveStatus.idle);
-        if (context.mounted) {
-          showSnackBar(
-            context,
-            AppLocalizations.of(context)!.expenseCreateError,
-          );
-        }
-      } finally {
-        if (mounted) {
-          if (context.mounted) {
-            _bypassDiscardGuard = true;
-            Navigator.pop(context);
-          }
-        }
-      }
+        },
+      );
     }
   }
 
@@ -1626,10 +1670,10 @@ class _ExpenseDetailState extends ConsumerState<ExpenseDetail> {
         Widget? headerTrailing;
         if (widget.expense != null) {
           headerTrailing = IconButton(
-            onPressed: _deleteProbeInFlight
+            onPressed: _deleteInFlight
                 ? null
-                : () => openDeleteItemDialog(context, widget.expense!),
-            icon: _deleteProbeInFlight
+                : () => _openDeleteItemDialog(widget.expense!),
+            icon: _deleteInFlight
                 ? SizedBox(
                     width: 16,
                     height: 16,
@@ -1646,9 +1690,17 @@ class _ExpenseDetailState extends ConsumerState<ExpenseDetail> {
         }
 
         return PopScope(
-          canPop: !_isDirty || _bypassDiscardGuard,
+          // A write that is out owns the route: only its success closes the
+          // editor (programmatically, past this guard), so a failure can still
+          // be reported on this screen.
+          canPop:
+              !_deleteInFlight &&
+              _saveStatus == _SaveStatus.idle &&
+              (!_isDirty || _bypassDiscardGuard),
           onPopInvokedWithResult: (didPop, result) async {
-            if (didPop) return;
+            if (didPop || _deleteInFlight || _saveStatus != _SaveStatus.idle) {
+              return;
+            }
             final discard = await showDiscardConfirmationSheet(context);
             if (discard == true && context.mounted) {
               _bypassDiscardGuard = true;
