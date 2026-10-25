@@ -709,11 +709,10 @@ void main() {
       double dyOf(Finder finder) => tester.getTopLeft(finder).dy;
 
       // Both flows are pumped in this single test (create, then edit). Avoid
-      // FriendshipListNotifier's real Supabase realtime subscription here: its
-      // retry backoff timer is not cancelled by disposeChannels() (a
-      // pre-existing gap, out of scope for this feature), and surviving across
-      // the create->edit remount trips flutter_test's "no pending timers"
-      // invariant. Neither flow's layout assertions depend on friend data.
+      // FriendshipListNotifier's real Supabase realtime subscription and
+      // friend fetches here: disposeChannels() does cancel a pending retry
+      // timer, but the override keeps both flows off the network. Neither
+      // flow's layout assertions depend on friend data.
       final noRealtimeOverrides = [
         friendshipListProvider.overrideWith(
           () => _FakeFriendshipListNotifier(const []),

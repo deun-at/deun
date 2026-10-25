@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart' show protected, visibleForTesting;
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -8,7 +9,8 @@ import '../data/expense_repository.dart';
 part 'expense_list.g.dart';
 
 @riverpod
-class ExpenseListNotifier extends _$ExpenseListNotifier with RealtimeNotifierMixin {
+class ExpenseListNotifier extends _$ExpenseListNotifier
+    with RealtimeNotifierMixin {
   static const int pageSize = 20;
   int _offset = 0;
   bool _hasMore = true;
@@ -22,7 +24,11 @@ class ExpenseListNotifier extends _$ExpenseListNotifier with RealtimeNotifierMix
       ref: ref,
       channelName: 'expense_list:$groupId',
       table: 'expense_update_checker',
-      filter: PostgresChangeFilter(type: PostgresChangeFilterType.eq, column: 'group_id', value: groupId),
+      filter: PostgresChangeFilter(
+        type: PostgresChangeFilterType.eq,
+        column: 'group_id',
+        value: groupId,
+      ),
       onEvent: (payload) async {
         if (payload.eventType == PostgresChangeEvent.delete) {
           final expenseId = payload.oldRecord['expense_id'];
@@ -37,7 +43,8 @@ class ExpenseListNotifier extends _$ExpenseListNotifier with RealtimeNotifierMix
         } else if (payload.eventType == PostgresChangeEvent.update ||
             payload.eventType == PostgresChangeEvent.insert) {
           final expenseId = payload.newRecord['expense_id'];
-          final expense = await ExpenseRepository.fetchDetail(expenseId);
+          final expense = await fetchExpense(expenseId);
+          if (!ref.mounted) return;
 
           state = state.whenData((expenses) {
             final updated = List<Expense>.from(expenses);
@@ -64,15 +71,29 @@ class ExpenseListNotifier extends _$ExpenseListNotifier with RealtimeNotifierMix
 
     listenForResume(ref: ref, onResume: () => reload(groupId));
 
-    return await ExpenseRepository.fetchData(groupId, _offset, _offset + pageSize - 1);
+    return await fetchPage(groupId, _offset, _offset + pageSize - 1);
   }
+
+  @visibleForTesting
+  @protected
+  Future<List<Expense>> fetchPage(String groupId, int from, int to) =>
+      ExpenseRepository.fetchData(groupId, from, to);
+
+  @visibleForTesting
+  @protected
+  Future<Expense> fetchExpense(String expenseId) =>
+      ExpenseRepository.fetchDetail(expenseId);
 
   Future<void> reload(String groupId) async {
     if (!ref.mounted) return;
     final expectedCount = _offset + pageSize;
-    state = await AsyncValue.guard(() async => await ExpenseRepository.fetchData(groupId, 0, expectedCount - 1));
+    final result = await AsyncValue.guard(
+      () => fetchPage(groupId, 0, expectedCount - 1),
+    );
+    if (!ref.mounted) return;
+    state = result;
     // Derive _hasMore from actual results instead of blindly resetting to true
-    _hasMore = (state.value?.length ?? 0) >= expectedCount;
+    _hasMore = (result.value?.length ?? 0) >= expectedCount;
   }
 
   int get offset => _offset;
@@ -83,7 +104,11 @@ class ExpenseListNotifier extends _$ExpenseListNotifier with RealtimeNotifierMix
     // Advance the offset only after a successful fetch so a failed request
     // doesn't silently skip a page on the next attempt.
     final nextOffset = _offset + pageSize;
-    final newExpenses = await ExpenseRepository.fetchData(groupId, nextOffset, nextOffset + pageSize - 1);
+    final newExpenses = await fetchPage(
+      groupId,
+      nextOffset,
+      nextOffset + pageSize - 1,
+    );
     if (!ref.mounted) return;
     _offset = nextOffset;
 
@@ -95,7 +120,10 @@ class ExpenseListNotifier extends _$ExpenseListNotifier with RealtimeNotifierMix
     state = state.whenData((expenses) {
       // Realtime inserts can shift pages — drop anything already in the list.
       final existingIds = expenses.map((e) => e.id).toSet();
-      return [...expenses, ...newExpenses.where((e) => !existingIds.contains(e.id))];
+      return [
+        ...expenses,
+        ...newExpenses.where((e) => !existingIds.contains(e.id)),
+      ];
     });
   }
 }

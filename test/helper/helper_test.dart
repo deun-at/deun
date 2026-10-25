@@ -173,7 +173,8 @@ void main() {
     });
 
     test('yesterday returns "Yesterday"', () {
-      final yesterday = DateTime.now().subtract(const Duration(days: 1));
+      final now = DateTime.now();
+      final yesterday = DateTime(now.year, now.month, now.day - 1);
       final str =
           '${yesterday.year}-${yesterday.month.toString().padLeft(2, '0')}-${yesterday.day.toString().padLeft(2, '0')}';
       expect(formatDate(str), 'Yesterday');

@@ -23,10 +23,10 @@
   - `abstract interface class RealtimeChannelFactory { RealtimeChannelHandle open({required String channelName, required String table, PostgresChangeFilter? filter, required void Function(PostgresChangePayload payload) onEvent, required void Function(RealtimeSubscribeStatus status, Object? error) onStatus, void Function(int presentCount)? onPresence}); }` — the one place a channel is created (lib/helper/realtime_mixin.dart)
   - `abstract interface class RealtimeChannelHandle { void track(Map<String, dynamic> payload); void close(); }`
   - `class SupabaseRealtimeChannelFactory implements RealtimeChannelFactory`, the real adapter over `supabase.channel(…)`/`removeChannel`.
-  - `@Riverpod(keepAlive: true) RealtimeChannelFactory realtimeChannelFactory(Ref ref)`, generated as `realtimeChannelFactoryProvider` in realtime_mixin.g.dart. It returns `SupabaseRealtimeChannelFactory()`, and tests override it with `overrideWithValue`.
+  - `@Riverpod(keepAlive: true) RealtimeChannelFactory realtimeChannelFactory(Ref ref)`, generated as `realtimeChannelFactoryProvider` in realtime_mixin.g.dart. It returns `const SupabaseRealtimeChannelFactory()`, and tests override it with `overrideWithValue`.
   - `RealtimeNotifierMixin`: public surface unchanged. That is `subscribeToChannel({required Ref ref, required String channelName, required String table, PostgresChangeFilter? filter, required void Function(PostgresChangePayload) onEvent, void Function(int)? onPresence, Map<String, dynamic>? presencePayload}): void`, `listenForResume({required Ref ref, required void Function() onResume}): void`, `resubscribeChannels(): void` and `disposeChannels(): void`.
   - Test-only seams, `@visibleForTesting @protected`: `ExpenseListNotifier.fetchPage(String groupId, int from, int to): Future<List<Expense>>`, `ExpenseListNotifier.fetchExpense(String expenseId): Future<Expense>`, `GroupDetailNotifier.fetchGroup(String groupId): Future<Group>`, `ClaimNotifier.fetchExpense(String expenseId): Future<Expense>`
-  - Test helper `FakeRealtimeChannelFactory` (test/helper/fake_realtime_channel_factory.dart). It records each open (name, table, filter) and close, and lets a test fire event, status and presence callbacks on any handle it returned. realtime-event-scope can reuse it to assert its filters.
+  - Test helper `FakeRealtimeChannelFactory` (test/helper/fake_realtime_channel_factory.dart). It records each open (name, table, filter) and close, and lets a test fire event, status and presence callbacks on any handle it returned. realtime-event-scope can reuse it to assert its filters. Its surface: `named(name)` (every channel opened under a name), `live(name)`, `latest(name)` and `deliver(name, payload)`; each `FakeRealtimeChannel` exposes `tracked`, `isClosed`, `emitEvent`, `emitStatus` and `emitPresence`.
 - Consumes: —
 - Decisions:
   - Scope -> finding 2 only: channel lifecycle in lib/helper/realtime_mixin.dart, plus the post-await guards below. Channel names, tables, filters and which events each notifier reacts to stay as they are; realtime-event-scope owns those (research/code-review-2026-10.md, As-is).
@@ -75,3 +75,23 @@
 - Tier: normal — the slot bookkeeping, the fake factory's shape and the fake_async test harness leave real design choices for a planner.
 - Depends: —
 - Parallel-with: editor-failure-keeps-form, scan-total-applies, expense-search-escape, guest-merge-rpc, payback-atomic-recalc, group-model-parse-safety, housekeeping
+
+## Evidence
+- 1: test/helper/realtime_mixin_test.dart `C1 disposed while a retry is pending: nothing reopens, errs or stays scheduled` (fake_async; also asserts no pending timers).
+- 2: test/helper/realtime_mixin_test.dart `C2 resume leaves one live channel per config, with or without a pending retry` (covers the two-config shape and one `onEvent` per delivered event).
+- 3: test/helper/realtime_mixin_test.dart `C3 repeated error reports before the retry fires get one replacement`.
+- 4: test/helper/realtime_mixin_test.dart `C4 a replaced or closed channel's late status changes nothing`.
+- 5: test/helper/realtime_mixin_test.dart `C5 after dispose no event, status or presence reaches the notifier`.
+- 6: test/helper/realtime_mixin_test.dart `C6 a live notifier retries at 1 s, 2 s and 4 s, then reports disconnected until a resume reconnects`.
+- 7: test/helper/realtime_mixin_test.dart `C7 presence is tracked once per live channel and counted only from the live one`; test/provider/realtime_notifier_dispose_test.dart `C7 ClaimNotifier.claimingNow follows its live claim channel`; the three claim_page_test.dart header tests stay green in the full suite.
+- 8: test/provider/realtime_notifier_dispose_test.dart group `C8 a fetch that outlives its notifier writes no state and raises no error`: ExpenseListNotifier realtime insert/update, ExpenseListNotifier resume reload, GroupDetailNotifier realtime event (its resume runs the same reload), ClaimNotifier realtime refetch, ClaimNotifier resume refetch.
+- 9: test/provider/realtime_notifier_dispose_test.dart `C9 while mounted, a realtime insert adds, an update replaces and a delete removes`.
+- 10: see gates.
+- 11: pending human (docs/ristretto/manual-checks.md)
+- gates: `dart format` clean on every file this feature touched (a repo-wide format check also lists 107 files this feature never touched); `flutter analyze` no issues; `flutter test` all 1664 passed.
+- review: notes-only · rounds: 1 · open: 0 block, 1 note, 0 lean · trimmed: 2
+- tier: normal
+- trim pass: both test leans applied. The trim-pass fixer also changed test/helper/helper_test.dart's `formatDate yesterday` test from `DateTime.now().subtract(Duration(days: 1))` to `DateTime(now.year, now.month, now.day - 1)` (assertion unchanged), because it went red on the 25-hour DST-end day 2026-10-25.
+
+## Open findings
+- note · test/helper/realtime_mixin_test.dart:~140 (C2) · The "with a pending retry" half would stay green even if resubscribe left the old retry running. That retry would close the resumed channel and open a third one, and there would still be exactly one live channel, equal to `latest`. · Fix: after `async.elapse(const Duration(seconds: 8))`, add `expect(h.channels.named('probe:a'), hasLength(2))`. · Why no user can be harmed: dispose and resubscribe cancel through the same `_retire`, and C1's `pendingTimers isEmpty` proves that cancel works.

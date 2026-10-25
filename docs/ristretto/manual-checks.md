@@ -251,6 +251,17 @@ carry `[human]` criteria that nobody has ever observed. Check here before shippi
   payback recorded **on someone else's behalf** (payer ≠ you) — it must behave identically, with no
   special case. If any share is stale, the delete needs its own RPC and this feature is not small.
 
+- [ ] **proves** · realtime-channel-lifecycle: live updates and claim presence still arrive through
+  the refactored channel code, before and after a background/resume · out of reach: the live
+  self-hosted realtime server (api.deun.app) and a real OS pause/resume (`supabase.removeAllChannels`
+  on pause); no test runs `SupabaseRealtimeChannelFactory`, the adapter behind the seam · what to
+  do: in a throwaway test group (never real data), sign a phone (A) and a second client (B; a web
+  build is enough) into the group. Open the group ledger on A, add an expense on B, and check it
+  appears on A without a refresh. Background A for about a minute, resume it, add another expense on
+  B, and check it appears. Open the same itemized expense's claim screen on A alone: it says 1
+  person claiming. Join on B (2), then leave on B (1). Background and resume A on the claim screen
+  and check it still says 1 while B is away.
+
 ## Findings from verification
 
 Defects turned up while walking the checks. These are not checks themselves — nobody ticks them —

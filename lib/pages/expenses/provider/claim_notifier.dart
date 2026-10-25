@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart' show protected, visibleForTesting;
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -41,7 +42,8 @@ class ClaimNotifier extends _$ClaimNotifier with RealtimeNotifierMixin {
         value: expenseId,
       ),
       onEvent: (_) async {
-        final fresh = await ExpenseRepository.fetchDetail(expenseId);
+        final fresh = await fetchExpense(expenseId);
+        if (!ref.mounted) return;
         state = AsyncData(fresh);
       },
       // Presence: one key per member (a member on two devices still counts
@@ -59,12 +61,19 @@ class ClaimNotifier extends _$ClaimNotifier with RealtimeNotifierMixin {
     listenForResume(
       ref: ref,
       onResume: () async {
-        state = await AsyncValue.guard(() => ExpenseRepository.fetchDetail(expenseId));
+        final result = await AsyncValue.guard(() => fetchExpense(expenseId));
+        if (!ref.mounted) return;
+        state = result;
       },
     );
 
-    return await ExpenseRepository.fetchDetail(expenseId);
+    return await fetchExpense(expenseId);
   }
+
+  @visibleForTesting
+  @protected
+  Future<Expense> fetchExpense(String expenseId) =>
+      ExpenseRepository.fetchDetail(expenseId);
 
   /// Claim units (split_mode 'claim') in stable DB order.
   List<ClaimUnit> get units {
@@ -72,10 +81,12 @@ class ClaimNotifier extends _$ClaimNotifier with RealtimeNotifierMixin {
     if (expense == null) return const [];
     return expense.expenseEntries.values
         .where((e) => e.isClaimUnit)
-        .map((e) => ClaimUnit(
-              unitCost: e.amount,
-              claimers: e.expenseEntryShares.map((s) => s.email).toList(),
-            ))
+        .map(
+          (e) => ClaimUnit(
+            unitCost: e.amount,
+            claimers: e.expenseEntryShares.map((s) => s.email).toList(),
+          ),
+        )
         .toList();
   }
 
@@ -99,20 +110,19 @@ class ClaimNotifier extends _$ClaimNotifier with RealtimeNotifierMixin {
 
   /// All claim-unit rows, flattened across [itemGroups]. The summary math and
   /// the confirm total bind to this; chips mutate via [ClaimUnitRow.entryId].
-  List<ClaimUnitRow> get unitRows =>
-      [for (final g in itemGroups) ...g.units];
+  List<ClaimUnitRow> get unitRows => [for (final g in itemGroups) ...g.units];
 
   ClaimUnitRow _rowOf(ExpenseEntry e) => ClaimUnitRow(
-        entryId: e.id,
-        name: e.name,
-        unit: ClaimUnit(
-          unitCost: e.amount,
-          claimers: e.expenseEntryShares.map((s) => s.email).toList(),
-        ),
-        claimerNames: {
-          for (final s in e.expenseEntryShares) s.email: s.displayName,
-        },
-      );
+    entryId: e.id,
+    name: e.name,
+    unit: ClaimUnit(
+      unitCost: e.amount,
+      claimers: e.expenseEntryShares.map((s) => s.email).toList(),
+    ),
+    claimerNames: {
+      for (final s in e.expenseEntryShares) s.email: s.displayName,
+    },
+  );
 
   Map<String, double> get memberTotals => memberShareTotals(units);
   double get claimed => claimedTotal(units);
@@ -153,6 +163,6 @@ class ClaimNotifier extends _$ClaimNotifier with RealtimeNotifierMixin {
       claimerEmails: emails,
     );
     // Realtime will refresh; optimistic refetch keeps UI snappy.
-    state = await AsyncValue.guard(() => ExpenseRepository.fetchDetail(expenseId));
+    state = await AsyncValue.guard(() => fetchExpense(expenseId));
   }
 }
