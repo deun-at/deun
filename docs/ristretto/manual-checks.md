@@ -262,6 +262,32 @@ carry `[human]` criteria that nobody has ever observed. Check here before shippi
   person claiming. Join on B (2), then leave on B (1). Background and resume A on the claim screen
   and check it still says 1 while B is away.
 
+- [ ] **proves** · realtime-event-scope: the group list's filtered channels deliver insert, update
+  and delete events, and a group the user is added to appears and goes live without a refresh ·
+  out of reach: the self-hosted realtime server on api.deun.app (`supabase/realtime:v2.34.7`:
+  whether it accepts in-filters with quoted values) and the unapplied migration; no test runs
+  `SupabaseRealtimeChannelFactory` · apply `20261025200000_realtime_event_scope.sql` as `supabase_admin`.
+  Confirm by SQL that
+  `select relname, relreplident from pg_class where relname in ('group_update_checker', 'friendship');`
+  shows `f` for both and that
+  `select tablename from pg_publication_tables where pubname = 'supabase_realtime';` lists
+  `group_member`. Then, in throwaway test groups only (never real data), sign a phone (A) and a
+  second client (B; a web build is enough) into two accounts that share group G, with A on the
+  group list. Add an expense in G on B: A's row for G changes without a refresh. On B, create group
+  H and add A: H appears in A's list without a refresh. Add an expense in H on B: A's row for H
+  updates. Add an expense on B in a group A is not in: A's list does not change. Delete G on B: G
+  leaves A's list without a refresh. Background A for about a minute, resume, and repeat one
+  expense add.
+
+- [ ] **proves** · realtime-event-scope: the friend list's two filtered friendship channels deliver
+  insert, update and delete events · out of reach: the self-hosted realtime server on api.deun.app
+  (eq filters on `friendship`; deletes that need replica identity full) and the unapplied migration
+  · with the migration above applied and A on the friends tab, using two test accounts: have B send
+  A a friend request — A's pending count rises without a refresh. B cancels — it falls back. B sends
+  again and A accepts — B's friend list shows A without a refresh. B removes the friendship — A's
+  list drops B. Add an expense on B in a throwaway group A and B share: A's balance with B updates
+  after about 2 s.
+
 ## Findings from verification
 
 Defects turned up while walking the checks. These are not checks themselves — nobody ticks them —

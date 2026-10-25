@@ -1,5 +1,7 @@
 import 'dart:async';
+import 'dart:math' show min;
 
+import 'package:flutter/foundation.dart' show setEquals;
 import 'package:flutter/material.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -114,6 +116,26 @@ class _SupabaseChannelHandle implements RealtimeChannelHandle {
 RealtimeChannelFactory realtimeChannelFactory(Ref ref) =>
     const SupabaseRealtimeChannelFactory();
 
+/// The most values one realtime `in` filter accepts (Supabase postgres_changes).
+const int kRealtimeInFilterMaxValues = 100;
+
+/// [values] deduplicated, sorted, and cut into chunks of at most
+/// [kRealtimeInFilterMaxValues] — one `in` filter each. Empty input, no chunks.
+List<List<String>> chunkForInFilter(Iterable<String> values) {
+  final sorted = values.toSet().toList()..sort();
+  return [
+    for (
+      var start = 0;
+      start < sorted.length;
+      start += kRealtimeInFilterMaxValues
+    )
+      sorted.sublist(
+        start,
+        min(start + kRealtimeInFilterMaxValues, sorted.length),
+      ),
+  ];
+}
+
 /// Stored channel configuration for replay after app resume.
 class _ChannelConfig {
   final String channelName;
@@ -161,6 +183,17 @@ class _ChannelSlot {
   Timer? retryTimer;
 }
 
+/// The chunk channels one [RealtimeNotifierMixin.syncInFilterChannels] prefix
+/// has open, and the values they cover.
+class _InFilterScope {
+  Set<String> values = const {};
+  List<String> channelNames = const [];
+
+  /// Never reset — not by [RealtimeNotifierMixin.disposeChannels] either — so
+  /// no chunk channel name is ever reused, not even across a rebuild.
+  int version = 0;
+}
+
 /// Mixin for Riverpod AsyncNotifiers that need Supabase real-time channel subscriptions.
 ///
 /// Standardizes channel creation, cleanup, error handling, and disposal across all providers.
@@ -176,6 +209,7 @@ class _ChannelSlot {
 /// re-established for providers using `listenForResume` instead of `ref.invalidate`.
 mixin RealtimeNotifierMixin {
   final Map<String, _ChannelSlot> _slots = {};
+  final Map<String, _InFilterScope> _inFilterScopes = {};
   bool _isResubscribing = false;
   static const int _maxRetries = 3;
 
@@ -222,6 +256,53 @@ mixin RealtimeNotifierMixin {
     );
     _slots[channelName] = slot;
     _open(slot);
+  }
+
+  /// Closes [channelName]'s live channel, cancels its pending retry and forgets
+  /// its config, so a resume does not reopen it. An unknown name is a no-op.
+  void unsubscribeFromChannel(String channelName) {
+    final slot = _slots.remove(channelName);
+    if (slot != null) _retire(slot);
+  }
+
+  /// Keeps one channel per [chunkForInFilter] chunk of [values] open on
+  /// [table], each filtered `column=in.(chunk)` and named
+  /// `<prefix>:s<version>:<index>`. A call whose [values] equal (by contents)
+  /// what [prefix] already covers closes and opens nothing — re-joining drops
+  /// the events that arrive in the gap. Otherwise the prefix's previous chunk
+  /// channels close and the new ones open under the next version, so a topic
+  /// whose leave may still be in flight is never reopened. Other channels are
+  /// never touched.
+  void syncInFilterChannels({
+    required Ref ref,
+    required String prefix,
+    required String table,
+    required String column,
+    required Set<String> values,
+    required void Function(PostgresChangePayload payload) onEvent,
+  }) {
+    final scope = _inFilterScopes.putIfAbsent(prefix, _InFilterScope.new);
+    if (setEquals(scope.values, values)) return;
+    scope.channelNames.forEach(unsubscribeFromChannel);
+    final version = ++scope.version;
+    final chunks = chunkForInFilter(values);
+    scope.values = Set.unmodifiable(values);
+    scope.channelNames = [
+      for (var i = 0; i < chunks.length; i++) '$prefix:s$version:$i',
+    ];
+    for (var i = 0; i < chunks.length; i++) {
+      subscribeToChannel(
+        ref: ref,
+        channelName: scope.channelNames[i],
+        table: table,
+        filter: PostgresChangeFilter(
+          type: PostgresChangeFilterType.inFilter,
+          column: column,
+          value: chunks[i],
+        ),
+        onEvent: onEvent,
+      );
+    }
   }
 
   /// Opens [slot]'s channel under its current generation. Every callback
@@ -334,13 +415,19 @@ mixin RealtimeNotifierMixin {
   }
 
   /// Closes every channel, cancels every pending retry and forgets the
-  /// configs. Call this at the start of build() before subscribing, and
-  /// register it via ref.onDispose.
+  /// configs and what each in-filter prefix covers (its version survives).
+  /// Call this at the start of build() before subscribing, and register it via
+  /// ref.onDispose.
   void disposeChannels() {
     final slots = _slots.values.toList();
     _slots.clear();
     for (final slot in slots) {
       _retire(slot);
+    }
+    for (final scope in _inFilterScopes.values) {
+      scope
+        ..values = const {}
+        ..channelNames = const [];
     }
   }
 }

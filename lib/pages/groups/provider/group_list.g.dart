@@ -33,7 +33,7 @@ final class GroupListNotifierProvider
   GroupListNotifier create() => GroupListNotifier();
 }
 
-String _$groupListNotifierHash() => r'1df9e8f9bae5f7be4ca12b72faf1788a847f9369';
+String _$groupListNotifierHash() => r'1b994062c401c05b7e666b089f2b3bf1fc3a2887';
 
 abstract class _$GroupListNotifier extends $AsyncNotifier<List<Group>> {
   FutureOr<List<Group>> build();
@@ -52,3 +52,58 @@ abstract class _$GroupListNotifier extends $AsyncNotifier<List<Group>> {
     element.handleCreate(ref, build);
   }
 }
+
+/// The ids of the groups in the user's group list — the scope both lists'
+/// realtime group channels are filtered on. Empty until the list's first data
+/// and again from the moment a rebuild (a user switch) starts; keeps its value
+/// through `reload()` and a failed reload.
+
+@ProviderFor(userGroupIds)
+final userGroupIdsProvider = UserGroupIdsProvider._();
+
+/// The ids of the groups in the user's group list — the scope both lists'
+/// realtime group channels are filtered on. Empty until the list's first data
+/// and again from the moment a rebuild (a user switch) starts; keeps its value
+/// through `reload()` and a failed reload.
+
+final class UserGroupIdsProvider
+    extends $FunctionalProvider<Set<String>, Set<String>, Set<String>>
+    with $Provider<Set<String>> {
+  /// The ids of the groups in the user's group list — the scope both lists'
+  /// realtime group channels are filtered on. Empty until the list's first data
+  /// and again from the moment a rebuild (a user switch) starts; keeps its value
+  /// through `reload()` and a failed reload.
+  UserGroupIdsProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'userGroupIdsProvider',
+        isAutoDispose: true,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$userGroupIdsHash();
+
+  @$internal
+  @override
+  $ProviderElement<Set<String>> $createElement($ProviderPointer pointer) =>
+      $ProviderElement(pointer);
+
+  @override
+  Set<String> create(Ref ref) {
+    return userGroupIds(ref);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(Set<String> value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<Set<String>>(value),
+    );
+  }
+}
+
+String _$userGroupIdsHash() => r'd36593c0dfffff8cfdb1f0d43d1bb12f7cabe98e';
