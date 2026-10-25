@@ -56,15 +56,22 @@
   - Docs and cleanup: supabase/schema/README.md (rebuild order, the stamp rule for later migrations, what the repo does not rebuild, how to refresh), delete supabase/config.toml, add the manual-checks Applied row.
 - Manual-Checks:
   - proves · on api.deun.app, every object re-stated by a reconciliation migration from this feature exists · the self-hosted instance is unreachable from the build · Jakob applies the migration by hand, then confirms each re-stated function in pg_proc, each column in information_schema.columns and each publication member in pg_publication_tables (no entry is written if the dump showed no gap)
-- Blockers: the whole-database schema-only dump of api.deun.app is not in the repo -> Jakob takes it and saves it at supabase/schema/baseline.sql, reporting the date and time it was taken. Status 2026-10-25 (Jakob in review of this prep, 2026-10-25: re-dump unfiltered rather than amend Scope):
-  - The 2026-10-24 12:48 dump at supabase/remote_dump/deun_schema.sql (main checkout only, gitignored) does not satisfy this plan. It was taken with `--schema=public`, so it has no publication, no membership and nothing outside `public`. It does not replace the re-dump.
-  - What it already shows, so the build can expect it (research/code-review-2026-10.md, "Answered by the live instance"):
+- Blockers: — (resolved 2026-10-25). Jakob took the whole-database schema-only dump (Jakob in review of this prep, 2026-10-25: re-dump unfiltered rather than amend Scope):
+  - Dump stamp: `20261025164747`, from 2026-10-25 16:47:47 UTC, read with `date` on the server just before `pg_dump`. It was taken with `docker exec supabase-db pg_dump -U supabase_admin -d postgres --schema-only`: pg_dump 15.8 against server 15.8, 7975 lines. No migration was open in manual-checks at the time.
+  - Location: `supabase/schema/baseline.sql` in the main checkout (C:\work\deun), untracked and not ignored. A build in a worktree copies it from there. The Privacy guard unit runs on it before anything under supabase/schema/ is staged; until then nobody stages that folder.
+  - A first look on 2026-10-25 shows what the build can expect:
+    - It holds `CREATE PUBLICATION supabase_realtime` plus `ADD TABLE ONLY` for exactly expense_update_checker, friendship and group_update_checker, and a second stack publication, `supabase_realtime_messages_publication`.
+    - It holds the stack schemas `_realtime`, auth, extensions, graphql, graphql_public, pgbouncer, pgsodium, realtime, storage, supabase_functions and vault.
+    - It has no `COPY`, `INSERT` or `setval`, no JWT, key or password-hash shape, and no email outside `guest.invalid`.
+    - The one secret-shaped hit is the column definition `jwt_secret text` in `_realtime.tenants`. The guard's `jwt_secret` shape must match a setting value, not a column name, and a planted-sample case pins that.
+    - pg_dump warned of circular foreign keys on `pgsodium.key`. That only matters for a data-only restore, so it does not matter here.
+  - The earlier 2026-10-24 12:48 public-only dump (supabase/remote_dump/deun_schema.sql) is superseded. What it showed still holds (research/code-review-2026-10.md, "Answered by the live instance"):
     - Chain coverage should come out clean. Every function, column and index the 11 pre-dump migrations create is present, `claim_set_unit_shares` included.
     - No reconciliation migration is expected. `match_contacts_by_email` is defined live.
     - The privacy scan of that file finds no row data, no JWT, key or password shape, and no email outside `guest.invalid`.
     - Expect four live objects that no migration defines and no client calls: `pay_back_all`, `get_group_monthly_statistics`, `birthday_signup` and `"Friendship Status"`. The README lists them as live-only. Dropping them is not this feature's job.
-  - Queried live 2026-10-25: `supabase_realtime` holds exactly group_update_checker, expense_update_checker and friendship, so the publication criterion should pass on the unfiltered dump. There are no app triggers, so the "webhook carrying the service-role JWT" redaction case does not arise.
-  - The unfiltered dump also carries the stack's own schemas (auth, storage, realtime, vault, pgsodium, graphql, supabase_functions), which a fresh stack recreates. The README's app-owned/stack-provided split covers them, and the privacy guard runs over all of it. The `postgres` role cannot read every stack schema, so dump as `supabase_admin`: `docker exec supabase-db pg_dump -U supabase_admin -d postgres --schema-only > baseline.sql` in /root/supabase/docker.
+  - There are no app triggers, so the "webhook carrying the service-role JWT" redaction case does not arise.
+  - A fresh stack recreates its own schemas. The README's app-owned/stack-provided split covers them, and the privacy guard runs over all of it.
   - Conflict with Ignore files: on feature/expense-card-fee the working tree has an uncommitted .gitignore that drops the `supabase/schema.sql`, `supabase/seed.sql` and `supabase/push.ts` lines and adds `supabase/remote_dump/`. This plan rules that those three lines stay. Whichever is committed first, the other has to agree.
 
 ## Approach
@@ -78,4 +85,4 @@
 - Depends: —
 - Parallel-with: editor-failure-keeps-form, scan-total-applies, expense-search-escape, realtime-channel-lifecycle, notification-context-free, typed-expense-draft, presentation-file-split, housekeeping. None of these touches supabase/ or test/supabase/. Several also append to docs/ristretto/manual-checks.md, an append-only rebase. realtime-channel-lifecycle keeps `subscribeToChannel`'s signature, so the realtime scanner is unaffected.
 
-status: blocked
+status: planned
