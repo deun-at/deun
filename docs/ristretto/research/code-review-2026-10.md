@@ -1,0 +1,112 @@
+# code-review-2026-10 — research
+Researched: 2026-10-22 · at commit 439b7d5 · reached: repo code + tests, docs/ristretto (roadmap, manual-checks, 25 archived plans), docs/CODE_REVIEW_2026-07-07.md, IMPROVEMENT_PLAN.md, pubspec.lock + pub cache, supabase.com realtime docs · not reached: live self-hosted instance api.deun.app (schema, RLS, publication, device_tokens); source of the `push`, `delete-user-account`, `send-contact-email`, `parse-receipt` Edge Functions (not in the repo)
+
+## Why
+Not stated.
+Candidates (proposals — a person picks or rewrites):
+- Group members using the app · noticed by: a failed save or delete no longer throws away the form, a retried payback no longer double-records, a joining guest no longer rewrites history outside the group
+- Push recipients · noticed by: no push on a device after its user signed out; text arrives in the receiver's language; only members of a shared group can be targeted
+- Jakob as sole maintainer · noticed by: the backend rebuilds from `supabase/migrations/`, the fallback code paths are gone, the 1500–1900-line files open in pieces
+
+## Domain
+- Realtime postgres_changes: `in` filter max 100 values; conditions combine with AND only — "OR is not supported" · source: https://supabase.com/docs/guides/realtime/postgres-changes, 2026-10-22 · proposed → domain/supabase-realtime.md
+- Realtime: "RLS policies are not applied to DELETE statements"; filtering DELETE events needs `replica identity full`; every event is authorized against each subscriber · source: same page, 2026-10-22 · proposed → domain/supabase-realtime.md
+
+## As-is
+- Exists: lib/pages/expenses/presentation/expense_detail.dart — `_saveExpense` (1117-1223): catch resets CTA + snackbar, then `finally` (1214) pops whenever mounted, so a failed save closes the editor · for editor-failure-keeps-form
+- Exists: lib/pages/expenses/presentation/expense_detail.dart — `openDeleteItemDialog` (467-537) `finally` pops dialog + editor after a failed delete too; State exposes public `groupMembers` (127), `detectAndUpdateCategory` (447), `openDeleteItemDialog`; `groupColor` (128) is never read · for editor-failure-keeps-form
+- Exists: test/widgets/expense_save_status_test.dart — `_GatedSave(throwing:)` over the `ExpenseSaver` seam; the failure test asserts no check, never pop/no-pop, so keeping the form contradicts no test · for editor-failure-keeps-form
+- Exists: lib/pages/groups/presentation/payback_detail_sheet.dart — `ExpenseDeleter` seam over `ExpenseRepository.delete`; the editor has no delete seam (only `loadGroupPaybacks`) · for editor-failure-keeps-form
+- Already settled: a failed write keeps its SnackBar, CTA back to idle, never a check — save-status-rollout (acceptance) · for editor-failure-keeps-form
+- Exists: lib/helper/realtime_mixin.dart — retry `Future.delayed` (142) is untracked; `disposeChannels` (197) and `resubscribeChannels` (165) never cancel it; the closure calls `_ref?.read` (149/152) on a possibly disposed Ref · for realtime-channel-lifecycle
+- Exists: lib/pages/expenses/provider/expense_list.dart — onEvent (26-62) awaits `fetchDetail` then writes `state` unguarded; `reload` (70) and `loadMoreEntries` (87) do check `ref.mounted` · for realtime-channel-lifecycle
+- Exists: lib/navigation.dart — `paused` → `supabase.removeAllChannels()` (643); resume bumps `appResumeCounterProvider`, so every mixin user resubscribes at once · for realtime-channel-lifecycle
+- Touches: lib/pages/expenses/provider/claim_notifier.dart — fifth mixin user (presence channel); any mixin change reaches it · for realtime-channel-lifecycle
+- Exists: lib/pages/groups/provider/group_list.dart — unfiltered `group_update_checker` channel; async onEvent calls `fetchDetail` (`.single()`, group_repository.dart:135-140) with no try/catch, no mounted check, no ordering · for realtime-event-scope
+- Exists: lib/pages/friends/provider/friendship_list.dart — unfiltered `friendship` + `group_update_checker` channels into one 2 s debounced full reload (61-66) · for realtime-event-scope
+- Exists: lib/pages/groups/provider/group_detail.dart — the pattern to copy: `group_id=eq` filter, onEvent → guarded `reload` · for realtime-event-scope
+- Exists: supabase/migrations/20260815000000_baseline_ledger_functions.sql — `group_update_checker(group_id, created_at)` unique on group_id, `expense_update_checker` unique on (group_id, expense_id); only `update_group_member_shares` writes them; no member column to filter on · for realtime-event-scope
+- Exists: pubspec.lock — realtime_client 2.7.1 has `PostgresChangeFilterType.inFilter`, one column per filter; friendship matches requester OR addressee, which one filter cannot express · for realtime-event-scope
+- Exists: docs/ristretto/plans/archived/group-currency-persist.md — 110 groups in the whole instance (2026-08-16): a per-user `group_id=in.(…)` sits far below the 100 cap · for realtime-event-scope
+- Exists: lib/navigation.dart — `_handlePush` (494-544) adds `onMessageOpenedApp` + `onTokenRefresh` listeners never stored or cancelled; `dispose` (653) cancels only the deep-link subscription, which is already correct · for push-session-lifecycle
+- Exists: lib/auth_gate.dart — shows `LoginScreen` while signed out and a fresh `NavigationScreen` per sign-in, so listeners stack once per sign-in · for push-session-lifecycle
+- Exists: lib/navigation.dart — `device_tokens.upsert({user_id, token})` (502, 532) with no `onConflict`, so the conflict target is the table's PK, which is not in the repo · for push-session-lifecycle
+- Exists: lib/pages/settings/setting.dart — sign-out (241) is bare `signOut()`; settings_sheets.dart:340-341 invokes `delete-user-account` then `signOut()`; no code deletes a `device_tokens` row · for push-session-lifecycle
+- Already settled: sign-out side effects live in one central auth listener (`AuthUserSwitchListener`, lib/provider.dart), not at call sites — auth-switch-stale-providers · for push-session-lifecycle, injectable-repositories
+- Exists: lib/helper/helper.dart — group/payback/reminder/expense senders (395-572) call `AppLocalizations.of(context)` inside `.then` after a select; friend senders (574-635) resolve l10n first but use `currentUser!` · for notification-context-free
+- Exists: lib/pages/groups/data/group_repository.dart — `payBack(context, …)` (539) uses context only to notify (605); `payBackAll(context, …)` (685) passes `sendNotification: false` and nothing else notifies, so settle-all sends no push · for notification-context-free
+- Exists: lib/pages/expenses/data/expense_repository.dart — `saveAll(context, …)` (182) uses context only for `sendExpenseNotification` on create (405) · for notification-context-free, typed-expense-draft
+- Exists: lib/pages/expenses/presentation/claim_page.dart — `ClaimNotificationSender` spy seam; group_members_page.dart has `notifyOverride` · for notification-context-free
+- Exists: lib/pages/groups/data/group_model.dart — `loadDataFromJson` (103-148) catch-all around the summary calc only `debugPrint`s, leaving `late` `groupSharesSummary`/`totalExpenses`/`totalShareAmount` (34-36) unset; reads `supabase.auth` (41, 139) · for group-model-parse-safety, injectable-repositories
+- Exists: test/model/group_settlement_test.dart — calls `calculateGroupSharesSummary*` directly with an explicit user email: the seam exists · for group-model-parse-safety
+- Exists: lib/pages/expenses/presentation/expense_detail.dart — `_scanReceipt` total-only branch (1103-1108) sets `initialAmount` on an already-built field; the keypad path (903-918) writes `_amountController.text` + `field.didChange` · for scan-total-applies
+- Exists: test/widgets/expense_itemized_editor_test.dart — scans enter only through the `receiptResult` constructor param; `_scanReceipt` opens `ReceiptScannerSheet` with no seam, so a rescan test needs one · for scan-total-applies
+- Exists: lib/pages/expenses/data/expense_repository.dart — `fetchData` `ilike('name', '%$filter%')` (25) unescaped; sole filtering caller group_detail.dart:345 · for expense-search-escape
+- Exists: lib/pages/friends/data/friendship_repository.dart — precedent strips `%_,()\` before ilike (131); `sanitizeFilterValue` (helper.dart:38) strips `%,()\` but not `_` · for expense-search-escape
+- Exists: lib/pages/groups/presentation/group_join_page.dart — `_joinGroup` (92-171): `expense.paid_by` + `expense_entry_share.email` updated by guest email only (135-144), group_member delete, unconditional `user` delete (154), recalc: 5 client writes, the app's one layering violation · for guest-merge-rpc
+- Exists: lib/pages/users/user_repository.dart — guest emails are unique per creation (`guest+<ts><rand>@guest.invalid`, 156) and searches exclude `is_guest`, so cross-group damage needs one guest in two groups · for guest-merge-rpc
+- Already settled: `resolveGroupJoin`/`GroupJoinPlan` decides insert, `removed_at` clear and merge independently — group-member-removal (Provides) · for guest-merge-rpc
+- Already settled: advice, not a ruling — one group-scoped RPC; delete the `user` row only with no memberships left; call via GroupRepository — docs/CODE_REVIEW_2026-07-07.md §1.1 · for guest-merge-rpc
+- Exists: lib/pages/groups/data/group_repository.dart — `payBack` (539-623): `pay_back_exact` (fallback `pay_back`), then a separate `update_group_member_shares` retried once (593-603); failure there throws after the payback committed · for payback-atomic-recalc
+- Exists: supabase/migrations/20260816010000_payback_on_behalf.sql — `pay_back` inserts only; `save_expense_all`/`save_group_all`/`claim_set_unit_shares` already `perform update_group_member_shares` in-transaction (precedent) · for payback-atomic-recalc
+- Already settled: the payback insert lives only in `pay_back`; `pay_back_exact` delegates; guards go into `pay_back`, not a new RPC — payback-on-behalf, settle-residue · for payback-atomic-recalc
+- Already settled: any member may record a payback for any two members; the both-party notification and recorded-by are load-bearing — payback-on-behalf · for payback-atomic-recalc, push-server-compose
+- Exists: test/model/group_repository_test.dart — pure `planPayBack`/`payBackRpcParams` seams; `PaybackRecorder` (record_payback_sheet) and `FriendSettleAll` (friend_detail_sheet) bypass the repository in widget tests · for payback-atomic-recalc
+- Exists: lib/pages/groups/data/group_repository.dart — `addMember` (394-433) select→write→recalc; `removeMember` (350-385) two reads→write→recalc; `delete` (728-734) `group` then `group_update_checker` · for member-write-rpcs
+- Already settled: block while unsettled / soft-remove with history / hard-remove without; removal never changes ledger math — group-member-removal · for member-write-rpcs
+- Already settled: membership writes are immediate and independent of the form; preview before write, and `removeMember` re-resolves to catch a moved balance — group-member-add-flow · for member-write-rpcs
+- Exists: lib/pages/groups/presentation/group_members_page.dart — add/remove/preview/notify override seams, used by test/pages/groups/group_member_add_flow_test.dart · for member-write-rpcs
+- Exists: supabase/migrations/ — defines get_user_spending_summary, save_expense_all, save_group_all, claim_set_unit_shares, explode_itemized_entries, pay_back, pay_back_exact, update_group_member_shares; no CREATE TABLE, RLS, policy, publication or trigger anywhere · for schema-baseline
+- Exists: lib/pages/users/user_repository.dart — `match_contacts_by_email` (74) is the only client RPC with no definition in migrations · for schema-baseline
+- Exists: supabase/migrations/20260815000000_baseline_ledger_functions.sql — precedent: captured "EXACTLY as they run in production", known defects kept; manual-checks marks it safe to skip · for schema-baseline
+- Exists: supabase/config.toml — local CLI stack config (Postgres 15, realtime + edge_runtime on, seed on, no seed.sql); Docker is installed here, the supabase CLI and deno are not · for schema-baseline
+- Exists: supabase/functions/ — only `exchange-rate/`; lib invokes `push`, `delete-user-account`, `send-contact-email`, `parse-receipt`, none in the repo · for schema-baseline, push-server-compose
+- Already settled: advice — put schema, RLS, RPCs and indexes in migrations; check account-delete FK cascades and the `delete-user-account` function — IMPROVEMENT_PLAN.md §1.5 · for schema-baseline
+- Exists: docs/ristretto/manual-checks.md — instance unreachable from the build; migrations applied by hand by Jakob; Applied: `pay_back_exact`, `save_group_all`, guarded `pay_back` (2026-08-16), `save_expense_all` (2026-09-11) · for legacy-fallback-removal
+- Exists: test/pages/expenses/expense_rate_migration_test.dart — calls 20260618000000 (`claim_set_unit_shares`) "previously-applied" (75); pins a `multi-currency-expense-rate` entry above `## Applied` in manual-checks · for legacy-fallback-removal, schema-baseline
+- Exists: docs/ristretto/plans/archived/group-currency-persist.md — checked against production 2026-08-16: `_saveAllLegacy` "only runs when the RPC is missing, and it isn't" · for legacy-fallback-removal
+- Exists: lib/pages/expenses/data/expense_repository.dart — `_saveAllLegacy` (429) and `_claimSetUnitSharesLegacy` (521), gated by `isMissingFunctionError` (401, 509) · for legacy-fallback-removal
+- Exists: lib/pages/groups/data/group_repository.dart — `_saveAllLegacy` (276) is the only caller of `resolveMemberWrite`/`GroupMemberWrite` (untested); `_payBackExactMissing` + `pay_back` fallback (578-588) · for legacy-fallback-removal
+- Exists: lib/helper/helper.dart — `isMissingFunctionError` (19) has no other callers; `isMissingColumnError` stays (currency probe, expense_repository.dart:564); no test references any fallback · for legacy-fallback-removal
+- Already settled: settle-residue's Provides lists the memoized `pay_back` fallback, so removing it changes that contract · for legacy-fallback-removal
+- Exists: lib/helper/helper.dart — `sendNotification` (637-665) posts `push` `{type:'INSERT', table:<type>, record:{type, object_id, title, body, notification_receiver:[emails]}}`, dropping only the sender; types sent: group, expense (incl. claim nudge), reminder, friendship · for push-server-compose
+- Exists: lib/navigation.dart — `_handleMessage` (546-576) reads `data['type']` and `data['expense_id']`; for 'group' it feeds `expense_id` to `GroupRepository.fetchDetail`, so the server maps object_id→expense_id; 'reminder' has no case · for push-server-compose
+- Exists: lib/navigation.dart — `_initUserLocale` (440-456) reads `user.locale`: the receiver locale is stored server-side · for push-server-compose
+- Already settled: Edge Functions follow the exchange-rate pattern and deploy by force-recreate; server code is proven by source-shape tests (test/pages/expenses/exchange_rate_function_test.dart) — multi-currency-rate-source · for push-server-compose, schema-baseline
+- Exists: lib/pages/expenses/data/expense_repository.dart — `saveAll` regex-parses `expense_entry[i][field]` keys (207-221); the `ExpenseSaver` typedef (expense_detail.dart:71) mirrors this signature and 2 tests pass `saveExpense:` · for typed-expense-draft
+- Touches: lib/pages/expenses/data/claimable_form.dart — builds `expense_entry[` keys, as do expense_model.dart, expense_detail.dart (8), expense_entry_widget.dart (8) · for typed-expense-draft
+- Touches: test/model/mark_entries_claimable_test.dart — 20 `expense_entry[` keys; also expense_entry_claim_test (8), expense_provenance_test (5), expense_editor_currency_rate_test (5) · for typed-expense-draft
+- Already settled: conversion happens client-side at entry, before the write; RPC arithmetic untouched — multi-currency-expense-rate · for typed-expense-draft
+- Exists: lib/pages/expenses/presentation/expense_detail.dart — 1898 lines (1098 at the 2026-07-07 review); 1 lib importer, 8 test importers · for expense-editor-split
+- Exists: lib/pages/expenses/presentation/claim_page.dart — 1631 lines, 3 test importers · for presentation-file-split
+- Exists: lib/pages/expenses/presentation/expense_entry_widget.dart — 1477 lines, imported by expense_detail.dart and 2 tests · for presentation-file-split
+- Already settled: advice — claim_page and expense_detail "cohesive … Leave alone"; move expense_entry_widget's rebalancing math into split_allocation.dart — CODE_REVIEW_2026-07-07 §6 · for expense-editor-split, presentation-file-split
+- Exists: lib/pages/groups/data/group_repository.dart — 809 lines, one of 5 static repositories; lib/test importers: group 11/3, expense 9/1, user 8/1, friendship 7/0, reminder 1/0 · for injectable-repositories
+- Exists: lib/pages/friends/data/friendship_model.dart — reads `supabase.auth` (39), like group_model; 82 `supabase.auth` reads across 33 lib files · for injectable-repositories
+- Exists: test/pages/groups/group_member_removal_test.dart — one of 29 test files that `Supabase.initialize` a dummy localhost URL only to satisfy the global client; per-widget function overrides are today's seams · for injectable-repositories
+- Already settled: advice — static repositories "unmockable … Leave alone unless integration tests become a goal" — CODE_REVIEW_2026-07-07 §6 · for injectable-repositories
+- Exists: lib/helper/helper.dart — 737 lines: error predicates, money/settled math, formatting, snackbars, push senders, navigation helpers; 48 lib + 37 test importers · for helper-split
+- Already settled: `isSettled`/`kSettledEpsilon` are the single settled predicate in helper.dart (settle-residue); `navigateToExpense`→`openLedgerExpense` live there (expense-notification-route) · for helper-split
+- Exists: lib/navigation.dart — 11 `state.extra as Map<String, dynamic>` casts (126-290, only `edit` nullable); 21 `extra:` sites in 9 lib files; hash URLs on web, so refreshing `#/group/details` hits a null cast · for typed-routes
+- Exists: test/widgets/screen_transition_test.dart — reads lib/navigation.dart source: no `CustomTransitionPage`, ≥17 `MaterialPage(`; moving routes out of the file reddens it · for typed-routes, push-session-lifecycle
+- Already settled: advice — IDs + refetch "only if web deep-linking becomes a real complaint"; split navigation.dart into navigation / push_notifications / deep_links when push is next touched — CODE_REVIEW_2026-07-07 §6 · for typed-routes, push-session-lifecycle
+- Exists: lib/widgets/form_loading_widget.dart — like rounded_container, search_view and sliver_grab_widget: zero importers in lib/ and test/ · for housekeeping
+- Exists: lib/navigation.dart — `/dev/gallery` (422-427, "Throwaway dev/QA route") is registered in every build; the deep-link allowlist rejects it, but on web it opens by URL · for housekeeping
+- Exists: lib/main.dart — `_firebaseMessagingBackgroundHandler` (15-27) initializes Firebase + Supabase, then only `debugPrint`s · for housekeeping
+- Exists: android/build/reports/problems/problems-report.html — tracked along with android/build/.last_build_id, and the report is modified in the working tree; only `/build/` is ignored, not android/build · for housekeeping
+- Exists: test/docs/ristretto_links_test.dart — every relative `.md` link under docs/ristretto must resolve; child plans citing this file must link it correctly · for all
+
+## Open
+- RLS and `supabase_realtime` membership of `group_update_checker`, `expense_update_checker`, `friendship`, `device_tokens` — nothing in the repo; only the live instance knows. It decides whether realtime-event-scope can rely on RLS (inserts/updates; deletes are never RLS-filtered) or must filter by `in.(group ids)` plus two friendship channels
+- Realtime server version on the self-hosted instance: the 2026 docs allow AND-combined filters; whether the deployed image does too is unverified (the client sends one filter)
+- `device_tokens` PK and columns: PK `token` means one user per device; `(user_id, token)` means a signed-out user still gets pushes on that device
+- Deleting the token needs the session (RLS), so it must run before `signOut()`, but the settled central listener fires after `signedOut`: reconcile with auth-switch-stale-providers
+- Does `delete-user-account` already remove `device_tokens` rows or cascade? Its source is not in the repo
+- The `push` function's server contract (receiver lookup, the object_id→`expense_id` mapping, any membership check) is inferred from the client only; push-server-compose needs its source recovered from the instance first
+- Is `claim_set_unit_shares` live? The evidence is a test comment, not the Applied table. Confirm before deleting `_claimSetUnitSharesLegacy`
+- Guest merge rewrites rows of other members and deletes a `user` row; every RPC here is SECURITY INVOKER. Whether RLS allows that or the RPC needs SECURITY DEFINER with its own membership check is unknown
+- expense-search-escape: strip `%`/`_` (friendship precedent) or escape them so they match literally? A product call
+- Settle-all with a friend sends no push today. Intended, or a regression? It decides whether notification-context-free adds one
+- `ExpenseRepository.delete` (expense_repository.dart:569-579) has the same three-statement non-atomic shape as the member writes but belongs to none of the 21 features
+- The CODE_REVIEW_2026-07-07 §6 "leave alone" advice conflicts with expense-editor-split, injectable-repositories, typed-routes and presentation-file-split; a person decides whether it still stands
+- Making supabase/config.toml + Docker the local verification path after schema-baseline would give RPC criteria (guest-merge-rpc, payback-atomic-recalc, member-write-rpcs) a reachable test instead of `[human]`. Adopting it is a decision, and the CLI is not installed
