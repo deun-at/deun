@@ -1,8 +1,8 @@
 # group-membership
 
 Handoff doc for the design session on group membership. Engineering contracts live in three plans
-([member-removal](archived/group-member-removal.md) · [create-simplify](archived/group-create-simplify.md) →
-[add-flow](archived/group-member-add-flow.md)); this file pivots them by **surface** so each screen is
+(member-removal · create-simplify →
+add-flow); this file pivots them by **surface** so each screen is
 designed once. Apply changes to the existing screens — don't rebuild.
 
 **Product model (the rules everything follows):**
@@ -102,7 +102,7 @@ Today this is a `SearchAnchor` embedded as a form field inside group edit. It be
    The other three surfaces hang off this, and what they inherit is the absence of a case.
 2. **Guest vs real user** — distinguished by one small `Guest` label on the roster row, and
    nowhere else. It exists for a single reason: a guest receives no notification, so someone
-   recording a payback on their behalf (see [payback-on-behalf](archived/payback-on-behalf.md))
+   recording a payback on their behalf (see payback-on-behalf)
    needs to know nobody is being told. Avatars stay identical — guests have no photo anyway, so a
    separate avatar treatment would encode nothing the initials don't.
 3. **Immediate-save feedback** — **the roster is the receipt.** The member appearing in the list

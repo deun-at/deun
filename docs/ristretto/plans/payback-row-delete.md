@@ -20,7 +20,7 @@
     case.
   - [ ] [human] On the live instance, deleting a payback row leaves `group_shares_summary` agreeing with
     the ledger — see the open question below, which is the whole risk of this feature.
-    how: [manual-checks.md](../../manual-checks.md) — confirm a deleted payback reopens the
+    how: manual-checks.md — confirm a deleted payback reopens the
       settlement in `group_shares_summary` on the live instance
   - [auto] `flutter analyze` and `flutter test` pass.
 - Provides:

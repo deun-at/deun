@@ -86,7 +86,7 @@
 - Deferred DB work: needs new columns for the entry's original currency, the frozen rate and the
   converted amount. Author the migration, write the model and editor against its post-migration
   shape, test the conversion and freezing logic as pure functions with fixtures, mark the
-  persistence criteria `[deferred]`, and append to [manual-checks.md](../../manual-checks.md). The rate maths
+  persistence criteria `[deferred]`, and append to manual-checks.md. The rate maths
   is the risky part and it is fully testable without a database — put the effort there.
 
 ## Approach
@@ -174,8 +174,8 @@ remains untested; pre-existing, not introduced here.
 
 Design: the surfaces this feature added had no design pass at first — the flight's brief predated the
 replan and explicitly forbade an expense-level currency picker. `12a5f84` closed that, and
-[multi-currency-design-brief](../multi-currency-design-brief.md) was rewritten against what shipped.
+[multi-currency-design-brief](multi-currency-design-brief.md) was rewritten against what shipped.
 
 ## Manual checks (migrated)
 
-- [manual-checks.md](../../manual-checks.md) — apply and verify `20260816020000_expense_entry_currency_rate.sql`
+- manual-checks.md — apply and verify `20260816020000_expense_entry_currency_rate.sql`
