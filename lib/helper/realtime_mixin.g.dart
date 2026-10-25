@@ -132,3 +132,59 @@ abstract class _$RealtimeConnectionStatus extends $Notifier<bool> {
     element.handleCreate(ref, build);
   }
 }
+
+/// The channel factory every [RealtimeNotifierMixin] opens through. Tests
+/// replace it with `realtimeChannelFactoryProvider.overrideWithValue(...)`.
+
+@ProviderFor(realtimeChannelFactory)
+final realtimeChannelFactoryProvider = RealtimeChannelFactoryProvider._();
+
+/// The channel factory every [RealtimeNotifierMixin] opens through. Tests
+/// replace it with `realtimeChannelFactoryProvider.overrideWithValue(...)`.
+
+final class RealtimeChannelFactoryProvider
+    extends
+        $FunctionalProvider<
+          RealtimeChannelFactory,
+          RealtimeChannelFactory,
+          RealtimeChannelFactory
+        >
+    with $Provider<RealtimeChannelFactory> {
+  /// The channel factory every [RealtimeNotifierMixin] opens through. Tests
+  /// replace it with `realtimeChannelFactoryProvider.overrideWithValue(...)`.
+  RealtimeChannelFactoryProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'realtimeChannelFactoryProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$realtimeChannelFactoryHash();
+
+  @$internal
+  @override
+  $ProviderElement<RealtimeChannelFactory> $createElement(
+    $ProviderPointer pointer,
+  ) => $ProviderElement(pointer);
+
+  @override
+  RealtimeChannelFactory create(Ref ref) {
+    return realtimeChannelFactory(ref);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(RealtimeChannelFactory value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<RealtimeChannelFactory>(value),
+    );
+  }
+}
+
+String _$realtimeChannelFactoryHash() =>
+    r'e3828d51ffee6bddda8fa3472f570b93c5ceddd6';

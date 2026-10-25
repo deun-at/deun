@@ -21,7 +21,7 @@
 | Flight | Feature | Title | Tier | Status |
 |--------|---------|-------|------|--------|
 | review-bugs | editor-failure-keeps-form | A failed save or delete keeps the expense editor and its input | normal | done |
-| review-bugs | realtime-channel-lifecycle | Realtime retries never outlive or duplicate a channel | normal | planned |
+| review-bugs | realtime-channel-lifecycle | Realtime retries never outlive or duplicate a channel | normal | done |
 | review-bugs | realtime-event-scope | Group and friend lists hear only the user's own groups and friendships | normal | planned |
 | review-bugs | push-session-lifecycle | Push registration lives and dies with the signed-in session | normal | planned |
 | review-bugs | notification-context-free | Pushes survive the screen that sent them | normal | planned |

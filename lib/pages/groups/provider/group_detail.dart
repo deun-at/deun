@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart' show protected, visibleForTesting;
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -8,7 +9,8 @@ import '../data/group_repository.dart';
 part 'group_detail.g.dart';
 
 @riverpod
-class GroupDetailNotifier extends _$GroupDetailNotifier with RealtimeNotifierMixin {
+class GroupDetailNotifier extends _$GroupDetailNotifier
+    with RealtimeNotifierMixin {
   @override
   FutureOr<Group> build(String groupId) async {
     disposeChannels();
@@ -18,7 +20,11 @@ class GroupDetailNotifier extends _$GroupDetailNotifier with RealtimeNotifierMix
       ref: ref,
       channelName: 'group_detail:$groupId',
       table: 'group_update_checker',
-      filter: PostgresChangeFilter(type: PostgresChangeFilterType.eq, column: 'group_id', value: groupId),
+      filter: PostgresChangeFilter(
+        type: PostgresChangeFilterType.eq,
+        column: 'group_id',
+        value: groupId,
+      ),
       onEvent: (payload) async {
         await reload(groupId);
       },
@@ -26,11 +32,18 @@ class GroupDetailNotifier extends _$GroupDetailNotifier with RealtimeNotifierMix
 
     listenForResume(ref: ref, onResume: () => reload(groupId));
 
-    return await GroupRepository.fetchDetail(groupId);
+    return await fetchGroup(groupId);
   }
+
+  @visibleForTesting
+  @protected
+  Future<Group> fetchGroup(String groupId) =>
+      GroupRepository.fetchDetail(groupId);
 
   Future<void> reload(String groupId) async {
     if (!ref.mounted) return;
-    state = await AsyncValue.guard(() async => await GroupRepository.fetchDetail(groupId));
+    final result = await AsyncValue.guard(() => fetchGroup(groupId));
+    if (!ref.mounted) return;
+    state = result;
   }
 }

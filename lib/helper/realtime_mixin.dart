@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -28,6 +30,90 @@ class RealtimeConnectionStatus extends _$RealtimeConnectionStatus {
   void markConnected() => state = true;
 }
 
+/// One open realtime channel, as [RealtimeChannelFactory.open] returns it.
+/// The mixin never touches a `RealtimeChannel` directly.
+abstract interface class RealtimeChannelHandle {
+  /// Tracks [payload] as this client's presence on the channel.
+  void track(Map<String, dynamic> payload);
+
+  /// Unsubscribes and removes the channel.
+  void close();
+}
+
+/// The one place a realtime channel is created. [onEvent] receives every
+/// postgres change on [table] (narrowed by [filter]), [onStatus] every
+/// subscribe status report, and [onPresence], when set, the distinct
+/// presence-key count on every presence sync/join/leave.
+abstract interface class RealtimeChannelFactory {
+  RealtimeChannelHandle open({
+    required String channelName,
+    required String table,
+    PostgresChangeFilter? filter,
+    required void Function(PostgresChangePayload payload) onEvent,
+    required void Function(RealtimeSubscribeStatus status, Object? error)
+    onStatus,
+    void Function(int presentCount)? onPresence,
+  });
+}
+
+/// [RealtimeChannelFactory] over the app's Supabase client.
+class SupabaseRealtimeChannelFactory implements RealtimeChannelFactory {
+  const SupabaseRealtimeChannelFactory();
+
+  @override
+  RealtimeChannelHandle open({
+    required String channelName,
+    required String table,
+    PostgresChangeFilter? filter,
+    required void Function(PostgresChangePayload payload) onEvent,
+    required void Function(RealtimeSubscribeStatus status, Object? error)
+    onStatus,
+    void Function(int presentCount)? onPresence,
+  }) {
+    late final RealtimeChannel channel;
+    var builder = supabase
+        .channel(channelName)
+        .onPostgresChanges(
+          event: PostgresChangeEvent.all,
+          schema: 'public',
+          table: table,
+          filter: filter,
+          callback: onEvent,
+        );
+    final presence = onPresence;
+    if (presence != null) {
+      // Distinct present members = distinct presence keys (one key per member;
+      // a member open on two devices still counts once).
+      void emitPresence() => presence(channel.presenceState().length);
+      builder = builder
+          .onPresenceSync((_) => emitPresence())
+          .onPresenceJoin((_) => emitPresence())
+          .onPresenceLeave((_) => emitPresence());
+    }
+    channel = builder.subscribe(onStatus);
+    return _SupabaseChannelHandle(channel);
+  }
+}
+
+class _SupabaseChannelHandle implements RealtimeChannelHandle {
+  _SupabaseChannelHandle(this._channel);
+
+  final RealtimeChannel _channel;
+
+  @override
+  void track(Map<String, dynamic> payload) =>
+      unawaited(_channel.track(payload));
+
+  @override
+  void close() => unawaited(supabase.removeChannel(_channel));
+}
+
+/// The channel factory every [RealtimeNotifierMixin] opens through. Tests
+/// replace it with `realtimeChannelFactoryProvider.overrideWithValue(...)`.
+@Riverpod(keepAlive: true)
+RealtimeChannelFactory realtimeChannelFactory(Ref ref) =>
+    const SupabaseRealtimeChannelFactory();
+
 /// Stored channel configuration for replay after app resume.
 class _ChannelConfig {
   final String channelName;
@@ -43,6 +129,10 @@ class _ChannelConfig {
   final void Function(int presentCount)? onPresence;
   final Map<String, dynamic>? presencePayload;
 
+  /// Read once per subscribe from [realtimeChannelFactoryProvider], so a retry
+  /// never touches a Ref.
+  final RealtimeChannelFactory factory;
+
   _ChannelConfig({
     required this.channelName,
     required this.table,
@@ -50,7 +140,25 @@ class _ChannelConfig {
     required this.onEvent,
     this.onPresence,
     this.presencePayload,
+    required this.factory,
   });
+}
+
+/// The one live channel of a config. [generation] advances whenever that
+/// channel is replaced or closed; each callback carries the generation it was
+/// opened under and is dropped once that is no longer current.
+class _ChannelSlot {
+  _ChannelSlot(this.config);
+
+  final _ChannelConfig config;
+  RealtimeChannelHandle? handle;
+  int generation = 0;
+
+  /// Retries spent in the current chain. Reset by a resubscribe.
+  int attempt = 0;
+
+  /// The pending retry, if any — at most one per config.
+  Timer? retryTimer;
 }
 
 /// Mixin for Riverpod AsyncNotifiers that need Supabase real-time channel subscriptions.
@@ -58,18 +166,22 @@ class _ChannelConfig {
 /// Standardizes channel creation, cleanup, error handling, and disposal across all providers.
 /// Supports multiple channels per provider (e.g., FriendshipListNotifier).
 ///
+/// A channel lives exactly as long as its notifier's subscription: one live
+/// channel and at most one pending retry per config, and once
+/// [disposeChannels] has run nothing a channel reports reaches the notifier.
+///
 /// On app resume, channels are automatically re-subscribed from stored configs
 /// before calling the reload callback. This fixes the issue where
 /// `supabase.removeAllChannels()` on pause kills channels that were never
 /// re-established for providers using `listenForResume` instead of `ref.invalidate`.
 mixin RealtimeNotifierMixin {
-  final List<RealtimeChannel> _channels = [];
-  final List<_ChannelConfig> _configs = [];
+  final Map<String, _ChannelSlot> _slots = {};
   bool _isResubscribing = false;
   static const int _maxRetries = 3;
 
   /// Set in subscribeToChannel() via the required `ref` parameter.
-  /// Used to update the global connection status on failure/recovery.
+  /// Used to update the global connection status on failure/recovery; only a
+  /// live channel's callback reaches it, so it is never read after dispose.
   Ref? _ref;
 
   /// Subscribe to a Supabase Postgres changes channel.
@@ -95,83 +207,115 @@ mixin RealtimeNotifierMixin {
   }) {
     _ref = ref;
     // Prevent duplicate configs for the same channel
-    if (_configs.any((c) => c.channelName == channelName)) return;
+    if (_slots.containsKey(channelName)) return;
 
-    final config = _ChannelConfig(
-      channelName: channelName,
-      table: table,
-      filter: filter,
-      onEvent: onEvent,
-      onPresence: onPresence,
-      presencePayload: presencePayload,
+    final slot = _ChannelSlot(
+      _ChannelConfig(
+        channelName: channelName,
+        table: table,
+        filter: filter,
+        onEvent: onEvent,
+        onPresence: onPresence,
+        presencePayload: presencePayload,
+        factory: ref.read(realtimeChannelFactoryProvider),
+      ),
     );
-    _configs.add(config);
-    _createChannel(config);
+    _slots[channelName] = slot;
+    _open(slot);
   }
 
-  void _createChannel(_ChannelConfig config, {int retryAttempt = 0}) {
-    late final RealtimeChannel channel;
-    void emitPresence() {
-      // Distinct present members = distinct presence keys (one key per member;
-      // a member open on two devices still counts once).
-      config.onPresence?.call(channel.presenceState().length);
-    }
+  /// Opens [slot]'s channel under its current generation. Every callback
+  /// returns before touching the notifier, its Ref or the connection status
+  /// unless the slot is still its config's live slot on that generation, so
+  /// superseded, retried-away and disposed channels are all dropped here.
+  void _open(_ChannelSlot slot) {
+    final config = slot.config;
+    final generation = slot.generation;
+    bool isLive() =>
+        identical(_slots[config.channelName], slot) &&
+        slot.generation == generation;
+    final onPresence = config.onPresence;
 
-    var builder = supabase.channel(config.channelName).onPostgresChanges(
-          event: PostgresChangeEvent.all,
-          schema: 'public',
-          table: config.table,
-          filter: config.filter,
-          callback: (payload) {
-            config.onEvent(payload);
-          },
-        );
-    if (config.onPresence != null) {
-      builder = builder
-          .onPresenceSync((_) => emitPresence())
-          .onPresenceJoin((_) => emitPresence())
-          .onPresenceLeave((_) => emitPresence());
-    }
-    channel = builder.subscribe((status, error) {
-          debugPrint('---subscribe--- ${config.channelName} $status');
-          if (status == RealtimeSubscribeStatus.channelError ||
-              status == RealtimeSubscribeStatus.timedOut) {
-            debugPrint('---subscribe error--- ${config.channelName}: $error');
-            if (retryAttempt < _maxRetries) {
-              final delay = Duration(seconds: 1 << retryAttempt); // exponential backoff
-              Future.delayed(delay, () {
-                _channels.remove(channel);
-                supabase.removeChannel(channel);
-                _createChannel(config, retryAttempt: retryAttempt + 1);
-              });
-            } else {
-              debugPrint('---subscribe give up--- ${config.channelName} after $_maxRetries retries');
-              _ref?.read(realtimeConnectionStatusProvider.notifier).markDisconnected();
-            }
-          } else if (status == RealtimeSubscribeStatus.subscribed) {
-            _ref?.read(realtimeConnectionStatusProvider.notifier).markConnected();
-            final payload = config.presencePayload;
-            if (payload != null) channel.track(payload);
-          } else if (status == RealtimeSubscribeStatus.closed) {
-            debugPrint('---subscribe closed--- ${config.channelName}');
-          }
-        });
+    slot.handle = config.factory.open(
+      channelName: config.channelName,
+      table: config.table,
+      filter: config.filter,
+      onEvent: (payload) {
+        if (isLive()) config.onEvent(payload);
+      },
+      onStatus: (status, error) {
+        if (isLive()) _onStatus(slot, status, error);
+      },
+      onPresence: onPresence == null
+          ? null
+          : (count) {
+              if (isLive()) onPresence(count);
+            },
+    );
+  }
 
-    _channels.add(channel);
+  /// Closes [slot]'s channel and cancels its pending retry. The generation
+  /// advances first, so anything the closing channel still reports is stale.
+  void _retire(_ChannelSlot slot) {
+    slot.generation++;
+    slot.retryTimer?.cancel();
+    slot.retryTimer = null;
+    slot.handle?.close();
+    slot.handle = null;
+  }
+
+  void _onStatus(
+    _ChannelSlot slot,
+    RealtimeSubscribeStatus status,
+    Object? error,
+  ) {
+    final config = slot.config;
+    debugPrint('---subscribe--- ${config.channelName} $status');
+    switch (status) {
+      case RealtimeSubscribeStatus.channelError ||
+          RealtimeSubscribeStatus.timedOut:
+        debugPrint('---subscribe error--- ${config.channelName}: $error');
+        // realtime_client 2.7.1 can report one failure twice (its _onError
+        // hook and the join push's error reply): one pending retry per config.
+        if (slot.retryTimer != null) return;
+        if (slot.attempt < _maxRetries) {
+          final delay = Duration(
+            seconds: 1 << slot.attempt,
+          ); // exponential backoff
+          slot.retryTimer = Timer(delay, () {
+            slot.attempt++;
+            _retire(slot);
+            _open(slot);
+          });
+        } else {
+          debugPrint(
+            '---subscribe give up--- ${config.channelName} after $_maxRetries retries',
+          );
+          _ref
+              ?.read(realtimeConnectionStatusProvider.notifier)
+              .markDisconnected();
+        }
+      case RealtimeSubscribeStatus.subscribed:
+        _ref?.read(realtimeConnectionStatusProvider.notifier).markConnected();
+        final payload = config.presencePayload;
+        if (payload != null) slot.handle?.track(payload);
+      case RealtimeSubscribeStatus.closed:
+        debugPrint('---subscribe closed--- ${config.channelName}');
+    }
   }
 
   /// Re-subscribe all channels from stored configs.
-  /// Called automatically on app resume to restore channels killed by removeAllChannels().
+  /// Called automatically on app resume to restore channels killed by
+  /// removeAllChannels(). Each config's channel and pending retry are replaced
+  /// by one fresh channel with a fresh retry budget.
   void resubscribeChannels() {
     if (_isResubscribing) return;
     _isResubscribing = true;
 
-    for (final channel in _channels) {
-      supabase.removeChannel(channel);
-    }
-    _channels.clear();
-    for (final config in _configs) {
-      _createChannel(config);
+    for (final slot in _slots.values) {
+      _retire(slot);
+      slot.attempt = 0;
+      _open(slot);
     }
 
     // Reset on next microtask so rapid resume events within the same
@@ -182,23 +326,21 @@ mixin RealtimeNotifierMixin {
   /// Listen for app resume events. Automatically re-subscribes channels,
   /// then calls [onResume] to reload data.
   /// Call this in build() after subscribeToChannel().
-  void listenForResume({
-    required Ref ref,
-    required void Function() onResume,
-  }) {
+  void listenForResume({required Ref ref, required void Function() onResume}) {
     ref.listen(appResumeCounterProvider, (_, _) {
       resubscribeChannels();
       onResume();
     });
   }
 
-  /// Removes all channels and clears stored configs.
-  /// Call this at the start of build() before subscribing, and register via ref.onDispose.
+  /// Closes every channel, cancels every pending retry and forgets the
+  /// configs. Call this at the start of build() before subscribing, and
+  /// register it via ref.onDispose.
   void disposeChannels() {
-    for (final channel in _channels) {
-      supabase.removeChannel(channel);
+    final slots = _slots.values.toList();
+    _slots.clear();
+    for (final slot in slots) {
+      _retire(slot);
     }
-    _channels.clear();
-    _configs.clear();
   }
 }
