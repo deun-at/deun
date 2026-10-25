@@ -1,8 +1,7 @@
-# payback-row-delete — Undoing a recorded payment
+# payback-row-delete
 
 ## Spec
 - Source: idea (Jakob, 2026-09-11, found in the app while checking the rate prefill)
-- Flight: —
 - Goal: A payment recorded in error can be undone. Today a payback row is the only thing in the
   ledger that cannot be touched once written.
 
@@ -19,8 +18,10 @@
   - [auto] A payback recorded on someone else's behalf
     ([payback-on-behalf](payback-on-behalf.md)) deletes by the same path, with no special
     case.
-  - [human] On the live instance, deleting a payback row leaves `group_shares_summary` agreeing with
+  - [ ] [human] On the live instance, deleting a payback row leaves `group_shares_summary` agreeing with
     the ledger — see the open question below, which is the whole risk of this feature.
+    how: [manual-checks.md](../../manual-checks.md) — confirm a deleted payback reopens the
+      settlement in `group_shares_summary` on the live instance
   - [auto] `flutter analyze` and `flutter test` pass.
 - Provides:
   - `paybackCounterpartyShare(Expense expense) → ExpenseEntryShare?` and
@@ -53,8 +54,6 @@
     payback-aware; decide at pull time.
   - Wire the delete through the existing probe and confirmation.
   - Prove the balance returns to its pre-payback value.
-- Manual-Checks: [manual-checks.md](../../manual-checks.md) — confirm a deleted payback reopens the
-  settlement in `group_shares_summary` on the live instance
 - Blockers: —
 
 ## Approach
@@ -171,5 +170,3 @@ entire assertion set (`calls`, `expenseId`, `groupId`, success snackbar) on top 
 distinctive to criterion 4 (the `paybackRecordedBy` line and the *same* confirmation title); the
 cancel test likewise re-asserts `calls == 0`, which the first test already establishes with the
 confirmation open · fix: keep the distinctive assertions, drop the re-proof of the shared path.
-
-status: done

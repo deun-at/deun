@@ -1,8 +1,7 @@
-# notification-context-free — Pushes survive the screen that sent them
+# notification-context-free
 
 ## Spec
 - Source: idea — code review 2026-10-22 (research/code-review-2026-10.md), review finding 3 (client half); As-is lines tagged "for notification-context-free"; Open item "Settle-all with a friend sends no push today"
-- Flight: review-bugs
 - Goal: Every push is composed from strings captured before the first network round trip and sent through one service, so a screen that closes early no longer drops it, and settling up with a friend finally tells the friend.
 - Why: push recipients (research/code-review-2026-10.md, Why candidate) · noticed by: an expense push still arrives when its sender has reduce-motion on or leaves the screen quickly; a friend is told when everything owed to them is marked as paid
 
@@ -28,8 +27,10 @@
     - When the push function itself throws, the send still completes normally.
   - [auto] The expense editor's save and the friend sheet's Mark as paid behave as before. test/widgets/expense_save_status_test.dart, test/widgets/expense_editor_currency_rate_test.dart and test/widgets/friend_detail_sheet_test.dart stay green with only their seam stubs' signatures changed: no assertion is removed or weakened. test/widgets/record_payback_sheet_test.dart and test/pages/groups/group_member_add_flow_test.dart stay green, unedited.
   - [auto] `dart format`, `flutter analyze` and `flutter test` pass.
-  - [human] With system reduce-motion on, creating an expense delivers the expense push to another member's device.
-  - [human] Settling everything with a friend who shares two groups delivers two payback pushes to the friend's device, one per group.
+  - [ ] [human] With system reduce-motion on, creating an expense delivers the expense push to another member's device.
+    how: out of reach: a physical device receiving a real FCM push through the live self-hosted instance's `push` Edge Function, whose source is not in the repo · on phone A, turn on the OS reduce-motion setting (Android "Remove animations" / iOS "Reduce Motion"), sign in as A and add an expense in a group shared with B. With B signed in on phone B and the app in the background, confirm phone B shows "<A> added a new expense!" naming the expense, the group and the amount.
+  - [ ] [human] Settling everything with a friend who shares two groups delivers two payback pushes to the friend's device, one per group.
+    how: out of reach: a physical device and the live self-hosted `push` function; whether two near-simultaneous pushes to one receiver both arrive is a server-side unknown · make A owe B in two shared groups, ideally in different currencies. On phone A, open B under Friends and tap Mark as paid. Confirm phone B receives two pushes, each naming its own group with that group's amount and currency.
 - Provides:
   - `NotificationSender` (lib/helper/notification_sender.dart):
     - `NotificationSender(AppLocalizations l10n, {PushTransport? push, NotificationRowLookup? groupRow, NotificationRowLookup? expenseRow, SenderNameLookup? senderName})` holds the strings from construction on.
@@ -81,9 +82,6 @@
   - Context-free save and payback: `payBack` and `saveAll` take `notifications`, and `ExpenseSaver` follows. expense_detail builds the sender before its first await. The two `saveExpense:` tests move to the new signature.
   - Settle-all push: `payBackAll` takes `notifications` and notifies each settled group through the single payback's notify step, behind the fan-out seam. `FriendSettleAll` follows, friend_detail_sheet builds the sender before its await, and the friend_detail_sheet test stub moves to the new signature. New tests cover pushes per group, skipped groups and a throwing write.
   - Call sites: group_members_page `_notify`, group_detail_payment (settle and remind), record_payback_sheet, the claim_page nudge, friend_list, friend_accept_page and friend_add_page. Each builds the sender synchronously before its first await.
-- Manual-Checks:
-  - proves · With system reduce-motion on, creating an expense delivers the expense push to another member's device · out of reach: a physical device receiving a real FCM push through the live self-hosted instance's `push` Edge Function, whose source is not in the repo · on phone A, turn on the OS reduce-motion setting (Android "Remove animations" / iOS "Reduce Motion"), sign in as A and add an expense in a group shared with B. With B signed in on phone B and the app in the background, confirm phone B shows "<A> added a new expense!" naming the expense, the group and the amount.
-  - proves · Settling everything with a friend who shares two groups delivers two payback pushes to the friend's device · out of reach: a physical device and the live self-hosted `push` function; whether two near-simultaneous pushes to one receiver both arrive is a server-side unknown · make A owe B in two shared groups, ideally in different currencies. On phone A, open B under Friends and tap Mark as paid. Confirm phone B receives two pushes, each naming its own group with that group's amount and currency.
 - Blockers: —
 
 ## Approach
@@ -96,5 +94,3 @@
 - Depends: —
 - Parallel-with: realtime-channel-lifecycle, realtime-event-scope, push-session-lifecycle, group-model-parse-safety, schema-baseline, housekeeping
 - Not parallel, because they edit the same signatures or blocks: typed-expense-draft (`saveAll` / `ExpenseSaver`), payback-atomic-recalc and legacy-fallback-removal (`payBack`), injectable-repositories (the static repositories whose signatures change here), editor-failure-keeps-form, scan-total-applies and expense-editor-split (`_saveExpense` and the `ExpenseSaver` typedef), presentation-file-split (the claim_page nudge), helper-split (the helper.dart sender block), push-server-compose (builds on this service).
-
-status: planned

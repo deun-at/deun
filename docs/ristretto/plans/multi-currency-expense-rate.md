@@ -1,8 +1,7 @@
-# multi-currency-expense-rate — Per-expense entry currency with a manual, frozen rate
+# multi-currency-expense-rate
 
 ## Spec
 - Source: idea ("multiple currencies with conversion rates", 2026-07-08; replanned 2026-08-11)
-- Flight: multi-currency
 - Goal: An expense can be entered in a currency other than its group's. The user supplies the rate,
   the app converts once at entry, and both the converted amount and the rate are frozen on the row.
   The ledger stays single-currency, so balances and settlement are unchanged.
@@ -11,12 +10,12 @@
 - Acceptance:
   - [auto] The expense editor offers a currency for the amount, defaulting to the group's currency. Choosing
     a different one reveals a rate field and a live preview of the resulting group-currency amount.
-  - [human] Saving stores the converted group-currency amount as the ledger value. Balances, settlement
+  - [ ] [human] Saving stores the converted group-currency amount as the ledger value. Balances, settlement
     suggestions, group totals and statistics read only that value and never the original.
-  - [human] The original amount, original currency, rate and rate date survive a save/reload round trip and
+  - [ ] [human] The original amount, original currency, rate and rate date survive a save/reload round trip and
     are shown on the expense read view (the amount as entered, the rate applied, and the date that
     rate is attributed to).
-  - [human] The stored rate and converted amount are frozen: editing an expense's name, category, payer,
+  - [ ] [human] The stored rate and converted amount are frozen: editing an expense's name, category, payer,
     participants, split or date leaves both untouched. Nothing in this feature ever recomputes a
     saved expense.
   - [auto] There is no implicit rate. An expense in a currency other than the group's cannot be saved
@@ -83,7 +82,6 @@
   - Expense read view: show the amount as entered, the rate, and the rate's date.
   - Sticky per-group rate prefill and reset.
   - Wire `canChangeGroupCurrency` to real expense currencies so the group picker locks correctly.
-- Manual-Checks: [manual-checks.md](../../manual-checks.md) — apply and verify `20260816020000_expense_entry_currency_rate.sql`
 - Blockers: —
 - Deferred DB work: needs new columns for the entry's original currency, the frozen rate and the
   converted amount. Author the migration, write the model and editor against its post-migration
@@ -178,4 +176,6 @@ Design: the surfaces this feature added had no design pass at first — the flig
 replan and explicitly forbade an expense-level currency picker. `12a5f84` closed that, and
 [multi-currency-design-brief](../multi-currency-design-brief.md) was rewritten against what shipped.
 
-status: done
+## Manual checks (migrated)
+
+- [manual-checks.md](../../manual-checks.md) — apply and verify `20260816020000_expense_entry_currency_rate.sql`

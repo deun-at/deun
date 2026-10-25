@@ -1,8 +1,7 @@
-# payback-on-behalf — Record a payback that someone else made
+# payback-on-behalf
 
 ## Spec
 - Source: idea (NOTES.md idea 6, Jakob 2026-07-24, branch `claude/group-management-issues-ifybxc`)
-- Flight: —
 - Goal: Let paybacks from people who don't use the app be recorded by someone who does, so a group can actually reach zero.
 
 ## Contract
@@ -143,5 +142,3 @@ Review verdict:
   `20260816010000_payback_on_behalf.sql` is authored, not applied (self-hosted instance, unreachable
   from the build — see manual-checks.md). Until it runs, the criteria marked `[deferred]` above are
   assumed from the client-side halves and code inspection, not observed end to end.
-
-status: done

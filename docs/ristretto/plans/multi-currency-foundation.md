@@ -1,8 +1,7 @@
-# multi-currency-foundation — Group currency + currency-aware formatting
+# multi-currency-foundation
 
 ## Spec
 - Source: idea ("multiple currencies with conversion rates", 2026-07-08)
-- Flight: multi-currency
 - Goal: Every group has a currency (default EUR); all money in the app is formatted with that currency instead of the hardcoded €.
 - Acceptance:
   - The `group` table has a `currency_code` column (ISO 4217, e.g. "EUR", "USD"); existing rows backfill to "EUR". Expenses have no currency of their own — they are always in their group's currency (users enter the group-currency amount their bank already converted).
@@ -23,7 +22,6 @@
 - Parallel-with: —
 - Blockers: —
 
-status: done
 
 ## Evidence
 

@@ -1,8 +1,7 @@
-# expense-delete-settled-guard — Warn before deleting an expense that a payback already touched
+# expense-delete-settled-guard
 
 ## Spec
 - Source: idea (NOTES.md bug 3, Jakob 2026-07-24, branch `claude/group-management-issues-ifybxc`)
-- Flight: —
 - Goal: Stop silent balance surprises by naming, before the delete, what a deletion will reopen — without ever making an expense undeletable.
 
 ## Contract
@@ -41,7 +40,6 @@
 - Depends: —
 - Parallel-with: —
 
-status: done
 
 ## Evidence
 - Confirmation naming counterparty + amount, cancel = zero writes: `test/model/expense_deletion_impact_test.dart` (`classifyExpenseDeletion` group — "deleting a payback row reports the counterparty and the amount") + `test/widgets/expense_detail_read_test.dart` / `test/widgets/expense_editor_delete_guard_test.dart` ("deleting a payback row never probes the group").

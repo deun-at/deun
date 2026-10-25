@@ -1,8 +1,7 @@
-# schema-baseline — The live base schema committed as a reference baseline
+# schema-baseline
 
 ## Spec
 - Source: idea — code review 2026-10-22 (research/code-review-2026-10.md), architecture item "the base schema lives only in the live DB"; the As-is lines tagged for schema-baseline; Open items "Is `claim_set_unit_shares` live?" and "supabase/config.toml + Docker as the local verification path"
-- Flight: backend-in-repo
 - Goal: The tables, RLS, policies, realtime publication and core RPCs that exist today only on api.deun.app are committed as a schema-only reference, and tests hold every client call and every migration to it.
 - Why: Jakob as sole maintainer · noticed by: the backend rebuilds from supabase/migrations/, the fallback code paths are gone, the 1500–1900-line files open in pieces
 
@@ -15,7 +14,8 @@
   - [auto] The drift check reports a missing target. Given an inline Dart sample that calls an absent RPC and an absent table in the call forms lib/ uses (see Scanner forms), it names both. Given a sample whose targets exist, it reports nothing.
   - [auto] Every table the app subscribes to through `subscribeToChannel(table: …)` is a member of the `supabase_realtime` publication in the rebuild set. Today those tables are `group_update_checker`, `expense_update_checker` and `friendship`. Red means a rebuilt backend accepts writes but never pushes the live refresh.
   - [auto] Every function, added column and index created by a migration stamped before the dump exists in the rebuild set. That makes the live status of `claim_set_unit_shares` a test result instead of a guess.
-  - [human] On api.deun.app, every object re-stated by a reconciliation migration from this feature exists after Jakob applies that migration. This is vacuous, with no manual-checks entry, when the dump shows no gap.
+  - [ ] [human] On api.deun.app, every object re-stated by a reconciliation migration from this feature exists after Jakob applies that migration. This is vacuous, with no manual-checks entry, when the dump shows no gap.
+    how: the self-hosted instance is unreachable from the build · Jakob applies the migration by hand, then confirms each re-stated function in pg_proc, each column in information_schema.columns and each publication member in pg_publication_tables (no entry is written if the dump showed no gap)
   - [auto] `dart format`, `flutter analyze` and `flutter test` pass. Already enforced by test/pages/expenses/expense_rate_migration_test.dart (pins `20260816020000`'s content, that `20260618000000` carries no provenance column, and the multi-currency-expense-rate entry above `## Applied` in manual-checks) and test/docs/ristretto_links_test.dart (every relative `.md` link under docs/ristretto resolves); both must stay green.
 - Provides:
   - `supabase/schema/baseline.sql`: the reference schema. Its header carries a machine-readable `-- dump-stamp: YYYYMMDDHHMMSS` line.
@@ -54,8 +54,6 @@
   - Drift: lib/ scanners, the fixture test, and the relation, RPC and realtime-table checks against the rebuild set (fourth to sixth criteria).
   - Chain coverage over pre-stamp migrations (seventh criterion). Only if it, the drift check or the realtime check fails on the real dump: the reconciliation migration and its manual-checks entry (the human criterion).
   - Docs and cleanup: supabase/schema/README.md (rebuild order, the stamp rule for later migrations, what the repo does not rebuild, how to refresh), delete supabase/config.toml, add the manual-checks Applied row.
-- Manual-Checks:
-  - proves · on api.deun.app, every object re-stated by a reconciliation migration from this feature exists · the self-hosted instance is unreachable from the build · Jakob applies the migration by hand, then confirms each re-stated function in pg_proc, each column in information_schema.columns and each publication member in pg_publication_tables (no entry is written if the dump showed no gap)
 - Blockers: — (resolved 2026-10-25). Jakob took the whole-database schema-only dump (Jakob in review of this prep, 2026-10-25: re-dump unfiltered rather than amend Scope):
   - Dump stamp: `20261025164747`, from 2026-10-25 16:47:47 UTC, read with `date` on the server just before `pg_dump`. It was taken with `docker exec supabase-db pg_dump -U supabase_admin -d postgres --schema-only`: pg_dump 15.8 against server 15.8, 7975 lines. No migration was open in manual-checks at the time.
   - Location: `supabase/schema/baseline.sql` in the main checkout (C:\work\deun), untracked and not ignored. A build in a worktree copies it from there. The Privacy guard unit runs on it before anything under supabase/schema/ is staged; until then nobody stages that folder.
@@ -84,5 +82,3 @@
 - Likely touchpoints: supabase/schema/baseline.sql (new), supabase/schema/README.md (new), supabase/config.toml (deleted), test/supabase/rebuild_set.dart (new), test/supabase/rebuild_set_test.dart, test/supabase/schema_baseline_privacy_test.dart, test/supabase/schema_baseline_drift_test.dart, docs/ristretto/manual-checks.md, and a new supabase/migrations/ file only on a gap. The scanner reads every `.dart` file under lib/ without editing any; today the targets sit in the repositories under lib/pages/*/data/, lib/pages/users/user_repository.dart, lib/pages/groups/presentation/group_join_page.dart, lib/navigation.dart, lib/auth_gate.dart, lib/helper/helper.dart, the two notifiers under lib/pages/statistics/provider/ and the five realtime providers.
 - Depends: —
 - Parallel-with: editor-failure-keeps-form, scan-total-applies, expense-search-escape, realtime-channel-lifecycle, notification-context-free, typed-expense-draft, presentation-file-split, housekeeping. None of these touches supabase/ or test/supabase/. Several also append to docs/ristretto/manual-checks.md, an append-only rebase. realtime-channel-lifecycle keeps `subscribeToChannel`'s signature, so the realtime scanner is unaffected.
-
-status: planned

@@ -1,8 +1,7 @@
-# injectable-repositories — One current-user source, repositories as injectable instances
+# injectable-repositories
 
 ## Spec
 - Source: idea — code review 2026-10-22 (research/code-review-2026-10.md), architecture item `injectable-repositories` (As-is lines tagged "for injectable-repositories"; Open item on the CODE_REVIEW_2026-07-07 §6 "leave alone" advice)
-- Flight: structure
 - Goal: The app reads "who is signed in" from one provider, models are told the user instead of reading global auth, and the repositories become Riverpod-provided instances over a `SupabaseClient`, so tests override providers instead of initializing Supabase and an account switch cannot leak the previous user's identity.
 - Why: Jakob as sole maintainer · noticed by: the backend rebuilds from supabase/migrations/, the fallback code paths are gone, the 1500–1900-line files open in pieces
 
@@ -17,7 +16,8 @@
   - [auto] The group list's star is the signed-in user's own. A group starred only by another member reads unstarred, and tapping the star persists the flipped flag on the signed-in user's own membership row (their email).
   - [auto] Members are named the same way on every surface. The signed-in user reads "You"; every other member reads their display name, including a soft-removed member on a past expense; an email that is not on the roster reads as that email, never blank; with nobody signed in, nobody reads "You". In the expense read view, a payer missing from the roster is named by email (blank at HEAD).
   - [auto] `dart format`, `flutter analyze` and `flutter test` pass.
-  - [human] Against the live instance, a cold start with a remembered session shows the signed-in user's own groups, friends and name. Signing out and into a second account on the same device then shows only the second account's groups, balances and name, with "You" marking the second account in a group both share, and a star the second account sets leaves the first account's star on that group unchanged.
+  - [ ] [human] Against the live instance, a cold start with a remembered session shows the signed-in user's own groups, friends and name. Signing out and into a second account on the same device then shows only the second account's groups, balances and name, with "You" marking the second account in a group both share, and a star the second account sets leaves the first account's star on that group unchanged.
+    how: out of reach: the live self-hosted instance api.deun.app and a real OAuth session restored from device storage by supabase_flutter, which tests replace with overrides · on a phone or the web build, sign in as A and kill and reopen the app: A's greeting, groups and friends show with no sign-in prompt. Sign out, sign in as B on the same device, and confirm the greeting, group list balances and friend balances are B's. Open a group both share and confirm B is "You" and A appears by name. Star a group as B and confirm A's star on that group is unchanged after A signs back in.
 - Provides:
   - `class CurrentUser` (lib/pages/users/current_user.dart): `const CurrentUser({required String id, required String email})`, fields `id: String` and `email: String`, value equality on both.
   - `supabaseClientProvider: Provider<SupabaseClient>` (lib/provider.dart, keepAlive): `Supabase.instance.client` in the app, overridden in tests.
@@ -73,8 +73,6 @@
   - Readers: every non-allowlisted auth read in presentation code, notifiers and helpers moves to `currentUserProvider` or to constructor-passed values, and widget-test harnesses swap `Supabase.initialize` for a `currentUserProvider` override.
   - Repositories: the five become instances with providers, GroupRepository splits into three, the spending-summary RPC moves to UserRepository and the statistics window query to ExpenseRepository, and the static seams become constructor parameters.
   - Call sites and proof: notifiers watch repository providers, widget seam defaults resolve through providers, the remaining harnesses override repository providers, and tests cover the favourite star, the end-to-end switch and same-user refresh. Add the manual-checks entry.
-- Manual-Checks:
-  - proves · a cold start with a remembered session shows the user's own data, and an account switch on one device shows only the new account's data · out of reach: the live self-hosted instance api.deun.app and a real OAuth session restored from device storage by supabase_flutter, which tests replace with overrides · on a phone or the web build, sign in as A and kill and reopen the app: A's greeting, groups and friends show with no sign-in prompt. Sign out, sign in as B on the same device, and confirm the greeting, group list balances and friend balances are B's. Open a group both share and confirm B is "You" and A appears by name. Star a group as B and confirm A's star on that group is unchanged after A signs back in.
 - Blockers: —
 
 ## Approach
@@ -87,5 +85,3 @@
 - Likely touchpoints: lib/provider.dart (and .g), lib/pages/users/current_user.dart (new), lib/pages/users/user_repository.dart, lib/pages/groups/data/group_repository.dart, lib/pages/groups/data/member_repository.dart (new), lib/pages/groups/data/payback_repository.dart (new), lib/pages/groups/data/member_display.dart (new), lib/pages/groups/data/reminder_repository.dart, lib/pages/groups/data/group_model.dart, lib/pages/expenses/data/expense_repository.dart, lib/pages/expenses/data/expense_model.dart, lib/pages/expenses/data/expense_deletion_impact.dart, lib/pages/friends/data/friendship_repository.dart, lib/pages/friends/data/friendship_model.dart, lib/pages/*/provider/, lib/pages/*/presentation/ (the readers and seam owners named above), lib/widgets/restyle/expense_picker_sheets.dart, lib/pages/statistics/provider/personal_statistics_notifiers.dart, lib/pages/statistics/provider/statistics_notifiers.dart, lib/pages/expenses/service/gemini_receipt_parser.dart, lib/navigation.dart (`_initUserLocale`'s auth read, push routing fetches), lib/auth_gate.dart (repository call only), test/ (harnesses plus new current-user, model, member-display, favourite and switch tests), docs/ristretto/manual-checks.md
 - Depends: notification-context-free, group-write-rpcs, guest-merge-rpc, payback-atomic-recalc
 - Parallel-with: schema-baseline
-
-status: planned

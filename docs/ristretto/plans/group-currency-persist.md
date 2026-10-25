@@ -1,9 +1,8 @@
-# group-currency-persist — `save_group_all` actually stores the group's currency
+# group-currency-persist
 
 ## Spec
 - Source: bug found 2026-08-16 while reading the live schema dump to answer an unrelated question
   about `save_group_all`; confirmed against production data the same day.
-- Flight: multi-currency
 - Goal: The currency a user picks on the group create and edit forms is persisted, instead of being
   silently discarded server-side and falling back to the column default.
 
@@ -91,5 +90,3 @@ per-group value. Neither should be pulled until this is applied.
   walked, so they are all *assumed*, not *observed*. The cheapest confirmation is recorded in
   [manual-checks.md](../../manual-checks.md).
 - `review: skipped (migration only, no code)`.
-
-status: done

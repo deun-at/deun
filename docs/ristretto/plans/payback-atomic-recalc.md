@@ -1,8 +1,7 @@
-# payback-atomic-recalc — A recorded payback and its balance update commit together
+# payback-atomic-recalc
 
 ## Spec
 - Source: idea — code review 2026-10-22 (research/code-review-2026-10.md), finding 7
-- Flight: atomic-writes
 - Goal: A payback is written together with its balance recalculation or not at all, so an error never hides a payment that was recorded, and retrying after an error never records it twice.
 - Why: group members using the app · noticed by: a failed save or delete no longer throws away the form, a retried payback no longer double-records, a joining guest no longer rewrites history outside the group
 
@@ -15,7 +14,8 @@
   - [auto] When the payback write fails with any error other than a missing function, `payBack` throws that error and issues no further RPC, so the same payment is never written a second time. Green at HEAD; red if a retry or a second write comes back.
   - [auto] A failed payback still reaches the user as the generic error, or as the rejection's reason, with the confirm button back to idle so they can try again. A second tap while the write is in flight still writes once, and both RPCs still receive the same four-argument map. Already enforced by test/widgets/record_payback_sheet_test.dart ("an unexpected write failure keeps the generic error", "a rejection from the write says why, not \"could not pay back\"", "a second tap while the write is in flight writes once") and by test/model/group_repository_test.dart (the `GroupRepository.payBackRpcParams` group). These must stay green.
   - [auto] `dart format`, `flutter analyze` and `flutter test` pass.
-  - [human] With the migration applied on api.deun.app, a payback recorded from the app updates `group_shares_summary` in the same transaction as the payback row. Two clients viewing the group both show the balance settled with no further write. A `pay_back` run inside a transaction that is then rolled back leaves neither a payback row nor a change to the summary.
+  - [ ] [human] With the migration applied on api.deun.app, a payback recorded from the app updates `group_shares_summary` in the same transaction as the payback row. Two clients viewing the group both show the balance settled with no further write. A `pay_back` run inside a transaction that is then rolled back leaves neither a payback row nor a change to the summary.
+    how: the self-hosted instance (api.deun.app) is unreachable from the build, and the migration is applied by hand · apply the new migration before the client change reaches main (a push to main deploys the web build, and that client no longer recalculates on its own). Confirm the live `pay_back` definition (`pg_get_functiondef`) contains `update_group_member_shares`. In a throwaway group open on two clients, record a payment from one, and repeat it once on someone else's behalf. Each time, confirm both clients show the balance settled within seconds with nothing else done. Then run `pay_back` for that group inside a transaction that ends in rollback. Before the rollback, `group_shares_summary` already includes the payment; after it, neither the payback expense row nor the summary change remains.
 - Provides:
   - `public.pay_back(_group_id uuid, _paid_by text, _paid_for text, _amount numeric) returns uuid`: signature unchanged. It now also performs `update_group_member_shares(_group_id, <new payback id>)` inside its own transaction. `pay_back_exact` inherits this unchanged.
   - `GroupRepository.payBack`: signature left as it stands at build time, contract tightened. At HEAD that is `payBack(BuildContext context, String groupId, String email, double amount, {String? paidBy, List<GroupMember>? members, bool sendNotification = true}): Future<void>`; once notification-context-free has landed it is `payBack(String groupId, String email, double amount, {String? paidBy, List<GroupMember>? members, required NotificationSender notifications}): Future<void>`. It completes only when the payback and its recalculation have committed, and it throws only when nothing was recorded (barring a response lost in transit; see "Out of scope").
@@ -53,8 +53,6 @@
   - RPC seam in `GroupRepository` (`PaybackRpc`, `payBackRpcOverride`, and `resetPayBackFallback` while the memo exists; reused if legacy-fallback-removal added the seam first), plus the Dart tests. The success tests on the `pay_back_exact` path and on the memoized fallback path are red, because the recalculation call throws twice. The test for a failure that is not a missing function pins today's behaviour and is green from the start.
   - Delete the recalculation call and retry from `payBack`, and rewrite its doc comment around the new contract ("throws only when nothing was recorded"). Turns the success tests green.
   - Open manual-checks entry for the `[human]` criterion. It names the new migration file and says to apply it before the client change reaches main.
-- Manual-Checks:
-  - proves · a payback and its `group_shares_summary` update commit in one transaction on the live instance · the self-hosted instance (api.deun.app) is unreachable from the build, and the migration is applied by hand · apply the new migration before the client change reaches main (a push to main deploys the web build, and that client no longer recalculates on its own). Confirm the live `pay_back` definition (`pg_get_functiondef`) contains `update_group_member_shares`. In a throwaway group open on two clients, record a payment from one, and repeat it once on someone else's behalf. Each time, confirm both clients show the balance settled within seconds with nothing else done. Then run `pay_back` for that group inside a transaction that ends in rollback. Before the rollback, `group_shares_summary` already includes the payment; after it, neither the payback expense row nor the summary change remains.
 - Blockers: —
 
 ## Approach
@@ -64,5 +62,3 @@
 - Likely touchpoints: supabase/migrations/ (new file), lib/pages/groups/data/group_repository.dart, test/pages/groups/payback_atomic_recalc_migration_test.dart, test/pages/groups/payback_atomic_recalc_test.dart, docs/ristretto/manual-checks.md
 - Depends: —
 - Parallel-with: editor-failure-keeps-form, guest-merge-rpc, group-write-rpcs. The last two also edit group_repository.dart (other methods) and add their own migration file, so expect a trivial rebase and distinct timestamps.
-
-status: planned

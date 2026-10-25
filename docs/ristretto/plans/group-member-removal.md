@@ -1,8 +1,7 @@
-# group-member-removal — Removing a group member: defined semantics instead of a silent wipe
+# group-member-removal
 
 ## Spec
 - Source: idea (NOTES.md bug 2, Jakob 2026-07-24, branch `claude/group-management-issues-ifybxc`)
-- Flight: —
 - Goal: Make removing a member from a group a deliberate, defined operation that can never strand a debt or silently alter historical balances.
 
 ## Contract
@@ -150,5 +149,3 @@ Review verdict:
   zero-involvement member) are now *reachable* but were not reported as walked, so they remain assumed
   rather than observed. Step 6 in particular — a group save leaving membership and `is_favorite`
   untouched — is the one non-deferred write-path criterion and has no unit coverage.
-
-status: done

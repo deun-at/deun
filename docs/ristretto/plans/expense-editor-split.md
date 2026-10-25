@@ -1,8 +1,7 @@
-# expense-editor-split — The expense editor's state lives in a controller, and the screen opens in pieces
+# expense-editor-split
 
 ## Spec
 - Source: idea — code review 2026-10-22 (research/code-review-2026-10.md), Architecture item: `lib/pages/expenses/presentation/expense_detail.dart` is 1898 lines (1098 at the 2026-07-07 review), with 1 lib importer and 8 test importers; the CODE_REVIEW_2026-07-07 §6 "leave alone" advice listed under Open
-- Flight: structure
 - Goal: The editor's entries, Quick/Itemized mode, rate state and save status move into a Riverpod controller that unit tests can reach without a widget. The screen is assembled from section widgets in their own files, and nothing changes for the user.
 - Why: Jakob as sole maintainer · noticed by: the backend rebuilds from supabase/migrations/, the fallback code paths are gone, the 1500–1900-line files open in pieces
 
@@ -151,7 +150,6 @@
   - Writes: move the save status, the delete in-flight flag and the write runner into the controller, with the screen mapping outcomes to SnackBars and the pop. Unit tests prove the refusal, single-flight and remember-rules criteria, that the write receives the state's conversion, and the close-mid-write half of the close criterion. The save-status and delete-guard suites are the regression net.
   - Entries and mode: move the entries, the index counter and the itemized override, plus the add, remove, mode and scan-entry intents, and replace `ExpenseEntryData`. The fresh-start test and the entries half of the remembered-rate-change criterion go here.
   - Sections: cut the build methods into the editor/ files and have the screen compose them. Every suite named in Acceptance stays green, and the size target is checked.
-- Manual-Checks: —
 - Blockers: —
 
 ## Approach
@@ -168,5 +166,3 @@
 - Likely touchpoints: lib/pages/expenses/presentation/expense_detail.dart, lib/pages/expenses/presentation/editor/ (new), lib/pages/expenses/provider/expense_editor_controller.dart and its .g.dart (new), test/provider/expense_editor_controller_test.dart (new)
 - Depends: typed-expense-draft, editor-failure-keeps-form, scan-total-applies
 - Parallel-with: realtime-channel-lifecycle, realtime-event-scope, push-session-lifecycle, group-model-parse-safety, expense-search-escape, guest-merge-rpc, payback-atomic-recalc, group-write-rpcs, schema-baseline, legacy-fallback-removal, typed-routes, housekeeping, presentation-file-split. These features do not run in parallel with it, because they edit the same file or seams: notification-context-free (the `ExpenseSaver` sender-side parameter and the save path), push-server-compose (how expense_detail.dart builds the sender), injectable-repositories (the `supabase.auth` reads and static repository calls in the editor) and helper-split (the helpers the editor and its new section files import).
-
-status: planned

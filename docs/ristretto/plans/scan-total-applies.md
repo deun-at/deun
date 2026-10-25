@@ -1,8 +1,7 @@
-# scan-total-applies — A rescanned receipt total lands in the amount and is saved
+# scan-total-applies
 
 ## Spec
 - Source: idea — code review 2026-10-22 (research/code-review-2026-10.md), As-is: `_scanReceipt` total-only branch (lib/pages/expenses/presentation/expense_detail.dart 1103-1108) and the missing scan seam (test/widgets/expense_itemized_editor_test.dart note)
-- Flight: review-bugs
 - Goal: A receipt rescanned inside the editor that yields only a total puts that total into the first item's amount, where it is shown and saved, instead of silently leaving the old amount in place.
 - Why: group members using the app · noticed by: a failed save or delete no longer throws away the form, a retried payback no longer double-records, a joining guest no longer rewrites history outside the group
 
@@ -44,7 +43,6 @@
   - Seam: add `ReceiptScanner` and `ExpenseDetail.scanReceipt`, and make `_scanReceipt` call the seam or fall back to today's sheet. This proves the default-scan criterion, and lets the merchant/date and line-item criteria be written as guards (their code does not change, so they pass once a scan can be injected).
   - Total-only write: update the first item's form value, `_amountController`, the row's unit price and `initialAmount` together, mark the form dirty, and stop forcing the override. This proves the empty-item, replace (including the same-total case) and entry-currency criteria. The discard criterion is a guard: `_scanReceipt` already sets `_isDirty` for every result at HEAD.
   - Edge branches: with zero items, add one seeded item; with two or more items, touch only the first. This proves those two criteria.
-- Manual-Checks: —
 - Blockers: —
 
 ## Approach
@@ -54,5 +52,3 @@
 - Depends: —
 - Parallel-with: payback-atomic-recalc, guest-merge-rpc, expense-search-escape, group-model-parse-safety, group-write-rpcs, realtime-channel-lifecycle, push-session-lifecycle, schema-baseline, housekeeping (disjoint files)
 - Not parallel, because they edit the same files or seams: editor-failure-keeps-form, typed-expense-draft and notification-context-free (expense_detail.dart, and the `ExpenseSaver` shape the new test's capturing closure implements), expense-editor-split (splits expense_detail.dart), presentation-file-split (splits expense_entry_widget.dart)
-
-status: planned

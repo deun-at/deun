@@ -1,8 +1,7 @@
-# scan-split-even — Split a scanned receipt evenly
+# scan-split-even
 
 ## Spec
 - Source: idea (2026-07-12 planning session)
-- Flight: —
 - Goal: A scanned receipt can be split evenly among members instead of being forced through per-item claiming.
 - Acceptance:
   - After scanning a receipt with multiple line items, the user can choose an even split without retyping anything; the resulting expense amount equals the receipt total (sum of all scanned line totals), not the first item's amount.
@@ -20,7 +19,6 @@
 - Parallel-with: — (touches the same editor file as itemized-expense-categories; pull sequentially)
 - Blockers: —
 
-status: done
 
 ## Evidence
 

@@ -1,8 +1,7 @@
-# realtime-channel-lifecycle — Realtime retries never outlive or duplicate a channel
+# realtime-channel-lifecycle
 
 ## Spec
 - Source: idea — code review 2026-10-22 (research/code-review-2026-10.md), finding 2 — the As-is lines tagged "for realtime-channel-lifecycle"
-- Flight: review-bugs
 - Goal: A realtime channel lives exactly as long as the notifier that opened it. A pending retry never outlives a dispose or doubles a channel on resume, and no channel callback lands in a disposed notifier.
 - Why: group members using the app · noticed by: a failed save or delete no longer throws away the form, a retried payback no longer double-records, a joining guest no longer rewrites history outside the group
 
@@ -18,7 +17,8 @@
   - [auto] **A fetch that outlives its notifier.** These notifiers can be disposed while a fetch is still in flight: ExpenseListNotifier (realtime insert/update, and the resume reload), GroupDetailNotifier (realtime event and resume reload) and ClaimNotifier (realtime refetch and resume refetch). When that fetch completes, it writes no state and raises no error.
   - [auto] **The mounted path is unchanged.** While ExpenseListNotifier is mounted, a realtime insert adds the fetched expense to its list, an update replaces the entry with the same id, and a delete removes it.
   - [auto] `dart format`, `flutter analyze` and `flutter test` pass.
-  - [human] On a phone against the live instance, live updates and claim presence still arrive through the refactored channel code, both before and after the app is backgrounded and resumed.
+  - [ ] [human] On a phone against the live instance, live updates and claim presence still arrive through the refactored channel code, both before and after the app is backgrounded and resumed.
+    how: out of reach: the live self-hosted realtime server (api.deun.app) and a real OS pause/resume (`supabase.removeAllChannels` on pause); no test runs `SupabaseRealtimeChannelFactory`, the adapter behind the seam · what to do: sign a phone (A) and a second client (B; a web build is enough) into the same group. Open the group ledger on A, add an expense on B, and check it appears on A without a refresh. Background A for about a minute, resume it, add another expense on B, and check it appears. Open the same itemized expense's claim screen on A alone: it says 1 person claiming. Join on B (2), then leave on B (1). Background and resume A on the claim screen and check it still says 1 while B is away.
 - Provides:
   - `abstract interface class RealtimeChannelFactory { RealtimeChannelHandle open({required String channelName, required String table, PostgresChangeFilter? filter, required void Function(PostgresChangePayload payload) onEvent, required void Function(RealtimeSubscribeStatus status, Object? error) onStatus, void Function(int presentCount)? onPresence}); }` — the one place a channel is created (lib/helper/realtime_mixin.dart)
   - `abstract interface class RealtimeChannelHandle { void track(Map<String, dynamic> payload); void close(); }`
@@ -58,8 +58,6 @@
   - Lifecycle bookkeeping: one live slot per config, holding the handle, a generation, the attempt count and the retry timer. Dispose cancels and closes, resubscribe supersedes, at most one pending retry, and callbacks are checked against their generation. Proves criteria 1–6.
   - Presence through the slot: track once per live channel after `subscribed`, and forward counts only from the live channel. Test `ClaimNotifier.claimingNow` through the real notifier. Proves criterion 7.
   - Post-await guards and fetch seams in ExpenseListNotifier, GroupDetailNotifier and ClaimNotifier, plus the stale comment fix. Proves criteria 8–9.
-- Manual-Checks:
-  - proves · realtime-channel-lifecycle: live updates and claim presence still arrive through the refactored channel code on a real device, before and after a background→resume cycle · out of reach: the live self-hosted realtime server (api.deun.app) and a real OS pause/resume (`supabase.removeAllChannels` on pause); no test runs `SupabaseRealtimeChannelFactory`, the adapter behind the seam · what to do: sign a phone (A) and a second client (B; a web build is enough) into the same group. Open the group ledger on A, add an expense on B, and check it appears on A without a refresh. Background A for about a minute, resume it, add another expense on B, and check it appears. Open the same itemized expense's claim screen on A alone: it says 1 person claiming. Join on B (2), then leave on B (1). Background and resume A on the claim screen and check it still says 1 while B is away.
 - Blockers: —
 
 ## Approach
@@ -77,5 +75,3 @@
 - Tier: normal — the slot bookkeeping, the fake factory's shape and the fake_async test harness leave real design choices for a planner.
 - Depends: —
 - Parallel-with: editor-failure-keeps-form, scan-total-applies, expense-search-escape, guest-merge-rpc, payback-atomic-recalc, group-model-parse-safety, housekeeping
-
-status: planned

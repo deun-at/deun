@@ -1,8 +1,7 @@
-# editor-failure-keeps-form — A failed save or delete keeps the expense editor and its input
+# editor-failure-keeps-form
 
 ## Spec
 - Source: idea — code review 2026-10-22 (research/code-review-2026-10.md), finding 1 (+ finding 10); research As-is lines tagged "for editor-failure-keeps-form"
-- Flight: review-bugs
 - Goal: When saving or deleting an expense fails, the user stays in the editor with everything they typed, is told why and can retry. Only a successful write closes the editor.
 - Why: group members using the app · noticed by: a failed save or delete no longer throws away the form, a retried payback no longer double-records, a joining guest no longer rewrites history outside the group
 
@@ -50,7 +49,6 @@
   - Shared helper and save path: lift the write-then-pop flow into the helper and route `_saveExpense` through it, with the sticky-rate write isolated in the success step. Tests go in test/widgets/expense_save_status_test.dart; the existing failure test is extended rather than duplicated. A saver that fails first and succeeds second, recording its payloads, covers acceptance 1, 2 and the save half of acceptance 9. The foreign-currency retry can reuse `pickCurrency` and `installFakePrefs` from test/widgets/expense_editor_currency_rate_test.dart. A `stickyRateProvider` override whose `setStickyRate` throws covers acceptance 3; the sticky write only runs for a foreign entry currency with a typed (user-origin) rate, so that test picks a currency and types a rate.
   - Delete through the helper: the dialog resolves to a confirmation, the write runs after it through the helper, header progress covers the write, and the cross-write single-flight guard goes in. Tests go in test/widgets/expense_editor_delete_guard_test.dart on a two-route stack (`/` behind `/edit`, as expense_save_status_test.dart does) so that the success pop has somewhere to land, with both a deleter and a saver injected. A gated deleter covers the in-flight taps. Together they cover acceptance 5, 6, 7, the dismiss half of 8 and the delete half of 9.
   - Conventions: privatise the three members and delete `groupColor`. The guard is that all editor suites stay green.
-- Manual-Checks: —
 - Blockers: —
 
 ## Approach
@@ -62,5 +60,3 @@
 - Likely touchpoints: lib/pages/expenses/presentation/expense_detail.dart, lib/pages/expenses/data/expense_deletion_impact.dart, lib/pages/groups/presentation/payback_detail_sheet.dart, test/widgets/expense_save_status_test.dart, test/widgets/expense_editor_delete_guard_test.dart
 - Depends: —
 - Parallel-with: payback-atomic-recalc, guest-merge-rpc, group-model-parse-safety, expense-search-escape (disjoint files). scan-total-applies, typed-expense-draft, notification-context-free and expense-editor-split all edit expense_detail.dart, so this one does not run in parallel with them.
-
-status: planned

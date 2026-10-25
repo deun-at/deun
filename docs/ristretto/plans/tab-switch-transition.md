@@ -1,8 +1,7 @@
-# tab-switch-transition — Animate home tab switches per motion spec
+# tab-switch-transition
 
 ## Spec
 - Source: idea (2026-07-12 planning session; spec exists in docs/design_handoff/ANIMATIONS.md §1)
-- Flight: —
 - Goal: Switching between the three home tabs (Groups / Friends / Settings) plays the spec'd fade-up instead of an instant cut.
 - Acceptance:
   - Switching home tabs animates the incoming view with the handoff spec's tab-switch motion: translateY(8px) + fade, 0.26s, ease — no horizontal slide.
@@ -19,7 +18,6 @@
 - Parallel-with: cosmetic-round-2026-07
 - Blockers: —
 
-status: done
 
 ## Evidence
 

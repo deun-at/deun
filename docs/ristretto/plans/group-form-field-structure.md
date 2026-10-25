@@ -1,8 +1,7 @@
-# group-form-field-structure — Group edit form: fields in a Column, not a lazy ListView
+# group-form-field-structure
 
 ## Spec
 - Source: idea (fallout from the multi-currency-foundation regression, 2026-07-12)
-- Flight: —
 - Goal: Make the group edit form structurally incapable of losing a field value on scroll, matching the expense form's proven pattern.
 - Acceptance:
   - The group edit form's fields (name/color, members, tracking mode, currency, edit-only actions) render inside a single `Column` that is the child of `FormBuilder`, with one outer scroller wrapping the whole form — i.e. no `FormBuilder`-owned field is a direct child of a lazily-built scrollable.
@@ -20,7 +19,6 @@
 - Parallel-with: —
 - Blockers: —
 
-status: done
 
 ## Evidence
 

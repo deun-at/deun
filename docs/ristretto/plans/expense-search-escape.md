@@ -1,8 +1,7 @@
-# expense-search-escape — Expense search matches what was typed, character for character
+# expense-search-escape
 
 ## Spec
 - Source: idea — code review 2026-10-22 (research/code-review-2026-10.md), As-is "expense_repository.dart `fetchData` `ilike('name', '%$filter%')` (25) unescaped" and "friendship_repository.dart precedent strips `%_,()\`"; Open item "expense-search-escape: strip `%`/`_` or escape them"
-- Flight: review-bugs
 - Goal: Every character typed into a group's expense search matches only itself. No character acts as a wildcard, and no input makes the search fail.
 - Why: group members using the app · noticed by: a failed save or delete no longer throws away the form, a retried payback no longer double-records, a joining guest no longer rewrites history outside the group
 
@@ -14,7 +13,8 @@
   - [auto] Each of the characters `\ . ^ $ * + ? ( ) [ ] { } |`, typed alone or inside text, matches only itself: `.` finds "v1.2" and not "abc", and `(1` finds "Taxi (1)". An unbalanced `(`, `[` or `{` never makes the search fail.
   - [auto] Ordinary text still finds what it found before. Letters, digits, spaces, umlauts and emoji match themselves, and the match ignores case: `TAXI` finds "Taxi" and `müller` finds "Café Müller".
   - [auto] Text typed into a group's expense search reaches the server only in its escaped, literal form. It is never placed raw inside a like/ilike pattern on the expense name.
-  - [human] On the live instance, searching a group for `50%`, `a_b`, `a*b`, `(1`, `[`, `\`, `TAXI` and `müller` returns exactly the expenses whose names contain that text (case ignored), with no error.
+  - [ ] [human] On the live instance, searching a group for `50%`, `a_b`, `a*b`, `(1`, `[`, `\`, `TAXI` and `müller` returns exactly the expenses whose names contain that text (case ignored), with no error.
+    how: api.deun.app (its PostgREST version, Postgres regex engine and locale) is unreachable from the build · in a scratch group, add expenses named "50% off", "500 EUR", "a_b", "axb", "a*b", "a long b", "Taxi (1)", "Café Müller" and "C:\temp". Search for `50%`, `a_b`, `a*b`, `(1`, `[`, `\`, `TAXI` and `müller`. Confirm that each search returns exactly the names containing that text (case ignored) and that no error is shown.
   - [auto] `dart format`, `flutter analyze` and `flutter test` pass.
 - Provides:
   - `literalSearchFilter(String typed): ({String operator, String value})`, in lib/helper/search_filter.dart. `operator` is always `imatch`. `value` is `typed` with each of the 14 ARE metacharacters `\ . ^ $ * + ? ( ) [ ] { } |` preceded by one backslash and every other character left unchanged. Under PostgREST `column=imatch.value` it matches exactly the rows whose column contains `typed` as a substring, ignoring case. Usable with postgrest-dart's `filter(column, operator, value)` on any text column.
@@ -41,7 +41,6 @@
 - Units:
   - lib/helper/search_filter.dart with `literalSearchFilter`, plus test/helper/search_filter_test.dart. The tests cover the exact `value` for `50%`, `a_b`, `a*b`, `a\b`, `50\`, `(1`, `[x`, `.`, `TAXI`, `müller` and `Café Müller 2`, and the operator is always `imatch`. They also assert that each of the 14 metacharacters is escaped to backslash plus itself, compiles, and matches only a name containing it. The Dart RegExp proxy checks matches against "50% off", "500 EUR", "50 EUR", "a_b", "axb", "a*b", "ab", "aab", "a long b", "a\b", "50\", "Taxi", "Taxi (1)", "v1.2", "abc" and "Café Müller".
   - `ExpenseRepository.fetchData` applies the `operator` and `value` from `literalSearchFilter(filter)` to the `name` column through postgrest-dart's `filter`, replacing the raw `ilike`. A source-shape test in the same test file reads lib/pages/expenses/data/expense_repository.dart. It fails if `literalSearchFilter(` is absent or if an `ilike(` or `like(` on `name` remains. This unit also appends the pending-human entry to docs/ristretto/manual-checks.md.
-- Manual-Checks: proves · on the live instance, a group expense search matches typed text literally and ignoring case, with no error for regex metacharacters · api.deun.app (its PostgREST version, Postgres regex engine and locale) is unreachable from the build · in a scratch group, add expenses named "50% off", "500 EUR", "a_b", "axb", "a*b", "a long b", "Taxi (1)", "Café Müller" and "C:\temp". Search for `50%`, `a_b`, `a*b`, `(1`, `[`, `\`, `TAXI` and `müller`. Confirm that each search returns exactly the names containing that text (case ignored) and that no error is shown.
 - Blockers: —
 
 ## Approach
@@ -50,5 +49,3 @@
 - Likely touchpoints: lib/helper/search_filter.dart (new), lib/pages/expenses/data/expense_repository.dart (`fetchData`), test/helper/search_filter_test.dart (new), docs/ristretto/manual-checks.md
 - Depends: —
 - Parallel-with: editor-failure-keeps-form, scan-total-applies, group-model-parse-safety (disjoint files). guest-merge-rpc and payback-atomic-recalc also append to docs/ristretto/manual-checks.md, an append-only rebase. legacy-fallback-removal, notification-context-free, typed-expense-draft, group-write-rpcs and injectable-repositories also edit expense_repository.dart, but in other methods, so the rebase is trivial.
-
-status: planned

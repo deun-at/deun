@@ -1,9 +1,8 @@
-# settle-residue — Settling a balance leaves no rounding remainder
+# settle-residue
 
 ## Spec
 - Source: idea (user bug report, 2026-08-11: "I was paying something back and then it showed that the
   person I paid back owes me 0.01 euro. I had to remove 1 cent from an expense to show the settled")
-- Flight: —
 - Goal: Paying someone back settles the balance exactly. No sub-cent remainder survives the
   settlement, and no screen ever asks the user to hand-edit an expense to make a balance disappear.
 
@@ -218,5 +217,3 @@ Review verdict:
   a hard zero) are now *reachable* but were not reported as walked, so they remain assumed rather than
   observed. The client-side fallback in `GroupRepository.payBack` is now dead code on this instance and
   can be removed whenever convenient.
-
-status: done

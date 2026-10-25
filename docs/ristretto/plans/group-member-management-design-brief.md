@@ -1,4 +1,4 @@
-# group-membership — Design brief (by surface)
+# group-membership
 
 Handoff doc for the design session on group membership. Engineering contracts live in three plans
 ([member-removal](archived/group-member-removal.md) · [create-simplify](archived/group-create-simplify.md) →

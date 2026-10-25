@@ -1,8 +1,7 @@
-# legacy-fallback-removal — Writes commit through their RPC or fail, with no client-side fallback
+# legacy-fallback-removal
 
 ## Spec
 - Source: idea — code review 2026-10-22 (research/code-review-2026-10.md), architecture item "legacy client write paths duplicate server logic without transactions"; the As-is lines tagged for legacy-fallback-removal; Open item "Is `claim_set_unit_shares` live?"
-- Flight: backend-in-repo
 - Goal: Every non-transactional client fallback whose RPC the live schema dump proves present is deleted, so a group save, expense save, payback or claim either goes through its server RPC or fails visibly, never through a client-side multi-step write.
 - Why: Jakob as sole maintainer · noticed by: the backend rebuilds from supabase/migrations/, the fallback code paths are gone, the 1500–1900-line files open in pieces
 
@@ -57,7 +56,6 @@
   - Payback: route every RPC `payBack` issues through `payBackRpcOverride` (reuse it or add it), write the red test, then delete the memo, the `pay_back` branch and its comments. If payback-atomic-recalc landed first, also delete `resetPayBackFallback()` and rewrite its memoized-fallback test (third criterion).
   - Claims, only when the baseline defines `claim_set_unit_shares`: add `claimSetUnitSharesOverride`, write the red test, and delete `_claimSetUnitSharesLegacy`. Add a case to test/widgets/claim_chips_test.dart where the fake notifier's `claimUnit` throws, asserting `claimLoadError` and unchanged chips (fourth criterion). Otherwise record the kept fallback in Evidence and on the roadmap row.
   - Cleanup: delete `isMissingFunctionError` if no caller remains, then run the gates.
-- Manual-Checks: —
 - Blockers: —
 
 ## Approach
@@ -68,5 +66,3 @@
 - Likely touchpoints: lib/pages/groups/data/group_repository.dart, lib/pages/expenses/data/expense_repository.dart, lib/pages/expenses/data/expense_conversion.dart, lib/helper/helper.dart (or lib/helper/error_predicates.dart after helper-split), test/model/expense_provenance_test.dart, test/model/write_rpc_no_fallback_test.dart (new), test/supabase/fallback_rpcs_in_baseline_test.dart (new), test/widgets/expense_save_status_test.dart (only if editor-failure-keeps-form has not landed), test/widgets/claim_chips_test.dart (only if the claim fallback goes), and test/pages/groups/payback_atomic_recalc_test.dart (only if payback-atomic-recalc landed first).
 - Depends: schema-baseline
 - Parallel-with: editor-failure-keeps-form (both may add to the same failure test in expense_save_status_test.dart, an additive rebase), scan-total-applies, group-model-parse-safety, realtime-channel-lifecycle, push-session-lifecycle, housekeeping, presentation-file-split (it keeps claim_chips_test green, and this feature only adds a case), expense-search-escape, guest-merge-rpc and group-write-rpcs (the last three edit other methods of the same repositories, so the rebase is trivial). Not parallel, because they edit the same blocks: payback-atomic-recalc and notification-context-free (`payBack`), typed-expense-draft (the expense `saveAll` fallback branch), helper-split (`isMissingFunctionError`) and injectable-repositories (the static repositories). Whichever lands second rebases.
-
-status: planned

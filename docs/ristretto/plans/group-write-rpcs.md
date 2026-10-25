@@ -1,8 +1,7 @@
-# group-write-rpcs — Member add/remove, group delete and expense delete each commit as one transaction
+# group-write-rpcs
 
 ## Spec
 - Source: idea — code review 2026-10-22 (research/code-review-2026-10.md), architecture item `member-write-rpcs` (renamed and widened to expense delete by Jakob) + the Open item on `ExpenseRepository.delete`'s three-statement shape
-- Flight: atomic-writes
 - Goal: The four multi-statement group writes the client runs today (add member, remove member, delete group, delete expense) each commit as one server transaction, recalc and realtime cleanup included, or not at all.
 - Why: group members using the app · noticed by: an add, removal or delete that fails half-way leaves nothing half-done (no removed member whose balances were never recalculated, no deleted expense still counted, no deleted group lingering in another member's list), and a removal can no longer slip through on a balance or history that changed in the same instant
 
@@ -24,9 +23,10 @@
     - test/widgets/payback_detail_sheet_test.dart: "confirming hard-deletes the payback row through the shared expense delete", "a payback recorded on someone else behalf deletes by the same path" and "a failed delete keeps the sheet open and says so".
     - test/model/member_removal_test.dart: the `resolveMemberRemoval` group (the preview's epsilon boundary, 0.004 settled and 0.005 blocked in both signs).
   - [auto] `dart format`, `flutter analyze` and `flutter test` pass.
-  - [human] With the migration applied on the live instance, adding and removing behave as specified. Add: a new member is inserted, a soft-removed member is re-added and an active member writes nothing. Remove: an unsettled member is blocked with no row change; a settled member with history gets `removed_at` stamped while their shares and every member's balance stay identical; a settled member without history loses their row. A second client's open group detail follows each change.
-  - [human] With the migration applied, deleting an expense, and separately a payback row, puts every member's balance back to exactly its value before that row existed. `group_shares_summary` keeps no leftover row, and the row leaves a second client's open ledger.
-  - [human] With the migration applied, deleting a group takes it off a second member's group list, and its `group_update_checker` row is gone.
+  - [ ] [human] With the migration applied on the live instance, adding and removing behave as specified. Add: a new member is inserted, a soft-removed member is re-added and an active member writes nothing. Remove: an unsettled member is blocked with no row change; a settled member with history gets `removed_at` stamped while their shares and every member's balance stay identical; a settled member without history loses their row. A second client's open group detail follows each change.
+    how: self-hosted instance api.deun.app, unreachable from the build; the migration is unapplied · apply the migration, then in a throwaway group on two signed-in clients: add a new member, add them again (expect "already in group"), soft-remove a settled member with history and re-add them, try to remove an unsettled member (expect no row change), and hard-remove a member with no expenses. A removal that fails with a permission error on `lock table` means the caller lacks table-level privileges on `expense` or `expense_entry_share`. That is not expected: the 2026-10-24 dump shows `GRANT ALL` to authenticated. For each step, check `group_member` (`removed_at`, row count) and `group_shares_summary` before and after, and confirm the second client's open detail follows.
+  - [ ] [human] With the migration applied, deleting an expense, and separately a payback row, puts every member's balance back to exactly its value before that row existed. `group_shares_summary` keeps no leftover row, and the row leaves a second client's open ledger.
+  - [ ] [human] With the migration applied, deleting a group takes it off a second member's group list, and its `group_update_checker` row is gone.
 - Provides:
   - `public.add_group_member(_group_id uuid, _email text) returns text`: one of `'inserted'`, `'re_added'` or `'already_member'`
   - `public.remove_group_member(_group_id uuid, _email text, _settled_epsilon numeric) returns jsonb`: `{outcome: 'blocked' | 'soft_removed' | 'hard_removed', outstanding: numeric}`
@@ -73,10 +73,6 @@
   - Member writes: `addMember` and `removeMember` become params → one RPC → parse. Add `addMemberRpcParams`, `removeMemberRpcParams`, `memberAddOutcomeFromRpc` and `memberRemovalOutcomeFromRpc` with unit tests, including the test that cross-checks the migration's parameter lists. Delete `resolveMemberAdd` and its test group.
   - Deletes: `GroupRepository.delete` and `ExpenseRepository.delete` become one RPC each, with `deleteRpcParams` seams covered by the same parameter-name cross-check.
   - Manual-checks: one entry with three verification walks, one per `[human]` criterion, plus the `pg_proc` query confirming that the four functions exist and are not security definer.
-- Manual-Checks:
-  - proves · member add/remove outcomes on the live instance and cross-client refresh · self-hosted instance api.deun.app, unreachable from the build; the migration is unapplied · apply the migration, then in a throwaway group on two signed-in clients: add a new member, add them again (expect "already in group"), soft-remove a settled member with history and re-add them, try to remove an unsettled member (expect no row change), and hard-remove a member with no expenses. A removal that fails with a permission error on `lock table` means the caller lacks table-level privileges on `expense` or `expense_entry_share`. That is not expected: the 2026-10-24 dump shows `GRANT ALL` to authenticated. For each step, check `group_member` (`removed_at`, row count) and `group_shares_summary` before and after, and confirm the second client's open detail follows.
-  - proves · expense and payback-row delete restore balances exactly and leave other ledgers · self-hosted instance, unreachable from the build · in a throwaway group, note every balance, add an expense, delete it and confirm the balances return exactly. Repeat with a recorded payment deleted from its sheet. Query `group_shares_summary` for leftovers, and confirm the row leaves a second client's open ledger.
-  - proves · group delete reaches other members' lists · self-hosted instance, unreachable from the build · create a throwaway group shared with a second client, delete it on the first, confirm it leaves the second client's group list without a refresh, and confirm that `select * from public.group_update_checker where group_id = '<id>'` returns nothing.
 - Blockers: —
 
 ## Approach
@@ -85,4 +81,8 @@
 - Depends: —
 - Parallel-with: editor-failure-keeps-form, payback-atomic-recalc, guest-merge-rpc
 
-status: planned
+## Manual checks (migrated)
+
+  - proves · expense and payback-row delete restore balances exactly and leave other ledgers · self-hosted instance, unreachable from the build · in a throwaway group, note every balance, add an expense, delete it and confirm the balances return exactly. Repeat with a recorded payment deleted from its sheet. Query `group_shares_summary` for leftovers, and confirm the row leaves a second client's open ledger.
+
+  - proves · group delete reaches other members' lists · self-hosted instance, unreachable from the build · create a throwaway group shared with a second client, delete it on the first, confirm it leaves the second client's group list without a refresh, and confirm that `select * from public.group_update_checker where group_id = '<id>'` returns nothing.

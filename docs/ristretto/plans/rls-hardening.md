@@ -1,8 +1,7 @@
-# rls-hardening — The anon key reaches nothing, and only the people a row concerns can change it
+# rls-hardening
 
 ## Spec
 - Source: idea — the live-instance answers to code review 2026-10-22 (research/code-review-2026-10.md, "Answered by the live instance (2026-10-25)"), raised by Jakob in review of this prep (2026-10-25)
-- Flight: backend-in-repo
 - Goal: Nobody without a session can read or write app data. A signed-in user can change only their own rows and the rows of the groups they belong to, and can read group data only for those groups; user profiles and memberships stay readable to every signed-in user. Every flow the app has today keeps working.
 - Why: group members and push recipients · noticed by: the web build's public anon key no longer reads every FCM token, share, IBAN or email, and no signed-in stranger can read or rewrite a group's shares, read another user's push tokens, or delete a user (which today cascades away that user's expenses in every group)
 
@@ -17,8 +16,10 @@
   - [auto] **No recursive policy.** Every policy that asks "is the caller a member of group G" asks it through one SECURITY DEFINER helper with a fixed `search_path`, never through a sub-select on `group_member` inside a `group_member` policy. Red means every query on the table fails with "infinite recursion detected in policy". Proven by source shape.
   - [auto] **Every write the app and its RPCs make today still passes the new policies.** For each client write and each SECURITY INVOKER RPC (`save_expense_all`, `save_group_all`, `claim_set_unit_shares`, `pay_back`, `pay_back_exact`, `update_group_member_shares`, and, where they have landed, `join_group`, `add_group_member`, `remove_group_member`, `delete_group` and `delete_expense`), a table maps the statement to the policy that admits it. The table is kept as data in the test file, and the test pins it against the migration's policy names and the statements found in lib/ and supabase/migrations/. Red means a save, payback, claim, join or member change starts failing with a permission error after Jakob applies the migration.
   - [auto] `dart format`, `flutter analyze` and `flutter test` pass.
-  - [human] With the migrations applied on api.deun.app, a request carrying only the anon key reads no row of `device_tokens`, `expense_entry_share` or `user`, and a signed-in account that shares nothing with group G reads no row of G's members, expenses, lines, shares or balances, and cannot update or delete them.
-  - [human] With the migrations applied, the everyday flows still work on a real account: sign in on a fresh account (user row created), create a group with a guest, add a member, add and edit an expense in Quick and Itemized, claim a unit, record a payback, settle all with a friend, join by invite link claiming a guest, remove a member, delete an expense and a group, register a push token, sign out.
+  - [ ] [human] With the migrations applied on api.deun.app, a request carrying only the anon key reads no row of `device_tokens`, `expense_entry_share` or `user`, and a signed-in account that shares nothing with group G reads no row of G's members, expenses, lines, shares or balances, and cannot update or delete them.
+    how: the self-hosted api.deun.app is unreachable from the build, and the migration is unapplied · apply the migrations, then with the anon key and with a second account sharing nothing with a test group, query each table and try an update and delete on that group's rows; all return no rows or fail
+  - [ ] [human] With the migrations applied, the everyday flows still work on a real account: sign in on a fresh account (user row created), create a group with a guest, add a member, add and edit an expense in Quick and Itemized, claim a unit, record a payback, settle all with a friend, join by invite link claiming a guest, remove a member, delete an expense and a group, register a push token, sign out.
+    how: same · walk the flows named in the second `[human]` criterion on a real account and a second device, and record any permission error under Findings
 - Provides: —
 - Consumes: —
 - Decisions:
@@ -48,9 +49,6 @@
   - Migration part 3: replace the open `user` and `group_member` policies with the scoped write policies and the authenticated-only SELECT.
   - The statement→policy table, its pin test, and the source-shape tests for parts 1–3, in one new test file.
   - The two Open manual-checks entries.
-- Manual-Checks:
-  - proves · anon and strangers reach nothing · the self-hosted api.deun.app is unreachable from the build, and the migration is unapplied · apply the migrations, then with the anon key and with a second account sharing nothing with a test group, query each table and try an update and delete on that group's rows; all return no rows or fail
-  - proves · everyday flows still work · same · walk the flows named in the second `[human]` criterion on a real account and a second device, and record any permission error under Findings
 - Blockers: —
 
 ## Approach
@@ -59,5 +57,3 @@
 - Likely touchpoints: supabase/migrations/ (one new file), test/pages/groups/rls_hardening_migration_test.dart (new), docs/ristretto/manual-checks.md
 - Depends: —
 - Parallel-with: every other code-review-2026-10 feature except realtime-event-scope, guest-merge-rpc, group-write-rpcs and payback-atomic-recalc, whose migrations it must read at build time (no shared code file; take the next free migration stamp).
-
-status: planned

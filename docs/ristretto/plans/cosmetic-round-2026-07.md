@@ -1,8 +1,7 @@
-# cosmetic-round-2026-07 — Post-release alignment & polish round
+# cosmetic-round-2026-07
 
 ## Spec
 - Source: idea (user-reported visual issues, 2026-07-12 planning session)
-- Flight: —
 - Goal: Fix seven small visual defects reported after the v2.0.0 release; each is a binary visual check against the design handoff.
 - Acceptance:
   - Add-friends screen: the loading shimmer uses the same padding as the loaded list content (no offset jump when content arrives).
@@ -21,7 +20,6 @@
 - Parallel-with: tab-switch-transition
 - Blockers: —
 
-status: done
 
 ## Evidence
 

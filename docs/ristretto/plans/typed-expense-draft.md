@@ -1,8 +1,7 @@
-# typed-expense-draft — The expense editor hands the repository a typed draft, not a string-keyed map
+# typed-expense-draft
 
 ## Spec
 - Source: idea — code review 2026-10-22 (research/code-review-2026-10.md), As-is: `ExpenseRepository.saveAll` regex-parses `expense_entry[i][field]` keys; `claimable_form.dart`, `expense_detail.dart` and the `ExpenseSaver` seam build and mirror that map
-- Flight: structure
 - Goal: The editor builds one typed `ExpenseDraft` and the repository consumes it, with no string-key parsing left at that boundary, while the save sends exactly what it sends today.
 - Why: Jakob as sole maintainer · noticed by: the backend rebuilds from supabase/migrations/, the fallback code paths are gone, the 1500–1900-line files open in pieces
 
@@ -58,7 +57,6 @@
   - Draft types: add `ExpenseDraft`/`ExpenseEntryDraft` and `ExpenseDraft.markEntriesClaimable`, and rewrite test/model/mark_entries_claimable_test.dart's six cases against the draft: every line flagged, input unchanged, other fields kept, notify emails become shares, no notify emails leaves shares alone, no lines means no change.
   - Switch the boundary: `planSave`, `saveAll` and `ExpenseSaver` take the draft, and the editor builds it. Delete the regex and claimable_form.dart. Port the characterization inputs to drafts with no expected literal edited, and port the seam closures in test/widgets/expense_editor_currency_rate_test.dart and test/widgets/expense_save_status_test.dart.
   - Editor-level proofs: new widget tests through the seam for the removed line and on-screen order, the quick-mode split, existing claims on a claimable re-save, and an unparseable amount ending in the error snackbar with the CTA idle and no write.
-- Manual-Checks: —
 - Blockers: —
 
 ## Approach
@@ -70,5 +68,3 @@
 - Likely touchpoints: lib/pages/expenses/data/expense_draft.dart (new), lib/pages/expenses/data/expense_repository.dart, lib/pages/expenses/data/claimable_form.dart (deleted), lib/pages/expenses/presentation/expense_detail.dart, test/model/expense_save_plan_test.dart (new), test/model/mark_entries_claimable_test.dart, test/widgets/expense_editor_currency_rate_test.dart, test/widgets/expense_save_status_test.dart, plus a new editor widget test file for the draft hand-over
 - Depends: —
 - Parallel-with: realtime-channel-lifecycle, realtime-event-scope, push-session-lifecycle, guest-merge-rpc, payback-atomic-recalc, group-model-parse-safety, schema-baseline, typed-routes, housekeeping, presentation-file-split. Not parallel with push-server-compose, which rebuilds the sender in expense_detail.dart's save path (its plan lists this feature as not parallel).
-
-status: planned

@@ -1,10 +1,9 @@
-# multi-currency-group — Per-currency cross-group totals, replacing home-currency conversion
+# multi-currency-group
 
 ## Spec
 - Source: idea ("multiple currencies with conversion rates", 2026-07-08; replanned 2026-08-11 on
   competitor + user-sentiment research; **rebased 2026-08-15** onto the multi-currency work that had
   already shipped on `feature/brew-2026-07-12`)
-- Flight: multi-currency
 - Goal: Cross-group totals stop converting into a personal home currency and start breaking down per
   currency, and per-group currency handling becomes correct for 0-decimal currencies.
 
@@ -326,5 +325,3 @@ violation: selector-mode disclosure text was overstating the hidden-currency cou
 with distinct selector wording (`currencyBreakdownSelect`, kept separate from the plain
 `currencyBreakdownMore` label) while keeping the underlying `hiddenCount` semantics unchanged. Final
 verdict: `review: clean`.
-
-status: done

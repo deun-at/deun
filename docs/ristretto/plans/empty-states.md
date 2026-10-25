@@ -1,9 +1,8 @@
-# empty-states — One shared empty state across the app
+# empty-states
 
 ## Spec
 - Source: idea (Jakob, 2026-09-13 — "empty states are not fully implemented. this is the first
   thing people see when downloading")
-- Flight: empty-states
 - Goal: Every blank screen uses one component that explains what goes there and, where the screen
   offers no prominent action of its own, how to fill it. A failed load stops impersonating an
   empty account.
@@ -102,7 +101,6 @@
   - Migrate the three empty call sites — `group_list.dart:82` (replacing the hand-rolled block),
     `group_detail_list.dart:81`, `friend_list.dart:201` — and delete `EmptyListWidget`.
   - Give `friend_list.dart:210`'s `AsyncError` branch the error tone with a working Retry.
-- Manual-Checks: —
 - Blockers: —
 
 ## Approach
@@ -251,5 +249,3 @@ viewport, or make the offset a named constant so the number is deliberate rather
 Also recorded, from the implementer (not a review finding): a repo-wide `dart format` would rewrite
 113 files untouched by this feature, so the tree is not format-clean under the pinned toolchain — a
 one-off format commit would stop that landing in someone's feature diff.
-
-status: done

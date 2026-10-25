@@ -1,4 +1,4 @@
-# multi-currency — Design brief (by surface)
+# multi-currency
 
 > Rewritten 2026-09-11. The previous version of this file described the
 > pre-2026-08-11 product model (one currency per group, never converted; a

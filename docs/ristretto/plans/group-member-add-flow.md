@@ -1,8 +1,7 @@
-# group-member-add-flow — Adding members as its own flow, not a form field
+# group-member-add-flow
 
 ## Spec
 - Source: idea (NOTES.md idea 5, Jakob 2026-07-24, branch `claude/group-management-issues-ifybxc`)
-- Flight: group-membership
 - Goal: Give adding and removing members a dedicated surface with its own state, instead of a search widget embedded as a value in the group form.
 
 ## Contract
@@ -14,7 +13,8 @@
   - [auto] Removal from this flow routes through `GroupRepository.removeMember` and honours its blocked/soft/hard outcomes; the flow never deletes a `group_member` row directly.
   - [auto] The `group_members` `FormBuilderField` is gone from `group_detail_edit.dart` entirely, and no group-attribute save path reads or writes membership.
   - [auto] Adding a member who is already in the group is a no-op with clear feedback, not a duplicate row.
-  - [human] A member added by one client appears on another client's open group detail through the existing realtime path.
+  - [ ] [human] A member added by one client appears on another client's open group detail through the existing realtime path.
+    how: [manual-checks.md](../../manual-checks.md) — cross-client realtime member add
   - [auto] All new copy exists in EN and DE with generated l10n committed.
   - *(Visual and interaction criteria, appended from the design session of 2026-09-11 — see [design brief](../group-member-management-design-brief.md).)*
   - [auto] The surface is a routed **Members page** — roster first, search above it — reachable from group detail and from a read-only member row on group edit. It is not a sheet and not a search overlay.
@@ -54,7 +54,6 @@
     settled-with-history confirms once; settled-without-history commits silently.
   - **Empty state** on group detail for a group of one, opening the Members page.
   - EN + DE copy for every new string, with generated l10n committed.
-- Manual-Checks: [manual-checks.md](../../manual-checks.md) — cross-client realtime member add
 - Blockers: —
 
 ## Approach
@@ -163,5 +162,3 @@ lean · `test/pages/groups/group_member_add_flow_test.dart:759,777` · the two `
 lean · `test/pages/groups/group_member_add_flow_test.dart:744` · `BottomSheet`/`SheetScaffold` `findsNothing` in a harness that pumps `GroupMembersPage` straight into a route — neither could ever appear; the `DeunHeader` and dy-ordering assertions carry the criterion · drop the two.
 
 minor (reviewer omitted from the main list): dangling `[resolveGroupJoin]` doc reference in `member_add.dart:22`; the symbol lives in `member_removal.dart`, which that file does not import.
-
-status: done

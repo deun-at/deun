@@ -1,8 +1,7 @@
-# auth-switch-stale-providers — Invalidate user-scoped providers on user switch
+# auth-switch-stale-providers
 
 ## Spec
 - Source: idea (bug report, 2026-07-12 planning session)
-- Flight: —
 - Goal: After signing out and into a different account on the same device, no screen shows the previous user's data.
 - Acceptance:
   - Signing out and signing in as another account (no app restart) shows the new user's greeting name, overall balance hero, and settings profile — verified by a regression test that invalidates via the central listener and asserts the user-scoped providers refetch.
@@ -19,7 +18,6 @@
 - Parallel-with: —
 - Blockers: —
 
-status: done
 
 ## Evidence
 

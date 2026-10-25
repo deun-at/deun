@@ -1,9 +1,8 @@
-# save-status-rollout — The save confirmation moves onto the button everywhere
+# save-status-rollout
 
 ## Spec
 - Source: idea (Jakob, 2026-09-14 — after `expense-save-status` shipped: "are the motions/animations
   also in… i liked it")
-- Flight: save-status
 - Goal: The two remaining writes that confirm themselves *after* closing their own surface confirm
   themselves on the button instead, the way the expense editor now does.
 
@@ -76,7 +75,6 @@
     `paybackRecordedShort`, retire `paybackRecordSuccess`.
   - `group_detail_edit.dart`: `_StickyFooter.succeeded`, the done state and hold in `_save`, drop
     the success `showMessage`, and branch the success copy on `_isEdit`.
-- Manual-Checks: —
 - Blockers: —
 
 ## Approach
@@ -169,5 +167,3 @@ the test holds open.
 
 review: resolved · rounds: 2 · open: 0 block, 0 note, 0 lean
 tier: easy
-
-status: done

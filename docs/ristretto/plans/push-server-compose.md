@@ -1,8 +1,7 @@
-# push-server-compose — The push function writes each push for its receiver and checks who may get it
+# push-server-compose
 
 ## Spec
 - Source: idea — code review 2026-10-22 (research/code-review-2026-10.md), review finding 3 (server half) + architecture item; the As-is lines tagged "for push-server-compose"; Open item "The `push` function's server contract … is inferred from the client only"
-- Flight: backend-in-repo
 - Goal: The `push` Edge Function, recovered into the repo, writes every push itself in each receiver's language and delivers it only to people who share that push's group or friendship with the signed-in sender.
 - Why: push recipients · noticed by: no push on a device after its user signed out; text arrives in the receiver's language; only members of a shared group can be targeted
 
@@ -34,8 +33,10 @@
     - test/widgets/record_payback_sheet_test.dart and test/pages/groups/group_member_add_flow_test.dart.
     - 'F175: tapping Nudge sends an expense push to the members' in test/widgets/claim_nudge_test.dart also stays green. Its spy changes to the new transport: the type, object id and receiver assertions stay, and the two non-empty title/body assertions become an assertion that the kind is `claim_nudge`.
   - [auto] `dart format`, `flutter analyze` and `flutter test` pass.
-  - [human] A real push arrives on a device in the receiver's language, with the group's currency formatted for that language, while the sender's app runs in the other language.
-  - [human] A receiver who shares no group with the sender, or who was soft-removed from the push's group, gets nothing, while a current member named in the same push gets it. A request made without a signed-in user delivers nothing.
+  - [ ] [human] A real push arrives on a device in the receiver's language, with the group's currency formatted for that language, while the sender's app runs in the other language.
+    how: out of reach: the self-hosted api.deun.app (edge runtime and its ICU data for German number formatting, the function loading push_kinds.json, `user.locale` rows) and real FCM delivery to a physical device · after Jakob redeploys supabase/functions/push by force-recreate: in Settings, set user B's language to Deutsch and user A's to English, tapping Update on each profile so `user.locale` is saved. A adds a 1234.50 expense in a EUR group shared with B. Confirm phone B shows the German expense push naming A, with "EUR 1.234,50". A records a payback to B in a JPY group shared with B. Confirm the German payback push shows a yen amount with no decimals. Switch B to English, have A send a reminder, and confirm it arrives in English, naming A.
+  - [ ] [human] A receiver who shares no group with the sender, or who was soft-removed from the push's group, gets nothing, while a current member named in the same push gets it. A request made without a signed-in user delivers nothing.
+    how: out of reach: the live instance's group_member, friendship and device_tokens rows and real FCM delivery · invoke `push` with A's access token, kind `member_added`, a group G where A is an active member, and receivers B (active member of G), C (shares no group with A, has a device) and D (soft-removed from G, has a device). Confirm only B's device shows the push. Repeat with the anon key in place of A's token and confirm no device receives anything.
 - Provides:
   - In lib/helper/notification_sender.dart:
     - `enum PushKind { memberAdded, paybackRecorded, paymentReminder, expenseCreated, claimNudge, friendRequested, friendAccepted }` with `String get wireName` (`member_added` …) and `String get routingType` (`group`, `reminder`, `expense`, `friendship`).
@@ -103,9 +104,6 @@
   - Server: change index.ts in place. It covers the caller from the JWT, refusing an unknown kind, finding the scope, the membership filter, the receiver's locale, money formatting, unchanged data keys and the stale-token delete. Each guard gets a source-shape assertion.
   - Client: add `PushKind`, `PushRequest`, the reshaped `PushTransport` and `pushRequestBody`, and slim down `NotificationSender`. Payback sends emails, the nudge drops its strings, and all ten call sites build `NotificationSender()`. Re-point notification-context-free's suites and the claim nudge spy at the request shape.
   - Docs: append the two Open entries to docs/ristretto/manual-checks.md.
-- Manual-Checks:
-  - proves · a real push arrives in the receiver's language, with the group's currency formatted for that language · out of reach: the self-hosted api.deun.app (edge runtime and its ICU data for German number formatting, the function loading push_kinds.json, `user.locale` rows) and real FCM delivery to a physical device · after Jakob redeploys supabase/functions/push by force-recreate: in Settings, set user B's language to Deutsch and user A's to English, tapping Update on each profile so `user.locale` is saved. A adds a 1234.50 expense in a EUR group shared with B. Confirm phone B shows the German expense push naming A, with "EUR 1.234,50". A records a payback to B in a JPY group shared with B. Confirm the German payback push shows a yen amount with no decimals. Switch B to English, have A send a reminder, and confirm it arrives in English, naming A.
-  - proves · a non-member or soft-removed receiver gets nothing while a current member of the same push gets it, and a request without a signed-in user delivers nothing · out of reach: the live instance's group_member, friendship and device_tokens rows and real FCM delivery · invoke `push` with A's access token, kind `member_added`, a group G where A is an active member, and receivers B (active member of G), C (shares no group with A, has a device) and D (soft-removed from G, has a device). Confirm only B's device shows the push. Repeat with the anon key in place of A's token and confirm no device receives anything.
 - Blockers: — (resolved 2026-10-25). The deployed source was recovered on 2026-10-24 to supabase/remote_dump/functions/push/index.ts. That copy exists only in the main checkout, which gitignores it because it holds the live key, so a build in a worktree copies it from there. What the recovered copy settles (research/code-review-2026-10.md, "Answered by the live instance"):
   - It is one file. Its imports are URL imports only (`npm:@supabase/supabase-js@2`, deno std `0.168.0`, `deno.land/x/googlejwtsa@v0.1.8`), so the Recover unit copies index.ts alone.
   - Credentials: the full Firebase service-account JSON (`deun-66067`, `firebase-adminsdk-fbsvc@…`) is inlined, `private_key` included. The Credentials ruling applies as written: an environment read replaces it in the first commit. That secret has sat in plaintext on the server and in the local dump, so Jakob rotates the key in the Firebase console and sets the new one as a functions-container env var before the redeploy. The variable name is the implementer's call, and the manual-checks entry names it. The key never reached git history: `git log --all -S "BEGIN PRIVATE KEY"` finds nothing.
@@ -130,5 +128,3 @@
   - typed-expense-draft, editor-failure-keeps-form, scan-total-applies and expense-editor-split edit expense_detail.dart, where the sender is built.
   - payback-atomic-recalc and legacy-fallback-removal edit `payBack`.
   - helper-split and injectable-repositories edit the sender and the static repositories.
-
-status: planned
