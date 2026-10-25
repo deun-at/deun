@@ -2,6 +2,7 @@ import 'package:deun/constants.dart';
 import 'package:deun/helper/helper.dart';
 import 'package:deun/l10n/app_localizations.dart';
 import 'package:deun/main.dart';
+import 'package:deun/pages/auth/sign_out.dart';
 import 'package:deun/provider.dart';
 import 'package:deun/widgets/restyle/primary_button.dart';
 import 'package:deun/widgets/restyle/sheet_scaffold.dart';
@@ -215,11 +216,19 @@ class _OptionRow extends StatelessWidget {
   }
 }
 
+/// The account delete itself, run before the app sign-out.
+typedef AccountDeleter = Future<void> Function();
+
 /// Opens the type-DELETE account-deletion sheet. Ports the existing dialog's
 /// logic: the destructive button enables only when the input matches
 /// [AppLocalizations.deleteAccountConfirmKeyword], then invokes the
-/// `delete-user-account` edge function and signs out. Cancel closes.
-void showDeleteAccountSheet(BuildContext context) {
+/// `delete-user-account` edge function and, once that has succeeded, signs
+/// out through [appSignOutProvider]. Cancel closes. [deleteAccount] replaces
+/// the edge-function call in tests.
+void showDeleteAccountSheet(
+  BuildContext context, {
+  AccountDeleter? deleteAccount,
+}) {
   showModalBottomSheet<void>(
     context: context,
     isScrollControlled: true,
@@ -227,18 +236,27 @@ void showDeleteAccountSheet(BuildContext context) {
     useSafeArea: true,
     sheetAnimationStyle: kSheetAnimationStyle,
     barrierColor: kSheetBarrierColor,
-    builder: (_) => const _DeleteAccountSheet(),
+    builder: (_) => _DeleteAccountSheet(
+      deleteAccount: deleteAccount ?? _invokeDeleteUserAccount,
+    ),
   );
 }
 
-class _DeleteAccountSheet extends StatefulWidget {
-  const _DeleteAccountSheet();
-
-  @override
-  State<_DeleteAccountSheet> createState() => _DeleteAccountSheetState();
+Future<void> _invokeDeleteUserAccount() async {
+  await supabase.functions.invoke('delete-user-account');
 }
 
-class _DeleteAccountSheetState extends State<_DeleteAccountSheet> {
+class _DeleteAccountSheet extends ConsumerStatefulWidget {
+  const _DeleteAccountSheet({required this.deleteAccount});
+
+  final AccountDeleter deleteAccount;
+
+  @override
+  ConsumerState<_DeleteAccountSheet> createState() =>
+      _DeleteAccountSheetState();
+}
+
+class _DeleteAccountSheetState extends ConsumerState<_DeleteAccountSheet> {
   final _controller = TextEditingController();
 
   @override
@@ -336,9 +354,10 @@ class _DeleteAccountSheetState extends State<_DeleteAccountSheet> {
 
   Future<void> _deleteAccount(BuildContext context) async {
     final l10n = AppLocalizations.of(context)!;
+    final signOut = ref.read(appSignOutProvider);
     try {
-      await supabase.functions.invoke('delete-user-account');
-      await supabase.auth.signOut();
+      await widget.deleteAccount();
+      await signOut();
     } catch (e) {
       if (context.mounted) {
         showSnackBar(context, l10n.deleteAccountError);

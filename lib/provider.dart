@@ -6,6 +6,7 @@ import 'package:deun/pages/friends/provider/friendship_list.dart';
 import 'package:deun/pages/groups/provider/group_list.dart';
 import 'package:deun/pages/settings/theme_mode_pref.dart';
 import 'package:deun/pages/users/user_repository.dart';
+import 'package:deun/push_notifications.dart';
 import 'package:flutter/material.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -52,10 +53,14 @@ Stream<AuthState> authStateChanges(Ref ref) => supabase.auth.onAuthStateChange;
 /// Device-scoped preference providers ([ThemeModeNotifier],
 /// [NotificationsEnabledNotifier], [CardFeeNotifier]) are intentionally
 /// excluded: they survive a user switch on the same device.
+///
+/// The push session ([PushSession]) holds this user's token and notification
+/// listeners, so it joins too; its disposal cancels them.
 void invalidateUserScopedProviders(Ref ref) {
   ref.invalidate(userDetailProvider);
   ref.invalidate(groupListProvider);
   ref.invalidate(friendshipListProvider);
+  ref.invalidate(pushSessionProvider);
 }
 
 /// Watches Supabase auth-state changes and invalidates the user-scoped providers

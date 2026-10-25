@@ -290,6 +290,25 @@ carry `[human]` criteria that nobody has ever observed. Check here before shippi
   list drops B. Add an expense on B in a throwaway group A and B share: A's balance with B updates
   after about 2 s.
 
+- [ ] **proves** · push-session-lifecycle: after user A signs out in Settings, A's device_tokens row
+  for this device's token is gone and pushes to A stop arriving there; after B signs in on that
+  device, B's push arrives and one tap opens its target once · out of reach: real FCM delivery to a
+  physical device and the self-hosted instance api.deun.app; no test runs `FirebasePushMessaging`
+  or `SupabaseDeviceTokenStore`, the adapters behind the seams · on an Android or iOS device signed
+  in as A (test accounts only), note A's user id and the device's token in device_tokens (read only).
+  Sign out in Settings and confirm that row is gone. If it survives, record it under Findings: the
+  stopgap's owner-only policy admits the owner's delete (supabase/tests/rls_stopgap
+  'sign-out deletes own token'), so a surviving row means the unregister never ran. Have B add an
+  expense in a group shared with A from another device and confirm nothing reaches the signed-out
+  device. Sign in as B on it, have A add an expense in a shared group, and confirm B's notification
+  arrives and one tap opens the expense once.
+
+- [ ] **proves** · push-session-lifecycle: after an account is deleted on a physical device, no
+  device_tokens row remains for that user and that token · out of reach: the live instance (the
+  dump of 2026-10-24 shows the `auth.users → device_tokens` cascade; this confirms it on a real
+  account) · create a throwaway account on a device, confirm its device_tokens row exists (read
+  only), delete the account in Settings, then confirm no row remains for that user id or token.
+
 ## Findings from verification
 
 Defects turned up while walking the checks. These are not checks themselves — nobody ticks them —

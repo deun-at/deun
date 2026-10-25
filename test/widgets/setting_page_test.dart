@@ -1,10 +1,12 @@
 import 'package:deun/constants.dart';
 import 'package:deun/widgets/restyle/soft_card.dart';
 import 'package:deun/l10n/app_localizations.dart';
+import 'package:deun/pages/auth/sign_out.dart';
 import 'package:deun/pages/settings/card_fee_sheet.dart';
 import 'package:deun/pages/settings/setting.dart';
 import 'package:deun/pages/users/user_model.dart';
 import 'package:deun/provider.dart';
+import 'package:deun/widgets/restyle/primary_button.dart';
 import 'package:deun/widgets/theme_builder.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
@@ -40,7 +42,11 @@ class _FakeCardFeeNotifier extends CardFeeNotifier {
   double? build() => _initial;
 }
 
-Future<void> _pumpSettings(WidgetTester tester, {double? cardFee}) async {
+Future<void> _pumpSettings(
+  WidgetTester tester, {
+  double? cardFee,
+  AppSignOut? signOut,
+}) async {
   // The settings screen is a scrollable ListView; give it a tall viewport so the
   // preferences section (below the profile form) is laid out, not lazily culled.
   tester.view.physicalSize = const Size(1200, 3600);
@@ -54,6 +60,7 @@ Future<void> _pumpSettings(WidgetTester tester, {double? cardFee}) async {
           () => _FakeUserDetailNotifier(_fakeUser()),
         ),
         cardFeeProvider.overrideWith(() => _FakeCardFeeNotifier(cardFee)),
+        appSignOutProvider.overrideWithValue(signOut ?? () async {}),
       ],
       child: MaterialApp(
         localizationsDelegates: const [
@@ -175,6 +182,26 @@ void main() {
           .controller!
           .text,
       '1.4',
+    );
+  });
+
+  testWidgets('confirming Sign out goes through the app sign-out', (
+    tester,
+  ) async {
+    final l10n = await AppLocalizations.delegate.load(const Locale('en'));
+    var signOuts = 0;
+    await _pumpSettings(tester, signOut: () async => signOuts++);
+
+    await tester.tap(find.byTooltip(l10n.settingsSignOut));
+    await tester.pumpAndSettle();
+    await tester.tap(find.widgetWithText(PrimaryButton, l10n.settingsSignOut));
+    await tester.pumpAndSettle();
+
+    expect(
+      signOuts,
+      1,
+      reason:
+          'the one sign-out that removes the token, shared with account delete',
     );
   });
 }
