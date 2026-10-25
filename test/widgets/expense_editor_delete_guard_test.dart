@@ -16,6 +16,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import 'expense_save_status_test.dart'
+    show cta, drainSnackBar, headerClose, nameField, openDateSheetMidWrite;
+
 GroupMember _member(String email, String name) {
   final m = GroupMember();
   m.groupId = 'g1';
@@ -121,12 +124,32 @@ Expense _payback(String date) {
   return e;
 }
 
+/// Records every delete the editor issues. [gate] holds the write open, so the
+/// in-flight window is observable; [throws] makes it fail.
+class _Deleter {
+  _Deleter({this.throws, this.gate});
+
+  final Object? throws;
+  final Completer<void>? gate;
+  final calls = <(String, String)>[];
+
+  Future<void> call(String expenseId, String groupId) async {
+    calls.add((expenseId, groupId));
+    if (gate != null) await gate!.future;
+    final failure = throws;
+    if (failure != null) throw failure;
+  }
+}
+
 Future<void> _pump(
   WidgetTester tester, {
   required Expense expense,
   List<Expense> paybacks = const [],
   Future<List<Expense>> Function(String groupId)? loader,
+  _Deleter? deleter,
+  List<Map<String, dynamic>>? saves,
 }) async {
+  final deletes = deleter ?? _Deleter();
   await tester.pumpWidget(
     ProviderScope(
       child: MaterialApp(
@@ -137,8 +160,12 @@ Future<void> _pump(
           GlobalCupertinoLocalizations.delegate,
         ],
         supportedLocales: AppLocalizations.supportedLocales,
-        home: Builder(
-          builder: (context) => Theme(
+        // '/edit' builds the stack ['/', '/edit'], so a successful delete's
+        // pop has somewhere to land instead of emptying the navigator.
+        initialRoute: '/edit',
+        routes: {
+          '/': (context) => const Scaffold(body: Text('BEHIND')),
+          '/edit': (context) => Theme(
             data: getThemeData(
               context,
               kBrandSeed,
@@ -148,13 +175,37 @@ Future<void> _pump(
               group: _group(),
               expense: expense,
               loadGroupPaybacks: loader ?? (_) async => paybacks,
+              deleteExpense: deletes.call,
+              saveExpense:
+                  (
+                    context,
+                    groupId,
+                    expenseId,
+                    formResponse, {
+                    required currency,
+                    conversion,
+                  }) async {
+                    saves?.add(Map<String, dynamic>.from(formResponse));
+                  },
             ),
           ),
-        ),
+        },
       ),
     ),
   );
   await tester.pumpAndSettle();
+}
+
+/// Opens the confirmation and taps its Delete. The caller pumps.
+Future<void> _confirmDelete(WidgetTester tester, AppLocalizations l10n) async {
+  await tester.tap(_headerDelete);
+  await tester.pumpAndSettle();
+  await tester.tap(
+    find.descendant(
+      of: find.byType(AlertDialog),
+      matching: find.text(l10n.delete),
+    ),
+  );
 }
 
 /// The delete action in the editor header (the item cards have their own trash).
@@ -323,6 +374,234 @@ void main() {
       expect(find.byType(AlertDialog), findsOneWidget);
       expect(find.text(l10n.expenseDeleteItemTitle), findsOneWidget);
       expect(tester.takeException(), isNull);
+    },
+  );
+
+  testWidgets(
+    'a failed delete keeps the editor and its edits, and a later save sends them',
+    (tester) async {
+      final l10n = await AppLocalizations.delegate.load(const Locale('en'));
+      final deleter = _Deleter(throws: Exception('offline'));
+      final saves = <Map<String, dynamic>>[];
+      await _pump(
+        tester,
+        expense: _quickExpense(),
+        deleter: deleter,
+        saves: saves,
+      );
+
+      await tester.enterText(nameField, 'Dinner for two');
+      FocusManager.instance.primaryFocus?.unfocus();
+      await tester.pumpAndSettle();
+
+      await _confirmDelete(tester, l10n);
+      await tester.pumpAndSettle();
+
+      expect(deleter.calls, hasLength(1));
+      expect(find.byType(AlertDialog), findsNothing);
+      expect(find.text('BEHIND'), findsNothing);
+      expect(find.text(l10n.expenseDetailTitleEdit), findsOneWidget);
+      expect(find.text('Dinner for two'), findsOneWidget);
+      expect(find.text(l10n.expenseDeleteError), findsOneWidget);
+      expect(find.text(l10n.expenseDeleteSuccess), findsNothing);
+      // The header delete is back for a retry.
+      expect(_headerDelete, findsOneWidget);
+      expect(
+        tester.widget<IconButton>(_headerDeleteButton).onPressed,
+        isNotNull,
+      );
+
+      // Drain the error SnackBar (it would sit over the CTA), then save.
+      await drainSnackBar(tester);
+      await tester.tap(cta);
+      await tester.pumpAndSettle(const Duration(seconds: 5));
+
+      expect(saves, hasLength(1));
+      expect(saves.single['name'], 'Dinner for two');
+      expect(find.text('BEHIND'), findsOneWidget);
+    },
+  );
+
+  testWidgets(
+    'a confirmed delete removes this expense once and closes the editor',
+    (tester) async {
+      final l10n = await AppLocalizations.delegate.load(const Locale('en'));
+      final deleter = _Deleter();
+      await _pump(tester, expense: _quickExpense(), deleter: deleter);
+
+      await _confirmDelete(tester, l10n);
+      await tester.pumpAndSettle();
+
+      expect(deleter.calls, [('e1', 'g1')]);
+      expect(find.text(l10n.expenseDeleteSuccess), findsOneWidget);
+      expect(find.byType(AlertDialog), findsNothing);
+      expect(find.byType(ExpenseDetail), findsNothing);
+      expect(find.text('BEHIND'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    },
+  );
+
+  // The header spinner animates forever, so this test pumps explicitly until
+  // the gate opens.
+  testWidgets(
+    'while a confirmed delete runs, neither delete nor save starts a second write',
+    (tester) async {
+      final l10n = await AppLocalizations.delegate.load(const Locale('en'));
+      final gate = Completer<void>();
+      final deleter = _Deleter(gate: gate);
+      final saves = <Map<String, dynamic>>[];
+      await _pump(
+        tester,
+        expense: _quickExpense(),
+        deleter: deleter,
+        saves: saves,
+      );
+
+      await _confirmDelete(tester, l10n);
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300)); // dialog exit
+
+      expect(find.byType(AlertDialog), findsNothing);
+      expect(
+        find.descendant(
+          of: find.byType(DeunHeader),
+          matching: find.byType(CircularProgressIndicator),
+        ),
+        findsOneWidget,
+        reason: 'the header shows progress for the delete write',
+      );
+
+      await tester.tap(_headerDeleteButton);
+      await tester.pump();
+      await tester.tap(cta);
+      await tester.pump();
+
+      expect(deleter.calls, hasLength(1));
+      expect(saves, isEmpty);
+      expect(find.byType(AlertDialog), findsNothing);
+
+      gate.complete();
+      await tester.pumpAndSettle();
+
+      expect(find.byType(ExpenseDetail), findsNothing);
+      // Popped once: a second pop would have taken '/' with it.
+      expect(find.text('BEHIND'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    },
+  );
+
+  // The delete write runs with the editor uncovered, and its sheets open on
+  // the editor's own (root) navigator: the success pop must close the editor,
+  // not the sheet on top of it.
+  testWidgets(
+    'a delete that succeeds under an open sheet still closes the editor',
+    (tester) async {
+      final l10n = await AppLocalizations.delegate.load(const Locale('en'));
+      final gate = Completer<void>();
+      await _pump(
+        tester,
+        expense: _quickExpense(),
+        deleter: _Deleter(gate: gate),
+      );
+
+      await _confirmDelete(tester, l10n);
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300)); // dialog exit
+      await openDateSheetMidWrite(tester);
+
+      gate.complete();
+      await tester.pumpAndSettle();
+
+      expect(find.byType(ExpenseDetail), findsNothing);
+      expect(find.text('BEHIND'), findsOneWidget);
+      expect(find.text(l10n.expenseDeleteSuccess), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    },
+  );
+
+  // The close button and system back go through PopScope, which a delete in
+  // flight must refuse: the editor stays until the write answers, so a failure
+  // can still be reported and a success pops the editor, not a discard sheet.
+  for (final dirty in [false, true]) {
+    testWidgets(
+      'closing is refused while a confirmed delete runs (${dirty ? 'dirty' : 'clean'} form), then it closes once',
+      (tester) async {
+        final l10n = await AppLocalizations.delegate.load(const Locale('en'));
+        final gate = Completer<void>();
+        final deleter = _Deleter(gate: gate);
+        await _pump(tester, expense: _quickExpense(), deleter: deleter);
+
+        if (dirty) {
+          await tester.enterText(nameField, 'Dinner for two');
+          FocusManager.instance.primaryFocus?.unfocus();
+          await tester.pumpAndSettle();
+        }
+
+        await _confirmDelete(tester, l10n);
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 300)); // dialog exit
+
+        await tester.tap(headerClose);
+        await tester.pump(const Duration(milliseconds: 300));
+
+        expect(find.text(l10n.discardChangesTitle), findsNothing);
+        expect(find.text(l10n.expenseDetailTitleEdit), findsOneWidget);
+        expect(find.text('BEHIND'), findsNothing);
+
+        gate.complete();
+        await tester.pumpAndSettle();
+
+        expect(find.byType(ExpenseDetail), findsNothing);
+        expect(find.text(l10n.discardChangesTitle), findsNothing);
+        expect(find.text('BEHIND'), findsOneWidget);
+        expect(tester.takeException(), isNull);
+      },
+    );
+  }
+
+  testWidgets(
+    'dismissing the confirmation with a barrier tap deletes nothing',
+    (tester) async {
+      final l10n = await AppLocalizations.delegate.load(const Locale('en'));
+      final deleter = _Deleter();
+      await _pump(tester, expense: _quickExpense(), deleter: deleter);
+
+      await tester.tap(_headerDelete);
+      await tester.pumpAndSettle();
+      expect(find.byType(AlertDialog), findsOneWidget);
+
+      await tester.tapAt(const Offset(10, 10)); // the modal barrier
+      await tester.pumpAndSettle();
+
+      expect(deleter.calls, isEmpty);
+      expect(find.byType(AlertDialog), findsNothing);
+      expect(find.text(l10n.expenseDetailTitleEdit), findsOneWidget);
+      expect(find.text('BEHIND'), findsNothing);
+    },
+  );
+
+  testWidgets(
+    'after a failed delete, closing the editor still asks to discard',
+    (tester) async {
+      final l10n = await AppLocalizations.delegate.load(const Locale('en'));
+      await _pump(
+        tester,
+        expense: _quickExpense(),
+        deleter: _Deleter(throws: Exception('offline')),
+      );
+
+      await tester.enterText(nameField, 'Dinner for two');
+      FocusManager.instance.primaryFocus?.unfocus();
+      await tester.pumpAndSettle();
+
+      await _confirmDelete(tester, l10n);
+      await tester.pumpAndSettle(const Duration(seconds: 5));
+
+      await tester.tap(headerClose);
+      await tester.pumpAndSettle();
+
+      expect(find.text(l10n.discardChangesTitle), findsOneWidget);
+      expect(find.text('BEHIND'), findsNothing);
     },
   );
 }

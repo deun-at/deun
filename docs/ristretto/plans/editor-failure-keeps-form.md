@@ -44,6 +44,18 @@
   - (f) Realtime: not applicable. A failed save commits nothing (one transaction); a partly failed delete is covered by the non-atomic-delete ruling above. A successful delete still removes `expense_update_checker` and recalculates as today.
   - (g) Test seams: `ExpenseSaver` (existing) plus the new `deleteExpense`. The sticky-rate failure is driven by a `stickyRateProvider` override in the test's `ProviderScope`, so it needs no new constructor seam.
   - (h) Migrations: none. No database change and no RPC, so there is no client fallback to rule on and no manual-checks entry.
+  - [ ] what to call the delete flag now that it covers the write as well as the probe → rename `_deleteProbeInFlight` to `_deleteInFlight` (one bool for both windows, doc comment rewritten)
+  - [ ] which unit privatises `openDeleteItemDialog` → Unit 3, as `_openDeleteItemDialog(Expense expense)`, because its signature changes there anyway (`modalContext` goes; the helper pops via the State's `context`). Unit 4 covers `_groupMembers`, `_detectAndUpdateCategory` and deleting `groupColor`
+  - [ ] header state while the confirmation dialog is up → `_deleteInFlight` is false while the modal dialog shows (no spinner behind the barrier) and goes back to true on confirm, for the write
+  - [ ] whether the helper runs the success step after the editor has unmounted → no. `_writeThenClose` checks `mounted` before `onSuccess` and again before the pop
+  - [ ] how a header-delete tap during a save is refused → a guard at the top of `_openDeleteItemDialog` (`_saveStatus != idle`). The header is not visually disabled during a save
+  - [ ] where the save's delete-in-flight check sits → the first line of `_saveExpense`, before `saveAndValidate`, so a refused tap changes no state
+  - [ ] how the save avoids using `context` after the write's await → the error string and `reduceMotion` are read before the helper call. The success step uses no context
+  - [ ] delete-guard test harness → `_pump` moves to the `/` behind `/edit` stack for every test in the file, and always injects a stub deleter and saver so no test can reach the network
+  - [ ] rate-date check in the retry test → assert it is non-null and the same across both attempts, not equal to today's ymd
+  - [ ] the barrier-dismiss test (3.4) already passes at HEAD apart from compiling → kept, as the guard for the new `confirmed != true` / null-result branch
+  - [ ] (implementer) the error SnackBar is not drained by pumpAndSettle(5s) → a small `drainSnackBar` helper (settle, pump 3s, settle) used before the second CTA tap
+  - [ ] (round 3, review failed twice on "only a successful write closes the editor") how a success fences against a route stacked above the editor → close the editor's own route (`ModalRoute.of(context)`, `popUntil` it, then `pop`) instead of blocking input; while a write is out, PopScope refuses X/back
 - Units:
   - Delete seam: move `ExpenseDeleter` into lib/pages/expenses/data/expense_deletion_impact.dart, repoint payback_detail_sheet.dart, and add `ExpenseDetail.deleteExpense`. This changes no behaviour; test/widgets/payback_detail_sheet_test.dart and every editor suite must stay green.
   - Shared helper and save path: lift the write-then-pop flow into the helper and route `_saveExpense` through it, with the sticky-rate write isolated in the success step. Tests go in test/widgets/expense_save_status_test.dart; the existing failure test is extended rather than duplicated. A saver that fails first and succeeds second, recording its payloads, covers acceptance 1, 2 and the save half of acceptance 9. The foreign-currency retry can reuse `pickCurrency` and `installFakePrefs` from test/widgets/expense_editor_currency_rate_test.dart. A `stickyRateProvider` override whose `setStickyRate` throws covers acceptance 3; the sticky write only runs for a foreign entry currency with a typed (user-origin) rate, so that test picks a currency and types a rate.
@@ -60,3 +72,18 @@
 - Likely touchpoints: lib/pages/expenses/presentation/expense_detail.dart, lib/pages/expenses/data/expense_deletion_impact.dart, lib/pages/groups/presentation/payback_detail_sheet.dart, test/widgets/expense_save_status_test.dart, test/widgets/expense_editor_delete_guard_test.dart
 - Depends: —
 - Parallel-with: payback-atomic-recalc, guest-merge-rpc, group-model-parse-safety, expense-search-escape (disjoint files). scan-total-applies, typed-expense-draft, notification-context-free and expense-editor-split all edit expense_detail.dart, so this one does not run in parallel with them.
+
+## Evidence
+- 1: test/widgets/expense_save_status_test.dart `a failed save shows the error and never shows a check` (extended: editor still on screen, route behind not shown, error SnackBar, CTA idle with no spinner, no check); red at HEAD because the `finally` popped.
+- 2: test/widgets/expense_save_status_test.dart `a retry after a failed save sends the same name, amount and conversion` (name, amount, CHF entry currency, typed rate and a non-null rate date identical across both attempts; one write per tap).
+- 3: test/widgets/expense_save_status_test.dart `a failed rate memory after a committed write still counts as saved` (`stickyRateProvider` override whose `setStickyRate` throws: check shown, editor closed onto the route behind, one write, no SnackBar).
+- 4: no new test; the five existing tests in test/widgets/expense_save_status_test.dart named in the criterion stay green unchanged.
+- 5: test/widgets/expense_editor_delete_guard_test.dart `a failed delete keeps the editor and its edits, and a later save sends them`.
+- 6: test/widgets/expense_editor_delete_guard_test.dart `a confirmed delete removes this expense once and closes the editor`.
+- 7: test/widgets/expense_editor_delete_guard_test.dart `while a confirmed delete runs, neither delete nor save starts a second write` (gated deleter; header progress, one deleter call, no save, one pop).
+- 8: cancel half by the existing `the editor warns on a settled expense, and cancel writes nothing`; dismiss half by `dismissing the confirmation with a barrier tap deletes nothing` (both in test/widgets/expense_editor_delete_guard_test.dart).
+- 9: test/widgets/expense_save_status_test.dart `after a failed save, closing the editor still asks to discard` and test/widgets/expense_editor_delete_guard_test.dart `after a failed delete, closing the editor still asks to discard`.
+- 10: gates below.
+- gates: `dart format` (5 touched files, 0 changed), `flutter analyze` (no issues), `flutter test` (1650 passed, all passed), run at close.
+- review: resolved · rounds: 3 · open: 0 block, 0 note, 0 lean · trimmed: 0
+- tier: normal

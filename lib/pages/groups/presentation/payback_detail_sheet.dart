@@ -14,12 +14,6 @@ import 'package:flutter/material.dart';
 import '../data/group_model.dart';
 import 'group_ledger.dart';
 
-/// The write [PaybackDetailSheet] performs. Null in production →
-/// [ExpenseRepository.delete]; widget tests inject a stub so they never reach
-/// the network (same seam as `RecordPaybackSheet.recordPayback`).
-typedef ExpenseDeleter =
-    Future<void> Function(String expenseId, String groupId);
-
 /// Opens the detail sheet for one payback row.
 ///
 /// Resolves when the sheet closes and carries no result: the deleted row leaves
