@@ -57,6 +57,16 @@ class _ProbeNotifier extends Notifier<int> with RealtimeNotifierMixin {
     listenForResume(ref: ref, onResume: () {});
     return 0;
   }
+
+  /// Drives [syncInFilterChannels] under the prefix `probe_scope`.
+  void syncScope(Set<String> values) => syncInFilterChannels(
+    ref: ref,
+    prefix: 'probe_scope',
+    table: 'probe_table',
+    column: 'id',
+    values: values,
+    onEvent: (_) {},
+  );
 }
 
 /// One mounted probe notifier on its own container, under [async].
@@ -326,4 +336,97 @@ void main() {
       });
     },
   );
+
+  group('realtime-event-scope', () {
+    test(
+      'S1 unsubscribeFromChannel closes only that channel, cancels its retry, and a resume leaves it closed',
+      () {
+        fakeAsync((async) {
+          final h = _Harness(async, channelNames: const ['probe:a', 'probe:b']);
+          final a = h.channels.latest('probe:a');
+          a.emitStatus(RealtimeSubscribeStatus.channelError); // retry pending
+          final notifier = h.container.read(h.provider.notifier);
+
+          notifier.unsubscribeFromChannel('probe:a');
+          notifier.unsubscribeFromChannel('probe:unknown'); // no-op
+
+          expect(a.isClosed, isTrue);
+          expect(h.channels.live('probe:b'), hasLength(1));
+          async.elapse(
+            const Duration(seconds: 8),
+          ); // the cancelled retry's backoff
+          h.resume();
+          expect(h.channels.named('probe:a'), hasLength(1));
+          expect(h.channels.live('probe:a'), isEmpty);
+          expect(h.channels.live('probe:b'), hasLength(1));
+          h.channels.deliver(
+            'probe:b',
+            postgresChange(PostgresChangeEvent.insert),
+          );
+          expect(h.probe.events, ['probe:b']);
+        });
+      },
+    );
+
+    test(
+      'S2 chunkForInFilter deduplicates and sorts, and no chunk exceeds the in-filter limit',
+      () {
+        expect(chunkForInFilter(const <String>[]), isEmpty);
+        expect(chunkForInFilter(const ['b', 'a', 'b']), [
+          ['a', 'b'],
+        ]);
+        final ids = [
+          for (var i = 250; i > 0; i--) 'g${i.toString().padLeft(3, '0')}',
+        ];
+        final chunks = chunkForInFilter([...ids, ...ids]);
+        expect(chunks.every((c) => c.length <= 100), isTrue);
+        expect(chunks.expand((c) => c).toList(), [...ids]..sort());
+      },
+    );
+
+    test(
+      'S3 syncInFilterChannels swaps chunk channels only when the set changes and never reuses a name',
+      () {
+        fakeAsync((async) {
+          final h = _Harness(async);
+          List<FakeRealtimeChannel> scoped() => h.channels.opened
+              .where((c) => c.channelName.startsWith('probe_scope:'))
+              .toList();
+          List<FakeRealtimeChannel> liveScoped() =>
+              scoped().where((c) => !c.isClosed).toList();
+
+          h.container.read(h.provider.notifier).syncScope({'b', 'a'});
+          final first = scoped().single;
+          expect(first.table, 'probe_table');
+          expect(first.filter!.type, PostgresChangeFilterType.inFilter);
+          expect(first.filter!.column, 'id');
+          expect(first.filter!.value, ['a', 'b']);
+
+          // Equal contents, different instance: nothing closes or reopens.
+          h.container.read(h.provider.notifier).syncScope({'a', 'b'});
+          expect(scoped(), [first]);
+          expect(first.isClosed, isFalse);
+
+          h.container.read(h.provider.notifier).syncScope({'a', 'b', 'c'});
+          expect(first.isClosed, isTrue);
+          expect(liveScoped().single.filter!.value, ['a', 'b', 'c']);
+
+          h.container.read(h.provider.notifier).syncScope(const {});
+          expect(liveScoped(), isEmpty);
+
+          // A rebuild disposes every channel; the next sync reopens under a
+          // name no earlier channel used.
+          h.container.invalidate(h.provider);
+          async.elapse(Duration.zero);
+          h.container.read(h.provider.notifier).syncScope({'a', 'b'});
+          expect(liveScoped().single.filter!.value, ['a', 'b']);
+          final names = scoped().map((c) => c.channelName).toList();
+          expect(names.toSet(), hasLength(names.length));
+
+          // The notifier's own channel is never touched by a re-scope.
+          expect(h.channels.live('probe:a'), hasLength(1));
+        });
+      },
+    );
+  });
 }
