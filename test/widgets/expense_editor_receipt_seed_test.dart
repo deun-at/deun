@@ -39,10 +39,7 @@ Group _group() {
   return g;
 }
 
-Future<void> _pumpEditor(
-  WidgetTester tester,
-  ReceiptScanResult receipt,
-) async {
+Future<void> _pumpEditor(WidgetTester tester, ReceiptScanResult receipt) async {
   tester.view.physicalSize = const Size(1200, 4000);
   tester.view.devicePixelRatio = 1.0;
   addTearDown(tester.view.reset);
@@ -87,12 +84,15 @@ List<(String, String)> _seededLines(WidgetTester tester) {
   final values = tester
       .state<FormBuilderState>(find.byType(FormBuilder))
       .instantValue;
-  final indexes = values.keys
-      .map((k) => RegExp(r'^expense_entry\[(\d+)\]\[amount\]$').firstMatch(k))
-      .whereType<RegExpMatch>()
-      .map((m) => int.parse(m.group(1)!))
-      .toList()
-    ..sort();
+  final indexes =
+      values.keys
+          .map(
+            (k) => RegExp(r'^expense_entry\[(\d+)\]\[amount\]$').firstMatch(k),
+          )
+          .whereType<RegExpMatch>()
+          .map((m) => int.parse(m.group(1)!))
+          .toList()
+        ..sort();
   return [
     for (final i in indexes)
       (
