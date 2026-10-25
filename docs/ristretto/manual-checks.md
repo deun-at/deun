@@ -266,7 +266,9 @@ carry `[human]` criteria that nobody has ever observed. Check here before shippi
   and delete events, and a group the user is added to appears and goes live without a refresh ·
   out of reach: the self-hosted realtime server on api.deun.app (`supabase/realtime:v2.34.7`:
   whether it accepts in-filters with quoted values) and the unapplied migration; no test runs
-  `SupabaseRealtimeChannelFactory` · apply `20261025200000_realtime_event_scope.sql` as `supabase_admin`.
+  `SupabaseRealtimeChannelFactory` · ⚠ **do not apply yet** — open security finding in
+  plans/realtime-event-scope.md (publishing `group_member` broadcasts every member removal's
+  `(email, group_id)` to any subscriber); resolve it first. Then apply `20261025200000_realtime_event_scope.sql` as `supabase_admin`.
   Confirm by SQL that
   `select relname, relreplident from pg_class where relname in ('group_update_checker', 'friendship');`
   shows `f` for both and that
