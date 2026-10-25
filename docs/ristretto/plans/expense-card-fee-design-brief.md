@@ -1,4 +1,4 @@
-# expense-card-fee — Design brief
+# expense-card-fee
 
 > Written 2026-09-17, out of a live bug walk: a 5 170 Ft receipt in a EUR group
 > settled at €14.17 by ECB reference while the card statement said €14.32. The

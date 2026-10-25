@@ -1,9 +1,8 @@
-# expense-notification-route — Expense notifications open the read view, not the editor
+# expense-notification-route
 
 ## Spec
 - Source: idea (user bug report, 2026-08-11: "expense notification jumps to the edit page of the
   expense not the expense view page")
-- Flight: —
 - Goal: Tapping an expense push notification lands on the expense read view, the same place tapping
   the expense in the list lands.
 
@@ -55,7 +54,6 @@ still unwinds correctly once the second push targets a different route.
 - Depends: —
 - Parallel-with: expense-editor-edit-labels
 
-status: done
 
 ## Evidence
 

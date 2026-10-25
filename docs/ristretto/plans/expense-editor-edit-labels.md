@@ -1,8 +1,7 @@
-# expense-editor-edit-labels — Editing an expense never says "Add expense"
+# expense-editor-edit-labels
 
 ## Spec
 - Source: idea (user bug report, 2026-08-11: "edit expense has a wrong label 'add expense'")
-- Flight: —
 - Goal: Every label on the expense editor reflects which mode it is in. Opening an existing expense
   to edit it reads as editing, in both languages.
 
@@ -129,5 +128,3 @@ do not name snackbars, so the acceptance bar is met, but the plan's Goal line ("
 expense editor reflects which mode it is in") is not fully served by this fix. Fixing it needs new
 `expenseUpdateSuccess`/`expenseUpdateError` copy in both ARBs — user-facing wording no plan has
 decided, so it is left for a future feature rather than fixed here.
-
-status: done — commit `57891ae`

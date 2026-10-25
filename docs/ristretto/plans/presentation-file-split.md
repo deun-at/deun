@@ -1,8 +1,7 @@
-# presentation-file-split — The claim page and the split editor open in pieces
+# presentation-file-split
 
 ## Spec
 - Source: idea — code review 2026-10-22 (research/code-review-2026-10.md), Architecture item: the god files `claim_page.dart` (1631 lines) and `expense_entry_widget.dart` (1477 lines), plus CODE_REVIEW_2026-07-07 §6's "move the rebalancing math into `split_allocation.dart`"
-- Flight: structure
 - Goal: `claim_page.dart` and `expense_entry_widget.dart` split into section files, and the split editor's rebalancing math moves into `split_allocation.dart` with its own unit tests. Nothing changes for the user.
 - Why: Jakob as sole maintainer · noticed by: the backend rebuilds from supabase/migrations/, the fallback code paths are gone, the 1500–1900-line files open in pieces
 
@@ -59,7 +58,6 @@
   - Move the math: add the three functions to `split_allocation.dart` with their unit tests, point the State at them, and replace `_isSplitValid` with `SplitAllocation.compute`.
   - Split `expense_entry_widget.dart` by section into `lib/pages/expenses/presentation/expense_entry/`.
   - Split `claim_page.dart`'s section widgets into `lib/pages/expenses/presentation/claim/`.
-- Manual-Checks: —
 - Blockers: —
 
 ## Approach
@@ -70,5 +68,3 @@
 - Likely touchpoints: lib/pages/expenses/presentation/claim_page.dart, lib/pages/expenses/presentation/claim/ (new), lib/pages/expenses/presentation/expense_entry_widget.dart, lib/pages/expenses/presentation/expense_entry/ (new), lib/pages/expenses/data/split_allocation.dart, test/model/split_allocation_test.dart, test/widgets/expense_entry_widget_test.dart
 - Depends: —
 - Parallel-with: expense-editor-split, editor-failure-keeps-form, typed-expense-draft (no shared code file; it rewrites two suites named in Acceptance, see Decisions), typed-routes, housekeeping, realtime-channel-lifecycle, realtime-event-scope, push-session-lifecycle, group-model-parse-safety, expense-search-escape, guest-merge-rpc, payback-atomic-recalc, group-write-rpcs, schema-baseline, legacy-fallback-removal
-
-status: planned

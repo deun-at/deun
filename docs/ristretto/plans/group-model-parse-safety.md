@@ -1,8 +1,7 @@
-# group-model-parse-safety — One malformed summary row no longer breaks a group
+# group-model-parse-safety
 
 ## Spec
 - Source: idea — code review 2026-10-22 (research/code-review-2026-10.md), finding 9
-- Flight: review-bugs
 - Goal: A malformed `group_shares_summary` row or a null `simplified_expenses` never leaves a `Group` or `GroupSharesSummary` with an unset field. The group still loads, and its other rows still count toward its balances.
 - Why: group members using the app · noticed by: a failed save or delete no longer throws away the form, a retried payback no longer double-records, a joining guest no longer rewrites history outside the group
 
@@ -49,7 +48,6 @@
   - Default-initialise Group's three summary outputs and the four GroupSharesSummary fields, and read a null `simplified_expenses` as false. Covers the two load-level criteria.
   - Add the shared parse helper and make the default calculation tolerate bad rows: email fallback for names, 0 for bad numerics, skip rows with no email. Move `memberBalances` onto the helper. Covers the default-mode criteria and the default halves of the no-email and JPY criteria.
   - Make the simplified calculation tolerate bad rows: the email fallback replaces `''`, the helper handles `total_expenses`/`total_share_amount`, and rows with no email are skipped. Covers the simplified-mode criteria and the simplified halves of the no-email and JPY criteria.
-- Manual-Checks: —
 - Blockers: —
 
 ## Approach
@@ -58,5 +56,3 @@
 - Likely touchpoints: lib/pages/groups/data/group_model.dart, test/model/group_settlement_test.dart, test/model/group_model_parse_safety_test.dart (new)
 - Depends: —
 - Parallel-with: editor-failure-keeps-form, payback-atomic-recalc, guest-merge-rpc, expense-search-escape. Not injectable-repositories, which also edits group_model.dart's `supabase.auth` reads.
-
-status: planned

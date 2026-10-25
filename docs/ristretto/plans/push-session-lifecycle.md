@@ -1,8 +1,7 @@
-# push-session-lifecycle — Push registration lives and dies with the signed-in session
+# push-session-lifecycle
 
 ## Spec
 - Source: idea — code review 2026-10-22 (research/code-review-2026-10.md), findings 4 + 5 (stacked FCM listeners; sign-out and account delete never remove the device token)
-- Flight: review-bugs
 - Goal: A signed-out device stops receiving its previous user's pushes, and one notification tap navigates once however often users sign in and out.
 - Why: push recipients · noticed by: no push on a device after its user signed out; text arrives in the receiver's language; only members of a shared group can be targeted
 
@@ -22,8 +21,10 @@
   - [auto] Deep links keep their allowlist. These are accepted: /group/join with a UUID groupId; /friend/accept with a valid email or with a username plus code; /group, /friend, /setting, /setting/privacy-policy and /setting/contact. Every other path (including /dev/gallery and /group/details) and every malformed parameter is rejected (unit test).
   - [auto] Signing in as another account still shows none of the previous user's data, and device preferences survive. This is already enforced by test/provider/auth_switch_invalidation_test.dart ('signedOut invalidates the user-scoped providers (user detail, group list, friendship list) so they refetch', 'signedOut leaves device-scoped preference providers untouched', 'signedIn as a DIFFERENT user invalidates; the same user does not'), which must stay green with those cases unedited.
   - [auto] `dart format`, `flutter analyze` and `flutter test` pass.
-  - [human] On a physical device, after user A signs out in Settings, A's device_tokens row for the device's token is gone and a push addressed to A no longer arrives there. After B signs in on that device, B's push arrives and tapping it opens its target once.
-  - [human] After an account is deleted on a physical device, no device_tokens row remains for that user and the device's token.
+  - [ ] [human] On a physical device, after user A signs out in Settings, A's device_tokens row for the device's token is gone and a push addressed to A no longer arrives there. After B signs in on that device, B's push arrives and tapping it opens its target once.
+    how: out of reach: the self-hosted instance api.deun.app (device_tokens PK and RLS, including whether an owner DELETE policy exists) and real FCM delivery to a physical device · on an Android or iOS device signed in as A, query device_tokens for A's user id and note the device's token. Sign out in Settings and confirm that row is gone. If it survives, record it under Findings: with no RLS on device_tokens today, it means the unregister never ran, or, once rls-hardening is applied, that its owner DELETE policy is missing. Have B add an expense in a group shared with A from another device and confirm nothing reaches the signed-out device. Sign in as B on it, have A add an expense in a shared group, and confirm B's notification arrives and a tap opens the expense once.
+  - [ ] [human] After an account is deleted on a physical device, no device_tokens row remains for that user and the device's token.
+    how: out of reach: the live instance. The dump (2026-10-24) already shows the `auth.users → device_tokens` cascade and the recovered `delete-user-account` source, so this check only confirms it on a real account · create a throwaway account on a device, confirm its device_tokens row exists, delete the account in Settings, then confirm no row remains for that user id or that token.
 - Provides:
   - `abstract interface class PushMessaging` with `prepare(): Future<bool>` (requests permission and, on iOS, checks once for an APNS token; false when permission is denied, on web, or when iOS returns no APNS token, exactly today's gating), `getToken(): Future<String?>`, `getInitialMessage(): Future<RemoteMessage?>`, `onMessageOpenedApp: Stream<RemoteMessage>` and `onTokenRefresh: Stream<String>`. The app's implementation is `FirebasePushMessaging implements PushMessaging`.
   - `abstract interface class DeviceTokenStore` with `register({required String userId, required String token}): Future<void>` and `unregister({required String userId, required String token}): Future<void>`. The app's implementation is `SupabaseDeviceTokenStore implements DeviceTokenStore`.
@@ -64,9 +65,6 @@
   - `signOutUser` and `appSignOutProvider` in lib/pages/auth/sign_out.dart: call order, a throwing delete, a hanging delete under the 3 s bound, and the no-token case. Proven by unit tests with a recording fake auth sign-out.
   - Call sites: the Settings sign-out dialog and `_DeleteAccountSheet` (which becomes a Consumer and gains the `AccountDeleter` seam) both call `appSignOutProvider`. Proven by extending test/widgets/setting_page_test.dart and test/widgets/settings_sheets_test.dart.
   - Deep links: `validateDeepLink` and `listenToDeepLinks` move into lib/deep_links.dart. Proven by allowlist unit tests.
-- Manual-Checks:
-  - proves · after sign-out on a physical device, the previous user's device_tokens row for the device's token is gone, their pushes stop arriving there, and the next user's pushes arrive and open once · out of reach: the self-hosted instance api.deun.app (device_tokens PK and RLS, including whether an owner DELETE policy exists) and real FCM delivery to a physical device · on an Android or iOS device signed in as A, query device_tokens for A's user id and note the device's token. Sign out in Settings and confirm that row is gone. If it survives, record it under Findings: with no RLS on device_tokens today, it means the unregister never ran, or, once rls-hardening is applied, that its owner DELETE policy is missing. Have B add an expense in a group shared with A from another device and confirm nothing reaches the signed-out device. Sign in as B on it, have A add an expense in a shared group, and confirm B's notification arrives and a tap opens the expense once.
-  - proves · after an account is deleted on a physical device, no device_tokens row remains for that user and the device's token · out of reach: the live instance. The dump (2026-10-24) already shows the `auth.users → device_tokens` cascade and the recovered `delete-user-account` source, so this check only confirms it on a real account · create a throwaway account on a device, confirm its device_tokens row exists, delete the account in Settings, then confirm no row remains for that user id or that token.
 - Blockers: —
 
 ## Approach
@@ -80,5 +78,3 @@
 - Likely touchpoints: lib/navigation.dart, lib/push_notifications.dart (new), lib/deep_links.dart (new), lib/pages/auth/sign_out.dart (new), lib/provider.dart and lib/provider.g.dart, lib/pages/settings/setting.dart, lib/pages/settings/settings_sheets.dart, test/push_notifications_test.dart (new), test/deep_links_test.dart (new), test/pages/auth/sign_out_test.dart (new), test/provider/auth_switch_invalidation_test.dart (one new case), test/widgets/setting_page_test.dart, test/widgets/settings_sheets_test.dart, docs/ristretto/manual-checks.md
 - Depends: —
 - Parallel-with: editor-failure-keeps-form, scan-total-applies, expense-search-escape, guest-merge-rpc, payback-atomic-recalc, group-write-rpcs, group-model-parse-safety, realtime-event-scope, realtime-channel-lifecycle, notification-context-free, typed-expense-draft, presentation-file-split, schema-baseline
-
-status: planned

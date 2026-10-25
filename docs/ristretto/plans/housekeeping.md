@@ -1,8 +1,7 @@
-# housekeeping — Review cleanup: dead widgets, a debug-only dev route, a no-op push handler, untracked build output
+# housekeeping
 
 ## Spec
 - Source: idea — code review 2026-10-22 (research/code-review-2026-10.md), the four As-is items tagged "for housekeeping" (dead widgets, `/dev/gallery`, `_firebaseMessagingBackgroundHandler`, tracked android/build)
-- Flight: structure
 - Goal: Remove what the review found dead or misplaced (four unused widgets, a background push handler that only logs, tracked Gradle output) and register the dev widget gallery route in debug builds only. No user flow changes.
 - Why: Jakob as sole maintainer (research/code-review-2026-10.md, Why candidate) · noticed by: the release web build no longer opens `/dev/gallery` by URL, git status stops listing Gradle output under android/build, and lib/widgets/ holds no file that nothing imports
 
@@ -10,7 +9,8 @@
 - Acceptance:
   - [auto] In a profile or release build, opening `/dev/gallery` (on web, by typing the URL) shows the app's "Page not found" screen and never builds the widget gallery. In a debug build the same URL still opens the gallery.
   - [auto] `dart format` (touched files), `flutter analyze` and `flutter test` pass, the whole suite green. In particular test/widgets/screen_transition_test.dart (reads lib/navigation.dart source: routes keep their theme-driven transitions) and test/helper/navigate_to_expense_test.dart (where a push tap lands: expense read view, group detail, friends tab) already exist and must stay green, unedited by this feature (if typed-routes has landed first, the first one reads lib/app_router.dart, as that plan repoints it).
-  - [human] On a physical Android device with this build, a push for an expense another member adds still appears in the system tray, both while the app is in the background and after it has been swiped away (terminated), and tapping it still opens that expense's read view. Where the tap lands is already enforced by test/helper/navigate_to_expense_test.dart; the device is needed for the tray and the FCM tap hand-off.
+  - [ ] [human] On a physical Android device with this build, a push for an expense another member adds still appears in the system tray, both while the app is in the background and after it has been swiped away (terminated), and tapping it still opens that expense's read view. Where the tap lands is already enforced by test/helper/navigate_to_expense_test.dart; the device is needed for the tray and the FCM tap hand-off.
+    how: a physical device receiving a real FCM push from the `push` Edge Function. Its recovered source shows a `notification` block, so the tray is expected to work · on an Android device running a build with this change, sign in as member A and put the app in the background. As member B (second device or the web app), add an expense to a group you share. Confirm the notification appears in the tray, tap it, and confirm the expense read view opens. Repeat with A's app swiped away. If nothing appears, check whether `push` sends a `notification` block: a data-only push never displayed before this change either, because the removed handler only logged.
 - Provides:
   - `devGalleryRoutes({required bool enabled}): List<RouteBase>` in lib/widgets/dev/widget_gallery_page.dart. It returns the `/dev/gallery` route when `enabled` is true and an empty list when false. The route table spreads it into its top-level routes with `enabled: kDebugMode`: in lib/navigation.dart, or in `buildAppRouter` in lib/app_router.dart if typed-routes has landed first.
 - Consumes: —
@@ -36,8 +36,6 @@
   - Background handler: remove `_firebaseMessagingBackgroundHandler`, its registration and the unused import from lib/main.dart. Write the manual-checks entry for the device-push criterion.
   - Dead widgets: delete the four files, re-running the zero-importer check (file names and class names over lib/ and test/) first.
   - Build output: remove android/build from the index (keep on disk) and add `android/build/` to .gitignore. Done when the index lists nothing under android/build and git reports problems-report.html as ignored.
-- Manual-Checks:
-  - proves · housekeeping: with the Dart background handler gone, a push for a new expense still reaches the Android system tray, with the app in the background and with it terminated, and tapping it opens that expense's read view · a physical device receiving a real FCM push from the `push` Edge Function. Its recovered source shows a `notification` block, so the tray is expected to work · on an Android device running a build with this change, sign in as member A and put the app in the background. As member B (second device or the web app), add an expense to a group you share. Confirm the notification appears in the tray, tap it, and confirm the expense read view opens. Repeat with A's app swiped away. If nothing appears, check whether `push` sends a `notification` block: a data-only push never displayed before this change either, because the removed handler only logged.
 - Blockers: —
 
 ## Approach
@@ -48,5 +46,3 @@
 - Likely touchpoints: lib/widgets/dev/widget_gallery_page.dart, lib/navigation.dart (one route plus the foundation import), lib/main.dart, lib/widgets/form_loading_widget.dart, lib/widgets/rounded_container.dart, lib/widgets/search_view.dart, lib/widgets/sliver_grab_widget.dart (all deleted), .gitignore, android/build/ (untracked), test/widgets/dev_gallery_route_test.dart (new), docs/ristretto/manual-checks.md
 - Depends: —
 - Parallel-with: helper-split, expense-editor-split, presentation-file-split, legacy-fallback-removal, realtime-channel-lifecycle. These share no code file with this feature (realtime-channel-lifecycle leaves lib/navigation.dart's pause/resume code unchanged, per its Decisions "App pause"); docs/ristretto/manual-checks.md is the only doc several features append to. Not parallel with typed-routes or push-session-lifecycle, which both edit lib/navigation.dart.
-
-status: planned

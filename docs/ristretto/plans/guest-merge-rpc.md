@@ -1,8 +1,7 @@
-# guest-merge-rpc — Joining a group and claiming a guest is one group-scoped transaction
+# guest-merge-rpc
 
 ## Spec
 - Source: idea — code review 2026-10-22 (research/code-review-2026-10.md), finding 6 (guest merge in `group_join_page.dart`; first raised as docs/CODE_REVIEW_2026-07-07.md §1.1)
-- Flight: atomic-writes
 - Goal: An invite-link join, including claiming a guest placeholder, either happens completely and only inside the joined group, or does not happen at all.
 - Why: group members using the app · noticed by: a failed save or delete no longer throws away the form, a retried payback no longer double-records, a joining guest no longer rewrites history outside the group
 
@@ -23,8 +22,10 @@
   - [auto] In the new migration, every refusal raises before the first write statement. The refusals are: no email in the session, and a named guest who is not an active, `is_guest` member of the joined group.
   - [auto] In the new migration, `update_group_member_shares(_group_id, null)` runs inside `join_group`, after the merge and before the guest `user` delete. The client sends no separate recalc.
   - [auto] In the new migration, the join cannot partly succeed without anyone noticing. `join_group` raises, which rolls back the whole join, in three cases: clearing the joiner's `removed_at` updated no row, deleting the guest's membership in the group removed no row, or an expense or share of that group still names the guest after the rewrite.
-  - [human] On the live instance with the migration applied, joining through the invite link while claiming a guest moves that guest's payments and shares in that group to the joiner, and recomputes that group's balances. Group detail and group list agree, and another client's open group detail refreshes. The same guest's rows in a second group the joiner does not belong to stay untouched. The guest's `user` row is removed only when the guest had no other membership.
-  - [human] Under the live instance's RLS, an ordinary invited account that is not yet a member can complete a guest-claiming join through the SECURITY INVOKER function. So can a soft-removed member re-joining, without hitting the merge guard or a permission error.
+  - [ ] [human] On the live instance with the migration applied, joining through the invite link while claiming a guest moves that guest's payments and shares in that group to the joiner, and recomputes that group's balances. Group detail and group list agree, and another client's open group detail refreshes. The same guest's rows in a second group the joiner does not belong to stay untouched. The guest's `user` row is removed only when the guest had no other membership.
+    how: the self-hosted instance api.deun.app (migration unapplied, unreachable from the build) · apply the migration. In a test group, use a guest who paid one expense and shares another, and by SQL give that same guest a membership and an expense in a second group that the joining account is not in. As a second account, open the invite link, pick the guest and join. By SQL, confirm that the first group's `expense.paid_by` / `expense_entry_share.email` now name the joiner and the second group's rows still name the guest. Also confirm the guest's first-group `group_member` row is gone and its `user` row survives. Check that group detail and group list agree on the joiner's balance and that a second device's open group detail refreshed. Repeat with a guest that has no other membership and confirm its `user` row is gone.
+  - [ ] [human] Under the live instance's RLS, an ordinary invited account that is not yet a member can complete a guest-claiming join through the SECURITY INVOKER function. So can a soft-removed member re-joining, without hitting the merge guard or a permission error.
+    how: RLS policies exist only on the live instance (research/code-review-2026-10.md, Open) · as a non-admin account that is not yet a member, join through the invite link while claiming a guest. Then soft-remove a settled member with history, and have them re-join through the link while claiming a guest. Both must land in the group with no error. If either fails with the merge guard or a permission error, record it under Findings in manual-checks. SECURITY DEFINER is then Jakob's follow-up decision.
 - Provides:
   - `public.join_group(_group_id uuid, _guest_email text default null) returns void`: SQL, SECURITY INVOKER, in a new `supabase/migrations/<timestamp>_join_group_guest_merge.sql`
   - `GroupRepository.joinGroup(String groupId, {String? guestEmail}): Future<void>`
@@ -77,9 +78,6 @@
   - Pure `GroupJoinState` / `resolveGroupJoinState` replacing `GroupJoinPlan` / `resolveGroupJoin` in `member_removal.dart`, with unit tests in `test/model/member_removal_test.dart` replacing 28–31: active guests only, real users excluded, active vs soft-removed self.
   - `GroupJoinPage` on the three seams, with no Supabase import, and widget tests in `test/pages/groups/group_join_page_test.dart` (guest passed, none passed, no double tap, failure keeps the page, success navigates, active-member redirect, load failure keeps the page usable).
   - Paperwork: two open `proves` entries in docs/ristretto/manual-checks.md and the roadmap row marked `⚠ migration pending`.
-- Manual-Checks:
-  - proves · joining while claiming a guest rewrites only that group's rows, recomputes its balances and keeps a guest `user` row that still has another membership · the self-hosted instance api.deun.app (migration unapplied, unreachable from the build) · apply the migration. In a test group, use a guest who paid one expense and shares another, and by SQL give that same guest a membership and an expense in a second group that the joining account is not in. As a second account, open the invite link, pick the guest and join. By SQL, confirm that the first group's `expense.paid_by` / `expense_entry_share.email` now name the joiner and the second group's rows still name the guest. Also confirm the guest's first-group `group_member` row is gone and its `user` row survives. Check that group detail and group list agree on the joiner's balance and that a second device's open group detail refreshed. Repeat with a guest that has no other membership and confirm its `user` row is gone.
-  - proves · an ordinary invited account and a soft-removed member can complete a guest-claiming join under the live RLS with the SECURITY INVOKER function · RLS policies exist only on the live instance (research/code-review-2026-10.md, Open) · as a non-admin account that is not yet a member, join through the invite link while claiming a guest. Then soft-remove a settled member with history, and have them re-join through the link while claiming a guest. Both must land in the group with no error. If either fails with the merge guard or a permission error, record it under Findings in manual-checks. SECURITY DEFINER is then Jakob's follow-up decision.
 - Blockers: —
 
 ## Approach
@@ -97,5 +95,3 @@
 - Likely touchpoints: supabase/migrations/ (new file), lib/pages/groups/data/group_repository.dart, lib/pages/groups/data/member_removal.dart, lib/pages/groups/data/member_add.dart (doc comment), lib/pages/groups/presentation/group_join_page.dart, test/pages/groups/join_group_migration_test.dart, test/model/group_repository_test.dart, test/model/member_removal_test.dart, test/pages/groups/group_join_page_test.dart, docs/ristretto/manual-checks.md
 - Depends: —
 - Parallel-with: editor-failure-keeps-form, payback-atomic-recalc, group-write-rpcs
-
-status: planned

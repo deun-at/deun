@@ -1,10 +1,9 @@
-# multi-currency-core — Currency value object + currency-aware money pipeline
+# multi-currency-core
 
 ## Spec
 - Source: idea ("multiple currencies with conversion rates", 2026-07-08; flight replanned 2026-08-11 against
   competitor + user-sentiment research — see `Decisions` and the flight note in
   [multi-currency-group](multi-currency-group.md))
-- Flight: multi-currency
 - Goal: Every amount in the app is rounded, formatted and entered according to an explicit `Currency`
   (including its decimal-digit count) instead of an implicit hardcoded EUR with 2 decimals. Nothing
   user-visible changes yet — every caller passes EUR — but the whole money pipeline becomes
@@ -238,5 +237,3 @@ verdict: `review: clean`.
 `lib/pages/expenses/data/expense_deletion_impact.dart`'s `confirmMessage` and a few other minor
 callers still take a raw `currencyCode` String rather than `Currency`. Left as-is — out of scope for
 this feature's contract, worth a small follow-up sweep whenever those call sites are next touched.
-
-status: done

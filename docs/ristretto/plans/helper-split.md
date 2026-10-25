@@ -1,8 +1,7 @@
-# helper-split — helper.dart opens in pieces
+# helper-split
 
 ## Spec
 - Source: idea — code review 2026-10-22 (research/code-review-2026-10.md), Architecture item: the As-is lines tagged "for helper-split" (lib/helper/helper.dart, 737 lines, 48 lib + 37 test importers, mixing error predicates, money/settled math, formatting, snackbars, push senders and navigation helpers; `isSettled`/`kSettledEpsilon` and `navigateToExpense`→`openLedgerExpense` already settled there)
-- Flight: structure
 - Goal: lib/helper/helper.dart becomes a barrel over seven single-concern modules under lib/helper/. No importer changes and no behaviour changes.
 - Why: Jakob as sole maintainer · noticed by: the backend rebuilds from supabase/migrations/, the fallback code paths are gone, the 1500–1900-line files open in pieces
 
@@ -53,7 +52,6 @@
   - Leaf modules: escaping.dart and error_predicates.dart. Neither imports anything else from lib/. helper.dart exports each module in the unit that creates it. Gates green.
   - Money, then formatting: money.dart, with the settled block moving as one piece, then formatting.dart on top of it. Gates green.
   - The rest and the barrel: ui_feedback.dart, navigation_helpers.dart and contact_mail.dart, then helper.dart reduced to its exports. Gates green, and no file outside lib/helper/ is in the diff.
-- Manual-Checks: —
 - Blockers: —
 
 ## Approach
@@ -64,5 +62,3 @@
 - Depends: notification-context-free
 - Parallel-with: housekeeping, expense-search-escape, realtime-channel-lifecycle, group-model-parse-safety, schema-baseline, typed-expense-draft, editor-failure-keeps-form, scan-total-applies, group-write-rpcs, guest-merge-rpc, payback-atomic-recalc
 - Not parallel, because they edit the same declarations or ask not to run alongside this: legacy-fallback-removal (it deletes `isMissingFunctionError`), typed-routes (the `extra:` maps in the navigation helpers), push-session-lifecycle, presentation-file-split and expense-editor-split (their plans ask not to). Whichever of a pair lands second rebases.
-
-status: planned

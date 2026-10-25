@@ -1,10 +1,9 @@
-# expense-card-fee — A card's foreign-transaction fee, on the rates Deun looks up
+# expense-card-fee
 
 ## Spec
 - Source: idea — a live bug walk, 2026-09-17: a 5 170 Ft receipt in a EUR group settled at €14.17 by
   ECB reference while the card statement said €14.32. Design brief:
   [expense-card-fee-design-brief](../expense-card-fee-design-brief.md).
-- Flight: multi-currency
 - Goal: let a user record their card's foreign-transaction fee once, have it ride on every rate Deun
   fetches, and collapse the editor's currency/rate block into one card so the fee has somewhere to live.
 
@@ -125,6 +124,7 @@
     functions that live only on the self-hosted instance.
   - The fee is **not** user-scoped state -> it is a fact about the device's owner's card, so it
     survives a user switch exactly as `ThemeModeNotifier` and `NotificationsEnabledNotifier` do.
+  - [ ] the Contract originally held two mutually exclusive `[auto]` criteria — the rate field leaving the editor's main screen, and the two rate suites passing **unedited**. 23 of their 38 tests drive `expense_rate_field` / `expense_rate_reset` / `expense_rate_preview` / `expense_rate_prefill_date` on the main screen with no sheet ever opened, so the two could not both hold. The first planner run returned `blocked` on it and the roadmap row was set `blocked`; Jakob ruled the same day that the density move wins and the suites are rewritten to reach the field through `showConversionSheet`, keeping every assertion's behavioural meaning. The ruling is recorded in `Decisions:` above and the amended criterion in `Acceptance:`.
 - Units:
   - `CardFeeNotifier` + `kCardFeePrefKey` + the pure `applyCardFee`, modelled on `StickyRateNotifier`
     (hydrate behind a `Future`, synchronous read after `hydrated`, JSON-free single value).
@@ -139,7 +139,6 @@
     [COMPONENTS.md](../../../design_handoff/COMPONENTS.md) §3.
   - Settings: a `Foreign transaction fee` row in the Preferences list plus the shared fee entry sheet.
   - l10n: every new key in `app_en.arb` and `app_de.arb`, including the locale-correct percent form.
-- Manual-Checks: —
 - Blockers: —
 
 ## Approach
@@ -212,14 +211,6 @@ trust:
    stored value. Pinned by `test/widgets/card_fee_sheet_test.dart`, which asserts both the raw
    preference and the re-hydrated notifier still read 1.4.
 
-decision taken: the Contract originally held two mutually exclusive `[auto]` criteria — the rate
-field leaving the editor's main screen, and the two rate suites passing **unedited**. 23 of their 38
-tests drive `expense_rate_field` / `expense_rate_reset` / `expense_rate_preview` /
-`expense_rate_prefill_date` on the main screen with no sheet ever opened, so the two could not both
-hold. The first planner run returned `blocked` on it and the roadmap row was set `blocked`; Jakob
-ruled the same day that the density move wins and the suites are rewritten to reach the field
-through `showConversionSheet`, keeping every assertion's behavioural meaning. The ruling is recorded
-in `Decisions:` above and the amended criterion in `Acceptance:`.
 
 No migration was authored and none is needed: nothing here touches the database,
 `save_expense_all`, the `exchange-rate` Edge Function, or any balance path. `Manual-Checks: —`
@@ -266,5 +257,3 @@ One round-1 lean was deliberately left and round 2 accepted the reasoning for tw
 cases: the fee chip's presence/absence is the conversion card's own criterion, while the card-fee
 suite asserts it as a side-check inside money tests, so neither suite was thinned. Round 2 narrowed
 the objection to the third case only, recorded above.
-
-status: done

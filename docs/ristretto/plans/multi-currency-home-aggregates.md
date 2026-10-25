@@ -1,8 +1,7 @@
-# multi-currency-home-aggregates — Home currency for cross-group balances & statistics
+# multi-currency-home-aggregates
 
 ## Spec
 - Source: idea ("multiple currencies with conversion rates", 2026-07-08)
-- Flight: multi-currency
 - Goal: The user picks a home currency; every total that spans groups (overall balance hero, friendship balances, statistics) converts mixed-currency amounts into it instead of summing raw numbers.
 - Acceptance:
   - Settings has a home-currency picker (same curated list as group currencies); default EUR; choice persists across app restarts.
@@ -20,7 +19,6 @@
 - Parallel-with: —
 - Blockers: —
 
-status: done
 
 ## Evidence
 

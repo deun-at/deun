@@ -1,8 +1,7 @@
-# group-create-simplify — Group creation asks for name, mode and currency only
+# group-create-simplify
 
 ## Spec
 - Source: idea (NOTES.md idea 4, Jakob 2026-07-24, branch `claude/group-management-issues-ifybxc`)
-- Flight: group-membership
 - Goal: Cut the create-group flow down to the three decisions that must be made up front, and move member management entirely into the group's own surface.
 
 ## Contract
@@ -98,5 +97,3 @@ proportional centering threshold with an absolute 120dp floor — was then also 
 narrow-phone TWO-actions regression test above).
 
 Final gates at close: `flutter analyze` clean, `flutter test` 1049 passing.
-
-status: done

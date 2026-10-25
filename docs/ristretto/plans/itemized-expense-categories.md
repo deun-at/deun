@@ -1,8 +1,7 @@
-# itemized-expense-categories — Expense-level category for itemized expenses
+# itemized-expense-categories
 
 ## Spec
 - Source: idea (2026-07-12 planning session)
-- Flight: —
 - Goal: Itemized expenses carry an expense-level category like quick/simple expenses do, so they stop all landing in "Other" in lists and statistics.
 - Acceptance:
   - The itemized editor exposes the same category selector as the quick layout; the chosen category saves and reads back on the expense (today itemized saves category as null, which reads back as `other` — F116 decision).
@@ -21,7 +20,6 @@
 - Parallel-with: — (touches the same editor file as scan-split-even; pull sequentially)
 - Blockers: —
 
-status: done
 
 ## Evidence
 

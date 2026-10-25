@@ -1,8 +1,7 @@
-# keypad-calculator — Calculator in the amount keypad sheet
+# keypad-calculator
 
 ## Spec
 - Source: idea ("calculator in the amount bottom sheet", 2026-07-12 planning session)
-- Flight: —
 - Goal: The amount keypad sheet can add, subtract, multiply and divide, so amounts like "my part plus the rest of the receipt" are computed in place instead of in a separate calculator app.
 - Acceptance:
   - The keypad sheet offers +, −, ×, ÷ alongside the digits; typing `12.50 + 3.20 + 8` then confirming yields an amount of 23.70.
@@ -23,7 +22,6 @@
 - Parallel-with: —
 - Blockers: —
 
-status: done
 
 ## Evidence
 

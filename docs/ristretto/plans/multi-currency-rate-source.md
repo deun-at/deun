@@ -1,8 +1,7 @@
-# multi-currency-rate-source — Historical rate prefill via a Supabase Edge Function
+# multi-currency-rate-source
 
 ## Spec
 - Source: idea ("multiple currencies with conversion rates", 2026-07-08; replanned 2026-08-11)
-- Flight: multi-currency
 - Goal: Stop making the user type a rate they do not have. The expense form prefills the historical
   rate for the expense's own date, fetched server-side and cached — as a suggestion the user can
   always overrule.
@@ -21,8 +20,9 @@
     published rate (weekends, holidays, future dates), the form falls back to manual entry with a
     visible explanation. It never substitutes 1:1, never silently uses today's rate in place of the
     requested date, and never blocks saving with a manually entered rate.
-  - [human] Rates are fetched through a Supabase Edge Function rather than directly from the client, so the
+  - [ ] [human] Rates are fetched through a Supabase Edge Function rather than directly from the client, so the
     web build is unaffected by CORS or by the provider changing hostnames.
+    how: [manual-checks.md](../../manual-checks.md) — deploy the `exchange-rate` Edge Function to the self-hosted instance
   - [auto] Repeated requests for the same currency pair and date are served from cache rather than refetched.
   - [auto] Every code in `kSupportedCurrencies` returns a rate for a recent weekday, verified by a test
     against the live function or a recorded fixture.
@@ -68,7 +68,6 @@
   - Wire prefill into the expense editor, including the effective-date label and the
     date-change-only refetch.
   - Fallback UX for unavailable rates, plus a check that every supported currency resolves.
-- Manual-Checks: [manual-checks.md](../../manual-checks.md) — deploy the `exchange-rate` Edge Function to the self-hosted instance
 - Blockers: —
 - Deferred DB work: needs an Edge Function deployed to the self-hosted instance, which updates by
   force-recreate rather than in place. Write the function source into the repo and the client against
@@ -221,5 +220,3 @@ moment the user touched the field, so it is now 12. The first version of that te
 vacuously — the formatter rejects input by reverting to the field's previous text, and the test had
 prefilled the same number, making a rejection indistinguishable from an acceptance. Rewritten to
 type into an empty field, it went red with `'0'` before the cap was raised.
-
-status: needs-human
