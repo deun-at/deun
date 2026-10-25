@@ -16,7 +16,7 @@ select t('member reads no foreign shares', 'a@x.test', $q$select * from expense_
 select t('member reads no foreign lines', 'a@x.test', $q$select * from expense_entry where id = 'f3000000-0000-0000-0000-000000000001'$q$, 'ok:0');
 select t('member sees only own token', 'a@x.test', $q$select * from device_tokens$q$, 'ok:1');
 select t('member reads all users (search)', 'a@x.test', $q$select * from "user"$q$, 'ok:6');
-select t('member reads all memberships', 'a@x.test', $q$select * from group_member$q$, 'ok:6');
+select t('member reads memberships of own groups only', 'a@x.test', $q$select * from group_member$q$, 'ok:4');
 select t('member: contact match', 'a@x.test', $q$select * from match_contacts_by_email(array['c@x.test','d@x.test'], array[]::text[])$q$, 'ok:2');
 select t('member: spending summary', 'a@x.test', $q$select * from get_user_spending_summary('a@x.test', '2000-01-01', '2100-01-01')$q$, 'ok:>0');
 -- ===== user rows =====
@@ -93,5 +93,18 @@ select t('stranger joins G1 by id (invite model)', 'c@x.test', $q$insert into gr
 select t('stranger reads G1 shares', 'c@x.test', $q$select * from expense_entry_share where expense_entry_id = 'f1000000-0000-0000-0000-000000000001'$q$, 'ok:0');
 select t('stranger rewrites G1 shares', 'c@x.test', $q$update expense_entry_share set percentage = 0 where expense_entry_id = 'f1000000-0000-0000-0000-000000000001'$q$, 'ok:0');
 select t('stranger reads a''s token', 'c@x.test', $q$select * from device_tokens where user_id = 'aaaaaaaa-0000-0000-0000-000000000001'$q$, 'ok:0');
+-- ===== follow-up (security review 2026-10-25) =====
+select t('stranger lists G1 roster', 'c@x.test', $q$select * from group_member where group_id = '11111111-0000-0000-0000-000000000001'$q$, 'ok:0');
+select t('outsider cannot list any group ids', 'd@x.test', $q$select distinct group_id from group_member$q$, 'ok:0');
+select t('member moves own membership to another group', 'a@x.test', $q$update group_member set group_id = '22222222-0000-0000-0000-000000000001' where email = 'a@x.test'$q$, 'err');
+select t('member renames own membership email', 'a@x.test', $q$update group_member set email = 'x@x.test' where email = 'a@x.test'$q$, 'err');
+select t('user changes own email', 'a@x.test', $q$update "user" set email = 'new@x.test' where email = 'a@x.test'$q$, 'err');
+select t('user turns self into guest', 'a@x.test', $q$update "user" set is_guest = true where email = 'a@x.test'$q$, 'err');
+select t('delete a guest whose only group the caller cannot see', 'a@x.test', $q$
+  select set_config('role', 'postgres', true);
+  insert into "user" (email, display_name, is_guest) values ('guest+g3@guest.invalid', 'Guest3', true);
+  insert into group_member (group_id, email) values ('22222222-0000-0000-0000-000000000001', 'guest+g3@guest.invalid');
+  select set_config('role', 'authenticated', true);
+  delete from "user" where email = 'guest+g3@guest.invalid'$q$, 'ok:0');
 select format('%s/%s passed', count(*) filter (where pass), count(*)) from test_result;
 select n, name, actor, expect, got from test_result where not pass order by n;
