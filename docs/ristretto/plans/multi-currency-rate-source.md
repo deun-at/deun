@@ -22,7 +22,7 @@
     requested date, and never blocks saving with a manually entered rate.
   - [ ] [human] Rates are fetched through a Supabase Edge Function rather than directly from the client, so the
     web build is unaffected by CORS or by the provider changing hostnames.
-    how: [manual-checks.md](../../manual-checks.md) — deploy the `exchange-rate` Edge Function to the self-hosted instance
+    how: manual-checks.md — deploy the `exchange-rate` Edge Function to the self-hosted instance
   - [auto] Repeated requests for the same currency pair and date are served from cache rather than refetched.
   - [auto] Every code in `kSupportedCurrencies` returns a rate for a recent weekday, verified by a test
     against the live function or a recorded fixture.
@@ -73,7 +73,7 @@
   force-recreate rather than in place. Write the function source into the repo and the client against
   its contract, test the client against a faked response including the failure and offline paths,
   mark anything requiring the deployed function `[deferred]`, and append to
-  [manual-checks.md](../../manual-checks.md). A prefill that silently fails must degrade to manual entry —
+  manual-checks.md. A prefill that silently fails must degrade to manual entry —
   that behaviour is testable without deploying anything, and is the one that matters most.
 
 ## Approach

@@ -14,9 +14,9 @@
   - [auto] The `group_members` `FormBuilderField` is gone from `group_detail_edit.dart` entirely, and no group-attribute save path reads or writes membership.
   - [auto] Adding a member who is already in the group is a no-op with clear feedback, not a duplicate row.
   - [ ] [human] A member added by one client appears on another client's open group detail through the existing realtime path.
-    how: [manual-checks.md](../../manual-checks.md) — cross-client realtime member add
+    how: manual-checks.md — cross-client realtime member add
   - [auto] All new copy exists in EN and DE with generated l10n committed.
-  - *(Visual and interaction criteria, appended from the design session of 2026-09-11 — see [design brief](../group-member-management-design-brief.md).)*
+  - *(Visual and interaction criteria, appended from the design session of 2026-09-11 — see [design brief](group-member-management-design-brief.md).)*
   - [auto] The surface is a routed **Members page** — roster first, search above it — reachable from group detail and from a read-only member row on group edit. It is not a sheet and not a search overlay.
   - [auto] After a successful add the page stays open, the new member is in the roster, and the search field is cleared and ready for the next one.
   - [auto] A search matching no existing user ends in an actionable `Create guest «query»` result row, and that row is the *only* guest entry point — there is no standing guest button.
