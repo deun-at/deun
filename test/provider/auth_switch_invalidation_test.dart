@@ -15,11 +15,15 @@ import 'package:deun/pages/groups/data/group_model.dart';
 import 'package:deun/pages/groups/provider/group_list.dart';
 import 'package:deun/pages/users/user_model.dart';
 import 'package:deun/provider.dart';
+import 'package:deun/push_notifications.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+
+import '../helper/fake_push.dart';
 
 /// Records every (re)build of the user-scoped providers so a test can assert a
 /// refetch happened (or didn't). Each notifier appends its tag at the top of
@@ -261,4 +265,37 @@ void main() {
       expect(_count(log, 'friendship'), 2);
     },
   );
+
+  test('a signedOut event the app did not start ends the push session: a tap '
+      'opens nothing and a refresh registers nothing', () async {
+    final controller = StreamController<AuthState>.broadcast();
+    addTearDown(controller.close);
+    final messaging = FakePushMessaging();
+    final store = FakeDeviceTokenStore();
+    final container = ProviderContainer.test(
+      overrides: [
+        authStateChangesProvider.overrideWith((ref) => controller.stream),
+        pushMessagingProvider.overrideWithValue(messaging),
+        deviceTokenStoreProvider.overrideWithValue(store),
+      ],
+    );
+    container.listen(authUserSwitchListenerProvider, (_, _) {});
+    await container.pump();
+    final opened = <RemoteMessage>[];
+    await container
+        .read(pushSessionProvider.notifier)
+        .start(userId: 'userA', onOpened: (m) async => opened.add(m));
+
+    // An expired session or a revoked refresh token: no app sign-out ran.
+    controller.add(const AuthState(AuthChangeEvent.signedOut, null));
+    await pumpEventQueue();
+    await container.pump();
+
+    messaging.taps.add(expenseTap);
+    messaging.refreshes.add('token-2');
+    await pumpEventQueue();
+
+    expect(opened, isEmpty);
+    expect(store.registers, ['register:userA:token-1']);
+  });
 }

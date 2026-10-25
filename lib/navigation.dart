@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:deun/deep_links.dart';
 import 'package:deun/helper/helper.dart';
 import 'package:deun/main.dart';
 import 'package:deun/pages/auth/update_password.dart';
@@ -8,7 +9,6 @@ import 'package:deun/pages/expenses/presentation/expense_detail.dart';
 import 'package:deun/pages/expenses/presentation/expense_detail_read.dart';
 import 'package:deun/pages/expenses/data/expense_model.dart';
 import 'package:deun/pages/expenses/data/receipt_scan_result.dart';
-import 'package:deun/pages/expenses/data/expense_repository.dart';
 import 'package:deun/pages/friends/presentation/friend_add_page.dart';
 import 'package:deun/pages/friends/presentation/friend_list.dart';
 import 'package:deun/pages/friends/provider/friendship_list.dart';
@@ -18,13 +18,13 @@ import 'package:deun/pages/groups/presentation/group_detail_payment.dart';
 import 'package:deun/pages/settings/contact.dart';
 import 'package:deun/pages/settings/privacy_policy.dart';
 import 'package:deun/provider.dart';
+import 'package:deun/push_notifications.dart';
 import 'helper/realtime_mixin.dart';
 import 'package:deun/widgets/currency_scope.dart';
 import 'package:deun/widgets/dev/widget_gallery_page.dart';
 import 'package:deun/widgets/initialization_helper.dart';
 import 'package:deun/widgets/theme_builder.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
-import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -40,11 +40,8 @@ import 'pages/statistics/group_statistics_page.dart';
 import 'pages/statistics/month_detail_bottom_sheet.dart';
 import 'pages/statistics/personal_statistics_page.dart';
 import 'package:deun/l10n/app_localizations.dart';
-import 'dart:io' show Platform;
-import 'package:app_links/app_links.dart';
 
 import 'pages/groups/data/group_model.dart';
-import 'pages/groups/data/group_repository.dart';
 import 'pages/settings/setting.dart';
 import 'widgets/modal_bottom_sheet_page.dart';
 import 'widgets/page_transitions.dart';
@@ -83,8 +80,8 @@ class _NavigationScreenState extends ConsumerState<NavigationScreen>
     // Defer async init to after the first frame renders to avoid skipping frames.
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _initUserLocale();
-      _initFirebaseMessaging();
-      initDeepLinks();
+      _startPushSession();
+      _linkSubscription = listenToDeepLinks(_rootNavigatorKey);
 
       if (!kIsWeb) {
         InitializationHelper().initialize();
@@ -455,181 +452,19 @@ class _NavigationScreenState extends ConsumerState<NavigationScreen>
     }
   }
 
-  Future<Null> _initFirebaseMessaging() async {
-    // You may set the permission requests to "provisional" which allows the user to choose what type
-    // of notifications they would like to receive once the user receives a notification.
-    final notificationSettings = await FirebaseMessaging.instance
-        .requestPermission(
-          alert: true,
-          announcement: false,
-          badge: true,
-          carPlay: false,
-          criticalAlert: false,
-          provisional: false,
-          sound: true,
-        );
-
-    // debugPrint('User granted permission: ${notificationSettings.authorizationStatus}');
-
-    if (notificationSettings.authorizationStatus ==
-        AuthorizationStatus.denied) {
-      return null;
-    }
-
-    if (kIsWeb) {
-    } else {
-      if (Platform.isIOS) {
-        // For apple platforms, ensure the APNS token is available before making any FCM plugin API calls
-        final apnsToken = await FirebaseMessaging.instance.getAPNSToken();
-        if (apnsToken != null) {
-          // APNS token is available, make FCM plugin API requests...
-          await _handlePush();
-        }
-      } else {
-        await _handlePush();
-      }
-    }
-  }
-
-  Future<void> _handlePush() async {
-    final fcmToken = await FirebaseMessaging.instance.getToken(
-      vapidKey: kFcmVapidKey,
-    );
-
+  /// Starts the signed-in user's push session. With nobody signed in, nothing
+  /// starts.
+  void _startPushSession() {
     final userId = supabase.auth.currentUser?.id;
-    if (fcmToken != null && userId != null) {
-      try {
-        await supabase.from('device_tokens').upsert({
-          'user_id': userId,
-          'token': fcmToken,
-        });
-      } catch (e) {
-        debugPrint('Device token upsert failed: $e');
-      }
-    }
-
-    await FirebaseMessaging.instance.setAutoInitEnabled(true);
-
-    // Get any messages which caused the application to open from
-    // a terminated state.
-    RemoteMessage? initialMessage = await FirebaseMessaging.instance
-        .getInitialMessage();
-
-    // If the message also contains a data property with a "type" of "chat",
-    // navigate to a chat screen
-    if (initialMessage != null) {
-      unawaited(_handleMessage(initialMessage));
-    }
-
-    // Also handle any interaction when the app is in the background via a
-    // Stream listener
-    FirebaseMessaging.onMessageOpenedApp.listen(_handleMessage);
-
-    FirebaseMessaging.instance.onTokenRefresh
-        .listen((fcmToken) {
-          final userId = supabase.auth.currentUser?.id;
-          if (userId == null) return;
-          supabase
-              .from('device_tokens')
-              .upsert({'user_id': userId, 'token': fcmToken})
-              .catchError((e) {
-                debugPrint('Device token refresh upsert failed: $e');
-              });
-          // Note: This callback is fired at each app startup and whenever a new
-          // token is generated.
-        })
-        .onError((err) {
-          debugPrint('FCM token refresh failed: $err');
-        });
-  }
-
-  Future<void> _handleMessage(RemoteMessage message) async {
-    try {
-      switch (message.data['type']) {
-        case 'group':
-          Group group = await GroupRepository.fetchDetail(
-            message.data['expense_id'],
-          );
-          final context = _rootNavigatorKey.currentContext;
-          if (context == null || !context.mounted) return;
-          navigateToGroup(context, group);
-          break;
-        case 'expense':
-          Expense expense = await ExpenseRepository.fetchDetail(
-            message.data['expense_id'],
-          );
-          final context = _rootNavigatorKey.currentContext;
-          if (context == null || !context.mounted) return;
-          navigateToExpense(context, expense);
-          break;
-        case 'friendship':
-          final context = _rootNavigatorKey.currentContext;
-          if (context == null || !context.mounted) return;
-          navigateToFriends(context);
-          break;
-        default:
-          break;
-      }
-    } catch (e) {
-      debugPrint('Failed to handle push notification navigation: $e');
-    }
-  }
-
-  Future<void> initDeepLinks() async {
-    _linkSubscription = AppLinks().uriLinkStream.listen((uri) {
-      final route = _validateDeepLink(uri.fragment);
-      if (route != null) {
-        GoRouter.of(_rootNavigatorKey.currentContext!).go(route);
-      }
-    });
-  }
-
-  static final _uuidRegExp = RegExp(
-    r'^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$',
-  );
-  static final _emailRegExp = RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$');
-
-  String? _validateDeepLink(String fragment) {
-    final uri = Uri.tryParse(fragment);
-    if (uri == null) return null;
-
-    final path = uri.path;
-    final params = uri.queryParameters;
-
-    // Allowlisted routes with parameter validation
-    if (path == '/group/join') {
-      final groupId = params['groupId'];
-      if (groupId == null || !_uuidRegExp.hasMatch(groupId)) return null;
-      return fragment;
-    }
-
-    if (path == '/friend/accept') {
-      final email = params['email'];
-      final username = params['u'];
-      final code = params['c'];
-      // Accept either email or username+code
-      final hasEmail = email != null && _emailRegExp.hasMatch(email);
-      final hasUsername =
-          username != null &&
-          username.isNotEmpty &&
-          code != null &&
-          code.isNotEmpty;
-      if (!hasEmail && !hasUsername) return null;
-      return fragment;
-    }
-
-    // Safe static routes (no user-controlled parameters)
-    const safeRoutes = [
-      '/group',
-      '/friend',
-      '/setting',
-      '/setting/privacy-policy',
-      '/setting/contact',
-    ];
-    if (safeRoutes.contains(path)) return fragment;
-
-    // Reject everything else
-    return null;
+    if (!mounted || userId == null) return;
+    unawaited(
+      ref
+          .read(pushSessionProvider.notifier)
+          .start(
+            userId: userId,
+            onOpened: (message) => openPushMessage(message, _rootNavigatorKey),
+          ),
+    );
   }
 
   bool _wasPaused = false;

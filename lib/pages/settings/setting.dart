@@ -1,5 +1,6 @@
 import 'package:async_preferences/async_preferences.dart';
 import 'package:deun/constants.dart';
+import 'package:deun/pages/auth/sign_out.dart';
 import 'package:deun/pages/settings/settings_sheets.dart';
 import 'package:deun/pages/users/user_model.dart';
 import 'package:deun/provider.dart';
@@ -14,7 +15,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../main.dart';
 import 'package:deun/l10n/app_localizations.dart';
 
 import 'settings_profile_form.dart';
@@ -256,7 +256,7 @@ class _SettingState extends ConsumerState<Setting> {
             foreground: Theme.of(context).colorScheme.onError,
             label: AppLocalizations.of(context)!.settingsSignOut,
             onPressed: () async {
-              await supabase.auth.signOut();
+              await ref.read(appSignOutProvider)();
             },
           ),
         ],
