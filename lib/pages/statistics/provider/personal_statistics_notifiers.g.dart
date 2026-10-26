@@ -56,7 +56,7 @@ final class PersonalStatisticsNotifierProvider
 }
 
 String _$personalStatisticsNotifierHash() =>
-    r'2a5ba858babd168a9e74061c0154a71af68ac625';
+    r'4f31d8816a751ae97757a00db40c6efb581f423a';
 
 final class PersonalStatisticsNotifierFamily extends $Family
     with
