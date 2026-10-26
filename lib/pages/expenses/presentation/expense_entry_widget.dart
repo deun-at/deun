@@ -1,27 +1,21 @@
-import 'package:deun/constants.dart';
 import 'package:deun/helper/helper.dart';
-import 'package:deun/widgets/theme_builder.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_form_builder/flutter_form_builder.dart';
-import 'package:form_builder_validators/form_builder_validators.dart';
 import 'package:deun/l10n/app_localizations.dart';
 
-import '../../../widgets/decimal_text_input_formatter.dart';
 import '../../../widgets/restyle/app_segmented_control.dart';
 import '../../../widgets/restyle/expense_picker_sheets.dart';
-import '../../../widgets/restyle/member_avatar.dart';
 import '../../../widgets/restyle/money_text.dart';
 import '../../../widgets/restyle/section_label.dart';
-import '../../../widgets/restyle/soft_card.dart';
-import '../../../widgets/restyle/stepper_control.dart';
 import '../../groups/data/group_member_model.dart';
 import '../../groups/data/member_display.dart';
 import '../data/expense_conversion.dart';
 import '../data/expense_entry_model.dart';
-import '../data/item_icon.dart';
 import '../data/split_allocation.dart';
 import '../data/split_mode.dart';
+import 'expense_entry/expense_entry_allocation_summary.dart';
+import 'expense_entry/expense_entry_item_row.dart';
+import 'expense_entry/expense_entry_member_list.dart';
 
 class ExpenseEntryWidget extends StatefulWidget {
   const ExpenseEntryWidget({
@@ -238,10 +232,19 @@ class _ExpenseEntryWidgetState extends State<ExpenseEntryWidget> {
         // Equal derives everything from total / included count on the fly.
         break;
       case SplitMode.amount:
-        _recalculateAmounts();
+        _memberAmounts = rebalanceExactAmounts(
+          total: _entryTotal,
+          enabled: _enabledMembers,
+          locked: _lockedMembers,
+          amounts: _memberAmounts,
+        );
         break;
       case SplitMode.percentage:
-        _recalculatePercentages();
+        _memberPercentages = rebalancePercentages(
+          enabled: _enabledMembers,
+          locked: _lockedMembers,
+          percentages: _memberPercentages,
+        );
         break;
       case SplitMode.shares:
         // Parts are always user-set, no auto-recalculation needed
@@ -266,63 +269,17 @@ class _ExpenseEntryWidgetState extends State<ExpenseEntryWidget> {
     widget.onLineTotalChanged?.call();
   }
 
-  void _recalculateAmounts() {
-    List<String> enabled = _enabledMembers.toList();
-    if (enabled.isEmpty) return;
-
-    double lockedSum = 0;
-    int unlockedCount = 0;
-    for (var email in enabled) {
-      if (_lockedMembers.contains(email)) {
-        lockedSum += _memberAmounts[email] ?? 0;
-      } else {
-        unlockedCount++;
-      }
-    }
-
-    double remaining = _entryTotal - lockedSum;
-    double perUnlocked = unlockedCount > 0 ? remaining / unlockedCount : 0;
-
-    for (var email in enabled) {
-      if (!_lockedMembers.contains(email)) {
-        _memberAmounts[email] = perUnlocked;
-      }
-    }
-  }
-
-  void _recalculatePercentages() {
-    List<String> enabled = _enabledMembers.toList();
-    if (enabled.isEmpty) return;
-
-    double lockedSum = 0;
-    int unlockedCount = 0;
-    for (var email in enabled) {
-      if (_lockedMembers.contains(email)) {
-        lockedSum += _memberPercentages[email] ?? 0;
-      } else {
-        unlockedCount++;
-      }
-    }
-
-    double remaining = 100 - lockedSum;
-    double perUnlocked = unlockedCount > 0 ? remaining / unlockedCount : 0;
-
-    for (var email in enabled) {
-      if (!_lockedMembers.contains(email)) {
-        _memberPercentages[email] = perUnlocked;
-      }
-    }
-  }
-
   void _scaleLockedMembers(double oldTotal, double newTotal) {
-    if (oldTotal <= 0 || newTotal <= 0 || _lockedMembers.isEmpty) {
-      _lockedMembers.clear();
-      return;
-    }
-    double ratio = newTotal / oldTotal;
-    for (var email in _lockedMembers) {
-      _memberAmounts[email] = (_memberAmounts[email] ?? 0) * ratio;
-    }
+    final scaled = scaleLockedAmounts(
+      oldTotal: oldTotal,
+      newTotal: newTotal,
+      locked: _lockedMembers,
+      amounts: _memberAmounts,
+    );
+    _memberAmounts = scaled.amounts;
+    // The shares / locked_members form fields hold this very Set, so the locks
+    // are released in place, never by swapping the Set.
+    if (scaled.releaseLocks) _lockedMembers.clear();
     // Percentages stay the same when total changes — they're relative
   }
 
@@ -354,8 +311,6 @@ class _ExpenseEntryWidgetState extends State<ExpenseEntryWidget> {
     return data;
   }
 
-  String _getDisplayName(String email) => _display.nameOf(email);
-
   @override
   Widget build(BuildContext context) {
     const double spacing = 8;
@@ -368,7 +323,7 @@ class _ExpenseEntryWidgetState extends State<ExpenseEntryWidget> {
 
     return Padding(
       // Itemized rows sit inside the parent's joined SoftCard and own their
-      // padding via _buildItemCard, so no outer inset (BUG D). Quick keeps the
+      // padding via ExpenseEntryItemRow, so no outer inset (BUG D). Quick keeps the
       // split-section inset, aligned to the same 16px horizontal grid as the
       // other form sections (the end inset was 8, leaving the split section
       // offset 8px past the cards above it).
@@ -384,7 +339,25 @@ class _ExpenseEntryWidgetState extends State<ExpenseEntryWidget> {
             // trash left, qty stepper right. Items are shared for claiming
             // (F118) — no per-item split UI; members claim their own units
             // on the claim page instead.
-            _buildItemCard(spacing, l10n),
+            ExpenseEntryItemRow(
+              index: widget.index,
+              currency: widget.currency,
+              itemName: _itemName,
+              initialName: widget.initialName,
+              initialAmountText:
+                  widget.initialAmount ??
+                  (widget.expenseEntry.expenseEntryShares.isNotEmpty
+                      ? _seedAmountText(widget.expenseEntry)
+                      : null),
+              unitPrice: _unitPrice,
+              quantity: _quantity,
+              lineTotal: _entryTotal,
+              onRemove: () => widget.onRemove(),
+              onNameChanged: (value) => setState(() => _itemName = value),
+              onUnitPriceChanged: _adoptUnitPrice,
+              onUnitPriceTap: _openUnitPriceKeypad,
+              onQuantityChanged: _adoptQuantity,
+            ),
           ] else ...[
             // Quick split keeps the full split section — label + 4-way mode
             // selector (Equal/Shares/%/Exact), per DESIGN_SPEC §8 (F105).
@@ -405,119 +378,45 @@ class _ExpenseEntryWidgetState extends State<ExpenseEntryWidget> {
             const SizedBox(height: spacing),
             // F161 D2/D3/D5: ONE colored bar + a single right-aligned
             // status-aware remain label, ABOVE the member-row card.
-            _buildAllocationSummary(l10n),
+            ExpenseEntryAllocationSummary(
+              index: widget.index,
+              splitMode: _splitMode,
+              currency: widget.currency,
+              entryTotal: _entryTotal,
+              groupMembers: widget.groupMembers,
+              enabledMembers: _enabledMembers,
+              memberAmounts: _memberAmounts,
+              memberPercentages: _memberPercentages,
+              memberParts: _memberParts,
+              isYou: _display.isYou,
+              amountPreview: _getAmountPreview,
+            ),
             const SizedBox(height: spacing),
-            _buildMemberList(spacing, l10n),
-            _buildHiddenFormFields(),
+            ExpenseEntryMemberList(
+              index: widget.index,
+              splitMode: _splitMode,
+              currency: widget.currency,
+              groupMembers: widget.groupMembers,
+              enabledMembers: _enabledMembers,
+              lockedMembers: _lockedMembers,
+              memberAmounts: _memberAmounts,
+              memberPercentages: _memberPercentages,
+              memberParts: _memberParts,
+              shareData: _buildShareData(),
+              isSplitBalanced: _isSplitBalanced,
+              displayName: _display.nameOf,
+              isYou: _display.isYou,
+              amountPreview: _getAmountPreview,
+              memberController: _getOrCreateController,
+              onToggleMember: _toggleMember,
+              onSetParts: _setParts,
+              onSetPercentage: _setPercentage,
+              onStepPercentage: _stepPercentage,
+              onStepAmount: _stepAmount,
+              onMemberAmountTap: _openMemberAmountKeypad,
+            ),
           ],
         ],
-      ),
-    );
-  }
-
-  /// F117 item row: leading auto-icon tile, inline-editable name +
-  /// "€ [price] each", line total right; bottom row = trash left, qty
-  /// stepper right. Wraps the same FormBuilderFields (name / amount /
-  /// quantity) so saving, the itemized total, and the claim explosion
-  /// (F118/F146) stay wired to unchanged state.
-  ///
-  /// BUG D: renders as a FLAT row (no own SoftCard) — the parent joins all item
-  /// rows inside ONE SoftCard, so wrapping here too produced a card-in-card.
-  Widget _buildItemCard(double spacing, AppLocalizations l10n) {
-    final colorScheme = Theme.of(context).colorScheme;
-    final textTheme = Theme.of(context).textTheme;
-
-    return Padding(
-      padding: const EdgeInsets.all(13),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Leading auto-icon tile (iconForItemName, F116) in a small
-              // rounded tinted square.
-              Container(
-                width: 36,
-                height: 36,
-                decoration: BoxDecoration(
-                  color: colorScheme.primary.withValues(alpha: 0.12),
-                  borderRadius: BorderRadius.circular(11),
-                ),
-                child: Icon(
-                  iconForItemName(_itemName),
-                  size: 20,
-                  color: colorScheme.primary,
-                ),
-              ),
-              const SizedBox(width: 10),
-              // Name (inline field) + "€ [price] each" (inline field).
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    _buildNameField(l10n),
-                    const SizedBox(height: 3),
-                    _buildUnitPriceField(l10n),
-                  ],
-                ),
-              ),
-              const SizedBox(width: 8),
-              // Line total (price × qty), right-aligned.
-              Padding(
-                padding: const EdgeInsets.only(top: 6),
-                child: Text(
-                  l10n.toCurrency(_entryTotal, widget.currency.code),
-                  style: textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.w700,
-                    fontFeatures: const [FontFeature.tabularFigures()],
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 10),
-          // Bottom row: trash left, qty stepper right.
-          Row(
-            children: [
-              IconButton(
-                onPressed: () => widget.onRemove(),
-                icon: const Icon(Icons.delete_outline),
-                color: Theme.of(context).extension<SemanticColors>()!.danger,
-                visualDensity: VisualDensity.compact,
-                tooltip: MaterialLocalizations.of(context).deleteButtonTooltip,
-              ),
-              const Spacer(),
-              _buildQuantityStepper(l10n),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildNameField(AppLocalizations l10n) {
-    return FormBuilderField(
-      key: ValueKey("${widget.index}_name"),
-      name: "expense_entry[${widget.index}][name]",
-      initialValue: widget.initialName,
-      builder: (FormFieldState<dynamic> field) => TextFormField(
-        initialValue: field.value,
-        style: Theme.of(
-          context,
-        ).textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w700),
-        decoration: InputDecoration(
-          isDense: true,
-          hintText: l10n.itemNameHint,
-          contentPadding: EdgeInsets.zero,
-          border: InputBorder.none,
-          enabledBorder: InputBorder.none,
-          focusedBorder: InputBorder.none,
-        ),
-        onChanged: (value) {
-          field.didChange(value);
-          setState(() => _itemName = value);
-        },
       ),
     );
   }
@@ -553,95 +452,6 @@ class _ExpenseEntryWidgetState extends State<ExpenseEntryWidget> {
     });
   }
 
-  Widget _buildUnitPriceField(AppLocalizations l10n) {
-    final colorScheme = Theme.of(context).colorScheme;
-    return FormBuilderField(
-      key: ValueKey("${widget.index}_amount"),
-      name: "expense_entry[${widget.index}][amount]",
-      initialValue:
-          widget.initialAmount ??
-          (widget.expenseEntry.expenseEntryShares.isNotEmpty
-              ? _seedAmountText(widget.expenseEntry)
-              : null),
-      autovalidateMode: AutovalidateMode.onUserInteraction,
-      onChanged: _adoptUnitPrice,
-      validator: FormBuilderValidators.compose([
-        FormBuilderValidators.required(
-          errorText: l10n.expenseEntryAmountValidationEmpty,
-        ),
-        (value) {
-          final amount = double.tryParse(value?.toString() ?? '');
-          // Negative lines are legal: receipt discounts ("Aktion", deposit
-          // returns) come through the scanner as -0.80 etc. Only the expense
-          // total has to stay positive — guarded in ExpenseDetail._saveExpense.
-          if (amount != null && amount == 0) {
-            return l10n.expenseEntryAmountValidationNonZero;
-          }
-          return null;
-        },
-      ]),
-      builder: (FormFieldState<dynamic> field) {
-        return InputDecorator(
-          decoration: InputDecoration(
-            errorText: field.errorText,
-            border: InputBorder.none,
-            isDense: true,
-            contentPadding: EdgeInsets.zero,
-          ),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              Text(
-                widget.currency.code,
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: colorScheme.onSurfaceVariant,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-              const SizedBox(width: 4),
-              // Tap-to-open keypad (F158): the unit price is money, so it routes
-              // through showAmountKeypadSheet like the quick-split amount, not a
-              // raw system-keyboard field. Tinted pill reads as editable.
-              InkWell(
-                onTap: () => _openUnitPriceKeypad(field),
-                borderRadius: BorderRadius.circular(8),
-                child: Container(
-                  constraints: const BoxConstraints(minWidth: 40, maxWidth: 90),
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 8,
-                    vertical: 4,
-                  ),
-                  decoration: BoxDecoration(
-                    color: colorScheme.surfaceContainerHighest,
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Text(
-                    formatAmountOnly(
-                      _unitPrice,
-                      widget.currency,
-                      Localizations.localeOf(context),
-                    ),
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      fontWeight: FontWeight.w700,
-                      fontFeatures: const [FontFeature.tabularFigures()],
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(width: 6),
-              Text(
-                l10n.itemPriceEachSuffix,
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: colorScheme.onSurfaceVariant,
-                ),
-              ),
-            ],
-          ),
-        );
-      },
-    );
-  }
-
   /// Adopts the quantity field's new [value] as this row's quantity, whoever
   /// wrote it: the stepper, or the editor resetting a rescanned item to one
   /// unit. Same reason as [_adoptUnitPrice].
@@ -653,28 +463,6 @@ class _ExpenseEntryWidgetState extends State<ExpenseEntryWidget> {
       _quantity = qty;
       _onTotalChanged(oldTotal);
     });
-  }
-
-  Widget _buildQuantityStepper(AppLocalizations l10n) {
-    return FormBuilderField(
-      key: ValueKey("${widget.index}_quantity"),
-      name: "expense_entry[${widget.index}][quantity]",
-      initialValue: _quantity.toString(),
-      onChanged: _adoptQuantity,
-      builder: (FormFieldState<dynamic> qtyField) {
-        void updateQty(int newQty) {
-          if (newQty < 1) newQty = 1;
-          qtyField.didChange(newQty.toString());
-        }
-
-        return StepperControl(
-          value: l10n.itemQtyStepperValue(_quantity),
-          canDecrement: _quantity > 1,
-          onDecrement: () => updateQty(_quantity - 1),
-          onIncrement: () => updateQty(_quantity + 1),
-        );
-      },
-    );
   }
 
   Widget _buildSplitModeSelector(AppLocalizations l10n) {
@@ -710,38 +498,20 @@ class _ExpenseEntryWidgetState extends State<ExpenseEntryWidget> {
     );
   }
 
-  bool _isSplitValid() {
-    if (_enabledMembers.isEmpty) return false;
-    switch (_splitMode) {
-      case SplitMode.equal:
-        // Equal is always fully allocated over the included members.
-        return true;
-      case SplitMode.amount:
-        double sum = _enabledMembers.fold(
-          0.0,
-          (s, email) => s + (_memberAmounts[email] ?? 0),
-        );
-        // Member amounts must add up to the entry total exactly at cent
-        // level — anything looser silently creates or destroys money.
-        return isSettled(
-          roundCurrency(sum, widget.currency) -
-              roundCurrency(_entryTotal, widget.currency),
-          widget.currency,
-        );
-      case SplitMode.percentage:
-        double sum = _enabledMembers.fold(
-          0.0,
-          (s, email) => s + (_memberPercentages[email] ?? 0),
-        );
-        return (sum - 100).abs() < 0.01;
-      case SplitMode.shares:
-        int totalParts = _enabledMembers.fold(
-          0,
-          (sum, e) => sum + (_memberParts[e] ?? 1),
-        );
-        return totalParts > 0;
-    }
-  }
+  /// Whether the split adds up: the save-time check the shares validator reads
+  /// live. [SplitAllocation.compute] is its one copy (it replaced
+  /// `_isSplitValid`, which matched it in every mode).
+  bool _isSplitBalanced() =>
+      SplitAllocation.compute(
+        mode: _splitMode,
+        total: _entryTotal,
+        amounts: _memberAmounts,
+        percentages: _memberPercentages,
+        parts: _memberParts,
+        enabled: _enabledMembers,
+        currency: widget.currency,
+      ).status ==
+      AllocationStatus.ok;
 
   void _syncFormFields() {
     final formState = FormBuilder.of(context);
@@ -751,98 +521,6 @@ class _ExpenseEntryWidgetState extends State<ExpenseEntryWidget> {
     formState.fields["$prefix[share_data]"]?.didChange(_buildShareData());
     formState.fields["$prefix[split_mode]"]?.didChange(_splitMode.toDbValue());
     formState.fields["$prefix[locked_members]"]?.didChange(_lockedMembers);
-  }
-
-  Widget _buildMemberList(double spacing, AppLocalizations l10n) {
-    return Column(
-      children: [
-        // Shares field with validation
-        FormBuilderField(
-          key: ValueKey("${widget.index}_shares"),
-          name: "expense_entry[${widget.index}][shares]",
-          initialValue: _enabledMembers,
-          autovalidateMode: AutovalidateMode.onUserInteraction,
-          validator: (value) {
-            Set<String>? shares = value;
-            if (shares == null || shares.isEmpty) {
-              return l10n.expenseEntrySharesValidationEmpty;
-            }
-            if (!_isSplitValid()) {
-              switch (_splitMode) {
-                case SplitMode.percentage:
-                  return l10n.splitPercentageError;
-                case SplitMode.amount:
-                  return l10n.splitAmountError;
-                case SplitMode.equal:
-                case SplitMode.shares:
-                  return l10n.expenseEntrySharesValidationEmpty;
-              }
-            }
-            return null;
-          },
-          builder: (FormFieldState<dynamic> sharesField) {
-            // F161 D1: only the member rows sit in a white SoftCard (radius 18,
-            // padding v6/h4). No "Split between" InputDecorator label — the
-            // section heading above already names it. errorText kept below.
-            return Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                SoftCard(
-                  borderRadius: 18,
-                  padding: const EdgeInsets.symmetric(
-                    vertical: 6,
-                    horizontal: 4,
-                  ),
-                  child: Column(
-                    children: [
-                      ...widget.groupMembers.map((member) {
-                        bool isEnabled = _enabledMembers.contains(member.email);
-                        return _buildMemberRow(member, isEnabled, sharesField);
-                      }),
-                    ],
-                  ),
-                ),
-                if (sharesField.errorText != null)
-                  Padding(
-                    padding: const EdgeInsets.only(top: 8, left: 4),
-                    child: Text(
-                      sharesField.errorText!,
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: Theme.of(context).colorScheme.error,
-                      ),
-                    ),
-                  ),
-              ],
-            );
-          },
-        ),
-        // Hidden fields for share_data, split_mode, locked_members
-        Offstage(
-          child: Column(
-            children: [
-              FormBuilderField(
-                key: ValueKey("${widget.index}_share_data"),
-                name: "expense_entry[${widget.index}][share_data]",
-                initialValue: _buildShareData(),
-                builder: (field) => const SizedBox.shrink(),
-              ),
-              FormBuilderField(
-                key: ValueKey("${widget.index}_split_mode"),
-                name: "expense_entry[${widget.index}][split_mode]",
-                initialValue: _splitMode.toDbValue(),
-                builder: (field) => const SizedBox.shrink(),
-              ),
-              FormBuilderField(
-                key: ValueKey("${widget.index}_locked_members"),
-                name: "expense_entry[${widget.index}][locked_members]",
-                initialValue: _lockedMembers,
-                builder: (field) => const SizedBox.shrink(),
-              ),
-            ],
-          ),
-        ),
-      ],
-    );
   }
 
   /// Toggle a member in/out of the split. Reuses the exact body the old
@@ -862,176 +540,6 @@ class _ExpenseEntryWidgetState extends State<ExpenseEntryWidget> {
     });
   }
 
-  /// F161 D4: custom 26px round include toggle (mockup L982-988).
-  /// Included = filled primary circle + white check(17); excluded = empty
-  /// circle with a 2px outlineVariant border. The gesture box is padded out to
-  /// a ≥48px hit target while the visual stays 26px.
-  Widget _buildIncludeToggle(GroupMember member, bool isEnabled) {
-    final colorScheme = Theme.of(context).colorScheme;
-    return Semantics(
-      checked: isEnabled,
-      label: _getDisplayName(member.email),
-      child: GestureDetector(
-        key: ValueKey('split_toggle_${widget.index}_${member.email}'),
-        behavior: HitTestBehavior.opaque,
-        onTap: () => _toggleMember(member, !isEnabled),
-        child: Container(
-          width: 48,
-          height: 48,
-          alignment: Alignment.center,
-          child: Container(
-            width: 26,
-            height: 26,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: isEnabled ? colorScheme.primary : Colors.transparent,
-              border: isEnabled
-                  ? null
-                  : Border.all(color: colorScheme.outlineVariant, width: 2),
-            ),
-            child: isEnabled
-                ? Icon(Icons.check, size: 17, color: colorScheme.onPrimary)
-                : null,
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildMemberRow(
-    GroupMember member,
-    bool isEnabled,
-    FormFieldState<dynamic> sharesField,
-  ) {
-    String displayName = _getDisplayName(member.email);
-    bool isLocked = _lockedMembers.contains(member.email);
-
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 2),
-      child: Row(
-        children: [
-          // F161 D4: 26px round include-toggle. Included = filled primary
-          // circle + white check(17); excluded = empty circle with a 2px
-          // outlineVariant border. ≥48px tap target via the padded gesture box.
-          _buildIncludeToggle(member, isEnabled),
-          // Avatar
-          Opacity(
-            opacity: isEnabled ? 1 : 0.4,
-            child: MemberAvatar(
-              name: displayName,
-              colorKey: member.email,
-              radius: 16,
-              isYou: _display.isYou(member.email),
-            ),
-          ),
-          const SizedBox(width: 10),
-          // Name
-          Expanded(
-            child: Text(
-              displayName,
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: isEnabled ? null : Theme.of(context).disabledColor,
-              ),
-              overflow: TextOverflow.ellipsis,
-            ),
-          ),
-          // Input area — fixed width to prevent layout shifts
-          isEnabled
-              ? Row(
-                  mainAxisSize: MainAxisSize.min,
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: [
-                    // Exact (amount) mode keeps the editable field; shares/%
-                    // use a ± stepper; equal shows just the per-head amount.
-                    if (_splitMode == SplitMode.amount) ...[
-                      _buildMemberInput(member.email),
-                      if (isLocked)
-                        Padding(
-                          padding: const EdgeInsets.only(left: 2),
-                          child: Icon(
-                            Icons.lock_outline,
-                            size: 14,
-                            color: Theme.of(context).colorScheme.outline,
-                          ),
-                        ),
-                    ] else ...[
-                      if (_splitMode != SplitMode.equal) ...[
-                        _buildMemberStepper(member.email),
-                        const SizedBox(width: 6),
-                      ],
-                      // € preview for equal, percentage and parts mode
-                      SizedBox(
-                        width: 52,
-                        child: MoneyText(
-                          _getAmountPreview(member.email),
-                          currency: widget.currency,
-                          style: Theme.of(context).textTheme.bodySmall
-                              ?.copyWith(
-                                color: Theme.of(context).colorScheme.outline,
-                              ),
-                          textAlign: TextAlign.end,
-                        ),
-                      ),
-                    ],
-                  ],
-                )
-              // Excluded members show a muted "Not in" instead of an amount.
-              : Text(
-                  AppLocalizations.of(context)!.splitNotInLabel,
-                  style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                    color: Theme.of(context).colorScheme.outline,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-        ],
-      ),
-    );
-  }
-
-  /// A ± stepper for non-equal modes: ±1 part (shares), ±5% (percentage),
-  /// ±€0.50 (amount). Mutates the same per-member maps the text inputs use and
-  /// runs the existing recalculation path so the split math is unchanged.
-  Widget _buildMemberStepper(String email) {
-    switch (_splitMode) {
-      case SplitMode.equal:
-        // Equal has no per-member control — never reached (guarded in
-        // _buildMemberRow).
-        return const SizedBox.shrink();
-      case SplitMode.shares:
-        final parts = _memberParts[email] ?? 1;
-        return StepperControl(
-          value: "$parts",
-          canDecrement: parts > 0,
-          onDecrement: () => setState(() {
-            _memberParts[email] = (parts - 1).clamp(0, 9999);
-            _updateSplitState();
-          }),
-          onIncrement: () => setState(() {
-            _memberParts[email] = parts + 1;
-            _updateSplitState();
-          }),
-        );
-      case SplitMode.percentage:
-        final pct = _memberPercentages[email] ?? 0;
-        return StepperControl(
-          value: "${pct.toStringAsFixed(0)}%",
-          canDecrement: pct > 0,
-          onDecrement: () => _stepPercentage(email, -5),
-          onIncrement: () => _stepPercentage(email, 5),
-        );
-      case SplitMode.amount:
-        final amt = _memberAmounts[email] ?? 0;
-        return StepperControl(
-          value: AppLocalizations.of(
-            context,
-          )!.toCurrency(amt, widget.currency.code),
-          canDecrement: amt > 0,
-          onDecrement: () => _stepAmount(email, -0.50),
-          onIncrement: () => _stepAmount(email, 0.50),
-        );
-    }
-  }
-
   void _stepPercentage(String email, double delta) {
     setState(() {
       final next = ((_memberPercentages[email] ?? 0) + delta).clamp(0.0, 100.0);
@@ -1048,6 +556,21 @@ class _ExpenseEntryWidgetState extends State<ExpenseEntryWidget> {
         widget.currency,
       );
       _memberAmounts[email] = next < 0 ? 0 : next;
+      _lockedMembers.add(email);
+      _updateSplitState();
+    });
+  }
+
+  void _setParts(String email, int parts) {
+    setState(() {
+      _memberParts[email] = parts;
+      _updateSplitState();
+    });
+  }
+
+  void _setPercentage(String email, double percentage) {
+    setState(() {
+      _memberPercentages[email] = percentage;
       _lockedMembers.add(email);
       _updateSplitState();
     });
@@ -1127,153 +650,6 @@ class _ExpenseEntryWidgetState extends State<ExpenseEntryWidget> {
     });
   }
 
-  Widget _buildMemberInput(String email) {
-    switch (_splitMode) {
-      case SplitMode.equal:
-        // Equal has no editable input — never reached (guarded in
-        // _buildMemberRow).
-        return const SizedBox.shrink();
-      case SplitMode.amount:
-        double val = _memberAmounts[email] ?? 0;
-        String ctrlKey = "amount_${widget.index}_$email";
-        TextEditingController controller = _getOrCreateController(
-          ctrlKey,
-          formatAmountOnly(
-            val,
-            widget.currency,
-            Localizations.localeOf(context),
-          ),
-        );
-        return Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(
-              widget.currency.code,
-              style: Theme.of(context).textTheme.bodyLarge,
-            ),
-            // Tap-to-open keypad (F158): per-member exact amount is money, so it
-            // routes through showAmountKeypadSheet instead of a raw system-keyboard
-            // field. The controller stays the source of truth (so
-            // _updateUnlockedControllers still syncs it); confirm runs the same
-            // mutation the old onChanged did (lock member + recalc).
-            ListenableBuilder(
-              listenable: controller,
-              builder: (context, _) => InkWell(
-                key: ValueKey(ctrlKey),
-                onTap: () => _openMemberAmountKeypad(email, controller),
-                borderRadius: BorderRadius.circular(8),
-                child: ConstrainedBox(
-                  constraints: const BoxConstraints(minWidth: 40, maxWidth: 80),
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 4,
-                      vertical: 8,
-                    ),
-                    child: Text(
-                      controller.text.isEmpty
-                          ? formatAmountOnly(
-                              0,
-                              widget.currency,
-                              Localizations.localeOf(context),
-                            )
-                          : controller.text,
-                      style: Theme.of(context).textTheme.bodyLarge,
-                      textAlign: TextAlign.end,
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          ],
-        );
-
-      case SplitMode.percentage:
-        double val = _memberPercentages[email] ?? 0;
-        String ctrlKey = "pct_${widget.index}_$email";
-        TextEditingController controller = _getOrCreateController(
-          ctrlKey,
-          val.toStringAsFixed(1),
-        );
-        return Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            IntrinsicWidth(
-              child: ConstrainedBox(
-                constraints: const BoxConstraints(minWidth: 30, maxWidth: 60),
-                child: TextFormField(
-                  key: ValueKey(ctrlKey),
-                  controller: controller,
-                  onChanged: (value) {
-                    setState(() {
-                      _memberPercentages[email] = double.tryParse(value) ?? 0;
-                      _lockedMembers.add(email);
-                      _updateSplitState();
-                    });
-                  },
-                  keyboardType: const TextInputType.numberWithOptions(
-                    decimal: true,
-                  ),
-                  inputFormatters: [DecimalTextInputFormatter(decimalRange: 1)],
-                  style: Theme.of(context).textTheme.bodyLarge,
-                  textAlign: TextAlign.end,
-                  decoration: const InputDecoration(
-                    isDense: true,
-                    contentPadding: EdgeInsets.symmetric(
-                      horizontal: 4,
-                      vertical: 8,
-                    ),
-                    border: InputBorder.none,
-                  ),
-                ),
-              ),
-            ),
-            Text(" %", style: Theme.of(context).textTheme.bodyLarge),
-          ],
-        );
-
-      case SplitMode.shares:
-        int val = _memberParts[email] ?? 1;
-        String ctrlKey = "parts_${widget.index}_$email";
-        TextEditingController controller = _getOrCreateController(
-          ctrlKey,
-          val.toString(),
-        );
-        return Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            IntrinsicWidth(
-              child: ConstrainedBox(
-                constraints: const BoxConstraints(minWidth: 20, maxWidth: 40),
-                child: TextFormField(
-                  key: ValueKey(ctrlKey),
-                  controller: controller,
-                  onChanged: (value) {
-                    setState(() {
-                      _memberParts[email] = int.tryParse(value) ?? 1;
-                      _updateSplitState();
-                    });
-                  },
-                  keyboardType: TextInputType.number,
-                  inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                  style: Theme.of(context).textTheme.bodyLarge,
-                  textAlign: TextAlign.end,
-                  decoration: const InputDecoration(
-                    isDense: true,
-                    contentPadding: EdgeInsets.symmetric(
-                      horizontal: 4,
-                      vertical: 8,
-                    ),
-                    border: InputBorder.none,
-                  ),
-                ),
-              ),
-            ),
-            Text("x", style: Theme.of(context).textTheme.bodyLarge),
-          ],
-        );
-    }
-  }
-
   /// The amount [email] would owe under the current split mode, in the entry's
   /// currency. A number, not text: both callers need it numerically (one hands
   /// it to [MoneyText], the other sizes a segment with it), so formatting it
@@ -1305,191 +681,5 @@ class _ExpenseEntryWidgetState extends State<ExpenseEntryWidget> {
     // Rounded to the entry currency's precision so the preview and the bar agree
     // with what MoneyText renders.
     return roundCurrency(preview, widget.currency);
-  }
-
-  /// F161 D3: ONE 10px / radius-6 segmented bar on a [surfaceContainerHighest]
-  /// track. Each INCLUDED member gets a segment sized as their share OF THE
-  /// TOTAL (not of the allocated sum), colored with their avatar color (same
-  /// [memberAvatarColor] the [MemberAvatar] uses; "you" uses primary). When the
-  /// split under-allocates, the segments don't fill the track — the leftover
-  /// track shows through as a visible empty remainder. Rebuilds with the parent
-  /// [setState] as members toggle or amounts change.
-  Widget _buildSplitSegments(SplitAllocation allocation) {
-    final colorScheme = Theme.of(context).colorScheme;
-
-    // Fraction of the total each segment occupies. For amount mode this is the
-    // per-member amount / total (so an under-allocation leaves empty track); for
-    // the other modes SplitAllocation.fraction is 1.0 (equal/shares/percent-ok)
-    // or <1 (percent under), and each member's slice is their share of that.
-    final children = <Widget>[];
-    for (final member in widget.groupMembers) {
-      if (!_enabledMembers.contains(member.email)) continue;
-      final amount = _getAmountPreview(member.email);
-      final double flexOfTotal = _entryTotal > 0
-          ? (amount / _entryTotal).clamp(0.0, 1.0).toDouble()
-          : 0.0;
-      // Positive int flex; a zero-share included member keeps a hairline so
-      // their color/presence stays visible.
-      final flex = (flexOfTotal * 10000).round().clamp(1, 1 << 30);
-      final color = _display.isYou(member.email)
-          ? colorScheme.primary
-          : memberAvatarColor(member.email);
-      children.add(
-        Expanded(
-          flex: flex,
-          child: Container(
-            key: ValueKey('split_segment_${widget.index}_${member.email}'),
-            color: color,
-          ),
-        ),
-      );
-    }
-
-    // Empty remainder: the unallocated slice of the track (visible when the
-    // split under-allocates). Over-allocation clamps to a full bar.
-    final remainderFlex = ((1.0 - allocation.fraction).clamp(0.0, 1.0) * 10000)
-        .round();
-    if (remainderFlex > 0) {
-      children.add(Expanded(flex: remainderFlex, child: const SizedBox()));
-    }
-
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(6),
-      child: Container(
-        height: 10,
-        color: colorScheme.surfaceContainerHighest,
-        child: children.isEmpty ? null : Row(children: children),
-      ),
-    );
-  }
-
-  /// F161 D3/D5: one colored bar + a single right-aligned, status-aware remain
-  /// label. Reads the same numbers the save-time validation uses (via the pure
-  /// [SplitAllocation] helper) so the bar, the label color, and validity stay in
-  /// sync. No ProgressBar and no left-aligned detail — matches the v3 mockup.
-  Widget _buildAllocationSummary(AppLocalizations l10n) {
-    final semantic = Theme.of(context).extension<SemanticColors>()!;
-    final colorScheme = Theme.of(context).colorScheme;
-
-    final allocation = SplitAllocation.compute(
-      mode: _splitMode,
-      total: _entryTotal,
-      amounts: _memberAmounts,
-      percentages: _memberPercentages,
-      parts: _memberParts,
-      enabled: _enabledMembers,
-      currency: widget.currency,
-    );
-
-    // Single right-aligned label: grey default (fully-allocated equal/shares
-    // show their per-head / parts detail), success when explicitly all set,
-    // warning when under, danger when over.
-    final Color labelColor;
-    final String label;
-    switch (allocation.status) {
-      case AllocationStatus.ok:
-        // Equal/shares are structurally always ok — keep their neutral detail
-        // (grey) rather than a redundant "All set". Amount/percentage reaching
-        // exactly 100% earn the success confirmation.
-        if (_splitMode == SplitMode.equal || _splitMode == SplitMode.shares) {
-          labelColor = colorScheme.onSurfaceVariant;
-          label = _allocationDetail(l10n);
-        } else {
-          labelColor = semantic.success;
-          label = l10n.splitAllocatedLabel;
-        }
-        break;
-      case AllocationStatus.under:
-        labelColor = semantic.warning;
-        label = _splitMode == SplitMode.amount
-            ? l10n.splitRemainingLabel(
-                l10n.toCurrency(allocation.remaining, widget.currency.code),
-              )
-            : _underLabel(l10n);
-        break;
-      case AllocationStatus.over:
-        labelColor = semantic.danger;
-        label = _splitMode == SplitMode.amount
-            ? l10n.splitOverLabel(
-                l10n.toCurrency(
-                  allocation.remaining.abs(),
-                  widget.currency.code,
-                ),
-              )
-            : _overLabel(l10n);
-        break;
-    }
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        _buildSplitSegments(allocation),
-        const SizedBox(height: 4),
-        Text(
-          label,
-          textAlign: TextAlign.end,
-          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-            color: labelColor,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-      ],
-    );
-  }
-
-  /// The left-side detail of the allocation row (allocated / target).
-  String _allocationDetail(AppLocalizations l10n) {
-    switch (_splitMode) {
-      case SplitMode.equal:
-        final each = _enabledMembers.isNotEmpty
-            ? _entryTotal / _enabledMembers.length
-            : 0.0;
-        return l10n.splitEqualSummary(
-          l10n.toCurrency(each, widget.currency.code),
-        );
-      case SplitMode.amount:
-        final sum = _enabledMembers.fold<double>(
-          0,
-          (s, e) => s + (_memberAmounts[e] ?? 0),
-        );
-        return "${l10n.toCurrency(sum, widget.currency.code)} / ${l10n.toCurrency(_entryTotal, widget.currency.code)}";
-      case SplitMode.percentage:
-        final sum = _enabledMembers.fold<double>(
-          0,
-          (s, e) => s + (_memberPercentages[e] ?? 0),
-        );
-        return "${sum.toStringAsFixed(1)}% / 100%";
-      case SplitMode.shares:
-        final totalParts = _enabledMembers.fold<int>(
-          0,
-          (s, e) => s + (_memberParts[e] ?? 1),
-        );
-        return l10n.splitSharesSummary(totalParts);
-    }
-  }
-
-  String _underLabel(AppLocalizations l10n) {
-    if (_splitMode == SplitMode.percentage) {
-      final sum = _enabledMembers.fold<double>(
-        0,
-        (s, e) => s + (_memberPercentages[e] ?? 0),
-      );
-      return "${(100 - sum).toStringAsFixed(1)}%";
-    }
-    return l10n.expenseEntrySharesValidationEmpty;
-  }
-
-  String _overLabel(AppLocalizations l10n) {
-    final sum = _enabledMembers.fold<double>(
-      0,
-      (s, e) => s + (_memberPercentages[e] ?? 0),
-    );
-    return "+${(sum - 100).toStringAsFixed(1)}%";
-  }
-
-  Widget _buildHiddenFormFields() {
-    // These are already rendered inline via FormBuilderField in _buildMemberList
-    // No additional hidden fields needed
-    return const SizedBox.shrink();
   }
 }

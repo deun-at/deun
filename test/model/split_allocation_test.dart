@@ -183,4 +183,152 @@ void main() {
       expect(a.fraction, 0.0);
     });
   });
+
+  group('rebalanceExactAmounts', () {
+    test('the unlocked included members share what the locked ones leave; '
+        'locked and excluded amounts stay', () {
+      final amounts = {'a': 9.0, 'b': 6.0, 'c': 4.0};
+      final result = rebalanceExactAmounts(
+        total: 12,
+        enabled: {'a', 'b'},
+        locked: {'a'},
+        amounts: amounts,
+      );
+      expect(result, {'a': 9.0, 'b': 3.0, 'c': 4.0});
+      // The input map is not changed.
+      expect(amounts, {'a': 9.0, 'b': 6.0, 'c': 4.0});
+    });
+
+    test('three unlocked members get exact thirds, not cent-rounded parts, '
+        'and the split counts as allocated', () {
+      final result = rebalanceExactAmounts(
+        total: 10,
+        enabled: {'a', 'b', 'c'},
+        locked: {},
+        amounts: {},
+      );
+      expect(result, {'a': 10 / 3, 'b': 10 / 3, 'c': 10 / 3});
+      final allocation = SplitAllocation.compute(
+        mode: SplitMode.amount,
+        total: 10,
+        amounts: result,
+        percentages: {},
+        parts: {},
+        enabled: {'a', 'b', 'c'},
+        currency: Currency.eur,
+      );
+      expect(allocation.status, AllocationStatus.ok);
+    });
+  });
+
+  group('rebalancePercentages', () {
+    test('the unlocked included members share what the locked ones leave of '
+        '100; locked and excluded percentages stay', () {
+      final result = rebalancePercentages(
+        enabled: {'a', 'b', 'c'},
+        locked: {'a'},
+        percentages: {'a': 50.0, 'd': 10.0},
+      );
+      expect(result, {'a': 50.0, 'b': 25.0, 'c': 25.0, 'd': 10.0});
+    });
+
+    test('three unlocked members get exact thirds of 100, and the split '
+        'counts as allocated', () {
+      final result = rebalancePercentages(
+        enabled: {'a', 'b', 'c'},
+        locked: {},
+        percentages: {},
+      );
+      expect(result, {'a': 100 / 3, 'b': 100 / 3, 'c': 100 / 3});
+      final allocation = SplitAllocation.compute(
+        mode: SplitMode.percentage,
+        total: 10,
+        amounts: {},
+        percentages: result,
+        parts: {},
+        enabled: {'a', 'b', 'c'},
+        currency: Currency.eur,
+      );
+      expect(allocation.status, AllocationStatus.ok);
+    });
+  });
+
+  group('rebalancing with nobody to rebalance', () {
+    test(
+      'no included members: amounts and percentages come back unchanged',
+      () {
+        expect(
+          rebalanceExactAmounts(
+            total: 12,
+            enabled: {},
+            locked: {},
+            amounts: {'a': 5.0},
+          ),
+          {'a': 5.0},
+        );
+        expect(
+          rebalancePercentages(
+            enabled: {},
+            locked: {},
+            percentages: {'a': 40.0},
+          ),
+          {'a': 40.0},
+        );
+      },
+    );
+
+    test('every included member locked: nothing is reassigned and nothing '
+        'turns NaN or Infinity', () {
+      final amounts = rebalanceExactAmounts(
+        total: 12,
+        enabled: {'a', 'b'},
+        locked: {'a', 'b'},
+        amounts: {'a': 9.0, 'b': 5.0},
+      );
+      final percentages = rebalancePercentages(
+        enabled: {'a', 'b'},
+        locked: {'a', 'b'},
+        percentages: {'a': 55.0, 'b': 50.0},
+      );
+      expect(amounts, {'a': 9.0, 'b': 5.0});
+      expect(percentages, {'a': 55.0, 'b': 50.0});
+    });
+  });
+
+  group('scaleLockedAmounts', () {
+    test('a locked amount scales with the total; unlocked ones stay', () {
+      final amounts = {'a': 9.0, 'b': 3.0};
+      final result = scaleLockedAmounts(
+        oldTotal: 12,
+        newTotal: 24,
+        locked: {'a'},
+        amounts: amounts,
+      );
+      expect(result.amounts, {'a': 18.0, 'b': 3.0});
+      expect(result.releaseLocks, isFalse);
+      // The input map is not changed.
+      expect(amounts, {'a': 9.0, 'b': 3.0});
+    });
+
+    test('a total at or below zero, or nobody locked, releases the locks and '
+        'changes no amount', () {
+      const amounts = {'a': 9.0, 'b': 3.0};
+      for (final (oldTotal, newTotal, locked) in [
+        (0.0, 24.0, {'a'}),
+        (12.0, 0.0, {'a'}),
+        (12.0, -5.0, {'a'}),
+        (12.0, 24.0, <String>{}),
+      ]) {
+        final result = scaleLockedAmounts(
+          oldTotal: oldTotal,
+          newTotal: newTotal,
+          locked: locked,
+          amounts: amounts,
+        );
+        final reason = '$oldTotal -> $newTotal, locked $locked';
+        expect(result.amounts, amounts, reason: reason);
+        expect(result.releaseLocks, isTrue, reason: reason);
+      }
+    });
+  });
 }

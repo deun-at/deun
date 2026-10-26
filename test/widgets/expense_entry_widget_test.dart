@@ -40,6 +40,7 @@ Future<void> _pump(
   TextEditingController? expenseLevelAmountController,
   Locale locale = const Locale('en'),
   Currency currency = Currency.eur,
+  GlobalKey<FormBuilderState>? formKey,
 }) async {
   final members = [
     _member('a@test.com', 'Alice'),
@@ -69,6 +70,7 @@ Future<void> _pump(
             child: Scaffold(
               body: SingleChildScrollView(
                 child: FormBuilder(
+                  key: formKey,
                   child: ExpenseEntryWidget(
                     expenseEntry: entry,
                     index: 0,
@@ -568,4 +570,113 @@ void main() {
     expect(find.text(l10n.toCurrency(6)), findsNWidgets(2));
     expect(tester.takeException(), isNull);
   });
+
+  // presentation-file-split: pins what the Exact split hands the save after
+  // the expense-level total changes under a locked member, before the
+  // rebalancing math moves into split_allocation.dart.
+  testWidgets(
+    'Exact split: a locked amount scales with a new total and the save gets '
+    'the scaled split',
+    (tester) async {
+      final controller = TextEditingController(text: '12.00');
+      addTearDown(controller.dispose);
+      final formKey = GlobalKey<FormBuilderState>();
+      await _pump(
+        tester,
+        initialAmount: null,
+        isSingleEntry: true,
+        expenseLevelAmountController: controller,
+        formKey: formKey,
+      );
+      final l10n = await AppLocalizations.delegate.load(const Locale('en'));
+
+      await tester.tap(find.text(l10n.splitModeExact));
+      await tester.pumpAndSettle();
+
+      // Keypad-edit Alice from 6 to 9: she locks, Bob rebalances to 3.
+      await tester.tap(find.byKey(const ValueKey('amount_0_a@test.com')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const ValueKey('keypad_backspace')));
+      await tester.tap(find.byKey(const ValueKey('keypad_9')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const ValueKey('keypad_confirm')));
+      await tester.pumpAndSettle();
+
+      // Double the expense-level amount.
+      controller.text = '24.00';
+      await tester.pumpAndSettle();
+
+      final fields = formKey.currentState!.fields;
+      expect(fields['expense_entry[0][share_data]']!.value, {
+        'a@test.com': 18.0,
+        'b@test.com': 6.0,
+      });
+      expect(fields['expense_entry[0][locked_members]']!.value, {'a@test.com'});
+    },
+  );
+
+  // presentation-file-split: no test covered the split validator, which moves
+  // from _isSplitValid to SplitAllocation.compute.
+  testWidgets(
+    'an Exact or percentage split that does not add up fails validation; a '
+    'balanced one validates clean',
+    (tester) async {
+      final controller = TextEditingController(text: '12.00');
+      addTearDown(controller.dispose);
+      final formKey = GlobalKey<FormBuilderState>();
+      await _pump(
+        tester,
+        initialAmount: null,
+        isSingleEntry: true,
+        expenseLevelAmountController: controller,
+        formKey: formKey,
+      );
+      final l10n = await AppLocalizations.delegate.load(const Locale('en'));
+      final shares = formKey.currentState!.fields['expense_entry[0][shares]']!;
+
+      Future<void> keypadEdit(String email, String digit) async {
+        await tester.tap(find.byKey(ValueKey('amount_0_$email')));
+        await tester.pumpAndSettle();
+        await tester.tap(find.byKey(const ValueKey('keypad_backspace')));
+        await tester.tap(find.byKey(ValueKey('keypad_$digit')));
+        await tester.pumpAndSettle();
+        await tester.tap(find.byKey(const ValueKey('keypad_confirm')));
+        await tester.pumpAndSettle();
+      }
+
+      // The member row is the nearest Row around the member's name.
+      Finder plusFor(String name) => find.descendant(
+        of: find
+            .ancestor(of: find.text(name), matching: find.byType(Row))
+            .first,
+        matching: find.byIcon(Icons.add),
+      );
+
+      // Exact: the 6 + 6 seed is balanced.
+      await tester.tap(find.text(l10n.splitModeExact));
+      await tester.pumpAndSettle();
+      expect(shares.validate(focusOnInvalid: false), isTrue);
+      expect(shares.errorText, isNull);
+
+      // Alice 9 (Bob rebalances to 3), then Bob 5: both locked, 14 of 12.
+      await keypadEdit('a@test.com', '9');
+      await keypadEdit('b@test.com', '5');
+      expect(shares.validate(focusOnInvalid: false), isFalse);
+      expect(shares.errorText, l10n.splitAmountError);
+
+      // Percentage: the 50 / 50 seed is balanced.
+      await tester.tap(find.text(l10n.splitModePercentage));
+      await tester.pumpAndSettle();
+      expect(shares.validate(focusOnInvalid: false), isTrue);
+      expect(shares.errorText, isNull);
+
+      // Alice +5 (Bob rebalances to 45), then Bob +5: both locked, 105%.
+      await tester.tap(plusFor('Alice'));
+      await tester.pumpAndSettle();
+      await tester.tap(plusFor('Bob'));
+      await tester.pumpAndSettle();
+      expect(shares.validate(focusOnInvalid: false), isFalse);
+      expect(shares.errorText, l10n.splitPercentageError);
+    },
+  );
 }
