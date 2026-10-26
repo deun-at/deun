@@ -8,6 +8,7 @@ import 'package:deun/pages/expenses/data/expense_category.dart';
 import 'package:deun/pages/expenses/data/keypad_amount.dart';
 import 'package:deun/pages/expenses/data/keypad_calculator.dart';
 import 'package:deun/pages/groups/data/group_member_model.dart';
+import 'package:deun/pages/groups/data/member_display.dart';
 
 import 'package:deun/widgets/decimal_text_input_formatter.dart';
 
@@ -193,6 +194,11 @@ class PaidBySheet extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     final colorScheme = Theme.of(context).colorScheme;
+    final display = MemberDisplay(
+      currentUserEmail: currentUserEmail,
+      youLabel: l10n.you,
+      roster: members,
+    );
 
     return SheetScaffold(
       title: title ?? l10n.paidBySheetTitle,
@@ -206,13 +212,9 @@ class PaidBySheet extends StatelessWidget {
                 name: member.displayName,
                 colorKey: member.email,
                 radius: 18,
-                isYou: member.email == currentUserEmail,
+                isYou: display.isYou(member.email),
               ),
-              title: Text(
-                member.email == currentUserEmail
-                    ? l10n.you
-                    : member.displayName,
-              ),
+              title: Text(display.nameOf(member.email)),
               subtitle: Text(member.fullUsername),
               trailing: member.email == selectedEmail
                   ? Icon(Icons.check_circle, color: colorScheme.primary)

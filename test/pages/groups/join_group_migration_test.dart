@@ -188,10 +188,10 @@ void main() {
       ).readAsStringSync();
       expect(page, isNot(contains('update_group_member_shares')));
       final repository = File(
-        'lib/pages/groups/data/group_repository.dart',
+        'lib/pages/groups/data/member_repository.dart',
       ).readAsStringSync();
       final joinGroup = RegExp(
-        r'static Future<void> joinGroup\((.*?)\r?\n  \}\r?\n', // CRLF checkouts
+        r'Future<void> joinGroup\((.*?)\r?\n  \}\r?\n', // CRLF checkouts
         dotAll: true,
       ).firstMatch(repository);
       expect(joinGroup, isNotNull);

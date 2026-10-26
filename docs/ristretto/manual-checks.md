@@ -418,6 +418,19 @@ carry `[human]` criteria that nobody has ever observed. Check here before shippi
   back to `authenticated` (`grant execute on function public.<name>(<args>) to authenticated;`) —
   never to `public`, which would reopen every revoked SECURITY DEFINER helper to anon.
 
+- [ ] **proves** · injectable-repositories: a cold start with a remembered session shows the
+  signed-in user's own groups, friends and name, and after signing out and into a second account on
+  the same device only the second account's groups, balances and name show, with "You" marking the
+  second account in a group both share and the first account's star on that group unchanged by the
+  second's · out of reach: a real OAuth session restored from device storage by supabase_flutter
+  against api.deun.app; the tests replace the auth stream and every repository with overrides ·
+  with two test accounts A and B and a throwaway group both belong to (never real data), on a phone
+  or the web build: sign in as A, kill and reopen the app, and confirm A's greeting, groups and
+  friends show with no sign-in prompt. Sign out, sign in as B, and confirm the greeting, the group
+  list balances and the friend balances are B's. Open the shared group and confirm B is "You" and A
+  appears by name. Star the group as B, sign out, sign back in as A, and confirm A's star on that
+  group is as A left it.
+
 ## Findings from verification
 
 Defects turned up while walking the checks. These are not checks themselves — nobody ticks them —

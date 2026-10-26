@@ -22,7 +22,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../data/reminder_repository.dart';
 import '../provider/group_detail.dart';
 import '../data/group_model.dart';
-import '../data/group_repository.dart';
+import '../data/payback_repository.dart';
 import 'payment_view_model.dart';
 import 'record_payback_sheet.dart';
 
@@ -288,17 +288,17 @@ class _PayRow extends StatelessWidget {
 }
 
 /// An "Owes you" row: payee avatar + amount + a Remind action.
-class _OwesRow extends StatefulWidget {
+class _OwesRow extends ConsumerStatefulWidget {
   const _OwesRow({required this.group, required this.entry});
 
   final Group group;
   final PaymentEntry entry;
 
   @override
-  State<_OwesRow> createState() => _OwesRowState();
+  ConsumerState<_OwesRow> createState() => _OwesRowState();
 }
 
-class _OwesRowState extends State<_OwesRow> {
+class _OwesRowState extends ConsumerState<_OwesRow> {
   bool _sending = false;
 
   @override
@@ -367,7 +367,8 @@ class _OwesRowState extends State<_OwesRow> {
     final l10n = AppLocalizations.of(context)!;
     final notifications = NotificationSender();
     try {
-      final lastReminder = await ReminderRepository.getLastReminder(
+      final reminders = ref.read(reminderRepositoryProvider);
+      final lastReminder = await reminders.getLastReminder(
         widget.group.id,
         widget.entry.email,
       );
@@ -377,10 +378,7 @@ class _OwesRowState extends State<_OwesRow> {
         return;
       }
 
-      await ReminderRepository.sendReminder(
-        widget.group.id,
-        widget.entry.email,
-      );
+      await reminders.sendReminder(widget.group.id, widget.entry.email);
 
       unawaited(
         notifications.paymentReminder(widget.group.id, {
@@ -493,7 +491,7 @@ class _AllSettled extends StatelessWidget {
 
 /// The payment-method detail sheet for a single payee: only the methods the
 /// payee actually has (filtered via [paymentMethodsFor]) plus a sticky CTA.
-class _PaymentMethodSheet extends StatelessWidget {
+class _PaymentMethodSheet extends ConsumerWidget {
   const _PaymentMethodSheet({
     required this.group,
     required this.entry,
@@ -508,7 +506,7 @@ class _PaymentMethodSheet extends StatelessWidget {
   final BuildContext modalContext;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context)!;
     final methods = paymentMethodsFor(entry.summary);
 
@@ -531,7 +529,7 @@ class _PaymentMethodSheet extends StatelessWidget {
         ],
       ),
       footer: PrimaryButton(
-        onPressed: () => _settle(context),
+        onPressed: () => _settle(context, ref),
         label: l10n.paymentPayAmount(
           l10n.toCurrency(entry.amount, group.currencyCode),
         ),
@@ -539,21 +537,23 @@ class _PaymentMethodSheet extends StatelessWidget {
     );
   }
 
-  /// Records the payment via the existing [GroupRepository.payBack] RPC, then
+  /// Records the payment via the existing [PaybackRepository.payBack] RPC, then
   /// closes both this sheet and the parent payment sheet.
-  Future<void> _settle(BuildContext context) async {
+  Future<void> _settle(BuildContext context, WidgetRef ref) async {
     final l10n = AppLocalizations.of(context)!;
     final notifications = NotificationSender();
     try {
-      await GroupRepository.payBack(
-        group.id,
-        entry.email,
-        entry.amount,
-        // The roster this screen is already bound to — the settle path must not
-        // pay for a second `group_member` SELECT, nor fail on one.
-        members: group.groupMembers,
-        notifications: notifications,
-      );
+      await ref
+          .read(paybackRepositoryProvider)
+          .payBack(
+            group.id,
+            entry.email,
+            entry.amount,
+            // The roster this screen is already bound to — the settle path must not
+            // pay for a second `group_member` SELECT, nor fail on one.
+            members: group.groupMembers,
+            notifications: notifications,
+          );
       if (modalContext.mounted) {
         showSnackBar(
           modalContext,

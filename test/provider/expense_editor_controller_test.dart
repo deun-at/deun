@@ -31,7 +31,6 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/misc.dart' show Override;
 import 'package:flutter_test/flutter_test.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 
 // The editor fixtures, shared with the suite that owns the rate field rather
 // than copied. `show` keeps that file's own `main` out of this one.
@@ -42,7 +41,6 @@ import '../widgets/expense_editor_currency_rate_test.dart'
         convertedClaimExpense,
         convertedChfExpense,
         convertedExpense,
-        initTestSupabase,
         installFakePrefs,
         openConversionSheet,
         pickCurrency,
@@ -750,12 +748,6 @@ void main() {
   });
 
   group('a fresh session per editor', () {
-    setUpAll(initTestSupabase);
-
-    tearDownAll(() async {
-      await Supabase.instance.dispose();
-    });
-
     testWidgets(
       'a new editor on the same group starts fresh after one closed unsaved',
       (tester) async {
@@ -766,6 +758,7 @@ void main() {
         final group = _group();
         await tester.pumpWidget(
           ProviderScope(
+            overrides: [currentUserProvider.overrideWithValue(null)],
             child: MaterialApp(
               localizationsDelegates: const [
                 AppLocalizations.delegate,

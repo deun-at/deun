@@ -12,12 +12,11 @@ import 'package:deun/pages/groups/data/group_model.dart';
 import 'package:deun/widgets/restyle/deun_header.dart';
 import 'package:deun/widgets/restyle/soft_card.dart';
 import 'package:deun/widgets/theme_builder.dart';
+import 'package:deun/provider.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 
 GroupMember _member(String email, String name) {
   final m = GroupMember();
@@ -130,6 +129,7 @@ Future<void> _pump(
 }) async {
   await tester.pumpWidget(
     ProviderScope(
+      overrides: [currentUserProvider.overrideWithValue(null)],
       child: MaterialApp(
         localizationsDelegates: const [
           AppLocalizations.delegate,
@@ -160,25 +160,6 @@ Future<void> _pump(
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
-
-  setUpAll(() async {
-    TestWidgetsFlutterBinding.ensureInitialized().defaultBinaryMessenger
-        .setMockMethodCallHandler(
-          const MethodChannel('plugins.flutter.io/shared_preferences'),
-          (call) async {
-            if (call.method == 'getAll') return <String, Object>{};
-            return null;
-          },
-        );
-    await Supabase.initialize(
-      url: 'http://localhost:54321',
-      anonKey: 'test-anon-key',
-    );
-  });
-
-  tearDownAll(() async {
-    await Supabase.instance.dispose();
-  });
 
   testWidgets('summary card shows title, total, payer and category', (
     tester,
@@ -654,5 +635,21 @@ void main() {
     );
 
     expect(find.text(l10n.paybackRecordedBy('Alice')), findsNothing);
+  });
+
+  testWidgets('a payer missing from the roster is named by email', (
+    tester,
+  ) async {
+    await _pump(
+      tester,
+      _expense(
+        entryCount: 1,
+        shareStat: const {'a@test.com': 15, 'b@test.com': 15},
+        paidBy: 'gone@test.com',
+      ),
+    );
+    final l10n = await AppLocalizations.delegate.load(const Locale('en'));
+
+    expect(find.text(l10n.expensePaidByOther('gone@test.com')), findsOneWidget);
   });
 }

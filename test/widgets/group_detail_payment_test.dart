@@ -9,12 +9,11 @@ import 'package:deun/widgets/restyle/deun_header.dart';
 import 'package:deun/widgets/restyle/primary_button.dart';
 import 'package:deun/widgets/restyle/sheet_scaffold.dart';
 import 'package:deun/widgets/theme_builder.dart';
+import 'package:deun/provider.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 
 const _myEmail = 'me@test.com';
 
@@ -115,6 +114,7 @@ Future<void> _pump(
   await tester.pumpWidget(
     ProviderScope(
       overrides: [
+        currentUserProvider.overrideWithValue(null),
         groupDetailProvider(
           group.id,
         ).overrideWith(() => _FakeGroupDetailNotifier(group)),
@@ -145,22 +145,6 @@ Future<void> _pump(
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
-
-  setUpAll(() async {
-    TestWidgetsFlutterBinding.ensureInitialized().defaultBinaryMessenger
-        .setMockMethodCallHandler(
-          const MethodChannel('plugins.flutter.io/shared_preferences'),
-          (call) async => call.method == 'getAll' ? <String, Object>{} : null,
-        );
-    await Supabase.initialize(
-      url: 'http://localhost:54321',
-      anonKey: 'test-anon-key',
-    );
-  });
-
-  tearDownAll(() async {
-    await Supabase.instance.dispose();
-  });
 
   testWidgets('hero shows the overall amount', (tester) async {
     final l10n = await AppLocalizations.delegate.load(const Locale('en'));
@@ -262,6 +246,7 @@ void main() {
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
+          currentUserProvider.overrideWithValue(null),
           groupDetailProvider(
             _group().id,
           ).overrideWith(() => _FakeGroupDetailNotifier(_group())),

@@ -3,12 +3,12 @@ import 'package:deun/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_form_builder/flutter_form_builder.dart';
 
-import '../../../../main.dart';
 import '../../../../widgets/restyle/expense_picker_sheets.dart';
 import '../../../../widgets/restyle/member_avatar.dart';
 import '../../../../widgets/restyle/soft_card.dart';
 import '../../../groups/data/group_member_model.dart';
 import '../../../groups/data/group_model.dart';
+import '../../../groups/data/member_display.dart';
 
 /// v3 quick block: a single white card holding the Paid-by and When rows with
 /// no spacing between them (a hairline divider separates the two), replacing
@@ -21,6 +21,7 @@ class EditorPaidWhenCard extends StatelessWidget {
     super.key,
     required this.screenContext,
     required this.group,
+    required this.display,
     required this.initialDate,
     required this.initialPaidBy,
     required this.onDateChanged,
@@ -31,6 +32,10 @@ class EditorPaidWhenCard extends StatelessWidget {
   /// here, not the group's.
   final BuildContext screenContext;
   final Group group;
+
+  /// How this card names members; its `currentUserEmail` is the signed-in
+  /// user, who is the default payer.
+  final MemberDisplay display;
   final DateTime initialDate;
 
   /// The saved expense's payer, or null for a new one, which defaults to the
@@ -38,15 +43,6 @@ class EditorPaidWhenCard extends StatelessWidget {
   final String? initialPaidBy;
 
   final ValueChanged<DateTime?> onDateChanged;
-
-  List<GroupMember> get _sortedMembers {
-    final currentEmail = supabase.auth.currentUser?.email;
-    return [...group.activeMembers]..sort((a, b) {
-      if (a.email == currentEmail) return -1;
-      if (b.email == currentEmail) return 1;
-      return a.fullUsername.compareTo(b.fullUsername);
-    });
-  }
 
   // group-member-removal: keeps searching the FULL roster (not activeMembers) —
   // a past expense paid by a since-removed member must still resolve to their
@@ -58,12 +54,6 @@ class EditorPaidWhenCard extends StatelessWidget {
     } catch (_) {
       return null;
     }
-  }
-
-  String _memberDisplayName(BuildContext context, GroupMember member) {
-    return member.email == supabase.auth.currentUser?.email
-        ? AppLocalizations.of(context)!.you
-        : member.displayName;
   }
 
   @override
@@ -117,7 +107,7 @@ class EditorPaidWhenCard extends StatelessWidget {
   }
 
   Widget _buildPaidByRow(BuildContext context) {
-    final initialEmail = initialPaidBy ?? supabase.auth.currentUser?.email;
+    final initialEmail = initialPaidBy ?? display.currentUserEmail;
 
     return FormBuilderField<String>(
       name: "paid_by",
@@ -125,13 +115,11 @@ class EditorPaidWhenCard extends StatelessWidget {
       builder: (FormFieldState<String?> field) {
         final l10n = AppLocalizations.of(context)!;
         final selectedMember = _findMember(field.value);
-        final isYou = selectedMember?.email == supabase.auth.currentUser?.email;
+        final isYou = display.isYou(field.value);
         return _PaidWhenRow(
           icon: Icons.account_balance_wallet_outlined,
           label: l10n.expensePaidBy,
-          value: selectedMember != null
-              ? _memberDisplayName(context, selectedMember)
-              : "",
+          value: display.nameOf(field.value),
           trailingLeading: selectedMember != null
               ? MemberAvatar(
                   name: selectedMember.displayName,
@@ -143,9 +131,9 @@ class EditorPaidWhenCard extends StatelessWidget {
           onTap: () async {
             final picked = await showPaidBySheet(
               screenContext,
-              members: _sortedMembers,
+              members: display.pickerMembers,
               selectedEmail: field.value,
-              currentUserEmail: supabase.auth.currentUser?.email,
+              currentUserEmail: display.currentUserEmail,
             );
             if (picked != null) field.didChange(picked);
           },

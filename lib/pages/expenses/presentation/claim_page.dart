@@ -2,7 +2,6 @@ import 'dart:async';
 
 import 'package:deun/helper/notification_sender.dart';
 import 'package:deun/l10n/app_localizations.dart';
-import 'package:deun/main.dart';
 import 'package:deun/pages/expenses/data/claim_math.dart';
 import 'package:deun/pages/expenses/data/claim_summary_view_model.dart';
 import 'package:deun/pages/expenses/data/expense_category.dart';
@@ -10,6 +9,8 @@ import 'package:deun/pages/expenses/data/expense_model.dart';
 import 'package:deun/pages/expenses/provider/claim_notifier.dart';
 import 'package:deun/pages/groups/data/group_member_model.dart';
 import 'package:deun/pages/groups/data/group_model.dart';
+import 'package:deun/pages/groups/data/member_display.dart';
+import 'package:deun/provider.dart';
 import 'package:deun/widgets/motion.dart';
 import 'package:deun/widgets/restyle/avatar_stack.dart';
 import 'package:deun/widgets/restyle/deun_header.dart';
@@ -64,7 +65,7 @@ class _ClaimPageState extends ConsumerState<ClaimPage> {
   /// time (F163: the modal bottom sheet is replaced by an in-card editor).
   String? _expandedUnit;
 
-  String? get _currentUserEmail => supabase.auth.currentUser?.email;
+  String? get _currentUserEmail => ref.read(currentUserProvider)?.email;
 
   String get _persona => _personaEmail ?? _currentUserEmail ?? '';
 
@@ -75,23 +76,10 @@ class _ClaimPageState extends ConsumerState<ClaimPage> {
     );
   }
 
-  GroupMember? _memberFor(String email) {
-    try {
-      return widget.group.groupMembers.firstWhere((m) => m.email == email);
-    } catch (_) {
-      return null;
-    }
-  }
-
-  String _displayName(BuildContext context, String email) {
-    if (email == _currentUserEmail) return AppLocalizations.of(context)!.you;
-    return _memberFor(email)?.displayName ?? email;
-  }
-
   /// The expense payer's display name for the unclaimed callout (F130).
-  String _payerName(BuildContext context, Expense expense) {
+  String _payerName(MemberDisplay display, Expense expense) {
     final email = expense.paidBy;
-    if (email != null && email.isNotEmpty) return _displayName(context, email);
+    if (email != null && email.isNotEmpty) return display.nameOf(email);
     return expense.paidByDisplayName ?? '';
   }
 
@@ -161,6 +149,11 @@ class _ClaimPageState extends ConsumerState<ClaimPage> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
+    final display = MemberDisplay(
+      currentUserEmail: ref.watch(currentUserProvider)?.email,
+      youLabel: l10n.you,
+      roster: widget.group.groupMembers,
+    );
     final claimState = ref.watch(
       claimProvider(widget.group.id, widget.expense.id),
     );
@@ -202,17 +195,16 @@ class _ClaimPageState extends ConsumerState<ClaimPage> {
                       padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
                       children: [
                         _PersonaSwitcher(
-                          members: widget.group.activeMembers,
+                          members: display.pickerMembers,
                           selected: _persona,
-                          currentUserEmail: _currentUserEmail,
+                          display: display,
                           onChanged: (email) =>
                               setState(() => _personaEmail = email),
                         ),
                         const SizedBox(height: 16),
                         _SummaryCard(
                           summary: summary,
-                          displayName: (e) => _displayName(context, e),
-                          currentUserEmail: _currentUserEmail,
+                          display: display,
                           currency: widget.group.currency,
                         ),
                         if (!summary.isFullyClaimed &&
@@ -223,7 +215,7 @@ class _ClaimPageState extends ConsumerState<ClaimPage> {
                           const SizedBox(height: 16),
                           _UnclaimedCallout(
                             unclaimed: summary.unclaimed,
-                            payerName: _payerName(context, expense),
+                            payerName: _payerName(display, expense),
                             onNudge: _nudge,
                             currency: widget.group.currency,
                           ),
@@ -234,17 +226,16 @@ class _ClaimPageState extends ConsumerState<ClaimPage> {
                         _ItemList(
                           groups: groups,
                           persona: _persona,
-                          currentUserEmail: _currentUserEmail,
+                          display: display,
                           // group-member-removal: activeMembers, not
                           // groupMembers — a removed member must not be
                           // offered a share of a new/edited split. Existing
                           // claims survive because _SplitEditorCard seeds
                           // _selected from initialClaimers (the unit's stored
-                          // claimers), and _memberFor/_displayName above keep
+                          // claimers), and the display helper keeps
                           // resolving names from the full roster.
                           members: widget.group.activeMembers,
                           expandedUnit: _expandedUnit,
-                          displayName: (e) => _displayName(context, e),
                           onTakeOne: _takeOne,
                           onTapUnit: _toggleUnit,
                           onSplitOne: _splitOne,
@@ -353,13 +344,13 @@ class _PersonaSwitcher extends StatelessWidget {
   const _PersonaSwitcher({
     required this.members,
     required this.selected,
-    required this.currentUserEmail,
+    required this.display,
     required this.onChanged,
   });
 
   final List<GroupMember> members;
   final String selected;
-  final String? currentUserEmail;
+  final MemberDisplay display;
   final ValueChanged<String> onChanged;
 
   @override
@@ -368,13 +359,7 @@ class _PersonaSwitcher extends StatelessWidget {
     final textTheme = Theme.of(context).textTheme;
     final colorScheme = Theme.of(context).colorScheme;
 
-    final ordered = [...members]
-      ..sort((a, b) {
-        if (a.email == currentUserEmail) return -1;
-        if (b.email == currentUserEmail) return 1;
-        return a.displayName.compareTo(b.displayName);
-      });
-    final interactive = ordered.length > 1;
+    final interactive = members.length > 1;
 
     return SoftCard(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
@@ -395,18 +380,16 @@ class _PersonaSwitcher extends StatelessWidget {
                 scrollDirection: Axis.horizontal,
                 child: Row(
                   children: [
-                    for (final m in ordered) ...[
+                    for (final m in members) ...[
                       _PersonaAvatar(
                         key: ValueKey('persona:${m.email}'),
-                        name: m.email == currentUserEmail
-                            ? l10n.you
-                            : m.displayName,
+                        name: display.nameOf(m.email),
                         colorKey: m.email,
-                        isYou: m.email == currentUserEmail,
+                        isYou: display.isYou(m.email),
                         selected: m.email == selected,
                         onTap: interactive ? () => onChanged(m.email) : null,
                       ),
-                      if (m != ordered.last) const SizedBox(width: 7),
+                      if (m != members.last) const SizedBox(width: 7),
                     ],
                   ],
                 ),
@@ -492,14 +475,12 @@ class _PersonaAvatar extends StatelessWidget {
 class _SummaryCard extends StatelessWidget {
   const _SummaryCard({
     required this.summary,
-    required this.displayName,
-    required this.currentUserEmail,
+    required this.display,
     required this.currency,
   });
 
   final ClaimSummary summary;
-  final String Function(String email) displayName;
-  final String? currentUserEmail;
+  final MemberDisplay display;
   final Currency currency;
 
   @override
@@ -619,10 +600,10 @@ class _SummaryCard extends StatelessWidget {
                 for (final m in summary.memberTotals) ...[
                   Expanded(
                     child: _MemberTotalChip(
-                      name: displayName(m.email),
+                      name: display.nameOf(m.email),
                       colorKey: m.email,
                       amount: m.amount,
-                      isYou: m.email == currentUserEmail,
+                      isYou: display.isYou(m.email),
                       onHero: onHero,
                       currency: currency,
                     ),
@@ -729,10 +710,9 @@ class _ItemList extends StatelessWidget {
   const _ItemList({
     required this.groups,
     required this.persona,
-    required this.currentUserEmail,
+    required this.display,
     required this.members,
     required this.expandedUnit,
-    required this.displayName,
     required this.onTakeOne,
     required this.onTapUnit,
     required this.onSplitOne,
@@ -742,10 +722,9 @@ class _ItemList extends StatelessWidget {
 
   final List<ClaimItemGroup> groups;
   final String persona;
-  final String? currentUserEmail;
+  final MemberDisplay display;
   final List<GroupMember> members;
   final String? expandedUnit;
-  final String Function(String email) displayName;
   final ValueChanged<ClaimUnitRow> onTakeOne;
   final ValueChanged<ClaimUnitRow> onTapUnit;
   final ValueChanged<ClaimItemGroup> onSplitOne;
@@ -774,10 +753,9 @@ class _ItemList extends StatelessWidget {
           _ItemCard(
             group: group,
             persona: persona,
-            currentUserEmail: currentUserEmail,
+            display: display,
             members: members,
             expandedUnit: expandedUnit,
-            displayName: displayName,
             onTakeOne: onTakeOne,
             onTapUnit: onTapUnit,
             onSplitOne: () => onSplitOne(group),
@@ -798,10 +776,9 @@ class _ItemCard extends StatelessWidget {
   const _ItemCard({
     required this.group,
     required this.persona,
-    required this.currentUserEmail,
+    required this.display,
     required this.members,
     required this.expandedUnit,
-    required this.displayName,
     required this.onTakeOne,
     required this.onTapUnit,
     required this.onSplitOne,
@@ -811,10 +788,9 @@ class _ItemCard extends StatelessWidget {
 
   final ClaimItemGroup group;
   final String persona;
-  final String? currentUserEmail;
+  final MemberDisplay display;
   final List<GroupMember> members;
   final String? expandedUnit;
-  final String Function(String email) displayName;
   final ValueChanged<ClaimUnitRow> onTakeOne;
   final ValueChanged<ClaimUnitRow> onTapUnit;
   final VoidCallback onSplitOne;
@@ -937,8 +913,7 @@ class _ItemCard extends StatelessWidget {
                     key: ValueKey('slot:${row.entryId}'),
                     row: row,
                     persona: persona,
-                    currentUserEmail: currentUserEmail,
-                    displayName: displayName,
+                    display: display,
                     onTap: () => onTapUnit(row),
                     currency: currency,
                   )
@@ -962,7 +937,7 @@ class _ItemCard extends StatelessWidget {
                       key: ValueKey('editor:${expandedRow.entryId}'),
                       unitCost: expandedRow.unit.unitCost,
                       members: members,
-                      currentUserEmail: currentUserEmail,
+                      display: display,
                       currency: currency,
                       // Seed with the unit's claimers; for a still-free unit
                       // (opened via "Split one") preselect the current persona,
@@ -1021,16 +996,14 @@ class _ClaimedUnitChip extends StatelessWidget {
     super.key,
     required this.row,
     required this.persona,
-    required this.currentUserEmail,
-    required this.displayName,
+    required this.display,
     required this.onTap,
     required this.currency,
   });
 
   final ClaimUnitRow row;
   final String persona;
-  final String? currentUserEmail;
-  final String Function(String email) displayName;
+  final MemberDisplay display;
   final VoidCallback onTap;
   final Currency currency;
 
@@ -1045,9 +1018,9 @@ class _ClaimedUnitChip extends StatelessWidget {
     final stackMembers = [
       for (final email in claimers)
         AvatarStackMember(
-          name: displayName(email),
+          name: display.nameOf(email),
           colorKey: email,
-          isYou: email == currentUserEmail,
+          isYou: display.isYou(email),
         ),
     ];
     // "You" accent when the persona is one of the claimers.
@@ -1063,7 +1036,7 @@ class _ClaimedUnitChip extends StatelessWidget {
         ? l10n.claimSplitLabel(
             l10n.toCurrency(chipState.perUnitCost, currency.code),
           )
-        : displayName(claimers.first);
+        : display.nameOf(claimers.first);
 
     return InkWell(
       onTap: onTap,
@@ -1398,7 +1371,7 @@ class _SplitEditorCard extends StatefulWidget {
     super.key,
     required this.unitCost,
     required this.members,
-    required this.currentUserEmail,
+    required this.display,
     required this.initialClaimers,
     required this.onDone,
     required this.currency,
@@ -1406,7 +1379,7 @@ class _SplitEditorCard extends StatefulWidget {
 
   final double unitCost;
   final List<GroupMember> members;
-  final String? currentUserEmail;
+  final MemberDisplay display;
   final Set<String> initialClaimers;
   final ValueChanged<List<String>> onDone;
   final Currency currency;
@@ -1464,11 +1437,9 @@ class _SplitEditorCardState extends State<_SplitEditorCard> {
               for (final m in widget.members)
                 _SplitMemberPill(
                   key: ValueKey('editor-member:${m.email}'),
-                  name: m.email == widget.currentUserEmail
-                      ? l10n.you
-                      : m.displayName,
+                  name: widget.display.nameOf(m.email),
                   colorKey: m.email,
-                  isYou: m.email == widget.currentUserEmail,
+                  isYou: widget.display.isYou(m.email),
                   selected: _selected.contains(m.email),
                   onTap: () => setState(() {
                     if (!_selected.remove(m.email)) _selected.add(m.email);

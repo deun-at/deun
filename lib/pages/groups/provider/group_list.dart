@@ -1,14 +1,15 @@
 import 'dart:async';
 
+import 'package:deun/provider.dart';
 import 'package:flutter/foundation.dart' show setEquals;
 import 'package:flutter/material.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../helper/realtime_mixin.dart';
-import '../../../main.dart' show supabase;
 import '../data/group_model.dart';
 import '../data/group_repository.dart';
+import '../data/member_repository.dart';
 
 part 'group_list.g.dart';
 
@@ -74,16 +75,17 @@ class GroupListNotifier extends _$GroupListNotifier with RealtimeNotifierMixin {
 
   @visibleForTesting
   @protected
-  Future<List<Group>> fetchGroups() => GroupRepository.fetchData('all');
+  Future<List<Group>> fetchGroups() =>
+      ref.read(groupRepositoryProvider).fetchData('all');
 
   @visibleForTesting
   @protected
   Future<Group> fetchGroup(String groupId) =>
-      GroupRepository.fetchDetail(groupId);
+      ref.read(groupRepositoryProvider).fetchDetail(groupId);
 
   @visibleForTesting
   @protected
-  String? currentUserEmail() => supabase.auth.currentUser?.email;
+  String? currentUserEmail() => ref.watch(currentUserProvider)?.email;
 
   Future<void> reload() async {
     final r = ref;
@@ -124,6 +126,7 @@ class GroupListNotifier extends _$GroupListNotifier with RealtimeNotifierMixin {
 
   Future<void> toggleFavorite(String groupId) async {
     final previousState = state;
+    final email = _email ?? '';
 
     // Optimistically update
     state = state.whenData((groups) {
@@ -132,18 +135,17 @@ class GroupListNotifier extends _$GroupListNotifier with RealtimeNotifierMixin {
       if (index == -1) return groups;
 
       final group = updated[index];
-      final email = group.groupMembers.firstWhere(
-        (m) =>
-            m.email == (Supabase.instance.client.auth.currentUser?.email ?? ''),
-      );
-      email.isFavorite = !email.isFavorite;
+      final mine = group.groupMembers.firstWhere((m) => m.email == email);
+      mine.isFavorite = !mine.isFavorite;
       return updated;
     });
 
     try {
       final group = state.value?.firstWhere((g) => g.id == groupId);
       if (group != null) {
-        await GroupRepository.toggleFavorite(groupId, group.isFavorite);
+        await ref
+            .read(memberRepositoryProvider)
+            .toggleFavorite(groupId, group.isFavoriteFor(email));
       }
     } catch (e) {
       debugPrint(e.toString());

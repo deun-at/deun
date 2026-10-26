@@ -71,6 +71,7 @@ class _GroupListState extends ConsumerState<GroupList> {
 
   @override
   Widget build(BuildContext context) {
+    final currentUserEmail = ref.watch(currentUserProvider)?.email;
     final groupList = ref.watch(groupListProvider);
     final l10n = AppLocalizations.of(context)!;
 
@@ -110,7 +111,7 @@ class _GroupListState extends ConsumerState<GroupList> {
                       ],
                     ),
                   )
-                : _buildList(value),
+                : _buildList(value, currentUserEmail),
           AsyncError() => RefreshIndicator(
             onRefresh: updateGroupList,
             // Single scroll view: greeting + error laid out inline. Anything
@@ -159,9 +160,12 @@ class _GroupListState extends ConsumerState<GroupList> {
     );
   }
 
-  Widget _buildList(List<Group> allGroups) {
+  Widget _buildList(List<Group> allGroups, String? currentUserEmail) {
     final l10n = AppLocalizations.of(context)!;
-    final sorted = sortGroups(allGroups, isFavorite: (g) => g.isFavorite);
+    final sorted = sortGroups(
+      allGroups,
+      isFavorite: (g) => g.isFavoriteFor(currentUserEmail),
+    );
     // Per-currency, never converted: the primary currency is the hero's big
     // number and the rest are stated beside it, one chip each.
     final breakdown = balancesByCurrency(allGroups);
@@ -198,7 +202,7 @@ class _GroupListState extends ConsumerState<GroupList> {
         GroupListItem(
           key: ValueKey(group.id),
           group: group,
-          isFavorite: group.isFavorite,
+          isFavorite: group.isFavoriteFor(currentUserEmail),
           onFavoriteToggle: () => _toggleFavorite(group.id),
         ),
     ];

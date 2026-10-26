@@ -13,9 +13,9 @@ import 'package:deun/pages/expenses/provider/claim_notifier.dart';
 import 'package:deun/pages/expenses/provider/expense_list.dart';
 import 'package:deun/pages/groups/data/group_model.dart';
 import 'package:deun/pages/groups/provider/group_detail.dart';
+import 'package:deun/provider.dart';
 import 'package:fake_async/fake_async.dart';
 import 'package:flutter/foundation.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 // Riverpod 3 exports Override and ProviderBase only from misc.dart.
 import 'package:flutter_riverpod/misc.dart' show Override, ProviderBase;
@@ -87,6 +87,7 @@ ProviderContainer _container(
   List<Override> overrides,
 ) => ProviderContainer.test(
   overrides: [
+    currentUserProvider.overrideWithValue(null),
     realtimeChannelFactoryProvider.overrideWithValue(channels),
     ...overrides,
   ],
@@ -161,28 +162,6 @@ _mountClaim(FakeAsync async) {
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
-
-  setUpAll(() async {
-    // ClaimNotifier.build reads supabase.auth.currentUser (null session here).
-    // Same setup as test/provider/auth_switch_invalidation_test.dart; no
-    // network is used (fake channels, seam fetches).
-    TestWidgetsFlutterBinding.ensureInitialized().defaultBinaryMessenger
-        .setMockMethodCallHandler(
-          const MethodChannel('plugins.flutter.io/shared_preferences'),
-          (call) async {
-            if (call.method == 'getAll') return <String, Object>{};
-            return null;
-          },
-        );
-    await Supabase.initialize(
-      url: 'http://localhost:54321',
-      anonKey: 'test-anon-key',
-    );
-  });
-
-  tearDownAll(() async {
-    await Supabase.instance.dispose();
-  });
 
   setUp(() {
     final original = debugPrint;

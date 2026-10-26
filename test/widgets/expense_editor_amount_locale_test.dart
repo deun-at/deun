@@ -6,12 +6,11 @@ import 'package:deun/pages/groups/data/group_member_model.dart';
 import 'package:deun/pages/groups/data/group_model.dart';
 import 'package:deun/widgets/restyle/expense_picker_sheets.dart';
 import 'package:deun/widgets/theme_builder.dart';
+import 'package:deun/provider.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 
 GroupMember _member(String email, String name) {
   final m = GroupMember();
@@ -75,7 +74,7 @@ Expense _expense(double initialAmount) {
         ],
       },
     ],
-  });
+  }, currentUserEmail: null);
   return e;
 }
 
@@ -87,6 +86,7 @@ Future<void> pumpEditor(
 }) async {
   await tester.pumpWidget(
     ProviderScope(
+      overrides: [currentUserProvider.overrideWithValue(null)],
       child: MaterialApp(
         locale: locale,
         localizationsDelegates: const [
@@ -120,25 +120,6 @@ Future<void> pumpEditor(
 }
 
 void main() {
-  setUpAll(() async {
-    TestWidgetsFlutterBinding.ensureInitialized().defaultBinaryMessenger
-        .setMockMethodCallHandler(
-          const MethodChannel('plugins.flutter.io/shared_preferences'),
-          (call) async {
-            if (call.method == 'getAll') return <String, Object>{};
-            return null;
-          },
-        );
-    await Supabase.initialize(
-      url: 'http://localhost:54321',
-      anonKey: 'test-anon-key',
-    );
-  });
-
-  tearDownAll(() async {
-    await Supabase.instance.dispose();
-  });
-
   testWidgets('the hero amount is locale-formatted for a German user', (
     tester,
   ) async {

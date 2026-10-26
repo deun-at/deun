@@ -10,6 +10,8 @@
 import 'package:deun/constants.dart';
 import 'package:deun/l10n/app_localizations.dart';
 import 'package:deun/pages/auth/update_password.dart';
+import 'package:deun/pages/friends/data/friendship_model.dart';
+import 'package:deun/pages/friends/data/friendship_repository.dart';
 import 'package:deun/pages/friends/presentation/friend_accept_page.dart';
 import 'package:deun/pages/friends/presentation/friend_add_page.dart';
 import 'package:deun/pages/friends/presentation/friend_qr_page.dart';
@@ -19,15 +21,16 @@ import 'package:deun/pages/settings/privacy_policy.dart';
 import 'package:deun/pages/statistics/group_statistics_page.dart';
 import 'package:deun/pages/statistics/provider/statistics_notifiers.dart';
 import 'package:deun/pages/statistics/statistics_models.dart';
+import 'package:deun/pages/users/user_model.dart';
+import 'package:deun/pages/users/user_repository.dart';
+import 'package:deun/provider.dart';
 import 'package:deun/widgets/restyle/deun_header.dart';
 import 'package:deun/widgets/theme_builder.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:plugin_platform_interface/plugin_platform_interface.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:webview_flutter_platform_interface/webview_flutter_platform_interface.dart';
 
 // ---------------------------------------------------------------------------
@@ -72,7 +75,10 @@ Future<void> _pumpInScope(
 }) async {
   await tester.pumpWidget(
     ProviderScope(
-      overrides: overrides.cast(),
+      overrides: [
+        currentUserProvider.overrideWithValue(null),
+        ...overrides.cast(),
+      ],
       child: MaterialApp(
         localizationsDelegates: const [
           AppLocalizations.delegate,
@@ -83,8 +89,11 @@ Future<void> _pumpInScope(
         supportedLocales: AppLocalizations.supportedLocales,
         home: Builder(
           builder: (context) => Theme(
-            data: getThemeData(context, kBrandSeed, brightness)
-                .copyWith(splashFactory: NoSplash.splashFactory),
+            data: getThemeData(
+              context,
+              kBrandSeed,
+              brightness,
+            ).copyWith(splashFactory: NoSplash.splashFactory),
             child: child,
           ),
         ),
@@ -105,14 +114,18 @@ const _summary = SpendingSummary(
 );
 
 final _statsOverrides = [
-  groupSpendingSummaryProvider
-      .overrideWith((ref, StatsRangeArgs args) async => _summary),
-  groupTrendProvider
-      .overrideWith((ref, StatsRangeArgs args) async => const <MonthBucket>[]),
+  groupSpendingSummaryProvider.overrideWith(
+    (ref, StatsRangeArgs args) async => _summary,
+  ),
+  groupTrendProvider.overrideWith(
+    (ref, StatsRangeArgs args) async => const <MonthBucket>[],
+  ),
   groupMemberBreakdownProvider.overrideWith(
-      (ref, StatsRangeArgs args) async => const <MemberSpendingBreakdown>[]),
+    (ref, StatsRangeArgs args) async => const <MemberSpendingBreakdown>[],
+  ),
   groupCategoryBreakdownProvider.overrideWith(
-      (ref, StatsRangeArgs args) async => const <CategoryMonthTotal>[]),
+    (ref, StatsRangeArgs args) async => const <CategoryMonthTotal>[],
+  ),
 ];
 
 // ---------------------------------------------------------------------------
@@ -121,8 +134,7 @@ final _statsOverrides = [
 // ---------------------------------------------------------------------------
 
 class _MockPlatformWebViewController extends PlatformWebViewController {
-  _MockPlatformWebViewController(super.params)
-      : super.implementation();
+  _MockPlatformWebViewController(super.params) : super.implementation();
 
   @override
   Future<void> loadRequest(LoadRequestParams params) async {}
@@ -139,31 +151,47 @@ class _MockWebViewPlatform extends WebViewPlatform
   @override
   PlatformWebViewController createPlatformWebViewController(
     PlatformWebViewControllerCreationParams params,
-  ) =>
-      _MockPlatformWebViewController(params);
+  ) => _MockPlatformWebViewController(params);
 
   @override
   PlatformWebViewWidget createPlatformWebViewWidget(
     PlatformWebViewWidgetCreationParams params,
-  ) =>
-      _MockPlatformWebViewWidget(params);
+  ) => _MockPlatformWebViewWidget(params);
 
   @override
   PlatformNavigationDelegate createPlatformNavigationDelegate(
     PlatformNavigationDelegateCreationParams params,
-  ) =>
-      throw UnimplementedError();
+  ) => throw UnimplementedError();
 
   @override
   PlatformWebViewCookieManager createPlatformCookieManager(
     PlatformWebViewCookieManagerCreationParams params,
-  ) =>
-      throw UnimplementedError();
+  ) => throw UnimplementedError();
 }
 
-// ---------------------------------------------------------------------------
-// Supabase mock (needed by friend screens)
-// ---------------------------------------------------------------------------
+/// A friend list that fails the way an unreachable server does: asynchronously,
+/// so the add page leaves its loading state (as it did when the test's client
+/// pointed at an unreachable local port).
+class _OfflineFriendships implements FriendshipRepository {
+  @override
+  Future<List<Friendship>> getRequestedFriendships() async =>
+      throw Exception('offline');
+
+  @override
+  dynamic noSuchMethod(Invocation invocation) =>
+      throw UnsupportedError('$invocation');
+}
+
+/// A user lookup that fails asynchronously, like an unreachable server.
+class _OfflineUsers implements UserRepository {
+  @override
+  Future<SupaUser> fetchDetail(String email) async =>
+      throw Exception('offline');
+
+  @override
+  dynamic noSuchMethod(Invocation invocation) =>
+      throw UnsupportedError('$invocation');
+}
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -171,38 +199,22 @@ void main() {
   setUpAll(() async {
     // Install WebView stub so PrivacyPolicy can build without a platform.
     WebViewPlatform.instance = _MockWebViewPlatform();
-
-    TestWidgetsFlutterBinding.ensureInitialized()
-        .defaultBinaryMessenger
-        .setMockMethodCallHandler(
-      const MethodChannel('plugins.flutter.io/shared_preferences'),
-      (call) async {
-        if (call.method == 'getAll') return <String, Object>{};
-        return null;
-      },
-    );
-    // Supabase is already initialized by other tests; guard against re-init.
-    try {
-      await Supabase.initialize(
-        url: 'http://localhost:54321',
-        anonKey: 'test-anon-key',
-      );
-    } catch (_) {}
-  });
-
-  tearDownAll(() async {
-    try {
-      await Supabase.instance.dispose();
-    } catch (_) {}
   });
 
   // -------------------------------------------------------------------------
   // 1. FriendAddPage — Icons.arrow_back, no actions
   // -------------------------------------------------------------------------
   group('FriendAddPage (friend_add_page.dart) header migration', () {
-    testWidgets('has DeunHeader with arrow_back and addFriends title',
-        (tester) async {
-      await _pumpInScope(tester, const FriendAddPage());
+    testWidgets('has DeunHeader with arrow_back and addFriends title', (
+      tester,
+    ) async {
+      await _pumpInScope(
+        tester,
+        const FriendAddPage(),
+        overrides: [
+          friendshipRepositoryProvider.overrideWithValue(_OfflineFriendships()),
+        ],
+      );
       final l10n = await AppLocalizations.delegate.load(const Locale('en'));
 
       expect(find.byType(DeunHeader), findsOneWidget);
@@ -211,12 +223,24 @@ void main() {
     });
 
     testWidgets('no AppBar present after migration', (tester) async {
-      await _pumpInScope(tester, const FriendAddPage());
+      await _pumpInScope(
+        tester,
+        const FriendAddPage(),
+        overrides: [
+          friendshipRepositoryProvider.overrideWithValue(_OfflineFriendships()),
+        ],
+      );
       expect(find.byType(AppBar), findsNothing);
     });
 
     testWidgets('body still renders the search field', (tester) async {
-      await _pumpInScope(tester, const FriendAddPage());
+      await _pumpInScope(
+        tester,
+        const FriendAddPage(),
+        overrides: [
+          friendshipRepositoryProvider.overrideWithValue(_OfflineFriendships()),
+        ],
+      );
       final l10n = await AppLocalizations.delegate.load(const Locale('en'));
       expect(find.text(l10n.addFriendshipSearchHint), findsOneWidget);
     });
@@ -226,8 +250,9 @@ void main() {
   // 2. FriendQrPage — Icons.arrow_back, drop custom font styling
   // -------------------------------------------------------------------------
   group('FriendQrPage (friend_qr_page.dart) header migration', () {
-    testWidgets('has DeunHeader with arrow_back and friendQrTitle',
-        (tester) async {
+    testWidgets('has DeunHeader with arrow_back and friendQrTitle', (
+      tester,
+    ) async {
       await _pumpInScope(tester, const FriendQrPage());
       final l10n = await AppLocalizations.delegate.load(const Locale('en'));
 
@@ -252,11 +277,13 @@ void main() {
   // 3. FriendAcceptPage — Icons.arrow_back, requestFriendship title
   // -------------------------------------------------------------------------
   group('FriendAcceptPage (friend_accept_page.dart) header migration', () {
-    testWidgets('has DeunHeader with arrow_back and requestFriendship title',
-        (tester) async {
+    testWidgets('has DeunHeader with arrow_back and requestFriendship title', (
+      tester,
+    ) async {
       await _pumpInScope(
         tester,
         const FriendAcceptPage(email: 'friend@example.com'),
+        overrides: [userRepositoryProvider.overrideWithValue(_OfflineUsers())],
       );
       final l10n = await AppLocalizations.delegate.load(const Locale('en'));
 
@@ -269,6 +296,7 @@ void main() {
       await _pumpInScope(
         tester,
         const FriendAcceptPage(email: 'friend@example.com'),
+        overrides: [userRepositoryProvider.overrideWithValue(_OfflineUsers())],
       );
       expect(find.byType(AppBar), findsNothing);
     });
@@ -281,8 +309,9 @@ void main() {
   // AND in the body's large heading text — so we use findsWidgets/findsAtLeastNWidgets.
   // -------------------------------------------------------------------------
   group('UpdatePassword (update_password.dart) header migration', () {
-    testWidgets('has DeunHeader with updatePasswordTitle and no back button',
-        (tester) async {
+    testWidgets('has DeunHeader with updatePasswordTitle and no back button', (
+      tester,
+    ) async {
       await _pumpInScope(tester, const UpdatePassword());
       final l10n = await AppLocalizations.delegate.load(const Locale('en'));
 
@@ -298,7 +327,9 @@ void main() {
       expect(find.byType(AppBar), findsNothing);
     });
 
-    testWidgets('body still renders the password instructions text', (tester) async {
+    testWidgets('body still renders the password instructions text', (
+      tester,
+    ) async {
       await _pumpInScope(tester, const UpdatePassword());
       final l10n = await AppLocalizations.delegate.load(const Locale('en'));
       // updatePasswordInstructions is unique in the tree (not repeated in header).
@@ -309,45 +340,54 @@ void main() {
   // -------------------------------------------------------------------------
   // 5. GroupStatisticsPage — statisticsTitle, arrow_back, wrapped in ThemeBuilder
   // -------------------------------------------------------------------------
-  group('GroupStatisticsPage (group_statistics_page.dart) header migration', () {
-    testWidgets('has DeunHeader with arrow_back and group stats title',
-        (tester) async {
-      await _pumpInScope(
+  group(
+    'GroupStatisticsPage (group_statistics_page.dart) header migration',
+    () {
+      testWidgets('has DeunHeader with arrow_back and group stats title', (
         tester,
-        GroupStatisticsPage(group: _group()),
-        overrides: _statsOverrides,
-      );
-      final l10n = await AppLocalizations.delegate.load(const Locale('en'));
+      ) async {
+        await _pumpInScope(
+          tester,
+          GroupStatisticsPage(group: _group()),
+          overrides: _statsOverrides,
+        );
+        final l10n = await AppLocalizations.delegate.load(const Locale('en'));
 
-      expect(find.byType(DeunHeader), findsOneWidget);
-      expect(find.text(l10n.statisticsGroupTitle('Trip to Rome')), findsOneWidget);
-      expect(find.byIcon(Icons.arrow_back), findsOneWidget);
-    });
+        expect(find.byType(DeunHeader), findsOneWidget);
+        expect(
+          find.text(l10n.statisticsGroupTitle('Trip to Rome')),
+          findsOneWidget,
+        );
+        expect(find.byIcon(Icons.arrow_back), findsOneWidget);
+      });
 
-    testWidgets('no AppBar present after migration', (tester) async {
-      await _pumpInScope(
-        tester,
-        GroupStatisticsPage(group: _group()),
-        overrides: _statsOverrides,
-      );
-      expect(find.byType(AppBar), findsNothing);
-    });
-  });
+      testWidgets('no AppBar present after migration', (tester) async {
+        await _pumpInScope(
+          tester,
+          GroupStatisticsPage(group: _group()),
+          overrides: _statsOverrides,
+        );
+        expect(find.byType(AppBar), findsNothing);
+      });
+    },
+  );
 
   // -------------------------------------------------------------------------
   // 6. PrivacyPolicy — settingsPrivacyPolicy title, arrow_back
   //    Requires WebView stub (set in setUpAll).
   // -------------------------------------------------------------------------
   group('PrivacyPolicy (privacy_policy.dart) header migration', () {
-    testWidgets('has DeunHeader with arrow_back and settingsPrivacyPolicy title',
-        (tester) async {
-      await _pumpInScope(tester, const PrivacyPolicy());
-      final l10n = await AppLocalizations.delegate.load(const Locale('en'));
+    testWidgets(
+      'has DeunHeader with arrow_back and settingsPrivacyPolicy title',
+      (tester) async {
+        await _pumpInScope(tester, const PrivacyPolicy());
+        final l10n = await AppLocalizations.delegate.load(const Locale('en'));
 
-      expect(find.byType(DeunHeader), findsOneWidget);
-      expect(find.text(l10n.settingsPrivacyPolicy), findsOneWidget);
-      expect(find.byIcon(Icons.arrow_back), findsOneWidget);
-    });
+        expect(find.byType(DeunHeader), findsOneWidget);
+        expect(find.text(l10n.settingsPrivacyPolicy), findsOneWidget);
+        expect(find.byIcon(Icons.arrow_back), findsOneWidget);
+      },
+    );
 
     testWidgets('no AppBar present after migration', (tester) async {
       await _pumpInScope(tester, const PrivacyPolicy());

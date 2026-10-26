@@ -8,7 +8,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_contacts/flutter_contacts.dart' as fc;
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
-import '../../../main.dart';
+import 'package:deun/provider.dart';
 
 part 'friend_add_notifier.g.dart';
 
@@ -43,14 +43,17 @@ class FriendAddState {
       isLoading: isLoading ?? this.isLoading,
       searchText: searchText ?? this.searchText,
       isAmbiguousUsername: isAmbiguousUsername ?? this.isAmbiguousUsername,
-      contactPermissionDenied: contactPermissionDenied ?? this.contactPermissionDenied,
+      contactPermissionDenied:
+          contactPermissionDenied ?? this.contactPermissionDenied,
     );
   }
 }
 
 /// Runs on an isolate: filters cached contacts by search text and matches
 /// them against the pre-fetched DB user map.
-Future<List<SupaUser>> _filterContactMatches(Map<String, dynamic> params) async {
+Future<List<SupaUser>> _filterContactMatches(
+  Map<String, dynamic> params,
+) async {
   final List<fc.Contact> contacts = params['contacts'];
   final Map<String, SupaUser> availableUserMap = params['availableUserMap'];
   final String searchText = params['searchText'].toLowerCase();
@@ -70,18 +73,26 @@ Future<List<SupaUser>> _filterContactMatches(Map<String, dynamic> params) async 
     if (matchedUser == null) continue;
 
     if (searchText.isNotEmpty) {
-      bool nameMatches = (contact.displayName ?? '').toLowerCase().contains(searchText);
-      bool emailMatches =
-          contact.emails.any((email) => email.address.toLowerCase().contains(searchText));
-      bool usernameMatches = matchedUser.username != null &&
+      bool nameMatches = (contact.displayName ?? '').toLowerCase().contains(
+        searchText,
+      );
+      bool emailMatches = contact.emails.any(
+        (email) => email.address.toLowerCase().contains(searchText),
+      );
+      bool usernameMatches =
+          matchedUser.username != null &&
           matchedUser.username!.toLowerCase().contains(searchText);
-      bool fullUsernameMatches = matchedUser.username != null &&
+      bool fullUsernameMatches =
+          matchedUser.username != null &&
           matchedUser.usernameCode != null &&
           '${matchedUser.username}#${matchedUser.usernameCode}'
               .toLowerCase()
               .contains(searchText);
 
-      if (!nameMatches && !emailMatches && !usernameMatches && !fullUsernameMatches) {
+      if (!nameMatches &&
+          !emailMatches &&
+          !usernameMatches &&
+          !fullUsernameMatches) {
         continue;
       }
     }
@@ -100,6 +111,7 @@ class FriendAddNotifier extends _$FriendAddNotifier {
 
   @override
   FriendAddState build() {
+    ref.watch(currentUserProvider);
     _init();
     return const FriendAddState();
   }
@@ -108,7 +120,9 @@ class FriendAddNotifier extends _$FriendAddNotifier {
   /// then fetches matching DB users via a single RPC call.
   Future<void> _init() async {
     try {
-      _cachedFriendships = await FriendshipRepository.getRequestedFriendships();
+      _cachedFriendships = await ref
+          .read(friendshipRepositoryProvider)
+          .getRequestedFriendships();
       await _loadContactUsers();
 
       if (!ref.mounted) return;
@@ -127,13 +141,17 @@ class FriendAddNotifier extends _$FriendAddNotifier {
   /// Loads device contacts and fetches matching DB users once.
   Future<void> _loadContactUsers() async {
     if (_cachedContacts == null) {
-      final status = await fc.FlutterContacts.permissions.request(fc.PermissionType.read);
-      if (status != fc.PermissionStatus.granted && status != fc.PermissionStatus.limited) {
+      final status = await fc.FlutterContacts.permissions.request(
+        fc.PermissionType.read,
+      );
+      if (status != fc.PermissionStatus.granted &&
+          status != fc.PermissionStatus.limited) {
         _contactPermissionDenied = true;
         return;
       }
       _cachedContacts = await fc.FlutterContacts.getAll(
-          properties: {fc.ContactProperty.name, fc.ContactProperty.email});
+        properties: {fc.ContactProperty.name, fc.ContactProperty.email},
+      );
     }
 
     if (_cachedContacts == null || _cachedContacts!.isEmpty) return;
@@ -149,13 +167,15 @@ class FriendAddNotifier extends _$FriendAddNotifier {
       return;
     }
 
-    List<String> excludeEmails =
-        (_cachedFriendships ?? []).map((f) => f.user.email).toList();
-    excludeEmails.add(supabase.auth.currentUser?.email ?? '');
+    List<String> excludeEmails = (_cachedFriendships ?? [])
+        .map((f) => f.user.email)
+        .toList();
+    excludeEmails.add(ref.read(currentUserProvider)?.email ?? '');
 
     // Single RPC call instead of chunked inFilter queries.
-    _cachedContactUsers =
-        await UserRepository.fetchByEmails(contactEmails, excludeEmails);
+    _cachedContactUsers = await ref
+        .read(userRepositoryProvider)
+        .fetchByEmails(contactEmails, excludeEmails);
   }
 
   /// Called on every debounced keystroke. Runs DB search + local contact
@@ -200,11 +220,14 @@ class FriendAddNotifier extends _$FriendAddNotifier {
   Future<List<SupaUser>> _fetchSearchResults(String searchText) async {
     if (searchText.isEmpty) return [];
 
-    List<String> selectedUsers =
-        (_cachedFriendships ?? []).map((f) => f.user.email).toList();
-    selectedUsers.add(supabase.auth.currentUser?.email ?? '');
+    List<String> selectedUsers = (_cachedFriendships ?? [])
+        .map((f) => f.user.email)
+        .toList();
+    selectedUsers.add(ref.read(currentUserProvider)?.email ?? '');
 
-    return await UserRepository.fetchData(searchText, selectedUsers, 5);
+    return await ref
+        .read(userRepositoryProvider)
+        .fetchData(searchText, selectedUsers, 5);
   }
 
   /// Pure client-side filter on cached contact users — no DB call.
@@ -213,7 +236,7 @@ class FriendAddNotifier extends _$FriendAddNotifier {
     if (_cachedContacts == null || _cachedContacts!.isEmpty) return [];
 
     final availableUserMap = {
-      for (var user in _cachedContactUsers!) user.email.toLowerCase(): user
+      for (var user in _cachedContactUsers!) user.email.toLowerCase(): user,
     };
 
     final params = {
@@ -230,7 +253,9 @@ class FriendAddNotifier extends _$FriendAddNotifier {
   Future<void> refresh() async {
     state = state.copyWith(isLoading: true);
     try {
-      _cachedFriendships = await FriendshipRepository.getRequestedFriendships();
+      _cachedFriendships = await ref
+          .read(friendshipRepositoryProvider)
+          .getRequestedFriendships();
 
       // Rebuild contact users with updated exclusion list.
       _cachedContactUsers = null;

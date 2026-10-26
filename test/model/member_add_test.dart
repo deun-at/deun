@@ -168,7 +168,7 @@ void main() {
 
   group('Group.memberBalances / isSolo', () {
     test('memberBalances keys every member by their own net share amount', () {
-      final g = Group()..loadDataFromJson(groupJson());
+      final g = Group()..loadDataFromJson(groupJson(), currentUserEmail: null);
       expect(g.memberBalances['a@test.com'], -12.5);
       expect(g.memberBalances['b@test.com'], 12.5);
       expect(g.memberBalances['c@test.com'], 0);
@@ -176,7 +176,10 @@ void main() {
 
     test('a group with no summary rows reads all-zero, not null', () {
       final g = Group()
-        ..loadDataFromJson({...groupJson(), 'group_shares_summary': null});
+        ..loadDataFromJson({
+          ...groupJson(),
+          'group_shares_summary': null,
+        }, currentUserEmail: null);
       expect(g.memberBalances, isEmpty);
       expect(g.memberBalances['a@test.com'] ?? 0, 0);
     });

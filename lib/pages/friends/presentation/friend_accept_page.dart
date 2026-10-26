@@ -8,13 +8,14 @@ import 'package:deun/pages/users/user_repository.dart';
 import 'package:deun/widgets/restyle/deun_header.dart';
 import 'package:deun/widgets/restyle/primary_button.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:deun/l10n/app_localizations.dart';
 
-import '../../../main.dart';
+import 'package:deun/provider.dart';
 import '../../../widgets/user_avatar.dart';
 
-class FriendAcceptPage extends StatefulWidget {
+class FriendAcceptPage extends ConsumerStatefulWidget {
   const FriendAcceptPage({
     super.key,
     this.email,
@@ -27,10 +28,10 @@ class FriendAcceptPage extends StatefulWidget {
   final String? usernameCode;
 
   @override
-  State<FriendAcceptPage> createState() => _FriendAcceptPageState();
+  ConsumerState<FriendAcceptPage> createState() => _FriendAcceptPageState();
 }
 
-class _FriendAcceptPageState extends State<FriendAcceptPage> {
+class _FriendAcceptPageState extends ConsumerState<FriendAcceptPage> {
   String? _error;
   SupaUser? _targetUser;
   bool _loading = true;
@@ -48,13 +49,14 @@ class _FriendAcceptPageState extends State<FriendAcceptPage> {
 
       if (widget.username != null && widget.usernameCode != null) {
         // Look up by username+code (new QR format)
-        user = await UserRepository.fetchByUsername(
-          widget.username!,
-          widget.usernameCode!,
-        );
+        user = await ref
+            .read(userRepositoryProvider)
+            .fetchByUsername(widget.username!, widget.usernameCode!);
       } else if (widget.email != null && widget.email!.isNotEmpty) {
         // Look up by email (legacy QR format / backward compat)
-        user = await UserRepository.fetchDetail(widget.email!);
+        user = await ref
+            .read(userRepositoryProvider)
+            .fetchDetail(widget.email!);
       } else {
         if (!mounted) return;
         setState(() {
@@ -65,7 +67,7 @@ class _FriendAcceptPageState extends State<FriendAcceptPage> {
       }
 
       // Block self-friendship
-      if (user.email == supabase.auth.currentUser?.email) {
+      if (user.email == ref.read(currentUserProvider)?.email) {
         if (!mounted) return;
         setState(() {
           _error = AppLocalizations.of(context)!.friendAcceptSelfError;
@@ -93,7 +95,7 @@ class _FriendAcceptPageState extends State<FriendAcceptPage> {
     final notifications = NotificationSender();
     final email = _targetUser!.email;
     try {
-      await FriendshipRepository.accepted(email);
+      await ref.read(friendshipRepositoryProvider).accepted(email);
       unawaited(notifications.friendAccepted({email}));
       if (!mounted) return;
       showSnackBar(

@@ -2,18 +2,32 @@ import 'package:deun/helper/currency_breakdown.dart';
 import 'package:deun/helper/helper.dart';
 import 'package:deun/pages/friends/data/friendship_model.dart';
 import 'package:deun/pages/groups/data/group_repository.dart';
+import 'package:deun/pages/users/current_user.dart';
 import 'package:deun/pages/users/user_model.dart';
+import 'package:deun/provider.dart';
+import 'package:riverpod_annotation/riverpod_annotation.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
-import '../../../main.dart';
+part 'friendship_repository.g.dart';
 
 class FriendshipRepository {
+  FriendshipRepository(
+    this._supabase,
+    this._currentUser, {
+    required GroupRepository groups,
+  }) : _groups = groups;
+
+  final SupabaseClient _supabase;
+  final CurrentUser? _currentUser;
+  final GroupRepository _groups;
+
   /// Fetches accepted friendships with their per-currency shared amounts. Each
   /// mutual group contributes in ITS OWN currency; nothing is converted and
   /// nothing is excluded for want of a rate.
-  static Future<List<Friendship>> fetchData() async {
-    String currentEmail = supabase.auth.currentUser?.email ?? '';
+  Future<List<Friendship>> fetchData() async {
+    String currentEmail = _currentUser?.email ?? '';
 
-    List<Map<String, dynamic>> data = await supabase
+    List<Map<String, dynamic>> data = await _supabase
         .from('friendship')
         .select('*, requester(*), addressee(*)')
         .eq('status', 'accepted')
@@ -22,11 +36,14 @@ class FriendshipRepository {
     List<Friendship> retData = List.empty(growable: true);
     Set<String> seenEmails = {};
 
-    final groupList = await GroupRepository.fetchData("active");
+    final groupList = await _groups.fetchData("active");
 
     for (var element in data) {
       Friendship friendship = Friendship();
-      friendship.loadDataFromJson(element);
+      friendship.loadDataFromJson(
+        element,
+        currentUserEmail: _currentUser?.email,
+      );
 
       // Deduplicate: with bidirectional query, the same friend may appear twice
       if (seenEmails.contains(friendship.user.email)) continue;
@@ -67,10 +84,10 @@ class FriendshipRepository {
     return retData;
   }
 
-  static Future<List<Friendship>> getRequestedFriendships() async {
-    String currentEmail = supabase.auth.currentUser?.email ?? '';
+  Future<List<Friendship>> getRequestedFriendships() async {
+    String currentEmail = _currentUser?.email ?? '';
 
-    List<Map<String, dynamic>> data = await supabase
+    List<Map<String, dynamic>> data = await _supabase
         .from('friendship')
         .select('*, requester(*), addressee(*)')
         .or("addressee.eq.$currentEmail,requester.eq.$currentEmail")
@@ -81,25 +98,28 @@ class FriendshipRepository {
 
     for (var element in data) {
       Friendship friendship = Friendship();
-      friendship.loadDataFromJson(element);
+      friendship.loadDataFromJson(
+        element,
+        currentUserEmail: _currentUser?.email,
+      );
       retData.add(friendship);
     }
 
     return retData;
   }
 
-  static Future<List<Friendship>> fetchPendingIncoming() async {
+  Future<List<Friendship>> fetchPendingIncoming() async {
     return _fetchPendingByRole('addressee');
   }
 
-  static Future<List<Friendship>> fetchPendingOutgoing() async {
+  Future<List<Friendship>> fetchPendingOutgoing() async {
     return _fetchPendingByRole('requester');
   }
 
-  static Future<List<Friendship>> _fetchPendingByRole(String roleColumn) async {
-    String currentEmail = supabase.auth.currentUser?.email ?? '';
+  Future<List<Friendship>> _fetchPendingByRole(String roleColumn) async {
+    String currentEmail = _currentUser?.email ?? '';
 
-    List<Map<String, dynamic>> data = await supabase
+    List<Map<String, dynamic>> data = await _supabase
         .from('friendship')
         .select('*, requester(*), addressee(*)')
         .eq(roleColumn, currentEmail)
@@ -109,28 +129,31 @@ class FriendshipRepository {
 
     for (var element in data) {
       Friendship friendship = Friendship();
-      friendship.loadDataFromJson(element);
+      friendship.loadDataFromJson(
+        element,
+        currentUserEmail: _currentUser?.email,
+      );
       retData.add(friendship);
     }
 
     return retData;
   }
 
-  static Future<Friendship> fetchDetail(String email) async {
+  Future<Friendship> fetchDetail(String email) async {
     Friendship friendship = Friendship();
     return friendship;
   }
 
-  static Future<List<SupaUser>> fetchFriends(
+  Future<List<SupaUser>> fetchFriends(
     String searchString,
     Iterable<String> selectedUsers,
     int limit,
   ) async {
-    var userEmail = supabase.auth.currentUser?.email ?? '';
+    var userEmail = _currentUser?.email ?? '';
 
     final escaped = searchString.replaceAll(RegExp(r'[%_,()\\]'), '');
 
-    List<Map<String, dynamic>> data = await supabase
+    List<Map<String, dynamic>> data = await _supabase
         .from("friendship")
         .select("...addressee!inner(*)")
         .or("requester.eq.$userEmail")
@@ -146,53 +169,51 @@ class FriendshipRepository {
     return data.map(SupaUser.fromJson).toList();
   }
 
-  static Future<void> request(String email) async {
-    if (email == supabase.auth.currentUser?.email) return;
-    await supabase.from("friendship").upsert({
-      "requester": supabase.auth.currentUser?.email,
+  Future<void> request(String email) async {
+    if (email == _currentUser?.email) return;
+    await _supabase.from("friendship").upsert({
+      "requester": _currentUser?.email,
       "addressee": email,
     });
   }
 
-  static Future<void> accepted(String email) async {
-    if (email != supabase.auth.currentUser?.email) {
-      await supabase.from("friendship").upsert([
+  Future<void> accepted(String email) async {
+    if (email != _currentUser?.email) {
+      await _supabase.from("friendship").upsert([
         {
-          "requester": supabase.auth.currentUser?.email,
+          "requester": _currentUser?.email,
           "addressee": email,
           "status": "accepted",
         },
         {
           "requester": email,
-          "addressee": supabase.auth.currentUser?.email,
+          "addressee": _currentUser?.email,
           "status": "accepted",
         },
       ]);
     }
   }
 
-  static Future<void> cancel(String email) async {
-    await supabase
+  Future<void> cancel(String email) async {
+    await _supabase
         .from("friendship")
         .delete()
-        .eq("requester", supabase.auth.currentUser?.email ?? '')
+        .eq("requester", _currentUser?.email ?? '')
         .eq("addressee", email);
   }
 
-  static Future<void> decline(String email) async {
-    await supabase
+  Future<void> decline(String email) async {
+    await _supabase
         .from("friendship")
         .delete()
-        .eq("addressee", supabase.auth.currentUser?.email ?? '')
+        .eq("addressee", _currentUser?.email ?? '')
         .eq("requester", email);
   }
 
-  static Future<void> remove(String email) async {
+  Future<void> remove(String email) async {
     final safeEmail = sanitizeFilterValue(email);
-    final currentEmail = sanitizeFilterValue(
-      supabase.auth.currentUser?.email ?? '',
-    );
-    await supabase
+    final currentEmail = sanitizeFilterValue(_currentUser?.email ?? '');
+    await _supabase
         .from("friendship")
         .delete()
         .or(
@@ -200,3 +221,10 @@ class FriendshipRepository {
         );
   }
 }
+
+@Riverpod(keepAlive: true)
+FriendshipRepository friendshipRepository(Ref ref) => FriendshipRepository(
+  ref.watch(supabaseClientProvider),
+  ref.watch(currentUserProvider),
+  groups: ref.watch(groupRepositoryProvider),
+);

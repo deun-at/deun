@@ -2,9 +2,11 @@ import 'package:deun/pages/groups/data/group_model.dart';
 import 'package:deun/pages/groups/data/group_repository.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-// Deliberately never initialises Supabase: the current-user lookup inside
-// `Group.loadDataFromJson`'s guard then throws, which is the reachable way to
-// force a failed summary calculation (group-model-parse-safety).
+// The current user is a parameter of `Group.loadDataFromJson` now, so nothing
+// reachable forces its guard to fail. The guard case reads a Group whose
+// summary calculation never ran: at the old head the failing global read was
+// the guard's first statement, so those are exactly the fields a failed run
+// leaves (group-model-parse-safety; injectable-repositories, Decisions).
 
 Map<String, dynamic> _groupJson({Object? simplifiedExpenses = false}) => {
   'id': 'g1',
@@ -40,13 +42,16 @@ Map<String, dynamic> _groupJson({Object? simplifiedExpenses = false}) => {
 void main() {
   test('a null simplified_expenses loads as false', () {
     final group = Group()
-      ..loadDataFromJson(_groupJson(simplifiedExpenses: null));
+      ..loadDataFromJson(
+        _groupJson(simplifiedExpenses: null),
+        currentUserEmail: null,
+      );
     expect(group.simplifiedExpenses, isFalse);
     expect(group.groupMembers.map((m) => m.email), ['a@test.com']);
   });
 
   test('a failed summary calculation still leaves readable defaults', () {
-    final failed = Group()..loadDataFromJson(_groupJson());
+    final failed = Group();
     expect(failed.groupSharesSummary, isEmpty);
     expect(failed.totalExpenses, 0);
     expect(failed.totalShareAmount, 0);

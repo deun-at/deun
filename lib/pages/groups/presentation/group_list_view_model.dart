@@ -67,7 +67,7 @@ OverallBalance aggregateOverallBalance(
 /// name within each tier. Pure: does not mutate [groups].
 ///
 /// [isFavorite] supplies favorite state; callers in the app pass
-/// `(g) => g.isFavorite`, while tests pass a deterministic predicate.
+/// `(g) => g.isFavoriteFor(email)`, while tests pass a deterministic predicate.
 List<Group> sortGroups(
   List<Group> groups, {
   required bool Function(Group) isFavorite,

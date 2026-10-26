@@ -5,12 +5,11 @@ import 'package:deun/pages/friends/provider/friendship_list.dart';
 import 'package:deun/pages/groups/data/group_model.dart';
 import 'package:deun/pages/groups/presentation/group_detail_edit.dart';
 import 'package:deun/widgets/theme_builder.dart';
+import 'package:deun/provider.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 
 /// Fake friends notifier that avoids the real notifier's Supabase realtime
 /// channel subscription, mirroring group_edit_screen_test.dart's fake — the
@@ -43,7 +42,7 @@ Expense _expense({String? originalCurrency}) => Expense()
     'created_at': '2026-08-16T10:00:00',
     'is_paid_back_row': false,
     'original_currency_code': originalCurrency,
-  });
+  }, currentUserEmail: null);
 
 Future<void> pumpGroupEdit(
   WidgetTester tester, {
@@ -53,6 +52,7 @@ Future<void> pumpGroupEdit(
   await tester.pumpWidget(
     ProviderScope(
       overrides: [
+        currentUserProvider.overrideWithValue(null),
         friendshipListProvider.overrideWith(
           () => _FakeFriendshipListNotifier(),
         ),
@@ -83,25 +83,6 @@ Future<void> pumpGroupEdit(
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
-
-  setUpAll(() async {
-    TestWidgetsFlutterBinding.ensureInitialized().defaultBinaryMessenger
-        .setMockMethodCallHandler(
-          const MethodChannel('plugins.flutter.io/shared_preferences'),
-          (call) async {
-            if (call.method == 'getAll') return <String, Object>{};
-            return null;
-          },
-        );
-    await Supabase.initialize(
-      url: 'http://localhost:54321',
-      anonKey: 'test-anon-key',
-    );
-  });
-
-  tearDownAll(() async {
-    await Supabase.instance.dispose();
-  });
 
   group('canChangeGroupCurrency reads real expense currencies', () {
     test('no expenses — unchanged, the picker stays open', () {

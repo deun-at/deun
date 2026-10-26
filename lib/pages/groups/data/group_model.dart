@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 
 import '../../../constants.dart';
 import '../../../helper/helper.dart';
-import '../../../main.dart';
 import '../../expenses/data/expense_model.dart';
 import '../data/group_member_model.dart';
 
@@ -53,8 +52,9 @@ class Group {
 
   late List<Expense>? expenses;
 
-  bool get isFavorite {
-    final email = supabase.auth.currentUser?.email;
+  /// Whether [email]'s own membership row is starred. A star another member
+  /// set never counts; with nobody signed in nothing is starred.
+  bool isFavoriteFor(String? email) {
     if (email == null) return false;
     return groupMembers.any((m) => m.email == email && m.isFavorite);
   }
@@ -116,7 +116,10 @@ class Group {
   static const groupSelectString =
       '*, group_shares_summary_helper:group_shares_summary!inner(*), group_shares_summary(*, ...paid_by(paid_by_display_name:display_name, paid_by_paypal_me:paypal_me, paid_by_iban:iban), ...paid_for(paid_for_display_name:display_name, paid_for_paypal_me:paypal_me, paid_for_iban:iban)), group_member(*, ...user(display_name:display_name, username:username, username_code:username_code, is_guest:is_guest))';
 
-  void loadDataFromJson(Map<String, dynamic> json) {
+  void loadDataFromJson(
+    Map<String, dynamic> json, {
+    required String? currentUserEmail,
+  }) {
     id = json["id"];
     // Defensive: a partially-written row could carry a null name. Never let one
     // bad row throw here — it would fail the whole list fetch (loadDataFromJson
@@ -150,7 +153,6 @@ class Group {
     }
 
     try {
-      final currentUserEmail = supabase.auth.currentUser?.email;
       if (simplifiedExpenses) {
         calculateGroupSharesSummarySimplified(json, currentUserEmail);
       } else {

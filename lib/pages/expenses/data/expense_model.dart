@@ -67,13 +67,18 @@ class Expense {
   static const currencyProbeSelectString =
       'id, group_id, name, expense_date, created_at, is_paid_back_row, original_currency_code';
 
-  void loadDataFromJson(Map<String, dynamic> json) {
+  /// The embedded group's summary is computed for [currentUserEmail] because
+  /// `navigateToExpense` opens the group detail with it.
+  void loadDataFromJson(
+    Map<String, dynamic> json, {
+    required String? currentUserEmail,
+  }) {
     id = json["id"];
     groupId = json["group_id"];
 
     group = Group();
     if (json["group"] != null) {
-      group.loadDataFromJson(json["group"]);
+      group.loadDataFromJson(json["group"], currentUserEmail: currentUserEmail);
     }
     // Defensive, mirroring Group.loadDataFromJson: a row with a null name must
     // not throw here. Expenses are parsed in a loop over a group's rows, so one

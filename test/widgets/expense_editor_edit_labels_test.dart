@@ -6,12 +6,11 @@ import 'package:deun/pages/groups/data/group_member_model.dart';
 import 'package:deun/pages/groups/data/group_model.dart';
 import 'package:deun/widgets/restyle/expense_picker_sheets.dart';
 import 'package:deun/widgets/theme_builder.dart';
+import 'package:deun/provider.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 
 GroupMember _member(String email, String name) {
   final m = GroupMember();
@@ -76,7 +75,7 @@ Expense _quickExpense() {
         ],
       },
     ],
-  });
+  }, currentUserEmail: null);
   return e;
 }
 
@@ -113,7 +112,7 @@ Expense _itemizedExpense() {
       unit('u1', 'Beer', 2.5, 'grp-1'),
       unit('u2', 'Wine', 4.0, 'grp-2'),
     ],
-  });
+  }, currentUserEmail: null);
   return e;
 }
 
@@ -124,6 +123,7 @@ Future<void> _pump(
 }) async {
   await tester.pumpWidget(
     ProviderScope(
+      overrides: [currentUserProvider.overrideWithValue(null)],
       child: MaterialApp(
         locale: locale,
         localizationsDelegates: const [
@@ -160,22 +160,6 @@ Future<AppLocalizations> _l10n(Locale locale) =>
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
-
-  setUpAll(() async {
-    TestWidgetsFlutterBinding.ensureInitialized().defaultBinaryMessenger
-        .setMockMethodCallHandler(
-          const MethodChannel('plugins.flutter.io/shared_preferences'),
-          (call) async => call.method == 'getAll' ? <String, Object>{} : null,
-        );
-    await Supabase.initialize(
-      url: 'http://localhost:54321',
-      anonKey: 'test-anon-key',
-    );
-  });
-
-  tearDownAll(() async {
-    await Supabase.instance.dispose();
-  });
 
   // AC1 — the reported bug, straight through the widget and against the
   // literal string the user saw.

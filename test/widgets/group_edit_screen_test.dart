@@ -12,14 +12,13 @@ import 'package:deun/pages/users/user_model.dart';
 import 'package:deun/widgets/restyle/primary_button.dart';
 import 'package:deun/widgets/restyle/soft_card.dart';
 import 'package:deun/widgets/theme_builder.dart';
+import 'package:deun/provider.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_form_builder/flutter_form_builder.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 
 /// Fake friends notifier that returns a fixed accepted-friends list without the
 /// real notifier's Supabase channel subscription (F71 inline roster tests).
@@ -75,7 +74,10 @@ Future<void> _pump(
 }) async {
   await tester.pumpWidget(
     ProviderScope(
-      overrides: overrides.cast(),
+      overrides: [
+        currentUserProvider.overrideWithValue(null),
+        ...overrides.cast(),
+      ],
       child: MaterialApp(
         localizationsDelegates: const [
           AppLocalizations.delegate,
@@ -138,6 +140,7 @@ Future<void> _pumpEditWithRouter(
 
   await tester.pumpWidget(
     ProviderScope(
+      overrides: [currentUserProvider.overrideWithValue(null)],
       child: MaterialApp.router(
         routerConfig: router,
         localizationsDelegates: const [
@@ -211,6 +214,7 @@ Future<void> _pumpSave(
 
   await tester.pumpWidget(
     ProviderScope(
+      overrides: [currentUserProvider.overrideWithValue(null)],
       child: MaterialApp.router(
         routerConfig: router,
         localizationsDelegates: const [
@@ -255,25 +259,6 @@ Finder _swatchFinder() {
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
-
-  setUpAll(() async {
-    TestWidgetsFlutterBinding.ensureInitialized().defaultBinaryMessenger
-        .setMockMethodCallHandler(
-          const MethodChannel('plugins.flutter.io/shared_preferences'),
-          (call) async {
-            if (call.method == 'getAll') return <String, Object>{};
-            return null;
-          },
-        );
-    await Supabase.initialize(
-      url: 'http://localhost:54321',
-      anonKey: 'test-anon-key',
-    );
-  });
-
-  tearDownAll(() async {
-    await Supabase.instance.dispose();
-  });
 
   testWidgets(
     'renders name field, six swatches, mode selector and Create button (new group)',

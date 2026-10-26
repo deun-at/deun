@@ -1,12 +1,12 @@
 import 'package:deun/helper/helper.dart';
 import 'package:deun/l10n/app_localizations.dart';
-import 'package:deun/main.dart';
 import 'package:deun/pages/expenses/data/expense_deletion_impact.dart';
 import 'package:deun/pages/expenses/data/expense_detail_view_model.dart';
 import 'package:deun/pages/expenses/data/expense_model.dart';
 import 'package:deun/pages/expenses/data/expense_repository.dart';
-import 'package:deun/pages/groups/data/group_member_model.dart';
 import 'package:deun/pages/groups/data/group_model.dart';
+import 'package:deun/pages/groups/data/member_display.dart';
+import 'package:deun/provider.dart';
 import 'package:deun/widgets/restyle/delete_confirm_sheet.dart';
 import 'package:deun/widgets/restyle/deun_header.dart';
 import 'package:deun/widgets/restyle/member_avatar.dart';
@@ -57,36 +57,6 @@ class _ExpenseDetailReadState extends ConsumerState<ExpenseDetailRead> {
   /// further guard is needed past this point.
   bool _deleteProbeInFlight = false;
 
-  String? get _currentUserEmail => supabase.auth.currentUser?.email;
-
-  GroupMember? _findMember(String? email) {
-    if (email == null) return null;
-    try {
-      return widget.group.groupMembers.firstWhere((m) => m.email == email);
-    } catch (_) {
-      return null;
-    }
-  }
-
-  /// Members in display order: "you" first, then alphabetical — matching the
-  /// editor's sort so the breakdown reads consistently.
-  List<String> get _orderedMemberEmails {
-    final members = [...widget.group.groupMembers]
-      ..sort((a, b) {
-        if (a.email == _currentUserEmail) return -1;
-        if (b.email == _currentUserEmail) return 1;
-        return a.fullUsername.compareTo(b.fullUsername);
-      });
-    return members.map((m) => m.email).toList();
-  }
-
-  String _displayName(BuildContext context, GroupMember? member) {
-    if (member == null) return '';
-    return member.email == _currentUserEmail
-        ? AppLocalizations.of(context)!.you
-        : member.displayName;
-  }
-
   void _openEditor(BuildContext context) {
     GoRouter.of(context).push(
       '/group/details/expense',
@@ -103,7 +73,10 @@ class _ExpenseDetailReadState extends ConsumerState<ExpenseDetailRead> {
     setState(() => _deleteProbeInFlight = true);
     final impact = await probeDeletionImpact(
       widget.expense,
-      loader: widget.loadGroupPaybacks,
+      loader:
+          widget.loadGroupPaybacks ??
+          (groupId) =>
+              ref.read(expenseRepositoryProvider).fetchPaybackRows(groupId),
     );
     if (!mounted) return;
     setState(() => _deleteProbeInFlight = false);
@@ -119,7 +92,9 @@ class _ExpenseDetailReadState extends ConsumerState<ExpenseDetailRead> {
     );
     if (confirmed != true || !context.mounted) return;
     try {
-      await ExpenseRepository.delete(widget.expense.id, widget.expense.groupId);
+      await ref
+          .read(expenseRepositoryProvider)
+          .delete(widget.expense.id, widget.expense.groupId);
       if (context.mounted) {
         showSnackBar(context, l10n.expenseDeleteSuccess);
       }
@@ -136,6 +111,11 @@ class _ExpenseDetailReadState extends ConsumerState<ExpenseDetailRead> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
+    final display = MemberDisplay(
+      currentUserEmail: ref.watch(currentUserProvider)?.email,
+      youLabel: l10n.you,
+      roster: widget.group.groupMembers,
+    );
 
     return ThemeBuilder(
       colorValue: widget.group.colorValue,
@@ -173,12 +153,9 @@ class _ExpenseDetailReadState extends ConsumerState<ExpenseDetailRead> {
                   children: [
                     _SummaryCard(
                       expense: widget.expense,
-                      payerName: _displayName(
-                        context,
-                        _findMember(widget.expense.paidBy),
-                      ),
-                      payerIsYou: widget.expense.paidBy == _currentUserEmail,
-                      currentUserEmail: _currentUserEmail,
+                      payerName: display.nameOf(widget.expense.paidBy),
+                      payerIsYou: display.isYou(widget.expense.paidBy),
+                      currentUserEmail: display.currentUserEmail,
                     ),
                     // Only real claim expenses get the "Review & claim" banner. Old
                     // itemized expenses (manual splits, no claim units) would land on
@@ -203,10 +180,10 @@ class _ExpenseDetailReadState extends ConsumerState<ExpenseDetailRead> {
                     const SizedBox(height: 8),
                     _MemberBreakdown(
                       expense: widget.expense,
-                      memberEmails: _orderedMemberEmails,
-                      memberFor: _findMember,
-                      displayName: (m) => _displayName(context, m),
-                      currentUserEmail: _currentUserEmail,
+                      memberEmails: [
+                        for (final m in display.rosterMembers) m.email,
+                      ],
+                      display: display,
                     ),
                   ],
                 ),
@@ -509,16 +486,12 @@ class _MemberBreakdown extends StatelessWidget {
   const _MemberBreakdown({
     required this.expense,
     required this.memberEmails,
-    required this.memberFor,
-    required this.displayName,
-    required this.currentUserEmail,
+    required this.display,
   });
 
   final Expense expense;
   final List<String> memberEmails;
-  final GroupMember? Function(String?) memberFor;
-  final String Function(GroupMember?) displayName;
-  final String? currentUserEmail;
+  final MemberDisplay display;
 
   @override
   Widget build(BuildContext context) {
@@ -529,8 +502,8 @@ class _MemberBreakdown extends StatelessWidget {
     if (rows.isEmpty) return const SizedBox.shrink();
 
     // The payer's display name, used verbatim in debtor rows ("owes <payer>").
-    final payerName = displayName(memberFor(expense.paidBy));
-    final payerIsYou = expense.paidBy == currentUserEmail;
+    final payerName = display.nameOf(expense.paidBy);
+    final payerIsYou = display.isYou(expense.paidBy);
 
     return SoftCard(
       padding: const EdgeInsets.symmetric(vertical: 4),
@@ -540,9 +513,8 @@ class _MemberBreakdown extends StatelessWidget {
           for (final entry in rows)
             _MemberRow(
               entry: entry,
-              member: memberFor(entry.email),
-              displayName: displayName,
-              isYou: entry.email == currentUserEmail,
+              name: display.nameOf(entry.email),
+              isYou: display.isYou(entry.email),
               payerName: payerName,
               payerIsYou: payerIsYou,
               total: expense.amount,
@@ -557,8 +529,7 @@ class _MemberBreakdown extends StatelessWidget {
 class _MemberRow extends StatelessWidget {
   const _MemberRow({
     required this.entry,
-    required this.member,
-    required this.displayName,
+    required this.name,
     required this.isYou,
     required this.payerName,
     required this.payerIsYou,
@@ -567,8 +538,7 @@ class _MemberRow extends StatelessWidget {
   });
 
   final MemberBreakdownEntry entry;
-  final GroupMember? member;
-  final String Function(GroupMember?) displayName;
+  final String name;
   final bool isYou;
   final String payerName;
   final bool payerIsYou;
@@ -580,7 +550,6 @@ class _MemberRow extends StatelessWidget {
     final l10n = AppLocalizations.of(context)!;
     final colorScheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
-    final name = displayName(member);
 
     // F123 sub-label wording, mapped to role exactly as the v3 prototype:
     //  - payer  → "paid €X.XX" (success/green)

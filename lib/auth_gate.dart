@@ -2,6 +2,7 @@ import 'package:deun/pages/users/user_model.dart';
 import 'package:deun/pages/users/user_repository.dart';
 import 'package:deun/widgets/splash_screen.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'main.dart';
@@ -11,14 +12,14 @@ import 'pages/auth/onboarding_screen.dart';
 
 enum _AuthScreen { loading, onboarding, ready }
 
-class AuthGate extends StatefulWidget {
+class AuthGate extends ConsumerStatefulWidget {
   const AuthGate({super.key});
 
   @override
-  State<AuthGate> createState() => _AuthGateState();
+  ConsumerState<AuthGate> createState() => _AuthGateState();
 }
 
-class _AuthGateState extends State<AuthGate> {
+class _AuthGateState extends ConsumerState<AuthGate> {
   _AuthScreen _screenState = _AuthScreen.loading;
   bool _onboardingCheckStarted = false;
   String? _initialDisplayName;
@@ -75,13 +76,15 @@ class _AuthGateState extends State<AuthGate> {
 
   void _checkOnboarding() async {
     final email = supabase.auth.currentUser?.email ?? '';
-    final results = await Future.wait([
-      UserRepository.fetchDetail(email),
-      Future.delayed(const Duration(milliseconds: 1200)),
-    ]).catchError((e) {
-      debugPrint('Onboarding check failed, continuing without profile: $e');
-      return <Object?>[null, null];
-    });
+    final users = ref.read(userRepositoryProvider);
+    final results =
+        await Future.wait([
+          users.fetchDetail(email),
+          Future.delayed(const Duration(milliseconds: 1200)),
+        ]).catchError((e) {
+          debugPrint('Onboarding check failed, continuing without profile: $e');
+          return <Object?>[null, null];
+        });
 
     if (!mounted) return;
 
@@ -109,8 +112,8 @@ class _AuthGateState extends State<AuthGate> {
       String? lastName;
 
       if (session.user.userMetadata?['full_name'] != null) {
-        final fullName =
-            (session.user.userMetadata?['full_name'] as String).split(' ');
+        final fullName = (session.user.userMetadata?['full_name'] as String)
+            .split(' ');
         if (fullName.isNotEmpty) {
           firstName = fullName[0];
           fullName.removeAt(0);
@@ -128,18 +131,22 @@ class _AuthGateState extends State<AuthGate> {
         lastName = session.user.userMetadata?['last_name'];
       }
 
-      final displayName = session.user.userMetadata?['user_name'] ??
+      final displayName =
+          session.user.userMetadata?['user_name'] ??
           session.user.userMetadata?['name'];
 
-      supabase.from("user").upsert({
-        'email': session.user.email,
-        'user_id': session.user.id,
-        'first_name': firstName,
-        'last_name': lastName,
-        'display_name': displayName ?? '-',
-      }, ignoreDuplicates: true).catchError((e) {
-        debugPrint('User upsert failed: $e');
-      });
+      supabase
+          .from("user")
+          .upsert({
+            'email': session.user.email,
+            'user_id': session.user.id,
+            'first_name': firstName,
+            'last_name': lastName,
+            'display_name': displayName ?? '-',
+          }, ignoreDuplicates: true)
+          .catchError((e) {
+            debugPrint('User upsert failed: $e');
+          });
     } catch (e) {
       debugPrint(e.toString());
     }

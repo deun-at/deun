@@ -22,6 +22,7 @@ import '../../../widgets/restyle/expense_picker_sheets.dart';
 import '../../../widgets/restyle/section_label.dart';
 import '../../../widgets/theme_builder.dart';
 import '../../groups/data/group_model.dart';
+import '../../groups/data/member_display.dart';
 import '../data/editor_mode.dart';
 import '../data/expense_category.dart';
 import '../data/expense_conversion.dart';
@@ -448,7 +449,8 @@ class _ExpenseDetailState extends ConsumerState<ExpenseDetail> {
                 notifyEmails: _members.map((m) => m.email).toSet(),
               )
             : onScreen;
-        await (widget.saveExpense ?? ExpenseRepository.saveAll)(
+        await (widget.saveExpense ??
+            ref.read(expenseRepositoryProvider).saveAll)(
           widget.group.id,
           widget.expense?.id,
           draft,
@@ -487,7 +489,13 @@ class _ExpenseDetailState extends ConsumerState<ExpenseDetail> {
     // Presentation-level guard, same rule as the read view: warn, then allow.
     // A failed probe degrades to today's plain prompt.
     final impact = await _controller.probeDeletion(
-      () => probeDeletionImpact(expense, loader: widget.loadGroupPaybacks),
+      () => probeDeletionImpact(
+        expense,
+        loader:
+            widget.loadGroupPaybacks ??
+            (groupId) =>
+                ref.read(expenseRepositoryProvider).fetchPaybackRows(groupId),
+      ),
     );
     if (impact == null || !mounted) return;
 
@@ -500,10 +508,11 @@ class _ExpenseDetailState extends ConsumerState<ExpenseDetail> {
 
     final l10n = AppLocalizations.of(context)!;
     final outcome = await _controller.delete(
-      () => (widget.deleteExpense ?? ExpenseRepository.delete)(
-        expense.id,
-        expense.groupId,
-      ),
+      () =>
+          (widget.deleteExpense ?? ref.read(expenseRepositoryProvider).delete)(
+            expense.id,
+            expense.groupId,
+          ),
     );
     if (outcome == EditorDeleteOutcome.ignoredInFlight) return;
     await _closeAfterWrite(
@@ -608,6 +617,7 @@ class _ExpenseDetailState extends ConsumerState<ExpenseDetail> {
   Widget build(BuildContext context) {
     const double spacing = 8;
 
+    final currentUserEmail = ref.watch(currentUserProvider)?.email;
     final editor = ref.watch(expenseEditorControllerProvider(_args));
     final fee = ref.watch(cardFeeProvider);
 
@@ -627,6 +637,11 @@ class _ExpenseDetailState extends ConsumerState<ExpenseDetail> {
       colorValue: widget.group.colorValue,
       builder: (context) {
         final l10n = AppLocalizations.of(context)!;
+        final display = MemberDisplay(
+          currentUserEmail: currentUserEmail,
+          youLabel: l10n.you,
+          roster: widget.group.groupMembers,
+        );
 
         final currencyRate = EditorCurrencyRateSection(
           screenContext: screenContext,
@@ -650,6 +665,7 @@ class _ExpenseDetailState extends ConsumerState<ExpenseDetail> {
         final paidWhen = EditorPaidWhenCard(
           screenContext: screenContext,
           group: widget.group,
+          display: display,
           initialDate: widget.expense?.expenseDate != null
               ? DateTime.parse(widget.expense!.expenseDate)
               : DateTime.now(),
@@ -840,6 +856,7 @@ class _ExpenseDetailState extends ConsumerState<ExpenseDetail> {
                                 isSingleEntry: editor.isSingleEntry,
                                 currency: editor.entryCurrency,
                                 members: _members,
+                                currentUserEmail: currentUserEmail,
                                 amountController: _amountController,
                                 onRemove: _controller.removeEntry,
                                 onLineTotalChanged: () => setState(() {}),

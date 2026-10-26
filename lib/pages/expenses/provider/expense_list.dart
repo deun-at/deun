@@ -1,3 +1,4 @@
+import 'package:deun/provider.dart';
 import 'package:flutter/foundation.dart' show protected, visibleForTesting;
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -17,6 +18,7 @@ class ExpenseListNotifier extends _$ExpenseListNotifier
 
   @override
   FutureOr<List<Expense>> build(String groupId) async {
+    ref.watch(currentUserProvider);
     disposeChannels();
     ref.onDispose(() => disposeChannels());
 
@@ -77,12 +79,12 @@ class ExpenseListNotifier extends _$ExpenseListNotifier
   @visibleForTesting
   @protected
   Future<List<Expense>> fetchPage(String groupId, int from, int to) =>
-      ExpenseRepository.fetchData(groupId, from, to);
+      ref.read(expenseRepositoryProvider).fetchData(groupId, from, to);
 
   @visibleForTesting
   @protected
   Future<Expense> fetchExpense(String expenseId) =>
-      ExpenseRepository.fetchDetail(expenseId);
+      ref.read(expenseRepositoryProvider).fetchDetail(expenseId);
 
   Future<void> reload(String groupId) async {
     if (!ref.mounted) return;

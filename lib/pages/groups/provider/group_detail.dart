@@ -1,3 +1,4 @@
+import 'package:deun/provider.dart';
 import 'package:flutter/foundation.dart' show protected, visibleForTesting;
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -13,6 +14,7 @@ class GroupDetailNotifier extends _$GroupDetailNotifier
     with RealtimeNotifierMixin {
   @override
   FutureOr<Group> build(String groupId) async {
+    ref.watch(currentUserProvider);
     disposeChannels();
     ref.onDispose(() => disposeChannels());
 
@@ -38,7 +40,7 @@ class GroupDetailNotifier extends _$GroupDetailNotifier
   @visibleForTesting
   @protected
   Future<Group> fetchGroup(String groupId) =>
-      GroupRepository.fetchDetail(groupId);
+      ref.read(groupRepositoryProvider).fetchDetail(groupId);
 
   Future<void> reload(String groupId) async {
     if (!ref.mounted) return;

@@ -1,6 +1,8 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:deun/provider.dart';
 import 'package:google_mlkit_text_recognition/google_mlkit_text_recognition.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:deun/l10n/app_localizations.dart';
@@ -25,14 +27,15 @@ double receiptPreviewTotal(ReceiptScanResult result) {
 /// The discrete stages the scanner sheet moves through.
 enum _ScanStage { idle, scanning, review, error }
 
-class ReceiptScannerSheet extends StatefulWidget {
+class ReceiptScannerSheet extends ConsumerStatefulWidget {
   const ReceiptScannerSheet({super.key});
 
   @override
-  State<ReceiptScannerSheet> createState() => _ReceiptScannerSheetState();
+  ConsumerState<ReceiptScannerSheet> createState() =>
+      _ReceiptScannerSheetState();
 }
 
-class _ReceiptScannerSheetState extends State<ReceiptScannerSheet> {
+class _ReceiptScannerSheetState extends ConsumerState<ReceiptScannerSheet> {
   _ScanStage _stage = _ScanStage.idle;
   ReceiptScanResult? _result;
 
@@ -64,7 +67,10 @@ class _ReceiptScannerSheetState extends State<ReceiptScannerSheet> {
         }
       }
 
-      final result = await GeminiReceiptParser.parse(ocrLines);
+      final result = await GeminiReceiptParser.parse(
+        ocrLines,
+        signedIn: ref.read(currentUserProvider) != null,
+      );
       if (result != null && !result.isEmpty && mounted) {
         // Hand control to the detected-items preview before returning.
         setState(() {
@@ -89,9 +95,9 @@ class _ReceiptScannerSheetState extends State<ReceiptScannerSheet> {
   }
 
   void _retake() => setState(() {
-        _stage = _ScanStage.idle;
-        _result = null;
-      });
+    _stage = _ScanStage.idle;
+    _result = null;
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -121,8 +127,8 @@ class _ReceiptScannerSheetState extends State<ReceiptScannerSheet> {
               child: Text(
                 l10n.receiptScanProcessing,
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: Theme.of(context).colorScheme.onSurfaceVariant,
-                    ),
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                ),
               ),
             ),
             const SizedBox(height: 24),
@@ -136,8 +142,8 @@ class _ReceiptScannerSheetState extends State<ReceiptScannerSheet> {
                 l10n.receiptScanInstructions,
                 textAlign: TextAlign.center,
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: Theme.of(context).colorScheme.onSurfaceVariant,
-                    ),
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                ),
               ),
             ),
             const SizedBox(height: 16),
@@ -197,8 +203,8 @@ class _ErrorBanner extends StatelessWidget {
             child: Text(
               message,
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: colorScheme.onErrorContainer,
-                  ),
+                color: colorScheme.onErrorContainer,
+              ),
             ),
           ),
         ],
@@ -241,8 +247,11 @@ class ReceiptItemsPreview extends StatelessWidget {
               result.merchantName!.isNotEmpty) ...[
             Row(
               children: [
-                Icon(Icons.storefront_outlined,
-                    size: 20, color: colorScheme.onSurfaceVariant),
+                Icon(
+                  Icons.storefront_outlined,
+                  size: 20,
+                  color: colorScheme.onSurfaceVariant,
+                ),
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(

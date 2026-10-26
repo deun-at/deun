@@ -43,7 +43,7 @@ class _FriendListState extends ConsumerState<FriendList> {
   Future<void> _acceptFriendRequest(String email, String displayName) async {
     final notifications = NotificationSender();
     try {
-      await FriendshipRepository.accepted(email);
+      await ref.read(friendshipRepositoryProvider).accepted(email);
       unawaited(notifications.friendAccepted({email}));
       if (!mounted) return;
       showSnackBar(
@@ -58,7 +58,7 @@ class _FriendListState extends ConsumerState<FriendList> {
 
   Future<void> _declineFriendRequest(String email, String displayName) async {
     try {
-      await FriendshipRepository.decline(email);
+      await ref.read(friendshipRepositoryProvider).decline(email);
       if (!mounted) return;
       showSnackBar(
         context,
@@ -72,7 +72,7 @@ class _FriendListState extends ConsumerState<FriendList> {
 
   Future<void> _cancelFriendRequest(String email, String displayName) async {
     try {
-      await FriendshipRepository.cancel(email);
+      await ref.read(friendshipRepositoryProvider).cancel(email);
       if (!mounted) return;
       showSnackBar(
         context,

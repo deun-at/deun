@@ -7,11 +7,11 @@ import 'package:deun/pages/groups/data/group_member_model.dart';
 import 'package:deun/pages/groups/data/group_model.dart';
 import 'package:deun/pages/groups/presentation/payback_detail_sheet.dart';
 import 'package:deun/widgets/theme_builder.dart';
+import 'package:deun/provider.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 
 GroupMember _member(String email, String name) {
   final m = GroupMember();
@@ -113,32 +113,35 @@ Future<void> _pump(
   _Deleted? deleted,
 }) async {
   await tester.pumpWidget(
-    MaterialApp(
-      localizationsDelegates: const [
-        AppLocalizations.delegate,
-        GlobalMaterialLocalizations.delegate,
-        GlobalWidgetsLocalizations.delegate,
-        GlobalCupertinoLocalizations.delegate,
-      ],
-      supportedLocales: AppLocalizations.supportedLocales,
-      initialRoute: '/sheet',
-      routes: {
-        '/': (context) => const Scaffold(body: Text('BEHIND')),
-        '/sheet': (context) => Theme(
-          data: getThemeData(
-            context,
-            kBrandSeed,
-            Brightness.light,
-          ).copyWith(splashFactory: NoSplash.splashFactory),
-          child: Scaffold(
-            body: PaybackDetailSheet(
-              group: _group(),
-              expense: expense,
-              deleteExpense: deleted?.call,
+    ProviderScope(
+      overrides: [currentUserProvider.overrideWithValue(null)],
+      child: MaterialApp(
+        localizationsDelegates: const [
+          AppLocalizations.delegate,
+          GlobalMaterialLocalizations.delegate,
+          GlobalWidgetsLocalizations.delegate,
+          GlobalCupertinoLocalizations.delegate,
+        ],
+        supportedLocales: AppLocalizations.supportedLocales,
+        initialRoute: '/sheet',
+        routes: {
+          '/': (context) => const Scaffold(body: Text('BEHIND')),
+          '/sheet': (context) => Theme(
+            data: getThemeData(
+              context,
+              kBrandSeed,
+              Brightness.light,
+            ).copyWith(splashFactory: NoSplash.splashFactory),
+            child: Scaffold(
+              body: PaybackDetailSheet(
+                group: _group(),
+                expense: expense,
+                deleteExpense: deleted?.call,
+              ),
             ),
           ),
-        ),
-      },
+        },
+      ),
     ),
   );
   await tester.pumpAndSettle();
@@ -146,22 +149,6 @@ Future<void> _pump(
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
-
-  setUpAll(() async {
-    TestWidgetsFlutterBinding.ensureInitialized().defaultBinaryMessenger
-        .setMockMethodCallHandler(
-          const MethodChannel('plugins.flutter.io/shared_preferences'),
-          (call) async => call.method == 'getAll' ? <String, Object>{} : null,
-        );
-    await Supabase.initialize(
-      url: 'http://localhost:54321',
-      anonKey: 'test-anon-key',
-    );
-  });
-
-  tearDownAll(() async {
-    await Supabase.instance.dispose();
-  });
 
   // criterion 2 — the existing settlement confirmation, naming counterparty
   // and amount.

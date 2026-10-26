@@ -5,9 +5,7 @@ import 'package:deun/widgets/restyle/expense_picker_sheets.dart';
 import 'package:deun/widgets/theme_builder.dart';
 import 'package:deun/constants.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 
 // No flutter_localizations import: AppLocalizations.localizationsDelegates already
 // bundles the Global*Localizations delegates, and an unused import fails analyze.
@@ -16,22 +14,6 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 /// assertion restates an acceptance criterion from the plan.
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
-
-  setUpAll(() async {
-    TestWidgetsFlutterBinding.ensureInitialized().defaultBinaryMessenger
-        .setMockMethodCallHandler(
-          const MethodChannel('plugins.flutter.io/shared_preferences'),
-          (call) async => call.method == 'getAll' ? <String, Object>{} : null,
-        );
-    await Supabase.initialize(
-      url: 'http://localhost:54321',
-      anonKey: 'test-anon-key',
-    );
-  });
-
-  tearDownAll(() async {
-    await Supabase.instance.dispose();
-  });
 
   Map<String, dynamic> memberJson(
     String email,
@@ -134,7 +116,10 @@ void main() {
     // 17
     test('activeMembers drops a removed member and keeps the rest', () {
       final g = Group()
-        ..loadDataFromJson(groupJson(carolRemovedAt: '2026-08-15T09:30:00Z'));
+        ..loadDataFromJson(
+          groupJson(carolRemovedAt: '2026-08-15T09:30:00Z'),
+          currentUserEmail: null,
+        );
 
       expect(g.activeMembers.map((m) => m.email), ['a@test.com', 'b@test.com']);
     });
@@ -144,7 +129,10 @@ void main() {
       'a removed member stays in groupMembers, so the ledger and the balance list keep them',
       () {
         final g = Group()
-          ..loadDataFromJson(groupJson(carolRemovedAt: '2026-08-15T09:30:00Z'));
+          ..loadDataFromJson(
+            groupJson(carolRemovedAt: '2026-08-15T09:30:00Z'),
+            currentUserEmail: null,
+          );
 
         expect(g.groupMembers.map((m) => m.email), contains('c@test.com'));
         expect(
@@ -185,7 +173,10 @@ void main() {
       'the paid-by picker fed activeMembers omits the removed member',
       (tester) async {
         final g = Group()
-          ..loadDataFromJson(groupJson(carolRemovedAt: '2026-08-15T09:30:00Z'));
+          ..loadDataFromJson(
+            groupJson(carolRemovedAt: '2026-08-15T09:30:00Z'),
+            currentUserEmail: null,
+          );
 
         await tester.pumpWidget(
           MaterialApp(

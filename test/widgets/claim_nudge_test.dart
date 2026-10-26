@@ -8,12 +8,11 @@ import 'package:deun/pages/expenses/provider/claim_notifier.dart';
 import 'package:deun/pages/groups/data/group_member_model.dart';
 import 'package:deun/pages/groups/data/group_model.dart';
 import 'package:deun/widgets/theme_builder.dart';
+import 'package:deun/provider.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 
 /// F175: the Nudge pill must fire a real push. This spies the push sender (via
 /// [ClaimPage.sendNotificationOverride]) and asserts `_nudge()` calls it as
@@ -88,27 +87,6 @@ class _FakeClaimNotifier extends ClaimNotifier {
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
-  setUpAll(() async {
-    TestWidgetsFlutterBinding.ensureInitialized().defaultBinaryMessenger
-        .setMockMethodCallHandler(
-          const MethodChannel('plugins.flutter.io/shared_preferences'),
-          (call) async {
-            if (call.method == 'getAll') return <String, Object>{};
-            return null;
-          },
-        );
-    // sendNotification reads supabase.auth.currentUser; initialize so that
-    // lookup does not throw even though the real helper is never called here.
-    await Supabase.initialize(
-      url: 'http://localhost:54321',
-      anonKey: 'test-anon-key',
-    );
-  });
-
-  tearDownAll(() async {
-    await Supabase.instance.dispose();
-  });
-
   testWidgets('F175: tapping Nudge sends an expense push to the members', (
     tester,
   ) async {
@@ -121,6 +99,7 @@ void main() {
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
+          currentUserProvider.overrideWithValue(null),
           claimProvider(
             group.id,
             expense.id,

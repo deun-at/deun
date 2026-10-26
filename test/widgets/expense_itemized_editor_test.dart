@@ -17,12 +17,11 @@ import 'package:deun/widgets/restyle/expense_picker_sheets.dart';
 import 'package:deun/widgets/restyle/primary_button.dart';
 import 'package:deun/widgets/restyle/soft_card.dart';
 import 'package:deun/widgets/theme_builder.dart';
+import 'package:deun/provider.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 
 GroupMember _member(String email, String name) {
   final m = GroupMember();
@@ -55,6 +54,7 @@ Future<void> _pump(
 }) async {
   await tester.pumpWidget(
     ProviderScope(
+      overrides: [currentUserProvider.overrideWithValue(null)],
       child: MaterialApp(
         localizationsDelegates: const [
           AppLocalizations.delegate,
@@ -124,7 +124,7 @@ Expense _sharedClaimExpense() {
       unit('u1', claimers: ['b@test.com']),
       unit('u2'),
     ],
-  });
+  }, currentUserEmail: null);
   return e;
 }
 
@@ -154,7 +154,7 @@ Expense _itemizedExpenseWithCategory(String category) {
         'expense_entry_share': const [],
       },
     ],
-  });
+  }, currentUserEmail: null);
   return e;
 }
 
@@ -193,7 +193,7 @@ Expense _twoItemExpense() {
       unit('u1', 'Beer', 2.5, 'grp-1'),
       unit('u2', 'Wine', 4.0, 'grp-2'),
     ],
-  });
+  }, currentUserEmail: null);
   return e;
 }
 
@@ -202,25 +202,6 @@ Future<AppLocalizations> _l10n() =>
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
-
-  setUpAll(() async {
-    TestWidgetsFlutterBinding.ensureInitialized().defaultBinaryMessenger
-        .setMockMethodCallHandler(
-          const MethodChannel('plugins.flutter.io/shared_preferences'),
-          (call) async {
-            if (call.method == 'getAll') return <String, Object>{};
-            return null;
-          },
-        );
-    await Supabase.initialize(
-      url: 'http://localhost:54321',
-      anonKey: 'test-anon-key',
-    );
-  });
-
-  tearDownAll(() async {
-    await Supabase.instance.dispose();
-  });
 
   testWidgets('renders the Quick/Itemized top segmented toggle', (
     tester,
@@ -780,7 +761,9 @@ void main() {
     );
 
     String? savedName(WidgetTester tester) {
-      final formState = tester.state<FormBuilderState>(find.byType(FormBuilder));
+      final formState = tester.state<FormBuilderState>(
+        find.byType(FormBuilder),
+      );
       formState.save();
       return formState.value['name'] as String?;
     }

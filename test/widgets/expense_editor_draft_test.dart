@@ -10,10 +10,9 @@ import 'package:deun/widgets/restyle/primary_button.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_form_builder/flutter_form_builder.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'expense_editor_currency_rate_test.dart'
-    show initTestSupabase, installFakePrefs, pumpEditorWithSaveSeam, saveEditor;
+    show installFakePrefs, pumpEditorWithSaveSeam, saveEditor;
 
 const _a = 'a@test.com';
 const _b = 'b@test.com';
@@ -48,7 +47,7 @@ Expense _expense(List<Map<String, dynamic>> entries) =>
       'created_at': '2026-07-01T10:00:00',
       'is_paid_back_row': false,
       'expense_entry': entries,
-    });
+    }, currentUserEmail: null);
 
 /// A Quick 12.50 split exact 4.00 / 8.50, Alice's amount locked.
 Expense _quickExactLocked() => _expense([
@@ -90,12 +89,6 @@ Expense _claimedBeer() => _expense([
 ]);
 
 void main() {
-  setUpAll(initTestSupabase);
-
-  tearDownAll(() async {
-    await Supabase.instance.dispose();
-  });
-
   setUp(installFakePrefs);
 
   testWidgets(

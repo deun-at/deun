@@ -2,7 +2,7 @@ import 'package:flutter/foundation.dart' show protected, visibleForTesting;
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-import '../../../main.dart';
+import 'package:deun/provider.dart';
 import '../../../helper/realtime_mixin.dart';
 import '../data/claim_math.dart';
 import '../data/expense_entry_model.dart';
@@ -30,7 +30,7 @@ class ClaimNotifier extends _$ClaimNotifier with RealtimeNotifierMixin {
     disposeChannels();
     ref.onDispose(() => disposeChannels());
 
-    final me = supabase.auth.currentUser;
+    final me = ref.watch(currentUserProvider);
 
     subscribeToChannel(
       ref: ref,
@@ -49,7 +49,7 @@ class ClaimNotifier extends _$ClaimNotifier with RealtimeNotifierMixin {
       // Presence: one key per member (a member on two devices still counts
       // once). ref.notifyListeners rebuilds the header subtitle live.
       presencePayload: {
-        'email': me?.email ?? me?.id ?? 'anon',
+        'email': me == null ? 'anon' : (me.email.isEmpty ? me.id : me.email),
         'ts': DateTime.now().toIso8601String(),
       },
       onPresence: (count) {
@@ -73,7 +73,7 @@ class ClaimNotifier extends _$ClaimNotifier with RealtimeNotifierMixin {
   @visibleForTesting
   @protected
   Future<Expense> fetchExpense(String expenseId) =>
-      ExpenseRepository.fetchDetail(expenseId);
+      ref.read(expenseRepositoryProvider).fetchDetail(expenseId);
 
   /// Claim units (split_mode 'claim') in stable DB order.
   List<ClaimUnit> get units {
@@ -156,12 +156,14 @@ class ClaimNotifier extends _$ClaimNotifier with RealtimeNotifierMixin {
   Future<void> _setClaimers(String unitEntryId, List<String> emails) async {
     final expenseId = state.value?.id;
     if (expenseId == null) return;
-    await ExpenseRepository.claimSetUnitShares(
-      groupId: _groupId,
-      expenseId: expenseId,
-      unitEntryId: unitEntryId,
-      claimerEmails: emails,
-    );
+    await ref
+        .read(expenseRepositoryProvider)
+        .claimSetUnitShares(
+          groupId: _groupId,
+          expenseId: expenseId,
+          unitEntryId: unitEntryId,
+          claimerEmails: emails,
+        );
     // Realtime will refresh; optimistic refetch keeps UI snappy.
     state = await AsyncValue.guard(() => fetchExpense(expenseId));
   }

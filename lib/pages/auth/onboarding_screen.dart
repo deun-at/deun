@@ -5,6 +5,7 @@ import 'package:deun/widgets/deun_app.dart';
 import 'package:deun/widgets/restyle/primary_button.dart';
 import 'package:deun/widgets/restyle/section_label.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 /// Screen 3 — Onboarding username + display name (redesign).
@@ -12,7 +13,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 /// A presentation-only restyle: the form, validation and the
 /// `UserRepository.saveUsername` wiring (plus the `onComplete` /
 /// `initialDisplayName` contract used by `auth_gate.dart`) are unchanged.
-class OnboardingScreen extends StatefulWidget {
+class OnboardingScreen extends ConsumerStatefulWidget {
   const OnboardingScreen({
     super.key,
     required this.initialDisplayName,
@@ -23,10 +24,10 @@ class OnboardingScreen extends StatefulWidget {
   final VoidCallback onComplete;
 
   @override
-  State<OnboardingScreen> createState() => _OnboardingScreenState();
+  ConsumerState<OnboardingScreen> createState() => _OnboardingScreenState();
 }
 
-class _OnboardingScreenState extends State<OnboardingScreen> {
+class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
   final _formKey = GlobalKey<FormState>();
   late final TextEditingController _usernameController;
   late final TextEditingController _displayNameController;
@@ -69,10 +70,12 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     });
 
     try {
-      await UserRepository.saveUsername(
-        _usernameController.text,
-        _displayNameController.text.trim(),
-      );
+      await ref
+          .read(userRepositoryProvider)
+          .saveUsername(
+            _usernameController.text,
+            _displayNameController.text.trim(),
+          );
       widget.onComplete();
     } on PostgrestException catch (_) {
       if (!mounted) return;
@@ -179,10 +182,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                                 textInputAction: TextInputAction.done,
                                 onFieldSubmitted: (_) => _submit(ctx),
                                 validator: (value) {
-                                  if (value == null ||
-                                      value.trim().isEmpty) {
-                                    return l10n
-                                        .onboardingDisplayNameRequired;
+                                  if (value == null || value.trim().isEmpty) {
+                                    return l10n.onboardingDisplayNameRequired;
                                   }
                                   return null;
                                 },
@@ -191,8 +192,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                                 const SizedBox(height: 12),
                                 Text(
                                   _errorMessage!,
-                                  style: theme.textTheme.bodyMedium
-                                      ?.copyWith(color: colorScheme.error),
+                                  style: theme.textTheme.bodyMedium?.copyWith(
+                                    color: colorScheme.error,
+                                  ),
                                   textAlign: TextAlign.center,
                                 ),
                               ],
@@ -252,23 +254,21 @@ class _UsernameField extends StatelessWidget {
           child: Text(
             '@',
             style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  color: colorScheme.onSurfaceVariant,
-                ),
+              color: colorScheme.onSurfaceVariant,
+            ),
           ),
         ),
-        prefixIconConstraints:
-            const BoxConstraints(minWidth: 0, minHeight: 0),
+        prefixIconConstraints: const BoxConstraints(minWidth: 0, minHeight: 0),
         suffixIcon: Padding(
           padding: const EdgeInsets.only(right: 16),
           child: Text(
             '#$codePlaceholder',
             style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  color: colorScheme.onSurfaceVariant,
-                ),
+              color: colorScheme.onSurfaceVariant,
+            ),
           ),
         ),
-        suffixIconConstraints:
-            const BoxConstraints(minWidth: 0, minHeight: 0),
+        suffixIconConstraints: const BoxConstraints(minWidth: 0, minHeight: 0),
         filled: true,
         fillColor: colorScheme.surfaceContainer,
         border: OutlineInputBorder(
@@ -301,8 +301,9 @@ class _HandlePreview extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
-    final baseStyle = theme.textTheme.bodyMedium
-        ?.copyWith(color: colorScheme.onSurfaceVariant);
+    final baseStyle = theme.textTheme.bodyMedium?.copyWith(
+      color: colorScheme.onSurfaceVariant,
+    );
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 4),

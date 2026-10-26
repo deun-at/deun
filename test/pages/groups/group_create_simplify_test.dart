@@ -16,13 +16,12 @@ import 'package:deun/pages/groups/presentation/group_detail_edit.dart';
 import 'package:deun/pages/groups/provider/group_detail.dart';
 import 'package:deun/widgets/restyle/deun_header.dart';
 import 'package:deun/widgets/theme_builder.dart';
+import 'package:deun/provider.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 
 GroupMember _member(String email, String name) {
   final m = GroupMember();
@@ -114,6 +113,7 @@ Future<void> _pumpCreateFlow(
 
   await tester.pumpWidget(
     ProviderScope(
+      overrides: [currentUserProvider.overrideWithValue(null)],
       child: MaterialApp.router(
         routerConfig: router,
         localizationsDelegates: _localizationsDelegates,
@@ -170,6 +170,7 @@ Future<void> _pumpGroupDetail(WidgetTester tester) async {
   await tester.pumpWidget(
     ProviderScope(
       overrides: [
+        currentUserProvider.overrideWithValue(null),
         groupDetailProvider('g1').overrideWith(_StubGroupDetail.new),
         expenseListProvider('g1').overrideWith(_StubExpenseList.new),
       ],
@@ -188,25 +189,6 @@ Future<void> _pumpGroupDetail(WidgetTester tester) async {
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
-
-  setUpAll(() async {
-    TestWidgetsFlutterBinding.ensureInitialized().defaultBinaryMessenger
-        .setMockMethodCallHandler(
-          const MethodChannel('plugins.flutter.io/shared_preferences'),
-          (call) async {
-            if (call.method == 'getAll') return <String, Object>{};
-            return null;
-          },
-        );
-    await Supabase.initialize(
-      url: 'http://localhost:54321',
-      anonKey: 'test-anon-key',
-    );
-  });
-
-  tearDownAll(() async {
-    await Supabase.instance.dispose();
-  });
 
   // U2-T1 — criterion 4 (landing)
   testWidgets('a successful create lands on the NEW group detail page', (

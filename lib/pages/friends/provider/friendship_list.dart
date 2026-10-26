@@ -5,7 +5,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../helper/realtime_mixin.dart';
-import '../../../main.dart' show supabase;
+import 'package:deun/provider.dart';
 import '../../groups/provider/group_list.dart';
 import '../data/friendship_model.dart';
 import '../data/friendship_repository.dart';
@@ -70,7 +70,7 @@ class FriendshipListNotifier extends _$FriendshipListNotifier
 
   @visibleForTesting
   @protected
-  String? currentUserEmail() => supabase.auth.currentUser?.email;
+  String? currentUserEmail() => ref.watch(currentUserProvider)?.email;
 
   void _onGroupScope(Set<String>? previous, Set<String> next) {
     final groupList = ref.read(groupListProvider);
@@ -106,10 +106,11 @@ class FriendshipListNotifier extends _$FriendshipListNotifier
   }
 
   Future<FriendshipListState> fetchFriendshipList() async {
+    final friendships = ref.read(friendshipRepositoryProvider);
     final results = await Future.wait([
-      FriendshipRepository.fetchData(),
-      FriendshipRepository.fetchPendingIncoming(),
-      FriendshipRepository.fetchPendingOutgoing(),
+      friendships.fetchData(),
+      friendships.fetchPendingIncoming(),
+      friendships.fetchPendingOutgoing(),
     ]);
 
     return FriendshipListState(

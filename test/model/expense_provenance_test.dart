@@ -71,7 +71,7 @@ Expense _expenseJson({
     },
     'expense_entry':
         entries ?? [_entryJson(id: 'u1', amount: 17.40, originalAmount: 3000)],
-  });
+  }, currentUserEmail: null);
 
 void main() {
   group('provenance round-trips through the model', () {
@@ -139,7 +139,7 @@ void main() {
                 'expense_entry_share': const [],
               },
             ],
-          });
+          }, currentUserEmail: null);
         expect(e.originalCurrencyCode, isNull);
         expect(e.conversionRate, isNull);
         expect(e.rateDate, isNull);

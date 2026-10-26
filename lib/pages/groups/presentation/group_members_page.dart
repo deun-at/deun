@@ -3,11 +3,11 @@ import 'dart:async';
 import 'package:deun/helper/helper.dart';
 import 'package:deun/helper/notification_sender.dart';
 import 'package:deun/l10n/app_localizations.dart';
-import 'package:deun/main.dart';
+import 'package:deun/pages/groups/data/member_repository.dart';
+import 'package:deun/provider.dart';
 import 'package:deun/pages/friends/data/friendship_repository.dart';
 import 'package:deun/pages/groups/data/group_member_model.dart';
 import 'package:deun/pages/groups/data/group_model.dart';
-import 'package:deun/pages/groups/data/group_repository.dart';
 import 'package:deun/pages/groups/data/member_add.dart';
 import 'package:deun/pages/groups/data/member_removal.dart';
 import 'package:deun/pages/groups/provider/group_detail.dart';
@@ -118,7 +118,7 @@ class _GroupMembersPageState extends ConsumerState<GroupMembersPage> {
     final group = _currentGroup();
     final exclude = addCandidateExclusions(
       members: group.groupMembers,
-      currentUserEmail: supabase.auth.currentUser?.email,
+      currentUserEmail: ref.read(currentUserProvider)?.email,
     );
     setState(() => _searching = true);
     try {
@@ -148,10 +148,12 @@ class _GroupMembersPageState extends ConsumerState<GroupMembersPage> {
     String query,
     Set<String> exclude,
   ) async {
-    final friends = await FriendshipRepository.fetchFriends(query, exclude, 99);
+    final friends = await ref
+        .read(friendshipRepositoryProvider)
+        .fetchFriends(query, exclude, 99);
     final others = query.isEmpty
         ? const <SupaUser>[]
-        : await UserRepository.fetchData(query, [
+        : await ref.read(userRepositoryProvider).fetchData(query, [
             ...exclude,
             ...friends.map((f) => f.email),
           ], 20);
@@ -175,10 +177,9 @@ class _GroupMembersPageState extends ConsumerState<GroupMembersPage> {
     try {
       MemberAddOutcome outcome;
       try {
-        outcome = await (widget.addMemberOverride ?? GroupRepository.addMember)(
-          group.id,
-          email,
-        );
+        outcome =
+            await (widget.addMemberOverride ??
+                ref.read(memberRepositoryProvider).addMember)(group.id, email);
       } catch (e) {
         debugPrint('Failed to add $email to group ${group.id}: $e');
         if (mounted) showSnackBar(context, l10n.groupMemberAddError(name));
@@ -217,9 +218,8 @@ class _GroupMembersPageState extends ConsumerState<GroupMembersPage> {
     final l10n = AppLocalizations.of(context)!;
     try {
       final guest =
-          await (widget.createGuestOverride ?? UserRepository.createGuest)(
-            name,
-          );
+          await (widget.createGuestOverride ??
+              ref.read(userRepositoryProvider).createGuest)(name);
       setState(() => _busy = false);
       await _handleAdd(
         email: guest.email,
@@ -272,7 +272,7 @@ class _GroupMembersPageState extends ConsumerState<GroupMembersPage> {
     try {
       final outcome =
           await (widget.previewRemovalOverride ??
-              GroupRepository.previewMemberRemoval)(
+              ref.read(memberRepositoryProvider).previewMemberRemoval)(
             group.id,
             member.email,
             currency: group.currency,
@@ -294,7 +294,8 @@ class _GroupMembersPageState extends ConsumerState<GroupMembersPage> {
         // No dialog at all — straight through.
       }
 
-      await (widget.removeMemberOverride ?? GroupRepository.removeMember)(
+      await (widget.removeMemberOverride ??
+          ref.read(memberRepositoryProvider).removeMember)(
         group.id,
         member.email,
         currency: group.currency,
@@ -314,6 +315,7 @@ class _GroupMembersPageState extends ConsumerState<GroupMembersPage> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
+    final currentUserEmail = ref.watch(currentUserProvider)?.email;
     return ThemeBuilder(
       colorValue: widget.group.colorValue,
       builder: (context) {
@@ -362,6 +364,7 @@ class _GroupMembersPageState extends ConsumerState<GroupMembersPage> {
                                       context,
                                       group,
                                       member,
+                                      currentUserEmail,
                                     ),
                                   ),
                               ],
@@ -498,10 +501,10 @@ class _GroupMembersPageState extends ConsumerState<GroupMembersPage> {
     BuildContext context,
     Group group,
     GroupMember member,
+    String? currentUserEmail,
   ) {
     final l10n = AppLocalizations.of(context)!;
     final theme = Theme.of(context);
-    final currentUserEmail = supabase.auth.currentUser?.email;
     final outstanding = group.memberBalances[member.email] ?? 0;
 
     final Widget trailing;

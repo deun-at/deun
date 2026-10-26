@@ -18,6 +18,7 @@ class EditorEntryList extends StatelessWidget {
     required this.isSingleEntry,
     required this.currency,
     required this.members,
+    required this.currentUserEmail,
     required this.amountController,
     required this.onRemove,
     required this.onLineTotalChanged,
@@ -27,6 +28,9 @@ class EditorEntryList extends StatelessWidget {
   final bool isSingleEntry;
   final Currency currency;
   final List<GroupMember> members;
+
+  /// The signed-in user's email, passed down so each entry marks "You".
+  final String? currentUserEmail;
   final TextEditingController amountController;
   final ValueChanged<int> onRemove;
 
@@ -45,6 +49,7 @@ class EditorEntryList extends StatelessWidget {
             index: e.index,
             onRemove: () => onRemove(e.index),
             groupMembers: members,
+            currentUserEmail: currentUserEmail,
             currency: currency,
             initialName: e.initialName,
             initialAmount: isSingleEntry ? null : e.initialAmount,

@@ -1,6 +1,5 @@
 import 'package:deun/constants.dart';
 import 'package:deun/helper/helper.dart';
-import 'package:deun/main.dart';
 import 'package:deun/widgets/theme_builder.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -17,6 +16,7 @@ import '../../../widgets/restyle/section_label.dart';
 import '../../../widgets/restyle/soft_card.dart';
 import '../../../widgets/restyle/stepper_control.dart';
 import '../../groups/data/group_member_model.dart';
+import '../../groups/data/member_display.dart';
 import '../data/expense_conversion.dart';
 import '../data/expense_entry_model.dart';
 import '../data/item_icon.dart';
@@ -30,6 +30,7 @@ class ExpenseEntryWidget extends StatefulWidget {
     required this.index,
     required this.onRemove,
     required this.groupMembers,
+    this.currentUserEmail,
     this.currency = Currency.eur,
     this.initialName,
     this.initialAmount,
@@ -43,6 +44,9 @@ class ExpenseEntryWidget extends StatefulWidget {
   final ExpenseEntry expenseEntry;
   final Function onRemove;
   final List<GroupMember> groupMembers;
+
+  /// The signed-in user's email: the member this entry names "You".
+  final String? currentUserEmail;
 
   /// Currency of the enclosing group, used to format all amounts and the
   /// amount-input symbol in this itemized entry.
@@ -67,6 +71,7 @@ class ExpenseEntryWidget extends StatefulWidget {
 }
 
 class _ExpenseEntryWidgetState extends State<ExpenseEntryWidget> {
+  late MemberDisplay _display;
   late SplitMode _splitMode;
   late int _quantity;
   late double _unitPrice;
@@ -349,23 +354,17 @@ class _ExpenseEntryWidgetState extends State<ExpenseEntryWidget> {
     return data;
   }
 
-  String _getDisplayName(String email) {
-    if (email == supabase.auth.currentUser?.email) {
-      return AppLocalizations.of(context)!.you;
-    }
-    try {
-      return widget.groupMembers
-          .firstWhere((m) => m.email == email)
-          .displayName;
-    } catch (_) {
-      return email;
-    }
-  }
+  String _getDisplayName(String email) => _display.nameOf(email);
 
   @override
   Widget build(BuildContext context) {
     const double spacing = 8;
     final l10n = AppLocalizations.of(context)!;
+    _display = MemberDisplay(
+      currentUserEmail: widget.currentUserEmail,
+      youLabel: l10n.you,
+      roster: widget.groupMembers,
+    );
 
     return Padding(
       // Itemized rows sit inside the parent's joined SoftCard and own their
@@ -922,7 +921,7 @@ class _ExpenseEntryWidgetState extends State<ExpenseEntryWidget> {
               name: displayName,
               colorKey: member.email,
               radius: 16,
-              isYou: member.email == supabase.auth.currentUser?.email,
+              isYou: _display.isYou(member.email),
             ),
           ),
           const SizedBox(width: 10),
@@ -1317,7 +1316,6 @@ class _ExpenseEntryWidgetState extends State<ExpenseEntryWidget> {
   /// [setState] as members toggle or amounts change.
   Widget _buildSplitSegments(SplitAllocation allocation) {
     final colorScheme = Theme.of(context).colorScheme;
-    final youEmail = supabase.auth.currentUser?.email;
 
     // Fraction of the total each segment occupies. For amount mode this is the
     // per-member amount / total (so an under-allocation leaves empty track); for
@@ -1333,7 +1331,7 @@ class _ExpenseEntryWidgetState extends State<ExpenseEntryWidget> {
       // Positive int flex; a zero-share included member keeps a hairline so
       // their color/presence stays visible.
       final flex = (flexOfTotal * 10000).round().clamp(1, 1 << 30);
-      final color = member.email == youEmail
+      final color = _display.isYou(member.email)
           ? colorScheme.primary
           : memberAvatarColor(member.email);
       children.add(

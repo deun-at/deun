@@ -3,7 +3,6 @@ import 'package:deun/l10n/app_localizations.dart';
 import 'package:flutter/foundation.dart';
 
 import 'expense_model.dart';
-import 'expense_repository.dart';
 
 /// Loads every payback (settle-up) row of one group.
 ///
@@ -119,23 +118,21 @@ ExpenseDeletionImpact classifyExpenseDeletion(
 /// row: [classifyExpenseDeletion] never reads `groupExpenses` in that branch,
 /// so fetching them first would be a guaranteed-wasted request on every
 /// settlement delete. Otherwise loads the group's payback rows via [loader]
-/// (production default: `ExpenseRepository.fetchPaybackRows`) and classifies
+/// (production: `ExpenseRepository.fetchPaybackRows`) and classifies
 /// against them. A failed probe degrades to [ExpenseDeletionImpact.none] —
 /// today's plain confirmation — rather than blocking the delete: this guard
 /// is presentation-only, never a reason to trap the user behind a network
 /// error.
 Future<ExpenseDeletionImpact> probeDeletionImpact(
   Expense expense, {
-  GroupPaybackLoader? loader,
+  required GroupPaybackLoader loader,
 }) async {
   if (expense.isPaidBackRow) {
     return classifyExpenseDeletion(expense, const []);
   }
 
   try {
-    final paybacks = await (loader ?? ExpenseRepository.fetchPaybackRows)(
-      expense.groupId,
-    );
+    final paybacks = await loader(expense.groupId);
     return classifyExpenseDeletion(expense, paybacks);
   } catch (e) {
     debugPrint('Payback probe failed for group ${expense.groupId}: $e');

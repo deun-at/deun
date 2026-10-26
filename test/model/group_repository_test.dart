@@ -9,8 +9,12 @@ import 'package:deun/pages/expenses/data/expense_repository.dart';
 import 'package:deun/pages/groups/data/group_repository.dart';
 import 'package:deun/pages/groups/data/group_member_model.dart';
 import 'package:deun/pages/groups/data/group_model.dart';
+import 'package:deun/pages/groups/data/member_repository.dart';
+import 'package:deun/pages/groups/data/payback_repository.dart';
 import 'package:deun/pages/groups/data/payback_request.dart';
 
+import '../helper/fake_supabase.dart';
+import '../helper/unused_repositories.dart';
 import '../pages/groups/join_group_migration_source.dart';
 
 void main() {
@@ -187,7 +191,7 @@ void main() {
     // 16
     test('the self-payback path sends exactly what it sent before', () {
       expect(
-        GroupRepository.payBackRpcParams(
+        PaybackRepository.payBackRpcParams(
           groupId: 'g1',
           paidBy: 'me@test.com',
           paidFor: 'ann@test.com',
@@ -204,13 +208,13 @@ void main() {
 
     // 17
     test('recording on behalf changes _paid_by and nothing else', () {
-      final mine = GroupRepository.payBackRpcParams(
+      final mine = PaybackRepository.payBackRpcParams(
         groupId: 'g1',
         paidBy: 'me@test.com',
         paidFor: 'bob@test.com',
         amount: 12.5,
       );
-      final onBehalf = GroupRepository.payBackRpcParams(
+      final onBehalf = PaybackRepository.payBackRpcParams(
         groupId: 'g1',
         paidBy: 'ann@test.com',
         paidFor: 'bob@test.com',
@@ -229,7 +233,7 @@ void main() {
       // pay_back_exact(_group_id, _paid_by, _paid_for, _amount) delegates to
       // pay_back with the same four, so one map serves both call sites.
       expect(
-        GroupRepository.payBackRpcParams(
+        PaybackRepository.payBackRpcParams(
           groupId: 'g1',
           paidBy: 'a@test.com',
           paidFor: 'b@test.com',
@@ -253,7 +257,7 @@ void main() {
     // 44 — criterion: the self-payback path sends byte-identical params.
     test('omitting paidBy makes the signed-in user the payer', () {
       final plan =
-          GroupRepository.planPayBack(
+          PaybackRepository.planPayBack(
                 paidFor: 'ann@test.com',
                 amount: 12.5,
                 recordedBy: 'me@test.com',
@@ -265,7 +269,7 @@ void main() {
       expect(plan.isOnBehalf, isFalse);
       // What `payBack` sends for that plan — exactly the pre-feature call.
       expect(
-        GroupRepository.payBackRpcParams(
+        PaybackRepository.payBackRpcParams(
           groupId: 'g1',
           paidBy: plan.paidBy,
           paidFor: plan.paidFor,
@@ -283,7 +287,7 @@ void main() {
     // 45 — an explicit payer is the only thing that moves `_paid_by`.
     test('an explicit paidBy overrides the default and nothing else', () {
       final plan =
-          GroupRepository.planPayBack(
+          PaybackRepository.planPayBack(
                 paidBy: 'ann@test.com',
                 paidFor: 'bob@test.com',
                 amount: 12.5,
@@ -296,7 +300,7 @@ void main() {
       expect(plan.recordedBy, 'me@test.com');
       expect(plan.isOnBehalf, isTrue);
       expect(
-        GroupRepository.payBackRpcParams(
+        PaybackRepository.payBackRpcParams(
           groupId: 'g1',
           paidBy: plan.paidBy,
           paidFor: plan.paidFor,
@@ -309,7 +313,7 @@ void main() {
     // 46 — the default is not a bypass: it goes through the same guard.
     test('the defaulted payer is still validated', () {
       expect(
-        GroupRepository.planPayBack(
+        PaybackRepository.planPayBack(
           paidFor: 'me@test.com',
           amount: 12.5,
           recordedBy: 'me@test.com',
@@ -322,7 +326,7 @@ void main() {
         ),
       );
       expect(
-        GroupRepository.planPayBack(
+        PaybackRepository.planPayBack(
           paidFor: 'ann@test.com',
           amount: 12.5,
           recordedBy: 'zoe@test.com',
@@ -346,7 +350,7 @@ void main() {
     const friend = 'ann@test.com';
 
     PayBackAllPlan resolve(List<Group> groups) =>
-        GroupRepository.resolvePayBackAll(
+        PaybackRepository.resolvePayBackAll(
           groups: groups,
           email: friend,
           recordedBy: me,
@@ -441,9 +445,10 @@ void main() {
     late List<PushRequest> pushes;
     late List<String> writes;
     late NotificationSender notifications;
+    late PayBackAllWrite write;
 
     PayBackAllPlan resolve(List<Group> groups) =>
-        GroupRepository.resolvePayBackAll(
+        PaybackRepository.resolvePayBackAll(
           groups: groups,
           email: friend,
           recordedBy: me,
@@ -455,17 +460,21 @@ void main() {
       notifications = NotificationSender(
         push: (request) async => pushes.add(request),
       );
-      GroupRepository.payBackAllWriteOverride = (target) async {
+      write = (target) async {
         writes.add(target.groupId);
       };
     });
 
-    tearDown(() => GroupRepository.payBackAllWriteOverride = null);
-
     test(
       'each settled group tells the friend once, with its own group and amount',
       () async {
-        await GroupRepository.applyPayBackAll(
+        await PaybackRepository(
+          FakeSupabaseClient(),
+          null,
+          groups: UnusedGroupRepository(),
+          members: UnusedMemberRepository(),
+          payBackAllWrite: (target) => write(target),
+        ).applyPayBackAll(
           resolve([
             _owingGroup('Trip', owed: 12.5),
             _owingGroup('Tokyo', owed: 3000, currencyCode: 'JPY'),
@@ -511,13 +520,19 @@ void main() {
     test(
       'a group whose write throws sends nothing; the others still send and the run still fails',
       () async {
-        GroupRepository.payBackAllWriteOverride = (target) async {
+        write = (target) async {
           if (target.groupId == 'id-Flat') throw Exception('rpc down');
           writes.add(target.groupId);
         };
 
         await expectLater(
-          GroupRepository.applyPayBackAll(
+          PaybackRepository(
+            FakeSupabaseClient(),
+            null,
+            groups: UnusedGroupRepository(),
+            members: UnusedMemberRepository(),
+            payBackAllWrite: (target) => write(target),
+          ).applyPayBackAll(
             resolve([
               _owingGroup('Trip'),
               _owingGroup('Flat'),
@@ -583,7 +598,7 @@ void main() {
     }
 
     PayBackAllPlan resolve(List<Group> groups) =>
-        GroupRepository.resolvePayBackAll(
+        PaybackRepository.resolvePayBackAll(
           groups: groups,
           email: friend,
           recordedBy: me,
@@ -645,31 +660,31 @@ void main() {
         expect(
           sql,
           contains(
-            'create or replace function public.${GroupRepository.joinGroupRpcName}(',
+            'create or replace function public.${MemberRepository.joinGroupRpcName}(',
           ),
         );
         final declared = joinGroupDeclaredArgs(sql).toSet();
 
         expect(
-          GroupRepository.joinGroupRpcParams(
+          MemberRepository.joinGroupRpcParams(
             groupId: 'g1',
             guestEmail: 'guest+1@guest.invalid',
           ).keys.toSet(),
           declared,
         );
         expect(
-          GroupRepository.joinGroupRpcParams(groupId: 'g1').keys.toSet(),
+          MemberRepository.joinGroupRpcParams(groupId: 'g1').keys.toSet(),
           declared,
         );
 
         expect(
-          GroupRepository.joinGroupRpcParams(
+          MemberRepository.joinGroupRpcParams(
             groupId: 'g1',
             guestEmail: 'guest+1@guest.invalid',
           ),
           {'_group_id': 'g1', '_guest_email': 'guest+1@guest.invalid'},
         );
-        expect(GroupRepository.joinGroupRpcParams(groupId: 'g1'), {
+        expect(MemberRepository.joinGroupRpcParams(groupId: 'g1'), {
           '_group_id': 'g1',
           '_guest_email': null,
         });
@@ -683,7 +698,7 @@ void main() {
   group('GroupRepository.removeMemberRpcParams', () {
     test("sends the settled epsilon of the group's own currency", () {
       expect(
-        GroupRepository.removeMemberRpcParams(
+        MemberRepository.removeMemberRpcParams(
           groupId: 'g1',
           email: 'ann@test.com',
           currency: Currency.eur,
@@ -691,7 +706,7 @@ void main() {
         0.005,
       );
       expect(
-        GroupRepository.removeMemberRpcParams(
+        MemberRepository.removeMemberRpcParams(
           groupId: 'g1',
           email: 'ann@test.com',
           currency: Currency.jpy,
@@ -711,12 +726,13 @@ void main() {
       () {
         final sql = migrationSqlBySuffix('_group_write_rpcs.sql');
         final calls = <String, Map<String, dynamic>>{
-          GroupRepository.addMemberRpcName: GroupRepository.addMemberRpcParams(
-            groupId: 'g1',
-            email: 'ann@test.com',
-          ),
-          GroupRepository.removeMemberRpcName:
-              GroupRepository.removeMemberRpcParams(
+          MemberRepository.addMemberRpcName:
+              MemberRepository.addMemberRpcParams(
+                groupId: 'g1',
+                email: 'ann@test.com',
+              ),
+          MemberRepository.removeMemberRpcName:
+              MemberRepository.removeMemberRpcParams(
                 groupId: 'g1',
                 email: 'ann@test.com',
                 currency: Currency.eur,
@@ -768,21 +784,19 @@ void main() {
       }
 
       const groups = 'lib/pages/groups/data/group_repository.dart';
+      const members = 'lib/pages/groups/data/member_repository.dart';
       const expenses = 'lib/pages/expenses/data/expense_repository.dart';
       final bodies = {
         'addMemberRpcName': method(
-          groups,
-          'static Future<MemberAddOutcome> addMember(',
+          members,
+          'Future<MemberAddOutcome> addMember(',
         ),
         'removeMemberRpcName': method(
-          groups,
-          'static Future<MemberRemovalOutcome> removeMember(',
+          members,
+          'Future<MemberRemovalOutcome> removeMember(',
         ),
-        'deleteRpcName (group)': method(groups, 'static Future<void> delete('),
-        'deleteRpcName (expense)': method(
-          expenses,
-          'static Future<void> delete(',
-        ),
+        'deleteRpcName (group)': method(groups, 'Future<void> delete('),
+        'deleteRpcName (expense)': method(expenses, 'Future<void> delete('),
       };
       for (final MapEntry(key: name, value: body) in bodies.entries) {
         expect('supabase.'.allMatches(body), hasLength(1), reason: name);

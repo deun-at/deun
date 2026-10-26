@@ -13,13 +13,11 @@ import 'package:deun/widgets/restyle/currency_chips.dart';
 import 'package:deun/widgets/restyle/money_text.dart';
 import 'package:deun/widgets/theme_builder.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_staggered_animations/flutter_staggered_animations.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 
 const _myEmail = 'me@test.com';
 
@@ -89,6 +87,7 @@ Future<void> _pumpScreen(
   await tester.pumpWidget(
     ProviderScope(
       overrides: [
+        currentUserProvider.overrideWithValue(null),
         groupListProvider.overrideWith(
           () => _FakeGroupListNotifier(groups, toggled ?? []),
         ),
@@ -155,6 +154,7 @@ Future<void> _pumpWithRouter(
   await tester.pumpWidget(
     ProviderScope(
       overrides: [
+        currentUserProvider.overrideWithValue(null),
         groupListProvider.overrideWith(
           () => _FakeGroupListNotifier(groups, []),
         ),
@@ -177,32 +177,6 @@ Future<void> _pumpWithRouter(
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
-
-  setUpAll(() async {
-    // Stub the shared_preferences platform channel (used by Supabase's auth
-    // storage) so init doesn't throw a MissingPluginException. Done via the
-    // channel directly to avoid a direct dev-dependency on shared_preferences.
-    TestWidgetsFlutterBinding.ensureInitialized().defaultBinaryMessenger
-        .setMockMethodCallHandler(
-          const MethodChannel('plugins.flutter.io/shared_preferences'),
-          (call) async {
-            if (call.method == 'getAll') return <String, Object>{};
-            return null;
-          },
-        );
-
-    // Initialize Supabase so Group.isFavorite's `supabase.auth.currentUser`
-    // access resolves (to null session) instead of throwing. No network is
-    // used by these tests.
-    await Supabase.initialize(
-      url: 'http://localhost:54321',
-      anonKey: 'test-anon-key',
-    );
-  });
-
-  tearDownAll(() async {
-    await Supabase.instance.dispose();
-  });
 
   testWidgets('renders greeting, group name and a card', (tester) async {
     await _pumpScreen(
@@ -386,6 +360,7 @@ void main() {
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
+          currentUserProvider.overrideWithValue(null),
           groupListProvider.overrideWith(
             () => _FakeGroupListNotifier([
               _group(id: 'a', name: 'A', totalShareAmount: 10),
@@ -746,6 +721,7 @@ void main() {
       await tester.pumpWidget(
         ProviderScope(
           overrides: [
+            currentUserProvider.overrideWithValue(null),
             groupListProvider.overrideWith(
               () => _FakeGroupListNotifier([
                 _group(
@@ -845,6 +821,7 @@ void main() {
       await tester.pumpWidget(
         ProviderScope(
           overrides: [
+            currentUserProvider.overrideWithValue(null),
             groupListProvider.overrideWith(
               () => _FakeGroupListNotifier(groups, []),
             ),
@@ -897,6 +874,7 @@ void main() {
       await tester.pumpWidget(
         ProviderScope(
           overrides: [
+            currentUserProvider.overrideWithValue(null),
             groupListProvider.overrideWith(
               () => _FakeGroupListNotifier(groups, toggled),
             ),

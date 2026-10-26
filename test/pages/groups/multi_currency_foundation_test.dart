@@ -4,30 +4,12 @@ import 'package:deun/pages/groups/data/group_model.dart';
 import 'package:deun/widgets/restyle/money_text.dart';
 import 'package:deun/widgets/theme_builder.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 
 /// Acceptance tests for multi-currency-foundation. Every assertion restates an
 /// acceptance criterion from the plan.
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
-
-  setUpAll(() async {
-    TestWidgetsFlutterBinding.ensureInitialized().defaultBinaryMessenger
-        .setMockMethodCallHandler(
-          const MethodChannel('plugins.flutter.io/shared_preferences'),
-          (call) async => call.method == 'getAll' ? <String, Object>{} : null,
-        );
-    await Supabase.initialize(
-      url: 'http://localhost:54321',
-      anonKey: 'test-anon-key',
-    );
-  });
-
-  tearDownAll(() async {
-    await Supabase.instance.dispose();
-  });
 
   Map<String, dynamic> _groupJson({String? currencyCode}) {
     final json = <String, dynamic>{
@@ -46,7 +28,7 @@ void main() {
 
   group('group currency_code column', () {
     test('existing rows (no currency_code) backfill to EUR', () {
-      final g = Group()..loadDataFromJson(_groupJson());
+      final g = Group()..loadDataFromJson(_groupJson(), currentUserEmail: null);
       expect(g.currencyCode, 'EUR');
     });
 
@@ -55,12 +37,19 @@ void main() {
       // loadDataFromJson — one bad row would otherwise fail the whole list.
       final json = _groupJson()..['name'] = null;
       final g = Group();
-      expect(() => g.loadDataFromJson(json), returnsNormally);
+      expect(
+        () => g.loadDataFromJson(json, currentUserEmail: null),
+        returnsNormally,
+      );
       expect(g.name, '');
     });
 
     test('a group reads its persisted currency_code', () {
-      final g = Group()..loadDataFromJson(_groupJson(currencyCode: 'USD'));
+      final g = Group()
+        ..loadDataFromJson(
+          _groupJson(currencyCode: 'USD'),
+          currentUserEmail: null,
+        );
       expect(g.currencyCode, 'USD');
     });
 
@@ -70,7 +59,11 @@ void main() {
     });
 
     test('currency_code round-trips through toJson', () {
-      final g = Group()..loadDataFromJson(_groupJson(currencyCode: 'GBP'));
+      final g = Group()
+        ..loadDataFromJson(
+          _groupJson(currencyCode: 'GBP'),
+          currentUserEmail: null,
+        );
       expect(g.toJson()['currency_code'], 'GBP');
     });
   });

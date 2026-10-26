@@ -139,13 +139,13 @@ const List<_Admit> _admits = [
     policy: ' Enable users to delete their friendships',
   ),
   (
-    source: 'lib/pages/groups/data/group_repository.dart',
+    source: 'lib/pages/groups/data/member_repository.dart',
     table: 'group_member',
     command: 'update',
     policy: _memberUpdate,
   ),
   (
-    source: 'lib/pages/groups/data/group_repository.dart',
+    source: 'lib/pages/groups/data/member_repository.dart',
     table: 'group_member',
     command: 'select',
     policy: _memberRead,

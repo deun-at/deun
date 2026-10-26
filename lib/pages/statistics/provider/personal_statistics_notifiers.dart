@@ -1,9 +1,10 @@
+import 'package:deun/provider.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../../helper/currency_breakdown.dart';
 import '../../../helper/helper.dart';
-import '../../../main.dart';
 import '../../groups/provider/group_list.dart';
+import '../../users/user_repository.dart';
 import '../statistics_models.dart';
 
 part 'personal_statistics_notifiers.g.dart';
@@ -16,8 +17,8 @@ class PersonalStatisticsNotifier extends _$PersonalStatisticsNotifier {
   }
 
   Future<PersonalStatisticsState> _load(StatsRange range) async {
-    final email = supabase.auth.currentUser?.email;
-    if (email == null) return PersonalStatisticsState.empty;
+    final email = ref.watch(currentUserProvider)?.email;
+    if (email == null || email.isEmpty) return PersonalStatisticsState.empty;
 
     final now = DateTime.now();
     final end = DateTime(now.year, now.month + 1, 1);
@@ -28,16 +29,9 @@ class PersonalStatisticsNotifier extends _$PersonalStatisticsNotifier {
       start = DateTime(now.year, now.month - (range.months! - 1), 1);
     }
 
-    final rows =
-        await supabase.rpc(
-              'get_user_spending_summary',
-              params: {
-                'p_user_email': email,
-                'p_start': _toDateOnly(start),
-                'p_end': _toDateOnly(end),
-              },
-            )
-            as List<dynamic>;
+    final rows = await ref
+        .read(userRepositoryProvider)
+        .fetchSpendingSummary(start: start, end: end);
 
     // The RPC already returns group_id per row and groups by group and month,
     // so the per-currency fold is pure client-side work over rows that already
@@ -49,8 +43,7 @@ class PersonalStatisticsNotifier extends _$PersonalStatisticsNotifier {
     final Map<Currency, Map<DateTime, double>> byMonth = {};
     int expenseCount = 0;
 
-    for (final raw in rows) {
-      final row = raw as Map<String, dynamic>;
+    for (final row in rows) {
       final groupId = row['group_id'] as String;
       final currency = currencyByGroup[groupId] ?? Currency.eur;
       final groupName = row['group_name'] as String? ?? '';
@@ -127,9 +120,6 @@ class PersonalStatisticsNotifier extends _$PersonalStatisticsNotifier {
       expenseCount: expenseCount,
     );
   }
-
-  static String _toDateOnly(DateTime d) =>
-      '${d.year.toString().padLeft(4, '0')}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
 }
 
 /// "Your share" per currency for the personal statistics surface, primary

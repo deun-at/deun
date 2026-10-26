@@ -5,7 +5,7 @@ import 'package:deun/helper/notification_sender.dart';
 import 'package:deun/pages/friends/data/friendship_model.dart';
 import 'package:deun/pages/friends/data/friendship_repository.dart';
 import 'package:deun/pages/friends/presentation/friend_detail_view_model.dart';
-import 'package:deun/pages/groups/data/group_repository.dart';
+import 'package:deun/pages/groups/data/payback_repository.dart';
 import 'package:deun/pages/users/user_model.dart';
 import 'package:deun/widgets/restyle/currency_chips.dart';
 import 'package:deun/widgets/restyle/member_avatar.dart';
@@ -29,11 +29,11 @@ import 'package:url_launcher/url_launcher.dart';
 /// settle-up sheet (E4-T1). A destructive "Remove as friend" action sits at the
 /// bottom.
 ///
-/// This is a presentation-only restyle: the pay-back (`GroupRepository`),
+/// This is a presentation-only restyle: the pay-back (`PaybackRepository`),
 /// remove-friend (`FriendshipRepository.remove`) and PayPal/IBAN handling are
 /// the same logic as the previous `openFriendshipDialog`.
 /// The cross-group settle "Mark as paid" performs. Null in production →
-/// [GroupRepository.payBackAll]; widget tests inject a stub so they never reach
+/// [PaybackRepository.payBackAll]; widget tests inject a stub so they never reach
 /// the network (same seam as `RecordPaybackSheet.recordPayback`).
 typedef FriendSettleAll =
     Future<PayBackAllResult> Function(
@@ -155,7 +155,7 @@ class FriendDetailSheet extends ConsumerWidget {
 
 /// One pay-back method card (PayPal / Copy IBAN / Mark as paid). Mirrors the
 /// group settle-up `_MethodCard` treatment (E4-T1).
-class _PayBackCard extends StatelessWidget {
+class _PayBackCard extends ConsumerWidget {
   const _PayBackCard({
     required this.method,
     required this.friendship,
@@ -172,7 +172,7 @@ class _PayBackCard extends StatelessWidget {
   final FriendSettleAll? settleAll;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context)!;
     final colorScheme = Theme.of(context).colorScheme;
 
@@ -202,7 +202,7 @@ class _PayBackCard extends StatelessWidget {
         title = l10n.payBackDialogDone;
         subtitle = l10n.friendPayBackMarkPaidSubtitle;
         trailing = Icons.check_circle_outline;
-        onTap = () => _markPaid(context);
+        onTap = () => _markPaid(context, ref);
         break;
     }
 
@@ -265,7 +265,7 @@ class _PayBackCard extends StatelessWidget {
     }
   }
 
-  /// Records the payment via the existing [GroupRepository.payBackAll] RPC, then
+  /// Records the payment via the existing [PaybackRepository.payBackAll] RPC, then
   /// closes the sheet (same behavior as the previous friend sheet).
   ///
   /// The balance shown here is a **cross-group** total, so a group `payBackAll`
@@ -279,12 +279,13 @@ class _PayBackCard extends StatelessWidget {
   /// neither a success worth naming an amount for — there is none, and
   /// `formatCurrencyAmounts` on an empty list yields a blank — nor a partial
   /// settle, since no group was left behind. It reports "nothing to pay back".
-  Future<void> _markPaid(BuildContext context) async {
+  Future<void> _markPaid(BuildContext context, WidgetRef ref) async {
     final l10n = AppLocalizations.of(context)!;
     final notifications = NotificationSender();
     final user = friendship.user;
     try {
-      final settle = settleAll ?? GroupRepository.payBackAll;
+      final settle =
+          settleAll ?? ref.read(paybackRepositoryProvider).payBackAll;
       final result = await settle(user.email, notifications: notifications);
       final String message;
       if (result.settledAmounts.isEmpty) {
@@ -325,19 +326,19 @@ class _PayBackCard extends StatelessWidget {
 }
 
 /// Destructive "Remove as friend" action card.
-class _RemoveFriendCard extends StatelessWidget {
+class _RemoveFriendCard extends ConsumerWidget {
   const _RemoveFriendCard({required this.user});
 
   final SupaUser user;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context)!;
     final colorScheme = Theme.of(context).colorScheme;
 
     return SoftCard(
       color: colorScheme.errorContainer.withValues(alpha: 0.4),
-      onTap: () => _confirmRemove(context),
+      onTap: () => _confirmRemove(context, ref),
       child: Row(
         children: [
           Icon(Icons.person_remove_outlined, color: colorScheme.error),
@@ -357,7 +358,7 @@ class _RemoveFriendCard extends StatelessWidget {
 
   /// Confirm + remove. Reuses [FriendshipRepository.remove] and the original
   /// two-pop close (confirm dialog + sheet).
-  void _confirmRemove(BuildContext sheetContext) {
+  void _confirmRemove(BuildContext sheetContext, WidgetRef ref) {
     showDialog<void>(
       context: sheetContext,
       builder: (dialogContext) => AlertDialog(
@@ -376,7 +377,7 @@ class _RemoveFriendCard extends StatelessWidget {
             label: AppLocalizations.of(dialogContext)!.remove,
             onPressed: () async {
               try {
-                await FriendshipRepository.remove(user.email);
+                await ref.read(friendshipRepositoryProvider).remove(user.email);
                 if (dialogContext.mounted) {
                   showSnackBar(
                     dialogContext,

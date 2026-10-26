@@ -21,7 +21,6 @@ import 'package:flutter_form_builder/flutter_form_builder.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 
 GroupMember _member(String email, String name) {
   final m = GroupMember();
@@ -99,7 +98,7 @@ Expense _expense(
         ],
       },
     ],
-  });
+  }, currentUserEmail: null);
   return e;
 }
 
@@ -190,7 +189,7 @@ Expense _itemizedExpense(List<double> amounts) => Expense()
       for (var i = 0; i < amounts.length; i++)
         _entryJson(id: 'u$i', amount: amounts[i]),
     ],
-  });
+  }, currentUserEmail: null);
 
 /// A CHF 10.00 x3 claim line at 0.9432: three units of 9.44 / 9.43 / 9.43
 /// summing to the 28.30 EUR the ledger holds. The editor regroups it into one
@@ -230,7 +229,7 @@ Expense convertedClaimExpense() => Expense()
         itemGroupId: 'i1',
       ),
     ],
-  });
+  }, currentUserEmail: null);
 
 late _FakePrefs _prefs;
 
@@ -307,6 +306,7 @@ Future<void> pumpEditor(
 }) async {
   await tester.pumpWidget(
     ProviderScope(
+      overrides: [currentUserProvider.overrideWithValue(null)],
       child: MaterialApp(
         localizationsDelegates: const [
           AppLocalizations.delegate,
@@ -412,23 +412,6 @@ void installFakePrefs() {
   _prefs = _FakePrefs()..install();
 }
 
-/// Initialises the mocked Supabase client the editor reaches for. Call from
-/// `setUpAll`.
-Future<void> initTestSupabase() async {
-  TestWidgetsFlutterBinding.ensureInitialized().defaultBinaryMessenger
-      .setMockMethodCallHandler(
-        const MethodChannel('plugins.flutter.io/shared_preferences'),
-        (call) async {
-          if (call.method == 'getAll') return <String, Object>{};
-          return null;
-        },
-      );
-  await Supabase.initialize(
-    url: 'http://localhost:54321',
-    anonKey: 'test-anon-key',
-  );
-}
-
 /// Pumps the editor with its WRITE stubbed, on a pushed route so a successful
 /// save can pop back, and returns the list the stub records into.
 ///
@@ -450,6 +433,7 @@ Future<List<SavedExpense>> pumpEditorWithSaveSeam(
   final captured = <SavedExpense>[];
   await tester.pumpWidget(
     ProviderScope(
+      overrides: [currentUserProvider.overrideWithValue(null)],
       child: MaterialApp(
         localizationsDelegates: const [
           AppLocalizations.delegate,
@@ -504,12 +488,6 @@ Future<void> _save(WidgetTester tester) async {
 }
 
 void main() {
-  setUpAll(initTestSupabase);
-
-  tearDownAll(() async {
-    await Supabase.instance.dispose();
-  });
-
   setUp(installFakePrefs);
 
   testWidgets(

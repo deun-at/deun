@@ -12,7 +12,6 @@ import 'package:deun/pages/expenses/service/rate_source.dart';
 import 'package:deun/provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 
 // The editor harness, shared with the suite that owns the rate field.
 import 'expense_editor_currency_rate_test.dart'
@@ -20,7 +19,6 @@ import 'expense_editor_currency_rate_test.dart'
         StubLookup,
         closeConversionSheet,
         convertedExpense,
-        initTestSupabase,
         installFakePrefs,
         openConversionSheet,
         pickCurrency,
@@ -53,12 +51,6 @@ Finder _conversionAmount(String text) => find.descendant(
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
-
-  setUpAll(initTestSupabase);
-
-  tearDownAll(() async {
-    await Supabase.instance.dispose();
-  });
 
   setUp(installFakePrefs);
 

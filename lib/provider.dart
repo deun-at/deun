@@ -5,6 +5,7 @@ import 'package:deun/main.dart';
 import 'package:deun/pages/friends/provider/friendship_list.dart';
 import 'package:deun/pages/groups/provider/group_list.dart';
 import 'package:deun/pages/settings/theme_mode_pref.dart';
+import 'package:deun/pages/users/current_user.dart';
 import 'package:deun/pages/users/user_repository.dart';
 import 'package:deun/push_notifications.dart';
 import 'package:flutter/material.dart';
@@ -45,6 +46,25 @@ String stickyRateKey(String groupId, Currency from) => '$groupId|${from.code}';
 /// controllable stream in tests.
 @riverpod
 Stream<AuthState> authStateChanges(Ref ref) => supabase.auth.onAuthStateChange;
+
+/// The Supabase client every repository queries through. Overridden in tests.
+@Riverpod(keepAlive: true)
+SupabaseClient supabaseClient(Ref ref) => Supabase.instance.client;
+
+/// Who is signed in right now, or null. The only reader of `supabase.auth`
+/// outside the auth plumbing: the last auth event's session decides, and before
+/// the first event the session the client restored does. An equal value does
+/// not notify, so a token refresh or a re-emitted sign-in for the same account
+/// rebuilds nothing.
+@Riverpod(keepAlive: true)
+CurrentUser? currentUser(Ref ref) {
+  final user = switch (ref.watch(authStateChangesProvider)) {
+    AsyncData(:final value) => value.session?.user,
+    _ => ref.watch(supabaseClientProvider).auth.currentUser,
+  };
+  if (user == null) return null;
+  return CurrentUser(id: user.id, email: user.email ?? '');
+}
 
 /// Invalidates every user-scoped `keepAlive` provider so a new session never
 /// inherits the previous account's cached data. This is the single choke point
@@ -106,13 +126,14 @@ class AuthUserSwitchListener extends _$AuthUserSwitchListener {
 class UserDetailNotifier extends _$UserDetailNotifier {
   @override
   FutureOr<SupaUser> build() async {
+    ref.watch(currentUserProvider);
     return await fetchUserDetail();
   }
 
   Future<SupaUser> fetchUserDetail() async {
-    return await UserRepository.fetchDetail(
-      supabase.auth.currentUser!.email ?? '',
-    );
+    return await ref
+        .read(userRepositoryProvider)
+        .fetchDetail(ref.read(currentUserProvider)!.email);
   }
 }
 
