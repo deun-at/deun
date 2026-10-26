@@ -397,6 +397,26 @@ carry `[human]` criteria that nobody has ever observed. Check here before shippi
   and has a device, and D was soft-removed from G and has a device. Confirm only B's device shows
   the push. Repeat with the anon key in place of A's token and confirm a 401 and that no device
   receives anything.
+- [ ] **proves** · rls-hardening: with the migration applied, the anon key executes no public
+  function, and the everyday flows still work on a real account · out of reach: the self-hosted
+  api.deun.app (migration unapplied); the policies and grants themselves are proven on the local
+  harness (`supabase/tests/rls_stopgap/70_rls_hardening_cases.sql`, 21/21; 20/21 before the
+  migration) and every write the app and its RPCs send is pinned to the policy that admits it by
+  `test/pages/groups/rls_hardening_migration_test.dart` · apply
+  `20261026160000_rls_hardening.sql` as `supabase_admin` **last**: after `20261026100000`,
+  `20261026120000` and `20261026140000` when those are applied. If one of them is applied after
+  it, run this file again (one idempotent `revoke`); until then the functions that migration
+  creates stay callable through PUBLIC. Confirm by read-only SQL that
+  `select count(*) from pg_proc p join pg_namespace n on n.oid = p.pronamespace where n.nspname = 'public' and has_function_privilege('anon', p.oid, 'execute');`
+  returns 0, and the same query with `not has_function_privilege('authenticated', p.oid, 'execute')`
+  returns 0. Then, with test accounts and throwaway groups only (never real data): sign in on a
+  fresh account (its user row is created), create a group, add a guest and a member, add and edit
+  an expense in Quick and in Itemized, claim a unit, record a payback, settle all with a friend,
+  join by invite link claiming a guest from a second device, remove a member, delete an expense and
+  the group, let the app register its push token, sign out. Record any permission error under
+  Findings. If a flow fails with `permission denied for function <name>`, grant that one function
+  back to `authenticated` (`grant execute on function public.<name>(<args>) to authenticated;`) —
+  never to `public`, which would reopen every revoked SECURITY DEFINER helper to anon.
 
 ## Findings from verification
 

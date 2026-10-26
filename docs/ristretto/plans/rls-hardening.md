@@ -16,10 +16,9 @@
   - [auto] **No recursive policy.** Every policy that asks "is the caller a member of group G" asks it through one SECURITY DEFINER helper with a fixed `search_path`, never through a sub-select on `group_member` inside a `group_member` policy. Red means every query on the table fails with "infinite recursion detected in policy". Proven by source shape.
   - [auto] **Every write the app and its RPCs make today still passes the new policies.** For each client write and each SECURITY INVOKER RPC (`save_expense_all`, `save_group_all`, `claim_set_unit_shares`, `pay_back`, `pay_back_exact`, `update_group_member_shares`, and, where they have landed, `join_group`, `add_group_member`, `remove_group_member`, `delete_group` and `delete_expense`), a table maps the statement to the policy that admits it. The table is kept as data in the test file, and the test pins it against the migration's policy names and the statements found in lib/ and supabase/migrations/. Red means a save, payback, claim, join or member change starts failing with a permission error after Jakob applies the migration.
   - [auto] `dart format`, `flutter analyze` and `flutter test` pass.
-  - [ ] [human] With the migrations applied on api.deun.app, a request carrying only the anon key reads no row of `device_tokens`, `expense_entry_share` or `user`, and a signed-in account that shares nothing with group G reads no row of G's members, expenses, lines, shares or balances, and cannot update or delete them.
-    how: the self-hosted api.deun.app is unreachable from the build, and the migration is unapplied · apply the migrations, then with the anon key and with a second account sharing nothing with a test group, query each table and try an update and delete on that group's rows; all return no rows or fail
+  - [auto] On the local RLS harness (supabase/tests/rls_stopgap: the public-schema dump plus the applied 20261025180000 stopgap and 20261025190000 follow-up) with the migration applied, the anon role holds no privilege on any public table, view, sequence or function, directly or through PUBLIC, and a table created later is not granted to it; a signed-in account that shares nothing with group G reads no row of G's group, members, expenses, lines, shares or balances, and updates or deletes none of them. (Planner 2026-10-26: was [human] on api.deun.app; the repo's harness reaches it — 70_rls_hardening_cases.sql, planner dry run 20/21 before the migration (anon executed 12 public functions through PUBLIC), 21/21 after; 30 75/75, 40 14/14, 50 4/4, 60 21/21 in both apply orders. The live apply stays the open manual-checks entry below.)
   - [ ] [human] With the migrations applied, the everyday flows still work on a real account: sign in on a fresh account (user row created), create a group with a guest, add a member, add and edit an expense in Quick and Itemized, claim a unit, record a payback, settle all with a friend, join by invite link claiming a guest, remove a member, delete an expense and a group, register a push token, sign out.
-    how: same · walk the flows named in the second `[human]` criterion on a real account and a second device, and record any permission error under Findings
+    how: the self-hosted api.deun.app is unreachable from the build, and the migration is unapplied · apply the migration (manual-checks entry), then walk the flows named in this criterion on a real account and a second device, and record any permission error under Findings
 - Provides: —
 - Consumes: —
 - Decisions:
@@ -43,12 +42,17 @@
   - Order against the atomic-writes RPCs -> no Depends either way. The statement→policy table covers the client statements and RPC bodies present at build time; for each of guest-merge-rpc, group-write-rpcs and payback-atomic-recalc that has landed, its RPC is in the table, and one that has not is covered by the client statements it will replace. Those plans keep their SECURITY INVOKER rulings, and their source-shape tests are untouched.
   - push-session-lifecycle -> its sign-out unregister deletes `device_tokens` by `user_id` and token, which the owner DELETE policy admits (push-session-lifecycle plan, Decisions "Migrations"). The push function reads and deletes tokens with the service role, which RLS does not apply to.
   - (h) migrations -> authored here, applied by Jakob, an Open manual-checks entry per `[human]` criterion, and a `⚠ migration pending` marker on the row. No client fallback.
+  - taken: what the new migration holds → one statement, `revoke execute on all functions in schema public from public, anon`. The live stopgap and follow-up already carry every RLS switch, policy, the membership helper and the column grants Units 1–3 name; what they left is PUBLIC's default EXECUTE, through which anon could still call every public function. No policy is re-stated, and authenticated and service_role keep their own explicit grants (planner 2026-10-26).
+  - taken: apply order → after 20261026100000, 20261026120000 and 20261026140000 when those are applied; if one goes in later, run this migration again (functions created after it get PUBLIC's EXECUTE back). No global default-privilege change, which would reach the platform's own schemas; every later migration that creates a function revokes it from public and anon itself, and the source test holds it to that (planner 2026-10-26).
+  - taken: the first `[human]` criterion → `[auto]` on the local harness; manual-checks keeps one Open entry (apply, read-only catalog check, the flow walk) (planner 2026-10-26).
+  - taken: friendship self-accept (a user setting their own friendship row to `accepted`) → left out of this feature under its scope ruling; nothing pinned here treats `accepted` as trust, and the push function admits a friendship row of any status (closer 2026-10-26).
+  - taken: publishing `group_member`'s `(email, group_id)` on DELETE (realtime-event-scope, migration 20261025200000) → left out of this feature; it is already flagged "do not apply yet" in manual-checks.md (closer 2026-10-26).
+  - taken: the `expense_update_checker` DELETE-event leak (live, not introduced here) → not changed by this feature; recorded under Open findings for Jakob's ruling. No roadmap row: that is Jakob's call (closer 2026-10-26).
 - Units:
-  - Migration part 1: the anon revoke on tables, functions and default privileges, and the membership helper.
-  - Migration part 2: RLS and policies on device_tokens, expense_entry, expense_entry_share and group_shares_summary.
-  - Migration part 3: replace the open `user` and `group_member` policies with the scoped write policies and the authenticated-only SELECT.
-  - The statement→policy table, its pin test, and the source-shape tests for parts 1–3, in one new test file.
-  - The two Open manual-checks entries.
+  - The migration: `revoke execute on all functions in schema public from public, anon` (20261026160000_rls_hardening.sql).
+  - The source-shape and statement→policy pin test, test/pages/groups/rls_hardening_migration_test.dart.
+  - The local-harness suite, supabase/tests/rls_stopgap/70_rls_hardening_cases.sql.
+  - One Open manual-checks entry (apply last, read-only catalog check, the flow walk).
 - Blockers: —
 
 ## Approach
@@ -57,3 +61,24 @@
 - Likely touchpoints: supabase/migrations/ (one new file), test/pages/groups/rls_hardening_migration_test.dart (new), docs/ristretto/manual-checks.md
 - Depends: —
 - Parallel-with: every other code-review-2026-10 feature except realtime-event-scope, guest-merge-rpc, group-write-rpcs and payback-atomic-recalc, whose migrations it must read at build time (no shared code file; take the next free migration stamp).
+
+## Evidence
+- 1: test/pages/groups/rls_hardening_migration_test.dart, the two C1 tests (red before the migration file existed, green after); harness 70_rls_hardening_cases.sql 21/21 (20/21 before: anon executed 12 public functions through PUBLIC).
+- 2: test C2 (RLS on every app table, `birthday_signup` without a policy), over the stopgap files that carry the switches.
+- 3: test C3 (device_tokens policies keyed by `auth.uid()`).
+- 4: test C4 (expense lines, shares and balances through the membership helper, soft-removed included).
+- 5: test C5 (user row by owner, guest domain, orphaned-guest delete).
+- 6: test C6 (group_member insert/update/delete rules).
+- 7: test C7 (no policy reads group_member; helpers are SECURITY DEFINER with a pinned search_path).
+- 8: the two C8 tests (statement→policy table pinned against lib/ and the RPC bodies; every column an update writes is granted to authenticated).
+- 9: `dart format --set-exit-if-changed` on the new test: 0 changed; `flutter analyze`: no issues; `flutter test`: 1815 passed.
+- 10: harness suites in both apply orders: 30 75/75, 40 14/14, 50 4/4, 60 21/21, 70 21/21.
+- 11: pending human
+- gates: dart format, flutter analyze, flutter test (1815) green; local harness green in both orders.
+- review: notes-only · rounds: 1 · open: 0 block, 1 note, 1 lean · trimmed: 0
+- tier: normal
+
+## Open findings
+- security · LIVE, not introduced here · supabase/schema/baseline.sql:6088 (`expense_update_checker` in `supabase_realtime`, PK `(expense_id, group_id)` at :4460) + 20261025180000_rls_stopgap.sql:165–175 (`group_member: insert self or by member` admits `email = own` for any `group_id`) · Realtime does not apply RLS to DELETE events and trims the old record to the primary key, so any signed-in subscriber without a filter receives `{expense_id, group_id}` for every deleted expense/payback (FK cascade from delete_expense; payback delete in payback_detail_sheet). A bare group id is enough to join (the harness asserts it: 30_cases.sql:92 `stranger joins G1 by id (invite model)` → ok:1); once joined the stranger is a full member — reads every expense, line, share and balance, can rewrite or delete expenses and delete the group. Cost to an attacker: any account from open OAuth sign-up plus one realtime socket, passively collecting ids; only trace is the intruder in the member list. Reviewer: correct, high severity. Same leak opens through `group_member` once 20261025200000 publishes it. · Fix: needs Jakob's ruling — drop the self-insert branch so joins go only through a token-checking `join_group` (invite token), and/or take `expense_update_checker` out of the publication (or stop relying on its DELETE events).
+- note · docs/ristretto/plans/rls-hardening.md:26–46 · The brief says items (4) and (5) were "recorded" out of scope, but no file in the diff or the tree records them. The plan's Decisions, research/code-review-2026-10.md and the roadmap all lack the `expense_update_checker` DELETE leak, the self-accept item and the group_member publication item · fix: add a Decisions line for each and a roadmap or idea row for (5) · why not harmful: this diff neither opens nor widens the hole; the only risk is that the finding is forgotten.
+- lean · docs/ristretto/plans/rls-hardening.md:49–53 · Units still list "Migration part 1/2/3" and "The two Open manual-checks entries", which contradicts the new `taken:` rulings (one statement, one entry) · fix: shorten Units to the one revoke, the test file, the 70 suite and one manual-checks entry.
