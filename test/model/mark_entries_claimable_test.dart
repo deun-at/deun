@@ -1,67 +1,103 @@
-import 'package:deun/pages/expenses/data/claimable_form.dart';
+import 'package:deun/pages/expenses/data/expense_category.dart';
+import 'package:deun/pages/expenses/data/expense_draft.dart';
+import 'package:deun/pages/expenses/data/split_mode.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+const _a = 'a@test.com';
+const _b = 'b@test.com';
+
+/// Two Itemized lines as the editor hands them over, one with an exact split
+/// and existing claims so every field is set.
+ExpenseDraft _draft() => ExpenseDraft(
+  name: 'Supermarket',
+  expenseDate: DateTime(2026, 10, 26),
+  paidBy: _a,
+  category: ExpenseCategory.food,
+  entries: const [
+    ExpenseEntryDraft(name: 'Beer', unitPrice: 5.0, quantity: 3),
+    ExpenseEntryDraft(
+      name: 'Wine',
+      unitPrice: 8.5,
+      splitMode: SplitMode.amount,
+      shares: {_a, _b},
+      shareData: {_a: 4.0, _b: 4.5},
+      lockedMembers: {_a},
+      existingClaims: [
+        [_a],
+      ],
+    ),
+  ],
+);
+
 void main() {
-  group('markEntriesClaimable', () {
-    test('adds a claimable flag for every entry index present', () {
-      final form = {
-        'name': 'Supermarket',
-        'expense_entry[0][name]': 'Beer',
-        'expense_entry[0][amount]': '5.00',
-        'expense_entry[0][quantity]': '3',
-        'expense_entry[1][name]': 'Wine',
-        'expense_entry[1][amount]': '8.50',
-      };
+  group('ExpenseDraft.markEntriesClaimable', () {
+    test('the draft it was called on is left unchanged', () {
+      final draft = _draft();
 
-      final out = markEntriesClaimable(form);
+      draft.markEntriesClaimable(notifyEmails: {_a, _b});
 
-      expect(out['expense_entry[0][claimable]'], isTrue);
-      expect(out['expense_entry[1][claimable]'], isTrue);
+      expect(draft, _draft());
     });
 
-    test('does not mutate the original map', () {
-      final form = {'expense_entry[0][amount]': '5.00'};
-      markEntriesClaimable(form);
-      expect(form.containsKey('expense_entry[0][claimable]'), isFalse);
+    test('every other field is kept', () {
+      final out = _draft().markEntriesClaimable();
+
+      expect(
+        out,
+        ExpenseDraft(
+          name: 'Supermarket',
+          expenseDate: DateTime(2026, 10, 26),
+          paidBy: _a,
+          category: ExpenseCategory.food,
+          entries: const [
+            ExpenseEntryDraft(
+              name: 'Beer',
+              unitPrice: 5.0,
+              quantity: 3,
+              claimable: true,
+            ),
+            ExpenseEntryDraft(
+              name: 'Wine',
+              unitPrice: 8.5,
+              splitMode: SplitMode.amount,
+              shares: {_a, _b},
+              shareData: {_a: 4.0, _b: 4.5},
+              lockedMembers: {_a},
+              claimable: true,
+              existingClaims: [
+                [_a],
+              ],
+            ),
+          ],
+        ),
+      );
     });
 
-    test('preserves all existing keys and values', () {
-      final form = {
-        'name': 'Shop',
-        'paid_by': 'a@test.com',
-        'expense_entry[2][amount]': '1.00',
-      };
-      final out = markEntriesClaimable(form);
-      expect(out['name'], 'Shop');
-      expect(out['paid_by'], 'a@test.com');
-      expect(out['expense_entry[2][amount]'], '1.00');
-      expect(out['expense_entry[2][claimable]'], isTrue);
+    test('notify emails become every line\'s shares', () {
+      final emails = {_a, _b, 'c@test.com'};
+
+      final out = _draft().markEntriesClaimable(notifyEmails: emails);
+
+      expect(out.entries.map((e) => e.shares), [emails, emails]);
     });
 
-    test('notifyEmails writes each entry\'s shares set for notifications', () {
-      final form = {
-        'expense_entry[0][amount]': '5.00',
-        'expense_entry[1][amount]': '8.50',
-      };
-      final emails = {'a@test.com', 'b@test.com'};
+    test('without notify emails every line keeps its shares', () {
+      final out = _draft().markEntriesClaimable();
 
-      final out = markEntriesClaimable(form, notifyEmails: emails);
-
-      expect(out['expense_entry[0][shares]'], emails);
-      expect(out['expense_entry[1][shares]'], emails);
-      expect(out['expense_entry[0][claimable]'], isTrue);
-      expect(out['expense_entry[1][claimable]'], isTrue);
+      expect(out.entries.map((e) => e.shares), [
+        <String>{},
+        {_a, _b},
+      ]);
     });
 
-    test('without notifyEmails no shares keys are added', () {
-      final out = markEntriesClaimable({'expense_entry[0][amount]': '5.00'});
-      expect(out.containsKey('expense_entry[0][shares]'), isFalse);
-    });
+    test('a draft with no lines comes back with no lines', () {
+      final draft = ExpenseDraft(
+        name: 'Shop',
+        expenseDate: DateTime(2026, 10, 26),
+        entries: const [],
+      );
 
-    test('no entries → no claimable keys added', () {
-      final form = {'name': 'Shop'};
-      final out = markEntriesClaimable(form);
-      expect(out.keys.any((k) => k.contains('[claimable]')), isFalse);
+      expect(draft.markEntriesClaimable(notifyEmails: {_a}), draft);
     });
   });
 }

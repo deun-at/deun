@@ -4,13 +4,37 @@ import 'package:deun/helper/helper.dart';
 import 'package:deun/helper/notification_sender.dart';
 import 'package:deun/helper/search_filter.dart';
 import 'package:deun/pages/expenses/data/expense_conversion.dart';
+import 'package:deun/pages/expenses/data/expense_draft.dart';
 import 'package:deun/pages/expenses/data/expense_model.dart';
-import 'package:deun/pages/expenses/data/expense_category.dart';
 import 'package:deun/pages/expenses/data/itemized_totals.dart';
+import 'package:deun/pages/expenses/data/split_mode.dart';
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../main.dart';
+
+/// What one expense save sends and whom it tells, decided before anything is
+/// written. Built by [ExpenseRepository.planSave].
+class ExpenseSavePlan {
+  const ExpenseSavePlan({
+    required this.rpcParams,
+    required this.notificationReceivers,
+    required this.notificationAmount,
+    required this.sendsNotification,
+  });
+
+  /// The `{_group_id, _expense, _entries}` parameters of `save_expense_all`.
+  final Map<String, dynamic> rpcParams;
+
+  /// Every line's members: the people told about a new expense.
+  final Set<String> notificationReceivers;
+
+  /// The rounded sum of the converted line totals, in the group currency.
+  final double notificationAmount;
+
+  /// True only when the save creates the expense. An edit pushes nobody.
+  final bool sendsNotification;
+}
 
 class ExpenseRepository {
   /// Null outside tests. When set, [saveAll] sends its one `save_expense_all`
@@ -194,235 +218,231 @@ class ExpenseRepository {
     return units;
   }
 
+  /// What saving [draft] sends and whom it tells, computed without touching
+  /// Supabase: the `save_expense_all` parameters (the expense row with its
+  /// provenance, every entry and share row, claimable lines exploded into
+  /// per-unit claim entries) and the push a new expense sends. [userId] is the
+  /// signed-in user's auth id, written as the expense's `user_id`.
+  static ExpenseSavePlan planSave({
+    required String groupId,
+    String? expenseId,
+    required ExpenseDraft draft,
+    required Currency currency,
+    ExpenseConversion? conversion,
+    String? userId,
+  }) {
+    final conv = conversion ?? ExpenseConversion.identity(currency);
+    final Map<String, dynamic> expense = {
+      'name': draft.name,
+      'expense_date': draft.expenseDate.toString(),
+      'paid_by': draft.paidBy,
+      'group_id': groupId,
+      'user_id': userId,
+      'category': draft.category?.name,
+      ...conv.expenseProvenance,
+      'id': ?expenseId,
+    };
+
+    final Set<String> notificationReceivers = {};
+    double amount = 0;
+    final List<Map<String, dynamic>> entries = [];
+
+    int sortId = 10;
+    int itemGroupSeq = 0;
+    for (final line in draft.entries) {
+      final int qty = line.quantity;
+      // Entered amounts are in the ENTRY currency; the ledger value is the
+      // converted one. The LINE converts once, through the same
+      // [ledgerLineTotal] the editor's preview reads, so the figure previewed
+      // and the figure stored are the same number by construction.
+      // `toLedger` throws MissingConversionRateException when a foreign
+      // currency carries no rate — no 1:1 fallback ever.
+      final item = ItemLine(unitPrice: line.unitPrice, quantity: qty);
+      final double enteredTotal = item.lineTotal;
+      final double entryTotal = ledgerLineTotal(item, conv);
+      amount = roundCurrency(amount + entryTotal, currency);
+
+      notificationReceivers.addAll(line.shares);
+
+      // Claimable itemized lines are exploded into per-unit claim entries
+      // (quantity 1, split_mode 'claim'), grouped server-side by a shared
+      // item_group_seq. Detection: an explicit claimable flag, or a plain
+      // multi-quantity itemized line with no manual custom split.
+      final bool isClaimable =
+          line.claimable ||
+          (qty > 1 && line.shareData.isEmpty && line.shares.isEmpty);
+
+      if (isClaimable) {
+        itemGroupSeq++;
+        entries.addAll(
+          ExpenseRepository.explodeItemizedEntry(
+            name: line.name,
+            unitPrice: line.unitPrice,
+            quantity: qty,
+            itemGroupSeq: itemGroupSeq,
+            sortIdStart: sortId,
+            currency: currency,
+            // Existing per-unit claims (edit round-trip, F146), so a re-save
+            // keeps its claimers.
+            unitClaims: line.existingClaims,
+            conversion: conv,
+          ),
+        );
+        sortId += qty * 10; // leave room between groups
+        continue;
+      }
+
+      List<Map<String, dynamic>> shareRows = [];
+
+      // Safety net: if split mode is exact but all amounts are zero, the
+      // widget didn't know the real total — fall back to equal split.
+      Map<String, num> shareData = line.shareData;
+      final bool allZeroExact =
+          line.splitMode == SplitMode.amount &&
+          shareData.isNotEmpty &&
+          shareData.values.every((v) => v.toDouble() == 0.0);
+      if (allZeroExact) {
+        shareData = const {};
+      }
+
+      if (shareData.isNotEmpty) {
+        final int totalParts = line.splitMode == SplitMode.shares
+            ? shareData.values.fold(0, (sum, v) => sum + (v as int))
+            : 0;
+
+        // An exact split's ledger amounts come out of the already-converted
+        // line, not from converting each share on its own — otherwise they
+        // sum to a cent less than the entry they belong to.
+        final exactLedger = line.splitMode == SplitMode.amount
+            ? ledgerFixedAmounts(
+                enteredByEmail: {
+                  for (final e in shareData.entries) e.key: e.value.toDouble(),
+                },
+                entryTotal: entryTotal,
+                conv: conv,
+                payer: draft.paidBy,
+              )
+            : const <String, double>{};
+
+        for (final share in shareData.entries) {
+          double percentage;
+          double? fixedAmount;
+          double? originalFixedAmount;
+          int? parts;
+
+          switch (line.splitMode) {
+            case SplitMode.amount:
+              final enteredFixed = share.value.toDouble();
+              fixedAmount = exactLedger[share.key];
+              // The entry-currency twin of the ledger `fixed_amount`, so the
+              // editor can reload this share into an entry-currency field
+              // without inverting the conversion. Same rule (and same null
+              // on an identity conversion) as `original_amount` below.
+              originalFixedAmount = conv.isIdentity
+                  ? null
+                  : roundCurrency(enteredFixed, conv.entryCurrency);
+              percentage = enteredTotal > 0
+                  ? (enteredFixed / enteredTotal) * 100
+                  : 0;
+            case SplitMode.percentage:
+              percentage = share.value.toDouble();
+            case SplitMode.shares:
+              parts = share.value as int;
+              percentage = totalParts > 0 ? (parts / totalParts) * 100 : 0;
+            case SplitMode.equal:
+              percentage = 100 / shareData.length;
+          }
+
+          shareRows.add({
+            "email": share.key,
+            "percentage": percentage,
+            "fixed_amount": fixedAmount,
+            "original_fixed_amount": originalFixedAmount,
+            "parts": parts,
+            "is_locked": line.lockedMembers.contains(share.key),
+          });
+        }
+      } else {
+        // Fallback: equal split over the selected members, rows carrying
+        // email and percentage only (backward compat).
+        shareRows = [
+          for (final email in line.shares)
+            <String, dynamic>{
+              "email": email,
+              "percentage": 100 / line.shares.length,
+            },
+        ];
+      }
+
+      entries.add({
+        'entry': {
+          'name': line.name,
+          'amount': entryTotal,
+          'original_amount': conv.isIdentity
+              ? null
+              : roundCurrency(enteredTotal, conv.entryCurrency),
+          'quantity': qty,
+          'split_mode': line.splitMode.toDbValue(),
+          'sort_id': sortId,
+        },
+        'shares': shareRows,
+      });
+
+      sortId += 10;
+    }
+
+    return ExpenseSavePlan(
+      rpcParams: {
+        '_group_id': groupId,
+        '_expense': expense,
+        '_entries': entries,
+      },
+      notificationReceivers: notificationReceivers,
+      notificationAmount: amount,
+      sendsNotification: expenseId == null,
+    );
+  }
+
   /// Saves an expense with all its entries and share splits in ONE server
   /// transaction (`save_expense_all`): the expense row with its provenance, every
   /// entry and share, and the share recalculation commit together or not at
   /// all. Any failure, a missing function included, is thrown as the RPC's own
-  /// error having written nothing: there is no client-side fallback.
+  /// error having written nothing: there is no client-side fallback. What it
+  /// sends and whom it tells come from [planSave]; a new expense pushes, an
+  /// edit does not.
   static Future<void> saveAll(
     String groupId,
     String? expenseId,
-    Map<String, dynamic> formResponse, {
+    ExpenseDraft draft, {
     required Currency currency,
     ExpenseConversion? conversion,
     required NotificationSender notifications,
   }) async {
-    final conv = conversion ?? ExpenseConversion.identity(currency);
+    final plan = planSave(
+      groupId: groupId,
+      expenseId: expenseId,
+      draft: draft,
+      currency: currency,
+      conversion: conversion,
+      userId: supabase.auth.currentUser?.id,
+    );
     try {
-      Map<String, dynamic> upsertVals = {
-        'name': formResponse['name'],
-        'expense_date': formResponse['expense_date'].toString(),
-        'paid_by': formResponse['paid_by'],
-        'group_id': groupId,
-        'user_id': supabase.auth.currentUser?.id,
-        'category': (formResponse['category'] as ExpenseCategory?)?.name,
-        ...conv.expenseProvenance,
-      };
-
-      if (expenseId != null) {
-        upsertVals.addAll({'id': expenseId});
-      }
-
-      Map<String, Map<String, dynamic>> expenseEntryValues = {};
-
-      formResponse.forEach((key, value) {
-        if (key.startsWith('expense_entry[')) {
-          RegExp regex = RegExp(r'\[(.*?)\]');
-
-          // Use allMatches to get all occurrences
-          Iterable<RegExpMatch> matches = regex.allMatches(key);
-
-          String index = matches.elementAt(0).group(1) ?? '';
-          String fieldName = matches.elementAt(1).group(1) ?? '';
-
-          expenseEntryValues.putIfAbsent(index, () => {});
-          expenseEntryValues[index]?[fieldName] = value;
-        }
-      });
-
-      Set<String> notificationReceiver = {};
-      double amount = 0;
-      List<Map<String, dynamic>> entries = [];
-
-      int sortId = 10;
-      int itemGroupSeq = 0;
-      for (var expenseEntry in expenseEntryValues.values) {
-        int qty =
-            int.tryParse(expenseEntry['quantity']?.toString() ?? '1') ?? 1;
-        double unitPrice = double.parse(expenseEntry['amount']);
-        // Entered amounts are in the ENTRY currency; the ledger value is the
-        // converted one. The LINE converts once, through the same
-        // [ledgerLineTotal] the editor's preview reads, so the figure previewed
-        // and the figure stored are the same number by construction.
-        // `toLedger` throws MissingConversionRateException when a foreign
-        // currency carries no rate — no 1:1 fallback ever.
-        final line = ItemLine(unitPrice: unitPrice, quantity: qty);
-        double enteredTotal = line.lineTotal;
-        double entryTotal = ledgerLineTotal(line, conv);
-        amount = roundCurrency(amount + entryTotal, currency);
-
-        String splitMode = expenseEntry['split_mode'] ?? 'equal';
-
-        // Itemized claim cards register no split fields (F118), so 'shares'
-        // may be absent entirely.
-        Set<String> expenseEntryShares = expenseEntry['shares'] ?? <String>{};
-        Map<String, dynamic> shareData = expenseEntry['share_data'] ?? {};
-        Set<String> lockedMembers =
-            expenseEntry['locked_members'] is Set<String>
-            ? expenseEntry['locked_members']
-            : <String>{};
-
-        notificationReceiver.addAll(expenseEntryShares);
-
-        // Claimable itemized lines are exploded into per-unit claim entries
-        // (quantity 1, split_mode 'claim'), grouped server-side by a shared
-        // item_group_seq. Detection: an explicit claimable flag, or a plain
-        // multi-quantity itemized line with no manual custom split.
-        final bool isClaimable =
-            (expenseEntry['claimable'] == true) ||
-            (qty > 1 && shareData.isEmpty && expenseEntryShares.isEmpty);
-
-        if (isClaimable) {
-          itemGroupSeq++;
-          // Existing per-unit claims (edit round-trip, F146) — injected by
-          // the editor from the regrouped entry so a re-save keeps claimers.
-          final unitClaims = (expenseEntry['existing_claims'] as List?)
-              ?.map((u) => (u as List).cast<String>())
-              .toList();
-          entries.addAll(
-            ExpenseRepository.explodeItemizedEntry(
-              name: expenseEntry['name'] as String?,
-              unitPrice: unitPrice,
-              quantity: qty,
-              itemGroupSeq: itemGroupSeq,
-              sortIdStart: sortId,
-              currency: currency,
-              unitClaims: unitClaims,
-              conversion: conv,
-            ),
-          );
-          sortId += qty * 10; // leave room between groups
-          continue;
-        }
-
-        List<Map<String, dynamic>> shareRows = [];
-
-        // Safety net: if split mode is 'exact' but all amounts are zero,
-        // the widget didn't know the real total — fall back to equal split.
-        bool allZeroExact =
-            splitMode == 'exact' &&
-            shareData.isNotEmpty &&
-            shareData.values.every((v) => (v as num).toDouble() == 0.0);
-        if (allZeroExact) {
-          shareData = {};
-        }
-
-        if (shareData.isNotEmpty) {
-          int totalParts = splitMode == 'shares'
-              ? shareData.values.fold(0, (sum, v) => sum + (v as int))
-              : 0;
-
-          // An exact split's ledger amounts come out of the already-converted
-          // line, not from converting each share on its own — otherwise they
-          // sum to a cent less than the entry they belong to.
-          final exactLedger = splitMode == 'exact'
-              ? ledgerFixedAmounts(
-                  enteredByEmail: {
-                    for (final e in shareData.entries)
-                      e.key: (e.value as num).toDouble(),
-                  },
-                  entryTotal: entryTotal,
-                  conv: conv,
-                  payer: formResponse['paid_by'] as String?,
-                )
-              : const <String, double>{};
-
-          for (var entry in shareData.entries) {
-            double percentage;
-            double? fixedAmount;
-            double? originalFixedAmount;
-            int? parts;
-
-            switch (splitMode) {
-              case 'exact':
-                final enteredFixed = (entry.value as num).toDouble();
-                fixedAmount = exactLedger[entry.key];
-                // The entry-currency twin of the ledger `fixed_amount`, so the
-                // editor can reload this share into an entry-currency field
-                // without inverting the conversion. Same rule (and same null
-                // on an identity conversion) as `original_amount` below.
-                originalFixedAmount = conv.isIdentity
-                    ? null
-                    : roundCurrency(enteredFixed, conv.entryCurrency);
-                percentage = enteredTotal > 0
-                    ? (enteredFixed / enteredTotal) * 100
-                    : 0;
-                break;
-              case 'percentage':
-                percentage = (entry.value as num).toDouble();
-                break;
-              case 'shares':
-                parts = entry.value as int;
-                percentage = totalParts > 0 ? (parts / totalParts) * 100 : 0;
-                break;
-              default:
-                percentage = 100 / shareData.length;
-            }
-
-            shareRows.add({
-              "email": entry.key,
-              "percentage": percentage,
-              "fixed_amount": fixedAmount,
-              "original_fixed_amount": originalFixedAmount,
-              "parts": parts,
-              "is_locked": lockedMembers.contains(entry.key),
-            });
-          }
-        } else {
-          // Fallback: equal split using shares set (backward compat)
-          shareRows = expenseEntryShares.map((email) {
-            return <String, dynamic>{
-              "email": email,
-              "percentage": 100 / expenseEntryShares.length,
-            };
-          }).toList();
-        }
-
-        entries.add({
-          'entry': {
-            'name': expenseEntry['name'],
-            'amount': entryTotal,
-            'original_amount': conv.isIdentity
-                ? null
-                : roundCurrency(enteredTotal, conv.entryCurrency),
-            'quantity': qty,
-            'split_mode': splitMode,
-            'sort_id': sortId,
-          },
-          'shares': shareRows,
-        });
-
-        sortId += 10;
-      }
-
-      final Map<String, dynamic> params = {
-        '_group_id': groupId,
-        '_expense': upsertVals,
-        '_entries': entries,
-      };
       final override = saveExpenseAllOverride;
       final savedExpenseId =
           (override != null
-                  ? await override(params)
-                  : await supabase.rpc('save_expense_all', params: params))
+                  ? await override(plan.rpcParams)
+                  : await supabase.rpc(
+                      'save_expense_all',
+                      params: plan.rpcParams,
+                    ))
               as String;
 
-      if (expenseId == null) {
+      if (plan.sendsNotification) {
         unawaited(
           notifications.expenseCreated(
             savedExpenseId,
-            notificationReceiver,
-            amount,
+            plan.notificationReceivers,
+            plan.notificationAmount,
           ),
         );
       }

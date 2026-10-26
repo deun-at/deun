@@ -19,16 +19,17 @@ import '../../groups/data/group_model.dart';
 import 'expense_entry_widget.dart';
 import 'receipt_scanner_sheet.dart';
 import '../service/rate_source.dart';
-import '../data/claimable_form.dart';
 import '../data/editor_mode.dart';
 import '../data/expense_conversion.dart';
 import '../data/expense_deletion_impact.dart';
+import '../data/expense_draft.dart';
 import '../data/expense_entry_model.dart';
 import '../data/expense_model.dart';
 import '../data/expense_repository.dart';
 import '../data/expense_category.dart';
 import '../data/itemized_totals.dart';
 import '../data/receipt_scan_result.dart';
+import '../data/split_mode.dart';
 import '../../../widgets/category_selector.dart';
 import '../../../widgets/restyle/app_segmented_control.dart';
 import '../../../widgets/restyle/discard_sheet.dart';
@@ -66,14 +67,14 @@ class ExpenseEntryData {
 ///
 /// Signature-compatible with [ExpenseRepository.saveAll] so production passes
 /// the repository method itself. Its point is testability: the save payload —
-/// the form values AND the [ExpenseConversion] the provenance is written from —
-/// is otherwise unreachable from a widget test, which is what let a
+/// the [ExpenseDraft] AND the [ExpenseConversion] the provenance is written
+/// from — is otherwise unreachable from a widget test, which is what let a
 /// re-conversion on reload survive review.
 typedef ExpenseSaver =
     Future<void> Function(
       String groupId,
       String? expenseId,
-      Map<String, dynamic> formResponse, {
+      ExpenseDraft draft, {
       required Currency currency,
       ExpenseConversion? conversion,
       required NotificationSender notifications,
@@ -1226,6 +1227,51 @@ class _ExpenseDetailState extends ConsumerState<ExpenseDetail> {
     navigator.pop();
   }
 
+  /// What is on screen, as the draft the save hands over: one line per card in
+  /// [_entries], in on-screen order, each read from the validated form value
+  /// by its exact field names. A field a card does not register takes the
+  /// default a missing one always had: a Quick card has no name or quantity,
+  /// an Itemized card no split fields. With [claimable], each card carries its
+  /// existing per-unit claims (F146), so re-sharing keeps them. Positional:
+  /// shrinking a quantity drops the last units' claims.
+  ///
+  /// Throws a [FormatException] for an amount that does not parse.
+  ExpenseDraft _draftFromForm({required bool claimable}) {
+    final values = _formKey.currentState!.value;
+    return ExpenseDraft(
+      name: values['name'] as String?,
+      expenseDate: values['expense_date'] as DateTime,
+      paidBy: values['paid_by'] as String?,
+      category: values['category'] as ExpenseCategory?,
+      entries: [
+        for (final data in _entries)
+          _entryDraftFrom(values, data, claimable: claimable),
+      ],
+    );
+  }
+
+  ExpenseEntryDraft _entryDraftFrom(
+    Map<String, dynamic> values,
+    ExpenseEntryData data, {
+    required bool claimable,
+  }) {
+    final field = 'expense_entry[${data.index}]';
+    final shares = values['$field[shares]'] as Set<String>?;
+    final shareData = values['$field[share_data]'] as Map<String, dynamic>?;
+    final locked = values['$field[locked_members]'];
+    return ExpenseEntryDraft(
+      name: values['$field[name]'] as String?,
+      unitPrice: double.parse(values['$field[amount]'] as String),
+      quantity:
+          int.tryParse(values['$field[quantity]']?.toString() ?? '1') ?? 1,
+      splitMode: SplitMode.fromString(values['$field[split_mode]'] as String?),
+      shares: {...?shares},
+      shareData: Map<String, num>.from(shareData ?? const {}),
+      lockedMembers: locked is Set<String> ? {...locked} : const {},
+      existingClaims: claimable ? data.expenseEntry.unitClaims : const [],
+    );
+  }
+
   /// Saves the expense. When [claimable] is true (the itemized
   /// "Add & share for claiming" CTA) every entry is flagged claimable so
   /// [ExpenseRepository.saveAll] explodes the lines into per-unit claim
@@ -1269,30 +1315,20 @@ class _ExpenseDetailState extends ConsumerState<ExpenseDetail> {
       final reduceMotion = MediaQuery.of(context).disableAnimations;
       await _writeThenClose(
         write: () async {
-          final formValue = claimable
-              ? markEntriesClaimable(
-                  _formKey.currentState!.value,
+          // Built inside the write, so an amount that does not parse ends in
+          // the save error like any other failed write.
+          final onScreen = _draftFromForm(claimable: claimable);
+          final draft = claimable
+              ? onScreen.markEntriesClaimable(
                   // Share with the whole group so everyone is notified that
                   // there are items to claim (claim units start unclaimed).
                   notifyEmails: _groupMembers.map((m) => m.email).toSet(),
                 )
-              : _formKey.currentState!.value;
-          if (claimable) {
-            // Re-saving a shared expense re-explodes its items into fresh
-            // claim units — thread each item's existing per-unit claims
-            // through so they are preserved (F146). Positional: shrinking an
-            // item's quantity drops the last units' claims.
-            for (final data in _entries) {
-              if (data.expenseEntry.unitClaims.isNotEmpty) {
-                formValue['expense_entry[${data.index}][existing_claims]'] =
-                    data.expenseEntry.unitClaims;
-              }
-            }
-          }
+              : onScreen;
           await (widget.saveExpense ?? ExpenseRepository.saveAll)(
             widget.group.id,
             widget.expense?.id,
-            formValue,
+            draft,
             currency: widget.group.currency,
             conversion: conversion,
             notifications: notifications,
