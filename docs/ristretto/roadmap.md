@@ -69,3 +69,4 @@
 | — | keypad-calculator | Calculator in the amount keypad sheet | normal | done |
 | multi-currency | expense-card-fee | A card's foreign-transaction fee, on the rates Deun looks up | normal | done |
 | — | group-id-leak | A group id alone no longer joins a group: joining needs the current invite token ⚠ migration pending | normal | done |
+| — | removed-member-access | A soft-removed member loses all access to the group they were removed from | normal | planned |
