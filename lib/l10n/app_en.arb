@@ -1159,18 +1159,6 @@
       }
     }
   },
-  "friendDeclineNotificationTitle": "Your friend request got declined",
-  "@friendDeclineNotificationTitle": {},
-  "friendDeclineNotificationBody": "{userDisplayName} declined your friend request.",
-  "@friendDeclineNotificationBody": {
-    "description": "Notification title when a friend request was declined.",
-    "placeholders": {
-      "userDisplayName": {
-        "type": "String",
-        "example": "Max Muster"
-      }
-    }
-  },
   "settings": "Settings",
   "@settings": {},
   "settingsUserHeading": "User Data",

@@ -1,4 +1,7 @@
+import 'dart:async';
+
 import 'package:deun/helper/helper.dart';
+import 'package:deun/helper/notification_sender.dart';
 import 'package:deun/pages/friends/data/friendship_repository.dart';
 import 'package:deun/pages/users/user_model.dart';
 import 'package:deun/pages/users/user_repository.dart';
@@ -45,7 +48,10 @@ class _FriendAcceptPageState extends State<FriendAcceptPage> {
 
       if (widget.username != null && widget.usernameCode != null) {
         // Look up by username+code (new QR format)
-        user = await UserRepository.fetchByUsername(widget.username!, widget.usernameCode!);
+        user = await UserRepository.fetchByUsername(
+          widget.username!,
+          widget.usernameCode!,
+        );
       } else if (widget.email != null && widget.email!.isNotEmpty) {
         // Look up by email (legacy QR format / backward compat)
         user = await UserRepository.fetchDetail(widget.email!);
@@ -84,13 +90,18 @@ class _FriendAcceptPageState extends State<FriendAcceptPage> {
 
   Future<void> _accept() async {
     setState(() => _accepting = true);
+    final notifications = NotificationSender.of(context);
+    final email = _targetUser!.email;
     try {
-      await FriendshipRepository.accepted(_targetUser!.email);
+      await FriendshipRepository.accepted(email);
+      unawaited(notifications.friendAccepted({email}));
       if (!mounted) return;
-      sendFriendAcceptNotification(context, {_targetUser!.email});
       showSnackBar(
+        context,
+        AppLocalizations.of(
           context,
-          AppLocalizations.of(context)!.friendshipAccept(_targetUser!.displayName));
+        )!.friendshipAccept(_targetUser!.displayName),
+      );
       GoRouter.of(context).go('/friend');
     } catch (e) {
       if (!mounted) return;
@@ -112,80 +123,86 @@ class _FriendAcceptPageState extends State<FriendAcceptPage> {
           Expanded(
             child: Center(
               child: _error != null
-            ? Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Icon(Icons.error_outline, size: 32),
-                  const SizedBox(height: 12),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 24),
-                    child: Text(_error!, textAlign: TextAlign.center),
-                  ),
-                  const SizedBox(height: 12),
-                  PrimaryButton(
-                    fullWidth: false,
-                    onPressed: () => GoRouter.of(context).go('/friend'),
-                    label: AppLocalizations.of(context)!.close,
-                  )
-                ],
-              )
-            : _loading
-                ? Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const CircularProgressIndicator(),
-                      const SizedBox(height: 12),
-                      Text(AppLocalizations.of(context)!.loading),
-                    ],
-                  )
-                : Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 24),
-                    child: Column(
+                  ? Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        UserAvatar(displayName: _targetUser!.displayName, radius: 40),
-                        const SizedBox(height: 16),
-                        Text(
-                          AppLocalizations.of(context)!.friendAcceptConfirmTitle,
-                          style: Theme.of(context).textTheme.titleLarge,
+                        const Icon(Icons.error_outline, size: 32),
+                        const SizedBox(height: 12),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 24),
+                          child: Text(_error!, textAlign: TextAlign.center),
                         ),
-                        const SizedBox(height: 8),
-                        Text(
-                          AppLocalizations.of(context)!
-                              .friendAcceptConfirmBody(_targetUser!.displayName),
-                          style: Theme.of(context).textTheme.bodyMedium,
-                          textAlign: TextAlign.center,
-                        ),
-                        Text(
-                          _targetUser!.fullUsername,
-                          style: Theme.of(context)
-                              .textTheme
-                              .bodySmall
-                              ?.copyWith(color: colorScheme.outline),
-                        ),
-                        const SizedBox(height: 24),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            SecondaryButton(
-                              fullWidth: false,
-                              onPressed: _accepting
-                                  ? null
-                                  : () => GoRouter.of(context).go('/friend'),
-                              label: AppLocalizations.of(context)!.cancel,
-                            ),
-                            const SizedBox(width: 12),
-                            PrimaryButton(
-                              fullWidth: false,
-                              loading: _accepting,
-                              onPressed: _accepting ? null : _accept,
-                              label: AppLocalizations.of(context)!.accept,
-                            ),
-                          ],
+                        const SizedBox(height: 12),
+                        PrimaryButton(
+                          fullWidth: false,
+                          onPressed: () => GoRouter.of(context).go('/friend'),
+                          label: AppLocalizations.of(context)!.close,
                         ),
                       ],
+                    )
+                  : _loading
+                  ? Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const CircularProgressIndicator(),
+                        const SizedBox(height: 12),
+                        Text(AppLocalizations.of(context)!.loading),
+                      ],
+                    )
+                  : Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 24),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          UserAvatar(
+                            displayName: _targetUser!.displayName,
+                            radius: 40,
+                          ),
+                          const SizedBox(height: 16),
+                          Text(
+                            AppLocalizations.of(
+                              context,
+                            )!.friendAcceptConfirmTitle,
+                            style: Theme.of(context).textTheme.titleLarge,
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            AppLocalizations.of(
+                              context,
+                            )!.friendAcceptConfirmBody(
+                              _targetUser!.displayName,
+                            ),
+                            style: Theme.of(context).textTheme.bodyMedium,
+                            textAlign: TextAlign.center,
+                          ),
+                          Text(
+                            _targetUser!.fullUsername,
+                            style: Theme.of(context).textTheme.bodySmall
+                                ?.copyWith(color: colorScheme.outline),
+                          ),
+                          const SizedBox(height: 24),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              SecondaryButton(
+                                fullWidth: false,
+                                onPressed: _accepting
+                                    ? null
+                                    : () => GoRouter.of(context).go('/friend'),
+                                label: AppLocalizations.of(context)!.cancel,
+                              ),
+                              const SizedBox(width: 12),
+                              PrimaryButton(
+                                fullWidth: false,
+                                loading: _accepting,
+                                onPressed: _accepting ? null : _accept,
+                                label: AppLocalizations.of(context)!.accept,
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
                     ),
-                  ),
             ),
           ),
         ],
@@ -193,4 +210,3 @@ class _FriendAcceptPageState extends State<FriendAcceptPage> {
     );
   }
 }
-

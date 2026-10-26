@@ -556,8 +556,6 @@
   "friendRequestNotificationBody": "{userDisplayName} möchte sich mit dir vernetzen.",
   "friendAcceptNotificationTitle": "Deine Freundschaftsanfrage wurde angenommen",
   "friendAcceptNotificationBody": "{userDisplayName} hat deine Freundschaftsanfrage angenommen.",
-  "friendDeclineNotificationTitle": "Deine Freundschaftsanfrage wurde abgelehnt",
-  "friendDeclineNotificationBody": "{userDisplayName} hat deine Freundschaftsanfrage abgelehnt.",
   "groupMemberRemoveTitle": "{name} entfernen?",
   "groupMemberRemoveBody": "Bereits geteilte Ausgaben bleiben unverändert, und kein Kontostand ändert sich. Du kannst die Person später wieder hinzufügen.",
   "groupMemberRemoveConfirm": "Entfernen",

@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:deun/helper/helper.dart';
+import 'package:deun/helper/notification_sender.dart';
 import 'package:deun/l10n/app_localizations.dart';
 import 'package:deun/main.dart';
 import 'package:deun/pages/friends/data/friendship_repository.dart';
@@ -157,10 +158,6 @@ class _GroupMembersPageState extends ConsumerState<GroupMembersPage> {
     return MemberSearchResults(friends: friends, otherUsers: others);
   }
 
-  void _notify(String groupId, Set<String> emails) {
-    sendGroupNotification(context, groupId, emails);
-  }
-
   /// Each add persists on its own; no batch, no commit button. No success
   /// snackbar in any branch: the member appearing in the roster is the
   /// confirmation. The page stays open and the field is cleared for the next
@@ -173,6 +170,7 @@ class _GroupMembersPageState extends ConsumerState<GroupMembersPage> {
     if (_busy) return;
     setState(() => _busy = true);
     final l10n = AppLocalizations.of(context)!;
+    final notifications = NotificationSender.of(context);
     final group = _currentGroup();
     try {
       MemberAddOutcome outcome;
@@ -186,12 +184,16 @@ class _GroupMembersPageState extends ConsumerState<GroupMembersPage> {
         if (mounted) showSnackBar(context, l10n.groupMemberAddError(name));
         return;
       }
-      if (!mounted) return;
 
+      if (shouldNotifyAddedMember(outcome: outcome, isGuest: isGuest)) {
+        (widget.notifyOverride ??
+            (groupId, emails) => unawaited(
+              notifications.memberAdded(groupId, emails),
+            ))(group.id, {email});
+      }
+      if (!mounted) return;
       if (outcome == MemberAddOutcome.alreadyMember) {
         showSnackBar(context, l10n.groupMemberAlreadyInGroup(name));
-      } else if (shouldNotifyAddedMember(outcome: outcome, isGuest: isGuest)) {
-        (widget.notifyOverride ?? _notify)(group.id, {email});
       }
 
       _searchController.clear();

@@ -11,6 +11,7 @@ import 'dart:async';
 
 import 'package:deun/constants.dart';
 import 'package:deun/helper/currency.dart';
+import 'package:deun/helper/notification_sender.dart';
 import 'package:deun/pages/expenses/data/expense_conversion.dart';
 import 'package:deun/l10n/app_localizations.dart';
 import 'package:deun/pages/expenses/data/expense_model.dart';
@@ -121,12 +122,12 @@ class _GatedSave {
   int get calls => payloads.length;
 
   Future<void> call(
-    BuildContext context,
     String groupId,
     String? expenseId,
     Map<String, dynamic> formResponse, {
     required Currency currency,
     ExpenseConversion? conversion,
+    required NotificationSender notifications,
   }) async {
     payloads.add(
       SavedExpense(

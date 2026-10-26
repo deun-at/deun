@@ -1,5 +1,8 @@
+import 'dart:async';
+
 import 'package:deun/helper/currency_breakdown.dart';
 import 'package:deun/helper/helper.dart';
+import 'package:deun/helper/notification_sender.dart';
 import 'package:deun/pages/groups/data/group_model.dart';
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -533,17 +536,18 @@ class GroupRepository {
   ///
   /// [members] is the group's FULL roster (soft-removed rows included). Every
   /// in-app caller already holds it on the group it is settling, so pass it:
-  /// the fallback SELECT costs a round trip on the hot self-settle path (and
-  /// one per group in [payBackAll]), and turns a transient read failure into a
-  /// failed settle.
+  /// the fallback SELECT costs a round trip on the hot self-settle path and
+  /// turns a transient read failure into a failed settle.
+  ///
+  /// [notifications] is built by the caller before its first await, so the push
+  /// that follows the write never reads a BuildContext.
   static Future<void> payBack(
-    BuildContext context,
     String groupId,
     String email,
     double amount, {
     String? paidBy,
     List<GroupMember>? members,
-    bool sendNotification = true,
+    required NotificationSender notifications,
   }) async {
     final recordedBy = supabase.auth.currentUser?.email ?? '';
     final plan = planPayBack(
@@ -563,6 +567,15 @@ class GroupRepository {
         accepted = plan;
     }
 
+    await _writePayBack(groupId, accepted);
+    _notifyPayBack(notifications, groupId, accepted);
+  }
+
+  /// The write half of a payback: the RPC sequence, then the share recalc.
+  static Future<void> _writePayBack(
+    String groupId,
+    PaybackAccepted accepted,
+  ) async {
     final params = payBackRpcParams(
       groupId: groupId,
       paidBy: accepted.paidBy,
@@ -601,25 +614,31 @@ class GroupRepository {
         params: {"_group_id": groupId, "_expense_id": expenseId},
       );
     }
+  }
 
-    if (context.mounted && sendNotification) {
-      sendGroupPayBackNotification(
-        context,
-        groupId,
-        expenseId,
-        accepted.notificationReceivers,
-        amount,
-        // Every name comes off the roster this call resolved the plan against,
-        // NOT from the DB row, so the copy works before the migration is
-        // applied. `recordedByDisplayName` null on the self path -> today's
-        // copy, unchanged.
+  /// The notify step a single payback and every settle-all group share, so the
+  /// copy is identical by construction. Fire-and-forget: never delays or fails
+  /// a write that committed. Every name comes off the roster the plan was
+  /// resolved against, NOT from the DB row, so the copy works before the
+  /// migration is applied; `recordedByDisplayName` null on the self path ->
+  /// today's copy, unchanged.
+  static void _notifyPayBack(
+    NotificationSender notifications,
+    String groupId,
+    PaybackAccepted accepted,
+  ) {
+    unawaited(
+      notifications.paybackRecorded(
+        groupId: groupId,
+        receivers: accepted.notificationReceivers,
+        amount: accepted.amount,
         paidByDisplayName: accepted.paidByDisplayName,
         paidForDisplayName: accepted.paidForDisplayName,
         recordedByDisplayName: accepted.isOnBehalf
             ? accepted.recordedByDisplayName
             : null,
-      );
-    }
+      ),
+    );
   }
 
   /// Which of [groups] a settle-everything-with-[email] run may actually write,
@@ -656,7 +675,7 @@ class GroupRepository {
         recordedBy: recordedBy,
         members: group.groupMembers,
       );
-      if (plan is PaybackRejected) {
+      if (plan is! PaybackAccepted) {
         skipped.add(group.name);
         continue;
       }
@@ -667,14 +686,20 @@ class GroupRepository {
           groupName: group.name,
           currency: group.currency,
           amount: amount,
-          // fetchData already loaded the roster; no extra SELECT per group.
-          members: group.groupMembers,
+          // The plan just resolved: the write and its push need no extra read.
+          accepted: plan,
         ),
       );
     }
 
     return PayBackAllPlan(settle: settle, skipped: skipped);
   }
+
+  /// Null outside tests. When set, [applyPayBackAll] runs it in place of each
+  /// settled target's payback write; the notify step still runs after each write
+  /// that completes.
+  @visibleForTesting
+  static PayBackAllWrite? payBackAllWriteOverride;
 
   /// Settles every active group the current user shares with [email].
   ///
@@ -683,27 +708,36 @@ class GroupRepository {
   /// rather than written, and is **named in the result** so the caller cannot
   /// report a total as settled when part of it is still outstanding.
   static Future<PayBackAllResult> payBackAll(
-    BuildContext context,
-    String email,
-  ) async {
+    String email, {
+    required NotificationSender notifications,
+  }) async {
     final groupList = await GroupRepository.fetchData("active", paidTo: email);
-    final plan = resolvePayBackAll(
-      groups: groupList,
-      email: email,
-      recordedBy: supabase.auth.currentUser?.email ?? '',
-    );
-
-    await Future.wait(
-      plan.settle.map(
-        (target) => GroupRepository.payBack(
-          context,
-          target.groupId,
-          email,
-          target.amount,
-          members: target.members,
-          sendNotification: false,
-        ),
+    return applyPayBackAll(
+      resolvePayBackAll(
+        groups: groupList,
+        email: email,
+        recordedBy: supabase.auth.currentUser?.email ?? '',
       ),
+      notifications: notifications,
+    );
+  }
+
+  /// Writes every settled target, each followed by the same notify step a single
+  /// payback runs. A failed write sends nothing for its group, does not hold back
+  /// the others (Future.wait waits for all), and still fails the run.
+  @visibleForTesting
+  static Future<PayBackAllResult> applyPayBackAll(
+    PayBackAllPlan plan, {
+    required NotificationSender notifications,
+  }) async {
+    final write =
+        payBackAllWriteOverride ??
+        (PayBackAllTarget t) => _writePayBack(t.groupId, t.accepted);
+    await Future.wait(
+      plan.settle.map((target) async {
+        await write(target);
+        _notifyPayBack(notifications, target.groupId, target.accepted);
+      }),
     );
 
     return PayBackAllResult(
@@ -742,7 +776,7 @@ class PayBackAllTarget {
     required this.groupName,
     required this.currency,
     required this.amount,
-    required this.members,
+    required this.accepted,
   });
 
   final String groupId;
@@ -754,10 +788,13 @@ class PayBackAllTarget {
   /// The per-group amount, never the cross-group total.
   final double amount;
 
-  /// The group's FULL roster, soft-removed rows included — passed straight
-  /// through to [GroupRepository.payBack] so it needs no extra SELECT.
-  final List<GroupMember> members;
+  /// The payback plan already resolved against the group's full roster: the
+  /// write takes its ids and amount, the push its receivers and names.
+  final PaybackAccepted accepted;
 }
+
+/// Settle-all's per-target write, as one function.
+typedef PayBackAllWrite = Future<void> Function(PayBackAllTarget target);
 
 /// What a settle-everything-with-one-friend run will and will not write, as
 /// resolved by [GroupRepository.resolvePayBackAll].

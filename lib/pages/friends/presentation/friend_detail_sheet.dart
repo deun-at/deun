@@ -1,6 +1,7 @@
 import 'package:deun/constants.dart';
 import 'package:deun/helper/currency_breakdown.dart';
 import 'package:deun/helper/helper.dart';
+import 'package:deun/helper/notification_sender.dart';
 import 'package:deun/pages/friends/data/friendship_model.dart';
 import 'package:deun/pages/friends/data/friendship_repository.dart';
 import 'package:deun/pages/friends/presentation/friend_detail_view_model.dart';
@@ -35,7 +36,10 @@ import 'package:url_launcher/url_launcher.dart';
 /// [GroupRepository.payBackAll]; widget tests inject a stub so they never reach
 /// the network (same seam as `RecordPaybackSheet.recordPayback`).
 typedef FriendSettleAll =
-    Future<PayBackAllResult> Function(BuildContext context, String email);
+    Future<PayBackAllResult> Function(
+      String email, {
+      required NotificationSender notifications,
+    });
 
 class FriendDetailSheet extends ConsumerWidget {
   const FriendDetailSheet({
@@ -277,10 +281,11 @@ class _PayBackCard extends StatelessWidget {
   /// settle, since no group was left behind. It reports "nothing to pay back".
   Future<void> _markPaid(BuildContext context) async {
     final l10n = AppLocalizations.of(context)!;
+    final notifications = NotificationSender.of(context);
     final user = friendship.user;
     try {
       final settle = settleAll ?? GroupRepository.payBackAll;
-      final result = await settle(context, user.email);
+      final result = await settle(user.email, notifications: notifications);
       final String message;
       if (result.settledAmounts.isEmpty) {
         message = result.skippedGroupNames.isEmpty

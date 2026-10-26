@@ -473,12 +473,12 @@ Future<List<SavedExpense>> pumpEditorWithSaveSeam(
               lookupRate: lookupRate ?? _noPrefill,
               saveExpense:
                   (
-                    context,
                     groupId,
                     expenseId,
                     formResponse, {
                     required currency,
                     conversion,
+                    required notifications,
                   }) async {
                     captured.add(
                       SavedExpense(

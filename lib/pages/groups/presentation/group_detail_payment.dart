@@ -1,5 +1,8 @@
+import 'dart:async';
+
 import 'package:deun/constants.dart';
 import 'package:deun/helper/helper.dart';
+import 'package:deun/helper/notification_sender.dart';
 import 'package:deun/widgets/restyle/deun_header.dart';
 import 'package:deun/widgets/restyle/member_avatar.dart';
 import 'package:deun/widgets/restyle/money_text.dart';
@@ -362,6 +365,7 @@ class _OwesRowState extends State<_OwesRow> {
   Future<void> _remind() async {
     setState(() => _sending = true);
     final l10n = AppLocalizations.of(context)!;
+    final notifications = NotificationSender.of(context);
     try {
       final lastReminder = await ReminderRepository.getLastReminder(
         widget.group.id,
@@ -378,10 +382,12 @@ class _OwesRowState extends State<_OwesRow> {
         widget.entry.email,
       );
 
-      if (mounted) {
-        sendPaymentReminderNotification(context, widget.group.id, {
+      unawaited(
+        notifications.paymentReminder(widget.group.id, {
           widget.entry.email,
-        }, widget.entry.amount);
+        }, widget.entry.amount),
+      );
+      if (mounted) {
         showSnackBar(
           context,
           l10n.reminderSent(widget.entry.summary.displayName),
@@ -537,15 +543,16 @@ class _PaymentMethodSheet extends StatelessWidget {
   /// closes both this sheet and the parent payment sheet.
   Future<void> _settle(BuildContext context) async {
     final l10n = AppLocalizations.of(context)!;
+    final notifications = NotificationSender.of(context);
     try {
       await GroupRepository.payBack(
-        modalContext,
         group.id,
         entry.email,
         entry.amount,
         // The roster this screen is already bound to — the settle path must not
         // pay for a second `group_member` SELECT, nor fail on one.
         members: group.groupMembers,
+        notifications: notifications,
       );
       if (modalContext.mounted) {
         showSnackBar(

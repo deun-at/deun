@@ -79,7 +79,7 @@ class PaybackAccepted extends PaybackPlan {
   /// deterrent is visibility — the payee ALWAYS hears about it, and so does the
   /// payer whenever they are a real user.
   ///
-  /// `sendNotification` strips the current user from every receiver set, so on
+  /// The push transport strips the current user from every receiver set, so on
   /// the self-payback path this reduces to exactly `{paidFor}` — the set that
   /// path has always sent.
   Set<String> get notificationReceivers => {paidFor, if (!payerIsGuest) paidBy};

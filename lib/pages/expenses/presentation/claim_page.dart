@@ -1,3 +1,6 @@
+import 'dart:async';
+
+import 'package:deun/helper/notification_sender.dart';
 import 'package:deun/l10n/app_localizations.dart';
 import 'package:deun/main.dart';
 import 'package:deun/pages/expenses/data/claim_math.dart';
@@ -27,17 +30,9 @@ import 'package:go_router/go_router.dart';
 /// unclaimed / per-member totals) and the per-unit item cards (F131): one card
 /// per item group with a slot chip per unit — tap a free slot to take it solo,
 /// tap a claimed slot or "Split one" for the solo/split modal (see [_ItemCard]).
-/// Signature of the push sender used by the Nudge action. Defaults to the real
-/// [sendNotification] helper; tests inject a spy so they never hit the live
-/// `push` Edge Function.
-typedef ClaimNotificationSender =
-    Future<void> Function(
-      String type,
-      String objectId,
-      Set<String> notificationReceiver,
-      String title,
-      String body,
-    );
+/// The push transport the Nudge action sends through. Tests inject a spy so
+/// they never hit the live `push` Edge Function.
+typedef ClaimNotificationSender = PushTransport;
 
 class ClaimPage extends ConsumerStatefulWidget {
   const ClaimPage({
@@ -50,7 +45,7 @@ class ClaimPage extends ConsumerStatefulWidget {
   final Group group;
   final Expense expense;
 
-  /// Test seam for the Nudge push. Null in production → [sendNotification].
+  /// Test seam for the Nudge push. Null in production → the service's default transport.
   final ClaimNotificationSender? sendNotificationOverride;
 
   @override
@@ -151,19 +146,23 @@ class _ClaimPageState extends ConsumerState<ClaimPage> {
   /// Nudge: fires an "expense" push to every other group member reminding them
   /// to claim their items (F175), then shows the local confirmation snackbar.
   /// Unclaimed units have no owner, so the receiver set is the whole group —
-  /// `sendNotification` auto-strips the current user. Copy is built sender-side
-  /// (same convention as [sendExpenseNotification]).
+  /// the push transport auto-strips the current user. Copy is built sender-side
+  /// ([NotificationSender.claimNudge]).
   void _nudge() {
     final l10n = AppLocalizations.of(context)!;
     final senderName =
         _memberFor(_currentUserEmail ?? '')?.displayName ?? l10n.you;
-    final receivers = widget.group.groupMembers.map((m) => m.email).toSet();
-    (widget.sendNotificationOverride ?? sendNotification)(
-      'expense',
-      widget.expense.id,
-      receivers,
-      l10n.claimNudgeNotificationTitle(senderName),
-      l10n.claimNudgeNotificationBody(widget.expense.name, widget.group.name),
+    unawaited(
+      NotificationSender.of(
+        context,
+        push: widget.sendNotificationOverride,
+      ).claimNudge(
+        expenseId: widget.expense.id,
+        receivers: widget.group.groupMembers.map((m) => m.email).toSet(),
+        senderDisplayName: senderName,
+        expenseName: widget.expense.name,
+        groupName: widget.group.name,
+      ),
     );
     showSnackBar(context, l10n.claimNudgeSent);
   }

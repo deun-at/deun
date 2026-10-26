@@ -1098,15 +1098,6 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get friendDeclineNotificationTitle =>
-      'Your friend request got declined';
-
-  @override
-  String friendDeclineNotificationBody(String userDisplayName) {
-    return '$userDisplayName declined your friend request.';
-  }
-
-  @override
   String get settings => 'Settings';
 
   @override

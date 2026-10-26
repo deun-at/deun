@@ -79,7 +79,7 @@ FriendSettleAll _settle({
   List<String> skipped = const [],
   List<CurrencyAmount> amounts = const [CurrencyAmount(Currency.eur, 25.0)],
 }) =>
-    (context, email) async => PayBackAllResult(
+    (email, {required notifications}) async => PayBackAllResult(
       settledGroupNames: const ['Trip'],
       skippedGroupNames: skipped,
       settledAmounts: amounts,

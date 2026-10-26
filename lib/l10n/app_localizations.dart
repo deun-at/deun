@@ -1845,18 +1845,6 @@ abstract class AppLocalizations {
   /// **'{userDisplayName} accepted your friend request.'**
   String friendAcceptNotificationBody(String userDisplayName);
 
-  /// No description provided for @friendDeclineNotificationTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Your friend request got declined'**
-  String get friendDeclineNotificationTitle;
-
-  /// Notification title when a friend request was declined.
-  ///
-  /// In en, this message translates to:
-  /// **'{userDisplayName} declined your friend request.'**
-  String friendDeclineNotificationBody(String userDisplayName);
-
   /// No description provided for @settings.
   ///
   /// In en, this message translates to:
