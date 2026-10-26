@@ -27,7 +27,7 @@ void main() {
     test('decimalRange: 1 blocks a second fractional digit', () {
       // Regression: the old body hardcoded `dotIndex + 3`, so decimalRange: 1
       // still let two fractional digits through — the live wiring in
-      // expense_entry_widget.dart's percentage field.
+      // expense_entry/expense_entry_member_list.dart's percentage field.
       final f = DecimalTextInputFormatter(decimalRange: 1);
       expect(_type(f, '12.5', '12.55'), '12.5');
       expect(_type(f, '12', '12.'), '12.');

@@ -8,10 +8,9 @@ enum AllocationStatus { under, ok, over }
 
 /// A pure, UI-free view of how fully an expense entry's split is allocated.
 ///
-/// This deliberately mirrors the existing validation in
-/// `ExpenseEntryWidget._isSplitValid` (same cent/percent tolerances) so the
-/// restyled allocation bar and remaining indicator stay consistent with the
-/// save-time validation — it does NOT introduce new split math.
+/// It is the editor's one split check: the allocation bar, the remaining
+/// indicator and the save-time validator (`status == AllocationStatus.ok`) all
+/// read it, so they cannot disagree. It does NOT introduce new split math.
 class SplitAllocation {
   const SplitAllocation({
     required this.status,
@@ -105,4 +104,80 @@ class SplitAllocation {
         );
     }
   }
+}
+
+/// Rebalances an Exact split: every member in [enabled] who is not in [locked]
+/// gets an equal part of [total] minus the locked included amounts. Locked
+/// members and members outside [enabled] keep their amounts, and with nobody
+/// left to rebalance (no included member, or every one locked) the amounts come
+/// back unchanged. Returns a new map and never rounds — rounding stays where
+/// the amounts are shown or saved.
+Map<String, double> rebalanceExactAmounts({
+  required double total,
+  required Set<String> enabled,
+  required Set<String> locked,
+  required Map<String, double> amounts,
+}) => _rebalance(
+  target: total,
+  enabled: enabled,
+  locked: locked,
+  values: amounts,
+);
+
+/// [rebalanceExactAmounts] for a percentage split, against 100.
+Map<String, double> rebalancePercentages({
+  required Set<String> enabled,
+  required Set<String> locked,
+  required Map<String, double> percentages,
+}) => _rebalance(
+  target: 100,
+  enabled: enabled,
+  locked: locked,
+  values: percentages,
+);
+
+Map<String, double> _rebalance({
+  required double target,
+  required Set<String> enabled,
+  required Set<String> locked,
+  required Map<String, double> values,
+}) {
+  final result = Map.of(values);
+  double lockedSum = 0;
+  int unlockedCount = 0;
+  for (final email in enabled) {
+    if (locked.contains(email)) {
+      lockedSum += values[email] ?? 0;
+    } else {
+      unlockedCount++;
+    }
+  }
+  if (unlockedCount == 0) return result;
+  final perUnlocked = (target - lockedSum) / unlockedCount;
+  for (final email in enabled) {
+    if (!locked.contains(email)) result[email] = perUnlocked;
+  }
+  return result;
+}
+
+/// Moves each [locked] amount with a changed entry total: it scales by
+/// [newTotal] / [oldTotal], and every other amount stays. When either total is
+/// ≤ 0 or nobody is locked there is nothing to scale against, so the amounts
+/// come back unchanged with `releaseLocks: true` — the caller then clears its
+/// locks. Returns a new map.
+({Map<String, double> amounts, bool releaseLocks}) scaleLockedAmounts({
+  required double oldTotal,
+  required double newTotal,
+  required Set<String> locked,
+  required Map<String, double> amounts,
+}) {
+  final scaled = Map.of(amounts);
+  if (oldTotal <= 0 || newTotal <= 0 || locked.isEmpty) {
+    return (amounts: scaled, releaseLocks: true);
+  }
+  final ratio = newTotal / oldTotal;
+  for (final email in locked) {
+    scaled[email] = (scaled[email] ?? 0) * ratio;
+  }
+  return (amounts: scaled, releaseLocks: false);
 }
