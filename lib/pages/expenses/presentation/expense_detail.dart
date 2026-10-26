@@ -79,6 +79,23 @@ typedef ExpenseSaver =
       required NotificationSender notifications,
     });
 
+/// The editor's receipt scanner, as an injectable function. Resolves to the
+/// scanned receipt, or null when the scan was dismissed.
+///
+/// Null in production → [_showReceiptScannerSheet]. Its point is testability:
+/// a rescan inside the editor is otherwise unreachable from a widget test.
+typedef ReceiptScanner =
+    Future<ReceiptScanResult?> Function(BuildContext context);
+
+/// The production scanner: the [ReceiptScannerSheet] as a modal bottom sheet.
+Future<ReceiptScanResult?> _showReceiptScannerSheet(BuildContext context) =>
+    showModalBottomSheet<ReceiptScanResult>(
+      context: context,
+      sheetAnimationStyle: kSheetAnimationStyle,
+      barrierColor: kSheetBarrierColor,
+      builder: (context) => const ReceiptScannerSheet(),
+    );
+
 /// The save CTA's three states. See [_ExpenseDetailState._saveStatus].
 enum _SaveStatus { idle, busy, done }
 
@@ -92,6 +109,7 @@ class ExpenseDetail extends ConsumerStatefulWidget {
     this.saveExpense,
     this.lookupRate,
     this.deleteExpense,
+    this.scanReceipt,
   });
 
   final Group group;
@@ -113,6 +131,10 @@ class ExpenseDetail extends ConsumerStatefulWidget {
   /// Test seam for the delete write. Null in production →
   /// [ExpenseRepository.delete].
   final ExpenseDeleter? deleteExpense;
+
+  /// Test seam for the in-editor receipt scan (the Itemized header's Scan
+  /// pill). Null in production → the [ReceiptScannerSheet] bottom sheet.
+  final ReceiptScanner? scanReceipt;
 
   @override
   ConsumerState<ExpenseDetail> createState() => _ExpenseDetailState();
@@ -385,13 +407,8 @@ class _ExpenseDetailState extends ConsumerState<ExpenseDetail> {
       }
     } else if (widget.receiptResult != null &&
         widget.receiptResult!.total != null) {
-      final expenseEntry = ExpenseEntry(index: _newTextFieldId++);
       _entries.add(
-        ExpenseEntryData(
-          index: expenseEntry.index,
-          expenseEntry: expenseEntry,
-          onRemove: () => _removeEntry(expenseEntry),
-          groupMembers: _groupMembers,
+        _freshEntry(
           initialAmount: amountToFieldText(
             widget.receiptResult!.total!,
             _entryCurrency,
@@ -399,15 +416,7 @@ class _ExpenseDetailState extends ConsumerState<ExpenseDetail> {
         ),
       );
     } else {
-      final expenseEntry = ExpenseEntry(index: _newTextFieldId++);
-      _entries.add(
-        ExpenseEntryData(
-          index: expenseEntry.index,
-          expenseEntry: expenseEntry,
-          onRemove: () => _removeEntry(expenseEntry),
-          groupMembers: _groupMembers,
-        ),
-      );
+      _entries.add(_freshEntry());
     }
 
     // Initialize amount controller from first entry data
@@ -476,26 +485,37 @@ class _ExpenseDetailState extends ConsumerState<ExpenseDetail> {
     });
   }
 
-  /// An item row seeded from a scanned receipt line. The scan's `amount` is
-  /// the LINE total ("5x Pita 12,50"), while the editor's amount field holds
-  /// the unit price, so the quantity has to travel with it — dropping it
-  /// turned every multi-unit line into a single unit priced at the line total.
-  ExpenseEntryData _entryFromReceiptLine(ReceiptLineItem item) {
+  /// A new item holding nothing yet, or just what is given.
+  ExpenseEntryData _freshEntry({
+    String? initialName,
+    String? initialAmount,
+    String? initialQuantity,
+  }) {
     final expenseEntry = ExpenseEntry(index: _newTextFieldId++);
     return ExpenseEntryData(
       index: expenseEntry.index,
       expenseEntry: expenseEntry,
       onRemove: () => _removeEntry(expenseEntry),
       groupMembers: _groupMembers,
-      initialName: item.name,
-      initialAmount: unitPriceFieldTextForTotal(
-        item.amount,
-        item.quantity,
-        _entryCurrency,
-      ),
-      initialQuantity: item.quantity.toString(),
+      initialName: initialName,
+      initialAmount: initialAmount,
+      initialQuantity: initialQuantity,
     );
   }
+
+  /// An item row seeded from a scanned receipt line. The scan's `amount` is
+  /// the LINE total ("5x Pita 12,50"), while the editor's amount field holds
+  /// the unit price, so the quantity has to travel with it — dropping it
+  /// turned every multi-unit line into a single unit priced at the line total.
+  ExpenseEntryData _entryFromReceiptLine(ReceiptLineItem item) => _freshEntry(
+    initialName: item.name,
+    initialAmount: unitPriceFieldTextForTotal(
+      item.amount,
+      item.quantity,
+      _entryCurrency,
+    ),
+    initialQuantity: item.quantity.toString(),
+  );
 
   void _detectAndUpdateCategory(String title) {
     if (title.isNotEmpty) {
@@ -984,15 +1004,7 @@ class _ExpenseDetailState extends ConsumerState<ExpenseDetail> {
         _entries.first.initialAmount = _amountController.text;
       }
 
-      final expenseEntry = ExpenseEntry(index: _newTextFieldId++);
-      _entries.add(
-        ExpenseEntryData(
-          index: expenseEntry.index,
-          expenseEntry: expenseEntry,
-          onRemove: () => _removeEntry(expenseEntry),
-          groupMembers: _groupMembers,
-        ),
-      );
+      _entries.add(_freshEntry());
     });
   }
 
@@ -1112,15 +1124,16 @@ class _ExpenseDetailState extends ConsumerState<ExpenseDetail> {
   double _itemizedTotalFromForm() => itemizedTotal(_formLines());
 
   Future<void> _scanReceipt() async {
-    final result = await showModalBottomSheet<ReceiptScanResult>(
-      context: context,
-      sheetAnimationStyle: kSheetAnimationStyle,
-      barrierColor: kSheetBarrierColor,
-      builder: (context) => const ReceiptScannerSheet(),
+    final result = await (widget.scanReceipt ?? _showReceiptScannerSheet)(
+      context,
     );
     if (result == null || !mounted) return;
+    // A total-only scan writes the first item's amount field after this
+    // setState, in the keypad's order (state first, then the field).
+    FormFieldState<dynamic>? totalField;
+    FormFieldState<dynamic>? quantityField;
+    String? totalText;
     setState(() {
-      _itemizedOverride = true;
       if (result.merchantName != null) {
         _nameController.text = result.merchantName!;
         _formKey.currentState?.fields['name']?.didChange(result.merchantName);
@@ -1130,19 +1143,45 @@ class _ExpenseDetailState extends ConsumerState<ExpenseDetail> {
         _formKey.currentState?.fields['expense_date']?.didChange(result.date);
       }
       if (result.lineItems.isNotEmpty) {
+        // Scanned lines open Itemized, and claiming stays the default after a
+        // scan. A total-only scan keeps whatever layout is showing.
+        _itemizedOverride = true;
         // Replace the current items with the scanned lines.
         _entries.clear();
         for (final item in result.lineItems) {
           _entries.add(_entryFromReceiptLine(item));
         }
-      } else if (result.total != null && _entries.isNotEmpty) {
-        _entries.first.initialAmount = amountToFieldText(
-          result.total!,
-          _entryCurrency,
-        );
+      } else if (result.total != null) {
+        // Through the same channels as the keypad (_openAmountKeypad): the
+        // controller, the seed and the first item's amount field, so the row,
+        // the itemized total and the save all hold the scanned total. Written
+        // at the ENTRY currency's precision: CHF 12.34 in a JPY group stays
+        // 12.34. The receipt total is what the item costs, so the first item
+        // goes back to one unit: its old quantity would multiply the total.
+        final text = amountToFieldText(result.total!, _entryCurrency);
+        _amountController.text = text;
+        if (_entries.isEmpty) {
+          // Every item was removed: the total gets a fresh item instead of
+          // being dropped.
+          _entries.add(_freshEntry(initialAmount: text));
+        } else {
+          // Only the first item: replacing items is the line-item branch's
+          // job.
+          final first = _entries.first;
+          first.initialAmount = text;
+          totalField = _formKey
+              .currentState
+              ?.fields['expense_entry[${first.index}][amount]'];
+          quantityField = _formKey
+              .currentState
+              ?.fields['expense_entry[${first.index}][quantity]'];
+          totalText = text;
+        }
       }
       _isDirty = true;
     });
+    quantityField?.didChange('1');
+    totalField?.didChange(totalText);
   }
 
   /// The one rule both writes follow: only a write that completes closes the

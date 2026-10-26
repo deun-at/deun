@@ -524,10 +524,9 @@ class _ExpenseEntryWidgetState extends State<ExpenseEntryWidget> {
   }
 
   /// F158: opens the shared amount keypad for the itemized unit price. On
-  /// confirm it writes back through the same channels the old inline field
-  /// used — the FormBuilderField (validated/saved) plus the same _unitPrice /
-  /// _onTotalChanged split-recalc — so the persisted value and split math are
-  /// unchanged. Format matches the old field (toStringAsFixed(2)).
+  /// confirm it writes the FormBuilderField (validated/saved); the field's
+  /// onChanged ([_adoptUnitPrice]) moves this row's price and split math with
+  /// it, so the persisted value and the row cannot disagree.
   Future<void> _openUnitPriceKeypad(FormFieldState<dynamic> field) async {
     final picked = await showAmountKeypadSheet(
       context,
@@ -535,11 +534,22 @@ class _ExpenseEntryWidgetState extends State<ExpenseEntryWidget> {
       currency: widget.currency,
     );
     if (picked == null || !mounted) return;
-    final text = amountToFieldText(picked, widget.currency);
-    field.didChange(text);
+    field.didChange(amountToFieldText(picked, widget.currency));
+  }
+
+  /// Adopts the amount field's new [value] as this row's unit price, whoever
+  /// wrote it: the row's own keypad, or the editor writing a rescanned total
+  /// or a switch-back re-conversion into the field. The row draws its price
+  /// and line total from [_unitPrice] while the itemized total and the save
+  /// read the field, so a write the row missed showed one amount and saved
+  /// another. [didUpdateWidget] cannot cover it: rescanning the same total
+  /// leaves [ExpenseEntryWidget.initialAmount] unchanged.
+  void _adoptUnitPrice(dynamic value) {
+    final price = double.tryParse(value?.toString() ?? '');
+    if (price == null || price == _unitPrice) return;
     setState(() {
-      double oldTotal = _entryTotal;
-      _unitPrice = picked;
+      final oldTotal = _entryTotal;
+      _unitPrice = price;
       _onTotalChanged(oldTotal);
     });
   }
@@ -555,6 +565,7 @@ class _ExpenseEntryWidgetState extends State<ExpenseEntryWidget> {
               ? _seedAmountText(widget.expenseEntry)
               : null),
       autovalidateMode: AutovalidateMode.onUserInteraction,
+      onChanged: _adoptUnitPrice,
       validator: FormBuilderValidators.compose([
         FormBuilderValidators.required(
           errorText: l10n.expenseEntryAmountValidationEmpty,
@@ -632,20 +643,29 @@ class _ExpenseEntryWidgetState extends State<ExpenseEntryWidget> {
     );
   }
 
+  /// Adopts the quantity field's new [value] as this row's quantity, whoever
+  /// wrote it: the stepper, or the editor resetting a rescanned item to one
+  /// unit. Same reason as [_adoptUnitPrice].
+  void _adoptQuantity(dynamic value) {
+    final qty = int.tryParse(value?.toString() ?? '');
+    if (qty == null || qty < 1 || qty == _quantity) return;
+    setState(() {
+      final oldTotal = _entryTotal;
+      _quantity = qty;
+      _onTotalChanged(oldTotal);
+    });
+  }
+
   Widget _buildQuantityStepper(AppLocalizations l10n) {
     return FormBuilderField(
       key: ValueKey("${widget.index}_quantity"),
       name: "expense_entry[${widget.index}][quantity]",
       initialValue: _quantity.toString(),
+      onChanged: _adoptQuantity,
       builder: (FormFieldState<dynamic> qtyField) {
         void updateQty(int newQty) {
           if (newQty < 1) newQty = 1;
           qtyField.didChange(newQty.toString());
-          setState(() {
-            double oldTotal = _entryTotal;
-            _quantity = newQty;
-            _onTotalChanged(oldTotal);
-          });
         }
 
         return StepperControl(
