@@ -18,6 +18,7 @@ import '../../../constants.dart';
 import '../../../widgets/restyle/deun_header.dart';
 import '../../../widgets/restyle/primary_button.dart';
 import '../../../widgets/native_ad_block.dart';
+import '../../../widgets/route_loader.dart' show RouteNotFound, isRowNotFound;
 import '../../expenses/data/receipt_scan_result.dart';
 import '../../expenses/presentation/receipt_scanner_sheet.dart';
 import '../provider/group_detail.dart';
@@ -88,6 +89,15 @@ class _GroupDetailState extends ConsumerState<GroupDetail> {
 
   @override
   Widget build(BuildContext context) {
+    // removed-member-access: a group the user can no longer read (removed from
+    // it, or deleted) comes back as no row on its next load; the open page
+    // then gives way to the not-found state a typed location shows.
+    final loadError = ref.watch(
+      groupDetailProvider(widget.group.id).select((state) => state.error),
+    );
+    if (loadError != null && isRowNotFound(loadError)) {
+      return const RouteNotFound();
+    }
     final currentUserEmail = ref.watch(currentUserProvider)?.email;
     return ThemeBuilder(
       colorValue: widget.group.colorValue,

@@ -1,9 +1,12 @@
 // typed-routes: the real route table opened by location alone. Every group and
 // expense page loads its ids from the path; a bad id shows not-found.
 
+import 'dart:async';
+
 import 'package:deun/app_paths.dart';
 import 'package:deun/app_router.dart';
 import 'package:deun/deep_links.dart';
+import 'package:deun/helper/realtime_mixin.dart';
 import 'package:deun/l10n/app_localizations.dart';
 import 'package:deun/pages/expenses/presentation/claim_page.dart';
 import 'package:deun/pages/expenses/presentation/expense_detail.dart';
@@ -20,6 +23,7 @@ import 'package:deun/pages/statistics/group_statistics_page.dart';
 import 'package:deun/pages/statistics/month_detail_bottom_sheet.dart';
 import 'package:deun/widgets/route_loader.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'helper/app_router_harness.dart';
@@ -374,6 +378,34 @@ void main() {
       );
       expect(recovery.isError, isFalse);
       expect(recovery.fullPath, '/update-password');
+    },
+  );
+
+  testWidgets(
+    'an open group page shows not-found once its next load reports no row, also when it was opened with the group at hand',
+    (tester) async {
+      final l10n = await AppLocalizations.delegate.load(const Locale('en'));
+      final loads = FakeRouteLoads.standard();
+      final router = await pumpApp(tester, '/group', loads: loads);
+      await settle(tester);
+      // As the group list opens it: the group rides along as the extra.
+      unawaited(
+        router.push(AppPaths.group(groupId), extra: loads.groups[groupId]),
+      );
+      await settle(tester);
+      expect(find.byType(GroupDetail), findsOneWidget);
+      expect(find.text('Trip'), findsWidgets);
+
+      // removed-member-access: the user was removed; the group reads as no row.
+      loads.groups.remove(groupId);
+      ProviderScope.containerOf(
+        tester.element(find.byType(GroupDetail)),
+      ).read(appResumeCounterProvider.notifier).increment();
+      await settle(tester);
+
+      expect(find.text(l10n.pageNotFound), findsWidgets);
+      expect(find.text('Trip'), findsNothing);
+      expect(tester.takeException(), isNull);
     },
   );
 }

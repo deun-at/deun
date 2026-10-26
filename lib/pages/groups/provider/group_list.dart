@@ -7,6 +7,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../helper/realtime_mixin.dart';
+import '../../../widgets/route_loader.dart' show isRowNotFound;
 import '../data/group_model.dart';
 import '../data/group_repository.dart';
 import '../data/member_repository.dart';
@@ -219,31 +220,34 @@ class GroupListNotifier extends _$GroupListNotifier with RealtimeNotifierMixin {
   }
 
   /// Fetches one group and writes it into the list — or takes it out when the
-  /// user has no member row in it any more (soft-removed rows count as rows).
-  /// The newest-started read or delete of a group wins; a failed fetch changes
-  /// nothing.
+  /// user has no member row in it any more, or when the fetch reports no row:
+  /// a group the user was removed from (removed-member-access: a soft-removed
+  /// member reads nothing of it) or that is gone. The newest-started read or
+  /// delete of a group wins; any other failed fetch changes nothing.
   Future<void> _refreshGroup(String groupId) async {
     final r = ref;
     final email = _email;
     if (email == null) return;
     final number = ++_readSeq;
-    final Group group;
+    Group? group;
     try {
       group = await fetchGroup(groupId);
     } catch (error) {
-      debugPrint('group_list: refresh of $groupId failed: $error');
-      return;
+      if (!isRowNotFound(error)) {
+        debugPrint('group_list: refresh of $groupId failed: $error');
+        return;
+      }
     }
     if (!r.mounted) return;
     final groups = _currentGroups();
     if (groups == null || _appliedAfter(groupId, number)) return;
     _applied[groupId] = number;
-    final stillMember = group.groupMembers.any((m) => m.email == email);
     _setGroups(
       [
         for (final g in groups)
           if (g.id != groupId) g,
-        if (stillMember) group,
+        if (group != null && group.groupMembers.any((m) => m.email == email))
+          group,
       ]..sort(_byName),
     );
   }

@@ -886,7 +886,7 @@ void main() {
   });
 
   test(
-    'C4 expense lines, shares and balances belong to the members of their group, soft-removed included',
+    'C4 expense lines, shares and balances belong to the active members of their group',
     () {
       const member = {
         'expense_entry':
@@ -909,8 +909,9 @@ void main() {
       }
       expect(
         fn('is_group_member'),
-        isNot(contains('removed_at')),
-        reason: 'a soft-removed member still sees their past groups',
+        contains('and gm.removed_at is null'),
+        reason:
+            'a soft-removed member reads and changes nothing of the group (removed-member-access)',
       );
     },
   );
@@ -950,20 +951,22 @@ void main() {
   );
 
   test(
-    "C6 membership changes only from inside the group or by the group's creator; joining goes through join_group",
+    "C6 membership changes only from inside the group, or by the creator of a group with no member row yet; joining goes through join_group",
     () {
-      const own = "email = (select auth.jwt() ->> 'email')";
       const member = 'public.is_group_member(group_id)';
       const creator =
           'exists (select 1 from public."group" g '
           'where g.id = group_member.group_id '
           'and g.user_id = (select auth.uid()))';
       expect(predicates('group_member', 'insert'), {
-        (null, '$member or $creator'),
+        (
+          null,
+          '$member or (not public.group_has_members(group_id) and $creator)',
+        ),
       });
-      expect(predicates('group_member', 'update'), {
-        ('$own or $member', '$own or $member'),
-      });
+      // removed-member-access: no own-row branch, so a soft-removed member
+      // cannot clear their own removed_at.
+      expect(predicates('group_member', 'update'), {(member, member)});
       expect(predicates('group_member', 'delete'), {(member, null)});
       // Decisions, "Reads of group_member": own rows and own groups only.
       expect(predicates('group_member', 'select'), {
@@ -991,6 +994,12 @@ void main() {
           'expense_entry',
           'expense_entry_share',
           'group_shares_summary',
+          // removed-member-access: these read group_member as the caller,
+          // which a soft-removed member passed through their own row.
+          'group',
+          'expense',
+          'expense_update_checker',
+          'group_update_checker',
         ])
           for (final MapEntry(key: name, value: p) in on(table).entries)
             for (final predicate in [p.using, p.check])
@@ -1003,6 +1012,7 @@ void main() {
       for (final (helper, args) in [
         ('is_group_member', 'uuid'),
         ('has_any_membership', 'text'),
+        ('group_has_members', 'uuid'),
       ]) {
         final sql = fn(helper);
         expect(sql, contains(' stable security definer '), reason: helper);

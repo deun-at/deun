@@ -84,7 +84,11 @@ select t('released-build join claiming a two-group guest is refused', 'd@x.test'
   select 1 from expense_entry_share where email = 'guest+g2@guest.invalid'
   union all select 1 from expense where paid_by = 'guest+g2@guest.invalid'
   union all select 1 from "user" where email = 'guest+g2@guest.invalid'$q$, 'err');
-select t('re-join after soft removal', 'b@x.test', $q$update group_member set removed_at = null where group_id = '11111111-0000-0000-0000-000000000001' and email = 'b@x.test'$q$, 'ok:1');
+select t('soft-removed member re-admits themselves (refused since removed-member-access)', 'b@x.test', $q$
+  select set_config('role', 'postgres', true);
+  update group_member set removed_at = now() where group_id = '11111111-0000-0000-0000-000000000001' and email = 'b@x.test';
+  select set_config('role', 'authenticated', true);
+  update group_member set removed_at = null where group_id = '11111111-0000-0000-0000-000000000001' and email = 'b@x.test'$q$, 'ok:0');
 -- ===== stranger c against group G1 =====
 select t('stranger soft-removes a G1 member', 'c@x.test', $q$update group_member set removed_at = now() where group_id = '11111111-0000-0000-0000-000000000001'$q$, 'ok:0');
 select t('stranger deletes G1 members', 'c@x.test', $q$delete from group_member where group_id = '11111111-0000-0000-0000-000000000001'$q$, 'ok:0');

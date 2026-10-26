@@ -16,6 +16,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../helper/app_router_harness.dart' show rowNotFound;
 import '../helper/fake_realtime_channel_factory.dart';
 import '../helper/group_list_harness.dart';
 
@@ -214,41 +215,27 @@ void main() {
   );
 
   test(
-    'C6 a hard-removed user loses the group; a soft-removed one keeps it live',
+    'C6 a hard-removed user loses the group and its checker stops fetching',
     () {
       fakeAsync((async) {
-        final m = _mount(async, [testGroup('g1'), testGroup('g2')]);
+        final m = _mount(async, [testGroup('g1')]);
         m.channels
             .checkerFor('group_list', 'g1')
             .emitEvent(checkerChange(_update, 'g1'));
-        m.channels
-            .checkerFor('group_list', 'g2')
-            .emitEvent(checkerChange(_update, 'g2'));
         async.elapse(Duration.zero);
         m.backend
             .fetchesOf('g1')
             .single
             .completer
             .complete(testGroup('g1', members: [other]));
-        m.backend
-            .fetchesOf('g2')
-            .single
-            .completer
-            .complete(
-              testGroup('g2', members: [other], removedMembers: [me], total: 3),
-            );
         async.elapse(Duration.zero);
-        expect(_totals(m.container), {'g2': 3});
+        expect(_ids(m.container), isEmpty);
 
         for (final channel in m.channels.liveCheckers('group_list')) {
           channel.emitEvent(checkerChange(_update, 'g1'));
         }
-        m.channels
-            .checkerFor('group_list', 'g2')
-            .emitEvent(checkerChange(_update, 'g2'));
         async.elapse(Duration.zero);
         expect(m.backend.fetchesOf('g1'), hasLength(1));
-        expect(m.backend.fetchesOf('g2'), hasLength(2));
       });
     },
   );
@@ -372,6 +359,32 @@ void main() {
             .complete(testGroup('g1', total: 9));
         async.elapse(Duration.zero);
         expect(_totals(m.container), {'g1': 9, 'g2': 2});
+      });
+    },
+  );
+
+  test(
+    'C10 a refresh that comes back not-found takes the group out, and a later event fetches nothing',
+    () {
+      fakeAsync((async) {
+        final m = _mount(async, [testGroup('g1'), testGroup('g2')]);
+        // removed-member-access: the removed member hears their own row's
+        // update, and the group itself now reads as no row.
+        m.channels.membership.emitEvent(membershipChange(_update, 'g1', me));
+        async.elapse(Duration.zero);
+        m.backend.fetchesOf('g1').single.completer.completeError(rowNotFound());
+        async.elapse(Duration.zero);
+        expect(
+          m.container.read(groupListProvider),
+          isA<AsyncData<List<Group>>>(),
+        );
+        expect(_ids(m.container), {'g2'});
+
+        for (final channel in m.channels.liveCheckers('group_list')) {
+          channel.emitEvent(checkerChange(_update, 'g1'));
+        }
+        async.elapse(Duration.zero);
+        expect(m.backend.fetchesOf('g1'), hasLength(1));
       });
     },
   );
