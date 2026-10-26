@@ -33,7 +33,7 @@
 | atomic-writes | group-write-rpcs | Member add/remove, group delete and expense delete each commit as one transaction ⚠ migration pending | normal | done |
 | backend-in-repo | schema-baseline | The live base schema committed as a reference baseline | normal | done |
 | backend-in-repo | legacy-fallback-removal | Writes commit through their RPC or fail, with no client-side fallback | normal | done |
-| backend-in-repo | push-server-compose | The push function writes each push for its receiver and checks who may get it | normal | planned |
+| backend-in-repo | push-server-compose | The push function writes each push for its receiver and checks who may get it ⚠ function deploy pending | normal | done |
 | backend-in-repo | rls-hardening | The anon key reaches nothing, and only the people a row concerns can change it | normal | planned |
 | structure | typed-expense-draft | The expense editor hands the repository a typed draft, not a string-keyed map | normal | planned |
 | structure | expense-editor-split | The expense editor's state lives in a controller, and the screen opens in pieces | normal | planned |

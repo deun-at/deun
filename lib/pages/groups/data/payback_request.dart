@@ -51,9 +51,6 @@ class PaybackAccepted extends PaybackPlan {
     required this.paidFor,
     required this.amount,
     required this.recordedBy,
-    required this.paidByDisplayName,
-    required this.paidForDisplayName,
-    required this.recordedByDisplayName,
     required this.payerIsGuest,
   });
 
@@ -64,10 +61,6 @@ class PaybackAccepted extends PaybackPlan {
   /// The signed-in user who is recording this. Equal to [paidBy] on the
   /// self-payback path.
   final String recordedBy;
-
-  final String paidByDisplayName;
-  final String paidForDisplayName;
-  final String recordedByDisplayName;
 
   /// A guest has no device, so no push can reach them.
   final bool payerIsGuest;
@@ -156,9 +149,6 @@ PaybackPlan resolvePayback({
     paidFor: paidFor,
     amount: amount,
     recordedBy: recordedBy,
-    paidByDisplayName: payer.displayName,
-    paidForDisplayName: payee.displayName,
-    recordedByDisplayName: anyName(recordedBy),
     payerIsGuest: payer.isGuest,
   );
 }

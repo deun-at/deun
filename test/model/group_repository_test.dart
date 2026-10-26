@@ -5,7 +5,6 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:deun/helper/currency_breakdown.dart';
 import 'package:deun/helper/helper.dart';
 import 'package:deun/helper/notification_sender.dart';
-import 'package:deun/l10n/app_localizations.dart';
 import 'package:deun/pages/expenses/data/expense_repository.dart';
 import 'package:deun/pages/groups/data/group_repository.dart';
 import 'package:deun/pages/groups/data/group_member_model.dart';
@@ -439,26 +438,7 @@ void main() {
   group('GroupRepository.applyPayBackAll', () {
     const me = 'me@test.com';
     const friend = 'ann@test.com';
-    final en = lookupAppLocalizations(const Locale('en'));
-    const rows = <String, Map<String, dynamic>>{
-      'id-Trip': {
-        'name': 'Trip',
-        'currency_code': 'EUR',
-        'user_display_name': 'Zoe',
-      },
-      'id-Tokyo': {
-        'name': 'Tokyo',
-        'currency_code': 'JPY',
-        'user_display_name': 'Zoe',
-      },
-      'id-Flat': {
-        'name': 'Flat',
-        'currency_code': 'EUR',
-        'user_display_name': 'Zoe',
-      },
-    };
-
-    late List<List<Object>> pushes;
+    late List<PushRequest> pushes;
     late List<String> writes;
     late NotificationSender notifications;
 
@@ -473,10 +453,7 @@ void main() {
       pushes = [];
       writes = [];
       notifications = NotificationSender(
-        en,
-        push: (type, objectId, receivers, title, body) async =>
-            pushes.add([type, objectId, Set.of(receivers), title, body]),
-        groupRow: (id) async => rows[id]!,
+        push: (request) async => pushes.add(request),
       );
       GroupRepository.payBackAllWriteOverride = (target) async {
         writes.add(target.groupId);
@@ -486,7 +463,7 @@ void main() {
     tearDown(() => GroupRepository.payBackAllWriteOverride = null);
 
     test(
-      'each settled group tells the friend once, with its own amount in its own currency',
+      'each settled group tells the friend once, with its own group and amount',
       () async {
         await GroupRepository.applyPayBackAll(
           resolve([
@@ -499,21 +476,32 @@ void main() {
 
         expect(writes, unorderedEquals(['id-Trip', 'id-Tokyo']));
         expect(
-          pushes,
+          pushes.map(
+            (p) => [
+              p.kind,
+              p.objectId,
+              p.receivers,
+              p.amount,
+              p.paidBy,
+              p.paidFor,
+            ],
+          ),
           unorderedEquals([
             [
-              'group',
+              PushKind.paybackRecorded,
               'id-Trip',
               {friend, me},
-              en.groupPayBackNotificationTitle('Me', 'Trip'),
-              en.groupPayBackNotificationBody('EUR 12.50'),
+              12.5,
+              me,
+              friend,
             ],
             [
-              'group',
+              PushKind.paybackRecorded,
               'id-Tokyo',
               {friend, me},
-              en.groupPayBackNotificationTitle('Me', 'Tokyo'),
-              en.groupPayBackNotificationBody('JPY 3,000'),
+              3000.0,
+              me,
+              friend,
             ],
           ]),
         );
@@ -542,7 +530,7 @@ void main() {
         await pumpEventQueue();
 
         expect(
-          pushes.map((p) => p[1]),
+          pushes.map((p) => p.objectId),
           unorderedEquals(['id-Trip', 'id-Tokyo']),
         );
       },

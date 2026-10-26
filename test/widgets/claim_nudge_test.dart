@@ -1,4 +1,5 @@
 import 'package:deun/constants.dart';
+import 'package:deun/helper/notification_sender.dart';
 import 'package:deun/l10n/app_localizations.dart';
 import 'package:deun/pages/expenses/data/expense_entry_model.dart';
 import 'package:deun/pages/expenses/data/expense_model.dart';
@@ -88,15 +89,14 @@ void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
   setUpAll(() async {
-    TestWidgetsFlutterBinding.ensureInitialized()
-        .defaultBinaryMessenger
+    TestWidgetsFlutterBinding.ensureInitialized().defaultBinaryMessenger
         .setMockMethodCallHandler(
-      const MethodChannel('plugins.flutter.io/shared_preferences'),
-      (call) async {
-        if (call.method == 'getAll') return <String, Object>{};
-        return null;
-      },
-    );
+          const MethodChannel('plugins.flutter.io/shared_preferences'),
+          (call) async {
+            if (call.method == 'getAll') return <String, Object>{};
+            return null;
+          },
+        );
     // sendNotification reads supabase.auth.currentUser; initialize so that
     // lookup does not throw even though the real helper is never called here.
     await Supabase.initialize(
@@ -109,19 +109,22 @@ void main() {
     await Supabase.instance.dispose();
   });
 
-  testWidgets('F175: tapping Nudge sends an expense push to the members',
-      (tester) async {
+  testWidgets('F175: tapping Nudge sends an expense push to the members', (
+    tester,
+  ) async {
     final l10n = await AppLocalizations.delegate.load(const Locale('en'));
     final group = _group();
     final expense = _expense();
 
-    final calls = <List<Object?>>[];
+    final calls = <PushRequest>[];
 
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
-          claimProvider(group.id, expense.id)
-              .overrideWith(() => _FakeClaimNotifier(expense)),
+          claimProvider(
+            group.id,
+            expense.id,
+          ).overrideWith(() => _FakeClaimNotifier(expense)),
         ],
         child: MaterialApp(
           localizationsDelegates: const [
@@ -135,14 +138,16 @@ void main() {
             builder: (context) => MediaQuery(
               data: MediaQuery.of(context).copyWith(disableAnimations: true),
               child: Theme(
-                data: getThemeData(context, kBrandSeed, Brightness.light)
-                    .copyWith(splashFactory: NoSplash.splashFactory),
+                data: getThemeData(
+                  context,
+                  kBrandSeed,
+                  Brightness.light,
+                ).copyWith(splashFactory: NoSplash.splashFactory),
                 child: ClaimPage(
                   group: group,
                   expense: expense,
-                  sendNotificationOverride:
-                      (type, objectId, receivers, title, body) async {
-                    calls.add([type, objectId, receivers, title, body]);
+                  sendNotificationOverride: (request) async {
+                    calls.add(request);
                   },
                 ),
               ),
@@ -163,13 +168,12 @@ void main() {
     // Exactly one push, wired like sendExpenseNotification.
     expect(calls, hasLength(1));
     final call = calls.single;
-    expect(call[0], 'expense'); // type
-    expect(call[1], 'e1'); // objectId = expense.id
+    expect(call.kind.routingType, 'expense'); // type
+    expect(call.objectId, 'e1'); // objectId = expense.id
     // Receivers = the whole group (the fallback set for unowned unclaimed
-    // units); the real sendNotification strips the current user server-side.
-    expect(call[2], {'a@test.com', 'b@test.com'});
-    // Copy is built sender-side and non-empty.
-    expect((call[3] as String).isNotEmpty, isTrue); // title
-    expect((call[4] as String).isNotEmpty, isTrue); // body
+    // units); the server drops the sender and any non-member.
+    expect(call.receivers, {'a@test.com', 'b@test.com'});
+    // The server writes the copy; the request names its kind.
+    expect(call.kind, PushKind.claimNudge);
   });
 }

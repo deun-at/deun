@@ -281,7 +281,7 @@ class _PayBackCard extends StatelessWidget {
   /// settle, since no group was left behind. It reports "nothing to pay back".
   Future<void> _markPaid(BuildContext context) async {
     final l10n = AppLocalizations.of(context)!;
-    final notifications = NotificationSender.of(context);
+    final notifications = NotificationSender();
     final user = friendship.user;
     try {
       final settle = settleAll ?? GroupRepository.payBackAll;

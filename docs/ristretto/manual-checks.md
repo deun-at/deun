@@ -364,6 +364,40 @@ carry `[human]` criteria that nobody has ever observed. Check here before shippi
   existing realtime path: once applied, the open group-member-add-flow, payback-row-delete and
   realtime-event-scope walks make the same observations through these RPCs.
 
+- [ ] **proves** · push-server-compose: a real push arrives on a device in the receiver's
+  language, with the group's currency formatted for that language, while the sender's app runs in
+  the other language · out of reach: the self-hosted api.deun.app (edge runtime and its ICU data for
+  German number formatting, the function loading push_kinds.json, `user.locale` rows) and real FCM
+  delivery to a physical device · deploy first, BEFORE releasing any build that carries the new
+  client (the client sends no text any more, so the old function would push empty
+  notifications):
+  1. Rotate the Firebase service-account key in the Firebase console (project `deun-66067`). The
+     old one sat in plaintext in the deployed function and in the local dump. Delete the old key.
+  2. Put the new key's JSON on one line (`jq -c . key.json`) into the functions service's
+     environment as `FIREBASE_SERVICE_ACCOUNT`: the compose `functions:` → `environment:` block, the
+     value single-quoted in `.env`. The main router hands every container env var to the worker.
+  3. Back up the running copy (the stopgap; /root/push_index.ts.bak-20261025 is the pre-stopgap
+     one), copy `supabase/functions/push/index.ts` AND `supabase/functions/push/push_kinds.json` to
+     `volumes/functions/push/`, then `docker compose up -d --force-recreate --no-deps functions`.
+
+  Then verify. In Settings, set user B's language to Deutsch and user A's to English, tapping
+  Update on each profile so `user.locale` is saved. A adds a 1234.50 expense in a EUR group shared
+  with B. Confirm phone B shows the German expense push naming A, with "EUR 1.234,50". A records a
+  payback to B in a JPY group shared with B. Confirm the German payback push shows a yen amount
+  with no decimals. Switch B to English, have A send a reminder, and confirm it arrives in English,
+  naming A (not the group's creator).
+
+- [ ] **proves** · push-server-compose: a receiver who shares no group with the sender, or who was
+  soft-removed from the push's group, gets nothing, while a current member named in the same push
+  gets it; a request made without a signed-in user delivers nothing · out of reach: the live
+  instance's group_member, friendship and device_tokens rows and real FCM delivery · after the
+  deploy above, invoke `push` with A's access token and the body
+  `{"type":"INSERT","table":"group","record":{"kind":"member_added","type":"group","object_id":"<G>","notification_receiver":["<B>","<C>","<D>"]}}`.
+  G is a group where A is an active member. B is an active member of G, C shares no group with A
+  and has a device, and D was soft-removed from G and has a device. Confirm only B's device shows
+  the push. Repeat with the anon key in place of A's token and confirm a 401 and that no device
+  receives anything.
+
 ## Findings from verification
 
 Defects turned up while walking the checks. These are not checks themselves — nobody ticks them —

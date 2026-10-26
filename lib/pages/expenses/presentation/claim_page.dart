@@ -143,28 +143,19 @@ class _ClaimPageState extends ConsumerState<ClaimPage> {
     _toggleUnit(row);
   }
 
-  /// Nudge: fires an "expense" push to every other group member reminding them
-  /// to claim their items (F175), then shows the local confirmation snackbar.
-  /// Unclaimed units have no owner, so the receiver set is the whole group —
-  /// the push transport auto-strips the current user. Copy is built sender-side
-  /// ([NotificationSender.claimNudge]).
+  /// Nudge: fires a claim-nudge push to every other group member reminding
+  /// them to claim their items (F175), then shows the local confirmation
+  /// snackbar. Unclaimed units have no owner, so the receiver set is the whole
+  /// group. The server drops the sender and anyone not an active member, and
+  /// writes the copy in each receiver's language.
   void _nudge() {
-    final l10n = AppLocalizations.of(context)!;
-    final senderName =
-        _memberFor(_currentUserEmail ?? '')?.displayName ?? l10n.you;
     unawaited(
-      NotificationSender.of(
-        context,
-        push: widget.sendNotificationOverride,
-      ).claimNudge(
+      NotificationSender(push: widget.sendNotificationOverride).claimNudge(
         expenseId: widget.expense.id,
         receivers: widget.group.groupMembers.map((m) => m.email).toSet(),
-        senderDisplayName: senderName,
-        expenseName: widget.expense.name,
-        groupName: widget.group.name,
       ),
     );
-    showSnackBar(context, l10n.claimNudgeSent);
+    showSnackBar(context, AppLocalizations.of(context)!.claimNudgeSent);
   }
 
   @override

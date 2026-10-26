@@ -202,17 +202,6 @@ void main() {
         _ann,
       });
     });
-
-    // 14 — criterion: the notification must name who recorded it. Those names
-    // come off the roster, so the copy works before the migration lands.
-    test('the accepted plan carries every display name the notification '
-        'needs', () {
-      final accepted = _resolve() as PaybackAccepted;
-
-      expect(accepted.paidByDisplayName, 'Ann');
-      expect(accepted.paidForDisplayName, 'Bob');
-      expect(accepted.recordedByDisplayName, 'Me');
-    });
   });
 
   group('PaybackRejected.message', () {
