@@ -68,3 +68,4 @@
 | — | tab-switch-transition | Animate home tab switches per motion spec | normal | done |
 | — | keypad-calculator | Calculator in the amount keypad sheet | normal | done |
 | multi-currency | expense-card-fee | A card's foreign-transaction fee, on the rates Deun looks up | normal | done |
+| — | group-id-leak | A group id alone no longer joins a group: joining needs the current invite token | normal | planned |
