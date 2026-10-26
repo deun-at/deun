@@ -74,7 +74,7 @@ final class MonthExpensesProvider
   }
 }
 
-String _$monthExpensesHash() => r'a4bdfb6ee152037f0a45862540b999e8d2cd8c5b';
+String _$monthExpensesHash() => r'd832283e5da180d7fbe83c059b2013790846c04b';
 
 /// Single shared fetch per (group, month range). The member-totals,
 /// category-totals and category-details providers all derive from this so
@@ -159,7 +159,7 @@ final class GroupMonthlyTotalsNotifierProvider
 }
 
 String _$groupMonthlyTotalsNotifierHash() =>
-    r'f8d7a0f44e02ecbaac1527419fdd1f8cbaca380c';
+    r'9f247baa9c98c38b8cba41ce114005ba03984e14';
 
 final class GroupMonthlyTotalsNotifierFamily extends $Family
     with
@@ -263,7 +263,7 @@ final class GroupMonthMemberTotalsNotifierProvider
 }
 
 String _$groupMonthMemberTotalsNotifierHash() =>
-    r'341c58b8e72e6e73d256c813560e49e26caa99e2';
+    r'db2abcc161426784127a9cb9d10329688f86c9e6';
 
 final class GroupMonthMemberTotalsNotifierFamily extends $Family
     with
@@ -573,7 +573,7 @@ final class GroupRangeDataNotifierProvider
 }
 
 String _$groupRangeDataNotifierHash() =>
-    r'6ea0c8df073509384425f771916b6473fa481308';
+    r'b4db241895c3e6c639aea64860231929f5cc45c5';
 
 final class GroupRangeDataNotifierFamily extends $Family
     with
@@ -677,7 +677,7 @@ final class GroupSpendingSummaryProvider
 }
 
 String _$groupSpendingSummaryHash() =>
-    r'2a9ac1276696921b9b61556192900d38b6060af1';
+    r'ec2239cac61b31b6006ef1e3ea2e0c201ee540c0';
 
 final class GroupSpendingSummaryFamily extends $Family
     with $FunctionalFamilyOverride<FutureOr<SpendingSummary>, StatsRangeArgs> {
@@ -833,7 +833,7 @@ final class GroupMemberBreakdownProvider
 }
 
 String _$groupMemberBreakdownHash() =>
-    r'a0c470ec8a1c7127e153c096c9ae3fcae96aed6e';
+    r'844ffb4e01c3e58306f69b5f482a7ed3342a2a77';
 
 final class GroupMemberBreakdownFamily extends $Family
     with

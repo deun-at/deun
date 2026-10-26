@@ -41,7 +41,7 @@ final class FriendAddNotifierProvider
   }
 }
 
-String _$friendAddNotifierHash() => r'deef7c844cbac845e62f7076bd360b0b62f6defd';
+String _$friendAddNotifierHash() => r'0cae97e68081e861f845d12513b7c0cd021d4ded';
 
 abstract class _$FriendAddNotifier extends $Notifier<FriendAddState> {
   FriendAddState build();

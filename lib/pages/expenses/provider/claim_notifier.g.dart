@@ -56,7 +56,7 @@ final class ClaimNotifierProvider
   }
 }
 
-String _$claimNotifierHash() => r'6a445bf7aa2ecb03cb201c96f0e289397b801fbe';
+String _$claimNotifierHash() => r'443b0acc91352e4e8dfb8da59646e64d51cb61de';
 
 /// Owns the claim state for a single itemized expense. Loads the expense,
 /// exposes its claim units + cost math, and mutates claimer sets per unit.
