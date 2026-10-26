@@ -1,9 +1,12 @@
+import 'dart:io';
+
 import 'package:flutter/widgets.dart' show Locale;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:deun/helper/currency_breakdown.dart';
 import 'package:deun/helper/helper.dart';
 import 'package:deun/helper/notification_sender.dart';
 import 'package:deun/l10n/app_localizations.dart';
+import 'package:deun/pages/expenses/data/expense_repository.dart';
 import 'package:deun/pages/groups/data/group_repository.dart';
 import 'package:deun/pages/groups/data/group_member_model.dart';
 import 'package:deun/pages/groups/data/group_model.dart';
@@ -684,6 +687,121 @@ void main() {
         });
       },
     );
+  });
+
+  // -------------------------------------------------------------------------
+  // group-write-rpcs: the settled threshold travels with the removal.
+  // -------------------------------------------------------------------------
+  group('GroupRepository.removeMemberRpcParams', () {
+    test("sends the settled epsilon of the group's own currency", () {
+      expect(
+        GroupRepository.removeMemberRpcParams(
+          groupId: 'g1',
+          email: 'ann@test.com',
+          currency: Currency.eur,
+        )['_settled_epsilon'],
+        0.005,
+      );
+      expect(
+        GroupRepository.removeMemberRpcParams(
+          groupId: 'g1',
+          email: 'ann@test.com',
+          currency: Currency.jpy,
+        )['_settled_epsilon'],
+        0.5,
+      );
+    });
+  });
+
+  // -------------------------------------------------------------------------
+  // group-write-rpcs: the four writes call the migration's functions with
+  // exactly its arguments, one rpc each.
+  // -------------------------------------------------------------------------
+  group('group-write RPC calls', () {
+    test(
+      'each call names its function and sends exactly its declared arguments, in order',
+      () {
+        final sql = migrationSqlBySuffix('_group_write_rpcs.sql');
+        final calls = <String, Map<String, dynamic>>{
+          GroupRepository.addMemberRpcName: GroupRepository.addMemberRpcParams(
+            groupId: 'g1',
+            email: 'ann@test.com',
+          ),
+          GroupRepository.removeMemberRpcName:
+              GroupRepository.removeMemberRpcParams(
+                groupId: 'g1',
+                email: 'ann@test.com',
+                currency: Currency.eur,
+              ),
+          GroupRepository.deleteRpcName: GroupRepository.deleteRpcParams('g1'),
+          ExpenseRepository.deleteRpcName: ExpenseRepository.deleteRpcParams(
+            'e1',
+            'g1',
+          ),
+        };
+
+        expect(calls.keys.toSet(), {
+          'add_group_member',
+          'remove_group_member',
+          'delete_group',
+          'delete_expense',
+        });
+        for (final MapEntry(key: function, value: params) in calls.entries) {
+          expect(
+            params.keys.toList(),
+            declaredArgs(sql, function),
+            reason: function,
+          );
+        }
+        // Each value lands on its own argument (no swapped ids).
+        expect(calls.values.toList(), [
+          {'_group_id': 'g1', '_email': 'ann@test.com'},
+          {
+            '_group_id': 'g1',
+            '_email': 'ann@test.com',
+            '_settled_epsilon': 0.005,
+          },
+          {'_group_id': 'g1'},
+          {'_expense_id': 'e1', '_group_id': 'g1'},
+        ]);
+      },
+    );
+
+    test('each of the four writes is one rpc call and no other statement', () {
+      String method(String path, String signature) {
+        final source = File(path).readAsStringSync().replaceAll('\r\n', '\n');
+        final start = source.indexOf(signature);
+        expect(start, isNonNegative, reason: signature);
+        final end = source.indexOf(
+          RegExp(r'\n  (///|static |@)'),
+          start + signature.length,
+        );
+        return source.substring(start, end < 0 ? source.length : end);
+      }
+
+      const groups = 'lib/pages/groups/data/group_repository.dart';
+      const expenses = 'lib/pages/expenses/data/expense_repository.dart';
+      final bodies = {
+        'addMemberRpcName': method(
+          groups,
+          'static Future<MemberAddOutcome> addMember(',
+        ),
+        'removeMemberRpcName': method(
+          groups,
+          'static Future<MemberRemovalOutcome> removeMember(',
+        ),
+        'deleteRpcName (group)': method(groups, 'static Future<void> delete('),
+        'deleteRpcName (expense)': method(
+          expenses,
+          'static Future<void> delete(',
+        ),
+      };
+      for (final MapEntry(key: name, value: body) in bodies.entries) {
+        expect('supabase.'.allMatches(body), hasLength(1), reason: name);
+        expect(body, contains('supabase.rpc('), reason: name);
+        expect(body, contains(name.split(' ').first), reason: name);
+      }
+    });
   });
 }
 

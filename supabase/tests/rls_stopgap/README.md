@@ -15,3 +15,5 @@ Follow-up (security review, 2026-10-25): with the stopgap alone, 70/75 (a strang
 guest-merge-rpc (2026-10-26): after step 5, apply `migrations/<timestamp>_join_group_guest_merge.sql` as `supabase_admin` and run `40_join_group_cases.sql`. It prints `14/14 passed` (7/14 before the migration, where every call errs on the missing function); `30_cases.sql` stays 75/75 with the migration applied.
 
 payback-atomic-recalc (2026-10-26): after step 5, apply `migrations/<timestamp>_pay_back_atomic_recalc.sql` as `supabase_admin` and run `50_pay_back_cases.sql`. It prints `4/4 passed` (0/4 before the migration, where `pay_back` only inserts); `30_cases.sql` stays 75/75 with the migration applied.
+
+group-write-rpcs (2026-10-26): after step 5, apply `migrations/<timestamp>_join_group_guest_merge.sql` (it creates `lock_group_member_writes`) and then `migrations/<timestamp>_group_write_rpcs.sql`, both as `supabase_admin`, and run `60_group_write_cases.sql`. It prints `21/21 passed` (2/21 before the migration, where every call errs on the missing function); with it applied `30_cases.sql` stays 75/75, `40_join_group_cases.sql` 14/14 and `50_pay_back_cases.sql` 4/4.

@@ -36,6 +36,22 @@ class MemberRemovalHardRemoved extends MemberRemovalOutcome {
   const MemberRemovalHardRemoved();
 }
 
+/// Maps `remove_group_member`'s answer (`{outcome, outstanding}`) to the outcome
+/// the Members page acts on. `outstanding` arrives as a JSON number (int or
+/// double). Anything else throws a [FormatException], which the page's existing
+/// catch turns into the remove-error snackbar instead of a silent success.
+MemberRemovalOutcome memberRemovalOutcomeFromRpc(Object? answer) =>
+    switch (answer) {
+      {'outcome': 'blocked', 'outstanding': final num outstanding} =>
+        MemberRemovalOutcome.blocked(outstanding: outstanding.toDouble()),
+      {'outcome': 'soft_removed'} => MemberRemovalOutcome.softRemoved,
+      {'outcome': 'hard_removed'} => MemberRemovalOutcome.hardRemoved,
+      _ => throw FormatException(
+        'remove_group_member: unrecognised answer',
+        answer,
+      ),
+    };
+
 /// Decides the removal outcome from the member's net group [balance] (signed:
 /// negative = they owe) and whether they appear on any expense in the group.
 ///

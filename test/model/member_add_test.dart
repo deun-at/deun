@@ -59,34 +59,28 @@ Map<String, dynamic> groupJson() => {
 };
 
 void main() {
-  group('resolveMemberAdd', () {
-    test('no membership row at all inserts one', () {
+  group('memberAddOutcomeFromRpc', () {
+    test('maps each add_group_member answer and throws on anything else', () {
+      expect(memberAddOutcomeFromRpc('inserted'), MemberAddOutcome.inserted);
+      expect(memberAddOutcomeFromRpc('re_added'), MemberAddOutcome.reAdded);
       expect(
-        resolveMemberAdd(existingMembership: null),
-        MemberAddOutcome.inserted,
-      );
-    });
-
-    test('a soft-removed row is a re-add, not an insert', () {
-      expect(
-        resolveMemberAdd(
-          existingMembership: {
-            'email': 'carol@test.com',
-            'removed_at': '2026-08-15T09:30:00Z',
-          },
-        ),
-        MemberAddOutcome.reAdded,
-        reason: 'clearing removed_at leaves the historical shares untouched',
-      );
-    });
-
-    test('an active row is already a member: nothing to write', () {
-      expect(
-        resolveMemberAdd(
-          existingMembership: {'email': 'ann@test.com', 'removed_at': null},
-        ),
+        memberAddOutcomeFromRpc('already_member'),
         MemberAddOutcome.alreadyMember,
       );
+      for (final garbled in <Object?>[
+        null,
+        '',
+        'Inserted',
+        'reAdded',
+        1,
+        {'outcome': 'inserted'},
+      ]) {
+        expect(
+          () => memberAddOutcomeFromRpc(garbled),
+          throwsFormatException,
+          reason: '$garbled',
+        );
+      }
     });
   });
 

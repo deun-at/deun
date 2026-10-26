@@ -341,6 +341,27 @@ carry `[human]` criteria that nobody has ever observed. Check here before shippi
   `pay_back_exact`. A rolled-back payback leaves neither the row nor a balance change, and a
   failed recalculation leaves no payback.
 
+- [ ] **proves** · group-write-rpcs: adding and removing a member, deleting a group and deleting an
+  expense (payback rows included) each commit as one server transaction. The app has no fallback,
+  so until this is applied every add, removal, group delete and expense delete fails with its error
+  snackbar · out of reach: the self-hosted instance (migration unapplied) · apply
+  `20261026140000_group_write_rpcs.sql` as `supabase_admin`, after `20261026100000` (it calls
+  `lock_group_member_writes`), BEFORE releasing any build containing group-write-rpcs (a push to
+  main deploys the web build). Confirm by SQL that
+  `select proname, prosecdef from pg_proc where proname in ('add_group_member', 'remove_group_member', 'delete_group', 'delete_expense');`
+  lists all four, each with `prosecdef` false. Behaviour is already proven on the local harness
+  (`supabase/tests/rls_stopgap/60_group_write_cases.sql`, 21/21; 2/21 before the migration): add
+  inserts, re-adds on the same row and leaves an active member alone; removal blocks an unsettled
+  member (owing or owed) with no change, soft-removes a settled member with a payment or a share
+  while no balance moves, hard-removes one whose only history is in another group, and holds the
+  member-write lock and the `share` locks on `expense` and `expense_entry_share`; expense and
+  payback-row delete return every balance exactly with no leftover summary row; group delete takes
+  the group and its checker row; a failed recalculation rolls each write back. If a removal fails
+  with a permission error on `lock table`, `authenticated` lacks UPDATE/DELETE/TRUNCATE on
+  `expense` or `expense_entry_share` (the 2026-10-24 dump grants ALL). Cross-client delivery is the
+  existing realtime path: once applied, the open group-member-add-flow, payback-row-delete and
+  realtime-event-scope walks make the same observations through these RPCs.
+
 ## Findings from verification
 
 Defects turned up while walking the checks. These are not checks themselves — nobody ticks them —
