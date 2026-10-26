@@ -7,11 +7,23 @@ import '../../expenses/data/expense_model.dart';
 import '../data/group_member_model.dart';
 
 class GroupSharesSummary {
-  late String displayName;
-  late String? paypalMe;
-  late String? iban;
-  late double shareAmount;
+  String displayName = '';
+  String? paypalMe;
+  String? iban;
+  double shareAmount = 0;
 }
+
+/// A `group_shares_summary` amount: null, unparseable or non-finite reads as 0,
+/// so one bad row can neither throw mid-calculation nor poison a balance with
+/// NaN (group-model-parse-safety).
+double _parseAmount(Object? value) {
+  final parsed = double.tryParse('$value') ?? 0;
+  return parsed.isFinite ? parsed : 0;
+}
+
+/// A row's `paid_by`/`paid_for` email, or null when there is none to key it by.
+String? _rowEmail(Object? value) =>
+    value is String && value.isNotEmpty ? value : null;
 
 class Group {
   late String id;
@@ -31,9 +43,13 @@ class Group {
   Currency get currency => Currency.fromCode(currencyCode);
 
   late List<GroupMember> groupMembers;
-  late Map<String, GroupSharesSummary> groupSharesSummary;
-  late double totalExpenses;
-  late double totalShareAmount;
+
+  /// The summary outputs. Default-initialised (not `late`) so a calculation
+  /// that throws inside [loadDataFromJson]'s guard leaves readable zeros, not a
+  /// LateInitializationError on the group list (group-model-parse-safety).
+  Map<String, GroupSharesSummary> groupSharesSummary = {};
+  double totalExpenses = 0;
+  double totalShareAmount = 0;
 
   late List<Expense>? expenses;
 
@@ -108,7 +124,7 @@ class Group {
     // can be renamed or deleted in-app.
     name = json["name"] ?? '';
     colorValue = json["color_value"] ?? ColorSeed.baseColor.color.toARGB32();
-    simplifiedExpenses = json["simplified_expenses"];
+    simplifiedExpenses = json["simplified_expenses"] ?? false;
     createdAt = json["created_at"];
     userId = json["user_id"];
     currencyCode = json["currency_code"] ?? kDefaultCurrencyCode;
@@ -127,11 +143,9 @@ class Group {
     memberBalances = {};
     if (json["group_shares_summary"] != null) {
       for (var element in json["group_shares_summary"]) {
-        final email = element['paid_for'] as String?;
-        if (email == null || email.isEmpty) continue;
-        memberBalances[email] =
-            double.tryParse((element['total_share_amount'] ?? 0).toString()) ??
-            0;
+        final email = _rowEmail(element['paid_for']);
+        if (email == null) continue;
+        memberBalances[email] = _parseAmount(element['total_share_amount']);
       }
     }
 
@@ -156,47 +170,29 @@ class Group {
     groupSharesSummary = {};
     if (json["group_shares_summary"] != null) {
       for (var element in json["group_shares_summary"]) {
-        if (element['paid_for'] == currentUserEmail) {
-          totalExpenses += double.parse(
-            (element['total_expenses'] ?? 0).toString(),
-          );
+        final paidBy = _rowEmail(element['paid_by']);
+        final paidFor = _rowEmail(element['paid_for']);
+        if (paidBy == null || paidFor == null) continue;
+
+        if (paidFor == currentUserEmail) {
+          totalExpenses += _parseAmount(element['total_expenses']);
           totalShareAmount = roundCurrency(
-            double.parse((element['total_share_amount'] ?? 0).toString()),
+            _parseAmount(element['total_share_amount']),
             currency,
           );
         }
 
-        if (element['paid_by'] == currentUserEmail &&
-            element['paid_for'] != currentUserEmail) {
-          if (groupSharesSummary[element['paid_for']] == null) {
-            groupSharesSummary[element['paid_for']] = GroupSharesSummary();
-            groupSharesSummary[element['paid_for']]!.displayName =
-                element['paid_for_display_name'];
-            groupSharesSummary[element['paid_for']]!.paypalMe =
-                element['paid_for_paypal_me'];
-            groupSharesSummary[element['paid_for']]!.iban =
-                element['paid_for_iban'];
-            groupSharesSummary[element['paid_for']]!.shareAmount = 0;
-          }
-
-          groupSharesSummary[element['paid_for']]!.shareAmount += double.parse(
-            (element['share_amount'] ?? 0).toString(),
+        if (paidBy == currentUserEmail && paidFor != currentUserEmail) {
+          groupSharesSummary
+              .putIfAbsent(paidFor, () => _party(element, 'paid_for', paidFor))
+              .shareAmount += _parseAmount(
+            element['share_amount'],
           );
-        } else if (element['paid_for'] == currentUserEmail &&
-            element['paid_by'] != currentUserEmail) {
-          if (groupSharesSummary[element['paid_by']] == null) {
-            groupSharesSummary[element['paid_by']] = GroupSharesSummary();
-            groupSharesSummary[element['paid_by']]!.displayName =
-                element['paid_by_display_name'];
-            groupSharesSummary[element['paid_by']]!.paypalMe =
-                element['paid_by_paypal_me'];
-            groupSharesSummary[element['paid_by']]!.iban =
-                element['paid_by_iban'];
-            groupSharesSummary[element['paid_by']]!.shareAmount = 0;
-          }
-
-          groupSharesSummary[element['paid_by']]!.shareAmount -= double.parse(
-            (element['share_amount'] ?? 0).toString(),
+        } else if (paidFor == currentUserEmail && paidBy != currentUserEmail) {
+          groupSharesSummary
+              .putIfAbsent(paidBy, () => _party(element, 'paid_by', paidBy))
+              .shareAmount -= _parseAmount(
+            element['share_amount'],
           );
         }
       }
@@ -223,44 +219,37 @@ class Group {
     totalShareAmount = 0;
     groupSharesSummary = {};
 
-    Map<String, dynamic> helperArray = {};
+    final parties = <String, GroupSharesSummary>{};
     if (json["group_shares_summary"] != null) {
       Map<String, double> simplifiedExpenseArray = {};
       for (var element in json["group_shares_summary"]) {
-        if (element['paid_for'] == currentUserEmail) {
-          totalExpenses += double.parse(
-            (element['total_expenses'] ?? 0).toString(),
-          );
+        final paidBy = _rowEmail(element['paid_by']);
+        final paidFor = _rowEmail(element['paid_for']);
+        if (paidBy == null || paidFor == null) continue;
+
+        if (paidFor == currentUserEmail) {
+          totalExpenses += _parseAmount(element['total_expenses']);
           totalShareAmount = roundCurrency(
-            double.parse((element['total_share_amount'] ?? 0).toString()),
+            _parseAmount(element['total_share_amount']),
             currency,
           );
         }
 
-        if (simplifiedExpenseArray[element["paid_for"]] == null) {
-          // Round on load so the settlement loop below works on exact cent
-          // values and its == 0 termination checks are reliable.
-          simplifiedExpenseArray[element["paid_for"]] = roundCurrency(
-            double.parse((element['total_share_amount'] ?? 0).toString()),
+        // Round on load so the settlement loop below works on exact cent
+        // values and its == 0 termination checks are reliable.
+        simplifiedExpenseArray.putIfAbsent(
+          paidFor,
+          () => roundCurrency(
+            _parseAmount(element['total_share_amount']),
             currency,
-          );
-        }
+          ),
+        );
 
-        if (helperArray[element["paid_by"]] == null) {
-          helperArray[element["paid_by"]] = {
-            "display_name": element['paid_by_display_name'],
-            "paypal_me": element['paid_by_paypal_me'],
-            "iban": element['paid_by_iban'],
-          };
-        }
-
-        if (helperArray[element["paid_for"]] == null) {
-          helperArray[element["paid_for"]] = {
-            "display_name": element['paid_for_display_name'],
-            "paypal_me": element['paid_for_paypal_me'],
-            "iban": element['paid_for_iban'],
-          };
-        }
+        parties.putIfAbsent(paidBy, () => _party(element, 'paid_by', paidBy));
+        parties.putIfAbsent(
+          paidFor,
+          () => _party(element, 'paid_for', paidFor),
+        );
       }
 
       totalExpenses = roundCurrency(totalExpenses, currency);
@@ -320,15 +309,22 @@ class Group {
       }
 
       finalSimplifiedExpenseArray.forEach((key, value) {
-        groupSharesSummary[key] = GroupSharesSummary();
-        groupSharesSummary[key]!.displayName =
-            helperArray[key]["display_name"] ?? '';
-        groupSharesSummary[key]!.paypalMe = helperArray[key]["paypal_me"];
-        groupSharesSummary[key]!.iban = helperArray[key]["iban"];
-        groupSharesSummary[key]!.shareAmount = value;
+        groupSharesSummary[key] = parties[key]!..shareAmount = value;
       });
     }
   }
+
+  /// The counterparty on [side] (`paid_by` / `paid_for`) of a summary row, with
+  /// a zero share. A null display name (a deleted user row) falls back to the
+  /// [email] it is keyed by — the `GroupMember` convention; an empty one stays.
+  static GroupSharesSummary _party(
+    Map<String, dynamic> element,
+    String side,
+    String email,
+  ) => GroupSharesSummary()
+    ..displayName = element['${side}_display_name'] ?? email
+    ..paypalMe = element['${side}_paypal_me']
+    ..iban = element['${side}_iban'];
 
   Map<String, dynamic> toJson() => {
     'name': name,

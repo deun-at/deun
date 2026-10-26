@@ -56,3 +56,19 @@
 - Likely touchpoints: lib/pages/groups/data/group_model.dart, test/model/group_settlement_test.dart, test/model/group_model_parse_safety_test.dart (new)
 - Depends: —
 - Parallel-with: editor-failure-keeps-form, payback-atomic-recalc, guest-merge-rpc, expense-search-escape. Not injectable-repositories, which also edits group_model.dart's `supabase.auth` reads.
+
+## Evidence
+- 1: test/model/group_settlement_test.dart "default: a counterparty with no display name reads its email" (red before: TypeError mid-loop, green after).
+- 2: same file, "default: rows after a malformed row still count".
+- 3: same file, "default: a null, non-numeric or non-finite amount counts as 0" (null, 'abc', 'NaN').
+- 4: same file, "simplified: a counterparty with no display name reads its email".
+- 5: same file, "simplified: a non-numeric balance counts as 0" ('abc', 'NaN').
+- 6: same file, "default: a row with no paid_by or paid_for email is skipped" and "simplified: a row with no paid_by or paid_for email is skipped".
+- 7: same file, "default: a zero-decimal group still rounds in its currency" and "simplified: a zero-decimal group still rounds in its currency" (JPY).
+- 8: test/model/group_model_parse_safety_test.dart "a null simplified_expenses loads as false".
+- 9: same file, "a failed summary calculation still leaves readable defaults" (Supabase uninitialised, so the guard fires; narrowToStatus keeps the named group).
+- 10: existing group_settlement_test.dart, settle_residue_test.dart, group_member_removal_test.dart, member_add_test.dart, display_name_fallback_test.dart, multi_currency_foundation_test.dart and expense_name_fallback_test.dart stay green in the full run.
+- 11: `dart format --set-exit-if-changed` on the 3 touched files: 0 changed; `flutter analyze`: no issues; `flutter test`: 1734 passed, all green.
+- gates: lint ✓ test ✓
+- review: clean · rounds: 1 · open: 0 block, 0 note, 0 lean · trimmed: 1
+- tier: easy

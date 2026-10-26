@@ -25,7 +25,7 @@
 | review-bugs | realtime-event-scope | Group and friend lists hear only the user's own groups and friendships ⚠ migration pending | normal | done |
 | review-bugs | push-session-lifecycle | Push registration lives and dies with the signed-in session | normal | done |
 | review-bugs | notification-context-free | Pushes survive the screen that sent them | normal | done |
-| review-bugs | group-model-parse-safety | One malformed summary row no longer breaks a group | easy | planned |
+| review-bugs | group-model-parse-safety | One malformed summary row no longer breaks a group | easy | done |
 | review-bugs | scan-total-applies | A rescanned receipt total lands in the amount and is saved | normal | planned |
 | review-bugs | expense-search-escape | Expense search matches what was typed, character for character | easy | planned |
 | atomic-writes | guest-merge-rpc | Joining a group and claiming a guest is one group-scoped transaction | normal | planned |
