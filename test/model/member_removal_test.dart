@@ -114,6 +114,64 @@ void main() {
     );
   });
 
+  group('memberRemovalOutcomeFromRpc', () {
+    test(
+      'maps each remove_group_member answer and throws on anything else',
+      () {
+        expect(
+          memberRemovalOutcomeFromRpc({
+            'outcome': 'blocked',
+            'outstanding': 12.5,
+          }),
+          isA<MemberRemovalBlocked>().having(
+            (b) => b.outstanding,
+            'outstanding',
+            12.5,
+          ),
+        );
+        expect(
+          memberRemovalOutcomeFromRpc({
+            'outcome': 'blocked',
+            'outstanding': 3000,
+          }),
+          isA<MemberRemovalBlocked>().having(
+            (b) => b.outstanding,
+            'outstanding',
+            3000.0,
+          ),
+        );
+        expect(
+          memberRemovalOutcomeFromRpc({
+            'outcome': 'soft_removed',
+            'outstanding': 0,
+          }),
+          isA<MemberRemovalSoftRemoved>(),
+        );
+        expect(
+          memberRemovalOutcomeFromRpc({
+            'outcome': 'hard_removed',
+            'outstanding': 0,
+          }),
+          isA<MemberRemovalHardRemoved>(),
+        );
+        for (final garbled in <Object?>[
+          null,
+          'hard_removed',
+          {'outcome': 'blocked'},
+          {'outcome': 'blocked', 'outstanding': '12.5'},
+          {'outcome': 'removed'},
+          <String, dynamic>{},
+        ]) {
+          expect(
+            () => memberRemovalOutcomeFromRpc(garbled),
+            throwsFormatException,
+            reason: '$garbled',
+          );
+        }
+      },
+    );
+  });
+
   group('resolveGroupJoinState', () {
     GroupMember member(
       String email, {

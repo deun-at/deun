@@ -1,6 +1,7 @@
-// guest-merge-rpc: the join_group migration as normalized source, shared by
-// join_group_migration_test.dart, group_repository_test.dart and
-// payback_atomic_recalc_migration_test.dart. Read as
+// guest-merge-rpc: migrations as normalized source, shared by
+// join_group_migration_test.dart, group_repository_test.dart,
+// payback_atomic_recalc_migration_test.dart and
+// group_write_rpcs_migration_test.dart. Read as
 // source, the way realtime_event_scope_migration_test.dart reads its
 // migration: the self-hosted instance is out of the build's reach.
 
@@ -31,34 +32,39 @@ List<File> migrationFiles() =>
         .toList()
       ..sort((a, b) => a.path.compareTo(b.path));
 
-/// The guest-merge-rpc migration, found by suffix so its timestamp can move.
-String joinGroupMigrationSql() {
-  final files = migrationFiles()
-      .where((f) => f.path.endsWith('_join_group_guest_merge.sql'))
-      .toList();
+/// The one migration whose filename ends in [suffix], normalized — found by
+/// suffix so its timestamp can move.
+String migrationSqlBySuffix(String suffix) {
+  final files = migrationFiles().where((f) => f.path.endsWith(suffix)).toList();
   if (files.length != 1) {
-    throw StateError(
-      'expected one *_join_group_guest_merge.sql, found ${files.length}',
-    );
+    throw StateError('expected one *$suffix, found ${files.length}');
   }
   return normalizedSql(files.single.readAsStringSync());
 }
+
+/// The guest-merge-rpc migration.
+String joinGroupMigrationSql() =>
+    migrationSqlBySuffix('_join_group_guest_merge.sql');
 
 /// Every migration, normalized — for a helper that may live in whichever
 /// migration landed first (`lock_group_member_writes`).
 String allMigrationsSql() =>
     migrationFiles().map((f) => normalizedSql(f.readAsStringSync())).join(' ');
 
-/// The argument names `public.join_group` declares, in order.
-List<String> joinGroupDeclaredArgs(String sql) {
+/// The argument names `public.<function>` declares in [sql], in order.
+List<String> declaredArgs(String sql, String function) {
   final match = RegExp(
-    r'create or replace function public\.join_group\s*\(([^)]*)\)',
+    'create or replace function public\\.${RegExp.escape(function)}\\s*\\(([^)]*)\\)',
   ).firstMatch(sql);
-  if (match == null) throw StateError('join_group is not defined');
-  return [
-    for (final arg in match.group(1)!.split(',')) arg.trim().split(' ').first,
-  ];
+  if (match == null) throw StateError('$function is not defined');
+  final args = match.group(1)!.trim();
+  if (args.isEmpty) return const [];
+  return [for (final arg in args.split(',')) arg.trim().split(' ').first];
 }
+
+/// The argument names `public.join_group` declares, in order.
+List<String> joinGroupDeclaredArgs(String sql) =>
+    declaredArgs(sql, 'join_group');
 
 /// The body between a function's `$tag$` dollar quotes.
 String functionBody(String sql, String tag) {

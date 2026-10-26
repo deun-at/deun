@@ -113,6 +113,36 @@ class GroupRepository {
     String? guestEmail,
   }) => {'_group_id': groupId, '_guest_email': guestEmail};
 
+  /// The RPCs the member writes and the group delete call — the ONE place their
+  /// names live.
+  static const String addMemberRpcName = 'add_group_member';
+  static const String removeMemberRpcName = 'remove_group_member';
+  static const String deleteRpcName = 'delete_group';
+
+  /// The `add_group_member` argument map — the ONE place its names live.
+  static Map<String, dynamic> addMemberRpcParams({
+    required String groupId,
+    required String email,
+  }) => {'_group_id': groupId, '_email': email};
+
+  /// The `remove_group_member` argument map. `_settled_epsilon` is the group's
+  /// own [Currency.settledEpsilon]: the server blocks iff |balance| >= it, the
+  /// exact mirror of [isSettled], and has no epsilon of its own.
+  static Map<String, dynamic> removeMemberRpcParams({
+    required String groupId,
+    required String email,
+    required Currency currency,
+  }) => {
+    '_group_id': groupId,
+    '_email': email,
+    '_settled_epsilon': currency.settledEpsilon,
+  };
+
+  /// The `delete_group` argument map.
+  static Map<String, dynamic> deleteRpcParams(String groupId) => {
+    '_group_id': groupId,
+  };
+
   static Future<List<Group>> fetchData(
     String statusFilter, {
     String? paidTo,
@@ -372,102 +402,51 @@ class GroupRepository {
     return savedGroupId;
   }
 
-  /// Removes [email] from [groupId] with defined semantics, decided by
-  /// [resolveMemberRemoval] *before* anything is written:
+  /// Removes [email] from [groupId] in ONE server transaction
+  /// (`remove_group_member`). The server decides, under the group's
+  /// member-write lock and with every in-flight expense write committed first:
   ///
-  /// * unsettled -> returns [MemberRemovalBlocked] having written **nothing**;
-  /// * settled with expense involvement -> stamps `removed_at` (the row survives,
-  ///   so every `expense_entry_share` of theirs still has a member behind it and
-  ///   no balance moves);
-  /// * settled with no involvement at all -> deletes the row, no tombstone.
+  /// * unsettled in the group's own currency (|balance| >= the epsilon sent) ->
+  ///   [MemberRemovalBlocked], having written **nothing**;
+  /// * settled with a payment or a share in the group -> `removed_at` stamped
+  ///   (the row survives, so no balance moves);
+  /// * settled with neither -> the row is deleted.
   ///
-  /// Both write paths then recalculate shares, which also bumps
-  /// `group_update_checker` — that is the channel `GroupDetailNotifier` listens
-  /// on, so other clients' open group detail refreshes with no stale roster.
+  /// Every write recalculates the group inside the same transaction, which also
+  /// bumps `group_update_checker`, the channel `GroupDetailNotifier` listens on.
+  /// The answer is parsed by [memberRemovalOutcomeFromRpc]; an unrecognised one
+  /// throws.
   static Future<MemberRemovalOutcome> removeMember(
     String groupId,
     String email, {
     required Currency currency,
-  }) async {
-    final outcome = await previewMemberRemoval(
-      groupId,
-      email,
-      currency: currency,
-    );
-
-    switch (outcome) {
-      case MemberRemovalBlocked():
-        // No write of any kind: the guard is the early return itself.
-        return outcome;
-      case MemberRemovalSoftRemoved():
-        await supabase
-            .from('group_member')
-            .update({'removed_at': DateTime.now().toUtc().toIso8601String()})
-            .eq('group_id', groupId)
-            .eq('email', email);
-      case MemberRemovalHardRemoved():
-        await supabase
-            .from('group_member')
-            .delete()
-            .eq('group_id', groupId)
-            .eq('email', email);
-    }
-
+  }) async => memberRemovalOutcomeFromRpc(
     await supabase.rpc(
-      'update_group_member_shares',
-      params: {"_group_id": groupId, "_expense_id": null},
-    );
+      removeMemberRpcName,
+      params: removeMemberRpcParams(
+        groupId: groupId,
+        email: email,
+        currency: currency,
+      ),
+    ),
+  );
 
-    return outcome;
-  }
-
-  /// Adds [email] to [groupId] **on its own**: one decision, one statement, no
-  /// group attributes, no form submission, no transaction shared with [saveAll].
-  ///
-  /// The share recalculation at the end also bumps `group_update_checker`, the
-  /// table `GroupDetailNotifier` subscribes to — so another client's open group
-  /// detail picks the new member up through the existing realtime path, exactly
-  /// as [removeMember] does.
+  /// Adds [email] to [groupId] **on its own** in ONE server transaction
+  /// (`add_group_member`): no row -> inserted (not favourite); a soft-removed
+  /// row -> `removed_at` cleared; an active row -> nothing written. The server
+  /// decides under the group's member-write lock and recalculates in the same
+  /// transaction, which bumps `group_update_checker`, so another client's open
+  /// group detail picks the change up. The answer is parsed by
+  /// [memberAddOutcomeFromRpc]; an unrecognised one throws.
   static Future<MemberAddOutcome> addMember(
     String groupId,
     String email,
-  ) async {
-    final rows = await supabase
-        .from('group_member')
-        .select('email, removed_at')
-        .eq('group_id', groupId)
-        .eq('email', email)
-        .limit(1);
-
-    final outcome = resolveMemberAdd(
-      existingMembership: rows.isEmpty ? null : rows.first,
-    );
-
-    switch (outcome) {
-      case MemberAddOutcome.alreadyMember:
-        // No write of any kind: the guard is the early return itself.
-        return outcome;
-      case MemberAddOutcome.reAdded:
-        await supabase
-            .from('group_member')
-            .update({'removed_at': null})
-            .eq('group_id', groupId)
-            .eq('email', email);
-      case MemberAddOutcome.inserted:
-        await supabase.from('group_member').insert({
-          'group_id': groupId,
-          'email': email,
-          'is_favorite': false,
-        });
-    }
-
+  ) async => memberAddOutcomeFromRpc(
     await supabase.rpc(
-      'update_group_member_shares',
-      params: {"_group_id": groupId, "_expense_id": null},
-    );
-
-    return outcome;
-  }
+      addMemberRpcName,
+      params: addMemberRpcParams(groupId: groupId, email: email),
+    ),
+  );
 
   /// Joins [groupId] through its invite link as the signed-in user, claiming
   /// the guest placeholder [guestEmail] when given.
@@ -516,13 +495,13 @@ class GroupRepository {
     );
   }
 
-  /// [removeMember]'s decision without its write: the same two reads and the
-  /// same [resolveMemberRemoval] call, returning the outcome so a caller can
-  /// decide whether to confirm BEFORE anything is written.
+  /// What `remove_group_member` is expected to decide, read on the client so
+  /// the page can confirm a soft removal BEFORE anything is written: the same
+  /// balance and history the server reads, resolved by [resolveMemberRemoval].
   ///
-  /// [removeMember] re-resolves rather than taking this result, so a balance
-  /// that moves between the preview and the confirmation is still caught by the
-  /// guard.
+  /// [removeMember] never sends this result: the server re-resolves under its
+  /// locks, so a balance that moves between the preview and the confirmation is
+  /// still caught.
   static Future<MemberRemovalOutcome> previewMemberRemoval(
     String groupId,
     String email, {
@@ -835,12 +814,12 @@ class GroupRepository {
         .eq('email', email);
   }
 
+  /// Deletes [groupId] in ONE server transaction (`delete_group`): the group
+  /// row (its members, expenses and summary rows go by FK cascade) and its
+  /// `group_update_checker` row, whose DELETE event drops the group from other
+  /// members' lists. Never recalculates: that would re-create the checker row.
   static Future<void> delete(String groupId) async {
-    await supabase.from('group').delete().eq('id', groupId);
-    await supabase
-        .from('group_update_checker')
-        .delete()
-        .eq('group_id', groupId);
+    await supabase.rpc(deleteRpcName, params: deleteRpcParams(groupId));
   }
 }
 

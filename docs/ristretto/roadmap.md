@@ -30,7 +30,7 @@
 | review-bugs | expense-search-escape | Expense search matches what was typed, character for character | easy | done |
 | atomic-writes | guest-merge-rpc | Joining a group and claiming a guest is one group-scoped transaction ⚠ migration pending | normal | done |
 | atomic-writes | payback-atomic-recalc | A recorded payback and its balance update commit together ⚠ migration pending | normal | done |
-| atomic-writes | group-write-rpcs | Member add/remove, group delete and expense delete each commit as one transaction | normal | planned |
+| atomic-writes | group-write-rpcs | Member add/remove, group delete and expense delete each commit as one transaction ⚠ migration pending | normal | done |
 | backend-in-repo | schema-baseline | The live base schema committed as a reference baseline | normal | planned |
 | backend-in-repo | legacy-fallback-removal | Writes commit through their RPC or fail, with no client-side fallback | normal | planned |
 | backend-in-repo | push-server-compose | The push function writes each push for its receiver and checks who may get it | normal | planned |

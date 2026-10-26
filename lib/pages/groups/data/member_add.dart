@@ -2,8 +2,9 @@ import 'package:deun/pages/users/user_model.dart';
 
 import 'group_member_model.dart';
 
-/// What adding one member to a group must write, decided before anything is
-/// written, from that member's CURRENT `group_member` row.
+/// What adding one member to a group did, as `add_group_member` answers it.
+/// The server decides from the member's current `group_member` row, under the
+/// group's member-write lock, in the same transaction as the write.
 enum MemberAddOutcome {
   /// No row at all — insert one.
   inserted,
@@ -16,19 +17,15 @@ enum MemberAddOutcome {
   alreadyMember,
 }
 
-/// Decides the add outcome from the target's own `group_member` row
-/// ([existingMembership], null when they have none).
-///
-/// Pure: no Supabase. Same shape as [resolveMemberRemoval] and for the same reason —
-/// the decision is made once, in one place, and the write path only applies it.
-MemberAddOutcome resolveMemberAdd({
-  required Map<String, dynamic>? existingMembership,
-}) {
-  if (existingMembership == null) return MemberAddOutcome.inserted;
-  return existingMembership['removed_at'] != null
-      ? MemberAddOutcome.reAdded
-      : MemberAddOutcome.alreadyMember;
-}
+/// Maps `add_group_member`'s answer to the outcome the Members page acts on.
+/// Anything else throws a [FormatException], which the page's existing catch
+/// turns into the add-error snackbar instead of a silent success.
+MemberAddOutcome memberAddOutcomeFromRpc(Object? answer) => switch (answer) {
+  'inserted' => MemberAddOutcome.inserted,
+  're_added' => MemberAddOutcome.reAdded,
+  'already_member' => MemberAddOutcome.alreadyMember,
+  _ => throw FormatException('add_group_member: unrecognised answer', answer),
+};
 
 /// Whether an add pushes the "you were added to a group" notification: only a
 /// real user (a guest carries no device) who actually joined (an
@@ -47,7 +44,7 @@ bool shouldNotifyAddedMember({
 /// Replaces `excludedCandidateEmails`, which also excluded **removed** members
 /// because the old form's add path would have collided with their surviving row.
 /// The design session reversed that: a soft-removed person is invisible, so the
-/// only way back is to find them in search, and [resolveMemberAdd] now turns
+/// only way back is to find them in search, and `add_group_member` now turns
 /// that collision into a `reAdded` rather than a failed insert.
 Set<String> addCandidateExclusions({
   required List<GroupMember> members,

@@ -574,15 +574,25 @@ class ExpenseRepository {
     }
   }
 
+  /// The RPC [delete] calls — the ONE place its name lives.
+  static const String deleteRpcName = 'delete_expense';
+
+  /// The `delete_expense` argument map.
+  static Map<String, dynamic> deleteRpcParams(
+    String expenseId,
+    String groupId,
+  ) => {'_expense_id': expenseId, '_group_id': groupId};
+
+  /// Deletes [expenseId] from [groupId] in ONE server transaction
+  /// (`delete_expense`): the expense (scoped to the group, so a mismatched pair
+  /// deletes nothing), its `expense_update_checker` row and the group's
+  /// recalculation commit together or not at all. The recalculation passes a
+  /// null expense id, so the deleted row is never re-announced. Payback rows
+  /// take the same path. Still the `ExpenseDeleter` shape.
   static Future<void> delete(String expenseId, String groupId) async {
-    await supabase.from('expense').delete().eq('id', expenseId);
-    await supabase
-        .from('expense_update_checker')
-        .delete()
-        .eq('expense_id', expenseId);
     await supabase.rpc(
-      'update_group_member_shares',
-      params: {"_group_id": groupId, "_expense_id": null},
+      deleteRpcName,
+      params: deleteRpcParams(expenseId, groupId),
     );
   }
 }
