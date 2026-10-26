@@ -2,66 +2,47 @@ import 'dart:async';
 
 import 'package:deun/helper/helper.dart';
 import 'package:deun/helper/notification_sender.dart';
+import 'package:deun/l10n/app_localizations.dart';
 import 'package:deun/pages/groups/data/group_member_model.dart';
+import 'package:deun/pages/settings/card_fee_sheet.dart';
 import 'package:deun/widgets/restyle/deun_header.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_form_builder/flutter_form_builder.dart';
-import 'package:deun/l10n/app_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:form_builder_validators/form_builder_validators.dart';
 
 import '../../../constants.dart';
-import '../../../main.dart';
 import '../../../provider.dart';
+import '../../../widgets/category_selector.dart';
 import '../../../widgets/currency_picker_sheet.dart';
+import '../../../widgets/motion.dart';
+import '../../../widgets/restyle/app_segmented_control.dart';
+import '../../../widgets/restyle/dashed_ghost_button.dart';
+import '../../../widgets/restyle/discard_sheet.dart';
+import '../../../widgets/restyle/expense_picker_sheets.dart';
+import '../../../widgets/restyle/section_label.dart';
 import '../../../widgets/theme_builder.dart';
 import '../../groups/data/group_model.dart';
-import 'expense_entry_widget.dart';
-import 'receipt_scanner_sheet.dart';
-import '../service/rate_source.dart';
 import '../data/editor_mode.dart';
+import '../data/expense_category.dart';
 import '../data/expense_conversion.dart';
 import '../data/expense_deletion_impact.dart';
 import '../data/expense_draft.dart';
-import '../data/expense_entry_model.dart';
 import '../data/expense_model.dart';
 import '../data/expense_repository.dart';
-import '../data/expense_category.dart';
 import '../data/itemized_totals.dart';
 import '../data/receipt_scan_result.dart';
-import '../data/split_mode.dart';
-import '../../../widgets/category_selector.dart';
-import '../../../widgets/restyle/app_segmented_control.dart';
-import '../../../widgets/restyle/discard_sheet.dart';
-import '../../../widgets/motion.dart';
-import '../../../widgets/restyle/expense_picker_sheets.dart';
-import '../../../widgets/restyle/soft_card.dart';
-import '../../../widgets/restyle/section_label.dart';
-import '../../../widgets/restyle/member_avatar.dart';
-import '../../../widgets/restyle/money_text.dart';
-import '../../../widgets/restyle/dashed_ghost_button.dart';
-import '../../../widgets/restyle/primary_button.dart';
-import 'package:deun/pages/settings/card_fee_sheet.dart';
-
-class ExpenseEntryData {
-  final int index;
-  final ExpenseEntry expenseEntry;
-  final VoidCallback onRemove;
-  final List<GroupMember> groupMembers;
-  String? initialName;
-  String? initialAmount;
-  String? initialQuantity;
-
-  ExpenseEntryData({
-    required this.index,
-    required this.expenseEntry,
-    required this.onRemove,
-    required this.groupMembers,
-    this.initialName,
-    this.initialAmount,
-    this.initialQuantity,
-  });
-}
+import '../provider/expense_editor_controller.dart';
+import '../service/rate_source.dart';
+import 'editor/editor_currency_rate_section.dart';
+import 'editor/editor_delete_action.dart';
+import 'editor/editor_entry_list.dart';
+import 'editor/editor_form_reading.dart';
+import 'editor/editor_itemized_header.dart';
+import 'editor/editor_name_field.dart';
+import 'editor/editor_paid_when_card.dart';
+import 'editor/editor_quick_amount.dart';
+import 'editor/editor_save_footer.dart';
+import 'receipt_scanner_sheet.dart';
 
 /// The editor's write, as an injectable function.
 ///
@@ -96,9 +77,6 @@ Future<ReceiptScanResult?> _showReceiptScannerSheet(BuildContext context) =>
       barrierColor: kSheetBarrierColor,
       builder: (context) => const ReceiptScannerSheet(),
     );
-
-/// The save CTA's three states. See [_ExpenseDetailState._saveStatus].
-enum _SaveStatus { idle, busy, done }
 
 class ExpenseDetail extends ConsumerStatefulWidget {
   const ExpenseDetail({
@@ -141,45 +119,24 @@ class ExpenseDetail extends ConsumerStatefulWidget {
   ConsumerState<ExpenseDetail> createState() => _ExpenseDetailState();
 }
 
-/// Where the rate currently in the editor's rate field came from.
-///
-/// The whole of "a user-entered rate always wins": a prefill may only ever
-/// write into a field that is [none] or already [prefilled]. A [user] rate — one
-/// typed this session, one a saved expense froze, or one remembered from a rate
-/// the user typed before — is never overwritten and never even refetched for.
-enum _RateOrigin { none, user, prefilled }
-
+/// The expense editor's screen: the form, its text controllers and the sheets
+/// it opens. Every rule it follows (rate, entries, mode, save) lives in
+/// [ExpenseEditorController]; this State reads that state and reports intents.
 class _ExpenseDetailState extends ConsumerState<ExpenseDetail> {
   final _formKey = GlobalKey<FormBuilderState>();
   final _nameController = TextEditingController();
   final _amountController = TextEditingController(text: "0");
-  List<GroupMember> _groupMembers = [];
-  final List<ExpenseEntryData> _entries = [];
-  int _newTextFieldId = 0;
 
-  /// Drives the Quick/Itemized top toggle. The app still distinguishes the two
-  /// layouts by entry count (a single entry = Quick); this override lets the
-  /// toggle force the Itemized layout while only one entry exists, without
-  /// inventing a parallel data model. See [resolveEditorMode].
-  bool _itemizedOverride = false;
+  /// Mirrors the controller's rate text; see [_onEditorChanged].
+  final _rateController = TextEditingController();
 
-  /// Where the save CTA is in its idle → busy → done cycle.
-  ///
-  /// The confirmation used to be a snackbar fired *after* `Navigator.pop`, so
-  /// it appeared on the screen behind; and nothing marked the write in flight,
-  /// so a second tap could start a second one. Both live on the button now.
-  _SaveStatus _saveStatus = _SaveStatus.idle;
+  late final ExpenseEditorArgs _args;
+  late final List<GroupMember> _members;
 
-  /// Quick layout is shown only for a single entry with no itemized override.
-  bool get _isSingleEntry => isSingleEntryQuick(
-    entryCount: _entries.length,
-    itemizedOverride: _itemizedOverride,
-  );
-
-  EditorMode get _editorMode => resolveEditorMode(
-    entryCount: _entries.length,
-    itemizedOverride: _itemizedOverride,
-  );
+  ExpenseEditorState get _editor =>
+      ref.read(expenseEditorControllerProvider(_args));
+  ExpenseEditorController get _controller =>
+      ref.read(expenseEditorControllerProvider(_args).notifier);
 
   /// True when the editor was opened on an existing expense. Mirrors
   /// `group_detail_edit.dart`'s `_isEdit` — every mode-sensitive label on this
@@ -190,59 +147,12 @@ class _ExpenseDetailState extends ConsumerState<ExpenseDetail> {
   /// Whether the user has touched the form (drives the discard guard).
   bool _isDirty = false;
 
-  /// Set only on the success path of [_writeThenClose], immediately before its
+  /// Set only on the success path of [_closeAfterWrite], immediately before its
   /// pop, and by the discard sheet's own confirm. A failed write never sets
   /// it, so closing after a failure still asks before dropping the form.
   bool _bypassDiscardGuard = false;
 
-  /// True while a delete is out: the payback probe before the confirmation,
-  /// and the delete write after it. A slow probe must not leave the header
-  /// delete tappable (a repeat tap would stack a second dialog), and the write
-  /// runs with the editor uncovered, so the header shows progress and ignores
-  /// taps, and a save tap is refused, for both windows. Within a delete it is
-  /// false only while the confirmation dialog is up, and that dialog is modal.
-  bool _deleteInFlight = false;
-
   ExpenseCategory? _detectedCategory;
-
-  /// The currency the amounts on this screen are TYPED in. Defaults to the
-  /// group's; an existing converted expense opens on its frozen original.
-  late Currency _entryCurrency;
-
-  final _rateController = TextEditingController();
-
-  /// `yyyy-MM-dd` the rate is attributed to. Stamped when a foreign currency is
-  /// chosen and carried unchanged through every later edit of a non-amount
-  /// field — nothing in this feature ever re-stamps a saved expense on its own.
-  /// Changing the entry currency does re-stamp it: the rate then belongs to a
-  /// different currency pair and is quoted today. See
-  /// [rateDateForPickedCurrency].
-  String? _rateDate;
-
-  _RateOrigin _rateOrigin = _RateOrigin.none;
-
-  /// `yyyy-MM-dd` the PREFILLED rate is effective for — the day the source
-  /// actually quoted it, which for a weekend or holiday expense is earlier than
-  /// the expense's own date. Non-null exactly while [_rateOrigin] is
-  /// [_RateOrigin.prefilled].
-  String? _prefilledRateDate;
-
-  /// True when the last prefill attempt for the current pair and date came back
-  /// with nothing. Drives the visible explanation; never blocks a save.
-  bool _rateUnavailable = false;
-
-  /// Monotonic request token. The fetch is asynchronous, so a response for a
-  /// date or currency the user has already moved off must be discarded rather
-  /// than dropped into the field.
-  int _rateRequestId = 0;
-
-  /// The rate exactly as the source quoted it, BEFORE the card fee. Non-null
-  /// exactly while [_rateOrigin] is [_RateOrigin.prefilled].
-  ///
-  /// The editor keeps it so a fee change recomputes rather than refetches: the
-  /// rate for a pair and a date is immutable, so a refetch would return the
-  /// same number, and the flight's only refetch trigger is a date change.
-  double? _baseRate;
 
   /// Ticks whenever anything the conversion sheet renders changes. The sheet
   /// is a separate route, so a `setState` here does not reach it — this does.
@@ -255,23 +165,6 @@ class _ExpenseDetailState extends ConsumerState<ExpenseDetail> {
     _conversionRevision,
   ]);
 
-  bool get _isForeignCurrency => _entryCurrency != widget.group.currency;
-
-  double? get _rate => parseConversionRate(_rateController.text);
-
-  /// The conversion this save will apply. Identity while the amounts are in the
-  /// group's own currency.
-  ExpenseConversion get _conversion => _isForeignCurrency
-      ? ExpenseConversion(
-          groupCurrency: widget.group.currency,
-          entryCurrency: _entryCurrency,
-          rate: _rate,
-          // A prefilled rate is attributed to the day it was actually quoted,
-          // not the day the currency was picked.
-          rateDate: _prefilledRateDate ?? _rateDate,
-        )
-      : ExpenseConversion.identity(widget.group.currency);
-
   /// The date the expense carries right now — what a historical rate is asked
   /// for. Reads the live form field so a date change is visible immediately,
   /// falling back to the loaded expense and then to today.
@@ -282,143 +175,28 @@ class _ExpenseDetailState extends ConsumerState<ExpenseDetail> {
     return loaded != null ? DateTime.parse(loaded) : DateTime.now();
   }
 
-  /// Fetches the historical rate for the expense's own date and drops it into
-  /// the rate field as a suggestion.
-  ///
-  /// Refuses to run at all unless the field is free: a rate the user typed, a
-  /// rate a saved expense froze and a rate remembered from one they typed
-  /// before are all [_RateOrigin.user], and this feature can neither overwrite
-  /// nor refetch for any of them. The check runs twice — before the request and
-  /// again after it resolves — because the user can type while it is in flight.
-  Future<void> _prefillRate() async {
-    if (!_isForeignCurrency || _rateOrigin == _RateOrigin.user) return;
-
-    // The fee rides on the rate that is about to land, so it has to be loaded
-    // before the answer arrives. Awaited HERE, before the request token, so the
-    // existing staleness guard still covers the whole in-flight window.
-    await ref.read(cardFeeProvider.notifier).hydrated;
-    if (!mounted || !_isForeignCurrency || _rateOrigin == _RateOrigin.user) {
-      return;
-    }
-
-    final base = _entryCurrency;
-    final quote = widget.group.currency;
-    final date = _expenseDate;
-    final id = ++_rateRequestId;
-
-    final result = await (widget.lookupRate ?? fetchRate)(
-      base: base,
-      quote: quote,
-      date: date,
-    );
-
-    // Superseded by a later pick or date change, the user has since made the
-    // rate their own, or they switched back to the group currency and there is
-    // no rate field left to write into. Either way this answer is stale.
-    if (!mounted ||
-        id != _rateRequestId ||
-        !_isForeignCurrency ||
-        _rateOrigin == _RateOrigin.user) {
-      return;
-    }
-
-    setState(() {
-      if (result == null) {
-        _rateUnavailable = true;
-        // A prefill for the PREVIOUS date must not stand under the new one —
-        // that is the silent wrong-date substitution, arrived at by omission.
-        _rateController.text = '';
-        _baseRate = null;
-        _prefilledRateDate = null;
-        _rateOrigin = _RateOrigin.none;
-      } else {
-        _rateUnavailable = false;
-        // The fee applies to a SUGGESTION and to nothing else: this is the one
-        // place _RateOrigin.prefilled is written, so it is the one place the
-        // fee can enter a rate.
-        _baseRate = result.rate;
-        _rateController.text = formatRate(
-          applyCardFee(result.rate, ref.read(cardFeeProvider)),
-        );
-        _prefilledRateDate = ymd(result.effectiveDate);
-        _rateOrigin = _RateOrigin.prefilled;
-      }
-      _conversionRevision.value++;
-    });
-  }
-
   @override
   void initState() {
     super.initState();
 
-    _entryCurrency = widget.expense?.originalCurrencyCode != null
-        ? Currency.fromCode(widget.expense!.originalCurrencyCode)
-        : widget.group.currency;
-    _rateDate = widget.expense?.rateDate;
-    final loadedRate = widget.expense?.conversionRate;
-    if (loadedRate != null) _rateController.text = formatRate(loadedRate);
-    // A saved expense opens on its FROZEN rate. Nothing in the prefill may
-    // touch it — not on open, not on a later date change.
-    _rateOrigin = loadedRate != null ? _RateOrigin.user : _RateOrigin.none;
+    _args = ExpenseEditorArgs(
+      group: widget.group,
+      expense: widget.expense,
+      receiptResult: widget.receiptResult,
+      lookupRate: widget.lookupRate,
+    );
+    // The screen's own subscription: keeps this editor's controller alive for
+    // exactly the screen's life, and mirrors the rate text into the field.
+    ref.listenManual(
+      expenseEditorControllerProvider(_args),
+      _onEditorChanged,
+      fireImmediately: true,
+    );
+    final entryCurrency = _editor.entryCurrency;
 
-    _groupMembers = widget.group.activeMembers;
+    _members = widget.group.activeMembers;
     _detectedCategory = widget.expense?.category;
     _nameController.text = widget.expense?.name ?? '';
-    if (widget.expense != null && widget.expense!.expenseEntries.isNotEmpty) {
-      // Claim units are regrouped into one qty-N item card per item_group_id
-      // (F146). Their claims ride along on the synthetic entry so a re-save
-      // can preserve them.
-      final editorEntries = widget.expense!.editorEntries;
-      _newTextFieldId = editorEntries.length;
-      // A shared claim expense is itemized by definition — keep the itemized
-      // layout even when its units regroup into a single card.
-      _itemizedOverride = editorEntries.any((e) => e.splitMode == 'claim');
-      for (final expenseEntry in editorEntries) {
-        _entries.add(
-          ExpenseEntryData(
-            index: expenseEntry.index,
-            expenseEntry: expenseEntry,
-            onRemove: () => _removeEntry(expenseEntry),
-            groupMembers: _groupMembers,
-            initialName: expenseEntry.name,
-            // Seed the item card and the itemized total header directly from
-            // the loaded entry — claim units have no shares, so the widget's
-            // shares-gated seeding showed €0.00 line totals before.
-            //
-            // The seed is the exact inverse of the save: a line whose total did
-            // not divide evenly over its units keeps the digits that multiply
-            // back to it. Rounding here instead would reopen a 28.30 qty-3 line
-            // as "9.43" and the next name-only save would store 28.29 — the
-            // same one-sided rounding the switch-back already avoids.
-            initialAmount: unitPriceFieldTextForTotal(
-              expenseEntry.enteredLineTotal,
-              expenseEntry.quantity,
-              _entryCurrency,
-            ),
-            initialQuantity: expenseEntry.quantity.toString(),
-          ),
-        );
-      }
-    } else if (widget.receiptResult != null &&
-        widget.receiptResult!.lineItems.isNotEmpty) {
-      // A scanned receipt with itemized lines opens in the Itemized layout.
-      _itemizedOverride = true;
-      for (final item in widget.receiptResult!.lineItems) {
-        _entries.add(_entryFromReceiptLine(item));
-      }
-    } else if (widget.receiptResult != null &&
-        widget.receiptResult!.total != null) {
-      _entries.add(
-        _freshEntry(
-          initialAmount: amountToFieldText(
-            widget.receiptResult!.total!,
-            _entryCurrency,
-          ),
-        ),
-      );
-    } else {
-      _entries.add(_freshEntry());
-    }
 
     // Initialize amount controller from first entry data
     if (widget.expense != null && widget.expense!.expenseEntries.isNotEmpty) {
@@ -426,14 +204,14 @@ class _ExpenseDetailState extends ConsumerState<ExpenseDetail> {
       _amountController.text = unitPriceFieldTextForTotal(
         firstEntry.enteredLineTotal,
         firstEntry.quantity,
-        _entryCurrency,
+        entryCurrency,
       );
     } else if (widget.receiptResult != null &&
         widget.receiptResult!.total != null &&
         widget.receiptResult!.lineItems.isEmpty) {
       _amountController.text = amountToFieldText(
         widget.receiptResult!.total!,
-        _entryCurrency,
+        entryCurrency,
       );
     }
 
@@ -480,43 +258,16 @@ class _ExpenseDetailState extends ConsumerState<ExpenseDetail> {
     super.dispose();
   }
 
-  void _removeEntry(ExpenseEntry expenseEntry) {
-    setState(() {
-      _entries.removeWhere((e) => e.index == expenseEntry.index);
-    });
+  /// Mirrors the controller into what lives outside it: the rate field's text,
+  /// written only when the controller changed it (a prefill, a pick, a reset,
+  /// a switch-back) so typing never moves the cursor; and the conversion
+  /// sheet, which is a separate route and listens to [_conversionRevision].
+  void _onEditorChanged(ExpenseEditorState? previous, ExpenseEditorState next) {
+    if (_rateController.text != next.rateText) {
+      _rateController.text = next.rateText;
+    }
+    _conversionRevision.value++;
   }
-
-  /// A new item holding nothing yet, or just what is given.
-  ExpenseEntryData _freshEntry({
-    String? initialName,
-    String? initialAmount,
-    String? initialQuantity,
-  }) {
-    final expenseEntry = ExpenseEntry(index: _newTextFieldId++);
-    return ExpenseEntryData(
-      index: expenseEntry.index,
-      expenseEntry: expenseEntry,
-      onRemove: () => _removeEntry(expenseEntry),
-      groupMembers: _groupMembers,
-      initialName: initialName,
-      initialAmount: initialAmount,
-      initialQuantity: initialQuantity,
-    );
-  }
-
-  /// An item row seeded from a scanned receipt line. The scan's `amount` is
-  /// the LINE total ("5x Pita 12,50"), while the editor's amount field holds
-  /// the unit price, so the quantity has to travel with it — dropping it
-  /// turned every multi-unit line into a single unit priced at the line total.
-  ExpenseEntryData _entryFromReceiptLine(ReceiptLineItem item) => _freshEntry(
-    initialName: item.name,
-    initialAmount: unitPriceFieldTextForTotal(
-      item.amount,
-      item.quantity,
-      _entryCurrency,
-    ),
-    initialQuantity: item.quantity.toString(),
-  );
 
   void _detectAndUpdateCategory(String title) {
     if (title.isNotEmpty) {
@@ -538,59 +289,225 @@ class _ExpenseDetailState extends ConsumerState<ExpenseDetail> {
     }
   }
 
-  Future<void> _openDeleteItemDialog(Expense expense) async {
-    // Single flight across both writes: no delete while a probe or a delete is
-    // already out, nor while a save is in flight or showing its check.
-    // Checked before any state flips.
-    if (_deleteInFlight || _saveStatus != _SaveStatus.idle) return;
-
-    // Presentation-level guard, same rule as the read view: warn, then allow.
-    // A failed probe degrades to today's plain prompt.
-    setState(() => _deleteInFlight = true);
-    final impact = await probeDeletionImpact(
-      expense,
-      loader: widget.loadGroupPaybacks,
+  /// Auto-open entry point for a new expense: resolves the Quick amount card's
+  /// form field and opens the keypad through the same path the tap uses.
+  /// No-op if the form/field isn't ready.
+  void _openAmountKeypadForFirstEntry() {
+    final entries = _editor.entries;
+    if (entries.isEmpty) return;
+    final field = _formKey
+        .currentState
+        ?.fields["expense_entry[${entries.first.index}][amount]"];
+    if (field == null) return;
+    openEditorAmountKeypad(
+      context,
+      field: field,
+      amountController: _amountController,
+      currency: _editor.entryCurrency,
+      onAmountChanged: () => setState(() {}),
     );
-    if (!mounted) return;
-    setState(() => _deleteInFlight = false);
+  }
 
-    // The dialog only asks: it closes itself and answers. The write runs
-    // below, through the same rule the save follows. Cancel, a barrier tap and
-    // a null result all delete nothing.
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (dialogContext) {
-        final l10n = AppLocalizations.of(dialogContext)!;
-        final colorScheme = Theme.of(dialogContext).colorScheme;
-        return AlertDialog(
-          title: Text(impact.confirmTitle(l10n)),
-          content: Text(impact.confirmMessage(l10n, widget.group.currencyCode)),
-          actions: <Widget>[
-            TextButton(
-              child: Text(l10n.cancel),
-              onPressed: () => Navigator.pop(dialogContext, false),
-            ),
-            PrimaryButton(
-              compact: true,
-              background: colorScheme.error,
-              foreground: colorScheme.onError,
-              label: l10n.delete,
-              onPressed: () => Navigator.pop(dialogContext, true),
-            ),
-          ],
+  void _addNewEntry() =>
+      _controller.addEntry(quickAmountText: _amountController.text);
+
+  /// Maps the Quick/Itemized toggle onto the controller's mode. The Quick amount
+  /// field and the snackbar are the screen's; the entries are the controller's.
+  void _onEditorModeChanged(EditorMode mode) {
+    final editor = _editor;
+    if (mode == editor.editorMode) return;
+    // Whether this Itemized → Quick switch drops per-item detail; the notice
+    // fires after the switch so the messenger sees the settled tree.
+    final collapsedItems =
+        mode == EditorMode.quick && editor.entries.length > 1;
+    final amount = _controller.setMode(
+      mode,
+      quickAmountText: _amountController.text,
+      itemizedTotal: _itemizedTotalFromForm(),
+      firstAmountFieldText: editor.entries.isEmpty
+          ? null
+          : _formKey
+                .currentState
+                ?.fields["expense_entry[${editor.entries.first.index}][amount]"]
+                ?.value
+                ?.toString(),
+    );
+    if (amount != null) setState(() => _amountController.text = amount);
+    if (collapsedItems && mounted) {
+      showSnackBar(
+        context,
+        AppLocalizations.of(context)!.editorModeCollapseNotice,
+      );
+    }
+  }
+
+  List<ItemLine> _formLines() =>
+      editorFormLines(_formKey.currentState, _editor.entries);
+
+  /// Sum of the current item line totals in the ENTRY currency, read live from
+  /// the form fields so the header tracks edits.
+  double _itemizedTotalFromForm() => itemizedTotal(_formLines());
+
+  Future<void> _scanReceipt() async {
+    final result = await (widget.scanReceipt ?? _showReceiptScannerSheet)(
+      context,
+    );
+    if (result == null || !mounted) return;
+    if (result.merchantName != null) {
+      _nameController.text = result.merchantName!;
+      _formKey.currentState?.fields['name']?.didChange(result.merchantName);
+      _detectAndUpdateCategory(result.merchantName!);
+    }
+    if (result.date != null) {
+      _formKey.currentState?.fields['expense_date']?.didChange(result.date);
+    }
+    // A total-only scan writes the first item's amount field after the
+    // controller moved, in the keypad's order (state first, then the field).
+    FormFieldState<dynamic>? totalField;
+    FormFieldState<dynamic>? quantityField;
+    String? totalText;
+    if (result.lineItems.isNotEmpty) {
+      // A total-only scan keeps whatever layout is showing.
+      _controller.replaceEntriesWithScannedLines(result.lineItems);
+    } else if (result.total != null) {
+      final first = _editor.entries.firstOrNull;
+      if (first != null) {
+        totalField = _formKey
+            .currentState
+            ?.fields['expense_entry[${first.index}][amount]'];
+        quantityField = _formKey
+            .currentState
+            ?.fields['expense_entry[${first.index}][quantity]'];
+      }
+      totalText = _controller.applyScannedTotal(result.total!);
+      _amountController.text = totalText;
+    }
+    setState(() => _isDirty = true);
+    quantityField?.didChange('1');
+    totalField?.didChange(totalText);
+  }
+
+  /// The one place a write's outcome reaches the screen: only a write that
+  /// completes closes the editor.
+  ///
+  /// A failure shows [errorMessage] and the editor stays, with every typed
+  /// value intact and the discard guard still armed, so a retry sends the same
+  /// form. A success runs [onSuccess], then — only while the editor is still
+  /// mounted — bypasses the guard and pops the editor's own route.
+  ///
+  /// The form stays live while a write is out, and its sheets (date, paid by,
+  /// amount, currency) open on the same root navigator as the editor's route.
+  /// A bare pop would close such a sheet instead and leave the editor stuck in
+  /// flight, so whatever sits above the editor is closed first.
+  Future<void> _closeAfterWrite({
+    required bool succeeded,
+    required String errorMessage,
+    required Future<void> Function() onSuccess,
+  }) async {
+    if (!mounted) return;
+    if (!succeeded) {
+      showSnackBar(context, errorMessage);
+      return;
+    }
+    await onSuccess();
+    if (!mounted) return;
+    _bypassDiscardGuard = true;
+    final navigator = Navigator.of(context);
+    final route = ModalRoute.of(context);
+    if (route != null) navigator.popUntil((r) => r == route);
+    navigator.pop();
+  }
+
+  /// Saves the expense. When [claimable] is true (the itemized
+  /// "Add & share for claiming" CTA) every entry is flagged claimable so
+  /// [ExpenseRepository.saveAll] explodes the lines into per-unit claim
+  /// entries; a plain save leaves the manual-split path untouched.
+  Future<void> _saveExpense({bool claimable = false}) async {
+    // Single flight across both writes: no save while a delete is out. Checked
+    // before the form is touched, so a refused tap leaves the CTA and the
+    // header exactly as they were.
+    if (_editor.deleteInFlight) return;
+    if (!_formKey.currentState!.saveAndValidate()) return;
+    final l10n = AppLocalizations.of(context)!;
+    final reduceMotion = MediaQuery.of(context).disableAnimations;
+    final notifications = NotificationSender();
+    final outcome = await _controller.save(
+      total: _itemizedTotalFromForm(),
+      write: (conversion) async {
+        // Built inside the write, so an amount that does not parse ends in the
+        // save error like any other failed write.
+        final onScreen = editorDraftFromForm(
+          _formKey.currentState!.value,
+          _editor.entries,
+          claimable: claimable,
+        );
+        final draft = claimable
+            ? onScreen.markEntriesClaimable(
+                // Share with the whole group so everyone is notified that
+                // there are items to claim (claim units start unclaimed).
+                notifyEmails: _members.map((m) => m.email).toSet(),
+              )
+            : onScreen;
+        await (widget.saveExpense ?? ExpenseRepository.saveAll)(
+          widget.group.id,
+          widget.expense?.id,
+          draft,
+          currency: widget.group.currency,
+          conversion: conversion,
+          notifications: notifications,
         );
       },
     );
-    if (confirmed != true || !mounted) return;
+    if (!mounted) return;
+    switch (outcome) {
+      case EditorSaveOutcome.refusedZeroTotal:
+        showSnackBar(context, l10n.expenseEntryAmountValidationZero);
+      case EditorSaveOutcome.refusedNoRate:
+        showSnackBar(context, l10n.expenseRateRequired);
+      case EditorSaveOutcome.ignoredInFlight:
+        return;
+      case EditorSaveOutcome.failed || EditorSaveOutcome.saved:
+        await _closeAfterWrite(
+          succeeded: outcome == EditorSaveOutcome.saved,
+          errorMessage: l10n.expenseCreateError,
+          // The confirmation is the check on the CTA, held long enough to read
+          // before the route goes. No snackbar: the old one fired after the
+          // pop and so was shown over the group detail behind.
+          onSuccess: () => Future<void>.delayed(
+            reducedIfNeeded(
+              Motion.saveConfirmationHold,
+              reduceMotion: reduceMotion,
+            ),
+          ),
+        );
+    }
+  }
 
-    setState(() => _deleteInFlight = true);
+  Future<void> _deleteExpense(Expense expense) async {
+    // Presentation-level guard, same rule as the read view: warn, then allow.
+    // A failed probe degrades to today's plain prompt.
+    final impact = await _controller.probeDeletion(
+      () => probeDeletionImpact(expense, loader: widget.loadGroupPaybacks),
+    );
+    if (impact == null || !mounted) return;
+
+    final confirmed = await showEditorDeleteConfirmation(
+      context,
+      impact: impact,
+      currencyCode: widget.group.currencyCode,
+    );
+    if (!confirmed || !mounted) return;
+
     final l10n = AppLocalizations.of(context)!;
-    await _writeThenClose(
-      write: () => (widget.deleteExpense ?? ExpenseRepository.delete)(
+    final outcome = await _controller.delete(
+      () => (widget.deleteExpense ?? ExpenseRepository.delete)(
         expense.id,
         expense.groupId,
       ),
-      onFailure: () => _deleteInFlight = false,
+    );
+    if (outcome == EditorDeleteOutcome.ignoredInFlight) return;
+    await _closeAfterWrite(
+      succeeded: outcome == EditorDeleteOutcome.deleted,
       errorMessage: l10n.expenseDeleteError,
       onSuccess: () async {
         // Before the pop on purpose: the messenger is an ancestor of the
@@ -602,963 +519,31 @@ class _ExpenseDetailState extends ConsumerState<ExpenseDetail> {
     );
   }
 
-  List<GroupMember> get _sortedMembers {
-    final currentEmail = supabase.auth.currentUser?.email;
-    return [...widget.group.activeMembers]..sort((a, b) {
-      if (a.email == currentEmail) return -1;
-      if (b.email == currentEmail) return 1;
-      return a.fullUsername.compareTo(b.fullUsername);
-    });
-  }
-
-  // group-member-removal: keeps searching the FULL roster (not activeMembers) —
-  // a past expense paid by a since-removed member must still resolve to their
-  // name in the ledger.
-  GroupMember? _findMember(String? email) {
-    if (email == null) return null;
-    try {
-      return widget.group.groupMembers.firstWhere((m) => m.email == email);
-    } catch (_) {
-      return null;
-    }
-  }
-
-  String _memberDisplayName(GroupMember member) {
-    return member.email == supabase.auth.currentUser?.email
-        ? AppLocalizations.of(context)!.you
-        : member.displayName;
-  }
-
-  /// The Quick / Itemized top segmented toggle. Bound to the existing
-  /// entry-count mode via [_onEditorModeChanged] — no parallel state.
-  Widget _buildModeToggle() {
-    final l10n = AppLocalizations.of(context)!;
-    return AppSegmentedControl<EditorMode>(
-      value: _editorMode,
-      segments: [
-        AppSegment(value: EditorMode.quick, label: l10n.editorModeQuick),
-        AppSegment(value: EditorMode.itemized, label: l10n.editorModeItemized),
-      ],
-      onChanged: _onEditorModeChanged,
-    );
-  }
-
-  /// Itemized header: the live total summed from the item line totals, with a
-  /// Scan action that triggers the existing receipt scanner.
-  Widget _buildItemizedTotalHeader() {
-    final l10n = AppLocalizations.of(context)!;
-    final colorScheme = Theme.of(context).colorScheme;
-    final ink = Theme.of(context).extension<SemanticColors>()!;
-    final total = _itemizedTotalFromForm();
-    // v3: unboxed total block — sits directly on the page background (no
-    // SoftCard), mirroring the F103 quick-header unboxing. Small grey label +
-    // big amount on the left, dark-ink Scan pill on the right.
-    return Row(
-      children: [
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                l10n.itemizedTotalFromItems(_entries.length),
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: colorScheme.onSurfaceVariant,
-                ),
-              ),
-              const SizedBox(height: 4),
-              MoneyText(
-                total,
-                currency: _entryCurrency,
-                style: Theme.of(context).textTheme.displaySmall?.copyWith(
-                  color: colorScheme.onSurface,
-                ),
-              ),
-            ],
-          ),
-        ),
-        // v3: dark-ink solid pill labeled "Scan" (not a light indigo tint).
-        PrimaryButton(
-          label: l10n.expenseScanShort,
-          icon: Icons.document_scanner_outlined,
-          background: ink.ink,
-          foreground: ink.onInk,
-          onPressed: _scanReceipt,
-          compact: true,
-        ),
-      ],
-    );
-  }
-
-  /// Tinted info callout explaining itemized / claiming. Uses a primary tint,
-  /// never a hard-coded hex.
-  Widget _buildItemizedInfoCallout() {
-    final l10n = AppLocalizations.of(context)!;
-    final colorScheme = Theme.of(context).colorScheme;
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: colorScheme.primaryContainer.withValues(alpha: 0.5),
-        borderRadius: BorderRadius.circular(14),
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Icon(Icons.info_outline, size: 20, color: colorScheme.primary),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Text(
-              l10n.itemizedInfoCallout,
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: colorScheme.onSurfaceVariant,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildNameField() {
-    final l10n = AppLocalizations.of(context)!;
-    final colorScheme = Theme.of(context).colorScheme;
-    final radius = BorderRadius.circular(12);
-    return FormBuilderField(
-      name: "name",
-      // Seeded from the controller, which is the value actually on screen.
-      //
-      // Without this the field's only source of truth was the onChanged
-      // callback below, and its element lifetime is not stable: the Quick
-      // branch above contributes 6 children to this Column and the Itemized
-      // branch 4, so switching modes shifts this field two positions up an
-      // unkeyed children list. Flutter reconciles unkeyed children by
-      // position, so the field is deactivated and re-inflated, and
-      // `clearValueOnUnregister: true` wipes whatever the user had typed —
-      // while _nameController keeps the text visibly on screen. The expense
-      // then saved with a null name and broke the expense list.
-      //
-      // expense_date next to it never had this problem precisely because it
-      // carries an initialValue to re-register with.
-      initialValue: _nameController.text,
-      builder: (FormFieldState<dynamic> field) => TextFormField(
-        key: const ValueKey('expense_name_field'),
-        controller: _nameController,
-        validator: FormBuilderValidators.required(
-          errorText: l10n.expenseNameValidationEmpty,
-        ),
-        decoration: InputDecoration(
-          hintText: l10n.expenseDescriptionHint,
-          filled: true,
-          // v3: description sits on a white card surface (not the grey field).
-          fillColor: colorScheme.surfaceContainerLowest,
-          border: OutlineInputBorder(
-            borderRadius: radius,
-            borderSide: BorderSide.none,
-          ),
-          enabledBorder: OutlineInputBorder(
-            borderRadius: radius,
-            borderSide: BorderSide.none,
-          ),
-          focusedBorder: OutlineInputBorder(
-            borderRadius: radius,
-            borderSide: BorderSide(color: colorScheme.primary, width: 1.5),
-          ),
-        ),
-        onChanged: (value) {
-          field.didChange(value);
-          if (value.isNotEmpty) {
-            _detectAndUpdateCategory(value);
-          }
-        },
-      ),
-    );
-  }
-
-  /// v3 quick block: a single white card holding the Paid-by and When rows with
-  /// no spacing between them (a hairline divider separates the two), replacing
-  /// the two separate boxed cards.
-  Widget _buildPaidWhenList() {
-    final colorScheme = Theme.of(context).colorScheme;
-    return SoftCard(
-      padding: EdgeInsets.zero,
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          _buildPaidByRow(),
-          Divider(
-            height: 1,
-            thickness: 1,
-            indent: 16,
-            endIndent: 16,
-            color: colorScheme.outlineVariant.withValues(alpha: 0.5),
-          ),
-          _buildDateRow(),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildDateRow() {
-    final l10n = AppLocalizations.of(context)!;
-    final initial = widget.expense?.expenseDate != null
-        ? DateTime.parse(widget.expense!.expenseDate)
-        : DateTime.now();
-    return FormBuilderField<DateTime>(
-      name: "expense_date",
-      initialValue: initial,
-      // THE only refetch trigger. A historical rate is a fact about the
-      // expense's day, so changing the day changes the rate; changing anything
-      // else does not, and any broader trigger reintroduces surprise rate
-      // movement on an expense the user thought was settled.
-      onChanged: (_) => unawaited(_prefillRate()),
-      builder: (FormFieldState<DateTime?> field) {
-        final value = field.value ?? initial;
-        return _PaidWhenRow(
-          icon: Icons.calendar_today_outlined,
-          label: l10n.expenseWhen,
-          value: formatDate(value.toIso8601String(), context),
-          onTap: () async {
-            final picked = await showDateOptionsSheet(context, current: value);
-            if (picked != null) field.didChange(picked);
-          },
-        );
-      },
-    );
-  }
-
-  Widget _buildPaidByRow() {
-    final initialEmail =
-        widget.expense?.paidBy ?? supabase.auth.currentUser?.email;
-
-    return FormBuilderField<String>(
-      name: "paid_by",
-      initialValue: initialEmail,
-      builder: (FormFieldState<String?> field) {
-        final l10n = AppLocalizations.of(context)!;
-        final selectedMember = _findMember(field.value);
-        final isYou = selectedMember?.email == supabase.auth.currentUser?.email;
-        return _PaidWhenRow(
-          icon: Icons.account_balance_wallet_outlined,
-          label: l10n.expensePaidBy,
-          value: selectedMember != null
-              ? _memberDisplayName(selectedMember)
-              : "",
-          trailingLeading: selectedMember != null
-              ? MemberAvatar(
-                  name: selectedMember.displayName,
-                  colorKey: selectedMember.email,
-                  radius: 12,
-                  isYou: isYou,
-                )
-              : null,
-          onTap: () async {
-            final picked = await showPaidBySheet(
-              context,
-              members: _sortedMembers,
-              selectedEmail: field.value,
-              currentUserEmail: supabase.auth.currentUser?.email,
-            );
-            if (picked != null) field.didChange(picked);
-          },
-        );
-      },
-    );
-  }
-
-  Widget _buildExpenseLevelAmount() {
-    final firstIndex = _entries.first.index;
-    return FormBuilderField(
-      key: ValueKey("expense_level_amount_$firstIndex"),
-      name: "expense_entry[$firstIndex][amount]",
-      initialValue: _amountController.text != "0"
-          ? _amountController.text
-          : null,
-      autovalidateMode: AutovalidateMode.onUserInteraction,
-      validator: FormBuilderValidators.compose([
-        FormBuilderValidators.required(
-          errorText: AppLocalizations.of(
-            context,
-          )!.expenseEntryAmountValidationEmpty,
-        ),
-        (value) {
-          final amount = double.tryParse(value?.toString() ?? '');
-          if (amount != null && amount <= 0) {
-            return AppLocalizations.of(
-              context,
-            )!.expenseEntryAmountValidationZero;
-          }
-          return null;
-        },
-      ]),
-      builder: (FormFieldState<dynamic> field) {
-        final colorScheme = Theme.of(context).colorScheme;
-        final amountStyle = Theme.of(
-          context,
-        ).textTheme.displayMedium?.copyWith(color: colorScheme.onSurface);
-        final amount = double.tryParse(_amountController.text) ?? 0;
-        // v3 quick block: unboxed icon+amount sit directly on the page
-        // background (no SoftCard), tap opens the keypad (F100), and a
-        // per-person split preview sits directly below the amount.
-        final memberCount = _groupMembers.isNotEmpty ? _groupMembers.length : 1;
-        final perHead = amount / memberCount;
-        final l10n = AppLocalizations.of(context)!;
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            InkWell(
-              onTap: () => _openAmountKeypad(field, amount),
-              borderRadius: BorderRadius.circular(12),
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                child: InputDecorator(
-                  decoration: InputDecoration(
-                    errorText: field.errorText,
-                    errorMaxLines: 2,
-                    border: InputBorder.none,
-                    isDense: true,
-                    contentPadding: EdgeInsets.zero,
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    crossAxisAlignment: CrossAxisAlignment.baseline,
-                    textBaseline: TextBaseline.alphabetic,
-                    children: [
-                      Text(
-                        _entryCurrency.code,
-                        style: amountStyle?.copyWith(
-                          color: colorScheme.onSurfaceVariant,
-                        ),
-                      ),
-                      const SizedBox(width: 4),
-                      Text(
-                        formatAmountOnly(
-                          amount,
-                          _entryCurrency,
-                          Localizations.localeOf(context),
-                        ),
-                        textAlign: TextAlign.center,
-                        style: amountStyle,
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              l10n.expenseSplitEach(
-                l10n.toCurrency(perHead, _entryCurrency.code),
-              ),
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: colorScheme.onSurfaceVariant,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ],
-        );
-      },
-    );
-  }
-
-  /// Opens the restyled amount keypad sheet and, on confirm, writes the value
-  /// back through the same channels the inline editor used: the form field
-  /// (validated/saved) and the shared [_amountController] (split-sync). The
-  /// written string keeps the currency-precision field format
-  /// (`amountToFieldText`), so the value round-trips and validators are
-  /// unchanged.
-  Future<void> _openAmountKeypad(
-    FormFieldState<dynamic> field,
-    double current,
-  ) async {
-    final picked = await showAmountKeypadSheet(
-      context,
-      initialAmount: current,
-      currency: _entryCurrency,
-    );
-    if (picked == null || !mounted) return;
-    final text = amountToFieldText(picked, _entryCurrency);
-    setState(() {
-      _amountController.text = text;
-    });
-    field.didChange(text);
-  }
-
-  /// Auto-open entry point for a new expense: resolves the Quick amount card's
-  /// form field and opens the keypad through the same [_openAmountKeypad] path
-  /// the tap uses. No-op if the form/field isn't ready.
-  void _openAmountKeypadForFirstEntry() {
-    if (_entries.isEmpty) return;
-    final firstIndex = _entries.first.index;
-    final field =
-        _formKey.currentState?.fields["expense_entry[$firstIndex][amount]"];
-    if (field == null) return;
-    final amount = double.tryParse(_amountController.text) ?? 0;
-    _openAmountKeypad(field, amount);
-  }
-
-  void _addNewEntry() {
-    setState(() {
-      // When transitioning from single to multi, transfer expense-level amount to first entry
-      if (_isSingleEntry &&
-          _amountController.text.isNotEmpty &&
-          _amountController.text != "0") {
-        _entries.first.initialAmount = _amountController.text;
-      }
-
-      _entries.add(_freshEntry());
-    });
-  }
-
-  /// Maps the Quick/Itemized toggle onto the existing entry-count mode.
-  ///
-  /// Quick → Itemized: flip the override so the (possibly single) entry renders
-  /// as an item card, seeding the first item's amount from the quick amount —
-  /// the same hand-off [_addNewEntry] already performs.
-  ///
-  /// Itemized → Quick: collapses the item list into one expense-level amount.
-  /// The Quick amount is seeded with the *summed* total of every item line
-  /// (scan-split-even), not just the first item's — so the receipt total is
-  /// preserved and can be split evenly. When 2+ items collapse into one, a
-  /// snackbar warns that per-item detail is dropped as it happens.
-  void _onEditorModeChanged(EditorMode mode) {
-    if (mode == _editorMode) return;
-    // Whether this Itemized → Quick switch drops per-item detail; the notice
-    // fires after setState so the messenger sees the settled tree.
-    var collapsedItems = false;
-    setState(() {
-      if (mode == EditorMode.itemized) {
-        if (_entries.length == 1 &&
-            _amountController.text.isNotEmpty &&
-            _amountController.text != "0") {
-          _entries.first.initialAmount = _amountController.text;
-        }
-        _itemizedOverride = true;
-      } else {
-        // Back to Quick. BUG B: with 2+ entries the toggle used to no-op
-        // silently — the tab snapped back to Itemized and read as a dead,
-        // unpressable control. Quick has a single expense-level amount, so
-        // collapse the itemized items into one entry. scan-split-even: seed
-        // the Quick amount from the SUM of every item line total (read live
-        // before dropping the extras) so the full receipt value survives —
-        // the old code kept only the first item's amount and silently lost
-        // the rest. Now the toggle is always honored and value-preserving.
-        collapsedItems = _entries.length > 1;
-        final summedTotal = _itemizedTotalFromForm();
-        if (_entries.length > 1) {
-          _entries.removeRange(1, _entries.length);
-        }
-        final amount = summedTotal > 0
-            ? amountToFieldText(summedTotal, _entryCurrency)
-            : _formKey
-                  .currentState
-                  ?.fields["expense_entry[${_entries.first.index}][amount]"]
-                  ?.value
-                  ?.toString();
-        if (amount != null && amount.isNotEmpty) {
-          _amountController.text = amount;
-          _entries.first.initialAmount = amount;
-        }
-        _itemizedOverride = false;
-      }
-    });
-    if (collapsedItems && mounted) {
-      showSnackBar(
-        context,
-        AppLocalizations.of(context)!.editorModeCollapseNotice,
-      );
-    }
-  }
-
-  /// The current item lines, read live from the form fields so everything
-  /// derived from them tracks edits. THE one reader of the amount and quantity
-  /// fields: the itemized header, the converted preview and the switch-back all
-  /// go through it, so they cannot disagree about what is on screen.
-  List<ItemLine> _formLines() {
-    final lines = <ItemLine>[];
-    for (final data in _entries) {
-      lines.add(
-        ItemLine(
-          unitPrice: _unitPriceFor(data) ?? 0,
-          quantity: _quantityFor(data),
-        ),
-      );
-    }
-    return lines;
-  }
-
-  /// This entry's live unit price, or null when neither the field nor the
-  /// seeded value holds anything parseable (an empty or half-typed amount).
-  double? _unitPriceFor(ExpenseEntryData data) {
-    final seeded = double.tryParse(data.initialAmount ?? '');
-    final value = _formKey
-        .currentState
-        ?.fields["expense_entry[${data.index}][amount]"]
-        ?.value;
-    if (value == null) return seeded;
-    return double.tryParse(value.toString()) ?? seeded;
-  }
-
-  /// This entry's live amount-field text, falling back to the seeded value
-  /// before the field registers.
-  String _unitPriceTextFor(ExpenseEntryData data) {
-    final value = _formKey
-        .currentState
-        ?.fields["expense_entry[${data.index}][amount]"]
-        ?.value;
-    return value?.toString() ?? data.initialAmount ?? '';
-  }
-
-  /// This entry's live quantity, defaulting to a single unit.
-  int _quantityFor(ExpenseEntryData data) {
-    final value = _formKey
-        .currentState
-        ?.fields["expense_entry[${data.index}][quantity]"]
-        ?.value;
-    return int.tryParse(value?.toString() ?? '') ??
-        int.tryParse(data.initialQuantity ?? '') ??
-        1;
-  }
-
-  /// Sum of the current item line totals in the ENTRY currency, read live from
-  /// the form fields so the header tracks edits. Uses the pure [itemizedTotal]
-  /// helper.
-  double _itemizedTotalFromForm() => itemizedTotal(_formLines());
-
-  Future<void> _scanReceipt() async {
-    final result = await (widget.scanReceipt ?? _showReceiptScannerSheet)(
-      context,
-    );
-    if (result == null || !mounted) return;
-    // A total-only scan writes the first item's amount field after this
-    // setState, in the keypad's order (state first, then the field).
-    FormFieldState<dynamic>? totalField;
-    FormFieldState<dynamic>? quantityField;
-    String? totalText;
-    setState(() {
-      if (result.merchantName != null) {
-        _nameController.text = result.merchantName!;
-        _formKey.currentState?.fields['name']?.didChange(result.merchantName);
-        _detectAndUpdateCategory(result.merchantName!);
-      }
-      if (result.date != null) {
-        _formKey.currentState?.fields['expense_date']?.didChange(result.date);
-      }
-      if (result.lineItems.isNotEmpty) {
-        // Scanned lines open Itemized, and claiming stays the default after a
-        // scan. A total-only scan keeps whatever layout is showing.
-        _itemizedOverride = true;
-        // Replace the current items with the scanned lines.
-        _entries.clear();
-        for (final item in result.lineItems) {
-          _entries.add(_entryFromReceiptLine(item));
-        }
-      } else if (result.total != null) {
-        // Through the same channels as the keypad (_openAmountKeypad): the
-        // controller, the seed and the first item's amount field, so the row,
-        // the itemized total and the save all hold the scanned total. Written
-        // at the ENTRY currency's precision: CHF 12.34 in a JPY group stays
-        // 12.34. The receipt total is what the item costs, so the first item
-        // goes back to one unit: its old quantity would multiply the total.
-        final text = amountToFieldText(result.total!, _entryCurrency);
-        _amountController.text = text;
-        if (_entries.isEmpty) {
-          // Every item was removed: the total gets a fresh item instead of
-          // being dropped.
-          _entries.add(_freshEntry(initialAmount: text));
-        } else {
-          // Only the first item: replacing items is the line-item branch's
-          // job.
-          final first = _entries.first;
-          first.initialAmount = text;
-          totalField = _formKey
-              .currentState
-              ?.fields['expense_entry[${first.index}][amount]'];
-          quantityField = _formKey
-              .currentState
-              ?.fields['expense_entry[${first.index}][quantity]'];
-          totalText = text;
-        }
-      }
-      _isDirty = true;
-    });
-    quantityField?.didChange('1');
-    totalField?.didChange(totalText);
-  }
-
-  /// The one rule both writes follow: only a write that completes closes the
-  /// editor.
-  ///
-  /// Runs [write]. If it throws, the error is logged, [onFailure] puts the
-  /// caller's in-flight state back to idle (inside `setState`), [errorMessage]
-  /// is shown, and the editor stays. Every typed value is intact and the
-  /// discard guard is still armed, so a retry sends the same form. If it
-  /// completes, [onSuccess] runs. Then, only while the editor is still
-  /// mounted, the discard guard is bypassed and the editor's own route pops.
-  ///
-  /// There is deliberately no `finally`: a failure must have no route to
-  /// [Navigator.pop].
-  ///
-  /// The form stays live while a write is out, and its sheets (date, paid by,
-  /// amount, currency) open on the same root navigator as the editor's route.
-  /// A bare pop would close such a sheet instead and leave the editor stuck in
-  /// flight, so whatever sits above the editor is closed first.
-  Future<void> _writeThenClose({
-    required Future<void> Function() write,
-    required VoidCallback onFailure,
-    required String errorMessage,
-    required Future<void> Function() onSuccess,
-  }) async {
-    try {
-      await write();
-    } catch (e) {
-      debugPrint('Expense write failed: $e');
-      if (!mounted) return;
-      setState(onFailure);
-      showSnackBar(context, errorMessage);
-      return;
-    }
-    if (!mounted) return;
-    await onSuccess();
-    if (!mounted) return;
-    _bypassDiscardGuard = true;
-    final navigator = Navigator.of(context);
-    final route = ModalRoute.of(context);
-    if (route != null) navigator.popUntil((r) => r == route);
-    navigator.pop();
-  }
-
-  /// What is on screen, as the draft the save hands over: one line per card in
-  /// [_entries], in on-screen order, each read from the validated form value
-  /// by its exact field names. A field a card does not register takes the
-  /// default a missing one always had: a Quick card has no name or quantity,
-  /// an Itemized card no split fields. With [claimable], each card carries its
-  /// existing per-unit claims (F146), so re-sharing keeps them. Positional:
-  /// shrinking a quantity drops the last units' claims.
-  ///
-  /// Throws a [FormatException] for an amount that does not parse.
-  ExpenseDraft _draftFromForm({required bool claimable}) {
-    final values = _formKey.currentState!.value;
-    return ExpenseDraft(
-      name: values['name'] as String?,
-      expenseDate: values['expense_date'] as DateTime,
-      paidBy: values['paid_by'] as String?,
-      category: values['category'] as ExpenseCategory?,
-      entries: [
-        for (final data in _entries)
-          _entryDraftFrom(values, data, claimable: claimable),
-      ],
-    );
-  }
-
-  ExpenseEntryDraft _entryDraftFrom(
-    Map<String, dynamic> values,
-    ExpenseEntryData data, {
-    required bool claimable,
-  }) {
-    final field = 'expense_entry[${data.index}]';
-    final shares = values['$field[shares]'] as Set<String>?;
-    final shareData = values['$field[share_data]'] as Map<String, dynamic>?;
-    final locked = values['$field[locked_members]'];
-    return ExpenseEntryDraft(
-      name: values['$field[name]'] as String?,
-      unitPrice: double.parse(values['$field[amount]'] as String),
-      quantity:
-          int.tryParse(values['$field[quantity]']?.toString() ?? '1') ?? 1,
-      splitMode: SplitMode.fromString(values['$field[split_mode]'] as String?),
-      shares: {...?shares},
-      shareData: Map<String, num>.from(shareData ?? const {}),
-      lockedMembers: locked is Set<String> ? {...locked} : const {},
-      existingClaims: claimable ? data.expenseEntry.unitClaims : const [],
-    );
-  }
-
-  /// Saves the expense. When [claimable] is true (the itemized
-  /// "Add & share for claiming" CTA) every entry is flagged claimable so
-  /// [ExpenseRepository.saveAll] explodes the lines into per-unit claim
-  /// entries; a plain save leaves the manual-split path untouched.
-  Future<void> _saveExpense(
-    BuildContext context, {
-    bool claimable = false,
-  }) async {
-    // Single flight across both writes: no save while a delete is out. Checked
-    // before the form is touched, so a refused tap leaves the CTA and the
-    // header exactly as they were.
-    if (_deleteInFlight) return;
-    if (_formKey.currentState!.saveAndValidate()) {
-      // Individual lines may be negative (discounts), but the expense total
-      // must stay positive — a non-positive total collapses every member's
-      // percentage share to 0% in ExpenseRepository.saveAll.
-      if (_itemizedTotalFromForm() <= 0) {
-        showSnackBar(
-          context,
-          AppLocalizations.of(context)!.expenseEntryAmountValidationZero,
-        );
-        return;
-      }
-      // No implicit rate: an expense in a currency other than the group's
-      // cannot be saved without one. No 1:1 fallback, no silent substitution.
-      final conversion = _conversion;
-      if (!conversion.isIdentity && conversion.rate == null) {
-        showSnackBar(
-          context,
-          AppLocalizations.of(context)!.expenseRateRequired,
-        );
-        return;
-      }
-      // Past every validation gate — from here a write is actually going out,
-      // so the CTA takes over as the progress indicator.
-      if (_saveStatus != _SaveStatus.idle) return;
-      final notifications = NotificationSender();
-      setState(() => _saveStatus = _SaveStatus.busy);
-
-      final errorMessage = AppLocalizations.of(context)!.expenseCreateError;
-      final reduceMotion = MediaQuery.of(context).disableAnimations;
-      await _writeThenClose(
-        write: () async {
-          // Built inside the write, so an amount that does not parse ends in
-          // the save error like any other failed write.
-          final onScreen = _draftFromForm(claimable: claimable);
-          final draft = claimable
-              ? onScreen.markEntriesClaimable(
-                  // Share with the whole group so everyone is notified that
-                  // there are items to claim (claim units start unclaimed).
-                  notifyEmails: _groupMembers.map((m) => m.email).toSet(),
-                )
-              : onScreen;
-          await (widget.saveExpense ?? ExpenseRepository.saveAll)(
-            widget.group.id,
-            widget.expense?.id,
-            draft,
-            currency: widget.group.currency,
-            conversion: conversion,
-            notifications: notifications,
-          );
-        },
-        // Failures still need words — a check would be a lie, and "something
-        // went wrong" can't be mimed.
-        onFailure: () => _saveStatus = _SaveStatus.idle,
-        errorMessage: errorMessage,
-        onSuccess: () async {
-          if (!conversion.isIdentity && _rateOrigin == _RateOrigin.user) {
-            // Remember the rate for the next expense in this currency in this
-            // group — a trip holds one agreed rate with no separate concept.
-            //
-            // Only a rate the USER supplied. Remembering a prefill would make
-            // the suggestion its own successor: the fetch would fire once per
-            // group and currency and then be shadowed forever by its first
-            // answer, which is the opposite of a rate for each expense's own
-            // date.
-            //
-            // The write has already committed, so failing to remember the
-            // rate is not a failed save: reporting it as one would invite a
-            // duplicate. Logged only.
-            try {
-              await ref
-                  .read(stickyRateProvider.notifier)
-                  .setStickyRate(
-                    widget.group.id,
-                    conversion.entryCurrency,
-                    conversion.rate!,
-                  );
-            } catch (e) {
-              debugPrint('Could not remember the typed rate: $e');
-            }
-          }
-          if (!mounted) return;
-          // The confirmation is the check on the CTA, held long enough to
-          // read before the route goes. No snackbar: the old one fired after
-          // the pop and so was shown over the group detail behind.
-          setState(() => _saveStatus = _SaveStatus.done);
-          await Future<void>.delayed(
-            reducedIfNeeded(
-              Motion.saveConfirmationHold,
-              reduceMotion: reduceMotion,
-            ),
-          );
-        },
-      );
-    }
-  }
-
-  /// Entry currency plus, when it differs from the group's, the conversion
-  /// stated as a RESULT: the ledger amount and its provenance, with the rate
-  /// itself one tap away in [showConversionSheet].
-  ///
-  /// Two rows, two tap targets. The rate was a form field here and the fee
-  /// could not become a second one — a per-user constant with an input on the
-  /// expense screen implies it is per-expense, which is the wrong model.
-  Widget _buildCurrencyAndRate() {
-    final l10n = AppLocalizations.of(context)!;
-    final theme = Theme.of(context);
-    final locale = Localizations.localeOf(context);
-    final rate = _rate;
-    final fee = ref.watch(cardFeeProvider);
-
-    return SoftCard(
-      padding: EdgeInsets.zero,
-      borderRadius: 16,
-      child: Column(
-        children: [
-          InkWell(
-            key: const ValueKey('expense_entry_currency'),
-            onTap: _pickEntryCurrency,
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: Text(
-                      l10n.expenseEntryCurrencyLabel,
-                      style: theme.textTheme.bodyMedium?.copyWith(
-                        color: theme.colorScheme.onSurfaceVariant,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ),
-                  Text(_entryCurrency.code, style: theme.textTheme.titleSmall),
-                  const SizedBox(width: 4),
-                  Icon(
-                    Icons.expand_more,
-                    color: theme.colorScheme.onSurfaceVariant,
-                  ),
-                ],
-              ),
-            ),
-          ),
-          if (_isForeignCurrency) ...[
-            const Divider(height: 1),
-            InkWell(
-              key: const ValueKey('expense_conversion_row'),
-              onTap: _openConversionSheet,
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          if (rate == null)
-                            Text(
-                              key: const ValueKey(
-                                'expense_conversion_rate_needed',
-                              ),
-                              l10n.expenseConversionRateNeeded,
-                              style: theme.textTheme.headlineSmall?.copyWith(
-                                color: theme.colorScheme.onSurfaceVariant,
-                              ),
-                            )
-                          else
-                            Text(
-                              key: const ValueKey('expense_conversion_amount'),
-                              formatMoney(
-                                // Per LINE, accumulated exactly as the save
-                                // accumulates it — converting the summed
-                                // itemized total once instead would state a
-                                // cent the ledger never stores (3 x 1.50 CHF
-                                // at 0.9432 is 4.23, not 4.24).
-                                ledgerTotalOfLines(_formLines(), _conversion),
-                                widget.group.currency,
-                                locale,
-                              ),
-                              style: theme.textTheme.headlineSmall?.copyWith(
-                                fontWeight: FontWeight.w700,
-                              ),
-                            ),
-                          const SizedBox(height: 6),
-                          Wrap(
-                            spacing: 6,
-                            runSpacing: 6,
-                            children: [
-                              ?_sourceChip(l10n),
-                              ?_feeChip(l10n, locale, fee),
-                            ],
-                          ),
-                        ],
-                      ),
-                    ),
-                    Icon(
-                      Icons.chevron_right,
-                      color: theme.colorScheme.onSurfaceVariant,
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ],
-        ],
-      ),
-    );
-  }
-
-  /// Where the rate in the field came from, as one chip. Mutually exclusive
-  /// states, so one key carries all of them and the tests read one thing.
-  Widget? _sourceChip(AppLocalizations l10n) {
-    if (_rateUnavailable) {
-      return _ProvenanceChip(
-        key: const ValueKey('expense_conversion_source_chip'),
-        label: l10n.expenseNoRateChip(formatDate(ymd(_expenseDate), context)),
-        tone: _ChipTone.warning,
-      );
-    }
-    switch (_rateOrigin) {
-      case _RateOrigin.prefilled:
-        return _ProvenanceChip(
-          key: const ValueKey('expense_conversion_source_chip'),
-          label: l10n.expenseSourceChip(
-            formatDate(_prefilledRateDate, context),
-          ),
-          tone: _ChipTone.neutral,
-        );
-      case _RateOrigin.user:
-        return _ProvenanceChip(
-          key: const ValueKey('expense_conversion_source_chip'),
-          label: l10n.expenseTypedRateChip,
-          tone: _ChipTone.neutral,
-        );
-      case _RateOrigin.none:
-        return null; // a fetch in flight: nothing true to say yet
-    }
-  }
-
-  /// The fee chip, and the whole of its condition: a NON-ZERO fee that was
-  /// actually applied, which is only ever to a fetched rate.
-  Widget? _feeChip(AppLocalizations l10n, Locale locale, double? fee) {
-    // `fee` is null-or-positive: CardFeeNotifier collapses every non-positive
-    // value to null, in both its hydrate and its setter, so "a fee of 0" and
-    // "no fee saved" reach here as the same state.
-    if (fee == null || _rateOrigin != _RateOrigin.prefilled) {
-      return null;
-    }
-    return _ProvenanceChip(
-      key: const ValueKey('expense_conversion_fee_chip'),
-      label: l10n.expenseFeeChip(
-        l10n.cardFeePercentValue(formatPercentValue(fee, locale)),
-      ),
-      tone: _ChipTone.accent,
-    );
-  }
-
   Future<void> _openConversionSheet() async {
     await showConversionSheet(
       context,
-      entryCurrency: _entryCurrency,
+      entryCurrency: _editor.entryCurrency,
       groupCurrency: widget.group.currency,
       rateController: _rateController,
       rateState: _conversionListenable,
-      data: () => ConversionSheetData(
-        enteredTotal: _itemizedTotalFromForm(),
-        convertedTotal: _rate == null
-            ? null
-            : ledgerTotalOfLines(_formLines(), _conversion),
-        baseRate: _baseRate,
-        prefilledRateDate: _prefilledRateDate,
-        rateUnavailable: _rateUnavailable,
-        cardFeePercent: ref.read(cardFeeProvider),
-        hasSavedRate: ref
-            .read(stickyRateProvider)
-            .containsKey(stickyRateKey(widget.group.id, _entryCurrency)),
-      ),
+      data: () {
+        final editor = _editor;
+        return ConversionSheetData(
+          enteredTotal: _itemizedTotalFromForm(),
+          convertedTotal: editor.rate == null
+              ? null
+              : ledgerTotalOfLines(_formLines(), editor.conversion),
+          baseRate: editor.baseRate,
+          prefilledRateDate: editor.prefilledRateDate,
+          rateUnavailable: editor.rateUnavailable,
+          cardFeePercent: ref.read(cardFeeProvider),
+          hasSavedRate: ref
+              .read(stickyRateProvider)
+              .containsKey(
+                stickyRateKey(widget.group.id, editor.entryCurrency),
+              ),
+        );
+      },
       onRateTyped: _onRateTyped,
       onClearSavedRate: _resetStickyRate,
       onEditCardFee: () =>
@@ -1570,156 +555,51 @@ class _ExpenseDetailState extends ConsumerState<ExpenseDetail> {
   }
 
   /// The user has taken ownership of the rate. Lifted out of the field's
-  /// `onChanged` because the field now lives in the sheet — the state it
-  /// mutates still lives here.
+  /// `onChanged` because the field now lives in the sheet.
   void _onRateTyped() {
-    setState(() {
-      _isDirty = true;
-      // Nothing refetches for this field again, and the rate date reverts to
-      // the pick-time stamp — the effective date belonged to the suggestion,
-      // not to the number they just typed.
-      _rateOrigin = _RateOrigin.user;
-      _baseRate = null;
-      _prefilledRateDate = null;
-      _rateUnavailable = false;
-      _conversionRevision.value++;
-    });
-  }
-
-  /// Re-applies a changed fee to the base rate already fetched. No
-  /// `_rateRequestId` bump and no [_prefillRate] call — recompute only.
-  void _reapplyCardFee(double? feePercent) {
-    final base = _baseRate;
-    if (base == null || _rateOrigin != _RateOrigin.prefilled) return;
-    setState(
-      () => _rateController.text = formatRate(applyCardFee(base, feePercent)),
-    );
+    _controller.rateTyped(_rateController.text);
+    setState(() => _isDirty = true);
   }
 
   Future<void> _pickEntryCurrency() async {
-    final picked = await showCurrencyPicker(context, initial: _entryCurrency);
-    if (picked == null || !mounted || picked == _entryCurrency) return;
+    final picked = await showCurrencyPicker(
+      context,
+      initial: _editor.entryCurrency,
+    );
+    if (picked == null || !mounted || picked == _editor.entryCurrency) return;
 
     if (picked == widget.group.currency) {
       _switchBackToGroupCurrency();
       return;
     }
 
-    // Await hydration before reading: this is a keepAlive provider and the
-    // editor may be the first thing to touch it after app start.
-    final sticky = ref.read(stickyRateProvider.notifier);
-    await sticky.hydrated;
-    final prefill = sticky.stickyRate(widget.group.id, picked);
-    if (!mounted) return;
-
-    setState(() {
-      _entryCurrency = picked;
-      // A rate is per source currency — a CHF rate is meaningless for JPY, so
-      // the field always follows the newly picked currency's remembered rate,
-      // and the date follows it too: a rate typed after switching JPY -> CHF is
-      // a CHF rate quoted today, never the old JPY rate's date. Only re-picking
-      // the currency the expense was loaded with keeps its frozen date.
-      _rateController.text = prefill != null ? formatRate(prefill) : '';
-      // A remembered rate is a rate the user typed, so it owns the field and
-      // no prefill is fetched for it. Nothing remembered leaves the field free.
-      _rateOrigin = prefill != null ? _RateOrigin.user : _RateOrigin.none;
-      _baseRate = null;
-      _prefilledRateDate = null;
-      _rateUnavailable = false;
-      _conversionRevision.value++;
-      // The date is a fact about the RATE, so the frozen one survives only
-      // while the frozen rate is what the field will hold. Gating on the
-      // currency alone misdates a round trip: CHF -> EUR -> CHF clears the
-      // field and refills it from the sticky rate, which may never have been
-      // quoted on the loaded date.
-      _rateDate = rateDateForPickedCurrency(
-        picked: picked,
-        loadedOriginalCurrencyCode: widget.expense?.originalCurrencyCode,
-        loadedRateDate: widget.expense?.rateDate,
-        loadedRate: widget.expense?.conversionRate,
-        pickedRate: prefill,
-        today: DateTime.now(),
-      );
-      _isDirty = true;
-    });
-
-    unawaited(_prefillRate());
+    await _controller.pickEntryCurrency(picked, expenseDate: _expenseDate);
+    if (mounted) setState(() => _isDirty = true);
   }
 
   Future<void> _resetStickyRate() async {
-    final sticky = ref.read(stickyRateProvider.notifier);
-    await sticky.clearStickyRate(widget.group.id, _entryCurrency);
+    await _controller.resetStickyRate(expenseDate: _expenseDate);
     if (!mounted) return;
-    // Ownership goes back to free, and a rate is fetched straight away.
-    //
-    // This state — foreign currency, empty field, nothing remembered — is
-    // exactly the one a fresh currency pick produces, and that one fetches.
-    // Not fetching here made the same state behave two ways depending on how
-    // it was reached, and left the user on an empty field having just asked to
-    // be rid of a stale number: the reason to clear a saved rate is almost
-    // always that it is wrong, not that typing is preferred.
-    setState(() {
-      _rateController.text = '';
-      _rateOrigin = _RateOrigin.none;
-      _baseRate = null;
-      _prefilledRateDate = null;
-      _rateUnavailable = false;
-      // The open sheet drops "Clear saved rate" the moment the sticky rate is
-      // gone.
-      _conversionRevision.value++;
-    });
-    if (context.mounted) {
-      showSnackBar(context, AppLocalizations.of(context)!.expenseRateResetDone);
-    }
-    unawaited(_prefillRate());
+    showSnackBar(context, AppLocalizations.of(context)!.expenseRateResetDone);
   }
 
-  /// Switches the editor back to the group's own currency.
-  ///
-  /// The amount fields hold amounts in the ENTRY currency, so leaving them as
-  /// typed would save a 3000 JPY expense as 3000 EUR, and clearing them would
-  /// silently discard the user's numbers. Each field is re-converted at the
-  /// FROZEN rate the expense is already carrying, which preserves the value the
-  /// ledger holds today: a converted 17.40 EUR expense switched back to EUR
-  /// stays 17.40, not 3000. The provenance clears in the same step.
-  ///
-  /// With no rate in effect nothing was ever converted, so the typed numbers
-  /// pass through untouched.
+  /// Switches the editor back to the group's own currency (the rule is
+  /// [ExpenseEditorController.switchBackToGroupCurrency]) and writes the
+  /// converted amounts into the form.
   void _switchBackToGroupCurrency() {
-    final formState = _formKey.currentState;
-    final rate = _rate;
-    final groupCurrency = widget.group.currency;
-
-    final texts = <String>[
-      for (final data in _entries) _unitPriceTextFor(data),
-    ];
-    // Amount fields hold UNIT prices, so the quantities ride along: each line
-    // converts once and its remainder distributes across its units, exactly as
-    // the save does. Re-converting the unit price alone would drop the
-    // remainder — a qty-3 10.00 CHF line at 0.9432 is 28.30 in the ledger and
-    // 9.43 x3 = 28.29 without it.
-    final converted = switchBackAmountTexts(
-      enteredTexts: texts,
-      rate: rate,
-      groupCurrency: groupCurrency,
-      quantities: [for (final data in _entries) _quantityFor(data)],
+    final form = _formKey.currentState;
+    final entries = _editor.entries;
+    final converted = _controller.switchBackToGroupCurrency(
+      enteredTexts: [for (final e in entries) editorUnitPriceText(form, e)],
+      quantities: [for (final e in entries) editorQuantity(form, e)],
     );
-
     setState(() {
-      for (var i = 0; i < _entries.length; i++) {
-        _entries[i].initialAmount = converted[i];
-        formState?.fields['expense_entry[${_entries[i].index}][amount]']
-            ?.didChange(converted[i]);
+      for (var i = 0; i < entries.length; i++) {
+        form?.fields['expense_entry[${entries[i].index}][amount]']?.didChange(
+          converted[i],
+        );
       }
       if (converted.isNotEmpty) _amountController.text = converted.first;
-      _entryCurrency = groupCurrency;
-      _rateController.text = '';
-      _rateDate = null;
-      _rateOrigin = _RateOrigin.none;
-      _baseRate = null;
-      _prefilledRateDate = null;
-      _rateUnavailable = false;
-      _conversionRevision.value++;
       _isDirty = true;
     });
   }
@@ -1728,54 +608,73 @@ class _ExpenseDetailState extends ConsumerState<ExpenseDetail> {
   Widget build(BuildContext context) {
     const double spacing = 8;
 
-    // A fee change re-applies to the base rate already fetched and issues NO
-    // new request: the rate for a pair and a date is immutable, so a refetch
-    // would return the same number.
+    final editor = ref.watch(expenseEditorControllerProvider(_args));
+    final fee = ref.watch(cardFeeProvider);
+
+    // A fee change re-applies to the base rate already fetched (in the
+    // controller) and issues NO new request: the rate for a pair and a date is
+    // immutable, so a refetch would return the same number.
     ref.listen<double?>(cardFeeProvider, (_, next) {
-      _reapplyCardFee(next);
       // The fee row and the fee chip refresh even when there is no prefilled
       // rate to rewrite (a typed rate still shows the current fee in the sheet).
       _conversionRevision.value++;
     });
 
+    // The screen's own context sits above the group's theme: the sections that
+    // always read the app's brand theme take it as their `screenContext`.
+    final screenContext = context;
     return ThemeBuilder(
       colorValue: widget.group.colorValue,
       builder: (context) {
-        final colorScheme = Theme.of(context).colorScheme;
         final l10n = AppLocalizations.of(context)!;
 
-        Widget? headerTrailing;
-        if (widget.expense != null) {
-          headerTrailing = IconButton(
-            onPressed: _deleteInFlight
-                ? null
-                : () => _openDeleteItemDialog(widget.expense!),
-            icon: _deleteInFlight
-                ? SizedBox(
-                    width: 16,
-                    height: 16,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      color: colorScheme.onSurface,
-                    ),
-                  )
-                : Icon(Icons.delete_outline, color: colorScheme.onSurface),
-            iconSize: 22,
-            constraints: const BoxConstraints(minWidth: 38, minHeight: 38),
-            padding: EdgeInsets.zero,
-          );
-        }
+        final currencyRate = EditorCurrencyRateSection(
+          screenContext: screenContext,
+          entryCurrency: editor.entryCurrency,
+          groupCurrency: widget.group.currency,
+          convertedTotal: editor.rate == null
+              ? null
+              // Per LINE, accumulated exactly as the save accumulates it —
+              // converting the summed itemized total once instead would state
+              // a cent the ledger never stores (3 x 1.50 CHF at 0.9432 is
+              // 4.23, not 4.24).
+              : ledgerTotalOfLines(_formLines(), editor.conversion),
+          rateOrigin: editor.rateOrigin,
+          rateUnavailable: editor.rateUnavailable,
+          prefilledRateDate: editor.prefilledRateDate,
+          expenseDate: _expenseDate,
+          cardFeePercent: fee,
+          onPickCurrency: _pickEntryCurrency,
+          onOpenConversion: _openConversionSheet,
+        );
+        final paidWhen = EditorPaidWhenCard(
+          screenContext: screenContext,
+          group: widget.group,
+          initialDate: widget.expense?.expenseDate != null
+              ? DateTime.parse(widget.expense!.expenseDate)
+              : DateTime.now(),
+          initialPaidBy: widget.expense?.paidBy,
+          // THE only refetch trigger. A historical rate is a fact about the
+          // expense's day, so changing the day changes the rate; changing
+          // anything else does not, and any broader trigger reintroduces
+          // surprise rate movement on an expense the user thought was settled.
+          onDateChanged: (_) =>
+              unawaited(_controller.prefillRate(expenseDate: _expenseDate)),
+        );
 
         return PopScope(
           // A write that is out owns the route: only its success closes the
           // editor (programmatically, past this guard), so a failure can still
           // be reported on this screen.
           canPop:
-              !_deleteInFlight &&
-              _saveStatus == _SaveStatus.idle &&
+              !editor.deleteInFlight &&
+              editor.saveStatus == EditorSaveStatus.idle &&
               (!_isDirty || _bypassDiscardGuard),
           onPopInvokedWithResult: (didPop, result) async {
-            if (didPop || _deleteInFlight || _saveStatus != _SaveStatus.idle) {
+            final current = _editor;
+            if (didPop ||
+                current.deleteInFlight ||
+                current.saveStatus != EditorSaveStatus.idle) {
               return;
             }
             final discard = await showDiscardConfirmationSheet(context);
@@ -1792,7 +691,12 @@ class _ExpenseDetailState extends ConsumerState<ExpenseDetail> {
                       ? l10n.expenseDetailTitleEdit
                       : l10n.expenseDetailTitleNew,
                   leadingIcon: Icons.close,
-                  trailing: headerTrailing,
+                  trailing: widget.expense == null
+                      ? null
+                      : EditorDeleteAction(
+                          inFlight: editor.deleteInFlight,
+                          onPressed: () => _deleteExpense(widget.expense!),
+                        ),
                 ),
                 Expanded(
                   child: ListView(
@@ -1805,7 +709,7 @@ class _ExpenseDetailState extends ConsumerState<ExpenseDetail> {
                     // needs no bottom inset to clear a CTA. Itemized keeps a small
                     // gap so the info callout doesn't touch the footer.
                     padding: EdgeInsets.only(
-                      bottom: _isSingleEntry ? 0 : spacing * 2,
+                      bottom: editor.isSingleEntry ? 0 : spacing * 2,
                     ),
                     children: [
                       Padding(
@@ -1830,10 +734,26 @@ class _ExpenseDetailState extends ConsumerState<ExpenseDetail> {
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    _buildModeToggle(),
+                                    // The Quick / Itemized top segmented toggle.
+                                    // Bound to the controller's mode — no parallel
+                                    // state.
+                                    AppSegmentedControl<EditorMode>(
+                                      value: editor.editorMode,
+                                      segments: [
+                                        AppSegment(
+                                          value: EditorMode.quick,
+                                          label: l10n.editorModeQuick,
+                                        ),
+                                        AppSegment(
+                                          value: EditorMode.itemized,
+                                          label: l10n.editorModeItemized,
+                                        ),
+                                      ],
+                                      onChanged: _onEditorModeChanged,
+                                    ),
                                     // Quick layout: expense-level amount card.
                                     // Itemized layout: total-from-items header + Scan.
-                                    if (_isSingleEntry) ...[
+                                    if (editor.isSingleEntry) ...[
                                       const SizedBox(height: spacing * 2),
                                       CategorySelector(
                                         name: "category",
@@ -1846,37 +766,50 @@ class _ExpenseDetailState extends ConsumerState<ExpenseDetail> {
                                         ),
                                       ),
                                       const SizedBox(height: spacing),
-                                      _buildExpenseLevelAmount(),
+                                      EditorQuickAmountSection(
+                                        screenContext: screenContext,
+                                        firstIndex: editor.entries.first.index,
+                                        amountController: _amountController,
+                                        currency: editor.entryCurrency,
+                                        memberCount: _members.length,
+                                        onAmountChanged: () => setState(() {}),
+                                      ),
                                       const SizedBox(height: spacing * 2),
-                                      _buildCurrencyAndRate(),
+                                      currencyRate,
                                     ] else ...[
                                       const SizedBox(height: spacing * 2),
-                                      _buildItemizedTotalHeader(),
+                                      EditorItemizedTotalHeader(
+                                        screenContext: screenContext,
+                                        itemCount: editor.entries.length,
+                                        total: _itemizedTotalFromForm(),
+                                        currency: editor.entryCurrency,
+                                        onScan: _scanReceipt,
+                                      ),
                                       const SizedBox(height: spacing * 2),
-                                      _buildCurrencyAndRate(),
+                                      currencyRate,
                                     ],
                                     // v3: inset name/description field below the
                                     // amount/category block (name stays persisted).
                                     const SizedBox(height: spacing * 2),
-                                    _buildNameField(),
+                                    EditorNameField(
+                                      screenContext: screenContext,
+                                      controller: _nameController,
+                                      onNameTyped: _detectAndUpdateCategory,
+                                    ),
                                     const SizedBox(height: spacing * 2),
-                                    if (_isSingleEntry) ...[
+                                    if (editor.isSingleEntry) ...[
                                       // Quick block (F103): no "Details" header; a single
                                       // non-spaced Paid-by / When card.
-                                      _buildPaidWhenList(),
+                                      paidWhen,
                                     ] else ...[
-                                      SectionLabel(
-                                        AppLocalizations.of(
-                                          context,
-                                        )!.expenseDetailsLabel,
-                                      ),
+                                      SectionLabel(l10n.expenseDetailsLabel),
                                       const SizedBox(height: spacing),
                                       // Paid-by / When render as ONE connected
                                       // card with a hairline divider between
                                       // them — the same block the quick layout
                                       // uses — instead of two separate spaced
                                       // cards.
-                                      _buildPaidWhenList(),
+                                      paidWhen,
                                       // itemized-expense-categories: an
                                       // expense-level Category row returns to
                                       // the itemized layout (revisits F116) so
@@ -1896,93 +829,26 @@ class _ExpenseDetailState extends ConsumerState<ExpenseDetail> {
                                         ),
                                       ),
                                       const SizedBox(height: spacing * 2),
-                                      SectionLabel(
-                                        AppLocalizations.of(
-                                          context,
-                                        )!.itemizedItemsLabel,
-                                      ),
+                                      SectionLabel(l10n.itemizedItemsLabel),
                                     ],
                                   ],
                                 ),
                               ),
                               const SizedBox(height: spacing),
-                              // F161 D1: quick split renders the entry on the page bg
-                              // (the split section owns its own SoftCard around only
-                              // the member rows). Itemized joins its item rows inside a
-                              // SINGLE SoftCard (the group_detail_list _DaySection
-                              // pattern) — the item rows render flat (no per-row card)
-                              // so there is no card-in-card nesting.
-                              Builder(
-                                builder: (context) {
-                                  final entryWidgets = _entries
-                                      .map(
-                                        (data) => ExpenseEntryWidget(
-                                          key: ValueKey(data.index),
-                                          expenseEntry: data.expenseEntry,
-                                          index: data.index,
-                                          onRemove: data.onRemove,
-                                          groupMembers: data.groupMembers,
-                                          currency: _entryCurrency,
-                                          initialName: data.initialName,
-                                          initialAmount: _isSingleEntry
-                                              ? null
-                                              : data.initialAmount,
-                                          initialQuantity: data.initialQuantity,
-                                          isSingleEntry: _isSingleEntry,
-                                          expenseLevelAmountController:
-                                              _isSingleEntry
-                                              ? _amountController
-                                              : null,
-                                          // Itemized total header lives in this parent; a child
-                                          // price/qty edit must rebuild it. FormBuilder.onChanged
-                                          // only fires the first time (it guards on _isDirty), so
-                                          // wire an explicit per-edit rebuild here.
-                                          onLineTotalChanged: _isSingleEntry
-                                              ? null
-                                              : () => setState(() {}),
-                                        ),
-                                      )
-                                      .toList();
-                                  if (_isSingleEntry) {
-                                    return Column(children: entryWidgets);
-                                  }
-                                  return Padding(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 16,
-                                    ),
-                                    child: SoftCard(
-                                      padding: EdgeInsets.zero,
-                                      borderRadius: 16,
-                                      child: Column(
-                                        children: [
-                                          for (
-                                            int i = 0;
-                                            i < entryWidgets.length;
-                                            i++
-                                          ) ...[
-                                            if (i > 0)
-                                              Divider(
-                                                height: 1,
-                                                thickness: 1,
-                                                indent: 16,
-                                                endIndent: 16,
-                                                color: colorScheme
-                                                    .outlineVariant
-                                                    .withValues(alpha: 0.5),
-                                              ),
-                                            entryWidgets[i],
-                                          ],
-                                        ],
-                                      ),
-                                    ),
-                                  );
-                                },
+                              EditorEntryList(
+                                entries: editor.entries,
+                                isSingleEntry: editor.isSingleEntry,
+                                currency: editor.entryCurrency,
+                                members: _members,
+                                amountController: _amountController,
+                                onRemove: _controller.removeEntry,
+                                onLineTotalChanged: () => setState(() {}),
                               ),
                               const SizedBox(height: spacing),
                               // F111: "Add item" is an Itemized-only concept — the Quick
                               // split has a single expense-level amount, so no add-item
                               // button here.
-                              if (!_isSingleEntry) ...[
+                              if (!editor.isSingleEntry) ...[
                                 // v3 handoff: full-width DASHED ghost button (not a
                                 // tonal/filled button). Muted-primary stroke, + icon.
                                 Padding(
@@ -1991,11 +857,11 @@ class _ExpenseDetailState extends ConsumerState<ExpenseDetail> {
                                   ),
                                   child: DashedGhostButton(
                                     icon: Icons.add,
-                                    color: colorScheme.primary,
-                                    label: AppLocalizations.of(
+                                    color: Theme.of(
                                       context,
-                                    )!.addItemByHand,
-                                    onPressed: () => _addNewEntry(),
+                                    ).colorScheme.primary,
+                                    label: l10n.addItemByHand,
+                                    onPressed: _addNewEntry,
                                   ),
                                 ),
                                 const SizedBox(height: spacing * 2),
@@ -2003,7 +869,9 @@ class _ExpenseDetailState extends ConsumerState<ExpenseDetail> {
                                   padding: const EdgeInsets.symmetric(
                                     horizontal: 16,
                                   ),
-                                  child: _buildItemizedInfoCallout(),
+                                  child: EditorItemizedInfoCallout(
+                                    screenContext: screenContext,
+                                  ),
                                 ),
                                 // The itemized "Add & share for claiming" CTA is
                                 // no longer the last scroll child — it is pinned
@@ -2018,157 +886,19 @@ class _ExpenseDetailState extends ConsumerState<ExpenseDetail> {
                     ],
                   ),
                 ),
-                // Save footer: pinned below the scrollable body on an opaque
-                // surface bar. Present in BOTH modes — Quick saves the expense;
-                // Itemized shares the items for claiming (F118).
-                // Because it is a sibling of the Expanded list (not an overlay),
-                // it always reserves its own space, so scroll content is never
-                // hidden behind it.
-                Builder(
-                  builder: (context) => Container(
-                    color: colorScheme.surface,
-                    padding: const EdgeInsets.fromLTRB(20, 14, 20, 20),
-                    child: PrimaryButton(
-                      loading: _saveStatus == _SaveStatus.busy,
-                      succeeded: _saveStatus == _SaveStatus.done,
-                      successLabel: l10n.expenseCreateSuccess,
-                      onPressed: _isSingleEntry
-                          ? () => _saveExpense(context)
-                          : () => _saveExpense(context, claimable: true),
-                      // expense-editor-edit-labels: the CTA is mode-aware in
-                      // BOTH axes. Quick/Itemized picks the action; new/edit
-                      // picks the verb — editing must never read "Add expense".
-                      // Edit reuses the shared `save` key, the same way
-                      // group_detail_edit.dart's sticky footer does.
-                      label: _isSingleEntry
-                          ? (_isEdit ? l10n.save : l10n.expenseAddButton)
-                          : (_isEdit
-                                ? l10n.expenseSaveAndShareForClaimingEdit
-                                : l10n.expenseSaveAndShareForClaiming),
-                    ),
-                  ),
+                EditorSaveFooter(
+                  status: editor.saveStatus,
+                  isSingleEntry: editor.isSingleEntry,
+                  isEdit: _isEdit,
+                  onSave: editor.isSingleEntry
+                      ? () => _saveExpense()
+                      : () => _saveExpense(claimable: true),
                 ),
               ],
             ),
           ),
         );
       },
-    );
-  }
-}
-
-/// A restyled trigger row for the Quick editor (paid-by / date). A [SoftCard]
-/// with a leading icon chip (or custom [leading]), a small [label], the current
-/// [value], and a trailing chevron. Tapping fires [onTap] — which opens the
-/// existing picker/sheet unchanged.
-/// A single-line row for the quick editor's Paid-by / When list: leading icon,
-/// grey label, right-aligned value (optionally preceded by a small avatar),
-/// then a chevron. Rows sit inside a shared card with no spacing between them.
-class _PaidWhenRow extends StatelessWidget {
-  const _PaidWhenRow({
-    required this.icon,
-    required this.label,
-    required this.value,
-    required this.onTap,
-    this.trailingLeading,
-  });
-
-  final IconData icon;
-  final String label;
-  final String value;
-  final VoidCallback onTap;
-
-  /// Optional small widget shown just before the value (e.g. a member avatar).
-  final Widget? trailingLeading;
-
-  @override
-  Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-    final textTheme = Theme.of(context).textTheme;
-    return InkWell(
-      onTap: onTap,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-        child: Row(
-          children: [
-            Icon(icon, color: colorScheme.onSurfaceVariant, size: 21),
-            const SizedBox(width: 13),
-            Expanded(
-              child: Text(
-                label,
-                style: textTheme.bodyMedium?.copyWith(
-                  color: colorScheme.onSurfaceVariant,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ),
-            if (trailingLeading != null) ...[
-              trailingLeading!,
-              const SizedBox(width: 8),
-            ],
-            Text(
-              value,
-              style: textTheme.bodyMedium?.copyWith(
-                color: colorScheme.onSurface,
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-            const SizedBox(width: 4),
-            Icon(Icons.chevron_right, color: colorScheme.outline, size: 20),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-/// Tone of a provenance chip on the conversion row.
-enum _ChipTone { neutral, accent, warning }
-
-/// A stadium chip stating one fact about the rate in the field.
-///
-/// Colours come from the theme (and [SemanticColors], the repo's token
-/// channel), never from fixed hexes, so the card reads correctly in dark mode
-/// like every other surface in the app.
-class _ProvenanceChip extends StatelessWidget {
-  const _ProvenanceChip({super.key, required this.label, required this.tone});
-
-  final String label;
-  final _ChipTone tone;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final semantic = theme.extension<SemanticColors>()!;
-
-    final (Color background, Color foreground) = switch (tone) {
-      _ChipTone.neutral => (
-        theme.colorScheme.surfaceContainerHighest,
-        theme.colorScheme.onSurfaceVariant,
-      ),
-      _ChipTone.accent => (
-        theme.colorScheme.primaryContainer,
-        theme.colorScheme.onPrimaryContainer,
-      ),
-      _ChipTone.warning => (
-        semantic.warning.withValues(alpha: 0.16),
-        semantic.warning,
-      ),
-    };
-
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      decoration: BoxDecoration(
-        color: background,
-        borderRadius: BorderRadius.circular(999),
-      ),
-      child: Text(
-        label,
-        style: theme.textTheme.labelSmall?.copyWith(
-          color: foreground,
-          fontWeight: FontWeight.w600,
-        ),
-      ),
     );
   }
 }

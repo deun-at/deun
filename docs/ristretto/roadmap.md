@@ -36,7 +36,7 @@
 | backend-in-repo | push-server-compose | The push function writes each push for its receiver and checks who may get it ⚠ function deploy pending | normal | done |
 | backend-in-repo | rls-hardening | The anon key reaches nothing, and only the people a row concerns can change it ⚠ migration pending | normal | done |
 | structure | typed-expense-draft | The expense editor hands the repository a typed draft, not a string-keyed map | normal | done |
-| structure | expense-editor-split | The expense editor's state lives in a controller, and the screen opens in pieces | normal | planned |
+| structure | expense-editor-split | The expense editor's state lives in a controller, and the screen opens in pieces | normal | done |
 | structure | injectable-repositories | One current-user source, repositories as injectable instances | normal | planned |
 | structure | helper-split | helper.dart opens in pieces | easy | planned |
 | structure | typed-routes | Group and expense pages open from their URL, by id | normal | planned |
