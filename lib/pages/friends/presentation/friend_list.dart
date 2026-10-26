@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:deun/helper/helper.dart';
+import 'package:deun/helper/notification_sender.dart';
 import 'package:deun/pages/friends/data/friendship_model.dart';
 import 'package:deun/pages/friends/data/friendship_repository.dart';
 import 'package:deun/pages/friends/presentation/friend_balance.dart';
@@ -40,14 +41,15 @@ class _FriendListState extends ConsumerState<FriendList> {
   }
 
   Future<void> _acceptFriendRequest(String email, String displayName) async {
+    final notifications = NotificationSender.of(context);
     try {
       await FriendshipRepository.accepted(email);
+      unawaited(notifications.friendAccepted({email}));
       if (!mounted) return;
       showSnackBar(
         context,
         AppLocalizations.of(context)!.friendshipAccept(displayName),
       );
-      sendFriendAcceptNotification(context, {email});
     } catch (e) {
       if (!mounted) return;
       showSnackBar(context, AppLocalizations.of(context)!.generalError);

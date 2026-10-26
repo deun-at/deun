@@ -2,6 +2,8 @@ import 'package:flutter/widgets.dart' show Locale;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:deun/helper/currency_breakdown.dart';
 import 'package:deun/helper/helper.dart';
+import 'package:deun/helper/notification_sender.dart';
+import 'package:deun/l10n/app_localizations.dart';
 import 'package:deun/pages/groups/data/group_repository.dart';
 import 'package:deun/pages/groups/data/group_member_model.dart';
 import 'package:deun/pages/groups/data/group_model.dart';
@@ -339,27 +341,6 @@ void main() {
     const me = 'me@test.com';
     const friend = 'ann@test.com';
 
-    /// A group in which the current user owes [friend] [owed], with whichever
-    /// members are given.
-    Group group(
-      String name, {
-      double owed = 10,
-      List<GroupMember>? members,
-      String currencyCode = 'EUR',
-    }) {
-      final g = Group();
-      g.id = 'id-$name';
-      g.name = name;
-      g.currencyCode = currencyCode;
-      g.groupMembers =
-          members ?? [_groupMember(me, 'Me'), _groupMember(friend, 'Ann')];
-      final summary = GroupSharesSummary();
-      summary.displayName = 'Ann';
-      summary.shareAmount = -owed;
-      g.groupSharesSummary = {friend: summary};
-      return g;
-    }
-
     PayBackAllPlan resolve(List<Group> groups) =>
         GroupRepository.resolvePayBackAll(
           groups: groups,
@@ -370,7 +351,7 @@ void main() {
     test(
       'an ordinary shared group is settled with its own per-group amount',
       () {
-        final plan = resolve([group('Trip', owed: 12.5)]);
+        final plan = resolve([_owingGroup('Trip', owed: 12.5)]);
 
         expect(plan.skipped, isEmpty);
         expect(plan.settle.single.groupId, 'id-Trip');
@@ -382,7 +363,7 @@ void main() {
     test(
       'a group with nothing outstanding is neither settled nor reported',
       () {
-        final plan = resolve([group('Trip', owed: 0)]);
+        final plan = resolve([_owingGroup('Trip', owed: 0)]);
 
         expect(plan.settle, isEmpty);
         expect(plan.skipped, isEmpty);
@@ -396,8 +377,8 @@ void main() {
       'a group whose payee is soft-removed is skipped by name, not settled',
       () {
         final plan = resolve([
-          group('Trip'),
-          group(
+          _owingGroup('Trip'),
+          _owingGroup(
             'Flat share',
             members: [
               _groupMember(me, 'Me'),
@@ -420,14 +401,14 @@ void main() {
       'a group the current user was removed from is skipped, not thrown',
       () {
         final plan = resolve([
-          group(
+          _owingGroup(
             'Flat share',
             members: [
               _groupMember(me, 'Me')..removedAt = DateTime.utc(2026, 8, 15),
               _groupMember(friend, 'Ann'),
             ],
           ),
-          group('Trip'),
+          _owingGroup('Trip'),
         ]);
 
         expect(plan.settle.map((t) => t.groupName), ['Trip']);
@@ -441,20 +422,124 @@ void main() {
         _groupMember(friend, 'Ann')..removedAt = DateTime.utc(2026, 8, 15),
       ];
       final plan = resolve([
-        group('Flat share', members: removedFriend),
-        group('Ski trip', members: removedFriend),
+        _owingGroup('Flat share', members: removedFriend),
+        _owingGroup('Ski trip', members: removedFriend),
       ]);
 
       expect(plan.settle, isEmpty);
       expect(plan.skipped, ['Flat share', 'Ski trip']);
     });
+  });
+
+  group('GroupRepository.applyPayBackAll', () {
+    const me = 'me@test.com';
+    const friend = 'ann@test.com';
+    final en = lookupAppLocalizations(const Locale('en'));
+    const rows = <String, Map<String, dynamic>>{
+      'id-Trip': {
+        'name': 'Trip',
+        'currency_code': 'EUR',
+        'user_display_name': 'Zoe',
+      },
+      'id-Tokyo': {
+        'name': 'Tokyo',
+        'currency_code': 'JPY',
+        'user_display_name': 'Zoe',
+      },
+      'id-Flat': {
+        'name': 'Flat',
+        'currency_code': 'EUR',
+        'user_display_name': 'Zoe',
+      },
+    };
+
+    late List<List<Object>> pushes;
+    late List<String> writes;
+    late NotificationSender notifications;
+
+    PayBackAllPlan resolve(List<Group> groups) =>
+        GroupRepository.resolvePayBackAll(
+          groups: groups,
+          email: friend,
+          recordedBy: me,
+        );
+
+    setUp(() {
+      pushes = [];
+      writes = [];
+      notifications = NotificationSender(
+        en,
+        push: (type, objectId, receivers, title, body) async =>
+            pushes.add([type, objectId, Set.of(receivers), title, body]),
+        groupRow: (id) async => rows[id]!,
+      );
+      GroupRepository.payBackAllWriteOverride = (target) async {
+        writes.add(target.groupId);
+      };
+    });
+
+    tearDown(() => GroupRepository.payBackAllWriteOverride = null);
 
     test(
-      'the roster is handed to the write, so payBack needs no extra read',
-      () {
-        final plan = resolve([group('Trip')]);
+      'each settled group tells the friend once, with its own amount in its own currency',
+      () async {
+        await GroupRepository.applyPayBackAll(
+          resolve([
+            _owingGroup('Trip', owed: 12.5),
+            _owingGroup('Tokyo', owed: 3000, currencyCode: 'JPY'),
+          ]),
+          notifications: notifications,
+        );
+        await pumpEventQueue();
 
-        expect(plan.settle.single.members.map((m) => m.email), [me, friend]);
+        expect(writes, unorderedEquals(['id-Trip', 'id-Tokyo']));
+        expect(
+          pushes,
+          unorderedEquals([
+            [
+              'group',
+              'id-Trip',
+              {friend, me},
+              en.groupPayBackNotificationTitle('Me', 'Trip'),
+              en.groupPayBackNotificationBody('EUR 12.50'),
+            ],
+            [
+              'group',
+              'id-Tokyo',
+              {friend, me},
+              en.groupPayBackNotificationTitle('Me', 'Tokyo'),
+              en.groupPayBackNotificationBody('JPY 3,000'),
+            ],
+          ]),
+        );
+      },
+    );
+
+    test(
+      'a group whose write throws sends nothing; the others still send and the run still fails',
+      () async {
+        GroupRepository.payBackAllWriteOverride = (target) async {
+          if (target.groupId == 'id-Flat') throw Exception('rpc down');
+          writes.add(target.groupId);
+        };
+
+        await expectLater(
+          GroupRepository.applyPayBackAll(
+            resolve([
+              _owingGroup('Trip'),
+              _owingGroup('Flat'),
+              _owingGroup('Tokyo', owed: 3000, currencyCode: 'JPY'),
+            ]),
+            notifications: notifications,
+          ),
+          throwsException,
+        );
+        await pumpEventQueue();
+
+        expect(
+          pushes.map((p) => p[1]),
+          unorderedEquals(['id-Trip', 'id-Tokyo']),
+        );
       },
     );
   });
@@ -555,6 +640,29 @@ void main() {
       );
     });
   });
+}
+
+/// A group in which the current user (`me@test.com`) owes `ann@test.com`
+/// [owed], with whichever members are given.
+Group _owingGroup(
+  String name, {
+  double owed = 10,
+  List<GroupMember>? members,
+  String currencyCode = 'EUR',
+}) {
+  const me = 'me@test.com';
+  const friend = 'ann@test.com';
+  final g = Group();
+  g.id = 'id-$name';
+  g.name = name;
+  g.currencyCode = currencyCode;
+  g.groupMembers =
+      members ?? [_groupMember(me, 'Me'), _groupMember(friend, 'Ann')];
+  final summary = GroupSharesSummary();
+  summary.displayName = 'Ann';
+  summary.shareAmount = -owed;
+  g.groupSharesSummary = {friend: summary};
+  return g;
 }
 
 GroupMember _groupMember(String email, String displayName) {

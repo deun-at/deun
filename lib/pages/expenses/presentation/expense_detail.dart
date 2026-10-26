@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:deun/helper/helper.dart';
+import 'package:deun/helper/notification_sender.dart';
 import 'package:deun/pages/groups/data/group_member_model.dart';
 import 'package:deun/widgets/restyle/deun_header.dart';
 import 'package:flutter/material.dart';
@@ -70,12 +71,12 @@ class ExpenseEntryData {
 /// re-conversion on reload survive review.
 typedef ExpenseSaver =
     Future<void> Function(
-      BuildContext context,
       String groupId,
       String? expenseId,
       Map<String, dynamic> formResponse, {
       required Currency currency,
       ExpenseConversion? conversion,
+      required NotificationSender notifications,
     });
 
 /// The save CTA's three states. See [_ExpenseDetailState._saveStatus].
@@ -1222,6 +1223,7 @@ class _ExpenseDetailState extends ConsumerState<ExpenseDetail> {
       // Past every validation gate — from here a write is actually going out,
       // so the CTA takes over as the progress indicator.
       if (_saveStatus != _SaveStatus.idle) return;
+      final notifications = NotificationSender.of(context);
       setState(() => _saveStatus = _SaveStatus.busy);
 
       final errorMessage = AppLocalizations.of(context)!.expenseCreateError;
@@ -1249,12 +1251,12 @@ class _ExpenseDetailState extends ConsumerState<ExpenseDetail> {
             }
           }
           await (widget.saveExpense ?? ExpenseRepository.saveAll)(
-            context,
             widget.group.id,
             widget.expense?.id,
             formValue,
             currency: widget.group.currency,
             conversion: conversion,
+            notifications: notifications,
           );
         },
         // Failures still need words — a check would be a lie, and "something

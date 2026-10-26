@@ -1126,15 +1126,6 @@ class AppLocalizationsDe extends AppLocalizations {
   }
 
   @override
-  String get friendDeclineNotificationTitle =>
-      'Deine Freundschaftsanfrage wurde abgelehnt';
-
-  @override
-  String friendDeclineNotificationBody(String userDisplayName) {
-    return '$userDisplayName hat deine Freundschaftsanfrage abgelehnt.';
-  }
-
-  @override
   String get settings => 'Einstellungen';
 
   @override

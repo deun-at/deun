@@ -1,4 +1,7 @@
+import 'dart:async';
+
 import 'package:deun/helper/helper.dart';
+import 'package:deun/helper/notification_sender.dart';
 import 'package:deun/pages/expenses/data/expense_conversion.dart';
 import 'package:deun/pages/expenses/data/expense_model.dart';
 import 'package:deun/pages/expenses/data/expense_category.dart';
@@ -180,12 +183,12 @@ class ExpenseRepository {
   /// the legacy multi-step write path when the database doesn't have the
   /// RPC yet, so the app works against not-yet-migrated servers.
   static Future<void> saveAll(
-    BuildContext context,
     String groupId,
     String? expenseId,
     Map<String, dynamic> formResponse, {
     required Currency currency,
     ExpenseConversion? conversion,
+    required NotificationSender notifications,
   }) async {
     final conv = conversion ?? ExpenseConversion.identity(currency);
     try {
@@ -402,12 +405,13 @@ class ExpenseRepository {
         savedExpenseId = await _saveAllLegacy(groupId, upsertVals, entries);
       }
 
-      if (expenseId == null && context.mounted) {
-        sendExpenseNotification(
-          context,
-          savedExpenseId,
-          notificationReceiver,
-          amount,
+      if (expenseId == null) {
+        unawaited(
+          notifications.expenseCreated(
+            savedExpenseId,
+            notificationReceiver,
+            amount,
+          ),
         );
       }
     } on PostgrestException catch (e) {

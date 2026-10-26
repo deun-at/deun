@@ -1,5 +1,6 @@
 import 'package:deun/constants.dart';
 import 'package:deun/helper/helper.dart';
+import 'package:deun/helper/notification_sender.dart';
 import 'package:deun/l10n/app_localizations.dart';
 import 'package:deun/main.dart';
 import 'package:deun/widgets/motion.dart';
@@ -168,7 +169,6 @@ class _RecordPaybackSheetState extends State<RecordPaybackSheet> {
         );
       } else {
         await GroupRepository.payBack(
-          context,
           widget.group.id,
           accepted.paidFor,
           accepted.amount,
@@ -176,6 +176,7 @@ class _RecordPaybackSheetState extends State<RecordPaybackSheet> {
           // Deliberately no `members:` here: the sheet can sit open for a while,
           // so let the repository re-resolve against a FRESH roster and catch a
           // member removed in the meantime.
+          notifications: NotificationSender.of(context),
         );
       }
       // The confirmation is the check on the CTA, held long enough to read

@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:deun/helper/helper.dart';
+import 'package:deun/helper/notification_sender.dart';
 import 'package:deun/pages/friends/data/friendship_repository.dart';
 import 'package:deun/pages/friends/provider/friend_add_notifier.dart';
 import 'package:deun/widgets/restyle/deun_header.dart';
@@ -102,12 +103,13 @@ class _FriendAddPageState extends ConsumerState<FriendAddPage> {
   }
 
   Future<void> _requestFriendship(String userEmail, String displayName) async {
+    final notifications = NotificationSender.of(context);
     try {
       await FriendshipRepository.request(userEmail);
+      unawaited(notifications.friendRequested({userEmail}));
       if (!mounted) return;
       setState(() => _requestedEmails.add(userEmail));
       showSnackBar(context, l10nOf(context).friendshipRequestSent(displayName));
-      sendFriendRequestNotification(context, {userEmail});
       unawaited(ref.read(friendAddProvider.notifier).refresh());
     } catch (e) {
       if (!mounted) return;
