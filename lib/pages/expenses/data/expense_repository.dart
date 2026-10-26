@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:deun/helper/helper.dart';
 import 'package:deun/helper/notification_sender.dart';
+import 'package:deun/helper/search_filter.dart';
 import 'package:deun/pages/expenses/data/expense_conversion.dart';
 import 'package:deun/pages/expenses/data/expense_model.dart';
 import 'package:deun/pages/expenses/data/expense_category.dart';
@@ -25,7 +26,10 @@ class ExpenseRepository {
     }
 
     if (filter != null) {
-      query = query.ilike('name', '%$filter%').eq('is_paid_back_row', 'false');
+      final search = literalSearchFilter(filter);
+      query = query
+          .filter('name', search.operator, search.value)
+          .eq('is_paid_back_row', 'false');
     }
 
     //created_at as fallback if multiple entrys are on the same date/check if name makes more senses

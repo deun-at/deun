@@ -309,6 +309,14 @@ carry `[human]` criteria that nobody has ever observed. Check here before shippi
   account) · create a throwaway account on a device, confirm its device_tokens row exists (read
   only), delete the account in Settings, then confirm no row remains for that user id or token.
 
+- [ ] **proves** · expense-search-escape: searching a group for `50%`, `a_b`, `a*b`, `(1`, `[`,
+  `\`, `TAXI` and `müller` returns exactly the expenses whose names contain that text (case
+  ignored), with no error · out of reach: api.deun.app (its PostgREST version, Postgres regex engine
+  and locale) is unreachable from the build · in a scratch group, add expenses named "50% off",
+  "500 EUR", "a_b", "axb", "a*b", "a long b", "Taxi (1)", "Café Müller" and "C:\temp". Search for
+  `50%`, `a_b`, `a*b`, `(1`, `[`, `\`, `TAXI` and `müller`. Confirm that each search returns exactly
+  the names containing that text (case ignored) and that no error is shown.
+
 ## Findings from verification
 
 Defects turned up while walking the checks. These are not checks themselves — nobody ticks them —

@@ -49,3 +49,19 @@
 - Likely touchpoints: lib/helper/search_filter.dart (new), lib/pages/expenses/data/expense_repository.dart (`fetchData`), test/helper/search_filter_test.dart (new), docs/ristretto/manual-checks.md
 - Depends: —
 - Parallel-with: editor-failure-keeps-form, scan-total-applies, group-model-parse-safety (disjoint files). guest-merge-rpc and payback-atomic-recalc also append to docs/ristretto/manual-checks.md, an append-only rebase. legacy-fallback-removal, notification-context-free, typed-expense-draft, group-write-rpcs and injectable-repositories also edit expense_repository.dart, but in other methods, so the rebase is trivial.
+
+## Evidence
+- 1: test/helper/search_filter_test.dart "% and _ match only themselves" (exact value and imatch operator, Dart RegExp proxy: `50%` finds "50% off", not "500 EUR"/"50 EUR"; `a_b` finds "a_b", not "axb").
+- 2: test/helper/search_filter_test.dart "* matches only itself" (`a*b` finds "a*b", not "ab", "aab", "a long b").
+- 3: test/helper/search_filter_test.dart "a backslash matches only a backslash" (`a\b` finds "a\b" not "ab"; `50\` finds "50\" not "50%").
+- 4: test/helper/search_filter_test.dart "every regex metacharacter matches only itself and never fails" (all 14 characters alone and inside text; `.` vs "v1.2"/"abc", `(1` vs "Taxi (1)", unbalanced `(`, `[`, `{` compile).
+- 5: test/helper/search_filter_test.dart "ordinary text matches itself, ignoring case" (`TAXI`, `müller`, `Café Müller 2`).
+- 6: test/helper/search_filter_test.dart "the expense search sends only the escaped, literal filter" (source-shape guard over expense_repository.dart: `literalSearchFilter(` present, no `ilike(`/`like(` on `name`).
+- 7: pending human (docs/ristretto/manual-checks.md, expense-search-escape entry).
+- 8: gates green (format, analyze, full test suite; gate-green recorded); test/helper/search_filter_test.dart re-run at close: 6 passed.
+- review: notes-only · rounds: 1 · open: 0 block, 2 note, 0 lean · trimmed: 1
+- tier: easy
+
+## Open findings
+- note · docs/ristretto/manual-checks.md:312 · The new `[human]` check runs on api.deun.app. Both `.env_flutter` files point there, so it is production, which goes against common.md "Never a check about production". It also says "Postgres regex engine … unreachable from the build", which fails the reach test. The repo has a path: `supabase/tests/rls_stopgap/README.md` runs a throwaway local `postgres:15.8`, the same version as live, and `supabase/config.toml` allows a local `supabase start` with PostgREST. Only the live locale is truly out of reach. · Fix: have the plan owner move the ARE/`~*` and imatch passthrough proof to that local path, and drop or narrow the production check. The plan file mandates this criterion, so it cannot be fixed in code alone. · Why no user is harmed: the box stays open as pending human, nothing claims it proven, and the shipped search code does not depend on it.
+- note · test/helper/search_filter_test.dart:83 · The call-site guard only catches `ilike(`/`like(` directly followed by a single-quoted `'name'`. A regression to `.filter('name', 'ilike', …)`, `ilikeAnyOf`, or a double-quoted column would stay green. Line 82 only checks that `literalSearchFilter(` appears somewhere, not that its result is what gets applied to `name`. · Fix: also reject `'(i?like|likeAnyOf|ilikeAnyOf)'` operators on name, or assert the `.filter('name', search.operator, search.value)` shape. · Why no user is harmed: the call site today (expense_repository.dart:29-32) sends the escaped imatch filter on `name`.
