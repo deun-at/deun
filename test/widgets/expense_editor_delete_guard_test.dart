@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:deun/constants.dart';
 import 'package:deun/l10n/app_localizations.dart';
+import 'package:deun/pages/expenses/data/expense_draft.dart';
 import 'package:deun/pages/expenses/data/expense_entry_model.dart';
 import 'package:deun/pages/expenses/data/expense_model.dart';
 import 'package:deun/pages/expenses/presentation/expense_detail.dart';
@@ -147,7 +148,7 @@ Future<void> _pump(
   List<Expense> paybacks = const [],
   Future<List<Expense>> Function(String groupId)? loader,
   _Deleter? deleter,
-  List<Map<String, dynamic>>? saves,
+  List<ExpenseDraft>? saves,
 }) async {
   final deletes = deleter ?? _Deleter();
   await tester.pumpWidget(
@@ -180,12 +181,12 @@ Future<void> _pump(
                   (
                     groupId,
                     expenseId,
-                    formResponse, {
+                    draft, {
                     required currency,
                     conversion,
                     required notifications,
                   }) async {
-                    saves?.add(Map<String, dynamic>.from(formResponse));
+                    saves?.add(draft);
                   },
             ),
           ),
@@ -382,7 +383,7 @@ void main() {
     (tester) async {
       final l10n = await AppLocalizations.delegate.load(const Locale('en'));
       final deleter = _Deleter(throws: Exception('offline'));
-      final saves = <Map<String, dynamic>>[];
+      final saves = <ExpenseDraft>[];
       await _pump(
         tester,
         expense: _quickExpense(),
@@ -417,7 +418,7 @@ void main() {
       await tester.pumpAndSettle(const Duration(seconds: 5));
 
       expect(saves, hasLength(1));
-      expect(saves.single['name'], 'Dinner for two');
+      expect(saves.single.name, 'Dinner for two');
       expect(find.text('BEHIND'), findsOneWidget);
     },
   );
@@ -449,7 +450,7 @@ void main() {
       final l10n = await AppLocalizations.delegate.load(const Locale('en'));
       final gate = Completer<void>();
       final deleter = _Deleter(gate: gate);
-      final saves = <Map<String, dynamic>>[];
+      final saves = <ExpenseDraft>[];
       await _pump(
         tester,
         expense: _quickExpense(),

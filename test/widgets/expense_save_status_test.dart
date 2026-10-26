@@ -13,6 +13,7 @@ import 'package:deun/constants.dart';
 import 'package:deun/helper/currency.dart';
 import 'package:deun/helper/notification_sender.dart';
 import 'package:deun/pages/expenses/data/expense_conversion.dart';
+import 'package:deun/pages/expenses/data/expense_draft.dart';
 import 'package:deun/l10n/app_localizations.dart';
 import 'package:deun/pages/expenses/data/expense_model.dart';
 import 'package:deun/pages/expenses/presentation/expense_detail.dart';
@@ -124,18 +125,12 @@ class _GatedSave {
   Future<void> call(
     String groupId,
     String? expenseId,
-    Map<String, dynamic> formResponse, {
+    ExpenseDraft draft, {
     required Currency currency,
     ExpenseConversion? conversion,
     required NotificationSender notifications,
   }) async {
-    payloads.add(
-      SavedExpense(
-        Map<String, dynamic>.from(formResponse),
-        currency,
-        conversion,
-      ),
-    );
+    payloads.add(SavedExpense(draft, currency, conversion));
     await gate.future;
     final failing = failures == null || payloads.length <= failures!;
     if (throwing != null && failing) throw throwing!;
@@ -465,12 +460,12 @@ void main() {
 
       final first = save.payloads[0];
       final second = save.payloads[1];
-      expect(first.formValue['name'], 'Lunch');
+      expect(first.draft.name, 'Lunch');
       expect(first.enteredAmount(0), 35);
       expect(first.conversion!.entryCurrency, Currency.chf);
       expect(first.conversion!.rate, 0.95);
       expect(first.conversion!.rateDate, isNotNull);
-      expect(second.formValue, first.formValue);
+      expect(second.draft, first.draft);
       expect(
         second.conversion!.expenseProvenance,
         first.conversion!.expenseProvenance,

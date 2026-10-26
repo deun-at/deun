@@ -154,24 +154,9 @@ Future<void> _retypeUnitPrice(
 }
 
 /// Every item the save carries, as (name, entered amount), in item order.
-List<(String?, double)> _savedItems(SavedExpense saved) {
-  final indexes =
-      saved.formValue.keys
-          .map(
-            (k) => RegExp(r'^expense_entry\[(\d+)\]\[amount\]$').firstMatch(k),
-          )
-          .whereType<RegExpMatch>()
-          .map((m) => int.parse(m.group(1)!))
-          .toList()
-        ..sort();
-  return [
-    for (final i in indexes)
-      (
-        saved.formValue['expense_entry[$i][name]'] as String?,
-        saved.enteredAmount(i),
-      ),
-  ];
-}
+List<(String?, double)> _savedItems(SavedExpense saved) => [
+  for (final line in saved.draft.entries) (line.name, line.unitPrice),
+];
 
 Finder get _headerClose => find.descendant(
   of: find.byType(DeunHeader),
@@ -235,9 +220,7 @@ void main() {
       await saveEditor(tester);
       expect(_savedItems(saved.single).map((i) => i.$2), [42.8]);
       expect(
-        saved.single.formValue.entries
-            .where((e) => e.key.endsWith('[quantity]'))
-            .map((e) => e.value.toString()),
+        saved.single.draft.entries.map((line) => line.quantity.toString()),
         ['1'],
       );
     },
@@ -287,7 +270,7 @@ void main() {
       expect(find.text('10.00'), findsNothing);
       await saveEditor(tester);
       final payload = saved.single;
-      expect(payload.formValue['expense_entry[0][amount]'], '12.34');
+      expect(payload.draft.entries[0].unitPrice, 12.34);
       expect(payload.conversion!.entryCurrency, Currency.chf);
       expect(payload.currency, Currency.jpy);
     },
@@ -367,8 +350,8 @@ void main() {
     await _tapScan(tester);
     await saveEditor(tester);
 
-    expect(saved.single.formValue['name'], 'Billa');
-    expect(saved.single.formValue['expense_date'], DateTime(2026, 10, 20));
+    expect(saved.single.draft.name, 'Billa');
+    expect(saved.single.draft.expenseDate, DateTime(2026, 10, 20));
   });
 
   testWidgets('a line-item rescan replaces the items with the scanned lines', (

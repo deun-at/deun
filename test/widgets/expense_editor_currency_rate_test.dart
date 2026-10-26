@@ -5,6 +5,7 @@ import 'package:deun/constants.dart';
 import 'package:deun/helper/helper.dart';
 import 'package:deun/l10n/app_localizations.dart';
 import 'package:deun/pages/expenses/data/expense_conversion.dart';
+import 'package:deun/pages/expenses/data/expense_draft.dart';
 import 'package:deun/pages/expenses/data/expense_model.dart';
 import 'package:deun/pages/expenses/presentation/expense_detail.dart';
 import 'package:deun/pages/expenses/service/rate_source.dart';
@@ -136,15 +137,14 @@ Expense convertedChfExpense() => _expense(
 
 /// One captured [ExpenseRepository.saveAll] call.
 class SavedExpense {
-  SavedExpense(this.formValue, this.currency, this.conversion);
+  SavedExpense(this.draft, this.currency, this.conversion);
 
-  final Map<String, dynamic> formValue;
+  final ExpenseDraft draft;
   final Currency currency;
   final ExpenseConversion? conversion;
 
-  /// The entered unit price of [index], as the repository would parse it.
-  double enteredAmount(int index) =>
-      double.parse(formValue['expense_entry[$index][amount]'].toString());
+  /// The entered unit price of the line at [index], in on-screen order.
+  double enteredAmount(int index) => draft.entries[index].unitPrice;
 }
 
 Map<String, dynamic> _entryJson({
@@ -433,7 +433,7 @@ Future<void> initTestSupabase() async {
 /// save can pop back, and returns the list the stub records into.
 ///
 /// The save payload is where the "frozen" criterion is actually decided: the
-/// form values are entry-currency amounts and the [ExpenseConversion] is what
+/// draft holds entry-currency amounts and the [ExpenseConversion] is what
 /// the provenance columns and every conversion are written from. Building an
 /// [ExpenseConversion] by hand in a unit test asserts nothing about the editor
 /// carrying its loaded rate and rate date through an unrelated edit, so the
@@ -480,18 +480,12 @@ Future<List<SavedExpense>> pumpEditorWithSaveSeam(
                   (
                     groupId,
                     expenseId,
-                    formResponse, {
+                    draft, {
                     required currency,
                     conversion,
                     required notifications,
                   }) async {
-                    captured.add(
-                      SavedExpense(
-                        Map<String, dynamic>.from(formResponse),
-                        currency,
-                        conversion,
-                      ),
-                    );
+                    captured.add(SavedExpense(draft, currency, conversion));
                   },
             ),
           ),
@@ -890,14 +884,9 @@ void main() {
 
       expect(saved, hasLength(1));
       final conversion = saved.single.conversion!;
-      final shareData =
-          saved.single.formValue['expense_entry[0][share_data]']
-              as Map<String, dynamic>;
+      final shareData = saved.single.draft.entries[0].shareData;
       // Entry-currency in, entry-currency out.
-      expect(shareData.values.map((v) => (v as num).toDouble()).toList(), [
-        2.25,
-        2.25,
-      ]);
+      expect(shareData.values.map((v) => v.toDouble()).toList(), [2.25, 2.25]);
       // ...and converting them once lands on exactly the stored ledger values.
       expect(conversion.toLedger(2.25), 2.12);
       expect(conversion.toLedger(saved.single.enteredAmount(0)), 4.24);
@@ -905,7 +894,7 @@ void main() {
       // share over entered total, 50% a head rather than 47%.
       final entered = saved.single.enteredAmount(0);
       for (final value in shareData.values) {
-        expect(((value as num).toDouble() / entered) * 100, closeTo(50, 1e-9));
+        expect((value.toDouble() / entered) * 100, closeTo(50, 1e-9));
       }
     },
   );
@@ -929,7 +918,7 @@ void main() {
 
       expect(saved, hasLength(1));
       final payload = saved.single;
-      expect(payload.formValue['name'], 'Kiosk am Bahnhof');
+      expect(payload.draft.name, 'Kiosk am Bahnhof');
       // Nothing about the money moved: the entry currency, the frozen rate and
       // the date it is attributed to are the ones the expense was loaded with,
       // and the amount the ledger receives is the one it already holds.

@@ -7,6 +7,7 @@
 
 import 'package:deun/helper/currency.dart';
 import 'package:deun/helper/notification_sender.dart';
+import 'package:deun/pages/expenses/data/expense_draft.dart';
 import 'package:deun/pages/expenses/data/expense_repository.dart';
 import 'package:deun/pages/groups/data/group_repository.dart';
 import 'package:flutter/services.dart';
@@ -85,23 +86,24 @@ void main() {
   group('an expense save goes through save_expense_all alone', () {
     final notifications = NotificationSender(push: (request) async {});
 
-    /// One equal-split line, as the editor's form submits it.
-    Map<String, dynamic> form() => {
-      'name': 'Dinner',
-      'expense_date': DateTime(2026, 10, 26),
-      'paid_by': 'a@test.com',
-      'category': null,
-      'expense_entry[0][name]': 'Dinner',
-      'expense_entry[0][amount]': '10',
-      'expense_entry[0][quantity]': '1',
-      'expense_entry[0][split_mode]': 'equal',
-      'expense_entry[0][shares]': <String>{'a@test.com', 'b@test.com'},
-    };
+    /// One equal-split line, as the editor hands it over.
+    ExpenseDraft draft() => ExpenseDraft(
+      name: 'Dinner',
+      expenseDate: DateTime(2026, 10, 26),
+      paidBy: 'a@test.com',
+      entries: const [
+        ExpenseEntryDraft(
+          name: 'Dinner',
+          unitPrice: 10,
+          shares: {'a@test.com', 'b@test.com'},
+        ),
+      ],
+    );
 
     Future<void> save(String? expenseId) => ExpenseRepository.saveAll(
       'g1',
       expenseId,
-      form(),
+      draft(),
       currency: Currency.eur,
       notifications: notifications,
     );
@@ -128,6 +130,31 @@ void main() {
       expect(calls, hasLength(1));
       expect((calls.single['_expense'] as Map)['id'], 'e1');
     });
+
+    test(
+      'a successful create pushes the planned receivers and amount once',
+      () async {
+        ExpenseRepository.saveExpenseAllOverride = recorder(() => 'e-new');
+        final pushes = <PushRequest>[];
+
+        await ExpenseRepository.saveAll(
+          'g1',
+          null,
+          draft(),
+          currency: Currency.eur,
+          notifications: NotificationSender(
+            push: (request) async => pushes.add(request),
+          ),
+        );
+
+        expect(calls, hasLength(1));
+        expect(pushes, hasLength(1));
+        expect(pushes.single.kind, PushKind.expenseCreated);
+        expect(pushes.single.objectId, 'e-new');
+        expect(pushes.single.receivers, {'a@test.com', 'b@test.com'});
+        expect(pushes.single.amount, 10.0);
+      },
+    );
   });
 
   test(
