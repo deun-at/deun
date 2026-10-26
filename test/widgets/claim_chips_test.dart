@@ -155,9 +155,14 @@ class _FakeClaimNotifier extends ClaimNotifier {
     ref.notifyListeners();
   }
 
+  /// When set, [claimUnit] records the call and throws this, mutating nothing:
+  /// what the real notifier does when the repository throws.
+  Object? claimError;
+
   @override
   Future<void> claimUnit(String unitEntryId, String email) async {
     claimCalls.add((unitEntryId, email));
+    if (claimError case final error?) throw error;
     final current = state.value!.expenseEntries[unitEntryId]!.expenseEntryShares
         .map((s) => s.email)
         .toList();
@@ -258,6 +263,37 @@ void main() {
   tearDownAll(() async {
     await Supabase.instance.dispose();
   });
+
+  testWidgets(
+    'a claim that fails shows the error SnackBar and leaves the chips',
+    (tester) async {
+      final l10n = await _l10n();
+      await _pump(tester, expense: _expense());
+      await _pickPersona(tester, 'a@test.com');
+      _fake.claimError = const PostgrestException(
+        message: 'Could not find the function public.claim_set_unit_shares',
+        code: 'PGRST202',
+      );
+
+      await tester.tap(
+        find.descendant(
+          of: find.byKey(const ValueKey('slot:u1')),
+          matching: find.text(l10n.claimTakeOne),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(_fake.claimCalls, [('u1', 'a@test.com')]);
+      expect(find.text(l10n.claimLoadError), findsOneWidget);
+      expect(
+        find.descendant(
+          of: find.byKey(const ValueKey('slot:u1')),
+          matching: find.text(l10n.claimTakeOne),
+        ),
+        findsOneWidget,
+      );
+    },
+  );
 
   testWidgets('open unit shows a "take one" chip', (tester) async {
     final l10n = await _l10n();

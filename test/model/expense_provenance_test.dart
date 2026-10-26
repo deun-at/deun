@@ -425,66 +425,6 @@ void main() {
     });
   });
 
-  group('the legacy write path strips provenance before PostgREST', () {
-    test('the expense row loses exactly the three provenance keys', () {
-      const conv = ExpenseConversion(
-        groupCurrency: Currency.eur,
-        entryCurrency: Currency.jpy,
-        rate: 0.0058,
-        rateDate: '2026-08-16',
-      );
-      final upsert = {
-        'name': 'Ramen',
-        'group_id': 'g1',
-        ...conv.expenseProvenance,
-      };
-      final stripped = stripProvenance(upsert, kExpenseProvenanceKeys);
-      expect(stripped.keys.toSet(), {'name', 'group_id'});
-      expect(stripped['name'], 'Ramen');
-    });
-
-    test(
-      'the share row loses original_fixed_amount but keeps fixed_amount',
-      () {
-        final stripped = stripProvenance({
-          'email': 'a@test.com',
-          'percentage': 100 / 3,
-          'fixed_amount': 1.41,
-          'original_fixed_amount': 1.50,
-          'is_locked': false,
-        }, kShareProvenanceKeys);
-        expect(stripped.keys.toSet(), {
-          'email',
-          'percentage',
-          'fixed_amount',
-          'is_locked',
-        });
-        expect(stripped['fixed_amount'], 1.41);
-      },
-    );
-
-    test('the entry row loses original_amount but keeps its ledger amount', () {
-      final stripped = stripProvenance({
-        'name': 'Ramen',
-        'amount': 17.40,
-        'original_amount': 3000,
-        'quantity': 1,
-      }, kEntryProvenanceKeys);
-      expect(stripped, {'name': 'Ramen', 'amount': 17.40, 'quantity': 1});
-    });
-
-    test(
-      'an unconverted save is also stripped — the NULL keys would fail PGRST204 too',
-      () {
-        final identity = ExpenseConversion.identity(Currency.eur);
-        final upsert = {'name': 'Ramen', ...identity.expenseProvenance};
-        expect(stripProvenance(upsert, kExpenseProvenanceKeys).keys.toSet(), {
-          'name',
-        });
-      },
-    );
-  });
-
   group('isForeignCurrencyIn', () {
     test('a JPY expense in a EUR group is foreign', () {
       final e = _expenseJson(

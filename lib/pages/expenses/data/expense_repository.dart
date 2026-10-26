@@ -13,6 +13,18 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../main.dart';
 
 class ExpenseRepository {
+  /// Null outside tests. When set, [saveAll] sends its one `save_expense_all`
+  /// call here instead of `supabase.rpc`.
+  @visibleForTesting
+  static Future<Object?> Function(Map<String, dynamic> params)?
+  saveExpenseAllOverride;
+
+  /// Null outside tests. When set, [claimSetUnitShares] sends its one
+  /// `claim_set_unit_shares` call here instead of `supabase.rpc`.
+  @visibleForTesting
+  static Future<Object?> Function(Map<String, dynamic> params)?
+  claimSetUnitSharesOverride;
+
   static Future<List<Expense>> fetchData([
     String? groupId,
     int rangeFrom = 0,
@@ -182,10 +194,11 @@ class ExpenseRepository {
     return units;
   }
 
-  /// Saves an expense with all its entries and share splits atomically via
-  /// the save_expense_all RPC (one transaction server-side). Falls back to
-  /// the legacy multi-step write path when the database doesn't have the
-  /// RPC yet, so the app works against not-yet-migrated servers.
+  /// Saves an expense with all its entries and share splits in ONE server
+  /// transaction (`save_expense_all`): the expense row with its provenance, every
+  /// entry and share, and the share recalculation commit together or not at
+  /// all. Any failure, a missing function included, is thrown as the RPC's own
+  /// error having written nothing: there is no client-side fallback.
   static Future<void> saveAll(
     String groupId,
     String? expenseId,
@@ -392,22 +405,17 @@ class ExpenseRepository {
         sortId += 10;
       }
 
-      String savedExpenseId;
-      try {
-        savedExpenseId =
-            await supabase.rpc(
-                  'save_expense_all',
-                  params: {
-                    '_group_id': groupId,
-                    '_expense': upsertVals,
-                    '_entries': entries,
-                  },
-                )
-                as String;
-      } on PostgrestException catch (e) {
-        if (!isMissingFunctionError(e)) rethrow;
-        savedExpenseId = await _saveAllLegacy(groupId, upsertVals, entries);
-      }
+      final Map<String, dynamic> params = {
+        '_group_id': groupId,
+        '_expense': upsertVals,
+        '_entries': entries,
+      };
+      final override = saveExpenseAllOverride;
+      final savedExpenseId =
+          (override != null
+                  ? await override(params)
+                  : await supabase.rpc('save_expense_all', params: params))
+              as String;
 
       if (expenseId == null) {
         unawaited(
@@ -424,75 +432,14 @@ class ExpenseRepository {
     }
   }
 
-  /// Legacy non-atomic write path for servers without the save_expense_all
-  /// RPC. Performs the same writes as the RPC, one statement at a time.
-  ///
-  /// The provenance columns are STRIPPED here — on the expense row, on every
-  /// entry row and on every share row. This path only runs against a server
-  /// that lacks the RPC, which by construction also lacks this feature's
-  /// migration — and PostgREST rejects an unknown column with PGRST204 rather
-  /// than ignoring it, so leaving the keys in would break every expense save,
-  /// not just converted ones. The ledger amount is already converted, so the
-  /// balances stay correct; only the provenance is lost on such a server.
-  static Future<String> _saveAllLegacy(
-    String groupId,
-    Map<String, dynamic> upsertVals,
-    List<Map<String, dynamic>> entries,
-  ) async {
-    Map<String, dynamic> expenseInsertResponse = await supabase
-        .from('expense')
-        .upsert(stripProvenance(upsertVals, kExpenseProvenanceKeys))
-        .select('id')
-        .single();
-    final savedExpenseId = expenseInsertResponse['id'] as String;
-
-    await supabase
-        .from('expense_entry')
-        .delete()
-        .eq('expense_id', savedExpenseId);
-
-    for (var item in entries) {
-      Map<String, dynamic> expenseEntryResult = await supabase
-          .from('expense_entry')
-          .insert({
-            ...stripProvenance(
-              item['entry'] as Map<String, dynamic>,
-              kEntryProvenanceKeys,
-            ),
-            'expense_id': savedExpenseId,
-          })
-          .select('id')
-          .single();
-
-      final shareRows = (item['shares'] as List)
-          .map(
-            (s) => {
-              ...stripProvenance(
-                s as Map<String, dynamic>,
-                kShareProvenanceKeys,
-              ),
-              'expense_entry_id': expenseEntryResult['id'],
-            },
-          )
-          .toList();
-      if (shareRows.isNotEmpty) {
-        await supabase.from('expense_entry_share').insert(shareRows);
-      }
-    }
-
-    await supabase.rpc(
-      'update_group_member_shares',
-      params: {"_group_id": groupId, "_expense_id": savedExpenseId},
-    );
-    return savedExpenseId;
-  }
-
-  /// Sets the exact claimer set for a single claim unit (one expense_entry).
-  /// [claimerEmails] empty => the unit becomes unclaimed. Each claimer gets
-  /// percentage = 100 / claimers so existing percentage-based aggregations
-  /// (groupMemberShareStatistic, get_user_spending_summary) stay correct.
-  /// Atomic via claim_set_unit_shares RPC; falls back to a multi-step write
-  /// against servers that don't have the RPC yet.
+  /// Sets the exact claimer set for a single claim unit (one expense_entry)
+  /// in ONE server transaction (`claim_set_unit_shares`), which also
+  /// recalculates the group's shares. [claimerEmails] empty => the unit
+  /// becomes unclaimed. Each claimer gets percentage = 100 / claimers so
+  /// existing percentage-based aggregations (groupMemberShareStatistic,
+  /// get_user_spending_summary) stay correct. Any failure, a missing function
+  /// included, is thrown as the RPC's own error: there is no client-side
+  /// fallback.
   static Future<void> claimSetUnitShares({
     required String groupId,
     required String expenseId,
@@ -500,56 +447,20 @@ class ExpenseRepository {
     required List<String> claimerEmails,
   }) async {
     final double pct = claimerEmails.isEmpty ? 0 : 100 / claimerEmails.length;
-    final shareRows = claimerEmails
-        .map((email) => {'email': email, 'percentage': pct})
-        .toList();
-    try {
-      await supabase.rpc(
-        'claim_set_unit_shares',
-        params: {
-          '_group_id': groupId,
-          '_expense_id': expenseId,
-          '_entry_id': unitEntryId,
-          '_shares': shareRows,
-        },
-      );
-    } on PostgrestException catch (e) {
-      if (!isMissingFunctionError(e)) rethrow;
-      await _claimSetUnitSharesLegacy(
-        groupId,
-        expenseId,
-        unitEntryId,
-        shareRows,
-      );
+    final Map<String, dynamic> params = {
+      '_group_id': groupId,
+      '_expense_id': expenseId,
+      '_entry_id': unitEntryId,
+      '_shares': [
+        for (final email in claimerEmails) {'email': email, 'percentage': pct},
+      ],
+    };
+    final override = claimSetUnitSharesOverride;
+    if (override != null) {
+      await override(params);
+    } else {
+      await supabase.rpc('claim_set_unit_shares', params: params);
     }
-  }
-
-  /// Legacy non-atomic claim mutation for servers without the
-  /// claim_set_unit_shares RPC. Mirrors the RPC's statements one at a time.
-  static Future<void> _claimSetUnitSharesLegacy(
-    String groupId,
-    String expenseId,
-    String unitEntryId,
-    List<Map<String, dynamic>> shareRows,
-  ) async {
-    await supabase
-        .from('expense_entry_share')
-        .delete()
-        .eq('expense_entry_id', unitEntryId);
-    if (shareRows.isNotEmpty) {
-      await supabase
-          .from('expense_entry_share')
-          .insert(
-            shareRows
-                .map((s) => {...s, 'expense_entry_id': unitEntryId})
-                .toList(),
-          );
-    }
-    // Recompute member shares (also bumps expense_update_checker for realtime).
-    await supabase.rpc(
-      'update_group_member_shares',
-      params: {"_group_id": groupId, "_expense_id": expenseId},
-    );
   }
 
   /// Every expense of [groupId] that could carry its own currency, on the lean
