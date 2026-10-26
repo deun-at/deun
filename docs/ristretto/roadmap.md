@@ -41,7 +41,7 @@
 | structure | helper-split | helper.dart opens in pieces | easy | done |
 | structure | typed-routes | Group and expense pages open from their URL, by id | normal | done |
 | structure | presentation-file-split | The claim page and the split editor open in pieces | normal | done |
-| structure | housekeeping | Review cleanup: dead widgets, a debug-only dev route, a no-op push handler, untracked build output | easy | planned |
+| structure | housekeeping | Review cleanup: dead widgets, a debug-only dev route, a no-op push handler, untracked build output | easy | done |
 | — | group-form-field-structure | Group edit form: fields in a Column, not a lazy ListView | normal | done |
 | — | group-member-removal | Removing a group member: defined semantics instead of a silent wipe | normal | done |
 | — | expense-delete-settled-guard | Warn before deleting an expense that a payback already touched | normal | done |
