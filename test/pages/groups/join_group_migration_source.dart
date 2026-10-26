@@ -1,5 +1,6 @@
 // guest-merge-rpc: the join_group migration as normalized source, shared by
-// join_group_migration_test.dart and group_repository_test.dart. Read as
+// join_group_migration_test.dart, group_repository_test.dart and
+// payback_atomic_recalc_migration_test.dart. Read as
 // source, the way realtime_event_scope_migration_test.dart reads its
 // migration: the self-hosted instance is out of the build's reach.
 
@@ -20,7 +21,9 @@ String normalizedSql(String raw) => raw
     .replaceAll('( ', '(')
     .replaceAll(' )', ')');
 
-List<File> _migrations() =>
+/// Every top-level `supabase/migrations/*.sql` (not `rollback/`), oldest first
+/// by filename — the order the timestamps apply them in.
+List<File> migrationFiles() =>
     Directory('supabase/migrations')
         .listSync()
         .whereType<File>()
@@ -30,7 +33,7 @@ List<File> _migrations() =>
 
 /// The guest-merge-rpc migration, found by suffix so its timestamp can move.
 String joinGroupMigrationSql() {
-  final files = _migrations()
+  final files = migrationFiles()
       .where((f) => f.path.endsWith('_join_group_guest_merge.sql'))
       .toList();
   if (files.length != 1) {
@@ -44,7 +47,7 @@ String joinGroupMigrationSql() {
 /// Every migration, normalized — for a helper that may live in whichever
 /// migration landed first (`lock_group_member_writes`).
 String allMigrationsSql() =>
-    _migrations().map((f) => normalizedSql(f.readAsStringSync())).join(' ');
+    migrationFiles().map((f) => normalizedSql(f.readAsStringSync())).join(' ');
 
 /// The argument names `public.join_group` declares, in order.
 List<String> joinGroupDeclaredArgs(String sql) {
