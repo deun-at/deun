@@ -1,3 +1,4 @@
+import 'package:deun/app_paths.dart';
 import 'package:deun/helper/helper.dart';
 import 'package:deun/l10n/app_localizations.dart';
 import 'package:deun/pages/expenses/data/expense_deletion_impact.dart';
@@ -59,8 +60,8 @@ class _ExpenseDetailReadState extends ConsumerState<ExpenseDetailRead> {
 
   void _openEditor(BuildContext context) {
     GoRouter.of(context).push(
-      '/group/details/expense',
-      extra: {'group': widget.group, 'expense': widget.expense},
+      AppPaths.expenseEdit(widget.group.id, widget.expense.id),
+      extra: ExpenseRouteExtra(group: widget.group, expense: widget.expense),
     );
   }
 
@@ -166,11 +167,14 @@ class _ExpenseDetailReadState extends ConsumerState<ExpenseDetailRead> {
                         onTap: () {
                           // → Tap-to-Claim screen (Screen 9).
                           GoRouter.of(context).push(
-                            '/group/details/claim',
-                            extra: {
-                              'group': widget.group,
-                              'expense': widget.expense,
-                            },
+                            AppPaths.expenseClaim(
+                              widget.group.id,
+                              widget.expense.id,
+                            ),
+                            extra: ExpenseRouteExtra(
+                              group: widget.group,
+                              expense: widget.expense,
+                            ),
                           );
                         },
                       ),

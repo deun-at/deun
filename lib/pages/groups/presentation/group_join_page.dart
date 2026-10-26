@@ -1,3 +1,4 @@
+import 'package:deun/app_paths.dart';
 import 'package:deun/helper/helper.dart';
 import 'package:deun/l10n/app_localizations.dart';
 import 'package:deun/pages/groups/data/group_member_model.dart';
@@ -96,7 +97,7 @@ class _GroupJoinPageState extends ConsumerState<GroupJoinPage> {
         await (widget.loadGroup ??
             ref.read(groupRepositoryProvider).fetchDetail)(widget.groupId);
     if (!mounted) return;
-    GoRouter.of(context).go('/group/details', extra: {'group': g});
+    GoRouter.of(context).go(AppPaths.group(g.id), extra: g);
   }
 
   Future<void> _joinGroup() async {

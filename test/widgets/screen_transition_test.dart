@@ -191,7 +191,7 @@ void main() {
     late String source;
 
     setUpAll(() {
-      source = File('lib/navigation.dart').readAsStringSync();
+      source = File('lib/app_router.dart').readAsStringSync();
     });
 
     test('no route builds a CustomTransitionPage', () {

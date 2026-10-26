@@ -431,6 +431,21 @@ carry `[human]` criteria that nobody has ever observed. Check here before shippi
   appears by name. Star the group as B, sign out, sign back in as A, and confirm A's star on that
   group is as A left it.
 
+- [ ] **proves** · typed-routes: on the web build, refreshing or going back and forward on a group
+  detail, an expense read view, a claim page or a statistics month sheet shows that page again after
+  a short load, and a group the account is not a member of shows "Page not found", not the error
+  state · out of reach: a real browser's hash-URL history (the repo has no web driver) and the
+  PostgREST no-row code (PGRST116) api.deun.app answers under RLS; that a non-member reads no group
+  or expense row is already proven on the local harness
+  (`supabase/tests/rls_stopgap/70_rls_hardening_cases.sql`, 'stranger reads G1 group row' and
+  'stranger reads G1 expenses') · read-only, with test accounts and a throwaway group (never real
+  data): open the web app signed in, then visit a group, one of its expenses, a claim-unit expense's
+  claim page and a statistics month sheet. On each, refresh the browser, then go back and forward,
+  and confirm the page reappears after a short load. Paste a group location with a random UUID, and
+  one with the id of a group this account does not belong to (take it from a second account). Both
+  should show "Page not found", not "Something went wrong". If the foreign group renders instead,
+  record under Findings that RLS lets non-members read groups.
+
 ## Findings from verification
 
 Defects turned up while walking the checks. These are not checks themselves — nobody ticks them —

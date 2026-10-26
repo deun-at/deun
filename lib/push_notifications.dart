@@ -5,7 +5,6 @@ import 'package:deun/constants.dart';
 import 'package:deun/helper/helper.dart';
 import 'package:deun/main.dart';
 import 'package:deun/pages/expenses/data/expense_model.dart';
-import 'package:deun/pages/groups/data/group_model.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
@@ -157,16 +156,16 @@ PushTarget? pushTargetFor(Map<String, dynamic> data) =>
 Future<void> openPushMessage(
   RemoteMessage message,
   GlobalKey<NavigatorState> rootNavigatorKey, {
-  required Future<Group> Function(String groupId) loadGroup,
   required Future<Expense> Function(String expenseId) loadExpense,
 }) async {
   try {
     switch (pushTargetFor(message.data)) {
       case PushGroupTarget(:final groupId):
-        final group = await loadGroup(groupId);
+        // The route loads the group: one load, and a deleted group shows
+        // not-found instead of nothing.
         final context = rootNavigatorKey.currentContext;
         if (context == null || !context.mounted) return;
-        navigateToGroup(context, group);
+        navigateToGroup(context, groupId);
       case PushExpenseTarget(:final expenseId):
         final expense = await loadExpense(expenseId);
         final context = rootNavigatorKey.currentContext;

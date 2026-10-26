@@ -171,7 +171,7 @@ Future<_FakeGroupDetailNotifier> _pumpMembersPage(
         ),
       ),
       GoRoute(
-        path: '/group/details/payment',
+        path: '/group/:groupId/payment',
         builder: (context, state) => const Scaffold(body: Text('PAYMENT')),
       ),
     ],
@@ -194,8 +194,8 @@ Future<_FakeGroupDetailNotifier> _pumpMembersPage(
   return notifier;
 }
 
-/// Pumps the real [GroupDetail] in a router carrying `/group/members` and
-/// `/group/edit` probe routes, so the add-members entry point's destination
+/// Pumps the real [GroupDetail] in a router carrying the group's members and
+/// edit probe routes, so the add-members entry point's destination
 /// can be observed.
 Future<void> _pumpGroupDetail(
   WidgetTester tester, {
@@ -216,11 +216,11 @@ Future<void> _pumpGroupDetail(
         ),
       ),
       GoRoute(
-        path: '/group/members',
+        path: '/group/:groupId/members',
         builder: (context, state) => const Scaffold(body: Text('MEMBERS')),
       ),
       GoRoute(
-        path: '/group/edit',
+        path: '/group/:groupId/edit',
         builder: (context, state) => const Scaffold(body: Text('GROUP FORM')),
       ),
     ],

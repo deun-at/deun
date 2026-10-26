@@ -22,6 +22,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 
 const _myEmail = 'me@test.com';
+const _routeReadDetail = '/group/:groupId/expense/:expenseId';
+const _routeClaim = '/group/:groupId/expense/:expenseId/claim';
 
 GroupMember _member(String email) {
   final m = GroupMember();
@@ -355,9 +357,9 @@ void main() {
         ),
         // Quick expenses open the read detail (Screen 11), not the editor.
         GoRoute(
-          path: '/group/details/expense-detail',
+          path: _routeReadDetail,
           builder: (context, state) {
-            visited = '/group/details/expense-detail';
+            visited = _routeReadDetail;
             return const Scaffold(body: Text('detail'));
           },
         ),
@@ -391,7 +393,7 @@ void main() {
     await tester.tap(find.text('Quick 1'));
     await tester.pumpAndSettle();
 
-    expect(visited, '/group/details/expense-detail');
+    expect(visited, _routeReadDetail);
     expect(find.text('detail'), findsOneWidget);
   });
 
@@ -465,7 +467,7 @@ void main() {
     await _expectOpenRoute(
       tester,
       expense: _quick(id: '1', date: '2026-01-02T10:00:00'),
-      expectedRoute: '/group/details/expense-detail',
+      expectedRoute: _routeReadDetail,
     );
   });
 
@@ -475,7 +477,7 @@ void main() {
     await _expectOpenRoute(
       tester,
       expense: _itemized(id: '2', date: '2026-01-02T10:00:00'),
-      expectedRoute: '/group/details/claim',
+      expectedRoute: _routeClaim,
     );
   });
 
@@ -556,16 +558,16 @@ Future<void> _expectOpenRoute(
         ),
       ),
       GoRoute(
-        path: '/group/details/expense-detail',
+        path: _routeReadDetail,
         builder: (context, state) {
-          visited = '/group/details/expense-detail';
+          visited = _routeReadDetail;
           return dest(visited!);
         },
       ),
       GoRoute(
-        path: '/group/details/claim',
+        path: _routeClaim,
         builder: (context, state) {
-          visited = '/group/details/claim';
+          visited = _routeClaim;
           return dest(visited!);
         },
       ),
