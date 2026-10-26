@@ -20,11 +20,26 @@ class MemberRepository {
   static const String joinGroupRpcName = 'join_group';
 
   /// The `join_group` argument map — the ONE place its argument names live.
-  /// Always both keys: `_guest_email` is null when joining as a new member.
+  /// Always all three keys: `_guest_email` is null when joining as a new member.
   static Map<String, dynamic> joinGroupRpcParams({
     required String groupId,
+    required String token,
     String? guestEmail,
-  }) => {'_group_id': groupId, '_guest_email': guestEmail};
+  }) => {'_group_id': groupId, '_token': token, '_guest_email': guestEmail};
+
+  /// The join page's two reads, by name — the ONE place they live.
+  static const String joinGuestsRpcName = 'group_join_guests';
+  static const String inviteValidRpcName = 'group_invite_valid';
+
+  /// The argument map both join-page reads take.
+  static Map<String, dynamic> inviteRpcParams({
+    required String groupId,
+    required String token,
+  }) => {'_group_id': groupId, '_token': token};
+
+  /// The SQLSTATE `join_group` raises when the link's token is not the group's
+  /// current one. [joinGroup] turns it into [InviteRejected].
+  static const String inviteRejectedErrorCode = 'DE401';
 
   /// The RPCs the member writes — the ONE place their
   /// names live.
@@ -116,26 +131,49 @@ class MemberRepository {
       );
 
   /// Joins [groupId] through its invite link as the signed-in user, claiming
-  /// the guest placeholder [guestEmail] when given.
+  /// the guest placeholder [guestEmail] when given. [token] is the one the
+  /// link carries; the server refuses any but the group's current one, which
+  /// surfaces here as [InviteRejected].
   ///
   /// One RPC, one transaction: the membership write, the guest merge (scoped to
   /// this group), the share recalculation and the orphaned-guest delete all
   /// happen in `join_group` or not at all. No fallback: the migration ships
   /// before the app (guest-merge-rpc plan, "Legacy fallback").
-  Future<void> joinGroup(String groupId, {String? guestEmail}) async {
-    await _supabase.rpc(
-      joinGroupRpcName,
-      params: joinGroupRpcParams(groupId: groupId, guestEmail: guestEmail),
-    );
+  Future<void> joinGroup(
+    String groupId, {
+    required String token,
+    String? guestEmail,
+  }) async {
+    try {
+      await _supabase.rpc(
+        joinGroupRpcName,
+        params: joinGroupRpcParams(
+          groupId: groupId,
+          token: token,
+          guestEmail: guestEmail,
+        ),
+      );
+    } on PostgrestException catch (e) {
+      if (e.code == inviteRejectedErrorCode) throw const InviteRejected();
+      rethrow;
+    }
   }
 
-  /// What the join page shows: the claimable guests (through the SECURITY
-  /// DEFINER `group_join_guests`, since a not-yet-member cannot read the roster)
-  /// and the signed-in user's own membership row, read in parallel.
-  Future<GroupJoinState> fetchJoinState(String groupId) async {
+  /// What the join page shows for the link ([groupId], [token]): whether the
+  /// token is the group's current one, the claimable guests (through the
+  /// SECURITY DEFINER `group_join_guests`, since a not-yet-member cannot read
+  /// the roster) and the signed-in user's own membership row, read in
+  /// parallel. Throws [InviteRejected] when the token is not current, before
+  /// anything is listed.
+  Future<GroupJoinState> fetchJoinState(
+    String groupId, {
+    required String token,
+  }) async {
     final email = _currentUser?.email;
+    final params = inviteRpcParams(groupId: groupId, token: token);
     final results = await Future.wait<dynamic>([
-      _supabase.rpc('group_join_guests', params: {'_group_id': groupId}),
+      _supabase.rpc(inviteValidRpcName, params: params),
+      _supabase.rpc(joinGuestsRpcName, params: params),
       if (email != null)
         _supabase
             .from('group_member')
@@ -143,15 +181,16 @@ class MemberRepository {
             .eq('group_id', groupId)
             .eq('email', email),
     ]);
+    if (results[0] != true) throw const InviteRejected();
 
     final guests = [
-      for (final row in (results[0] as List).cast<Map<String, dynamic>>())
+      for (final row in (results[1] as List).cast<Map<String, dynamic>>())
         GroupMember()
           ..loadDataFromJson({...row, 'group_id': groupId, 'is_guest': true}),
     ];
-    final own = results.length > 1
+    final own = results.length > 2
         ? [
-            for (final row in (results[1] as List).cast<Map<String, dynamic>>())
+            for (final row in (results[2] as List).cast<Map<String, dynamic>>())
               GroupMember()..loadDataFromJson(row),
           ]
         : const <GroupMember>[];

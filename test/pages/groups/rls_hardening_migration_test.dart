@@ -72,7 +72,7 @@ const _namedRpcs = [
 // Policy names as written in the baseline and the stopgap migrations.
 const _userInsert = 'user: insert own or guest';
 const _userRead = 'user: signed-in read';
-const _memberInsert = 'group_member: insert self or by member';
+const _memberInsert = 'group_member: insert by member or creator';
 const _memberUpdate = 'group_member: update by member';
 const _memberDelete = 'group_member: delete by member';
 const _memberRead = 'group_member: read own groups';
@@ -384,66 +384,38 @@ const List<_Admit> _admits = [
     command: 'select',
     policy: _byMemberSelect,
   ),
-  // join_group: the joiner's own row first, then the merge as a member
+  // join_group is SECURITY DEFINER since group-id-leak: it runs past RLS and
+  // maps nothing here; the functions it calls are followed on their own.
+  // reset_group_invite: an active member rotates the token as themselves.
   (
-    source: 'rpc:join_group',
-    table: 'group_member',
-    command: 'insert',
-    policy: _memberInsert,
-  ),
-  (
-    source: 'rpc:join_group',
-    table: 'group_member',
-    command: 'update',
-    policy: _memberUpdate,
-  ),
-  (
-    source: 'rpc:join_group',
-    table: 'group_member',
-    command: 'select',
-    policy: _memberRead,
-  ),
-  (
-    source: 'rpc:join_group',
-    table: 'group_member',
-    command: 'delete',
-    policy: _memberDelete,
-  ),
-  (
-    source: 'rpc:join_group',
-    table: 'expense',
+    source: 'rpc:reset_group_invite',
+    table: 'group',
     command: 'update',
     policy: _byMemberUpdate,
   ),
   (
-    source: 'rpc:join_group',
-    table: 'expense',
+    source: 'rpc:reset_group_invite',
+    table: 'group',
     command: 'select',
     policy: _byMemberSelect,
   ),
   (
-    source: 'rpc:join_group',
-    table: 'expense_entry_share',
+    source: 'rpc:reset_group_invite',
+    table: 'group_update_checker',
+    command: 'insert',
+    policy: _byMemberInsert,
+  ),
+  (
+    source: 'rpc:reset_group_invite',
+    table: 'group_update_checker',
     command: 'update',
-    policy: _shares,
+    policy: _byMemberUpdate,
   ),
   (
-    source: 'rpc:join_group',
-    table: 'expense_entry_share',
+    source: 'rpc:reset_group_invite',
+    table: 'group_update_checker',
     command: 'select',
-    policy: _shares,
-  ),
-  (
-    source: 'rpc:join_group',
-    table: 'user',
-    command: 'delete',
-    policy: 'user: delete orphaned guest',
-  ),
-  (
-    source: 'rpc:join_group',
-    table: 'user',
-    command: 'select',
-    policy: _userRead,
+    policy: _byMemberSelect,
   ),
   // add_group_member
   (
@@ -978,7 +950,7 @@ void main() {
   );
 
   test(
-    "C6 membership changes only from inside the group, by the group's creator, or by joining yourself",
+    "C6 membership changes only from inside the group or by the group's creator; joining goes through join_group",
     () {
       const own = "email = (select auth.jwt() ->> 'email')";
       const member = 'public.is_group_member(group_id)';
@@ -987,7 +959,7 @@ void main() {
           'where g.id = group_member.group_id '
           'and g.user_id = (select auth.uid()))';
       expect(predicates('group_member', 'insert'), {
-        (null, '$own or $member or $creator'),
+        (null, '$member or $creator'),
       });
       expect(predicates('group_member', 'update'), {
         ('$own or $member', '$own or $member'),

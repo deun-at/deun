@@ -12,6 +12,7 @@ import 'package:deun/pages/groups/presentation/group_detail.dart';
 import 'package:deun/pages/groups/presentation/group_detail_edit.dart';
 import 'package:deun/pages/groups/presentation/group_detail_payment.dart';
 import 'package:deun/pages/groups/presentation/group_invite_page.dart';
+import 'package:deun/pages/groups/presentation/group_join_page.dart';
 import 'package:deun/pages/groups/presentation/group_list.dart';
 import 'package:deun/pages/groups/presentation/group_members_page.dart';
 import 'package:deun/pages/statistics/category_detail_bottom_sheet.dart';
@@ -24,6 +25,26 @@ import 'package:flutter_test/flutter_test.dart';
 import 'helper/app_router_harness.dart';
 
 void main() {
+  testWidgets(
+    'the join location opens the join page with the group, the token and the name it carries',
+    (tester) async {
+      const token = '9b2c4e1a-6d3f-4a8b-b1c2-7e5d0f9a3c64';
+      await pumpApp(
+        tester,
+        AppPaths.groupJoin(groupId, token: token, name: 'Trip to Rome'),
+        loads: FakeRouteLoads.standard(),
+      );
+      await settle(tester);
+
+      final page = tester.widget<GroupJoinPage>(find.byType(GroupJoinPage));
+      expect(
+        (page.groupId, page.token, page.groupName),
+        (groupId, token, 'Trip to Rome'),
+      );
+      expect(tester.takeException(), isNull);
+    },
+  );
+
   testWidgets(
     'every group and expense location shows a loading state, then the page for the ids in its path',
     (tester) async {

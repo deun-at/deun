@@ -1,4 +1,5 @@
 import 'package:deun/app_paths.dart';
+import 'package:deun/deep_links.dart';
 import 'package:deun/helper/helper.dart';
 import 'package:deun/l10n/app_localizations.dart';
 import 'package:deun/pages/groups/data/group_member_model.dart';
@@ -15,11 +16,16 @@ import 'package:go_router/go_router.dart';
 /// The join write, as an injectable function. Signature-compatible with
 /// [MemberRepository.joinGroup], which production passes.
 typedef GroupJoiner =
-    Future<void> Function(String groupId, {String? guestEmail});
+    Future<void> Function(
+      String groupId, {
+      required String token,
+      String? guestEmail,
+    });
 
 /// The join page's read, as an injectable function. Signature-compatible with
 /// [MemberRepository.fetchJoinState].
-typedef GroupJoinStateLoader = Future<GroupJoinState> Function(String groupId);
+typedef GroupJoinStateLoader =
+    Future<GroupJoinState> Function(String groupId, {required String token});
 
 /// The joined group's load before the hand-off. Signature-compatible with
 /// [GroupRepository.fetchDetail].
@@ -29,6 +35,7 @@ class GroupJoinPage extends ConsumerStatefulWidget {
   const GroupJoinPage({
     super.key,
     required this.groupId,
+    this.token,
     this.groupName,
     this.joinGroup,
     this.loadJoinState,
@@ -36,6 +43,10 @@ class GroupJoinPage extends ConsumerStatefulWidget {
   });
 
   final String groupId;
+
+  /// The invite token the link carried; null when it carried none. Anything
+  /// but a well-formed uuid shows the invite as no longer valid, unloaded.
+  final String? token;
   final String? groupName;
 
   /// Test seam for the join write. Null in production → [MemberRepository.joinGroup].
@@ -56,12 +67,26 @@ class GroupJoinPage extends ConsumerStatefulWidget {
 class _GroupJoinPageState extends ConsumerState<GroupJoinPage> {
   bool _loading = true;
   bool _joining = false;
+
+  /// The link's token is missing, malformed or refused by the server: the
+  /// page says so and offers nothing else.
+  bool _invalidInvite = false;
+
+  /// The link's token once it is known to be well-formed.
+  String? _token;
   List<GroupMember> _guestMembers = const [];
   String? _selectedGuestEmail; // null = join as new member
 
   @override
   void initState() {
     super.initState();
+    final token = widget.token;
+    if (token == null || !isUuid(token)) {
+      _invalidInvite = true;
+      _loading = false;
+      return;
+    }
+    _token = token;
     _loadJoinState();
   }
 
@@ -71,6 +96,7 @@ class _GroupJoinPageState extends ConsumerState<GroupJoinPage> {
           await (widget.loadJoinState ??
               ref.read(memberRepositoryProvider).fetchJoinState)(
             widget.groupId,
+            token: _token!,
           );
       if (!mounted) return;
       if (state.isActiveMember) {
@@ -81,6 +107,13 @@ class _GroupJoinPageState extends ConsumerState<GroupJoinPage> {
         _guestMembers = state.joinableGuests;
         _loading = false;
       });
+    } on InviteRejected {
+      if (mounted) {
+        setState(() {
+          _invalidInvite = true;
+          _loading = false;
+        });
+      }
     } catch (e) {
       // As before: no guests, page stays, joining as a new member still works.
       if (mounted) {
@@ -106,9 +139,13 @@ class _GroupJoinPageState extends ConsumerState<GroupJoinPage> {
     try {
       await (widget.joinGroup ?? ref.read(memberRepositoryProvider).joinGroup)(
         widget.groupId,
+        token: _token!,
         guestEmail: _selectedGuestEmail,
       );
       await _openGroup();
+    } on InviteRejected {
+      // Reset while the page was open: same message as on opening.
+      if (mounted) setState(() => _invalidInvite = true);
     } catch (e) {
       if (!mounted) return;
       showSnackBar(context, AppLocalizations.of(context)!.generalError);
@@ -144,84 +181,88 @@ class _GroupJoinPageState extends ConsumerState<GroupJoinPage> {
                         style: Theme.of(context).textTheme.headlineSmall,
                       ),
                       const SizedBox(height: 8),
-                      Text(
-                        t.groupInviteJoinSubtitle,
-                        textAlign: TextAlign.center,
-                      ),
-                      const SizedBox(height: 20),
-
-                      // Guest selection section
-                      Align(
-                        alignment: Alignment.centerLeft,
-                        child: Text(
-                          t.groupInviteGuestSelectTitle,
-                          style: Theme.of(context).textTheme.titleMedium,
+                      if (_invalidInvite)
+                        Text(t.groupInviteInvalid, textAlign: TextAlign.center)
+                      else ...[
+                        Text(
+                          t.groupInviteJoinSubtitle,
+                          textAlign: TextAlign.center,
                         ),
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        t.groupInviteGuestSelectSubtitle,
-                        textAlign: TextAlign.left,
-                      ),
-                      const SizedBox(height: 12),
-                      if (_loading)
-                        const Padding(
-                          padding: EdgeInsets.all(8.0),
-                          child: CircularProgressIndicator(),
-                        )
-                      else
-                        RadioGroup<String?>(
-                          groupValue: _selectedGuestEmail,
-                          onChanged: (String? value) {
-                            setState(() {
-                              _selectedGuestEmail = value;
-                            });
-                          },
-                          child: Column(
-                            children: [
-                              RadioListTile<String?>(
-                                title: Text(t.groupInviteJoinAsNew),
-                                value: null,
-                              ),
-                              if (_guestMembers.isEmpty)
-                                Align(
-                                  alignment: Alignment.centerLeft,
-                                  child: Text(
-                                    t.groupInviteNoGuestsFound,
-                                    style: Theme.of(
-                                      context,
-                                    ).textTheme.bodySmall,
-                                  ),
-                                )
-                              else
-                                ConstrainedBox(
-                                  constraints: const BoxConstraints(
-                                    maxHeight: 220,
-                                  ),
-                                  child: ListView.builder(
-                                    shrinkWrap: true,
-                                    itemCount: _guestMembers.length,
-                                    itemBuilder: (context, index) {
-                                      final gm = _guestMembers[index];
-                                      return RadioListTile<String?>(
-                                        title: Text(gm.displayName),
-                                        subtitle: Text(t.groupMemberIsGuest),
-                                        value: gm.email,
-                                      );
-                                    },
-                                  ),
-                                ),
-                            ],
+                        const SizedBox(height: 20),
+
+                        // Guest selection section
+                        Align(
+                          alignment: Alignment.centerLeft,
+                          child: Text(
+                            t.groupInviteGuestSelectTitle,
+                            style: Theme.of(context).textTheme.titleMedium,
                           ),
                         ),
-                      const SizedBox(height: 20),
-                      PrimaryButton(
-                        fullWidth: false,
-                        loading: _joining,
-                        icon: Icons.login,
-                        onPressed: _joining ? null : _joinGroup,
-                        label: t.groupInviteTransferButton,
-                      ),
+                        const SizedBox(height: 8),
+                        Text(
+                          t.groupInviteGuestSelectSubtitle,
+                          textAlign: TextAlign.left,
+                        ),
+                        const SizedBox(height: 12),
+                        if (_loading)
+                          const Padding(
+                            padding: EdgeInsets.all(8.0),
+                            child: CircularProgressIndicator(),
+                          )
+                        else
+                          RadioGroup<String?>(
+                            groupValue: _selectedGuestEmail,
+                            onChanged: (String? value) {
+                              setState(() {
+                                _selectedGuestEmail = value;
+                              });
+                            },
+                            child: Column(
+                              children: [
+                                RadioListTile<String?>(
+                                  title: Text(t.groupInviteJoinAsNew),
+                                  value: null,
+                                ),
+                                if (_guestMembers.isEmpty)
+                                  Align(
+                                    alignment: Alignment.centerLeft,
+                                    child: Text(
+                                      t.groupInviteNoGuestsFound,
+                                      style: Theme.of(
+                                        context,
+                                      ).textTheme.bodySmall,
+                                    ),
+                                  )
+                                else
+                                  ConstrainedBox(
+                                    constraints: const BoxConstraints(
+                                      maxHeight: 220,
+                                    ),
+                                    child: ListView.builder(
+                                      shrinkWrap: true,
+                                      itemCount: _guestMembers.length,
+                                      itemBuilder: (context, index) {
+                                        final gm = _guestMembers[index];
+                                        return RadioListTile<String?>(
+                                          title: Text(gm.displayName),
+                                          subtitle: Text(t.groupMemberIsGuest),
+                                          value: gm.email,
+                                        );
+                                      },
+                                    ),
+                                  ),
+                              ],
+                            ),
+                          ),
+                        const SizedBox(height: 20),
+                        PrimaryButton(
+                          fullWidth: false,
+                          loading: _joining,
+                          icon: Icons.login,
+                          onPressed: _joining ? null : _joinGroup,
+                          label: t.groupInviteTransferButton,
+                        ),
+                      ],
                     ],
                   ),
                 ),

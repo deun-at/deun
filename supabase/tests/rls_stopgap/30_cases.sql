@@ -64,16 +64,16 @@ select t('expense delete flow', 'a@x.test', $q$delete from expense where id = 'e
 select t('delete a foreign expense', 'a@x.test', $q$delete from expense where id = 'e3000000-0000-0000-0000-000000000001'$q$, 'ok:0');
 select t('group delete flow', 'a@x.test', $q$delete from "group" where id = '11111111-0000-0000-0000-000000000001'; delete from group_update_checker where group_id = '11111111-0000-0000-0000-000000000001'$q$, 'ok');
 select t('delete a foreign group', 'a@x.test', $q$delete from "group" where id = '22222222-0000-0000-0000-000000000001'$q$, 'ok:0');
--- ===== invite-link join by d (today's client flow) =====
-select t('join claiming a one-group guest', 'd@x.test', $q$
+-- ===== invite-link join by d, as released builds send it (client-side insert): refused since group-id-leak =====
+select t('released-build join claiming a one-group guest is refused', 'd@x.test', $q$
   insert into group_member (group_id, email, is_favorite) values ('11111111-0000-0000-0000-000000000001', 'd@x.test', false);
   update expense set paid_by = 'd@x.test' where paid_by = 'guest+g1@guest.invalid';
   update expense_entry_share set email = 'd@x.test' where email = 'guest+g1@guest.invalid';
   delete from group_member where group_id = '11111111-0000-0000-0000-000000000001' and email = 'guest+g1@guest.invalid';
   delete from "user" where email = 'guest+g1@guest.invalid';
   select update_group_member_shares('11111111-0000-0000-0000-000000000001', null);
-  select 1 from "user" where email = 'guest+g1@guest.invalid'$q$, 'ok:0');
-select t('join claiming a two-group guest keeps the other group', 'd@x.test', $q$
+  select 1 from "user" where email = 'guest+g1@guest.invalid'$q$, 'err');
+select t('released-build join claiming a two-group guest is refused', 'd@x.test', $q$
   insert into group_member (group_id, email, is_favorite) values ('11111111-0000-0000-0000-000000000001', 'd@x.test', false);
   update expense set paid_by = 'd@x.test' where paid_by = 'guest+g2@guest.invalid';
   update expense_entry_share set email = 'd@x.test' where email = 'guest+g2@guest.invalid';
@@ -83,13 +83,13 @@ select t('join claiming a two-group guest keeps the other group', 'd@x.test', $q
   select set_config('role', 'postgres', true);
   select 1 from expense_entry_share where email = 'guest+g2@guest.invalid'
   union all select 1 from expense where paid_by = 'guest+g2@guest.invalid'
-  union all select 1 from "user" where email = 'guest+g2@guest.invalid'$q$, 'ok:4');
+  union all select 1 from "user" where email = 'guest+g2@guest.invalid'$q$, 'err');
 select t('re-join after soft removal', 'b@x.test', $q$update group_member set removed_at = null where group_id = '11111111-0000-0000-0000-000000000001' and email = 'b@x.test'$q$, 'ok:1');
 -- ===== stranger c against group G1 =====
 select t('stranger soft-removes a G1 member', 'c@x.test', $q$update group_member set removed_at = now() where group_id = '11111111-0000-0000-0000-000000000001'$q$, 'ok:0');
 select t('stranger deletes G1 members', 'c@x.test', $q$delete from group_member where group_id = '11111111-0000-0000-0000-000000000001'$q$, 'ok:0');
 select t('stranger adds someone to G1', 'c@x.test', $q$insert into group_member (group_id, email) values ('11111111-0000-0000-0000-000000000001', 'd@x.test')$q$, 'err');
-select t('stranger joins G1 by id (invite model)', 'c@x.test', $q$insert into group_member (group_id, email) values ('11111111-0000-0000-0000-000000000001', 'c@x.test')$q$, 'ok:1');
+select t('stranger joins G1 by id alone (refused since group-id-leak)', 'c@x.test', $q$insert into group_member (group_id, email) values ('11111111-0000-0000-0000-000000000001', 'c@x.test')$q$, 'err');
 select t('stranger reads G1 shares', 'c@x.test', $q$select * from expense_entry_share where expense_entry_id = 'f1000000-0000-0000-0000-000000000001'$q$, 'ok:0');
 select t('stranger rewrites G1 shares', 'c@x.test', $q$update expense_entry_share set percentage = 0 where expense_entry_id = 'f1000000-0000-0000-0000-000000000001'$q$, 'ok:0');
 select t('stranger reads a''s token', 'c@x.test', $q$select * from device_tokens where user_id = 'aaaaaaaa-0000-0000-0000-000000000001'$q$, 'ok:0');

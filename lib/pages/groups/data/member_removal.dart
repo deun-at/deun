@@ -89,6 +89,13 @@ class GroupJoinState {
   final List<GroupMember> joinableGuests;
 }
 
+/// The server refused an invite link's token: missing, malformed, from before
+/// a reset, or never the group's. The join page shows the invite as no longer
+/// valid for it; every other failure keeps the general error.
+class InviteRejected implements Exception {
+  const InviteRejected();
+}
+
 /// Decides the join state from [roster] (any mix of the group's members) and
 /// the signed-in [currentEmail] (null when nobody is signed in).
 ///

@@ -262,6 +262,23 @@ class AppLocalizationsEn extends AppLocalizations {
   String get groupInviteHideQr => 'Hide QR code';
 
   @override
+  String get groupInviteResetLink => 'Reset link';
+
+  @override
+  String get groupInviteResetTitle => 'Reset invite link?';
+
+  @override
+  String get groupInviteResetBody =>
+      'Links you already shared will stop working.';
+
+  @override
+  String get groupInviteResetConfirm => 'Reset';
+
+  @override
+  String get groupInviteInvalid =>
+      'This invite link is no longer valid. Ask a member of the group for a new link.';
+
+  @override
   String get inviteQrButton => 'QR';
 
   @override

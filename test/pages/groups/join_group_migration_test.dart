@@ -1,6 +1,7 @@
-// guest-merge-rpc: the join_group migration, read as source. Each test pins one
-// contract criterion; the behaviour itself is proven on the local harness
-// (supabase/tests/rls_stopgap/40_join_group_cases.sql).
+// guest-merge-rpc, group-id-leak: the join_group migration, read as source. Each
+// test pins one contract criterion; the behaviour itself is proven on the local
+// harness (supabase/tests/rls_stopgap/40_join_group_cases.sql and
+// 80_group_invite_token_cases.sql).
 
 import 'dart:io';
 
@@ -163,9 +164,15 @@ void main() {
     expect(noEmail, isNotNull);
     expect(noEmail!.end, lessThan(firstWrite));
 
+    final staleToken = RegExp(
+      r'if not public\.group_invite_valid\(_group_id, _token\) then raise exception',
+    ).firstMatch(body);
+    expect(staleToken, isNotNull);
+    expect(staleToken!.end, lessThan(firstWrite));
+
     final notAnActiveGuest = RegExp(
       r'if _guest_email is not null and not exists \(select 1 from '
-      r'public\.group_join_guests\(_group_id\) as g where g\.email = _guest_email\) '
+      r'public\.group_join_guests\(_group_id, _token\) as g where g\.email = _guest_email\) '
       r'then raise exception',
     ).firstMatch(body);
     expect(notAnActiveGuest, isNotNull);
@@ -238,10 +245,10 @@ void main() {
   );
 
   test(
-    'the claimable guests are the group\'s active guest members, readable by a signed-in non-member only',
+    'the claimable guests are the group\'s active guest members, listed only with the group\'s current token, to a signed-in user',
     () {
       final header = RegExp(
-        r'create or replace function public\.group_join_guests\(_group_id uuid\) '
+        r'create or replace function public\.group_join_guests\(_group_id uuid, _token uuid\) '
         r'(.*?) as \$group_join_guests\$',
       ).firstMatch(sql);
       expect(header, isNotNull);
@@ -257,39 +264,146 @@ void main() {
       expect(
         functionBody(sql, 'group_join_guests'),
         allOf(
+          contains('public.group_invite_valid(_group_id, _token)'),
           contains('gm.group_id = _group_id'),
           contains('gm.removed_at is null'),
           contains('u.is_guest is true'),
         ),
       );
+      final drop = sql.indexOf(
+        'drop function if exists public.group_join_guests(uuid);',
+      );
+      expect(drop, isNonNegative);
+      expect(drop, lessThan(header.start));
       expect(
         sql,
         contains(
-          'revoke execute on function public.group_join_guests(uuid) from public, anon',
+          'revoke execute on function public.group_join_guests(uuid, uuid) from public, anon;',
         ),
       );
       expect(
         sql,
         contains(
-          'grant execute on function public.group_join_guests(uuid) to authenticated;',
+          'grant execute on function public.group_join_guests(uuid, uuid) to authenticated;',
         ),
       );
     },
   );
 
-  test('join_group takes the group member-write lock as its first statement', () {
+  test(
+    'join_group refuses a session without an email, then a token that is not the group\'s current one, and only then takes the member-write lock, before any read of group_member',
+    () {
+      final opening = RegExp(
+        r"^\s*declare .*? begin "
+        r"if _email is null or _email = '' then raise exception [^;]*; end if; "
+        r'if not public\.group_invite_valid\(_group_id, _token\) then raise exception [^;]*'
+        r"using errcode = 'de401'; end if; "
+        r'perform public\.lock_group_member_writes\(_group_id\);',
+      ).firstMatch(body);
+      expect(opening, isNotNull);
+      expect(body.indexOf('public.group_member'), greaterThan(opening!.end));
+      expect(
+        RegExp(
+          r'create or replace function public\.lock_group_member_writes\(_group_id uuid\)'
+          r'.*?pg_advisory_xact_lock',
+        ).hasMatch(allMigrationsSql()),
+        isTrue,
+      );
+    },
+  );
+
+  test(
+    'join_group runs as its owner with an empty search_path, takes the joiner from the JWT, scopes every write to the group, and only signed-in users may call it',
+    () {
+      final header = RegExp(
+        r'create or replace function public\.join_group\((.*?)\) (.*?) as \$join_group\$',
+      ).firstMatch(sql);
+      expect(header, isNotNull);
+      expect(
+        header![1],
+        '_group_id uuid, _token uuid, _guest_email text default null',
+      );
+      expect(
+        header[2],
+        allOf(contains('security definer'), contains("set search_path = ''")),
+      );
+      expect(body, contains("_email text := auth.jwt() ->> 'email';"));
+
+      final drop = sql.indexOf(
+        'drop function if exists public.join_group(uuid, text);',
+      );
+      expect(drop, isNonNegative);
+      expect(drop, lessThan(header.start));
+
+      // Every write but the orphaned-guest user delete (guarded by
+      // has_any_membership, pinned above) names the joined group.
+      final writes = [
+        for (final piece in body.split(';'))
+          if (RegExp(
+            r'\b(?:insert into|update|delete from) public\.',
+          ).hasMatch(piece))
+            piece.trim(),
+      ];
+      expect(writes, hasLength(6));
+      for (final write in writes.where(
+        (w) => !w.contains('delete from public."user"'),
+      )) {
+        expect(write, contains('_group_id'), reason: write);
+      }
+
+      // The recalc it calls names its tables unqualified: it brings its own path.
+      expect(
+        sql,
+        contains(
+          'alter function public.update_group_member_shares(uuid, uuid) '
+          'set search_path = public, pg_temp;',
+        ),
+      );
+
+      expect(
+        sql,
+        contains(
+          'revoke execute on function public.join_group(uuid, uuid, text) from public, anon;',
+        ),
+      );
+      expect(
+        [
+          for (final m in RegExp(
+            r'grant execute on function public\.join_group\([^)]*\) to ([^;]*);',
+          ).allMatches(sql))
+            m[1],
+        ],
+        ['authenticated'],
+      );
+    },
+  );
+
+  test('group_invite_valid answers with a boolean to signed-in users only', () {
+    final header = RegExp(
+      r'create or replace function public\.group_invite_valid\(_group_id uuid, _token uuid\) '
+      r'(.*?) as \$group_invite_valid\$',
+    ).firstMatch(sql);
+    expect(header, isNotNull);
     expect(
-      RegExp(
-        r'^\s*declare .*? begin perform public\.lock_group_member_writes\(_group_id\);',
-      ).hasMatch(body),
-      isTrue,
+      header![1],
+      allOf(
+        contains('returns boolean'),
+        contains('stable'),
+        contains('security definer'),
+        contains("set search_path = ''"),
+      ),
     );
     expect(
-      RegExp(
-        r'create or replace function public\.lock_group_member_writes\(_group_id uuid\)'
-        r'.*?pg_advisory_xact_lock',
-      ).hasMatch(allMigrationsSql()),
-      isTrue,
+      sql,
+      contains(
+        'revoke execute on function public.group_invite_valid(uuid, uuid) from public, anon;',
+      ),
+    );
+    expect(
+      sql,
+      contains(
+        'grant execute on function public.group_invite_valid(uuid, uuid) to authenticated;',
+      ),
     );
   });
 }

@@ -266,6 +266,23 @@ class AppLocalizationsDe extends AppLocalizations {
   String get groupInviteHideQr => 'QR-Code ausblenden';
 
   @override
+  String get groupInviteResetLink => 'Link zurücksetzen';
+
+  @override
+  String get groupInviteResetTitle => 'Einladungslink zurücksetzen?';
+
+  @override
+  String get groupInviteResetBody =>
+      'Links, die du schon geteilt hast, funktionieren dann nicht mehr.';
+
+  @override
+  String get groupInviteResetConfirm => 'Zurücksetzen';
+
+  @override
+  String get groupInviteInvalid =>
+      'Dieser Einladungslink ist nicht mehr gültig. Bitte ein Mitglied der Gruppe um einen neuen Link.';
+
+  @override
   String get inviteQrButton => 'QR';
 
   @override

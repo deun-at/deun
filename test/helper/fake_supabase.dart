@@ -1,7 +1,7 @@
 // A SupabaseClient that reaches no server, for tests that build real
 // repositories. `auth` answers only `currentUser`; `rpc` records the call and
-// throws [SentRpc], so a test reads what an RPC fetch or write would have
-// sent. Anything else throws.
+// throws [SentRpc] (or the given `rpcError`), so a test reads what an RPC fetch
+// or write would have sent. Anything else throws.
 
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -24,10 +24,15 @@ class FakeAuth implements GoTrueClient {
 }
 
 class FakeSupabaseClient implements SupabaseClient {
-  FakeSupabaseClient({User? currentUser}) : auth = FakeAuth(currentUser);
+  FakeSupabaseClient({User? currentUser, this.rpcError})
+    : auth = FakeAuth(currentUser);
 
   @override
   final FakeAuth auth;
+
+  /// When set, [rpc] records the call and throws this instead of [SentRpc]:
+  /// the error the server answered with.
+  final Object? rpcError;
 
   /// Every RPC asked for, in order.
   final List<({String function, Map<String, dynamic>? params})> rpcs = [];
@@ -39,7 +44,7 @@ class FakeSupabaseClient implements SupabaseClient {
     dynamic get = false,
   }) {
     rpcs.add((function: fn, params: params));
-    throw SentRpc(fn);
+    throw rpcError ?? SentRpc(fn);
   }
 
   @override

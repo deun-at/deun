@@ -443,7 +443,11 @@ void main() {
     ) async {
       await _pumpInScope(
         tester,
-        const GroupJoinPage(groupId: 'g1', groupName: 'Trip'),
+        const GroupJoinPage(
+          groupId: 'g1',
+          groupName: 'Trip',
+          token: '9b2c4e1a-6d3f-4a8b-b1c2-7e5d0f9a3c64',
+        ),
       );
       final l10n = await AppLocalizations.delegate.load(const Locale('en'));
       expect(find.text('Trip'), findsAtLeastNWidgets(1));

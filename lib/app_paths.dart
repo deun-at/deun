@@ -8,6 +8,18 @@ import 'package:deun/pages/groups/data/group_model.dart';
 abstract final class AppPaths {
   static const String groupNew = '/group/new';
 
+  /// The invite-link join for [groupId]. [token] is the group's current invite
+  /// token, which the server checks; [name] only labels the page before
+  /// anything loads.
+  static String groupJoin(
+    String groupId, {
+    required String token,
+    String? name,
+  }) =>
+      '/group/join?groupId=${Uri.encodeComponent(groupId)}'
+      '&token=${Uri.encodeComponent(token)}'
+      '${name == null ? '' : '&name=${Uri.encodeComponent(name)}'}';
+
   static String group(String groupId) => '/group/$groupId';
   static String groupEdit(String groupId) => '${group(groupId)}/edit';
   static String groupMembers(String groupId) => '${group(groupId)}/members';
