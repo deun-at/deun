@@ -1,18 +1,50 @@
 import 'package:deun/helper/helper.dart';
-import 'package:deun/main.dart';
+import 'package:deun/l10n/app_localizations.dart';
+import 'package:deun/pages/groups/data/group_member_model.dart';
+import 'package:deun/pages/groups/data/group_model.dart';
 import 'package:deun/pages/groups/data/group_repository.dart';
 import 'package:deun/pages/groups/data/member_removal.dart';
 import 'package:deun/widgets/restyle/deun_header.dart';
 import 'package:deun/widgets/restyle/primary_button.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:deun/l10n/app_localizations.dart';
+
+/// The join write, as an injectable function. Signature-compatible with
+/// [GroupRepository.joinGroup], which production passes.
+typedef GroupJoiner =
+    Future<void> Function(String groupId, {String? guestEmail});
+
+/// The join page's read, as an injectable function. Signature-compatible with
+/// [GroupRepository.fetchJoinState].
+typedef GroupJoinStateLoader = Future<GroupJoinState> Function(String groupId);
+
+/// The joined group's load before the hand-off. Signature-compatible with
+/// [GroupRepository.fetchDetail].
+typedef GroupDetailLoader = Future<Group> Function(String groupId);
 
 class GroupJoinPage extends StatefulWidget {
-  const GroupJoinPage({super.key, required this.groupId, this.groupName});
+  const GroupJoinPage({
+    super.key,
+    required this.groupId,
+    this.groupName,
+    this.joinGroup,
+    this.loadJoinState,
+    this.loadGroup,
+  });
 
   final String groupId;
   final String? groupName;
+
+  /// Test seam for the join write. Null in production → [GroupRepository.joinGroup].
+  final GroupJoiner? joinGroup;
+
+  /// Test seam for the join-state read. Null in production →
+  /// [GroupRepository.fetchJoinState].
+  final GroupJoinStateLoader? loadJoinState;
+
+  /// Test seam for the hand-off's group load. Null in production →
+  /// [GroupRepository.fetchDetail].
+  final GroupDetailLoader? loadGroup;
 
   @override
   State<GroupJoinPage> createState() => _GroupJoinPageState();
@@ -21,149 +53,58 @@ class GroupJoinPage extends StatefulWidget {
 class _GroupJoinPageState extends State<GroupJoinPage> {
   bool _loading = true;
   bool _joining = false;
-  List<Map<String, dynamic>> _guestMembers = [];
+  List<GroupMember> _guestMembers = const [];
   String? _selectedGuestEmail; // null = join as new member
-
-  Future<void> _checkAlreadyMember() async {
-    final email = supabase.auth.currentUser?.email;
-    if (email == null) return;
-    try {
-      final existing = await supabase
-          .from('group_member')
-          .select('email, removed_at')
-          .eq('group_id', widget.groupId)
-          .eq('email', email)
-          .maybeSingle();
-
-      // A soft-removed member is NOT "already a member" — they have to re-join,
-      // which clears their removed_at in _joinGroup.
-      if (existing != null && existing['removed_at'] == null) {
-        final g = await GroupRepository.fetchDetail(widget.groupId);
-        if (!mounted) return;
-        GoRouter.of(context).go('/group/details', extra: {'group': g});
-      }
-    } catch (e) {
-      // ignore and keep on page
-    }
-  }
 
   @override
   void initState() {
     super.initState();
-    _checkAlreadyMember();
-    _fetchGuestMembers();
+    _loadJoinState();
   }
 
-  Future<void> _fetchGuestMembers() async {
+  Future<void> _loadJoinState() async {
     try {
-      final data = await supabase
-          .from('group_member')
-          .select(
-            'email, ...user(display_name:display_name, is_guest:is_guest)',
-          )
-          .eq('group_id', widget.groupId);
-
-      final guests = <Map<String, dynamic>>[];
-      for (final row in (data as List<dynamic>)) {
-        final isGuest = (row['is_guest'] ?? row['user']?['is_guest']) ?? false;
-        final displayName =
-            (row['display_name'] ?? row['user']?['display_name']) ??
-            row['email'];
-        if (isGuest == true) {
-          guests.add({'email': row['email'], 'display_name': displayName});
-        }
+      final state =
+          await (widget.loadJoinState ?? GroupRepository.fetchJoinState)(
+            widget.groupId,
+          );
+      if (!mounted) return;
+      if (state.isActiveMember) {
+        await _openGroup();
+        return;
       }
-      if (mounted) {
-        setState(() {
-          _guestMembers = guests;
-          _loading = false;
-        });
-      }
+      setState(() {
+        _guestMembers = state.joinableGuests;
+        _loading = false;
+      });
     } catch (e) {
+      // As before: no guests, page stays, joining as a new member still works.
       if (mounted) {
         setState(() {
-          _guestMembers = [];
+          _guestMembers = const [];
           _loading = false;
         });
       }
     }
   }
 
-  Future<void> _joinGroup() async {
-    final email = supabase.auth.currentUser?.email;
-    if (email == null) return;
+  Future<void> _openGroup() async {
+    final g = await (widget.loadGroup ?? GroupRepository.fetchDetail)(
+      widget.groupId,
+    );
+    if (!mounted) return;
+    GoRouter.of(context).go('/group/details', extra: {'group': g});
+  }
 
+  Future<void> _joinGroup() async {
+    if (_joining) return;
     setState(() => _joining = true);
     try {
-      // Ensure user is member
-      final existing = await supabase
-          .from('group_member')
-          .select('email, removed_at')
-          .eq('group_id', widget.groupId)
-          .eq('email', email)
-          .maybeSingle();
-
-      final plan = resolveGroupJoin(
-        existingMembership: existing,
-        selectedGuestEmail: _selectedGuestEmail,
+      await (widget.joinGroup ?? GroupRepository.joinGroup)(
+        widget.groupId,
+        guestEmail: _selectedGuestEmail,
       );
-
-      if (plan.clearRemovedAt) {
-        // Re-joining via the invite link clears the removal marker; their
-        // historical shares are untouched and not duplicated.
-        await supabase
-            .from('group_member')
-            .update({'removed_at': null})
-            .eq('group_id', widget.groupId)
-            .eq('email', email);
-      }
-
-      if (plan.insertMembership) {
-        await supabase.from('group_member').insert({
-          'group_id': widget.groupId,
-          'email': email,
-        });
-      }
-
-      // If a guest was selected, transfer their data to current user and remove
-      // guest from this group. Independent of the membership write above: a
-      // re-joining removed member may be picking up a guest placeholder too.
-      if (plan.mergeGuest) {
-        final guestEmail = _selectedGuestEmail!;
-
-        // 1) Update expense.paid_by for this group
-        await supabase
-            .from('expense')
-            .update({'paid_by': email})
-            .eq('paid_by', guestEmail);
-
-        // 2) Update expense_entry_share.email for this email
-        await supabase
-            .from('expense_entry_share')
-            .update({'email': email})
-            .eq('email', guestEmail);
-
-        // 3) Remove guest membership from this group
-        await supabase
-            .from('group_member')
-            .delete()
-            .eq('group_id', widget.groupId)
-            .eq('email', guestEmail);
-
-        // 4) Remove guest member from user
-        await supabase.from('user').delete().eq('email', guestEmail);
-      }
-
-      // Update calculated shares after changes
-      await supabase.rpc(
-        'update_group_member_shares',
-        params: {"_group_id": widget.groupId, "_expense_id": null},
-      );
-
-      // Navigate to group details
-      final g = await GroupRepository.fetchDetail(widget.groupId);
-      if (!mounted) return;
-      GoRouter.of(context).go('/group/details', extra: {'group': g});
+      await _openGroup();
     } catch (e) {
       if (!mounted) return;
       showSnackBar(context, AppLocalizations.of(context)!.generalError);
@@ -258,18 +199,10 @@ class _GroupJoinPageState extends State<GroupJoinPage> {
                                     itemCount: _guestMembers.length,
                                     itemBuilder: (context, index) {
                                       final gm = _guestMembers[index];
-                                      return RadioListTile<String>(
-                                        title: Text(
-                                          gm['display_name'] ?? gm['email'],
-                                        ),
-                                        subtitle: Text(
-                                          (gm['is_guest'] ?? false)
-                                              ? AppLocalizations.of(
-                                                  context,
-                                                )!.groupMemberIsGuest
-                                              : fullUsernameFromJson(gm),
-                                        ),
-                                        value: gm['email'],
+                                      return RadioListTile<String?>(
+                                        title: Text(gm.displayName),
+                                        subtitle: Text(t.groupMemberIsGuest),
+                                        value: gm.email,
                                       );
                                     },
                                   ),

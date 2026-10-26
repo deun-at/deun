@@ -317,6 +317,17 @@ carry `[human]` criteria that nobody has ever observed. Check here before shippi
   `50%`, `a_b`, `a*b`, `(1`, `[`, `\`, `TAXI` and `müller`. Confirm that each search returns exactly
   the names containing that text (case ignored) and that no error is shown.
 
+- [ ] **proves** · guest-merge-rpc: invite-link joins (with or without claiming a guest) work on the
+  live instance — the app has no fallback, so every join fails until this is applied · out of
+  reach: the self-hosted instance (migration unapplied) · apply
+  `20261026100000_join_group_guest_merge.sql` as `supabase_admin`, after `20261025190000`, BEFORE
+  releasing any build containing guest-merge-rpc. Confirm by SQL that
+  `select proname, prosecdef from pg_proc where proname in ('join_group', 'group_join_guests', 'lock_group_member_writes');`
+  lists all three, with `prosecdef` true only for `group_join_guests`. Behaviour is already proven on
+  the local harness (`supabase/tests/rls_stopgap/40_join_group_cases.sql`, 14/14): scoped merge,
+  second group untouched, orphaned-guest delete only, outsider and soft-removed re-join under the
+  live policies, refusals, colliding share rolls the join back.
+
 ## Findings from verification
 
 Defects turned up while walking the checks. These are not checks themselves — nobody ticks them —

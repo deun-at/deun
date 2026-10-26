@@ -9,6 +9,8 @@ import 'package:deun/pages/groups/data/group_member_model.dart';
 import 'package:deun/pages/groups/data/group_model.dart';
 import 'package:deun/pages/groups/data/payback_request.dart';
 
+import '../pages/groups/join_group_migration_source.dart';
+
 void main() {
   // -------------------------------------------------------------------------
   // group-member-add-flow: membership is not a group attribute any more —
@@ -639,6 +641,49 @@ void main() {
         'EUR 25.50',
       );
     });
+  });
+
+  // -------------------------------------------------------------------------
+  // guest-merge-rpc: the join call's name and arguments are the migration's.
+  // -------------------------------------------------------------------------
+  group('GroupRepository.joinGroupRpcParams', () {
+    test(
+      'names the function the migration defines and sends exactly its arguments',
+      () {
+        final sql = joinGroupMigrationSql();
+        expect(
+          sql,
+          contains(
+            'create or replace function public.${GroupRepository.joinGroupRpcName}(',
+          ),
+        );
+        final declared = joinGroupDeclaredArgs(sql).toSet();
+
+        expect(
+          GroupRepository.joinGroupRpcParams(
+            groupId: 'g1',
+            guestEmail: 'guest+1@guest.invalid',
+          ).keys.toSet(),
+          declared,
+        );
+        expect(
+          GroupRepository.joinGroupRpcParams(groupId: 'g1').keys.toSet(),
+          declared,
+        );
+
+        expect(
+          GroupRepository.joinGroupRpcParams(
+            groupId: 'g1',
+            guestEmail: 'guest+1@guest.invalid',
+          ),
+          {'_group_id': 'g1', '_guest_email': 'guest+1@guest.invalid'},
+        );
+        expect(GroupRepository.joinGroupRpcParams(groupId: 'g1'), {
+          '_group_id': 'g1',
+          '_guest_email': null,
+        });
+      },
+    );
   });
 }
 

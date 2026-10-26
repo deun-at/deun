@@ -82,6 +82,16 @@ class GroupRepository {
     "_amount": amount,
   };
 
+  /// The RPC an invite-link join calls — the ONE place its name lives.
+  static const String joinGroupRpcName = 'join_group';
+
+  /// The `join_group` argument map — the ONE place its argument names live.
+  /// Always both keys: `_guest_email` is null when joining as a new member.
+  static Map<String, dynamic> joinGroupRpcParams({
+    required String groupId,
+    String? guestEmail,
+  }) => {'_group_id': groupId, '_guest_email': guestEmail};
+
   static Future<List<Group>> fetchData(
     String statusFilter, {
     String? paidTo,
@@ -207,6 +217,12 @@ class GroupRepository {
     return GroupMemberWrite(inserts: inserts, reAddEmails: reAddEmails);
   }
 
+  /// The `group_member` select every roster read uses: the membership row plus
+  /// the user fields `GroupMember` parses. Same embed as `Group.groupSelectString`.
+  static const String _rosterSelect =
+      '*, ...user(display_name:display_name, username:username, '
+      'username_code:username_code, is_guest:is_guest)';
+
   /// The group's FULL `group_member` roster as models, soft-removed rows
   /// included. [resolvePayback] needs the removed rows to tell "not a member"
   /// from "removed", and needs `is_guest` to decide whether the payer can be
@@ -215,10 +231,7 @@ class GroupRepository {
   static Future<List<GroupMember>> _groupRoster(String groupId) async {
     final rows = await supabase
         .from('group_member')
-        .select(
-          '*, ...user(display_name:display_name, username:username, '
-          'username_code:username_code, is_guest:is_guest)',
-        )
+        .select(_rosterSelect)
         .eq('group_id', groupId);
     return rows
         .map((row) => GroupMember()..loadDataFromJson(row))
@@ -433,6 +446,53 @@ class GroupRepository {
     );
 
     return outcome;
+  }
+
+  /// Joins [groupId] through its invite link as the signed-in user, claiming
+  /// the guest placeholder [guestEmail] when given.
+  ///
+  /// One RPC, one transaction: the membership write, the guest merge (scoped to
+  /// this group), the share recalculation and the orphaned-guest delete all
+  /// happen in `join_group` or not at all. No fallback: the migration ships
+  /// before the app (guest-merge-rpc plan, "Legacy fallback").
+  static Future<void> joinGroup(String groupId, {String? guestEmail}) async {
+    await supabase.rpc(
+      joinGroupRpcName,
+      params: joinGroupRpcParams(groupId: groupId, guestEmail: guestEmail),
+    );
+  }
+
+  /// What the join page shows: the claimable guests (through the SECURITY
+  /// DEFINER `group_join_guests`, since a not-yet-member cannot read the roster)
+  /// and the signed-in user's own membership row, read in parallel.
+  static Future<GroupJoinState> fetchJoinState(String groupId) async {
+    final email = supabase.auth.currentUser?.email;
+    final results = await Future.wait<dynamic>([
+      supabase.rpc('group_join_guests', params: {'_group_id': groupId}),
+      if (email != null)
+        supabase
+            .from('group_member')
+            .select(_rosterSelect)
+            .eq('group_id', groupId)
+            .eq('email', email),
+    ]);
+
+    final guests = [
+      for (final row in (results[0] as List).cast<Map<String, dynamic>>())
+        GroupMember()
+          ..loadDataFromJson({...row, 'group_id': groupId, 'is_guest': true}),
+    ];
+    final own = results.length > 1
+        ? [
+            for (final row in (results[1] as List).cast<Map<String, dynamic>>())
+              GroupMember()..loadDataFromJson(row),
+          ]
+        : const <GroupMember>[];
+
+    return resolveGroupJoinState(
+      roster: [...own, ...guests],
+      currentEmail: email,
+    );
   }
 
   /// [removeMember]'s decision without its write: the same two reads and the
