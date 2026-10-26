@@ -344,7 +344,9 @@ carry `[human]` criteria that nobody has ever observed. Check here before shippi
 - [ ] **proves** · group-write-rpcs: adding and removing a member, deleting a group and deleting an
   expense (payback rows included) each commit as one server transaction. The app has no fallback,
   so until this is applied every add, removal, group delete and expense delete fails with its error
-  snackbar · out of reach: the self-hosted instance (migration unapplied) · apply
+  snackbar · out of reach: the self-hosted instance (migration unapplied) · ⚠ first read the open
+  security finding in plans/group-write-rpcs.md (`remove_group_member` takes table-wide SHARE locks
+  that stall expense writes in every group) and decide whether to fix it before applying · apply
   `20261026140000_group_write_rpcs.sql` as `supabase_admin`, after `20261026100000` (it calls
   `lock_group_member_writes`), BEFORE releasing any build containing group-write-rpcs (a push to
   main deploys the web build). Confirm by SQL that
