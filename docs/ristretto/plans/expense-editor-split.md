@@ -46,7 +46,7 @@
     - `@riverpod class ExpenseEditorController extends _$ExpenseEditorController`, with `ExpenseEditorState build(ExpenseEditorArgs args)`. This generates the auto-dispose family `expenseEditorControllerProvider(ExpenseEditorArgs args)`.
     - `ExpenseEditorArgs({required Group group, Expense? expense, ReceiptScanResult? receiptResult, RateLookup? lookupRate})`. Equality is identity. One instance is created per opened editor.
     - `ExpenseEditorState`, an immutable value:
-      - fields: `List<EditorEntry> entries`, `bool itemizedOverride`, `Currency groupCurrency`, `Currency entryCurrency`, `String rateText`, `String? rateDate`, `RateOrigin rateOrigin`, `String? prefilledRateDate`, `bool rateUnavailable`, `EditorSaveStatus saveStatus`, `bool deleteInFlight`
+      - fields: `List<EditorEntry> entries`, `bool itemizedOverride`, `Currency groupCurrency`, `Currency entryCurrency`, `String rateText`, `String? rateDate`, `RateOrigin rateOrigin`, `String? prefilledRateDate`, `double? baseRate`, `bool rateUnavailable`, `EditorSaveStatus saveStatus`, `bool deleteInFlight`
       - getters: `EditorMode editorMode`, `bool isSingleEntry`, `bool isForeignCurrency`, `double? rate`, `ExpenseConversion conversion`
     - `EditorEntry({required int index, required ExpenseEntry expenseEntry, String? initialName, String? initialAmount, String? initialQuantity})`, an immutable value that replaces `ExpenseEntryData`
     - `enum RateOrigin { none, user, prefilled }`, `enum EditorSaveStatus { idle, busy, done }`, `enum EditorSaveOutcome { saved, failed, refusedZeroTotal, refusedNoRate, ignoredInFlight }` and `enum EditorDeleteOutcome { deleted, failed, ignoredInFlight }`
@@ -60,7 +60,13 @@
       - `Future<EditorSaveOutcome> save({required double total, required Future<void> Function(ExpenseConversion conversion) write})`
       - `Future<ExpenseDeletionImpact?> probeDeletion(Future<ExpenseDeletionImpact> Function() probe)`. Returns null when a write is in flight.
       - `Future<EditorDeleteOutcome> delete(Future<void> Function() write)`
-    - Entry and mode methods: `void addEntry(…)`, `void removeEntry(int index)`, `setMode(EditorMode mode, …)`, plus replacing the entries with scanned lines and the first-entry seeding scan-total-applies needs. Each takes the live form readings it needs as arguments. Their exact parameter lists are the planner's to decide.
+    - Entry and mode methods, each taking the live form readings it needs as arguments:
+      - `void addEntry({required String quickAmountText})`
+      - `void removeEntry(int index)`
+      - `String? setMode(EditorMode mode, {required String quickAmountText, required double itemizedTotal, required String? firstAmountFieldText})`. Returns the text the Quick amount field now holds, or null when unchanged.
+      - `void replaceEntriesWithScannedLines(List<ReceiptLineItem> lines)`
+      - `String applyScannedTotal(double total)`. Returns the first entry's field text.
+    - Also new, not in the original Provides: `ExpenseEditorState.baseRate` (the unfee'd prefilled rate, kept so a card-fee change recomputes rather than refetches), `EditorEntry.withInitialAmount(String?)`, and the section widgets under lib/pages/expenses/presentation/editor/ (`editor_currency_rate_section`, `editor_delete_action`, `editor_entry_list`, `editor_form_reading`, `editor_itemized_header`, `editor_name_field`, `editor_paid_when_card`, `editor_quick_amount`, `editor_save_footer`), which are plain widgets and not a surface.
 - Consumes:
   - typed-expense-draft: `ExpenseDraft`, `ExpenseEntryDraft`, `ExpenseDraft.markEntriesClaimable({Set<String>? notifyEmails}): ExpenseDraft`, and `typedef ExpenseSaver` in its draft-taking shape
   - editor-failure-keeps-form: `ExpenseDetail.deleteExpense` (`ExpenseDeleter?`), and `typedef ExpenseDeleter = Future<void> Function(String expenseId, String groupId)` in lib/pages/expenses/data/expense_deletion_impact.dart
@@ -145,6 +151,8 @@
   - (f) Realtime -> does not apply. The controller subscribes to no channel and does not use `RealtimeNotifierMixin`. The write path is unchanged, so `save_expense_all` still bumps the checkers as today.
   - (g) Test seams -> `loadGroupPaybacks`, `saveExpense`, `lookupRate`, `deleteExpense` and `scanReceipt` stay function-typed constructor overrides on `ExpenseDetail`, and stay null where lib/navigation.dart builds the editor (Jakob in prep code-review-2026-10 (2026-10-24): the constructor and its test seams stay as they are). `lookupRate` reaches the controller through its args. The others are bound into the screen's closures. `ExpenseDetail` gains no new seam. The controller's own seams are its args and the write and probe closures its methods take.
   - (h) Migrations -> none. There is no schema, RPC or Edge Function change, so there is no manual-checks entry and no client fallback question.
+  - taken: a rate typed while a save is still in flight -> whether the rate is remembered is decided from the rate's origin when that save started, so a prefilled rate that was saved is never remembered. HEAD read the origin after the write; the new rule only ever remembers less.
+  - taken: fresh-start test's red-first mutation -> the check this plan named (giving `ExpenseEditorArgs` a `group.id` `==`/`hashCode`) does not turn the test red, because the auto-dispose provider already drops the closed editor's session. The test does go red with that key plus a temporary `ref.keepAlive()`; both mutations were reverted.
 - Units:
   - Controller and rate state: add the controller, args and state with today's rate seeding (entry currency, frozen rate and its date, origin), and move every rate field and rule into it. The screen reads the state and mirrors the rate text. Unit tests prove the ownership, latest-answer and switch-back criteria, the conversion the state reports, the rate half of the remembered-rate-change criterion, and the close-mid-lookup half of the close criterion.
   - Writes: move the save status, the delete in-flight flag and the write runner into the controller, with the screen mapping outcomes to SnackBars and the pop. Unit tests prove the refusal, single-flight and remember-rules criteria, that the write receives the state's conversion, and the close-mid-write half of the close criterion. The save-status and delete-guard suites are the regression net.
@@ -166,3 +174,24 @@
 - Likely touchpoints: lib/pages/expenses/presentation/expense_detail.dart, lib/pages/expenses/presentation/editor/ (new), lib/pages/expenses/provider/expense_editor_controller.dart and its .g.dart (new), test/provider/expense_editor_controller_test.dart (new)
 - Depends: typed-expense-draft, editor-failure-keeps-form, scan-total-applies
 - Parallel-with: realtime-channel-lifecycle, realtime-event-scope, push-session-lifecycle, group-model-parse-safety, expense-search-escape, guest-merge-rpc, payback-atomic-recalc, group-write-rpcs, schema-baseline, legacy-fallback-removal, typed-routes, housekeeping, presentation-file-split. These features do not run in parallel with it, because they edit the same file or seams: notification-context-free (the `ExpenseSaver` sender-side parameter and the save path), push-server-compose (how expense_detail.dart builds the sender), injectable-repositories (the `supabase.auth` reads and static repository calls in the editor) and helper-split (the helpers the editor and its new section files import).
+
+## Evidence
+- 1: test/widgets/expense_save_status_test.dart and test/widgets/expense_editor_delete_guard_test.dart, unchanged, green; the controller's own write cases in test/provider/expense_editor_controller_test.dart ('refusals, single flight and remembered rates', 'closing mid-write') cover the single-flight and failed-write paths without a widget.
+- 2: test/widgets/expense_editor_currency_rate_test.dart and test/widgets/expense_editor_rate_prefill_test.dart, unchanged, green.
+- 3: the layout, tiles, locale, edit-label, header-migration and rescan suites named in the criterion, unchanged, green; test/widgets/expense_editor_group_theme_test.dart (3 tests, red with the sections pointed back at the group context) pins that sections and sheets keep the brand theme in a non-brand group. The keypad auto-opening on a new expense is verified by reading only. Some colours (onSurfaceVariant, onSurface, surfaceContainerLowest) are identical across seeds and cannot be tested; parity there holds by construction.
+- 4: test/provider/expense_editor_controller_test.dart group 'rate ownership' (3 tests, no widget pumped).
+- 5: same file, group 'latest prefill wins' (3 tests, including the CHF 2026-07-01 / 2026-07-04 case and the empty-answer variants).
+- 6: same file, groups 'the conversion a save hands over' (3 tests) and 'switch back' (2 tests, including 3000 JPY at 0.0058 -> 17.40 and the qty-3 CHF line keeping 28.30).
+- 7: same file, group 'refusals, single flight and remembered rates' (non-positive total, no rate, save during save, save during delete, typed rate remembered, prefilled never remembered, remember-throws still saved with one write, failed write remembers nothing and returns to idle).
+- 8: same file, groups 'closing mid-lookup' and 'closing mid-write'.
+- 9: same file, group 'a fresh session per editor' (widget test; red only with a `group.id` key plus a temporary `ref.keepAlive()`, see the taken: line).
+- 10: same file, groups 'entries survive a change in the remembered rates'; the fetch half stays with the existing "clearing a saved" test named in the criterion.
+- 11: `flutter analyze` no issues; `dart format --set-exit-if-changed` on the touched files 0 changed; `flutter test` 1860 passed, 0 failed.
+- gates: format clean on touched files, analyze clean, 1860 tests passed
+- review: resolved · rounds: 2 · open: 0 block, 2 note, 1 lean · trimmed: 1
+- tier: normal
+
+## Open findings
+- note · lib/pages/expenses/provider/expense_editor_controller.dart:601 · The planner's rule ("whether to remember the rate is decided by its origin when the save started") changes HEAD. HEAD read `_rateOrigin` after the write. No test covers a rate typed while a save is in flight, and the plan has no `- taken:` line for this decision, although common.md requires one for a choice made during a build. Why no user is harmed: the new rule only ever remembers less. HEAD could remember a prefilled number that had been saved, which the new rule cannot. Fix: add the `- taken:` line to docs/ristretto/plans/expense-editor-split.md. (The taken: line is added at close — the remaining gap is the missing test.)
+- note · lib/pages/expenses/presentation/expense_detail.dart:576,581 · `_expenseDate` is read when the call starts, before the controller awaits the remembered rates (hydration or clear). HEAD read the live date after that await. Why no user is harmed: the window is a single prefs read or write right after a sheet closes, and no person can open the date sheet and pick a date inside it. Fix, optional: pass a `DateTime Function()` instead of the value.
+- lean · lib/pages/expenses/presentation/expense_detail.dart (892 lines), expense_editor_controller.dart (810 lines) · Both files miss the plan's size target of about 500 lines. Most of the gap is the screen's `build`: about 280 lines of ListView and FormBuilder composition, with two near-identical `CategorySelector` blocks and the inline mode toggle. Fix: move the form body (toggle, category, Quick/Itemized branches) into its own editor/ section widget.
