@@ -1,0 +1,4 @@
+# Glossary
+
+- **Soft-removed vs hard-removed member** Removing a group member is blocked while their balance in the group is unsettled (|balance| at or above the group currency's settled epsilon). A settled member with history (paid for any of the group's expenses, or holds a share on one) is soft-removed: `group_member.removed_at` is stamped and the row is kept. A settled member with no history is hard-removed: the row is deleted. Removal never changes ledger math, only visibility: a soft-removed member stays on past expenses, in the ledger and in the remaining members' balance list, and drops out of every picker. Re-adding them clears `removed_at`.
+  source: docs/ristretto/plans/group-member-removal.md (Contract, Decisions); supabase/migrations/20261026140000_group_write_rpcs.sql `remove_group_member`; supabase/schema/baseline.sql:3295 column comment, read 2026-10-26 · unconfirmed — proposed by prep removed-member-access, 2026-10-26
