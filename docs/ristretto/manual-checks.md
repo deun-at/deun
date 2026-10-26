@@ -446,6 +446,19 @@ carry `[human]` criteria that nobody has ever observed. Check here before shippi
   should show "Page not found", not "Something went wrong". If the foreign group renders instead,
   record under Findings that RLS lets non-members read groups.
 
+- [ ] **proves** · housekeeping: with the Dart background push handler removed, a push for an
+  expense another member adds still appears in the system tray on a physical Android device, both
+  while the app is in the background and after it has been swiped away, and tapping it opens that
+  expense's read view · out of reach: real FCM delivery from the `push` Edge Function to a physical
+  device and the OS tray/tap hand-off; where the tap lands is already proven by
+  `test/helper/navigate_to_expense_test.dart` · with test accounts only: on an Android device
+  running a build with this change, sign in as member A and put the app in the background. As
+  member B (second device or the web app), add an expense to a group you share. Confirm the
+  notification appears in the tray, tap it, and confirm the expense read view opens. Repeat with
+  A's app swiped away. If nothing appears, check whether `push` sends a `notification` block: a
+  data-only push never displayed before this change either, because the removed handler only
+  logged.
+
 ## Findings from verification
 
 Defects turned up while walking the checks. These are not checks themselves — nobody ticks them —

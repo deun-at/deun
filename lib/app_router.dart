@@ -30,6 +30,7 @@ import 'package:deun/widgets/modal_bottom_sheet_page.dart';
 import 'package:deun/widgets/page_transitions.dart';
 import 'package:deun/widgets/restyle/app_bottom_nav.dart';
 import 'package:deun/widgets/route_loader.dart';
+import 'package:flutter/foundation.dart' show kDebugMode;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -397,12 +398,7 @@ GoRouter buildAppRouter({
         pageBuilder: (context, state) =>
             MaterialPage(key: state.pageKey, child: const UpdatePassword()),
       ),
-      // Throwaway dev/QA route for the E0-T4 shared restyle widgets.
-      GoRoute(
-        path: '/dev/gallery',
-        pageBuilder: (context, state) =>
-            const NoTransitionPage(child: WidgetGalleryPage()),
-      ),
+      ...devGalleryRoutes(enabled: kDebugMode),
     ],
     errorBuilder: (context, state) {
       return Scaffold(

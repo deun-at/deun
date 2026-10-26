@@ -10,11 +10,23 @@ import 'package:deun/widgets/restyle/sheet_scaffold.dart';
 import 'package:deun/widgets/restyle/soft_card.dart';
 import 'package:deun/widgets/restyle/stepper_control.dart';
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
+
+/// The `/dev/gallery` route when [enabled], else none. The route table passes
+/// `kDebugMode`, so profile and release builds answer the URL with not-found.
+List<RouteBase> devGalleryRoutes({required bool enabled}) => [
+  if (enabled)
+    GoRoute(
+      path: '/dev/gallery',
+      pageBuilder: (context, state) =>
+          const NoTransitionPage(child: WidgetGalleryPage()),
+    ),
+];
 
 /// Throwaway QA gallery for the E0-T4 shared restyle widgets. Renders each
 /// widget with sample data so they can be eyeballed in light and dark (the
 /// app's themeMode drives brightness). Not part of any user flow — reachable
-/// only via the dev route `/dev/gallery`.
+/// only via the debug-only [devGalleryRoutes].
 class WidgetGalleryPage extends StatefulWidget {
   const WidgetGalleryPage({super.key});
 
@@ -45,11 +57,19 @@ class _WidgetGalleryPageState extends State<WidgetGalleryPage> {
           _section('MemberAvatar', const [
             Row(
               children: [
-                MemberAvatar(name: 'You', colorKey: 'you@deun.app', isYou: true),
+                MemberAvatar(
+                  name: 'You',
+                  colorKey: 'you@deun.app',
+                  isYou: true,
+                ),
                 SizedBox(width: 12),
                 MemberAvatar(name: 'Sam Lee', colorKey: 'sam@deun.app'),
                 SizedBox(width: 12),
-                MemberAvatar(name: 'Priya Nair', colorKey: 'priya@deun.app', radius: 24),
+                MemberAvatar(
+                  name: 'Priya Nair',
+                  colorKey: 'priya@deun.app',
+                  radius: 24,
+                ),
                 SizedBox(width: 12),
                 MemberAvatar(name: 'Guest', colorKey: 'guest', ringWidth: 2),
               ],
@@ -67,9 +87,17 @@ class _WidgetGalleryPageState extends State<WidgetGalleryPage> {
             MoneyText(8.25, semantic: MoneySemantic.positive, showSign: true),
           ]),
           _section('BalancePill', const [
-            BalancePill(label: 'You are owed', state: BalanceState.owed, amount: 32.5),
+            BalancePill(
+              label: 'You are owed',
+              state: BalanceState.owed,
+              amount: 32.5,
+            ),
             SizedBox(height: 8),
-            BalancePill(label: 'You owe', state: BalanceState.owe, amount: -12.0),
+            BalancePill(
+              label: 'You owe',
+              state: BalanceState.owe,
+              amount: -12.0,
+            ),
             SizedBox(height: 8),
             BalancePill(label: 'Settled', state: BalanceState.settled),
           ]),
@@ -77,8 +105,16 @@ class _WidgetGalleryPageState extends State<WidgetGalleryPage> {
             AppSegmentedControl<String>(
               value: _segment,
               segments: const [
-                AppSegment(value: 'quick', label: 'Quick split', icon: Icons.flash_on),
-                AppSegment(value: 'itemized', label: 'Itemized', icon: Icons.list_alt),
+                AppSegment(
+                  value: 'quick',
+                  label: 'Quick split',
+                  icon: Icons.flash_on,
+                ),
+                AppSegment(
+                  value: 'itemized',
+                  label: 'Itemized',
+                  icon: Icons.list_alt,
+                ),
               ],
               onChanged: (v) => setState(() => _segment = v),
             ),
@@ -90,7 +126,9 @@ class _WidgetGalleryPageState extends State<WidgetGalleryPage> {
             ),
           ]),
           _section('SoftCard', const [
-            SoftCard(child: Text('A soft card — the base list-card container.')),
+            SoftCard(
+              child: Text('A soft card — the base list-card container.'),
+            ),
           ]),
           _section('StepperControl', [
             StepperControl(

@@ -12,7 +12,7 @@
   - [ ] [human] On a physical Android device with this build, a push for an expense another member adds still appears in the system tray, both while the app is in the background and after it has been swiped away (terminated), and tapping it still opens that expense's read view. Where the tap lands is already enforced by test/helper/navigate_to_expense_test.dart; the device is needed for the tray and the FCM tap hand-off.
     how: a physical device receiving a real FCM push from the `push` Edge Function. Its recovered source shows a `notification` block, so the tray is expected to work · on an Android device running a build with this change, sign in as member A and put the app in the background. As member B (second device or the web app), add an expense to a group you share. Confirm the notification appears in the tray, tap it, and confirm the expense read view opens. Repeat with A's app swiped away. If nothing appears, check whether `push` sends a `notification` block: a data-only push never displayed before this change either, because the removed handler only logged.
 - Provides:
-  - `devGalleryRoutes({required bool enabled}): List<RouteBase>` in lib/widgets/dev/widget_gallery_page.dart. It returns the `/dev/gallery` route when `enabled` is true and an empty list when false. The route table spreads it into its top-level routes with `enabled: kDebugMode`: in lib/navigation.dart, or in `buildAppRouter` in lib/app_router.dart if typed-routes has landed first.
+  - `devGalleryRoutes({required bool enabled}): List<RouteBase>` in lib/widgets/dev/widget_gallery_page.dart. It returns the `/dev/gallery` route when `enabled` is true and an empty list when false. The route table spreads it into its top-level routes with `enabled: kDebugMode` in `buildAppRouter` in lib/app_router.dart (typed-routes had landed first).
 - Consumes: —
 - Decisions:
   - The four widgets are deleted: lib/widgets/form_loading_widget.dart, lib/widgets/rounded_container.dart, lib/widgets/search_view.dart, lib/widgets/sliver_grab_widget.dart. Re-verified against HEAD 439b7d5: nothing in lib/ or test/ imports these files or mentions their classes (`FormLoading`, `RoundedContainer`, `SearchView`, `SliverGrabWidget`). They import only Flutter, so deleting them orphans nothing else. Sources: research/code-review-2026-10.md; Jakob in prep code-review-2026-10 (2026-10-24).
@@ -46,3 +46,11 @@
 - Likely touchpoints: lib/widgets/dev/widget_gallery_page.dart, lib/navigation.dart (one route plus the foundation import), lib/main.dart, lib/widgets/form_loading_widget.dart, lib/widgets/rounded_container.dart, lib/widgets/search_view.dart, lib/widgets/sliver_grab_widget.dart (all deleted), .gitignore, android/build/ (untracked), test/widgets/dev_gallery_route_test.dart (new), docs/ristretto/manual-checks.md
 - Depends: —
 - Parallel-with: helper-split, expense-editor-split, presentation-file-split, legacy-fallback-removal, realtime-channel-lifecycle. These share no code file with this feature (realtime-channel-lifecycle leaves lib/navigation.dart's pause/resume code unchanged, per its Decisions "App pause"); docs/ristretto/manual-checks.md is the only doc several features append to. Not parallel with typed-routes or push-session-lifecycle, which both edit lib/navigation.dart.
+
+## Evidence
+- 1: test/widgets/dev_gallery_route_test.dart - 'with the flag off, /dev/gallery is not found' and 'with the flag on, /dev/gallery opens the gallery' drive `devGalleryRoutes`; 'the route table registers the gallery only through kDebugMode' pins the `kDebugMode` wiring across lib/. A release build itself was not run (flutter test always has kDebugMode true).
+- 2: format of touched files, flutter analyze and flutter test green; test/widgets/screen_transition_test.dart and test/helper/navigate_to_expense_test.dart unedited and green
+- 3: pending human
+- gates: lint ok, test ok (whole suite)
+- review: clean · rounds: 1 · open: 0 block, 0 note, 0 lean · trimmed: 0
+- tier: easy
