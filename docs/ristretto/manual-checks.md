@@ -328,6 +328,19 @@ carry `[human]` criteria that nobody has ever observed. Check here before shippi
   second group untouched, orphaned-guest delete only, outsider and soft-removed re-join under the
   live policies, refusals, colliding share rolls the join back.
 
+- [ ] **proves** · payback-atomic-recalc: a payback recorded from the app settles the group's
+  balance in the same transaction as the payback row. The app no longer recalculates on its own,
+  so until this is applied every payback leaves the balance stale until the next write · out of
+  reach: the self-hosted instance (migration unapplied) · apply
+  `20261026120000_pay_back_atomic_recalc.sql` as `supabase_admin` BEFORE the client change reaches
+  main (a push to main deploys the web build). Confirm by SQL that
+  `select position('update_group_member_shares' in pg_get_functiondef('public.pay_back(uuid,text,text,numeric)'::regprocedure)) > 0;`
+  returns true. The behaviour is already proven on the local harness
+  (`supabase/tests/rls_stopgap/50_pay_back_cases.sql`, 4/4; 0/4 before the migration). The
+  payback, its balances and both checkers commit together, through `pay_back` and
+  `pay_back_exact`. A rolled-back payback leaves neither the row nor a balance change, and a
+  failed recalculation leaves no payback.
+
 ## Findings from verification
 
 Defects turned up while walking the checks. These are not checks themselves — nobody ticks them —

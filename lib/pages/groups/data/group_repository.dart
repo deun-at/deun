@@ -21,6 +21,27 @@ class GroupRepository {
   /// instead of once per group.
   static bool _payBackExactMissing = false;
 
+  /// Null outside tests. When set, every RPC [payBack] issues (and
+  /// [applyPayBackAll]'s default write) goes through it instead of
+  /// `supabase.rpc`.
+  @visibleForTesting
+  static PaybackRpc? payBackRpcOverride;
+
+  /// Forgets that `pay_back_exact` was found missing, so each test starts on
+  /// the `pay_back_exact` path.
+  @visibleForTesting
+  static void resetPayBackFallback() => _payBackExactMissing = false;
+
+  /// Every RPC a payback write issues.
+  static Future<Object?> _payBackRpc(
+    String function,
+    Map<String, dynamic> params,
+  ) async {
+    final override = payBackRpcOverride;
+    if (override != null) return override(function, params);
+    return await supabase.rpc(function, params: params);
+  }
+
   /// The PostgREST `or` predicate behind the **active** group list. The filter
   /// runs inside the query, so it cannot call [isSettled] — the balance lives on
   /// a referenced table while `currency_code` lives on the parent row, so no
@@ -594,6 +615,13 @@ class GroupRepository {
   /// same two rules are enforced inside `pay_back` by
   /// `20260816010000_payback_on_behalf.sql` for concurrent clients.
   ///
+  /// Completes only once the payback AND its balance recalculation have
+  /// committed: `pay_back` runs `update_group_member_shares` in the same
+  /// transaction (`20261026120000_pay_back_atomic_recalc.sql`), so this method
+  /// throws only when nothing was recorded, and retrying after an error never
+  /// records the payment twice. A response lost in transit after the server
+  /// committed is the one exception: it still surfaces as an error.
+  ///
   /// [members] is the group's FULL roster (soft-removed rows included). Every
   /// in-app caller already holds it on the group it is settling, so pass it:
   /// the fallback SELECT costs a round trip on the hot self-settle path and
@@ -631,7 +659,11 @@ class GroupRepository {
     _notifyPayBack(notifications, groupId, accepted);
   }
 
-  /// The write half of a payback: the RPC sequence, then the share recalc.
+  /// The write half of a payback: ONE RPC, which records the payback and
+  /// recalculates the group's balances in the same server transaction
+  /// (`pay_back`, which `pay_back_exact` delegates to; see
+  /// `20261026120000_pay_back_atomic_recalc.sql`). It completes only once both
+  /// have committed and throws only when nothing was recorded.
   static Future<void> _writePayBack(
     String groupId,
     PaybackAccepted accepted,
@@ -647,32 +679,16 @@ class GroupRepository {
     // value server-side, so the payback cancels the unrounded balance the client
     // could only see rounded. A server without it falls back to pay_back —
     // exactly the way `saveAll` falls back for `save_group_all`.
-    String expenseId;
     if (_payBackExactMissing) {
-      expenseId = await supabase.rpc('pay_back', params: params) as String;
-    } else {
-      try {
-        expenseId =
-            await supabase.rpc('pay_back_exact', params: params) as String;
-      } on PostgrestException catch (e) {
-        if (!isMissingFunctionError(e)) rethrow;
-        _payBackExactMissing = true;
-        expenseId = await supabase.rpc('pay_back', params: params) as String;
-      }
+      await _payBackRpc('pay_back', params);
+      return;
     }
-
-    // Retry share update once on failure to reduce partial-state risk.
-    // This RPC is idempotent (recalculates from scratch), so retrying is safe.
     try {
-      await supabase.rpc(
-        'update_group_member_shares',
-        params: {"_group_id": groupId, "_expense_id": expenseId},
-      );
-    } catch (e) {
-      await supabase.rpc(
-        'update_group_member_shares',
-        params: {"_group_id": groupId, "_expense_id": expenseId},
-      );
+      await _payBackRpc('pay_back_exact', params);
+    } on PostgrestException catch (e) {
+      if (!isMissingFunctionError(e)) rethrow;
+      _payBackExactMissing = true;
+      await _payBackRpc('pay_back', params);
     }
   }
 
@@ -855,6 +871,11 @@ class PayBackAllTarget {
 
 /// Settle-all's per-target write, as one function.
 typedef PayBackAllWrite = Future<void> Function(PayBackAllTarget target);
+
+/// One RPC as a payback write issues it: the function name and its argument
+/// map.
+typedef PaybackRpc =
+    Future<Object?> Function(String function, Map<String, dynamic> params);
 
 /// What a settle-everything-with-one-friend run will and will not write, as
 /// resolved by [GroupRepository.resolvePayBackAll].
