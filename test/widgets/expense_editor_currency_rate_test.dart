@@ -443,7 +443,9 @@ Future<List<SavedExpense>> pumpEditorWithSaveSeam(
   required String currencyCode,
   double? initialAmount,
   Expense? expense,
+  bool newExpense = false,
   RateLookup? lookupRate,
+  ReceiptScanner? scanReceipt,
 }) async {
   final captured = <SavedExpense>[];
   await tester.pumpWidget(
@@ -469,8 +471,11 @@ Future<List<SavedExpense>> pumpEditorWithSaveSeam(
             ).copyWith(splashFactory: NoSplash.splashFactory),
             child: ExpenseDetail(
               group: _group(currencyCode),
-              expense: expense ?? _expense(initialAmount ?? 12.5),
+              expense: newExpense
+                  ? null
+                  : expense ?? _expense(initialAmount ?? 12.5),
               lookupRate: lookupRate ?? _noPrefill,
+              scanReceipt: scanReceipt,
               saveExpense:
                   (
                     groupId,

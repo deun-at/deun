@@ -39,6 +39,7 @@
   - (b) email identity, (c) soft-removed members, (d) guests and (f) realtime -> do not apply. No member, payer, share or DB write path changes, and a new item takes the editor's active-member list (`widget.group.activeMembers`) as items do today.
   - (e) Locale -> no new user-facing string. If one turns out to be necessary, it goes in both lib/l10n/app_en.arb and lib/l10n/app_de.arb.
   - (h) Migrations -> none. There is no schema, RPC or Edge Function change, so there is no manual-checks entry (roadmap header house rule).
+  - taken: a total-only rescan onto a first item whose quantity is above 1 → resets that item's quantity to 1 and writes the total as its amount, so the scanned total is exactly what is shown and saved (the planner first proposed keeping the quantity, which would save total × quantity; round-1 review blocked that against the plan's Goal, and the fixer took the reset)
 - Units:
   - Seam: add `ReceiptScanner` and `ExpenseDetail.scanReceipt`, and make `_scanReceipt` call the seam or fall back to today's sheet. This proves the default-scan criterion, and lets the merchant/date and line-item criteria be written as guards (their code does not change, so they pass once a scan can be injected).
   - Total-only write: update the first item's form value, `_amountController`, the row's unit price and `initialAmount` together, mark the form dirty, and stop forcing the override. This proves the empty-item, replace (including the same-total case) and entry-currency criteria. The discard criterion is a guard: `_scanReceipt` already sets `_isDirty` for every result at HEAD.
@@ -52,3 +53,19 @@
 - Depends: —
 - Parallel-with: payback-atomic-recalc, guest-merge-rpc, expense-search-escape, group-model-parse-safety, group-write-rpcs, realtime-channel-lifecycle, push-session-lifecycle, schema-baseline, housekeeping (disjoint files)
 - Not parallel, because they edit the same files or seams: editor-failure-keeps-form, typed-expense-draft and notification-context-free (expense_detail.dart, and the `ExpenseSaver` shape the new test's capturing closure implements), expense-editor-split (splits expense_detail.dart), presentation-file-split (splits expense_entry_widget.dart)
+
+## Evidence
+- 1: test/widgets/expense_editor_rescan_test.dart "a total-only rescan fills an item that has no amount yet" (red with the seam only: save refused by the empty-amount validator; green after the write). Asserts 42.80 as unit price, once as line total and once as itemized total, and the saved item amount 42.8.
+- 2: "rescanning the same total replaces the amount the user typed over it" (scan, retype 5 on the row keypad, scan the same total: row, itemized total and save all return to 42.80), and "a total-only rescan onto a multi-unit item stores the total, not total x units" (replaces a held 3 x 4.00 with 42.80; quantity saved as 1, not 128.40). The round-1 test "a total-only rescan replaces an amount the user entered" was superseded and deleted.
+- 3: "the total is written at the ENTRY currency precision, not the group one" (CHF expense in a JPY group: row shows 12.34, saved `expense_entry[0][amount]` is '12.34', conversion entry currency CHF, group currency JPY).
+- 4: "with every item removed, a total-only rescan adds one item".
+- 5: "with two items, a total-only rescan changes only the first amount".
+- 6: "a total-only rescan arms the discard confirmation" (guard; `_isDirty` was already set).
+- 7: "a total-only rescan still applies the merchant name and date" (guard).
+- 8: "a line-item rescan replaces the items with the scanned lines" (guard).
+- 9: "Scan in the Itemized header opens the receipt scanner" (guard on the seam's fallback to the `ReceiptScannerSheet`).
+- 10: no new test; the named existing tests ran inside the full `flutter test` run and stay green, including "switching back re-renders the item row, not just the header and the save", which now goes through `_adoptUnitPrice`.
+- 11: see gates.
+- gates: `dart format --set-exit-if-changed` on the four touched files, 0 changed; `flutter analyze` no issues; `flutter test` 1744 passed, all green.
+- review: resolved · rounds: 2 · open: 0 block, 0 note, 0 lean · trimmed: 1
+- tier: normal
