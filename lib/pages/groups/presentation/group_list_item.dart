@@ -1,3 +1,4 @@
+import 'package:deun/app_paths.dart';
 import 'package:deun/helper/helper.dart';
 import 'package:deun/widgets/restyle/avatar_stack.dart';
 import 'package:deun/widgets/restyle/money_text.dart';
@@ -68,7 +69,7 @@ class GroupListItem extends ConsumerWidget {
     return SoftCard(
       padding: EdgeInsets.zero,
       onTap: () {
-        GoRouter.of(context).push("/group/details", extra: {'group': group});
+        GoRouter.of(context).push(AppPaths.group(group.id), extra: group);
       },
       child: Padding(
         padding: const EdgeInsets.fromLTRB(16, 14, 12, 14),

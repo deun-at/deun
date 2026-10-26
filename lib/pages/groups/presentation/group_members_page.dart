@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:deun/app_paths.dart';
 import 'package:deun/helper/helper.dart';
 import 'package:deun/helper/notification_sender.dart';
 import 'package:deun/l10n/app_localizations.dart';
@@ -526,7 +527,7 @@ class _GroupMembersPageState extends ConsumerState<GroupMembersPage> {
             compact: true,
             onPressed: () => GoRouter.of(
               context,
-            ).push('/group/details/payment', extra: {'group': group}),
+            ).push(AppPaths.groupPayment(group.id), extra: group),
           ),
         ],
       );

@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:io';
 
+import 'package:deun/app_paths.dart';
 import 'package:deun/helper/helper.dart';
 import 'package:deun/provider.dart';
 import 'package:deun/pages/expenses/data/expense_model.dart';
@@ -94,13 +95,13 @@ class _GroupDetailState extends ConsumerState<GroupDetail> {
         void openGroupForm() {
           GoRouter.of(
             context,
-          ).push("/group/edit", extra: {'group': widget.group});
+          ).push(AppPaths.groupEdit(widget.group.id), extra: widget.group);
         }
 
         void openMembersPage() {
           GoRouter.of(
             context,
-          ).push("/group/members", extra: {'group': widget.group});
+          ).push(AppPaths.groupMembers(widget.group.id), extra: widget.group);
         }
 
         return Scaffold(
@@ -244,12 +245,11 @@ class _GroupDetailState extends ConsumerState<GroupDetail> {
                   if (result != null && context.mounted) {
                     unawaited(
                       GoRouter.of(context).push(
-                        "/group/details/expense",
-                        extra: {
-                          'group': widget.group,
-                          'expense': null,
-                          'receiptResult': result,
-                        },
+                        AppPaths.expenseNew(widget.group.id),
+                        extra: ExpenseRouteExtra(
+                          group: widget.group,
+                          receiptResult: result,
+                        ),
                       ),
                     );
                   }
@@ -265,8 +265,8 @@ class _GroupDetailState extends ConsumerState<GroupDetail> {
                 extendedPadding: _showText ? null : const EdgeInsets.all(16),
                 onPressed: () {
                   GoRouter.of(context).push(
-                    "/group/details/expense",
-                    extra: {'group': widget.group, 'expense': null},
+                    AppPaths.expenseNew(widget.group.id),
+                    extra: ExpenseRouteExtra(group: widget.group),
                   );
                 },
                 label: AnimatedSize(
@@ -505,7 +505,7 @@ class _GroupBalanceHero extends StatelessWidget {
                 onPressed: () {
                   GoRouter.of(
                     context,
-                  ).push("/group/details/payment", extra: {'group': group});
+                  ).push(AppPaths.groupPayment(group.id), extra: group);
                 },
               ),
             ],
@@ -535,7 +535,7 @@ class _GroupQuickActions extends StatelessWidget {
             onTap: () {
               GoRouter.of(
                 context,
-              ).push("/group/details/statistics", extra: {'group': group});
+              ).push(AppPaths.groupStatistics(group.id), extra: group);
             },
           ),
         ),
@@ -547,7 +547,7 @@ class _GroupQuickActions extends StatelessWidget {
             onTap: () {
               GoRouter.of(
                 context,
-              ).push("/group/share", extra: {'group': group});
+              ).push(AppPaths.groupShare(group.id), extra: group);
             },
           ),
         ),

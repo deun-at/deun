@@ -1,3 +1,4 @@
+import 'package:deun/app_paths.dart';
 import 'package:deun/l10n/app_localizations.dart';
 import 'package:deun/pages/groups/data/group_model.dart';
 import 'package:deun/pages/statistics/provider/statistics_notifiers.dart';
@@ -41,21 +42,26 @@ class _GroupStatisticsPageState extends ConsumerState<GroupStatisticsPage> {
   }
 
   void _openMonth(MonthBucket bucket) {
-    GoRouter.of(context).push('/group/details/statistics/month', extra: {
-      'group': widget.group,
-      'monthStart': bucket.start,
-      'monthEnd': bucket.end,
-    });
+    GoRouter.of(context).push(
+      AppPaths.groupStatisticsMonth(
+        widget.group.id,
+        start: bucket.start,
+        end: bucket.end,
+      ),
+      extra: widget.group,
+    );
   }
 
   void _openCategory(String categoryName) {
     final window = _currentWindow();
-    GoRouter.of(context).push('/group/details/statistics/category', extra: {
-      'groupId': widget.group.id,
-      'categoryName': categoryName,
-      'monthStart': window.start,
-      'monthEnd': window.end,
-    });
+    GoRouter.of(context).push(
+      AppPaths.groupStatisticsCategory(
+        widget.group.id,
+        category: categoryName,
+        start: window.start,
+        end: window.end,
+      ),
+    );
   }
 
   @override

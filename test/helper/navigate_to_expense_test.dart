@@ -1,3 +1,4 @@
+import 'package:deun/app_paths.dart';
 import 'package:deun/helper/helper.dart';
 import 'package:deun/pages/expenses/data/expense_entry_model.dart';
 import 'package:deun/pages/expenses/data/expense_model.dart';
@@ -16,10 +17,10 @@ import 'package:go_router/go_router.dart';
 
 const _routeGroupList = '/group';
 const _routeFriendTab = '/friend';
-const _routeGroupDetail = '/group/details';
-const _routeEditor = '/group/details/expense';
-const _routeReadDetail = '/group/details/expense-detail';
-const _routeClaim = '/group/details/claim';
+const _routeGroupDetail = '/group/:groupId';
+const _routeEditor = '/group/:groupId/expense/:expenseId/edit';
+const _routeReadDetail = '/group/:groupId/expense/:expenseId';
+const _routeClaim = '/group/:groupId/expense/:expenseId/claim';
 
 Group _group() {
   final g = Group();
@@ -104,16 +105,16 @@ class _Harness {
   /// Every route path built, in build order. A page that is on the navigation
   /// stack has been built, so absence here means absence from the stack.
   final List<String> visited;
-  final Map<String, Map<String, dynamic>?> extraByPath;
+  final Map<String, Object?> extraByPath;
 
-  /// The route actually on top of the stack right now. Chained navigation
-  /// calls (go then push then push, as `navigateToExpense` does) make
-  /// GoRouter rebuild ancestor pages again while settling, so a route built
-  /// earlier can be re-appended to [visited] after the true top route —
+  /// The route pattern actually on top of the stack right now. Chained
+  /// navigation calls (go then push then push, as `navigateToExpense` does)
+  /// make GoRouter rebuild ancestor pages again while settling, so a route
+  /// built earlier can be re-appended to [visited] after the true top route —
   /// [visited]`.last` is therefore not a reliable "current top" check. This
   /// reads the router's own current match list instead, which is.
   String get top =>
-      router.routerDelegate.currentConfiguration.matches.last.matchedLocation;
+      router.routerDelegate.currentConfiguration.last.route.path;
 }
 
 /// Pumps a router carrying stand-ins for every destination a notification can
@@ -124,7 +125,7 @@ Future<_Harness> _pump(
   required void Function(BuildContext context) action,
 }) async {
   final visited = <String>[];
-  final extraByPath = <String, Map<String, dynamic>?>{};
+  final extraByPath = <String, Object?>{};
 
   GoRoute trigger(String path, String label) => GoRoute(
     path: path,
@@ -148,7 +149,7 @@ Future<_Harness> _pump(
     path: path,
     builder: (context, state) {
       visited.add(path);
-      extraByPath[path] = state.extra as Map<String, dynamic>?;
+      extraByPath[path] = state.extra;
       return Scaffold(body: Text(label));
     },
   );
@@ -226,10 +227,11 @@ void main() {
         );
 
         final extra = h.extraByPath[_routeReadDetail];
-        expect(extra, isNotNull);
-        // ExpenseDetailRead casts these as `Group` and non-nullable `Expense`.
-        expect(extra!['group'], same(group));
-        expect(extra['expense'], same(expense));
+        expect(extra, isA<ExpenseRouteExtra>());
+        // The route builds ExpenseDetailRead from these.
+        extra as ExpenseRouteExtra;
+        expect(extra.group, same(group));
+        expect(extra.expense, same(expense));
       },
     );
 
@@ -311,12 +313,12 @@ void main() {
       final h = await _pump(
         tester,
         initialLocation: _routeFriendTab,
-        action: (context) => navigateToGroup(context, group),
+        action: (context) => navigateToGroup(context, group.id, group: group),
       );
 
       expect(h.top, _routeGroupDetail);
       expect(find.text('group detail'), findsOneWidget);
-      expect(h.extraByPath[_routeGroupDetail]!['group'], same(group));
+      expect(h.extraByPath[_routeGroupDetail], same(group));
     });
 
     testWidgets('a friendship notification still opens the friends tab', (

@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:deun/app_paths.dart';
 import 'package:deun/helper/currency_breakdown.dart';
 import 'package:deun/widgets/restyle/empty_state.dart';
 import 'package:deun/widgets/restyle/member_avatar.dart';
@@ -106,7 +107,7 @@ class _GroupListState extends ConsumerState<GroupList> {
                           body: l10n.emptyGroupsBody,
                           actionLabel: l10n.addNewGroup,
                           onAction: () =>
-                              GoRouter.of(context).push("/group/edit"),
+                              GoRouter.of(context).push(AppPaths.groupNew),
                         ),
                       ],
                     ),
@@ -185,7 +186,7 @@ class _GroupListState extends ConsumerState<GroupList> {
         l10n.homeYourGroups,
         emphasized: true,
         trailing: TextButton.icon(
-          onPressed: () => GoRouter.of(context).push("/group/edit"),
+          onPressed: () => GoRouter.of(context).push(AppPaths.groupNew),
           icon: const Icon(Icons.add, size: 18),
           label: Text(l10n.commonNew),
           style: TextButton.styleFrom(

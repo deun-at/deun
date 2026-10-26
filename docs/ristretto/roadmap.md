@@ -39,7 +39,7 @@
 | structure | expense-editor-split | The expense editor's state lives in a controller, and the screen opens in pieces | normal | done |
 | structure | injectable-repositories | One current-user source, repositories as injectable instances | normal | done |
 | structure | helper-split | helper.dart opens in pieces | easy | done |
-| structure | typed-routes | Group and expense pages open from their URL, by id | normal | planned |
+| structure | typed-routes | Group and expense pages open from their URL, by id | normal | done |
 | structure | presentation-file-split | The claim page and the split editor open in pieces | normal | planned |
 | structure | housekeeping | Review cleanup: dead widgets, a debug-only dev route, a no-op push handler, untracked build output | easy | planned |
 | — | group-form-field-structure | Group edit form: fields in a Column, not a lazy ListView | normal | done |

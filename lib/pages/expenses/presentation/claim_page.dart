@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:deun/app_paths.dart';
 import 'package:deun/helper/notification_sender.dart';
 import 'package:deun/l10n/app_localizations.dart';
 import 'package:deun/pages/expenses/data/claim_math.dart';
@@ -71,8 +72,8 @@ class _ClaimPageState extends ConsumerState<ClaimPage> {
 
   void _openEditor() {
     GoRouter.of(context).push(
-      '/group/details/expense',
-      extra: {'group': widget.group, 'expense': widget.expense},
+      AppPaths.expenseEdit(widget.group.id, widget.expense.id),
+      extra: ExpenseRouteExtra(group: widget.group, expense: widget.expense),
     );
   }
 

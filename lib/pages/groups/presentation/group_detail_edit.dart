@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:deun/app_paths.dart';
 import 'package:deun/helper/helper.dart';
 import 'package:deun/pages/groups/data/group_repository.dart';
 import 'package:deun/widgets/motion.dart';
@@ -131,10 +132,7 @@ class _GroupEditState extends ConsumerState<GroupEdit> {
       ),
     );
     if (!mounted) return;
-    GoRouter.of(context).go("/group");
-    unawaited(
-      GoRouter.of(context).push("/group/details", extra: {'group': newGroup}),
-    );
+    navigateToGroup(context, newGroup.id, group: newGroup);
   }
 
   /// The real write path: one atomic save, then re-read the saved group so the
@@ -228,8 +226,10 @@ class _GroupEditState extends ConsumerState<GroupEdit> {
                                           Icons.chevron_right,
                                         ),
                                         onTap: () => GoRouter.of(context).push(
-                                          "/group/members",
-                                          extra: {'group': widget.group},
+                                          AppPaths.groupMembers(
+                                            widget.group!.id,
+                                          ),
+                                          extra: widget.group,
                                         ),
                                       ),
                                     ),
@@ -290,9 +290,10 @@ class _GroupEditState extends ConsumerState<GroupEdit> {
             leading: const Icon(Icons.ios_share),
             title: Text(l10n.groupInviteTitle),
             onTap: () {
-              GoRouter.of(
-                context,
-              ).push("/group/share", extra: {'group': widget.group});
+              GoRouter.of(context).push(
+                AppPaths.groupShare(widget.group!.id),
+                extra: widget.group,
+              );
             },
           ),
         ),

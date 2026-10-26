@@ -109,7 +109,7 @@ Future<void> _pump(
   await tester.pumpAndSettle();
 }
 
-/// Pumps the edit form inside a GoRouter carrying the `/group/members` probe
+/// Pumps the edit form inside a GoRouter carrying the group's members probe
 /// route, so the read-only members row's navigation can be observed landing
 /// on the member surface.
 Future<void> _pumpEditWithRouter(
@@ -131,7 +131,7 @@ Future<void> _pumpEditWithRouter(
         ),
       ),
       GoRoute(
-        path: '/group/members',
+        path: '/group/:groupId/members',
         builder: (context, state) =>
             const Scaffold(body: Text('MEMBER SURFACE')),
       ),
@@ -206,7 +206,7 @@ Future<void> _pumpSave(
         ),
       ),
       GoRoute(
-        path: '/group/details',
+        path: '/group/:groupId',
         builder: (context, state) => const Scaffold(body: Text('GROUP DETAIL')),
       ),
     ],

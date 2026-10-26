@@ -28,7 +28,7 @@ GroupMember _guest(String email, String name) => GroupMember()
 
 Group _group(String id) => Group()..id = id;
 
-/// Pumps the join page for group `g1` under a router whose `/group/details`
+/// Pumps the join page for group `g1` under a router whose group-detail
 /// probe prints the id of the group it was handed.
 Future<void> _pump(
   WidgetTester tester, {
@@ -62,9 +62,9 @@ Future<void> _pump(
         ),
       ),
       GoRoute(
-        path: '/group/details',
+        path: '/group/:groupId',
         builder: (context, state) {
-          final group = (state.extra as Map<String, dynamic>)['group'] as Group;
+          final group = state.extra! as Group;
           return Scaffold(body: Text('DETAILS ${group.id}'));
         },
       ),

@@ -85,14 +85,6 @@ Future<void> _pumpCreateFlow(
         builder: (context, state) => const Scaffold(body: Text('GROUP LIST')),
       ),
       GoRoute(
-        path: '/group/details',
-        builder: (context, state) {
-          final extra = state.extra! as Map<String, dynamic>;
-          final group = extra['group'] as Group;
-          return Scaffold(body: Text('DETAIL ${group.name}'));
-        },
-      ),
-      GoRoute(
         path: '/group/edit',
         builder: (context, state) => Theme(
           data: getThemeData(
@@ -107,6 +99,14 @@ Future<void> _pumpCreateFlow(
             },
           ),
         ),
+      ),
+      // After the host, so `/group/edit` is not read as a group id.
+      GoRoute(
+        path: '/group/:groupId',
+        builder: (context, state) {
+          final group = state.extra! as Group;
+          return Scaffold(body: Text('DETAIL ${group.name}'));
+        },
       ),
     ],
   );
@@ -141,7 +141,7 @@ Future<void> _createNamed(WidgetTester tester, String name) async {
   await tester.pumpAndSettle();
 }
 
-/// Pumps the group detail page inside a GoRouter whose `/group/members` route is
+/// Pumps the group detail page inside a GoRouter whose members route is
 /// a probe, so a tap on the add-members affordance can be observed landing on
 /// the member surface.
 Future<void> _pumpGroupDetail(WidgetTester tester) async {
@@ -160,7 +160,7 @@ Future<void> _pumpGroupDetail(WidgetTester tester) async {
         ),
       ),
       GoRoute(
-        path: '/group/members',
+        path: '/group/:groupId/members',
         builder: (context, state) =>
             const Scaffold(body: Text('MEMBER SURFACE')),
       ),

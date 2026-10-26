@@ -1,3 +1,4 @@
+import 'package:deun/app_paths.dart';
 import 'package:deun/constants.dart';
 import 'package:deun/l10n/app_localizations.dart';
 import 'package:deun/pages/groups/data/group_member_model.dart';
@@ -124,7 +125,7 @@ class _FakeUserNotifier extends UserDetailNotifier {
 }
 
 /// Pumps the groups home inside a GoRouter so `GoRouter.of(context).push` works.
-/// The `/group/edit` destination records that it was reached (F91: verifies the
+/// The new-group destination records that it was reached (F91: verifies the
 /// kept "+ New" header action and the empty-state CTA both create a group).
 Future<void> _pumpWithRouter(
   WidgetTester tester, {
@@ -145,7 +146,7 @@ Future<void> _pumpWithRouter(
         ),
       ),
       GoRoute(
-        path: '/group/edit',
+        path: AppPaths.groupNew,
         builder: (context, state) => const Scaffold(body: Text('EDIT ROUTE')),
       ),
     ],

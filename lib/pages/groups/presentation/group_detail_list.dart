@@ -489,7 +489,7 @@ class _ItemizedRow extends ConsumerWidget {
     final showAccentBar = hasUnclaimed;
 
     return LedgerRowInk(
-      onTap: onTap, // → /group/details/claim (Screen 9), via _openExpense.
+      onTap: onTap, // → the claim page (Screen 9), via _openExpense.
       padding: EdgeInsets.zero,
       child: IntrinsicHeight(
         child: Row(

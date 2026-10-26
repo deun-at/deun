@@ -9,6 +9,9 @@ final _uuidRegExp = RegExp(
 );
 final _emailRegExp = RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$');
 
+/// True when [value] has the shape of a group or expense id.
+bool isUuid(String value) => _uuidRegExp.hasMatch(value);
+
 /// The route a deep link's [fragment] may open, or null when it is not on the
 /// allowlist or a parameter is malformed.
 String? validateDeepLink(String fragment) {
