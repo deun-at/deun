@@ -2,23 +2,13 @@ import 'package:deun/helper/helper.dart';
 
 import 'itemized_totals.dart';
 
-/// Keys of the provenance columns on the `expense` row. Exported so the legacy
-/// (non-RPC) write path can strip them before a PostgREST upsert.
+/// Keys of the provenance columns on the `expense` row: exactly the keys
+/// [ExpenseConversion.expenseProvenance] writes.
 const Set<String> kExpenseProvenanceKeys = {
   'original_currency_code',
   'conversion_rate',
   'rate_date',
 };
-
-/// Key of the provenance column on the `expense_entry` row.
-const Set<String> kEntryProvenanceKeys = {'original_amount'};
-
-/// Key of the provenance column on the `expense_entry_share` row.
-///
-/// `fixed_amount` is a LEDGER-currency column, so an exact-split share needs an
-/// entry-currency twin for the editor to reload — the same rule
-/// [kEntryProvenanceKeys] encodes for `expense_entry.amount`.
-const Set<String> kShareProvenanceKeys = {'original_fixed_amount'};
 
 /// How one expense's ENTERED amounts map onto its group's ledger.
 ///
@@ -321,14 +311,3 @@ String unitPriceFieldTextForTotal(
     currency,
   );
 }
-
-/// A copy of [row] with [keys] removed. The legacy (non-RPC) write path goes
-/// through PostgREST, which rejects an unknown column outright, so the
-/// provenance keys must not reach it.
-Map<String, dynamic> stripProvenance(
-  Map<String, dynamic> row,
-  Set<String> keys,
-) => {
-  for (final entry in row.entries)
-    if (!keys.contains(entry.key)) entry.key: entry.value,
-};

@@ -15,22 +15,17 @@ import 'member_removal.dart';
 import 'payback_request.dart';
 
 class GroupRepository {
-  /// Set once `pay_back_exact` is confirmed missing (PGRST202/42883) so that
-  /// `payBackAll` — which fans payBack out once per shared group in parallel —
-  /// pays the round-trip cost of probing for the RPC once per app session
-  /// instead of once per group.
-  static bool _payBackExactMissing = false;
-
   /// Null outside tests. When set, every RPC [payBack] issues (and
   /// [applyPayBackAll]'s default write) goes through it instead of
   /// `supabase.rpc`.
   @visibleForTesting
   static PaybackRpc? payBackRpcOverride;
 
-  /// Forgets that `pay_back_exact` was found missing, so each test starts on
-  /// the `pay_back_exact` path.
+  /// Null outside tests. When set, [saveAll] sends its one `save_group_all`
+  /// call here instead of `supabase.rpc`.
   @visibleForTesting
-  static void resetPayBackFallback() => _payBackExactMissing = false;
+  static Future<Object?> Function(Map<String, dynamic> params)?
+  saveGroupAllOverride;
 
   /// Every RPC a payback write issues.
   static Future<Object?> _payBackRpc(
@@ -86,11 +81,10 @@ class GroupRepository {
     }
   }
 
-  /// The `pay_back` / `pay_back_exact` argument map — the ONE place those
-  /// parameter names live. Pure, so a test can prove that defaulting `paidBy` to
-  /// the current user leaves the self-payback call byte-identical to what it
-  /// sent before the parameter existed. `pay_back_exact` takes the same four
-  /// arguments and delegates to `pay_back`, so one map serves both.
+  /// The `pay_back_exact` argument map, the ONE place those parameter names
+  /// live. Pure, so a test can prove that defaulting `paidBy` to the current
+  /// user leaves the self-payback call byte-identical to what it sent before the
+  /// parameter existed.
   static Map<String, dynamic> payBackRpcParams({
     required String groupId,
     required String paidBy,
@@ -239,35 +233,6 @@ class GroupRepository {
     ];
   }
 
-  /// The `group_member` writes a save performs, decided before anything is
-  /// written: submitted members the group does not have an **active** row for
-  /// are inserted; the rest are re-adds (rows that exist already, possibly
-  /// soft-removed). Rows with no email are never written.
-  ///
-  /// This is the union/dedup against the group's current roster — the same rule
-  /// the `save_group_all` RPC applies server-side — expressed once so the legacy
-  /// write path and the tests share it instead of restating it.
-  ///
-  /// Pure: no Supabase. The caller passes the group's current [existingEmails].
-  static GroupMemberWrite resolveMemberWrite({
-    required String groupId,
-    required List<Map<String, dynamic>> members,
-    required Set<String> existingEmails,
-  }) {
-    final inserts = <Map<String, dynamic>>[];
-    final reAddEmails = <String>[];
-    for (final member in members) {
-      final email = (member['email'] as String?) ?? '';
-      if (email.isEmpty) continue;
-      if (existingEmails.contains(email)) {
-        reAddEmails.add(email);
-      } else {
-        inserts.add({'group_id': groupId, 'email': email});
-      }
-    }
-    return GroupMemberWrite(inserts: inserts, reAddEmails: reAddEmails);
-  }
-
   /// The `group_member` select every roster read uses: the membership row plus
   /// the user fields `GroupMember` parses. Same embed as `Group.groupSelectString`.
   static const String _rosterSelect =
@@ -289,10 +254,12 @@ class GroupRepository {
         .toList(growable: false);
   }
 
-  /// Saves a group with members and share recalculation atomically via the
-  /// save_group_all RPC (one transaction server-side, including guest user
-  /// creation). Falls back to the legacy multi-step write path when the
-  /// database doesn't have the RPC yet.
+  /// Saves a group in ONE server transaction (`save_group_all`): the group
+  /// row, the creator's membership on a create (guest user creation included)
+  /// and the share recalculation commit together or not at all. Returns the id
+  /// the RPC returned. Any failure, a missing function included, is thrown as
+  /// the RPC's own error having written nothing: there is no client-side
+  /// fallback.
   static Future<String> saveAll(
     String? groupId,
     Map<String, dynamic> formValue,
@@ -318,88 +285,19 @@ class GroupRepository {
         currentUserEmail: supabase.auth.currentUser?.email,
       );
 
-      String savedGroupId;
-      try {
-        savedGroupId =
-            await supabase.rpc(
-                  'save_group_all',
-                  params: {'_group': upsertVals, '_members': groupMembers},
-                )
-                as String;
-      } on PostgrestException catch (e) {
-        if (!isMissingFunctionError(e)) rethrow;
-        savedGroupId = await _saveAllLegacy(upsertVals, groupMembers);
-      }
-
-      return savedGroupId;
+      final Map<String, dynamic> params = {
+        '_group': upsertVals,
+        '_members': groupMembers,
+      };
+      final override = saveGroupAllOverride;
+      return (override != null
+              ? await override(params)
+              : await supabase.rpc('save_group_all', params: params))
+          as String;
     } on PostgrestException catch (e) {
       debugPrint('Failed to save group ${groupId ?? 'new'}: ${e.message}');
       rethrow;
     }
-  }
-
-  /// Legacy non-atomic write path for servers without the save_group_all
-  /// RPC. Performs the same writes as the RPC, one statement at a time.
-  static Future<String> _saveAllLegacy(
-    Map<String, dynamic> upsertVals,
-    List<Map<String, dynamic>> groupMembers,
-  ) async {
-    Map<String, dynamic> groupInsertResponse = await supabase
-        .from('group')
-        .upsert(upsertVals)
-        .select('id')
-        .single();
-    final savedGroupId = groupInsertResponse['id'] as String;
-
-    // group-member-add-flow: a save submits at most the creator row (create) or
-    // nothing at all (edit) — no guest-pending entries reach this path any
-    // more, so there is nothing left to resolve here.
-    final members = List<Map<String, dynamic>>.from(groupMembers);
-
-    // group-member-removal: never delete here. Membership shrinks only through
-    // GroupRepository.removeMember; a member merely absent from `members` keeps
-    // their row (and their is_favorite, which the old delete/re-insert cycle
-    // destroyed). No upsert/onConflict: this instance's unique constraints are
-    // not verifiable from the build, so existence is checked explicitly.
-    final existingRows = await supabase
-        .from('group_member')
-        .select('email')
-        .eq('group_id', savedGroupId);
-    final existingEmails = existingRows
-        .map((row) => (row['email'] as String?) ?? '')
-        .toSet();
-
-    final write = resolveMemberWrite(
-      groupId: savedGroupId,
-      members: members,
-      existingEmails: existingEmails,
-    );
-    final newRows = write.inserts;
-    final reAddEmails = write.reAddEmails;
-
-    if (reAddEmails.isNotEmpty) {
-      // One round trip for every re-add instead of one per member: almost all
-      // of these are already-active members and thus no-ops, so the
-      // `removed_at is not null` guard (mirroring the RPC) keeps the write
-      // from touching rows that don't need it.
-      await supabase
-          .from('group_member')
-          .update({'removed_at': null})
-          .eq('group_id', savedGroupId)
-          .inFilter('email', reAddEmails)
-          .not('removed_at', 'is', null);
-    }
-
-    if (newRows.isNotEmpty) {
-      await supabase.from('group_member').insert(newRows);
-    }
-
-    await supabase.rpc(
-      'update_group_member_shares',
-      params: {"_group_id": savedGroupId, "_expense_id": null},
-    );
-
-    return savedGroupId;
   }
 
   /// Removes [email] from [groupId] in ONE server transaction
@@ -638,37 +536,25 @@ class GroupRepository {
     _notifyPayBack(notifications, groupId, accepted);
   }
 
-  /// The write half of a payback: ONE RPC, which records the payback and
-  /// recalculates the group's balances in the same server transaction
-  /// (`pay_back`, which `pay_back_exact` delegates to; see
-  /// `20261026120000_pay_back_atomic_recalc.sql`). It completes only once both
-  /// have committed and throws only when nothing was recorded.
+  /// The write half of a payback: ONE RPC, `pay_back_exact`, which snaps
+  /// `amount` to the exact outstanding value server-side (settle-residue) and
+  /// records the payback through `pay_back`. It completes only once the server
+  /// has committed. Any failure, a missing function included, is thrown as the
+  /// RPC's own error having recorded nothing: there is no client-side
+  /// fallback.
   static Future<void> _writePayBack(
     String groupId,
     PaybackAccepted accepted,
   ) async {
-    final params = payBackRpcParams(
-      groupId: groupId,
-      paidBy: accepted.paidBy,
-      paidFor: accepted.paidFor,
-      amount: accepted.amount,
+    await _payBackRpc(
+      'pay_back_exact',
+      payBackRpcParams(
+        groupId: groupId,
+        paidBy: accepted.paidBy,
+        paidFor: accepted.paidFor,
+        amount: accepted.amount,
+      ),
     );
-
-    // settle-residue: pay_back_exact snaps `amount` to the exact outstanding
-    // value server-side, so the payback cancels the unrounded balance the client
-    // could only see rounded. A server without it falls back to pay_back —
-    // exactly the way `saveAll` falls back for `save_group_all`.
-    if (_payBackExactMissing) {
-      await _payBackRpc('pay_back', params);
-      return;
-    }
-    try {
-      await _payBackRpc('pay_back_exact', params);
-    } on PostgrestException catch (e) {
-      if (!isMissingFunctionError(e)) rethrow;
-      _payBackExactMissing = true;
-      await _payBackRpc('pay_back', params);
-    }
   }
 
   /// The notify step a single payback and every settle-all group share, so the
@@ -888,19 +774,4 @@ class PayBackAllResult {
 
   /// True when every group that owed something was settled.
   bool get isComplete => skippedGroupNames.isEmpty;
-}
-
-/// The `group_member` writes one group save performs, as resolved by
-/// [GroupRepository.resolveMemberWrite]. A save never deletes: membership
-/// shrinks only through [GroupRepository.removeMember].
-class GroupMemberWrite {
-  const GroupMemberWrite({required this.inserts, required this.reAddEmails});
-
-  /// Rows to insert, each `{'group_id': ..., 'email': ...}` — members the group
-  /// has no row for at all.
-  final List<Map<String, dynamic>> inserts;
-
-  /// Emails that already have a row; the write only clears a `removed_at` on
-  /// the soft-removed ones and leaves the rest untouched.
-  final List<String> reAddEmails;
 }

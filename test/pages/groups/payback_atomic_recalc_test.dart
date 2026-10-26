@@ -27,25 +27,17 @@ GroupMember _member(String email, String displayName) => GroupMember()
 void main() {
   final en = lookupAppLocalizations(const Locale('en'));
   final roster = [_member(_ann, 'Ann'), _member(_bob, 'Bob')];
-  final expectedParams = GroupRepository.payBackRpcParams(
-    groupId: _groupId,
-    paidBy: _ann,
-    paidFor: _bob,
-    amount: 12.5,
-  );
   const missingExact = PostgrestException(
     message: 'Could not find the function public.pay_back_exact',
     code: 'PGRST202',
   );
 
   late List<String> calls;
-  late List<Map<String, dynamic>> sent;
 
   /// Records every RPC payBack issues; [respond] returns its result or throws.
   void answer(Object? Function(String function) respond) {
     GroupRepository.payBackRpcOverride = (function, params) async {
       calls.add(function);
-      sent.add(params);
       return respond(function);
     };
   }
@@ -86,13 +78,10 @@ void main() {
 
   setUp(() {
     calls = [];
-    sent = [];
-    GroupRepository.resetPayBackFallback();
   });
 
   tearDown(() {
     GroupRepository.payBackRpcOverride = null;
-    GroupRepository.resetPayBackFallback();
   });
 
   group('a recorded payback completes on its write alone', () {
@@ -108,28 +97,6 @@ void main() {
         await payBack();
 
         expect(calls, ['pay_back_exact']);
-      },
-    );
-
-    test(
-      'without pay_back_exact: one probe plus pay_back, then pay_back alone',
-      () async {
-        answer(
-          (function) => switch (function) {
-            'pay_back_exact' => throw missingExact,
-            'pay_back' => 'payback-1',
-            _ => throw StateError('unexpected RPC $function'),
-          },
-        );
-
-        await payBack();
-        expect(calls, ['pay_back_exact', 'pay_back']);
-        // Both RPCs receive the same four-argument map.
-        expect(sent, everyElement(equals(expectedParams)));
-
-        calls.clear();
-        await payBack();
-        expect(calls, ['pay_back']);
       },
     );
   });
@@ -150,16 +117,16 @@ void main() {
     );
 
     test(
-      'a dropped connection on the pay_back fallback is thrown after that one write',
+      'a missing pay_back_exact is thrown after that one RPC, and the next payback issues it alone again',
       () async {
-        final dropped = Exception('connection reset');
-        answer(
-          (function) =>
-              function == 'pay_back_exact' ? throw missingExact : throw dropped,
-        );
+        answer((_) => throw missingExact);
 
-        await expectLater(payBack(), throwsA(same(dropped)));
-        expect(calls, ['pay_back_exact', 'pay_back']);
+        await expectLater(payBack(), throwsA(same(missingExact)));
+        expect(calls, ['pay_back_exact']);
+
+        calls.clear();
+        await expectLater(payBack(), throwsA(same(missingExact)));
+        expect(calls, ['pay_back_exact']);
       },
     );
   });

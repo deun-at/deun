@@ -12,12 +12,6 @@ import 'package:deun/l10n/app_localizations.dart';
 import 'currency.dart';
 export 'currency.dart';
 
-/// True when an RPC failed because the function doesn't exist on the server
-/// yet (older database without the atomic save migrations applied).
-/// PGRST202 = PostgREST schema cache miss, 42883 = Postgres undefined function.
-bool isMissingFunctionError(PostgrestException e) =>
-    e.code == 'PGRST202' || e.code == '42883';
-
 /// True when a PostgREST call failed because a column doesn't exist on the
 /// server yet (an older database without a feature's migration applied).
 /// 42703 = Postgres undefined column, PGRST204 = PostgREST schema-cache miss.
