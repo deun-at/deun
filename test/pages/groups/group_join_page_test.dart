@@ -1,4 +1,4 @@
-// guest-merge-rpc: the invite-link join page on its three seams. Each test
+// guest-merge-rpc, group-id-leak: the invite-link join page on its three seams. Each test
 // restates one contract criterion; no Supabase is reached.
 
 import 'dart:async';
@@ -18,6 +18,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 
 const _gina = 'guest+gina@guest.invalid';
+const _token = '9b2c4e1a-6d3f-4a8b-b1c2-7e5d0f9a3c64';
 
 GroupMember _guest(String email, String name) => GroupMember()
   ..groupId = 'g1'
@@ -33,6 +34,7 @@ Group _group(String id) => Group()..id = id;
 Future<void> _pump(
   WidgetTester tester, {
   required GroupJoiner joinGroup,
+  String? token = _token,
   GroupJoinStateLoader? loadJoinState,
   GroupDetailLoader? loadGroup,
 }) async {
@@ -49,11 +51,12 @@ Future<void> _pump(
           ).copyWith(splashFactory: NoSplash.splashFactory),
           child: GroupJoinPage(
             groupId: 'g1',
+            token: token,
             groupName: 'Trip',
             joinGroup: joinGroup,
             loadJoinState:
                 loadJoinState ??
-                (_) async => GroupJoinState(
+                (_, {required token}) async => GroupJoinState(
                   isActiveMember: false,
                   joinableGuests: [_guest(_gina, 'Gina')],
                 ),
@@ -89,15 +92,18 @@ Future<void> _pump(
 }
 
 void main() {
-  late List<(String, String?)> calls;
+  late List<(String, String, String?)> calls;
 
   setUp(() => calls = []);
 
-  Future<void> recordJoin(String groupId, {String? guestEmail}) async =>
-      calls.add((groupId, guestEmail));
+  Future<void> recordJoin(
+    String groupId, {
+    required String token,
+    String? guestEmail,
+  }) async => calls.add((groupId, token, guestEmail));
 
   testWidgets(
-    'joining with a guest picked passes exactly that group and that guest, once',
+    "joining with a guest picked passes exactly that group, the link's token and that guest, once",
     (tester) async {
       await _pump(tester, joinGroup: recordJoin);
 
@@ -106,7 +112,7 @@ void main() {
       await tester.tap(find.byType(PrimaryButton));
       await tester.pumpAndSettle();
 
-      expect(calls, [('g1', _gina)]);
+      expect(calls, [('g1', _token, _gina)]);
     },
   );
 
@@ -116,7 +122,7 @@ void main() {
     await tester.tap(find.byType(PrimaryButton));
     await tester.pumpAndSettle();
 
-    expect(calls, [('g1', null)]);
+    expect(calls, [('g1', _token, null)]);
   });
 
   testWidgets('a second tap while a join is in flight makes no second call', (
@@ -125,8 +131,8 @@ void main() {
     final inFlight = Completer<void>();
     await _pump(
       tester,
-      joinGroup: (groupId, {guestEmail}) {
-        calls.add((groupId, guestEmail));
+      joinGroup: (groupId, {required token, guestEmail}) {
+        calls.add((groupId, token, guestEmail));
         return inFlight.future;
       },
     );
@@ -150,8 +156,8 @@ void main() {
       final l10n = await AppLocalizations.delegate.load(const Locale('en'));
       await _pump(
         tester,
-        joinGroup: (groupId, {guestEmail}) async {
-          calls.add((groupId, guestEmail));
+        joinGroup: (groupId, {required token, guestEmail}) async {
+          calls.add((groupId, token, guestEmail));
           throw Exception('join failed');
         },
       );
@@ -173,7 +179,7 @@ void main() {
       await tester.tap(find.byType(PrimaryButton));
       await tester.pumpAndSettle();
 
-      expect(calls, [('g1', _gina), ('g1', _gina)]);
+      expect(calls, [('g1', _token, _gina), ('g1', _token, _gina)]);
       expect(find.textContaining('DETAILS'), findsNothing);
     },
   );
@@ -204,7 +210,7 @@ void main() {
     await _pump(
       tester,
       joinGroup: recordJoin,
-      loadJoinState: (_) async =>
+      loadJoinState: (_, {required token}) async =>
           const GroupJoinState(isActiveMember: true, joinableGuests: []),
     );
 
@@ -219,7 +225,8 @@ void main() {
       await _pump(
         tester,
         joinGroup: recordJoin,
-        loadJoinState: (_) async => throw Exception('load failed'),
+        loadJoinState: (_, {required token}) async =>
+            throw Exception('load failed'),
       );
 
       expect(find.byType(CircularProgressIndicator), findsNothing);
@@ -229,7 +236,120 @@ void main() {
       await tester.tap(find.byType(PrimaryButton));
       await tester.pumpAndSettle();
 
-      expect(calls, [('g1', null)]);
+      expect(calls, [('g1', _token, null)]);
+    },
+  );
+
+  for (final (label, linkToken) in [
+    ('no token', null),
+    ('a malformed token', 'not-a-uuid'),
+  ]) {
+    testWidgets(
+      'a link with $label shows the invite as no longer valid, lists no guests, offers no join and loads nothing',
+      (tester) async {
+        final l10n = await AppLocalizations.delegate.load(const Locale('en'));
+        final loads = <String>[];
+        await _pump(
+          tester,
+          joinGroup: recordJoin,
+          token: linkToken,
+          loadJoinState: (_, {required token}) async {
+            loads.add(token);
+            return GroupJoinState(
+              isActiveMember: false,
+              joinableGuests: [_guest(_gina, 'Gina')],
+            );
+          },
+        );
+
+        expect(find.text(l10n.groupInviteInvalid), findsOneWidget);
+        expect(find.text('Gina'), findsNothing);
+        expect(find.byType(PrimaryButton), findsNothing);
+        expect(loads, isEmpty);
+        expect(calls, isEmpty);
+      },
+    );
+  }
+
+  testWidgets(
+    'a token the server rejects shows the invite as no longer valid before listing anything',
+    (tester) async {
+      final l10n = await AppLocalizations.delegate.load(const Locale('en'));
+      await _pump(
+        tester,
+        joinGroup: recordJoin,
+        loadJoinState: (_, {required token}) async =>
+            throw const InviteRejected(),
+      );
+
+      expect(find.text(l10n.groupInviteInvalid), findsOneWidget);
+      expect(find.byType(RadioListTile<String?>), findsNothing);
+      expect(find.byType(PrimaryButton), findsNothing);
+      expect(find.textContaining('DETAILS'), findsNothing);
+    },
+  );
+
+  testWidgets(
+    'a join refused for its token switches to the no-longer-valid state, with no error and no navigation',
+    (tester) async {
+      final l10n = await AppLocalizations.delegate.load(const Locale('en'));
+      await _pump(
+        tester,
+        joinGroup: (groupId, {required token, guestEmail}) async {
+          calls.add((groupId, token, guestEmail));
+          throw const InviteRejected();
+        },
+      );
+
+      await tester.tap(find.byType(PrimaryButton));
+      await tester.pumpAndSettle();
+
+      expect(calls, [('g1', _token, null)]);
+      expect(find.text(l10n.groupInviteInvalid), findsOneWidget);
+      expect(find.text(l10n.generalError), findsNothing);
+      expect(find.byType(PrimaryButton), findsNothing);
+      expect(find.textContaining('DETAILS'), findsNothing);
+    },
+  );
+
+  testWidgets(
+    'a link with a well-formed token loads the join state for that group and token and offers joining',
+    (tester) async {
+      final loads = <(String, String)>[];
+      await _pump(
+        tester,
+        joinGroup: recordJoin,
+        loadJoinState: (groupId, {required token}) async {
+          loads.add((groupId, token));
+          return GroupJoinState(
+            isActiveMember: false,
+            joinableGuests: [_guest(_gina, 'Gina')],
+          );
+        },
+      );
+
+      expect(loads, [('g1', _token)]);
+      expect(find.text('Gina'), findsOneWidget);
+      expect(find.byType(PrimaryButton), findsOneWidget);
+    },
+  );
+
+  testWidgets(
+    'the invite strings group-id-leak adds are translated in German',
+    (tester) async {
+      final en = await AppLocalizations.delegate.load(const Locale('en'));
+      final de = await AppLocalizations.delegate.load(const Locale('de'));
+      final strings = <String, String Function(AppLocalizations)>{
+        'groupInviteInvalid': (l) => l.groupInviteInvalid,
+        'groupInviteResetLink': (l) => l.groupInviteResetLink,
+        'groupInviteResetTitle': (l) => l.groupInviteResetTitle,
+        'groupInviteResetBody': (l) => l.groupInviteResetBody,
+        'groupInviteResetConfirm': (l) => l.groupInviteResetConfirm,
+      };
+      for (final MapEntry(key: key, value: read) in strings.entries) {
+        expect(read(de), isNotEmpty, reason: key);
+        expect(read(de), isNot(read(en)), reason: key);
+      }
     },
   );
 }

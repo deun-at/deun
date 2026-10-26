@@ -1,11 +1,21 @@
+import 'package:deun/app_paths.dart';
 import 'package:deun/deep_links.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
   test('deep links keep their allowlist', () {
-    const accepted = [
+    final accepted = [
       '/group/join?groupId=123e4567-e89b-12d3-a456-426614174000',
       '/group/join?groupId=123e4567-e89b-12d3-a456-426614174000&name=Trip',
+      // group-id-leak: the link the invite page builds, token included.
+      AppPaths.groupJoin(
+        '123e4567-e89b-12d3-a456-426614174000',
+        token: '9b2c4e1a-6d3f-4a8b-b1c2-7e5d0f9a3c64',
+        name: 'Trip to Rome',
+      ),
+      // The join page, not the allowlist, judges the token: a malformed one
+      // still opens the page, which says the invite is no longer valid.
+      '/group/join?groupId=123e4567-e89b-12d3-a456-426614174000&token=not-a-uuid',
       '/friend/accept?email=maya@deun.app',
       '/friend/accept?u=maya&c=4821',
       '/group',

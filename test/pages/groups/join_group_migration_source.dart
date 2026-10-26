@@ -1,4 +1,4 @@
-// guest-merge-rpc: migrations as normalized source, shared by
+// guest-merge-rpc, group-id-leak: migrations as normalized source, shared by
 // join_group_migration_test.dart, group_repository_test.dart,
 // payback_atomic_recalc_migration_test.dart and
 // group_write_rpcs_migration_test.dart. Read as
@@ -42,9 +42,11 @@ String migrationSqlBySuffix(String suffix) {
   return normalizedSql(files.single.readAsStringSync());
 }
 
-/// The guest-merge-rpc migration.
+/// The migration that defines the current `join_group`, `group_join_guests`,
+/// `group_invite_valid` and `reset_group_invite`: group-id-leak's, which
+/// replaced guest-merge-rpc's token-less pair.
 String joinGroupMigrationSql() =>
-    migrationSqlBySuffix('_join_group_guest_merge.sql');
+    migrationSqlBySuffix('_group_invite_token.sql');
 
 /// Every migration, normalized — for a helper that may live in whichever
 /// migration landed first (`lock_group_member_writes`).

@@ -78,6 +78,14 @@ class GroupRepository {
     '_group_id': groupId,
   };
 
+  /// The RPC the invite-link reset calls — the ONE place its name lives.
+  static const String resetInviteRpcName = 'reset_group_invite';
+
+  /// The `reset_group_invite` argument map.
+  static Map<String, dynamic> resetInviteRpcParams(String groupId) => {
+    '_group_id': groupId,
+  };
+
   Future<List<Group>> fetchData(String statusFilter, {String? paidTo}) async {
     var currentUserEmail = _currentUser?.email ?? '';
     var query = _supabase.from('group').select(Group.groupSelectString);
@@ -224,6 +232,17 @@ class GroupRepository {
   Future<void> delete(String groupId) async {
     await _supabase.rpc(deleteRpcName, params: deleteRpcParams(groupId));
   }
+
+  /// Gives [groupId] a new invite token in ONE server call
+  /// (`reset_group_invite`, active members only) and returns it. Every link
+  /// that carries an earlier token stops working; the call bumps
+  /// `group_update_checker`, so other members' open screens pick up the new one.
+  Future<String> resetInviteToken(String groupId) async =>
+      await _supabase.rpc(
+            resetInviteRpcName,
+            params: resetInviteRpcParams(groupId),
+          )
+          as String;
 }
 
 @Riverpod(keepAlive: true)

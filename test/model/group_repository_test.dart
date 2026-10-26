@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:flutter/widgets.dart' show Locale;
 import 'package:flutter_test/flutter_test.dart';
+import 'package:supabase_flutter/supabase_flutter.dart' show PostgrestException;
 import 'package:deun/helper/currency_breakdown.dart';
 import 'package:deun/helper/helper.dart';
 import 'package:deun/helper/notification_sender.dart';
@@ -9,6 +10,7 @@ import 'package:deun/pages/expenses/data/expense_repository.dart';
 import 'package:deun/pages/groups/data/group_repository.dart';
 import 'package:deun/pages/groups/data/group_member_model.dart';
 import 'package:deun/pages/groups/data/group_model.dart';
+import 'package:deun/pages/groups/data/member_removal.dart';
 import 'package:deun/pages/groups/data/member_repository.dart';
 import 'package:deun/pages/groups/data/payback_repository.dart';
 import 'package:deun/pages/groups/data/payback_request.dart';
@@ -650,44 +652,75 @@ void main() {
   });
 
   // -------------------------------------------------------------------------
-  // guest-merge-rpc: the join call's name and arguments are the migration's.
+  // guest-merge-rpc, group-id-leak: the invite calls name the migration's
+  // functions and send exactly their arguments.
   // -------------------------------------------------------------------------
-  group('GroupRepository.joinGroupRpcParams', () {
+  group('invite-token RPC calls', () {
     test(
-      'names the function the migration defines and sends exactly its arguments',
+      'each call names its function and sends exactly its declared arguments, in order',
       () {
         final sql = joinGroupMigrationSql();
+        final calls = <String, Map<String, dynamic>>{
+          MemberRepository.joinGroupRpcName:
+              MemberRepository.joinGroupRpcParams(
+                groupId: 'g1',
+                token: 't1',
+                guestEmail: 'guest+1@guest.invalid',
+              ),
+          MemberRepository.joinGuestsRpcName: MemberRepository.inviteRpcParams(
+            groupId: 'g1',
+            token: 't1',
+          ),
+          MemberRepository.inviteValidRpcName: MemberRepository.inviteRpcParams(
+            groupId: 'g1',
+            token: 't1',
+          ),
+          GroupRepository.resetInviteRpcName:
+              GroupRepository.resetInviteRpcParams('g1'),
+        };
+
+        for (final MapEntry(key: function, value: params) in calls.entries) {
+          expect(
+            params.keys.toList(),
+            declaredArgs(sql, function),
+            reason: function,
+          );
+        }
+        // Joining as a new member still sends the guest argument, as null.
         expect(
-          sql,
+          MemberRepository.joinGroupRpcParams(groupId: 'g1', token: 't1'),
+          {'_group_id': 'g1', '_token': 't1', '_guest_email': null},
+        );
+      },
+    );
+
+    test(
+      'a join refused for its token surfaces as InviteRejected; any other failure stays as it was',
+      () async {
+        expect(
+          joinGroupMigrationSql(),
           contains(
-            'create or replace function public.${MemberRepository.joinGroupRpcName}(',
+            "using errcode = '${MemberRepository.inviteRejectedErrorCode.toLowerCase()}'",
           ),
         );
-        final declared = joinGroupDeclaredArgs(sql).toSet();
 
-        expect(
-          MemberRepository.joinGroupRpcParams(
-            groupId: 'g1',
-            guestEmail: 'guest+1@guest.invalid',
-          ).keys.toSet(),
-          declared,
-        );
-        expect(
-          MemberRepository.joinGroupRpcParams(groupId: 'g1').keys.toSet(),
-          declared,
-        );
-
-        expect(
-          MemberRepository.joinGroupRpcParams(
-            groupId: 'g1',
-            guestEmail: 'guest+1@guest.invalid',
+        Future<void> join(String code) => MemberRepository(
+          FakeSupabaseClient(
+            rpcError: PostgrestException(message: 'refused', code: code),
           ),
-          {'_group_id': 'g1', '_guest_email': 'guest+1@guest.invalid'},
+          null,
+        ).joinGroup('g1', token: 't1');
+
+        await expectLater(
+          join(MemberRepository.inviteRejectedErrorCode),
+          throwsA(isA<InviteRejected>()),
         );
-        expect(MemberRepository.joinGroupRpcParams(groupId: 'g1'), {
-          '_group_id': 'g1',
-          '_guest_email': null,
-        });
+        await expectLater(
+          join('28000'),
+          throwsA(
+            isA<PostgrestException>().having((e) => e.code, 'code', '28000'),
+          ),
+        );
       },
     );
   });

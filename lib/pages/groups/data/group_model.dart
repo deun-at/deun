@@ -37,6 +37,11 @@ class Group {
   /// initialized (not `late`) so a Group built without JSON still formats.
   String currencyCode = kDefaultCurrencyCode;
 
+  /// The group's current invite token (`group.invite_token`). Every invite
+  /// link carries it, and `join_group` refuses any other. Only the group's
+  /// members and its creator can read it. Empty on a Group built without JSON.
+  String inviteToken = '';
+
   /// The group's currency as a value object — the single conversion point from
   /// the stored `currency_code` string to the type the money pipeline takes.
   Currency get currency => Currency.fromCode(currencyCode);
@@ -131,6 +136,7 @@ class Group {
     createdAt = json["created_at"];
     userId = json["user_id"];
     currencyCode = json["currency_code"] ?? kDefaultCurrencyCode;
+    inviteToken = json["invite_token"] ?? '';
 
     groupMembers = [];
     if (json["group_member"] != null) {

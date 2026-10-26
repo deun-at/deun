@@ -459,6 +459,22 @@ carry `[human]` criteria that nobody has ever observed. Check here before shippi
   data-only push never displayed before this change either, because the removed handler only
   logged.
 
+- [ ] **proves** · group-id-leak: an invite link joins only with the group's current token, and a group id alone joins
+  nothing. The app has no fallback: until this is applied every join and every join-page guest list fails; once it is
+  applied every released build's join and every token-less link already shared stops working (hard-fail, by ruling) ·
+  out of reach: the self-hosted instance (migration unapplied) · apply `20261026180000_group_invite_token.sql` as
+  `supabase_admin`, after `20261026100000` (it replaces that file's `join_group` and `group_join_guests` and calls its
+  `lock_group_member_writes`; run that entry's `prosecdef` check before this one, since this file makes `join_group`
+  SECURITY DEFINER), and BEFORE releasing any build containing group-id-leak (a push to main deploys the web build).
+  The order against `20261026160000` does not matter: this file revokes its own functions. Confirm by read-only SQL
+  that `select count(*) from public."group" where invite_token is null;` returns 0;
+  `select proname, prosecdef, proconfig from pg_proc where proname in ('join_group', 'group_join_guests', 'group_invite_valid', 'reset_group_invite') order by proname;`
+  lists four rows, `prosecdef` true for all but `reset_group_invite`, each with `search_path=""` in `proconfig`; and
+  `select pg_get_function_identity_arguments(oid) from pg_proc where proname = 'join_group';` returns exactly one row,
+  `_group_id uuid, _token uuid, _guest_email text`. Behaviour is already proven on the local harness
+  (`supabase/tests/rls_stopgap/80_group_invite_token_cases.sql`, 9/9; `30_cases.sql` 75/75 with the released builds'
+  join and "stranger joins G1 by id alone" now refused, 72/75 before; 40 14/14, 50 4/4, 60 21/21, 70 21/21).
+
 ## Findings from verification
 
 Defects turned up while walking the checks. These are not checks themselves — nobody ticks them —

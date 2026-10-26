@@ -82,13 +82,13 @@ GoRouter buildAppRouter({
                     path: 'join',
                     parentNavigatorKey: rootNavigatorKey,
                     pageBuilder: (context, state) {
-                      final groupId = state.uri.queryParameters['groupId'];
-                      final groupName = state.uri.queryParameters['name'];
+                      final params = state.uri.queryParameters;
                       return MaterialPage(
                         key: state.pageKey,
                         child: GroupJoinPage(
-                          groupId: groupId ?? '',
-                          groupName: groupName,
+                          groupId: params['groupId'] ?? '',
+                          token: params['token'],
+                          groupName: params['name'],
                         ),
                       );
                     },

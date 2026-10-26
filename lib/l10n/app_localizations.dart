@@ -530,6 +530,36 @@ abstract class AppLocalizations {
   /// **'Hide QR code'**
   String get groupInviteHideQr;
 
+  /// No description provided for @groupInviteResetLink.
+  ///
+  /// In en, this message translates to:
+  /// **'Reset link'**
+  String get groupInviteResetLink;
+
+  /// No description provided for @groupInviteResetTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Reset invite link?'**
+  String get groupInviteResetTitle;
+
+  /// No description provided for @groupInviteResetBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Links you already shared will stop working.'**
+  String get groupInviteResetBody;
+
+  /// No description provided for @groupInviteResetConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Reset'**
+  String get groupInviteResetConfirm;
+
+  /// No description provided for @groupInviteInvalid.
+  ///
+  /// In en, this message translates to:
+  /// **'This invite link is no longer valid. Ask a member of the group for a new link.'**
+  String get groupInviteInvalid;
+
   /// No description provided for @inviteQrButton.
   ///
   /// In en, this message translates to:

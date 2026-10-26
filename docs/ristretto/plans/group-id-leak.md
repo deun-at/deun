@@ -20,10 +20,13 @@
   - [auto] Gates: `flutter analyze` clean, `flutter test` green.
 - Provides:
   - `public."group".invite_token uuid not null` (default a fresh random uuid; existing groups get one in the migration)
-  - `public.join_group(_group_id uuid, _token uuid, _guest_email text default null) returns void` — SECURITY DEFINER; the token-less signature is dropped
-  - `public.group_join_guests(_group_id uuid, _token uuid) returns table (email text, display_name text)` — the token-less signature is dropped
-  - `public.reset_group_invite(_group_id uuid) returns uuid` — active members only; returns the new token
-  - `MemberRepository.joinGroup(String groupId, {required String token, String? guestEmail}): Future<void>`, `MemberRepository.fetchJoinState(String groupId, {required String token}): Future<GroupJoinState>`, `GroupRepository.resetInviteToken(String groupId): Future<String>` (exact class placement is the planner's, against HEAD)
+  - `public.group_invite_valid(_group_id uuid, _token uuid) returns boolean` — SECURITY DEFINER, `search_path = ''`; the one place a token is compared; `join_group`, `group_join_guests` and the client's `fetchJoinState` all use it; returns a boolean, never a token
+  - `public.join_group(_group_id uuid, _token uuid, _guest_email text default null) returns void` — SECURITY DEFINER; a rejected token raises SQLSTATE `DE401`; the token-less signature is dropped
+  - `public.group_join_guests(_group_id uuid, _token uuid) returns table (email text, display_name text)` — SECURITY DEFINER; the token-less signature is dropped
+  - `public.reset_group_invite(_group_id uuid) returns uuid` — SECURITY INVOKER, active members only (42501 otherwise); returns the new token and bumps `group_update_checker`
+  - `public.update_group_member_shares(uuid, uuid)` now pins `search_path = public, pg_temp`
+  - `MemberRepository.joinGroup(String groupId, {required String token, String? guestEmail}): Future<void>` (maps `DE401` to `InviteRejected`), `MemberRepository.fetchJoinState(String groupId, {required String token}): Future<GroupJoinState>` (throws `InviteRejected` before listing anything), `GroupRepository.resetInviteToken(String groupId): Future<String>`
+  - `InviteRejected` (lib/pages/groups/data/member_removal.dart) — the typed "token not current" failure
   - `AppPaths.groupJoin(String groupId, {required String token, String? name})` — the join location carries `token`
 - Consumes: — (guest-merge-rpc and rls-hardening are done; this feature edits their surfaces in place)
 - Decisions:
@@ -41,6 +44,11 @@
   - Tests that pin the old rule → the harness case at 30_cases.sql:92 flips to "refused"; rls_hardening_migration_test.dart's C6 and its statement→policy row for `rpc:join_group` are updated to the new policy and signatures; test/widgets/group_invite_page_test.dart and test/deep_links_test.dart are updated for the token parameter. These are deliberate rule changes, not weakenings.
   - Realtime → unchanged. expense_update_checker stays published and its deletes still carry `{expense_id, group_id}`; after this feature that id grants nothing (stays context: domain/supabase-realtime.md: postgres_changes DELETE payload under RLS). The group_member publication in 20261025200000 remains "do not apply yet" (it leaks emails, a separate finding).
   - Out of scope, recorded → a soft-removed member still passes `is_group_member` (it ignores `removed_at`) and can clear their own `removed_at`; that is the existing soft-removal model, not this leak.
+  - taken: an invite link with a missing, malformed or reset token → shows "This invite link is no longer valid. Ask a member of the group for a new link." / "Dieser Einladungslink ist nicht mehr gültig. Bitte ein Mitglied der Gruppe um einen neuen Link." to everyone, including a current member; the straight-to-the-group redirect runs only after the token is accepted
+  - taken: the token is reset while the join page is open → tapping Continue switches the page to that same "no longer valid" state, not the general error
+  - taken: a link with a malformed token → still opens the join page and shows it as no longer valid; the deep-link allowlist does not silently drop it
+  - taken: the reset confirmation → reuses the app's existing confirm sheet (link-off badge, "Reset invite link?" / "Links you already shared will stop working.", Reset / Cancel) instead of a new dialog; "Reset link" sits beside the QR toggle on the invite sheet
+  - taken: a reset → bumps the group's `group_update_checker`, so other members' open group screens refetch the group and share the new link
 - Units:
   - Migration: `invite_token` column with backfill, replaced group_member INSERT policy, `join_group` and `group_join_guests` with token (old signatures dropped), `reset_group_invite`, grants/revokes
   - Harness: flip 30_cases.sql:92, add token cases (wrong/old/missing token, reset, non-member reset, direct self-insert refused, guests without token), update 40_join_group_cases.sql to pass tokens
@@ -55,3 +63,18 @@
 - Likely touchpoints: supabase/migrations/ (new file), supabase/tests/rls_stopgap/30_cases.sql, 40_join_group_cases.sql, a new cases file, lib/pages/groups/data/member_repository.dart, group_repository.dart, lib/pages/groups/presentation/group_invite_page.dart, group_join_page.dart, lib/app_paths.dart, lib/app_router.dart, lib/deep_links.dart, lib/l10n/app_en.arb, app_de.arb, test/widgets/group_invite_page_test.dart, test/pages/groups/group_join_page_test.dart, test/deep_links_test.dart, test/pages/groups/rls_hardening_migration_test.dart, test/pages/groups/join_group_migration_test.dart, docs/ristretto/manual-checks.md
 - Depends: guest-merge-rpc, rls-hardening
 - Parallel-with: —
+
+## Evidence
+- 1: harness 80_group_invite_token_cases.sql (no token, another group's token, a token retired by a reset: refused, no row written) and 30_cases.sql 'stranger joins G1 by id' flipped to err; local harness only, never live.
+- 2: 30_cases.sql direct own-row insert cases (:92, :68, :76) now err (72/75 before, 75/75 after); rls_hardening_migration_test C6 pins the replaced policy.
+- 3: 40_join_group_cases.sql passes the token, 14/14 (join as new, claim, colliding-share rollback, guest checks).
+- 4: harness 30 75/75, 50 4/4, 60 21/21, 70 21/21 with the migration applied; C8 statement-to-policy table green.
+- 5: 80 'join guests without a valid token list nothing'; 40 'outsider sees exactly the active guests' with the token.
+- 6: 80 'reset by a member', 'a non-member cannot reset', 'reset_group_invite refuses a soft-removed member' (80 9/9).
+- 7: group_invite_page_test (copy carries the token; 'reopening the sheet from a stale group snapshot shows the reset token'; 'after a reset here, a later reset elsewhere shows once the group reloads'), app_router_test, deep_links_test token entry.
+- 8: group_join_page_test (missing and malformed tokens, rejected on load, token reset while open, well-formed token, en and de strings), deep_links_test.
+- 9: group_invite_page_test 'Reset asks first' and 'Reset issues a new token'.
+- 10: rls_hardening_migration_test C1 forward test (covers the new file), join_group_migration_test (revokes, pinned search_path, JWT caller, token checked first); security review found no server-side hole.
+- gates: flutter analyze no issues; flutter test 1927 passed; harness 30 75/75 · 40 14/14 · 50 4/4 · 60 21/21 · 70 21/21 · 80 9/9 (local container only). Migration authored, not applied; its apply entry stays open in manual-checks.md.
+- review: resolved · rounds: 3 · open: 0 block, 0 note, 0 lean · trimmed: 2
+- tier: normal
