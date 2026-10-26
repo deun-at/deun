@@ -7,12 +7,16 @@ const bob = 'bob@test.com';
 const carol = 'carol@test.com';
 
 /// Builds a group_shares_summary row as returned by Supabase.
+///
+/// Emails and amounts are nullable/untyped so malformed rows can be built;
+/// [nameless] nulls both display names (a deleted user row).
 Map<String, dynamic> row({
-  required String paidBy,
-  required String paidFor,
-  double shareAmount = 0,
-  double totalExpenses = 0,
-  double totalShareAmount = 0,
+  required String? paidBy,
+  required String? paidFor,
+  Object? shareAmount = 0.0,
+  Object? totalExpenses = 0.0,
+  Object? totalShareAmount = 0.0,
+  bool nameless = false,
 }) {
   return {
     'paid_by': paidBy,
@@ -20,18 +24,22 @@ Map<String, dynamic> row({
     'share_amount': shareAmount,
     'total_expenses': totalExpenses,
     'total_share_amount': totalShareAmount,
-    'paid_by_display_name': paidBy.split('@').first,
+    'paid_by_display_name': nameless ? null : paidBy?.split('@').first,
     'paid_by_paypal_me': null,
     'paid_by_iban': null,
-    'paid_for_display_name': paidFor.split('@').first,
+    'paid_for_display_name': nameless ? null : paidFor?.split('@').first,
     'paid_for_paypal_me': null,
     'paid_for_iban': null,
   };
 }
 
 /// One row per member carrying that member's net balance
-/// (positive = is owed money, negative = owes money).
-Map<String, dynamic> balancesJson(Map<String, double> balances) {
+/// (positive = is owed money, negative = owes money). Members in [nameless]
+/// have null display names.
+Map<String, dynamic> balancesJson(
+  Map<String, Object?> balances, {
+  Set<String> nameless = const {},
+}) {
   return {
     'group_shares_summary': [
       for (final entry in balances.entries)
@@ -39,15 +47,26 @@ Map<String, dynamic> balancesJson(Map<String, double> balances) {
           paidBy: entry.key,
           paidFor: entry.key,
           totalShareAmount: entry.value,
+          nameless: nameless.contains(entry.key),
         ),
     ],
   };
 }
 
-Map<String, double> settle(Map<String, double> balances, {String currentUser = me}) {
+Map<String, double> amountsOf(Group group) => group.groupSharesSummary.map(
+  (email, summary) => MapEntry(email, summary.shareAmount),
+);
+
+Map<String, double> settle(
+  Map<String, Object?> balances, {
+  String currentUser = me,
+}) {
   final group = Group();
-  group.calculateGroupSharesSummarySimplified(balancesJson(balances), currentUser);
-  return group.groupSharesSummary.map((email, summary) => MapEntry(email, summary.shareAmount));
+  group.calculateGroupSharesSummarySimplified(
+    balancesJson(balances),
+    currentUser,
+  );
+  return amountsOf(group);
 }
 
 void main() {
@@ -128,8 +147,18 @@ void main() {
       final group = Group();
       group.calculateGroupSharesSummarySimplified({
         'group_shares_summary': [
-          row(paidBy: alice, paidFor: me, totalExpenses: 0.1, totalShareAmount: -0.3),
-          row(paidBy: bob, paidFor: me, totalExpenses: 0.2, totalShareAmount: -0.3),
+          row(
+            paidBy: alice,
+            paidFor: me,
+            totalExpenses: 0.1,
+            totalShareAmount: -0.3,
+          ),
+          row(
+            paidBy: bob,
+            paidFor: me,
+            totalExpenses: 0.2,
+            totalShareAmount: -0.3,
+          ),
           row(paidBy: me, paidFor: alice, totalShareAmount: 0.15),
           row(paidBy: me, paidFor: bob, totalShareAmount: 0.15),
         ],
@@ -140,7 +169,9 @@ void main() {
 
     test('null and missing summary data yield empty results', () {
       final group = Group();
-      group.calculateGroupSharesSummarySimplified({'group_shares_summary': null}, me);
+      group.calculateGroupSharesSummarySimplified({
+        'group_shares_summary': null,
+      }, me);
       expect(group.groupSharesSummary, isEmpty);
       expect(group.totalExpenses, 0);
       expect(group.totalShareAmount, 0);
@@ -193,11 +224,146 @@ void main() {
       final group = Group();
       group.calculateGroupSharesSummaryDefault({
         'group_shares_summary': [
-          row(paidBy: me, paidFor: me, shareAmount: 10.0, totalExpenses: 10.0, totalShareAmount: 0.0),
+          row(
+            paidBy: me,
+            paidFor: me,
+            shareAmount: 10.0,
+            totalExpenses: 10.0,
+            totalShareAmount: 0.0,
+          ),
         ],
       }, me);
       expect(group.groupSharesSummary, isEmpty);
       expect(group.totalExpenses, 10.0);
+    });
+  });
+
+  // group-model-parse-safety: a malformed row never leaves an unset field, and
+  // the group's other rows still count.
+  group('malformed summary rows', () {
+    test('default: a counterparty with no display name reads its email', () {
+      final group = Group();
+      group.calculateGroupSharesSummaryDefault({
+        'group_shares_summary': [
+          row(paidBy: me, paidFor: alice, shareAmount: 25.0, nameless: true),
+          row(paidBy: bob, paidFor: me, shareAmount: 10.0, nameless: true),
+        ],
+      }, me);
+      expect(group.groupSharesSummary[alice]!.displayName, alice);
+      expect(group.groupSharesSummary[alice]!.shareAmount, 25.0);
+      expect(group.groupSharesSummary[bob]!.displayName, bob);
+      expect(group.groupSharesSummary[bob]!.shareAmount, -10.0);
+    });
+
+    test('default: rows after a malformed row still count', () {
+      final group = Group();
+      group.calculateGroupSharesSummaryDefault({
+        'group_shares_summary': [
+          row(paidBy: me, paidFor: alice, shareAmount: 25.0, nameless: true),
+          row(paidBy: me, paidFor: carol, shareAmount: 5.0),
+          row(
+            paidBy: me,
+            paidFor: me,
+            totalExpenses: 30.0,
+            totalShareAmount: -12.34,
+          ),
+        ],
+      }, me);
+      expect(group.groupSharesSummary[carol]!.shareAmount, 5.0);
+      expect(group.totalShareAmount, -12.34);
+      expect(group.totalExpenses, 30.0);
+    });
+
+    test('default: a null, non-numeric or non-finite amount counts as 0', () {
+      for (final bad in [null, 'abc', 'NaN']) {
+        final group = Group();
+        group.calculateGroupSharesSummaryDefault({
+          'group_shares_summary': [
+            row(paidBy: me, paidFor: alice, shareAmount: bad),
+            row(paidBy: me, paidFor: alice, shareAmount: 7.0),
+            row(
+              paidBy: me,
+              paidFor: me,
+              totalExpenses: bad,
+              totalShareAmount: bad,
+            ),
+          ],
+        }, me);
+        expect(
+          group.groupSharesSummary[alice]!.shareAmount,
+          7.0,
+          reason: '$bad',
+        );
+        expect(group.totalExpenses, 0, reason: '$bad');
+        expect(group.totalShareAmount, 0, reason: '$bad');
+      }
+    });
+
+    test('simplified: a counterparty with no display name reads its email', () {
+      final group = Group();
+      group.calculateGroupSharesSummarySimplified(
+        balancesJson({me: -50.0, alice: 50.0}, nameless: {alice}),
+        me,
+      );
+      expect(group.groupSharesSummary[alice]!.displayName, alice);
+      expect(group.groupSharesSummary[alice]!.shareAmount, -50.0);
+    });
+
+    test('simplified: a non-numeric balance counts as 0', () {
+      for (final bad in ['abc', 'NaN']) {
+        expect(settle({me: -50.0, alice: 50.0, bob: bad}), {
+          alice: -50.0,
+        }, reason: bad);
+      }
+    });
+
+    test('default: a row with no paid_by or paid_for email is skipped', () {
+      final group = Group();
+      group.calculateGroupSharesSummaryDefault({
+        'group_shares_summary': [
+          row(paidBy: me, paidFor: alice, shareAmount: 25.0),
+          row(paidBy: me, paidFor: null, shareAmount: 9.0),
+          row(paidBy: me, paidFor: '', shareAmount: 9.0),
+        ],
+      }, me);
+      expect(amountsOf(group), {alice: 25.0});
+    });
+
+    test('simplified: a row with no paid_by or paid_for email is skipped', () {
+      final json = balancesJson({me: -50.0, alice: 50.0});
+      json['group_shares_summary'].add(
+        row(paidBy: null, paidFor: null, totalShareAmount: 99.0),
+      );
+      final group = Group();
+      group.calculateGroupSharesSummarySimplified(json, me);
+      expect(amountsOf(group), {alice: -50.0});
+    });
+
+    test('default: a zero-decimal group still rounds in its currency', () {
+      final group = Group()..currencyCode = 'JPY';
+      group.calculateGroupSharesSummaryDefault({
+        'group_shares_summary': [
+          row(paidBy: me, paidFor: alice, shareAmount: 2500.6, nameless: true),
+          row(
+            paidBy: me,
+            paidFor: me,
+            totalExpenses: 2500.6,
+            totalShareAmount: 2500.6,
+          ),
+        ],
+      }, me);
+      expect(group.groupSharesSummary[alice]!.shareAmount, 2501.0);
+      expect(group.totalExpenses, 2501.0);
+      expect(group.totalShareAmount, 2501.0);
+    });
+
+    test('simplified: a zero-decimal group still rounds in its currency', () {
+      final group = Group()..currencyCode = 'JPY';
+      group.calculateGroupSharesSummarySimplified(
+        balancesJson({me: -2500.6, alice: 2500.6}),
+        me,
+      );
+      expect(amountsOf(group), {alice: -2501.0});
     });
   });
 }
