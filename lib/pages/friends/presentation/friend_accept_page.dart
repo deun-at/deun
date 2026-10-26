@@ -90,7 +90,7 @@ class _FriendAcceptPageState extends State<FriendAcceptPage> {
 
   Future<void> _accept() async {
     setState(() => _accepting = true);
-    final notifications = NotificationSender.of(context);
+    final notifications = NotificationSender();
     final email = _targetUser!.email;
     try {
       await FriendshipRepository.accepted(email);

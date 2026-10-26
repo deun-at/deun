@@ -41,7 +41,7 @@ class _FriendListState extends ConsumerState<FriendList> {
   }
 
   Future<void> _acceptFriendRequest(String email, String displayName) async {
-    final notifications = NotificationSender.of(context);
+    final notifications = NotificationSender();
     try {
       await FriendshipRepository.accepted(email);
       unawaited(notifications.friendAccepted({email}));

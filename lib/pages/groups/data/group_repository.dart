@@ -504,8 +504,7 @@ class GroupRepository {
   /// the fallback SELECT costs a round trip on the hot self-settle path and
   /// turns a transient read failure into a failed settle.
   ///
-  /// [notifications] is built by the caller before its first await, so the push
-  /// that follows the write never reads a BuildContext.
+  /// [notifications] sends the push that follows the write.
   static Future<void> payBack(
     String groupId,
     String email,
@@ -557,12 +556,10 @@ class GroupRepository {
     );
   }
 
-  /// The notify step a single payback and every settle-all group share, so the
-  /// copy is identical by construction. Fire-and-forget: never delays or fails
-  /// a write that committed. Every name comes off the roster the plan was
-  /// resolved against, NOT from the DB row, so the copy works before the
-  /// migration is applied; `recordedByDisplayName` null on the self path ->
-  /// today's copy, unchanged.
+  /// The notify step a single payback and every settle-all group share.
+  /// Fire-and-forget: never delays or fails a write that committed. The server
+  /// names both parties from the emails and picks the on-behalf copy when the
+  /// signed-in recorder is not the payer.
   static void _notifyPayBack(
     NotificationSender notifications,
     String groupId,
@@ -573,11 +570,8 @@ class GroupRepository {
         groupId: groupId,
         receivers: accepted.notificationReceivers,
         amount: accepted.amount,
-        paidByDisplayName: accepted.paidByDisplayName,
-        paidForDisplayName: accepted.paidForDisplayName,
-        recordedByDisplayName: accepted.isOnBehalf
-            ? accepted.recordedByDisplayName
-            : null,
+        paidBy: accepted.paidBy,
+        paidFor: accepted.paidFor,
       ),
     );
   }

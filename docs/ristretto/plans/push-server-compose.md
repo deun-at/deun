@@ -43,6 +43,7 @@
     - `class PushRequest` with `const PushRequest({required PushKind kind, required String objectId, required Set<String> receivers, double? amount, String? paidBy, String? paidFor})`.
     - `typedef PushTransport = Future<void> Function(PushRequest request)`. It replaces the five-argument shape. `ClaimNotificationSender` stays an alias of it.
     - `Map<String, dynamic> pushRequestBody(PushRequest request, {String? senderEmail})` builds `{type: 'INSERT', table: <routingType>, record: {kind, type, object_id, notification_receiver, amount?, paid_by?, paid_for?}}`, with no title and no body, and leaves `senderEmail` out of notification_receiver.
+    - `postPushRequest(PushRequest request, {required String? senderEmail, required Future<void> Function(Map<String, dynamic> body) post})` (`@visibleForTesting`) posts `pushRequestBody(request, senderEmail: …)` and posts nothing when `senderEmail` is null.
   - `NotificationSender({PushTransport? push})`. Every method returns `Future<void>` and completes normally on every failure:
     - `memberAdded(String groupId, Set<String> receivers)`
     - `paybackRecorded({required String groupId, required Set<String> receivers, required double amount, required String paidBy, required String paidFor})`
@@ -50,6 +51,7 @@
     - `expenseCreated(String expenseId, Set<String> receivers, double amount)`
     - `friendRequested(Set<String> receivers)` / `friendAccepted(Set<String> receivers)`
     - `claimNudge({required String expenseId, required Set<String> receivers})`
+  - Removed from `PaybackAccepted` (lib/pages/groups/data/payback_request.dart): `paidByDisplayName`, `paidForDisplayName` and `recordedByDisplayName`. `recordedBy` and `isOnBehalf` remain, with no production reader (see Open findings).
   - Removed from notification-context-free's surface: `NotificationSender.of`, the `AppLocalizations` constructor argument, `NotificationRowLookup` and `SenderNameLookup`. `GroupRepository.payBack`, `GroupRepository.payBackAll`, `ExpenseRepository.saveAll`, `ExpenseSaver` and `FriendSettleAll` keep their signatures.
   - Edge Function `push` (supabase/functions/push/index.ts):
     - It accepts the body that `pushRequestBody` builds, and only from a signed-in caller.
@@ -98,6 +100,9 @@
   - Reminder tap -> out of scope: tapping a reminder still opens nothing. The brief pins only the data keys, and push-session-lifecycle's "including 'reminder' targets nothing" test stays green. This is left to Jakob as a follow-up idea. Source: Jakob in prep code-review-2026-10 (2026-10-24) (data keys unchanged); push-session-lifecycle Decisions ("Push data keys").
   - Client shape -> `NotificationSender` keeps its name, its seven sends, every call site and every repository signature. It loses `AppLocalizations`, both row lookups and the sender-name lookup, because the client no longer writes any push text. `NotificationSender.of` goes, and call sites build `NotificationSender()`. The payback notify step passes `PaybackAccepted.paidBy` / `.paidFor` instead of display names, and the claim nudge passes only its expense id and receivers. Source: notification-context-free Provides; prep ruling.
   - Landing order with the plans that share these signatures, none of which depends on this one or it on them: "keep their signatures" means the form each has at build time. If typed-expense-draft has landed, `saveAll` and `ExpenseSaver` carry its `ExpenseDraft` in place of the form map in Consumes, and this feature does not touch that parameter. If injectable-repositories has landed, `payBack` / `payBackAll` and the payback notify step live in `PaybackRepository` (lib/pages/groups/data/payback_repository.dart) and `saveAll` is an `ExpenseRepository` instance method; the notify step is edited there, and `NotificationSender()` stays outside the provider graph (injectable-repositories plan, Decisions "Push service"). If presentation-file-split has landed, the claim nudge handler is still in `_ClaimPageState` in claim_page.dart (presentation-file-split plan, Decisions). Source: those plans' Decisions.
+  - taken: Recover source → "as deployed" means the 2026-10-24 dump plus the 2026-10-25 caller-check stopgap that went live (manual-checks Applied table). Applying C:/work/deun-rescue/push/caller_check.diff (it holds no key) to the dump reproduces deun-rescue/push/index.ts byte for byte. The Recover commit is that copy with the inlined service-account block swapped for an environment read.
+  - taken: credential env var → `FIREBASE_SERVICE_ACCOUNT`, holding the whole service-account JSON on one line. Before the redeploy, the manual-checks entry has Jakob rotate the key and set this variable on the functions container. The redeploy must also come before any release of the new client.
+  - taken: payback display names → `PaybackAccepted.paidByDisplayName`, `.paidForDisplayName` and `.recordedByDisplayName` are removed, together with the payback_request test that pinned them. The push was their only reader, and names are now read server-side from rows (push_function_test B). The three payback_request tests the contract lists stay unedited.
 - Units:
   - Recover: commit the recovered copy as deployed, with credentials swapped for environment reads, plus the credential scan over supabase/functions/push/.
   - Kind table: write push_kinds.json and a Dart suite (for example test/supabase/push_function_test.dart) that parses it against both ARB files, `kSupportedCurrencies` and `PushKind`. It covers kind parity, copy parity, bindings and zero-decimal codes.
@@ -128,3 +133,26 @@
   - typed-expense-draft, editor-failure-keeps-form, scan-total-applies and expense-editor-split edit expense_detail.dart, where the sender is built.
   - payback-atomic-recalc and legacy-fallback-removal edit `payBack`.
   - helper-split and injectable-repositories edit the sender and the static repositories.
+
+## Evidence
+- 1: test/helper/notification_sender_test.dart 'every kind reaches the server with what it needs to write the push, ...' (one case per wire-table row: member added, payback recorded by the payer or on their behalf, payment reminder, expense created, claim nudge, friend request and accepted) over `pushRequestBody` and a spy transport.
+- 2: test/supabase/push_function_test.dart 'every kind the client can send is one the server can write, with the same routing type' (push_kinds.json against `PushKind`).
+- 3: push_function_test.dart 'tapping a push still opens what it opens today' (index.ts source shape); the client half stays with `pushTargetFor`'s tests in test/push_notifications_test.dart.
+- 4: push_function_test.dart 'every kind has its English and German copy, worded as the ARB files' (push_kinds.json against app_en.arb and app_de.arb).
+- 5: push_function_test.dart "the language is the receiver's stored language, never the sender's" (index.ts reads `user.locale` per receiver).
+- 6: push_function_test.dart 'every name in a push belongs to the right person' (placeholder bindings; names read server-side from rows). The old payback_request display-name test was removed with the fields it pinned (taken above).
+- 7: push_function_test.dart "amounts show in the group's currency with that currency's own decimals" (zero-decimal list equals the `kSupportedCurrencies` codes with no decimal digits).
+- 8: push_function_test.dart 'only a signed-in caller can send a push, and only a known kind' (index.ts source shape; the gates cannot run TypeScript, a local `deno check` of index.ts was clean).
+- 9: push_function_test.dart "only people who share the push's group or friendship with the caller receive it ..." (source shape: active-membership `removed_at is null`, exact-match receiver filtering, friendship either direction, caller removed from receivers).
+- 10: push_function_test.dart 'no credential is committed under supabase/functions/push' (reuses `findSecrets`; adds the `"private_key"` field and FCM server-key shapes). `git diff --cached` scanned before the commit: no key material.
+- 11: test/helper/notification_sender_test.dart 'no send ever throws to its caller' and 'nothing is posted when nobody is signed in'; the settle-all cases in test/model/group_repository_test.dart. "A push still goes out after the issuing screen is gone" holds by signature: `NotificationSender()` takes no BuildContext, so its dedicated test was trimmed.
+- 12: the contract's listed receiver tests (test/model/payback_request_test.dart, member_add_test.dart, record_payback_sheet_test.dart, group_member_add_flow_test.dart) pass with their receiver assertions unedited; test/widgets/claim_nudge_test.dart F175 asserts type, object id, receivers and kind `claim_nudge`.
+- 13: `dart format --set-exit-if-changed` on the 19 touched Dart files (0 changed), `flutter analyze` (no issues), `flutter test` (1805 passed).
+- 14: pending human
+- 15: pending human
+- gates: dart format clean on touched files, flutter analyze no issues, flutter test 1805 passed (PATH flutter 3.44.2)
+- review: notes-only · rounds: 1 · open: 0 block, 0 note, 1 lean · trimmed: 1 (a second lean, the unused `serve` import at index.ts:2, was fixed by the orchestrator)
+- tier: normal
+
+## Open findings
+- lean · lib/pages/groups/data/payback_request.dart:61-69 · `PaybackAccepted.recordedBy` and `isOnBehalf` have no production reader any more, because the server now picks the on-behalf copy from the caller (it now uses the `paidBy`/`paidFor` emails) · delete both. Their only readers are the test assertions at payback_request_test.dart:61-62 and 69-71 and group_repository_test.dart:265 and 296-297. `recordedBy` is then unused in `resolvePayback`/`planPayBack` too.

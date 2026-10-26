@@ -5,10 +5,8 @@
 // a no-op transport; no test here reaches the network.
 
 import 'package:deun/helper/notification_sender.dart';
-import 'package:deun/l10n/app_localizations.dart';
 import 'package:deun/pages/groups/data/group_member_model.dart';
 import 'package:deun/pages/groups/data/group_repository.dart';
-import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -25,7 +23,6 @@ GroupMember _member(String email, String displayName) => GroupMember()
   ..isFavorite = false;
 
 void main() {
-  final en = lookupAppLocalizations(const Locale('en'));
   final roster = [_member(_ann, 'Ann'), _member(_bob, 'Bob')];
   const missingExact = PostgrestException(
     message: 'Could not find the function public.pay_back_exact',
@@ -48,15 +45,7 @@ void main() {
     12.5,
     paidBy: _ann,
     members: roster,
-    notifications: NotificationSender(
-      en,
-      push: (type, objectId, receivers, title, body) async {},
-      groupRow: (_) async => const {
-        'name': 'Trip',
-        'currency_code': 'EUR',
-        'user_display_name': 'Zoe',
-      },
-    ),
+    notifications: NotificationSender(push: (request) async {}),
   );
 
   setUpAll(() async {

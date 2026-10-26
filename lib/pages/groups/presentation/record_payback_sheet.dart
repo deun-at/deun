@@ -176,7 +176,7 @@ class _RecordPaybackSheetState extends State<RecordPaybackSheet> {
           // Deliberately no `members:` here: the sheet can sit open for a while,
           // so let the repository re-resolve against a FRESH roster and catch a
           // member removed in the meantime.
-          notifications: NotificationSender.of(context),
+          notifications: NotificationSender(),
         );
       }
       // The confirmation is the check on the CTA, held long enough to read

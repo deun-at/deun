@@ -1262,7 +1262,7 @@ class _ExpenseDetailState extends ConsumerState<ExpenseDetail> {
       // Past every validation gate — from here a write is actually going out,
       // so the CTA takes over as the progress indicator.
       if (_saveStatus != _SaveStatus.idle) return;
-      final notifications = NotificationSender.of(context);
+      final notifications = NotificationSender();
       setState(() => _saveStatus = _SaveStatus.busy);
 
       final errorMessage = AppLocalizations.of(context)!.expenseCreateError;

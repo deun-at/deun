@@ -365,7 +365,7 @@ class _OwesRowState extends State<_OwesRow> {
   Future<void> _remind() async {
     setState(() => _sending = true);
     final l10n = AppLocalizations.of(context)!;
-    final notifications = NotificationSender.of(context);
+    final notifications = NotificationSender();
     try {
       final lastReminder = await ReminderRepository.getLastReminder(
         widget.group.id,
@@ -543,7 +543,7 @@ class _PaymentMethodSheet extends StatelessWidget {
   /// closes both this sheet and the parent payment sheet.
   Future<void> _settle(BuildContext context) async {
     final l10n = AppLocalizations.of(context)!;
-    final notifications = NotificationSender.of(context);
+    final notifications = NotificationSender();
     try {
       await GroupRepository.payBack(
         group.id,

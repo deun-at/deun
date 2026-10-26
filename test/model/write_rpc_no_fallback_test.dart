@@ -7,10 +7,8 @@
 
 import 'package:deun/helper/currency.dart';
 import 'package:deun/helper/notification_sender.dart';
-import 'package:deun/l10n/app_localizations.dart';
 import 'package:deun/pages/expenses/data/expense_repository.dart';
 import 'package:deun/pages/groups/data/group_repository.dart';
-import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -85,11 +83,7 @@ void main() {
   });
 
   group('an expense save goes through save_expense_all alone', () {
-    final en = lookupAppLocalizations(const Locale('en'));
-    final notifications = NotificationSender(
-      en,
-      push: (type, objectId, receivers, title, body) async {},
-    );
+    final notifications = NotificationSender(push: (request) async {});
 
     /// One equal-split line, as the editor's form submits it.
     Map<String, dynamic> form() => {

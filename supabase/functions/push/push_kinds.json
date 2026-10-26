@@ -1,0 +1,181 @@
+{
+  "zero_decimal_currencies": [
+    "JPY",
+    "ISK",
+    "KRW"
+  ],
+  "kinds": {
+    "member_added": {
+      "type": "group",
+      "scope": "group",
+      "copy": {
+        "default": {
+          "title": {
+            "key": "groupNotificationTitle",
+            "en": "{userDisplayName} added you to a new group!",
+            "de": "{userDisplayName} hat dich zu einer neuen Gruppe hinzugefügt!"
+          },
+          "body": {
+            "key": "groupNotificationBody",
+            "en": "You now have access to \"{groupName}\".",
+            "de": "Du hast jetzt Zugriff auf \"{groupName}\"."
+          }
+        }
+      },
+      "bindings": {
+        "userDisplayName": "caller.display_name",
+        "groupName": "group.name"
+      }
+    },
+    "payback_recorded": {
+      "type": "group",
+      "scope": "group",
+      "copy": {
+        "default": {
+          "title": {
+            "key": "groupPayBackNotificationTitle",
+            "en": "{userDisplayName} paid their debts in \"{groupName}\" back!",
+            "de": "{userDisplayName} hat die Schulden in \"{groupName}\" zurückgezahlt!"
+          },
+          "body": {
+            "key": "groupPayBackNotificationBody",
+            "en": "You should receive {amount} in the next days.",
+            "de": "Du solltest {amount} in den nächsten Tagen erhalten."
+          }
+        },
+        "on_behalf": {
+          "title": {
+            "key": "groupPayBackOnBehalfNotificationTitle",
+            "en": "{recordedByDisplayName} recorded a payment in \"{groupName}\"",
+            "de": "{recordedByDisplayName} hat eine Zahlung in \"{groupName}\" erfasst"
+          },
+          "body": {
+            "key": "groupPayBackOnBehalfNotificationBody",
+            "en": "{paidByDisplayName} paid {paidForDisplayName} {amount}.",
+            "de": "{paidByDisplayName} hat {paidForDisplayName} {amount} gezahlt."
+          }
+        }
+      },
+      "bindings": {
+        "userDisplayName": "caller.display_name",
+        "groupName": "group.name",
+        "amount": "amount",
+        "recordedByDisplayName": "caller.display_name",
+        "paidByDisplayName": "paid_by.display_name",
+        "paidForDisplayName": "paid_for.display_name"
+      }
+    },
+    "payment_reminder": {
+      "type": "reminder",
+      "scope": "group",
+      "copy": {
+        "default": {
+          "title": {
+            "key": "reminderNotificationTitle",
+            "en": "{displayName} reminds you",
+            "de": "{displayName} erinnert dich"
+          },
+          "body": {
+            "key": "reminderNotificationBody",
+            "en": "You owe {amount} in {groupName}",
+            "de": "Du schuldest {amount} in {groupName}"
+          }
+        }
+      },
+      "bindings": {
+        "displayName": "caller.display_name",
+        "amount": "amount",
+        "groupName": "group.name"
+      }
+    },
+    "expense_created": {
+      "type": "expense",
+      "scope": "expense",
+      "copy": {
+        "default": {
+          "title": {
+            "key": "expenseNotificationTitle",
+            "en": "{userDisplayName} added a new expense!",
+            "de": "{userDisplayName} hat eine neue Ausgabe hinzugefügt!"
+          },
+          "body": {
+            "key": "expenseNotificationBody",
+            "en": "\"{expenseName}\" has been added to \"{groupName}\" with a total of {amount}.",
+            "de": "\"{expenseName}\" wurde zu \"{groupName}\" mit einem Gesamtbetrag von {amount} hinzugefügt."
+          }
+        }
+      },
+      "bindings": {
+        "userDisplayName": "caller.display_name",
+        "expenseName": "expense.name",
+        "groupName": "group.name",
+        "amount": "amount"
+      }
+    },
+    "claim_nudge": {
+      "type": "expense",
+      "scope": "expense",
+      "copy": {
+        "default": {
+          "title": {
+            "key": "claimNudgeNotificationTitle",
+            "en": "{userDisplayName} nudged you",
+            "de": "{userDisplayName} erinnert dich"
+          },
+          "body": {
+            "key": "claimNudgeNotificationBody",
+            "en": "Claim your items in \"{expenseName}\" ({groupName}).",
+            "de": "Ordne deine Posten in \"{expenseName}\" ({groupName}) zu."
+          }
+        }
+      },
+      "bindings": {
+        "userDisplayName": "caller.display_name",
+        "expenseName": "expense.name",
+        "groupName": "group.name"
+      }
+    },
+    "friend_requested": {
+      "type": "friendship",
+      "scope": "friendship",
+      "copy": {
+        "default": {
+          "title": {
+            "key": "friendRequestNotificationTitle",
+            "en": "You have a new friend request",
+            "de": "Du hast eine neue Freundschaftsanfrage"
+          },
+          "body": {
+            "key": "friendRequestNotificationBody",
+            "en": "{userDisplayName} wants to connect with you.",
+            "de": "{userDisplayName} möchte sich mit dir vernetzen."
+          }
+        }
+      },
+      "bindings": {
+        "userDisplayName": "caller.display_name"
+      }
+    },
+    "friend_accepted": {
+      "type": "friendship",
+      "scope": "friendship",
+      "copy": {
+        "default": {
+          "title": {
+            "key": "friendAcceptNotificationTitle",
+            "en": "Your friend request got accepted",
+            "de": "Deine Freundschaftsanfrage wurde angenommen"
+          },
+          "body": {
+            "key": "friendAcceptNotificationBody",
+            "en": "{userDisplayName} accepted your friend request.",
+            "de": "{userDisplayName} hat deine Freundschaftsanfrage angenommen."
+          }
+        }
+      },
+      "bindings": {
+        "userDisplayName": "caller.display_name"
+      }
+    }
+  }
+}

@@ -170,7 +170,7 @@ class _GroupMembersPageState extends ConsumerState<GroupMembersPage> {
     if (_busy) return;
     setState(() => _busy = true);
     final l10n = AppLocalizations.of(context)!;
-    final notifications = NotificationSender.of(context);
+    final notifications = NotificationSender();
     final group = _currentGroup();
     try {
       MemberAddOutcome outcome;

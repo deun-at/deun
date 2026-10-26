@@ -1,272 +1,188 @@
-import 'dart:async';
-
-import 'package:deun/helper/helper.dart';
-import 'package:deun/l10n/app_localizations.dart';
 import 'package:deun/main.dart';
-import 'package:deun/pages/users/user_repository.dart';
-import 'package:flutter/widgets.dart';
+import 'package:flutter/foundation.dart';
+
+/// Every push the app sends. [wireName] is the `record.kind` the `push` Edge
+/// Function looks up in supabase/functions/push/push_kinds.json, where the
+/// text is written in each receiver's language. [routingType] is the FCM
+/// `data['type']` a tap routes on (see `pushTargetFor`).
+enum PushKind {
+  memberAdded('member_added', 'group'),
+  paybackRecorded('payback_recorded', 'group'),
+  paymentReminder('payment_reminder', 'reminder'),
+  expenseCreated('expense_created', 'expense'),
+  claimNudge('claim_nudge', 'expense'),
+  friendRequested('friend_requested', 'friendship'),
+  friendAccepted('friend_accepted', 'friendship');
+
+  const PushKind(this.wireName, this.routingType);
+
+  final String wireName;
+  final String routingType;
+}
+
+/// What the server needs to write one push, and no text: the server reads
+/// every name from rows and writes the copy itself. [amount] is the number the
+/// text shows; [paidBy] and [paidFor] are emails.
+class PushRequest {
+  const PushRequest({
+    required this.kind,
+    required this.objectId,
+    required this.receivers,
+    this.amount,
+    this.paidBy,
+    this.paidFor,
+  });
+
+  final PushKind kind;
+
+  /// The group id (member added, payback, reminder), the expense id (expense
+  /// created, claim nudge) or empty (friendship).
+  final String objectId;
+  final Set<String> receivers;
+  final double? amount;
+  final String? paidBy;
+  final String? paidFor;
+}
 
 /// The `push` Edge Function call. Default: [_invokePush].
-typedef PushTransport =
-    Future<void> Function(
-      String type,
-      String objectId,
-      Set<String> receivers,
-      String title,
-      String body,
-    );
-
-/// One row of today's select. Group row: `name`, `currency_code`,
-/// `user_display_name` (the group's creator). Expense row: `name`,
-/// `group_name`, `group_currency_code`, `user_display_name` (the expense's
-/// creator).
-typedef NotificationRowLookup =
-    Future<Map<String, dynamic>> Function(String id);
-
-/// The signed-in user's display name, or null when nobody is signed in.
-typedef SenderNameLookup = Future<String?> Function();
+typedef PushTransport = Future<void> Function(PushRequest request);
 
 /// The body posted to the `push` Edge Function. [senderEmail] is left out of
-/// `notification_receiver`; [receivers] is not mutated.
-Map<String, dynamic> pushRequestBody({
-  required String type,
-  required String objectId,
-  required Set<String> receivers,
-  required String title,
-  required String body,
+/// `notification_receiver`; the request is not mutated.
+Map<String, dynamic> pushRequestBody(
+  PushRequest request, {
   String? senderEmail,
 }) => {
   'type': 'INSERT',
-  'table': type,
+  'table': request.kind.routingType,
   'record': {
-    'type': type,
-    'object_id': objectId,
-    'title': title,
-    'body': body,
+    'kind': request.kind.wireName,
+    'type': request.kind.routingType,
+    'object_id': request.objectId,
     'notification_receiver': [
-      for (final receiver in receivers)
+      for (final receiver in request.receivers)
         if (receiver != senderEmail) receiver,
     ],
+    if (request.amount != null) 'amount': request.amount,
+    if (request.paidBy != null) 'paid_by': request.paidBy,
+    if (request.paidFor != null) 'paid_for': request.paidFor,
   },
 };
 
-/// Composes and sends every push. Holds its [AppLocalizations] from
-/// construction on, so no BuildContext is ever read after a lookup returns.
-/// Constructing one touches no Supabase client; the defaults reach `supabase`
-/// only when a send runs. Every method completes normally on every failure.
-class NotificationSender {
-  NotificationSender(
-    this._l10n, {
-    PushTransport? push,
-    NotificationRowLookup? groupRow,
-    NotificationRowLookup? expenseRow,
-    SenderNameLookup? senderName,
-  }) : _push = push ?? _invokePush,
-       _groupRow = groupRow ?? _fetchGroupRow,
-       _expenseRow = expenseRow ?? _fetchExpenseRow,
-       _senderName = senderName ?? _fetchSenderName;
+/// Posts [request] as the signed-in [senderEmail]. Nobody signed in posts
+/// nothing. The server would refuse it anyway.
+@visibleForTesting
+Future<void> postPushRequest(
+  PushRequest request, {
+  required String? senderEmail,
+  required Future<void> Function(Map<String, dynamic> body) post,
+}) async {
+  if (senderEmail == null) return;
+  await post(pushRequestBody(request, senderEmail: senderEmail));
+}
 
-  /// Resolves [AppLocalizations] synchronously: call it before the first await.
-  factory NotificationSender.of(
-    BuildContext context, {
-    PushTransport? push,
-    NotificationRowLookup? groupRow,
-    NotificationRowLookup? expenseRow,
-    SenderNameLookup? senderName,
-  }) => NotificationSender(
-    AppLocalizations.of(context)!,
-    push: push,
-    groupRow: groupRow,
-    expenseRow: expenseRow,
-    senderName: senderName,
+/// Sends every push as a [PushRequest]. Holds no BuildContext and no strings,
+/// so a send never depends on the screen that issued it. Constructing one
+/// touches no Supabase client: the default transport reaches `supabase` only
+/// when a send runs. Every method completes normally on every failure.
+class NotificationSender {
+  NotificationSender({PushTransport? push}) : _push = push ?? _invokePush;
+
+  final PushTransport _push;
+
+  Future<void> memberAdded(String groupId, Set<String> receivers) => _send(
+    PushRequest(
+      kind: PushKind.memberAdded,
+      objectId: groupId,
+      receivers: receivers,
+    ),
   );
 
-  final AppLocalizations _l10n;
-  final PushTransport _push;
-  final NotificationRowLookup _groupRow;
-  final NotificationRowLookup _expenseRow;
-  final SenderNameLookup _senderName;
-
-  String _money(double amount, Object? currencyCode) =>
-      _l10n.toCurrency(amount, currencyCode as String? ?? kDefaultCurrencyCode);
-
-  Future<void> memberAdded(String groupId, Set<String> receivers) =>
-      _guard('group', () async {
-        final row = await _groupRow(groupId);
-        await _push(
-          'group',
-          groupId,
-          receivers,
-          _l10n.groupNotificationTitle(row['user_display_name']),
-          _l10n.groupNotificationBody(row['name']),
-        );
-      });
-
-  /// [recordedByDisplayName] null = the payer recorded it (today's copy);
-  /// non-null = the on-behalf copy.
+  /// The server picks the on-behalf copy when the caller is not [paidBy].
   Future<void> paybackRecorded({
     required String groupId,
     required Set<String> receivers,
     required double amount,
-    required String paidByDisplayName,
-    required String paidForDisplayName,
-    String? recordedByDisplayName,
-  }) => _guard('payback', () async {
-    final row = await _groupRow(groupId);
-    final amountText = _money(amount, row['currency_code']);
-    final String title;
-    final String body;
-    if (recordedByDisplayName == null) {
-      title = _l10n.groupPayBackNotificationTitle(
-        paidByDisplayName,
-        row['name'],
-      );
-      body = _l10n.groupPayBackNotificationBody(amountText);
-    } else {
-      title = _l10n.groupPayBackOnBehalfNotificationTitle(
-        recordedByDisplayName,
-        row['name'],
-      );
-      body = _l10n.groupPayBackOnBehalfNotificationBody(
-        paidByDisplayName,
-        paidForDisplayName,
-        amountText,
-      );
-    }
-    await _push('group', groupId, receivers, title, body);
-  });
+    required String paidBy,
+    required String paidFor,
+  }) => _send(
+    PushRequest(
+      kind: PushKind.paybackRecorded,
+      objectId: groupId,
+      receivers: receivers,
+      amount: amount,
+      paidBy: paidBy,
+      paidFor: paidFor,
+    ),
+  );
 
   Future<void> paymentReminder(
     String groupId,
     Set<String> receivers,
     double amount,
-  ) => _guard('reminder', () async {
-    final row = await _groupRow(groupId);
-    await _push(
-      'reminder',
-      groupId,
-      receivers,
-      _l10n.reminderNotificationTitle(row['user_display_name']),
-      _l10n.reminderNotificationBody(
-        _money(amount, row['currency_code']),
-        row['name'],
-      ),
-    );
-  });
+  ) => _send(
+    PushRequest(
+      kind: PushKind.paymentReminder,
+      objectId: groupId,
+      receivers: receivers,
+      amount: amount,
+    ),
+  );
 
   Future<void> expenseCreated(
     String expenseId,
     Set<String> receivers,
     double amount,
-  ) => _guard('expense', () async {
-    final row = await _expenseRow(expenseId);
-    await _push(
-      'expense',
-      expenseId,
-      receivers,
-      _l10n.expenseNotificationTitle(row['user_display_name']),
-      _l10n.expenseNotificationBody(
-        row['name'],
-        row['group_name'],
-        _money(amount, row['group_currency_code']),
-      ),
-    );
-  });
+  ) => _send(
+    PushRequest(
+      kind: PushKind.expenseCreated,
+      objectId: expenseId,
+      receivers: receivers,
+      amount: amount,
+    ),
+  );
 
-  Future<void> friendRequested(Set<String> receivers) =>
-      _guard('friend request', () async {
-        final name = await _senderName();
-        if (name == null) return;
-        await _push(
-          'friendship',
-          '',
-          receivers,
-          _l10n.friendRequestNotificationTitle,
-          _l10n.friendRequestNotificationBody(name),
-        );
-      });
+  Future<void> friendRequested(Set<String> receivers) => _send(
+    PushRequest(
+      kind: PushKind.friendRequested,
+      objectId: '',
+      receivers: receivers,
+    ),
+  );
 
-  Future<void> friendAccepted(Set<String> receivers) =>
-      _guard('friend accept', () async {
-        final name = await _senderName();
-        if (name == null) return;
-        await _push(
-          'friendship',
-          '',
-          receivers,
-          _l10n.friendAcceptNotificationTitle,
-          _l10n.friendAcceptNotificationBody(name),
-        );
-      });
+  Future<void> friendAccepted(Set<String> receivers) => _send(
+    PushRequest(
+      kind: PushKind.friendAccepted,
+      objectId: '',
+      receivers: receivers,
+    ),
+  );
 
   Future<void> claimNudge({
     required String expenseId,
     required Set<String> receivers,
-    required String senderDisplayName,
-    required String expenseName,
-    required String groupName,
-  }) => _guard(
-    'claim nudge',
-    () => _push(
-      'expense',
-      expenseId,
-      receivers,
-      _l10n.claimNudgeNotificationTitle(senderDisplayName),
-      _l10n.claimNudgeNotificationBody(expenseName, groupName),
+  }) => _send(
+    PushRequest(
+      kind: PushKind.claimNudge,
+      objectId: expenseId,
+      receivers: receivers,
     ),
   );
 
-  static Future<void> _guard(String kind, Future<void> Function() send) async {
+  Future<void> _send(PushRequest request) async {
     try {
-      await send();
+      await _push(request);
     } catch (e) {
-      debugPrint('Failed to send $kind notification: $e');
+      debugPrint('Failed to send ${request.kind.wireName} notification: $e');
     }
   }
 }
 
-Future<Map<String, dynamic>> _fetchGroupRow(String groupId) async =>
-    await supabase
-        .from('group')
-        .select(
-          'name, currency_code, ...user_id(user_display_name:display_name)',
-        )
-        .eq('id', groupId)
-        .single();
-
-Future<Map<String, dynamic>> _fetchExpenseRow(
-  String expenseId,
-) async => await supabase
-    .from('expense')
-    .select(
-      'name, ...group!expense_group_id_fkey(group_name:name, group_currency_code:currency_code), ...user_id(user_display_name:display_name)',
-    )
-    .eq('id', expenseId)
-    .single();
-
-Future<String?> _fetchSenderName() async {
-  final email = supabase.auth.currentUser?.email;
-  if (email == null) return null;
-  return (await UserRepository.fetchDetail(email)).displayName;
-}
-
-Future<void> _invokePush(
-  String type,
-  String objectId,
-  Set<String> receivers,
-  String title,
-  String body,
-) async {
-  final res = await supabase.functions.invoke(
-    'push',
-    body: pushRequestBody(
-      type: type,
-      objectId: objectId,
-      receivers: receivers,
-      title: title,
-      body: body,
-      senderEmail: supabase.auth.currentUser?.email,
-    ),
-  );
-  debugPrint(res.data.toString());
-}
+Future<void> _invokePush(PushRequest request) => postPushRequest(
+  request,
+  senderEmail: supabase.auth.currentUser?.email,
+  post: (body) async {
+    final res = await supabase.functions.invoke('push', body: body);
+    debugPrint(res.data.toString());
+  },
+);
