@@ -19,7 +19,7 @@ enum MemberAddOutcome {
 /// Decides the add outcome from the target's own `group_member` row
 /// ([existingMembership], null when they have none).
 ///
-/// Pure: no Supabase. Same shape as [resolveGroupJoin] and for the same reason —
+/// Pure: no Supabase. Same shape as [resolveMemberRemoval] and for the same reason —
 /// the decision is made once, in one place, and the write path only applies it.
 MemberAddOutcome resolveMemberAdd({
   required Map<String, dynamic>? existingMembership,

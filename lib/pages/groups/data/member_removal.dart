@@ -1,4 +1,5 @@
 import 'package:deun/helper/helper.dart';
+import 'package:deun/pages/groups/data/group_member_model.dart';
 
 /// What removing a member from a group should do, decided before anything is
 /// written. `blocked` carries the amount to name in the message.
@@ -54,42 +55,39 @@ MemberRemovalOutcome resolveMemberRemoval({
       : MemberRemovalOutcome.hardRemoved;
 }
 
-/// The writes an invite-link join may need, decided before anything is written.
-class GroupJoinPlan {
-  const GroupJoinPlan({
-    required this.insertMembership,
-    required this.clearRemovedAt,
-    required this.mergeGuest,
+/// What the invite-link join page needs to know before anything is written:
+/// whether the signed-in user is already an active member (then the page goes
+/// straight to the group), and which guest placeholders they may claim.
+class GroupJoinState {
+  const GroupJoinState({
+    required this.isActiveMember,
+    required this.joinableGuests,
   });
 
-  /// The joiner has no `group_member` row yet — insert one.
-  final bool insertMembership;
+  /// The user has a `group_member` row with no `removed_at`. A soft-removed
+  /// member is NOT active: they stay on the join page so they can re-join.
+  final bool isActiveMember;
 
-  /// The joiner has a soft-removed row — clear its `removed_at` instead of
-  /// inserting, so their historical shares are neither touched nor duplicated.
-  final bool clearRemovedAt;
-
-  /// The joiner picked a guest placeholder to absorb: transfer that guest's
-  /// expenses and shares, then drop the guest.
-  final bool mergeGuest;
+  /// The group's active guest members — never a soft-removed guest, never a
+  /// real user, never the joiner.
+  final List<GroupMember> joinableGuests;
 }
 
-/// Plans a join from the joiner's own `group_member` row ([existingMembership],
-/// null when they have none) and the guest they picked to merge
-/// ([selectedGuestEmail], null = join as a brand-new member).
+/// Decides the join state from [roster] (any mix of the group's members) and
+/// the signed-in [currentEmail] (null when nobody is signed in).
 ///
-/// Pure: no Supabase. The guest merge is deliberately independent of the
-/// membership write — a soft-removed member coming back through the invite link
-/// may just as well be picking up a guest placeholder, and their merge must not
-/// be skipped because their `group_member` row already exists.
-GroupJoinPlan resolveGroupJoin({
-  required Map<String, dynamic>? existingMembership,
-  required String? selectedGuestEmail,
-}) {
-  return GroupJoinPlan(
-    insertMembership: existingMembership == null,
-    clearRemovedAt:
-        existingMembership != null && existingMembership['removed_at'] != null,
-    mergeGuest: selectedGuestEmail != null,
-  );
-}
+/// Pure: no Supabase. The writes themselves are decided server-side by
+/// `join_group`, which applies the same rules (guest must be an active
+/// `is_guest` member; a soft-removed joiner is re-activated).
+GroupJoinState resolveGroupJoinState({
+  required List<GroupMember> roster,
+  required String? currentEmail,
+}) => GroupJoinState(
+  isActiveMember:
+      currentEmail != null &&
+      roster.any((m) => m.email == currentEmail && !m.isRemoved),
+  joinableGuests: [
+    for (final m in roster)
+      if (m.isGuest && !m.isRemoved && m.email != currentEmail) m,
+  ],
+);

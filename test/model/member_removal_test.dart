@@ -1,4 +1,5 @@
 import 'package:deun/helper/currency.dart';
+import 'package:deun/pages/groups/data/group_member_model.dart';
 import 'package:deun/pages/groups/data/member_removal.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -113,65 +114,80 @@ void main() {
     );
   });
 
-  group('resolveGroupJoin', () {
+  group('resolveGroupJoinState', () {
+    GroupMember member(
+      String email, {
+      bool isGuest = false,
+      DateTime? removedAt,
+    }) => GroupMember()
+      ..groupId = 'g1'
+      ..email = email
+      ..displayName = email
+      ..isGuest = isGuest
+      ..isFavorite = false
+      ..removedAt = removedAt;
+
     // 28
     test(
-      'a brand-new joiner inserts a membership and merges the picked guest',
+      'offers exactly the active guests: never a soft-removed guest, never a real user',
       () {
-        final plan = resolveGroupJoin(
-          existingMembership: null,
-          selectedGuestEmail: 'guest+1@guest.invalid',
+        final state = resolveGroupJoinState(
+          roster: [
+            member('ann@test.com'),
+            member('guest+1@guest.invalid', isGuest: true),
+            member(
+              'guest+2@guest.invalid',
+              isGuest: true,
+              removedAt: DateTime.utc(2026, 8, 15),
+            ),
+          ],
+          currentEmail: 'me@test.com',
         );
 
-        expect(plan.insertMembership, isTrue);
-        expect(plan.clearRemovedAt, isFalse);
-        expect(plan.mergeGuest, isTrue);
+        expect(state.joinableGuests.map((m) => m.email), [
+          'guest+1@guest.invalid',
+        ]);
       },
     );
 
     // 29
-    test(
-      'a removed member re-joining clears the marker, inserts nothing, and still merges the picked guest',
-      () {
-        // The bug this pins: the guest merge used to be nested inside the
-        // "no membership row yet" branch, so a re-joining removed member who
-        // picked a guest was sent into the group with the guest untouched — no
-        // transfer, no error.
-        final plan = resolveGroupJoin(
-          existingMembership: const {
-            'email': 'c@test.com',
-            'removed_at': '2026-08-15T09:30:00Z',
-          },
-          selectedGuestEmail: 'guest+1@guest.invalid',
-        );
-
-        expect(plan.insertMembership, isFalse);
-        expect(plan.clearRemovedAt, isTrue);
-        expect(plan.mergeGuest, isTrue);
-      },
-    );
-
-    // 30
-    test('joining as a new member merges no guest', () {
-      final plan = resolveGroupJoin(
-        existingMembership: null,
-        selectedGuestEmail: null,
+    test('an active member of the group is already in', () {
+      final state = resolveGroupJoinState(
+        roster: [member('me@test.com')],
+        currentEmail: 'me@test.com',
       );
 
-      expect(plan.insertMembership, isTrue);
-      expect(plan.mergeGuest, isFalse);
+      expect(state.isActiveMember, isTrue);
+    });
+
+    // 30
+    test('a soft-removed member is not in, so they can re-join', () {
+      final state = resolveGroupJoinState(
+        roster: [member('me@test.com', removedAt: DateTime.utc(2026, 8, 15))],
+        currentEmail: 'me@test.com',
+      );
+
+      expect(state.isActiveMember, isFalse);
     });
 
     // 31
-    test('an active membership row is left alone', () {
-      final plan = resolveGroupJoin(
-        existingMembership: const {'email': 'a@test.com', 'removed_at': null},
-        selectedGuestEmail: null,
-      );
+    test('no own row, or nobody signed in, is not a member', () {
+      final roster = [member('ann@test.com')];
 
-      expect(plan.insertMembership, isFalse);
-      expect(plan.clearRemovedAt, isFalse);
-      expect(plan.mergeGuest, isFalse);
+      expect(
+        resolveGroupJoinState(
+          roster: roster,
+          currentEmail: 'me@test.com',
+        ).isActiveMember,
+        isFalse,
+      );
+      expect(
+        resolveGroupJoinState(
+          roster: roster,
+          currentEmail: null,
+        ).isActiveMember,
+        isFalse,
+      );
     });
   });
 }
