@@ -17,15 +17,9 @@ import 'package:deun/widgets/restyle/deun_header.dart';
 import 'package:deun/widgets/restyle/expense_picker_sheets.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'expense_editor_currency_rate_test.dart'
-    show
-        SavedExpense,
-        initTestSupabase,
-        installFakePrefs,
-        pumpEditorWithSaveSeam,
-        saveEditor;
+    show SavedExpense, installFakePrefs, pumpEditorWithSaveSeam, saveEditor;
 
 Map<String, dynamic> _claimUnit(
   String id,
@@ -61,7 +55,7 @@ Expense _twoItemExpense() => Expense()
       _claimUnit('u1', 'Beer', 2.5, 'grp-1'),
       _claimUnit('u2', 'Wine', 4.0, 'grp-2'),
     ],
-  });
+  }, currentUserEmail: null);
 
 /// A saved shared expense entered in CHF inside a JPY group: one CHF 10.00
 /// item at a frozen 160, so 1600 JPY in the ledger.
@@ -80,7 +74,7 @@ Expense _chfInJpyExpense() => Expense()
     'expense_entry': [
       _claimUnit('u1', 'Beer', 1600, 'grp-1', originalAmount: 10),
     ],
-  });
+  }, currentUserEmail: null);
 
 /// A scanner answering each Scan tap with the next of [results].
 ReceiptScanner _scans(List<ReceiptScanResult> results) {
@@ -164,12 +158,6 @@ Finder get _headerClose => find.descendant(
 );
 
 void main() {
-  setUpAll(initTestSupabase);
-
-  tearDownAll(() async {
-    await Supabase.instance.dispose();
-  });
-
   setUp(installFakePrefs);
 
   testWidgets('a total-only rescan fills an item that has no amount yet', (

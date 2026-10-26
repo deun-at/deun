@@ -105,7 +105,7 @@ class _FriendAddPageState extends ConsumerState<FriendAddPage> {
   Future<void> _requestFriendship(String userEmail, String displayName) async {
     final notifications = NotificationSender();
     try {
-      await FriendshipRepository.request(userEmail);
+      await ref.read(friendshipRepositoryProvider).request(userEmail);
       unawaited(notifications.friendRequested({userEmail}));
       if (!mounted) return;
       setState(() => _requestedEmails.add(userEmail));

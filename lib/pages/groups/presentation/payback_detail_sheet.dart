@@ -1,7 +1,7 @@
 import 'package:deun/constants.dart';
 import 'package:deun/helper/helper.dart';
 import 'package:deun/l10n/app_localizations.dart';
-import 'package:deun/main.dart';
+import 'package:deun/provider.dart';
 import 'package:deun/pages/expenses/data/expense_deletion_impact.dart';
 import 'package:deun/pages/expenses/data/expense_model.dart';
 import 'package:deun/pages/expenses/data/expense_repository.dart';
@@ -10,6 +10,7 @@ import 'package:deun/widgets/restyle/primary_button.dart';
 import 'package:deun/widgets/restyle/sheet_scaffold.dart';
 import 'package:deun/widgets/theme_builder.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../data/group_model.dart';
 import 'group_ledger.dart';
@@ -51,7 +52,7 @@ Future<void> showPaybackDetailSheet(
 /// expense editor onto a synthetic single-entry row it was never designed to
 /// save — so this is a dedicated sheet, mirroring `RecordPaybackSheet`, the
 /// surface that *writes* the row this one undoes.
-class PaybackDetailSheet extends StatefulWidget {
+class PaybackDetailSheet extends ConsumerStatefulWidget {
   const PaybackDetailSheet({
     super.key,
     required this.group,
@@ -64,10 +65,10 @@ class PaybackDetailSheet extends StatefulWidget {
   final ExpenseDeleter? deleteExpense;
 
   @override
-  State<PaybackDetailSheet> createState() => _PaybackDetailSheetState();
+  ConsumerState<PaybackDetailSheet> createState() => _PaybackDetailSheetState();
 }
 
-class _PaybackDetailSheetState extends State<PaybackDetailSheet> {
+class _PaybackDetailSheetState extends ConsumerState<PaybackDetailSheet> {
   bool _deleting = false;
 
   Future<void> _confirmDelete() async {
@@ -77,7 +78,11 @@ class _PaybackDetailSheetState extends State<PaybackDetailSheet> {
     // The SAME classifier every other delete in the app runs through. A
     // payback row short-circuits the probe inside probeDeletionImpact, so
     // this costs no network round-trip and needs no loader seam.
-    final impact = await probeDeletionImpact(widget.expense);
+    final impact = await probeDeletionImpact(
+      widget.expense,
+      loader: (groupId) =>
+          ref.read(expenseRepositoryProvider).fetchPaybackRows(groupId),
+    );
     if (!mounted) return;
 
     final confirmed = await showDeleteConfirmationSheet(
@@ -91,7 +96,8 @@ class _PaybackDetailSheetState extends State<PaybackDetailSheet> {
 
     setState(() => _deleting = true);
     try {
-      await (widget.deleteExpense ?? ExpenseRepository.delete)(
+      await (widget.deleteExpense ??
+          ref.read(expenseRepositoryProvider).delete)(
         widget.expense.id,
         widget.expense.groupId,
       );
@@ -117,6 +123,7 @@ class _PaybackDetailSheetState extends State<PaybackDetailSheet> {
     final l10n = AppLocalizations.of(context)!;
     final colorScheme = Theme.of(context).colorScheme;
     final danger = Theme.of(context).extension<SemanticColors>()!.danger;
+    final currentUserEmail = ref.watch(currentUserProvider)?.email;
 
     return SheetScaffold(
       body: Column(
@@ -128,7 +135,7 @@ class _PaybackDetailSheetState extends State<PaybackDetailSheet> {
               widget.expense,
               l10n,
               currencyCode: widget.group.currencyCode,
-              currentUserEmail: supabase.auth.currentUser?.email,
+              currentUserEmail: currentUserEmail,
             ),
             style: Theme.of(context).textTheme.titleMedium,
           ),

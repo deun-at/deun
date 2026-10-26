@@ -8,7 +8,6 @@ import 'package:deun/provider.dart';
 import 'package:deun/widgets/restyle/expense_picker_sheets.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 
 // The editor harness, shared with the suite that owns the manual rate field
 // rather than copied. `show` keeps that file's own `main` out of this one.
@@ -17,7 +16,6 @@ import 'expense_editor_currency_rate_test.dart'
         StubLookup,
         closeConversionSheet,
         convertedExpense,
-        initTestSupabase,
         installFakePrefs,
         openConversionSheet,
         pickCurrency,
@@ -68,12 +66,6 @@ Future<void> _pickYesterday(WidgetTester tester) async {
 }
 
 void main() {
-  setUpAll(initTestSupabase);
-
-  tearDownAll(() async {
-    await Supabase.instance.dispose();
-  });
-
   setUp(installFakePrefs);
 
   // AC: the prefill is for the EXPENSE's date, not today's.

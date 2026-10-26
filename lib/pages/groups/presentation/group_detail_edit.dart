@@ -73,7 +73,9 @@ class _GroupEditState extends ConsumerState<GroupEdit> {
     try {
       final expenses =
           await (widget.loadGroupExpenseCurrencies ??
-              ExpenseRepository.fetchCurrencyProbeRows)(group.id);
+              ref.read(expenseRepositoryProvider).fetchCurrencyProbeRows)(
+            group.id,
+          );
       if (!mounted) return;
       setState(() {
         _currencyLocked = !canChangeGroupCurrency(group, expenses: expenses);
@@ -142,8 +144,9 @@ class _GroupEditState extends ConsumerState<GroupEdit> {
     String? groupId,
     Map<String, dynamic> formValue,
   ) async {
-    final savedId = await GroupRepository.saveAll(groupId, formValue);
-    return GroupRepository.fetchDetail(savedId);
+    final groups = ref.read(groupRepositoryProvider);
+    final savedId = await groups.saveAll(groupId, formValue);
+    return groups.fetchDetail(savedId);
   }
 
   @override
@@ -325,7 +328,9 @@ class _GroupEditState extends ConsumerState<GroupEdit> {
             label: AppLocalizations.of(context)!.delete,
             onPressed: () async {
               try {
-                await GroupRepository.delete(widget.group!.id);
+                await ref
+                    .read(groupRepositoryProvider)
+                    .delete(widget.group!.id);
                 if (context.mounted) {
                   showSnackBar(
                     context,

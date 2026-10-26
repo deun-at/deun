@@ -22,12 +22,11 @@ import 'package:deun/pages/groups/presentation/group_detail_edit.dart';
 import 'package:deun/pages/groups/presentation/group_join_page.dart';
 import 'package:deun/widgets/restyle/deun_header.dart';
 import 'package:deun/widgets/theme_builder.dart';
+import 'package:deun/provider.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 
 // ---------------------------------------------------------------------------
 // Shared helpers
@@ -100,6 +99,7 @@ Future<void> _pumpInScope(
 }) async {
   await tester.pumpWidget(
     ProviderScope(
+      overrides: [currentUserProvider.overrideWithValue(null)],
       child: MaterialApp(
         localizationsDelegates: const [
           AppLocalizations.delegate,
@@ -130,30 +130,6 @@ Future<void> _pumpInScope(
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
-
-  setUpAll(() async {
-    TestWidgetsFlutterBinding.ensureInitialized().defaultBinaryMessenger
-        .setMockMethodCallHandler(
-          const MethodChannel('plugins.flutter.io/shared_preferences'),
-          (call) async {
-            if (call.method == 'getAll') return <String, Object>{};
-            return null;
-          },
-        );
-    // Supabase is already initialized by other tests; guard against re-init.
-    try {
-      await Supabase.initialize(
-        url: 'http://localhost:54321',
-        anonKey: 'test-anon-key',
-      );
-    } catch (_) {}
-  });
-
-  tearDownAll(() async {
-    try {
-      await Supabase.instance.dispose();
-    } catch (_) {}
-  });
 
   // -------------------------------------------------------------------------
   // 1. GroupEdit — Icons.close, no AppBar actions
@@ -291,6 +267,7 @@ void main() {
       await tester.pumpWidget(
         ProviderScope(
           overrides: [
+            currentUserProvider.overrideWithValue(null),
             groupDetailProvider('g1').overrideWith(_StubGroupDetail.new),
             expenseListProvider('g1').overrideWith(_StubExpenseList.new),
           ],
@@ -393,10 +370,14 @@ void main() {
 
       // Scan = white circle with an accent icon; Add expense = colored pill.
       final scan = tester.widget<FloatingActionButton>(
-        find.widgetWithIcon(FloatingActionButton, Icons.document_scanner_outlined),
+        find.widgetWithIcon(
+          FloatingActionButton,
+          Icons.document_scanner_outlined,
+        ),
       );
-      final scheme = Theme.of(tester.element(find.byType(GroupDetail)))
-          .colorScheme;
+      final scheme = Theme.of(
+        tester.element(find.byType(GroupDetail)),
+      ).colorScheme;
       expect(scan.backgroundColor, scheme.surfaceContainerLowest);
       expect(scan.foregroundColor, scheme.primary);
 
@@ -407,24 +388,28 @@ void main() {
       );
     });
 
-    testWidgets('tapping Scan opens the receipt scanner; Add expense is wired', (
-      tester,
-    ) async {
-      await pumpFrame(tester);
+    testWidgets(
+      'tapping Scan opens the receipt scanner; Add expense is wired',
+      (tester) async {
+        await pumpFrame(tester);
 
-      // Add expense keeps its navigation callback (still triggers an action).
-      final addFab = tester.widget<FloatingActionButton>(
-        find.widgetWithIcon(FloatingActionButton, Icons.add),
-      );
-      expect(addFab.onPressed, isNotNull);
+        // Add expense keeps its navigation callback (still triggers an action).
+        final addFab = tester.widget<FloatingActionButton>(
+          find.widgetWithIcon(FloatingActionButton, Icons.add),
+        );
+        expect(addFab.onPressed, isNotNull);
 
-      // Tapping Scan opens the receipt-scanner bottom sheet.
-      await tester.tap(
-        find.widgetWithIcon(FloatingActionButton, Icons.document_scanner_outlined),
-      );
-      await tester.pumpAndSettle();
-      expect(find.byType(ReceiptScannerSheet), findsOneWidget);
-    });
+        // Tapping Scan opens the receipt-scanner bottom sheet.
+        await tester.tap(
+          find.widgetWithIcon(
+            FloatingActionButton,
+            Icons.document_scanner_outlined,
+          ),
+        );
+        await tester.pumpAndSettle();
+        expect(find.byType(ReceiptScannerSheet), findsOneWidget);
+      },
+    );
   });
 
   // -------------------------------------------------------------------------

@@ -1,23 +1,38 @@
 // legacy-fallback-removal: a group save, an expense save and a claim change
 // each write through their one server RPC or fail with that RPC's own error.
-// No client-side multi-step fallback runs: a fallback would reach this local
-// client, fail with a different error and turn these tests red. Every RPC
-// goes through the repositories' @visibleForTesting seams. No test reaches the
-// network.
+// No client-side multi-step fallback runs: a fallback would reach the
+// FakeSupabaseClient and fail with a different error, turning these tests red.
+// Every RPC goes through the repositories' constructor seams. No test reaches
+// the network.
 
 import 'package:deun/helper/currency.dart';
 import 'package:deun/helper/notification_sender.dart';
 import 'package:deun/pages/expenses/data/expense_draft.dart';
 import 'package:deun/pages/expenses/data/expense_repository.dart';
 import 'package:deun/pages/groups/data/group_repository.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+
+import '../helper/fake_supabase.dart';
 
 /// A missing-function error as PostgREST (PGRST202) or Postgres (42883)
 /// reports it.
 PostgrestException _missing(String code) =>
     PostgrestException(message: 'Could not find the function', code: code);
+
+GroupRepository _groups(
+  Future<Object?> Function(Map<String, dynamic>) saveGroupAll,
+) => GroupRepository(FakeSupabaseClient(), null, saveGroupAllRpc: saveGroupAll);
+
+ExpenseRepository _expenses({
+  Future<Object?> Function(Map<String, dynamic>)? saveExpenseAll,
+  Future<Object?> Function(Map<String, dynamic>)? claimSetUnitShares,
+}) => ExpenseRepository(
+  FakeSupabaseClient(),
+  null,
+  saveExpenseAllRpc: saveExpenseAll,
+  claimSetUnitSharesRpc: claimSetUnitShares,
+);
 
 void main() {
   late List<Map<String, dynamic>> calls;
@@ -30,29 +45,7 @@ void main() {
     return respond();
   };
 
-  setUpAll(() async {
-    TestWidgetsFlutterBinding.ensureInitialized().defaultBinaryMessenger
-        .setMockMethodCallHandler(
-          const MethodChannel('plugins.flutter.io/shared_preferences'),
-          (call) async => call.method == 'getAll' ? <String, Object>{} : null,
-        );
-    await Supabase.initialize(
-      url: 'http://localhost:54321',
-      anonKey: 'test-anon-key',
-    );
-  });
-
-  tearDownAll(() async {
-    await Supabase.instance.dispose();
-  });
-
   setUp(() => calls = []);
-
-  tearDown(() {
-    GroupRepository.saveGroupAllOverride = null;
-    ExpenseRepository.saveExpenseAllOverride = null;
-    ExpenseRepository.claimSetUnitSharesOverride = null;
-  });
 
   group('a group save goes through save_group_all alone', () {
     for (final code in ['PGRST202', '42883']) {
@@ -60,10 +53,10 @@ void main() {
         'a missing save_group_all ($code) is thrown after that one call',
         () async {
           final missing = _missing(code);
-          GroupRepository.saveGroupAllOverride = recorder(() => throw missing);
+          final groups = _groups(recorder(() => throw missing));
 
           await expectLater(
-            GroupRepository.saveAll(null, {'name': 'Trip'}),
+            groups.saveAll(null, {'name': 'Trip'}),
             throwsA(same(missing)),
           );
           expect(calls, hasLength(1));
@@ -74,9 +67,9 @@ void main() {
     test(
       'a successful save returns the id the RPC returned, after that one call',
       () async {
-        GroupRepository.saveGroupAllOverride = recorder(() => 'g-new');
+        final groups = _groups(recorder(() => 'g-new'));
 
-        expect(await GroupRepository.saveAll(null, {'name': 'Trip'}), 'g-new');
+        expect(await groups.saveAll(null, {'name': 'Trip'}), 'g-new');
         expect(calls, hasLength(1));
         expect((calls.single['_group'] as Map)['name'], 'Trip');
       },
@@ -100,33 +93,34 @@ void main() {
       ],
     );
 
-    Future<void> save(String? expenseId) => ExpenseRepository.saveAll(
-      'g1',
-      expenseId,
-      draft(),
-      currency: Currency.eur,
-      notifications: notifications,
-    );
+    Future<void> save(ExpenseRepository expenses, String? expenseId) =>
+        expenses.saveAll(
+          'g1',
+          expenseId,
+          draft(),
+          currency: Currency.eur,
+          notifications: notifications,
+        );
 
     for (final code in ['PGRST202', '42883']) {
       test(
         'a missing save_expense_all ($code) is thrown after that one call',
         () async {
           final missing = _missing(code);
-          ExpenseRepository.saveExpenseAllOverride = recorder(
-            () => throw missing,
+          final expenses = _expenses(
+            saveExpenseAll: recorder(() => throw missing),
           );
 
-          await expectLater(save('e1'), throwsA(same(missing)));
+          await expectLater(save(expenses, 'e1'), throwsA(same(missing)));
           expect(calls, hasLength(1));
         },
       );
     }
 
     test('a successful edit completes after that one call', () async {
-      ExpenseRepository.saveExpenseAllOverride = recorder(() => 'e1');
+      final expenses = _expenses(saveExpenseAll: recorder(() => 'e1'));
 
-      await save('e1');
+      await save(expenses, 'e1');
       expect(calls, hasLength(1));
       expect((calls.single['_expense'] as Map)['id'], 'e1');
     });
@@ -134,10 +128,10 @@ void main() {
     test(
       'a successful create pushes the planned receivers and amount once',
       () async {
-        ExpenseRepository.saveExpenseAllOverride = recorder(() => 'e-new');
+        final expenses = _expenses(saveExpenseAll: recorder(() => 'e-new'));
         final pushes = <PushRequest>[];
 
-        await ExpenseRepository.saveAll(
+        await expenses.saveAll(
           'g1',
           null,
           draft(),
@@ -161,12 +155,12 @@ void main() {
     'a missing claim_set_unit_shares is thrown after that one call',
     () async {
       final missing = _missing('PGRST202');
-      ExpenseRepository.claimSetUnitSharesOverride = recorder(
-        () => throw missing,
+      final expenses = _expenses(
+        claimSetUnitShares: recorder(() => throw missing),
       );
 
       await expectLater(
-        ExpenseRepository.claimSetUnitShares(
+        expenses.claimSetUnitShares(
           groupId: 'g1',
           expenseId: 'e1',
           unitEntryId: 'u1',

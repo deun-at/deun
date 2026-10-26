@@ -4,7 +4,7 @@ import 'package:deun/helper/currency_breakdown.dart';
 import 'package:deun/helper/helper.dart';
 import 'package:deun/pages/friends/data/friendship_model.dart';
 import 'package:deun/pages/friends/presentation/friend_detail_sheet.dart';
-import 'package:deun/pages/groups/data/group_repository.dart';
+import 'package:deun/pages/groups/data/payback_repository.dart';
 import 'package:deun/pages/users/user_model.dart';
 import 'package:deun/widgets/restyle/currency_breakdown_disclosure.dart';
 import 'package:deun/widgets/restyle/currency_chips.dart';

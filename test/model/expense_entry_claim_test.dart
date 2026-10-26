@@ -43,7 +43,7 @@ Expense _expenseWith(List<Map<String, dynamic>> entries) {
     'created_at': '2026-07-01T10:00:00',
     'is_paid_back_row': false,
     'expense_entry': entries,
-  });
+  }, currentUserEmail: null);
   return e;
 }
 

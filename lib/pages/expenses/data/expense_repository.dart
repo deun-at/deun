@@ -8,10 +8,13 @@ import 'package:deun/pages/expenses/data/expense_draft.dart';
 import 'package:deun/pages/expenses/data/expense_model.dart';
 import 'package:deun/pages/expenses/data/itemized_totals.dart';
 import 'package:deun/pages/expenses/data/split_mode.dart';
+import 'package:deun/pages/users/current_user.dart';
+import 'package:deun/provider.dart';
 import 'package:flutter/material.dart';
+import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-import '../../../main.dart';
+part 'expense_repository.g.dart';
 
 /// What one expense save sends and whom it tells, decided before anything is
 /// written. Built by [ExpenseRepository.planSave].
@@ -37,25 +40,35 @@ class ExpenseSavePlan {
 }
 
 class ExpenseRepository {
+  ExpenseRepository(
+    this._supabase,
+    this._currentUser, {
+    Future<Object?> Function(Map<String, dynamic> params)? saveExpenseAllRpc,
+    Future<Object?> Function(Map<String, dynamic> params)?
+    claimSetUnitSharesRpc,
+  }) : _saveExpenseAllRpc = saveExpenseAllRpc,
+       _claimSetUnitSharesRpc = claimSetUnitSharesRpc;
+
+  final SupabaseClient _supabase;
+  final CurrentUser? _currentUser;
+
   /// Null outside tests. When set, [saveAll] sends its one `save_expense_all`
-  /// call here instead of `supabase.rpc`.
-  @visibleForTesting
-  static Future<Object?> Function(Map<String, dynamic> params)?
-  saveExpenseAllOverride;
+  /// call here instead of the client.
+  final Future<Object?> Function(Map<String, dynamic> params)?
+  _saveExpenseAllRpc;
 
   /// Null outside tests. When set, [claimSetUnitShares] sends its one
-  /// `claim_set_unit_shares` call here instead of `supabase.rpc`.
-  @visibleForTesting
-  static Future<Object?> Function(Map<String, dynamic> params)?
-  claimSetUnitSharesOverride;
+  /// `claim_set_unit_shares` call here instead of the client.
+  final Future<Object?> Function(Map<String, dynamic> params)?
+  _claimSetUnitSharesRpc;
 
-  static Future<List<Expense>> fetchData([
+  Future<List<Expense>> fetchData([
     String? groupId,
     int rangeFrom = 0,
     int rangeTo = 0,
     String? filter,
   ]) async {
-    var query = supabase.from('expense').select(Expense.expenseSelectString);
+    var query = _supabase.from('expense').select(Expense.expenseSelectString);
 
     if (groupId != null) {
       query = query.eq('group_id', groupId);
@@ -78,19 +91,19 @@ class ExpenseRepository {
 
     for (var element in data) {
       Expense expense = Expense();
-      expense.loadDataFromJson(element);
+      expense.loadDataFromJson(element, currentUserEmail: _currentUser?.email);
       retData.add(expense);
     }
 
     return retData;
   }
 
-  static Future<List<Expense>> fetchRange(
+  Future<List<Expense>> fetchRange(
     String groupId,
     DateTime start,
     DateTime end,
   ) async {
-    var query = supabase
+    var query = _supabase
         .from('expense')
         .select(Expense.expenseSelectString)
         .eq('group_id', groupId)
@@ -105,7 +118,7 @@ class ExpenseRepository {
     List<Expense> retData = List.empty(growable: true);
     for (var element in data) {
       Expense expense = Expense();
-      expense.loadDataFromJson(element);
+      expense.loadDataFromJson(element, currentUserEmail: _currentUser?.email);
       retData.add(expense);
     }
     return retData;
@@ -120,8 +133,8 @@ class ExpenseRepository {
   /// loaded page would silently miss a settlement on an unloaded one. One row
   /// per settle-up ever made in the group, on a trimmed select with no `group`
   /// embed — the guard reads only `expense_date` and `is_paid_back_row`.
-  static Future<List<Expense>> fetchPaybackRows(String groupId) async {
-    final List<Map<String, dynamic>> data = await supabase
+  Future<List<Expense>> fetchPaybackRows(String groupId) async {
+    final List<Map<String, dynamic>> data = await _supabase
         .from('expense')
         .select(Expense.paybackSelectString)
         .eq('group_id', groupId)
@@ -131,15 +144,15 @@ class ExpenseRepository {
     final List<Expense> retData = List.empty(growable: true);
     for (var element in data) {
       Expense expense = Expense();
-      expense.loadDataFromJson(element);
+      expense.loadDataFromJson(element, currentUserEmail: _currentUser?.email);
       retData.add(expense);
     }
 
     return retData;
   }
 
-  static Future<Expense> fetchDetail(String expenseId) async {
-    Map<String, dynamic> data = await supabase
+  Future<Expense> fetchDetail(String expenseId) async {
+    Map<String, dynamic> data = await _supabase
         .from('expense')
         .select(Expense.expenseSelectString)
         .eq('id', expenseId)
@@ -147,7 +160,7 @@ class ExpenseRepository {
         .single();
 
     Expense expense = Expense();
-    expense.loadDataFromJson(data);
+    expense.loadDataFromJson(data, currentUserEmail: _currentUser?.email);
 
     return expense;
   }
@@ -410,7 +423,7 @@ class ExpenseRepository {
   /// error having written nothing: there is no client-side fallback. What it
   /// sends and whom it tells come from [planSave]; a new expense pushes, an
   /// edit does not.
-  static Future<void> saveAll(
+  Future<void> saveAll(
     String groupId,
     String? expenseId,
     ExpenseDraft draft, {
@@ -424,14 +437,14 @@ class ExpenseRepository {
       draft: draft,
       currency: currency,
       conversion: conversion,
-      userId: supabase.auth.currentUser?.id,
+      userId: _currentUser?.id,
     );
     try {
-      final override = saveExpenseAllOverride;
+      final override = _saveExpenseAllRpc;
       final savedExpenseId =
           (override != null
                   ? await override(plan.rpcParams)
-                  : await supabase.rpc(
+                  : await _supabase.rpc(
                       'save_expense_all',
                       params: plan.rpcParams,
                     ))
@@ -460,7 +473,7 @@ class ExpenseRepository {
   /// get_user_spending_summary) stay correct. Any failure, a missing function
   /// included, is thrown as the RPC's own error: there is no client-side
   /// fallback.
-  static Future<void> claimSetUnitShares({
+  Future<void> claimSetUnitShares({
     required String groupId,
     required String expenseId,
     required String unitEntryId,
@@ -475,11 +488,11 @@ class ExpenseRepository {
         for (final email in claimerEmails) {'email': email, 'percentage': pct},
       ],
     };
-    final override = claimSetUnitSharesOverride;
+    final override = _claimSetUnitSharesRpc;
     if (override != null) {
       await override(params);
     } else {
-      await supabase.rpc('claim_set_unit_shares', params: params);
+      await _supabase.rpc('claim_set_unit_shares', params: params);
     }
   }
 
@@ -491,18 +504,36 @@ class ExpenseRepository {
   /// column with 42703 / PGRST204. On that server no expense CAN carry a
   /// foreign currency, so an empty list is the correct answer — the picker
   /// stays unlocked rather than erroring.
-  static Future<List<Expense>> fetchCurrencyProbeRows(String groupId) async {
+  Future<List<Expense>> fetchCurrencyProbeRows(String groupId) async {
     try {
-      final List<Map<String, dynamic>> data = await supabase
+      final List<Map<String, dynamic>> data = await _supabase
           .from('expense')
           .select(Expense.currencyProbeSelectString)
           .eq('group_id', groupId)
           .not('original_currency_code', 'is', null);
-      return [for (final element in data) Expense()..loadDataFromJson(element)];
+      return [
+        for (final element in data)
+          Expense()
+            ..loadDataFromJson(element, currentUserEmail: _currentUser?.email),
+      ];
     } on PostgrestException catch (e) {
       if (!isMissingColumnError(e)) rethrow;
       return const [];
     }
+  }
+
+  /// The group's earliest non-payback `expense_date`, or null when it has
+  /// none. The all-time statistics window starts at its month.
+  Future<DateTime?> fetchFirstExpenseDate(String groupId) async {
+    final rows = await _supabase
+        .from('expense')
+        .select('expense_date')
+        .eq('group_id', groupId)
+        .eq('is_paid_back_row', false)
+        .order('expense_date', ascending: true)
+        .limit(1);
+    if (rows.isEmpty) return null;
+    return DateTime.parse(rows.first['expense_date'] as String);
   }
 
   /// The RPC [delete] calls — the ONE place its name lives.
@@ -520,10 +551,16 @@ class ExpenseRepository {
   /// recalculation commit together or not at all. The recalculation passes a
   /// null expense id, so the deleted row is never re-announced. Payback rows
   /// take the same path. Still the `ExpenseDeleter` shape.
-  static Future<void> delete(String expenseId, String groupId) async {
-    await supabase.rpc(
+  Future<void> delete(String expenseId, String groupId) async {
+    await _supabase.rpc(
       deleteRpcName,
       params: deleteRpcParams(expenseId, groupId),
     );
   }
 }
+
+@Riverpod(keepAlive: true)
+ExpenseRepository expenseRepository(Ref ref) => ExpenseRepository(
+  ref.watch(supabaseClientProvider),
+  ref.watch(currentUserProvider),
+);

@@ -2,7 +2,7 @@ import 'package:deun/constants.dart';
 import 'package:deun/helper/helper.dart';
 import 'package:deun/helper/notification_sender.dart';
 import 'package:deun/l10n/app_localizations.dart';
-import 'package:deun/main.dart';
+import 'package:deun/provider.dart';
 import 'package:deun/widgets/motion.dart';
 import 'package:deun/widgets/restyle/expense_picker_sheets.dart';
 import 'package:deun/widgets/restyle/member_avatar.dart';
@@ -11,13 +11,14 @@ import 'package:deun/widgets/restyle/primary_button.dart';
 import 'package:deun/widgets/restyle/sheet_scaffold.dart';
 import 'package:deun/widgets/theme_builder.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../data/group_model.dart';
-import '../data/group_repository.dart';
+import '../data/payback_repository.dart';
 import '../data/payback_request.dart';
 
 /// The write [RecordPaybackSheet] performs. Null in production →
-/// [GroupRepository.payBack]; widget tests inject a stub so they never reach the
+/// [PaybackRepository.payBack]; widget tests inject a stub so they never reach the
 /// network (same seam as `ExpenseDetailRead.loadGroupPaybacks`).
 typedef PaybackRecorder =
     Future<void> Function({
@@ -63,7 +64,7 @@ Future<void> showRecordPaybackSheet(
 /// app applies to strictly more destructive actions. What replaces permission is
 /// visibility — both parties are notified and the recorder is written onto the
 /// row.
-class RecordPaybackSheet extends StatefulWidget {
+class RecordPaybackSheet extends ConsumerStatefulWidget {
   const RecordPaybackSheet({
     super.key,
     required this.group,
@@ -74,16 +75,16 @@ class RecordPaybackSheet extends StatefulWidget {
   final PaybackRecorder? recordPayback;
 
   @override
-  State<RecordPaybackSheet> createState() => _RecordPaybackSheetState();
+  ConsumerState<RecordPaybackSheet> createState() => _RecordPaybackSheetState();
 }
 
-class _RecordPaybackSheetState extends State<RecordPaybackSheet> {
+class _RecordPaybackSheetState extends ConsumerState<RecordPaybackSheet> {
   String? _paidBy;
   String? _paidFor;
   double _amount = 0;
   _SaveStatus _status = _SaveStatus.idle;
 
-  String? get _currentUserEmail => supabase.auth.currentUser?.email;
+  String? get _currentUserEmail => ref.read(currentUserProvider)?.email;
 
   @override
   void initState() {
@@ -136,7 +137,7 @@ class _RecordPaybackSheetState extends State<RecordPaybackSheet> {
     final l10n = AppLocalizations.of(context)!;
 
     // Decided before anything is written. The same rule runs again inside
-    // GroupRepository.payBack and a third time inside the pay_back RPC; this
+    // PaybackRepository.payBack and a third time inside the pay_back RPC; this
     // call is the one that produces a message.
     final plan = resolvePayback(
       paidBy: _paidBy ?? '',
@@ -168,16 +169,18 @@ class _RecordPaybackSheetState extends State<RecordPaybackSheet> {
           amount: accepted.amount,
         );
       } else {
-        await GroupRepository.payBack(
-          widget.group.id,
-          accepted.paidFor,
-          accepted.amount,
-          paidBy: accepted.paidBy,
-          // Deliberately no `members:` here: the sheet can sit open for a while,
-          // so let the repository re-resolve against a FRESH roster and catch a
-          // member removed in the meantime.
-          notifications: NotificationSender(),
-        );
+        await ref
+            .read(paybackRepositoryProvider)
+            .payBack(
+              widget.group.id,
+              accepted.paidFor,
+              accepted.amount,
+              paidBy: accepted.paidBy,
+              // Deliberately no `members:` here: the sheet can sit open for a while,
+              // so let the repository re-resolve against a FRESH roster and catch a
+              // member removed in the meantime.
+              notifications: NotificationSender(),
+            );
       }
       // The confirmation is the check on the CTA, held long enough to read
       // before the sheet goes. No snackbar: the old one fired one line before

@@ -23,7 +23,8 @@ class SettingsProfileForm extends ConsumerStatefulWidget {
   const SettingsProfileForm({super.key});
 
   @override
-  ConsumerState<SettingsProfileForm> createState() => _SettingsProfileFormState();
+  ConsumerState<SettingsProfileForm> createState() =>
+      _SettingsProfileFormState();
 }
 
 class _SettingsProfileFormState extends ConsumerState<SettingsProfileForm> {
@@ -43,8 +44,9 @@ class _SettingsProfileFormState extends ConsumerState<SettingsProfileForm> {
     }
 
     final String? localeTag = locale?.toLanguageTag();
-    final String languageLabel =
-        localeTag == null ? l10n.localeSelectorSystem : l10n.localeSelector(localeTag);
+    final String languageLabel = localeTag == null
+        ? l10n.localeSelectorSystem
+        : l10n.localeSelector(localeTag);
 
     return FormBuilder(
       key: _formKey,
@@ -108,17 +110,21 @@ class _SettingsProfileFormState extends ConsumerState<SettingsProfileForm> {
                     child: Text(
                       '#${user.usernameCode}',
                       style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                            color: Theme.of(context).colorScheme.onSurfaceVariant,
-                            fontWeight: FontWeight.w600,
-                          ),
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                   ),
                 IconButton(
                   icon: const Icon(Icons.copy),
                   onPressed: () {
                     Clipboard.setData(ClipboardData(text: user.fullUsername));
-                    showSnackBar(context,
-                        AppLocalizations.of(context)!.settingsUsernameCopied(user.fullUsername));
+                    showSnackBar(
+                      context,
+                      AppLocalizations.of(
+                        context,
+                      )!.settingsUsernameCopied(user.fullUsername),
+                    );
                   },
                 ),
               ],
@@ -156,10 +162,7 @@ class _SettingsProfileFormState extends ConsumerState<SettingsProfileForm> {
             ),
           ),
           const SizedBox(height: heightSpacing),
-          PrimaryButton(
-            label: l10n.update,
-            onPressed: _onSave,
-          ),
+          PrimaryButton(label: l10n.update, onPressed: _onSave),
         ],
       ),
     );
@@ -174,19 +177,26 @@ class _SettingsProfileFormState extends ConsumerState<SettingsProfileForm> {
       final formValue = _formKey.currentState!.value;
       final newUsername = formValue['username'] as String?;
       final usernameChanged =
-          newUsername != null && newUsername.isNotEmpty && newUsername != user.username;
+          newUsername != null &&
+          newUsername.isNotEmpty &&
+          newUsername != user.username;
 
       if (usernameChanged) {
-        await UserRepository.saveUsername(
-          newUsername,
-          formValue['display_name'] ?? user.displayName,
-        );
+        await ref
+            .read(userRepositoryProvider)
+            .saveUsername(
+              newUsername,
+              formValue['display_name'] ?? user.displayName,
+            );
       }
 
-      await UserRepository.saveProfileData(formValue);
+      await ref.read(userRepositoryProvider).saveProfileData(formValue);
       ref.invalidate(userDetailProvider);
       if (mounted) {
-        showSnackBar(context, AppLocalizations.of(context)!.settingsUserUpdateSuccess);
+        showSnackBar(
+          context,
+          AppLocalizations.of(context)!.settingsUserUpdateSuccess,
+        );
 
         final localeValue = _formKey.currentState!.value['locale'];
         if (localeValue == null) {
@@ -197,7 +207,10 @@ class _SettingsProfileFormState extends ConsumerState<SettingsProfileForm> {
       }
     } catch (e) {
       if (mounted) {
-        showSnackBar(context, AppLocalizations.of(context)!.settingsUserUpdateError);
+        showSnackBar(
+          context,
+          AppLocalizations.of(context)!.settingsUserUpdateError,
+        );
       }
       debugPrint(e.toString());
     } finally {
@@ -258,7 +271,9 @@ class _LanguageRow extends StatelessWidget {
                   Expanded(
                     child: Text(
                       value,
-                      style: theme.textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w600),
+                      style: theme.textTheme.bodyLarge?.copyWith(
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                   ),
                   Icon(Icons.expand_more, color: colorScheme.onSurfaceVariant),

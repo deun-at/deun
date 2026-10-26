@@ -2,7 +2,7 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:deun/helper/helper.dart';
-import 'package:deun/main.dart';
+import 'package:deun/provider.dart';
 import 'package:deun/pages/expenses/data/expense_model.dart';
 import 'package:deun/pages/expenses/data/expense_repository.dart';
 import 'package:deun/pages/groups/presentation/group_detail_list.dart';
@@ -87,6 +87,7 @@ class _GroupDetailState extends ConsumerState<GroupDetail> {
 
   @override
   Widget build(BuildContext context) {
+    final currentUserEmail = ref.watch(currentUserProvider)?.email;
     return ThemeBuilder(
       colorValue: widget.group.colorValue,
       builder: (context) {
@@ -181,7 +182,10 @@ class _GroupDetailState extends ConsumerState<GroupDetail> {
                                     crossAxisAlignment:
                                         CrossAxisAlignment.start,
                                     children: [
-                                      _GroupBalanceHero(group: groupDetail),
+                                      _GroupBalanceHero(
+                                        group: groupDetail,
+                                        currentUserEmail: currentUserEmail,
+                                      ),
                                       const SizedBox(height: 14),
                                       _GroupQuickActions(group: groupDetail),
                                       if (groupDetail.isSolo) ...[
@@ -342,12 +346,9 @@ class _GroupDetailState extends ConsumerState<GroupDetail> {
 
     final l10n = AppLocalizations.of(context)!;
 
-    List<Expense> result = await ExpenseRepository.fetchData(
-      group.id,
-      0,
-      9,
-      input,
-    );
+    List<Expense> result = await ref
+        .read(expenseRepositoryProvider)
+        .fetchData(group.id, 0, 9, input);
     if (result.isEmpty) {
       return [_searchHint(l10n.expensesSearchEmpty)];
     }
@@ -390,9 +391,15 @@ class _GroupDetailState extends ConsumerState<GroupDetail> {
 /// The surrounding [ThemeBuilder] has already re-tinted the theme by
 /// `Group.colorValue`, so the hero's tint comes from `colorScheme.primary*`.
 class _GroupBalanceHero extends StatelessWidget {
-  const _GroupBalanceHero({required this.group});
+  const _GroupBalanceHero({
+    required this.group,
+    required this.currentUserEmail,
+  });
 
   final Group group;
+
+  /// The signed-in user's email, marking which member reads as "you".
+  final String? currentUserEmail;
 
   @override
   Widget build(BuildContext context) {
@@ -430,7 +437,7 @@ class _GroupBalanceHero extends StatelessWidget {
           (GroupMember m) => AvatarStackMember(
             name: m.displayName,
             colorKey: m.email,
-            isYou: m.email == supabase.auth.currentUser?.email,
+            isYou: m.email == currentUserEmail,
           ),
         )
         .toList();

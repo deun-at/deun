@@ -2,8 +2,6 @@ import 'package:deun/helper/currency_breakdown.dart';
 import 'package:deun/helper/helper.dart';
 import 'package:deun/pages/users/user_model.dart';
 
-import '../../../main.dart';
-
 class Friendship {
   late SupaUser user;
   late String status;
@@ -35,8 +33,11 @@ class Friendship {
   /// The currency [shareAmount] is expressed in.
   Currency get currency => breakdown.primary.currency;
 
-  void loadDataFromJson(Map<String, dynamic> json) {
-    if (json["requester"]["email"] == supabase.auth.currentUser?.email) {
+  void loadDataFromJson(
+    Map<String, dynamic> json, {
+    required String? currentUserEmail,
+  }) {
+    if (json["requester"]["email"] == currentUserEmail) {
       isIncomingRequest = false;
       user = SupaUser.fromJson(json["addressee"]);
     } else {

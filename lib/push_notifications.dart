@@ -4,8 +4,8 @@ import 'dart:io' show Platform;
 import 'package:deun/constants.dart';
 import 'package:deun/helper/helper.dart';
 import 'package:deun/main.dart';
-import 'package:deun/pages/expenses/data/expense_repository.dart';
-import 'package:deun/pages/groups/data/group_repository.dart';
+import 'package:deun/pages/expenses/data/expense_model.dart';
+import 'package:deun/pages/groups/data/group_model.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
@@ -156,17 +156,19 @@ PushTarget? pushTargetFor(Map<String, dynamic> data) =>
 /// throws.
 Future<void> openPushMessage(
   RemoteMessage message,
-  GlobalKey<NavigatorState> rootNavigatorKey,
-) async {
+  GlobalKey<NavigatorState> rootNavigatorKey, {
+  required Future<Group> Function(String groupId) loadGroup,
+  required Future<Expense> Function(String expenseId) loadExpense,
+}) async {
   try {
     switch (pushTargetFor(message.data)) {
       case PushGroupTarget(:final groupId):
-        final group = await GroupRepository.fetchDetail(groupId);
+        final group = await loadGroup(groupId);
         final context = rootNavigatorKey.currentContext;
         if (context == null || !context.mounted) return;
         navigateToGroup(context, group);
       case PushExpenseTarget(:final expenseId):
-        final expense = await ExpenseRepository.fetchDetail(expenseId);
+        final expense = await loadExpense(expenseId);
         final context = rootNavigatorKey.currentContext;
         if (context == null || !context.mounted) return;
         navigateToExpense(context, expense);

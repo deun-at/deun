@@ -1,15 +1,17 @@
-// payback-atomic-recalc: GroupRepository.payBack issues the payback write and
+// payback-atomic-recalc: PaybackRepository.payBack issues the payback write and
 // nothing else. The balance recalculation runs inside `pay_back` on the
 // server, so a thrown error means nothing was recorded and a retry is safe.
-// Every RPC goes through GroupRepository.payBackRpcOverride and every push to
-// a no-op transport; no test here reaches the network.
+// Every RPC goes through the repository's `rpc` constructor parameter and every
+// push to a no-op transport; no test here reaches the network.
 
 import 'package:deun/helper/notification_sender.dart';
 import 'package:deun/pages/groups/data/group_member_model.dart';
-import 'package:deun/pages/groups/data/group_repository.dart';
-import 'package:flutter/services.dart';
+import 'package:deun/pages/groups/data/payback_repository.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+
+import '../../helper/fake_supabase.dart';
+import '../../helper/unused_repositories.dart';
 
 const _groupId = 'g1';
 const _ann = 'ann@test.com';
@@ -30,47 +32,35 @@ void main() {
   );
 
   late List<String> calls;
+  late PaybackRpc rpc;
 
   /// Records every RPC payBack issues; [respond] returns its result or throws.
   void answer(Object? Function(String function) respond) {
-    GroupRepository.payBackRpcOverride = (function, params) async {
+    rpc = (function, params) async {
       calls.add(function);
       return respond(function);
     };
   }
 
-  Future<void> payBack() => GroupRepository.payBack(
-    _groupId,
-    _bob,
-    12.5,
-    paidBy: _ann,
-    members: roster,
-    notifications: NotificationSender(push: (request) async {}),
-  );
-
-  setUpAll(() async {
-    // A local, signed-out client: payBack reads supabase.auth for the recorder.
-    TestWidgetsFlutterBinding.ensureInitialized().defaultBinaryMessenger
-        .setMockMethodCallHandler(
-          const MethodChannel('plugins.flutter.io/shared_preferences'),
-          (call) async => call.method == 'getAll' ? <String, Object>{} : null,
-        );
-    await Supabase.initialize(
-      url: 'http://localhost:54321',
-      anonKey: 'test-anon-key',
-    );
-  });
-
-  tearDownAll(() async {
-    await Supabase.instance.dispose();
-  });
+  // No signed-in user: payBack reads the recorder from the current user.
+  Future<void> payBack() =>
+      PaybackRepository(
+        FakeSupabaseClient(),
+        null,
+        groups: UnusedGroupRepository(),
+        members: UnusedMemberRepository(),
+        rpc: rpc,
+      ).payBack(
+        _groupId,
+        _bob,
+        12.5,
+        paidBy: _ann,
+        members: roster,
+        notifications: NotificationSender(push: (request) async {}),
+      );
 
   setUp(() {
     calls = [];
-  });
-
-  tearDown(() {
-    GroupRepository.payBackRpcOverride = null;
   });
 
   group('a recorded payback completes on its write alone', () {

@@ -10,12 +10,11 @@ import 'package:deun/pages/groups/data/group_member_model.dart';
 import 'package:deun/pages/groups/data/group_model.dart';
 import 'package:deun/widgets/restyle/deun_header.dart';
 import 'package:deun/widgets/theme_builder.dart';
+import 'package:deun/provider.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'expense_save_status_test.dart'
     show cta, drainSnackBar, headerClose, nameField, openDateSheetMidWrite;
@@ -83,7 +82,7 @@ Expense _quickExpense({String date = '2026-01-10'}) {
         ],
       },
     ],
-  });
+  }, currentUserEmail: null);
   return e;
 }
 
@@ -153,6 +152,7 @@ Future<void> _pump(
   final deletes = deleter ?? _Deleter();
   await tester.pumpWidget(
     ProviderScope(
+      overrides: [currentUserProvider.overrideWithValue(null)],
       child: MaterialApp(
         localizationsDelegates: const [
           AppLocalizations.delegate,
@@ -225,22 +225,6 @@ Finder get _headerDeleteButton => find.descendant(
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
-
-  setUpAll(() async {
-    TestWidgetsFlutterBinding.ensureInitialized().defaultBinaryMessenger
-        .setMockMethodCallHandler(
-          const MethodChannel('plugins.flutter.io/shared_preferences'),
-          (call) async => call.method == 'getAll' ? <String, Object>{} : null,
-        );
-    await Supabase.initialize(
-      url: 'http://localhost:54321',
-      anonKey: 'test-anon-key',
-    );
-  });
-
-  tearDownAll(() async {
-    await Supabase.instance.dispose();
-  });
 
   // 17 — no regression: the editor's unguarded dialog is today's single string.
   testWidgets('the editor unguarded delete dialog shows today plain prompt', (

@@ -3,26 +3,28 @@ import 'package:deun/l10n/app_localizations.dart';
 import 'package:deun/pages/groups/data/group_member_model.dart';
 import 'package:deun/pages/groups/data/group_model.dart';
 import 'package:deun/pages/groups/data/group_repository.dart';
+import 'package:deun/pages/groups/data/member_repository.dart';
 import 'package:deun/pages/groups/data/member_removal.dart';
 import 'package:deun/widgets/restyle/deun_header.dart';
 import 'package:deun/widgets/restyle/primary_button.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 /// The join write, as an injectable function. Signature-compatible with
-/// [GroupRepository.joinGroup], which production passes.
+/// [MemberRepository.joinGroup], which production passes.
 typedef GroupJoiner =
     Future<void> Function(String groupId, {String? guestEmail});
 
 /// The join page's read, as an injectable function. Signature-compatible with
-/// [GroupRepository.fetchJoinState].
+/// [MemberRepository.fetchJoinState].
 typedef GroupJoinStateLoader = Future<GroupJoinState> Function(String groupId);
 
 /// The joined group's load before the hand-off. Signature-compatible with
 /// [GroupRepository.fetchDetail].
 typedef GroupDetailLoader = Future<Group> Function(String groupId);
 
-class GroupJoinPage extends StatefulWidget {
+class GroupJoinPage extends ConsumerStatefulWidget {
   const GroupJoinPage({
     super.key,
     required this.groupId,
@@ -35,11 +37,11 @@ class GroupJoinPage extends StatefulWidget {
   final String groupId;
   final String? groupName;
 
-  /// Test seam for the join write. Null in production → [GroupRepository.joinGroup].
+  /// Test seam for the join write. Null in production → [MemberRepository.joinGroup].
   final GroupJoiner? joinGroup;
 
   /// Test seam for the join-state read. Null in production →
-  /// [GroupRepository.fetchJoinState].
+  /// [MemberRepository.fetchJoinState].
   final GroupJoinStateLoader? loadJoinState;
 
   /// Test seam for the hand-off's group load. Null in production →
@@ -47,10 +49,10 @@ class GroupJoinPage extends StatefulWidget {
   final GroupDetailLoader? loadGroup;
 
   @override
-  State<GroupJoinPage> createState() => _GroupJoinPageState();
+  ConsumerState<GroupJoinPage> createState() => _GroupJoinPageState();
 }
 
-class _GroupJoinPageState extends State<GroupJoinPage> {
+class _GroupJoinPageState extends ConsumerState<GroupJoinPage> {
   bool _loading = true;
   bool _joining = false;
   List<GroupMember> _guestMembers = const [];
@@ -65,7 +67,8 @@ class _GroupJoinPageState extends State<GroupJoinPage> {
   Future<void> _loadJoinState() async {
     try {
       final state =
-          await (widget.loadJoinState ?? GroupRepository.fetchJoinState)(
+          await (widget.loadJoinState ??
+              ref.read(memberRepositoryProvider).fetchJoinState)(
             widget.groupId,
           );
       if (!mounted) return;
@@ -89,9 +92,9 @@ class _GroupJoinPageState extends State<GroupJoinPage> {
   }
 
   Future<void> _openGroup() async {
-    final g = await (widget.loadGroup ?? GroupRepository.fetchDetail)(
-      widget.groupId,
-    );
+    final g =
+        await (widget.loadGroup ??
+            ref.read(groupRepositoryProvider).fetchDetail)(widget.groupId);
     if (!mounted) return;
     GoRouter.of(context).go('/group/details', extra: {'group': g});
   }
@@ -100,7 +103,7 @@ class _GroupJoinPageState extends State<GroupJoinPage> {
     if (_joining) return;
     setState(() => _joining = true);
     try {
-      await (widget.joinGroup ?? GroupRepository.joinGroup)(
+      await (widget.joinGroup ?? ref.read(memberRepositoryProvider).joinGroup)(
         widget.groupId,
         guestEmail: _selectedGuestEmail,
       );

@@ -8,6 +8,7 @@ import 'package:deun/widgets/restyle/sheet_scaffold.dart';
 import 'package:deun/widgets/theme_builder.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 ReceiptScanResult _result({
@@ -17,7 +18,8 @@ ReceiptScanResult _result({
 }) {
   return ReceiptScanResult(
     merchantName: merchant,
-    lineItems: items ??
+    lineItems:
+        items ??
         const [
           ReceiptLineItem(name: 'Coffee', amount: 4.50),
           ReceiptLineItem(name: 'Croissant', amount: 3.20),
@@ -32,19 +34,24 @@ Future<void> _pump(
   Brightness brightness = Brightness.light,
 }) async {
   await tester.pumpWidget(
-    MaterialApp(
-      localizationsDelegates: const [
-        AppLocalizations.delegate,
-        GlobalMaterialLocalizations.delegate,
-        GlobalWidgetsLocalizations.delegate,
-        GlobalCupertinoLocalizations.delegate,
-      ],
-      supportedLocales: AppLocalizations.supportedLocales,
-      home: Builder(
-        builder: (context) => Theme(
-          data: getThemeData(context, kBrandSeed, brightness)
-              .copyWith(splashFactory: NoSplash.splashFactory),
-          child: Scaffold(body: child),
+    ProviderScope(
+      child: MaterialApp(
+        localizationsDelegates: const [
+          AppLocalizations.delegate,
+          GlobalMaterialLocalizations.delegate,
+          GlobalWidgetsLocalizations.delegate,
+          GlobalCupertinoLocalizations.delegate,
+        ],
+        supportedLocales: AppLocalizations.supportedLocales,
+        home: Builder(
+          builder: (context) => Theme(
+            data: getThemeData(
+              context,
+              kBrandSeed,
+              brightness,
+            ).copyWith(splashFactory: NoSplash.splashFactory),
+            child: Scaffold(body: child),
+          ),
         ),
       ),
     ),
@@ -99,8 +106,9 @@ void main() {
       expect(find.text('Cafe Central'), findsOneWidget);
     });
 
-    testWidgets('uses v3 button presets (not raw Material buttons)',
-        (tester) async {
+    testWidgets('uses v3 button presets (not raw Material buttons)', (
+      tester,
+    ) async {
       await _pump(
         tester,
         ReceiptItemsPreview(
@@ -149,8 +157,9 @@ void main() {
   });
 
   group('ReceiptScannerSheet', () {
-    testWidgets('idle state shows the instructions and capture actions',
-        (tester) async {
+    testWidgets('idle state shows the instructions and capture actions', (
+      tester,
+    ) async {
       final l10n = await AppLocalizations.delegate.load(const Locale('en'));
       await _pump(tester, const ReceiptScannerSheet());
 

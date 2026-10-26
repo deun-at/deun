@@ -1,5 +1,5 @@
 import 'package:deun/helper/helper.dart';
-import 'package:deun/main.dart';
+import 'package:deun/provider.dart';
 import 'package:deun/pages/groups/data/group_model.dart';
 import 'package:deun/pages/groups/presentation/group_ledger.dart';
 import 'package:deun/pages/groups/presentation/payback_detail_sheet.dart';
@@ -237,16 +237,16 @@ class _LedgerRow extends StatelessWidget {
 }
 
 /// Shared "{payer} paid · you lent/owe €X" net summary line.
-class ExpenseNetLine extends StatelessWidget {
+class ExpenseNetLine extends ConsumerWidget {
   const ExpenseNetLine({super.key, required this.expense});
 
   final Expense expense;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context)!;
     final colorScheme = Theme.of(context).colorScheme;
-    final currentUserEmail = supabase.auth.currentUser?.email;
+    final currentUserEmail = ref.watch(currentUserProvider)?.email;
     final currentUserPaid = expense.paidBy == currentUserEmail;
     final shareStat = expense.groupMemberShareStatistic;
 
@@ -449,18 +449,18 @@ class LedgerRowInk extends StatelessWidget {
 
 /// Itemized expense: accent left bar, claim pill / claimed state, claimer
 /// avatars and unclaimed meta.
-class _ItemizedRow extends StatelessWidget {
+class _ItemizedRow extends ConsumerWidget {
   const _ItemizedRow({required this.expense, required this.onTap});
 
   final Expense expense;
   final VoidCallback onTap;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context)!;
     final colorScheme = Theme.of(context).colorScheme;
     final semantic = Theme.of(context).extension<SemanticColors>()!;
-    final currentUserEmail = supabase.auth.currentUser?.email;
+    final currentUserEmail = ref.watch(currentUserProvider)?.email;
 
     // Claim derivation from the existing share statistic (do not recompute
     // settlement). A member is a "claimer" when they hold a share; the current
@@ -666,17 +666,17 @@ class _ItemizedRow extends StatelessWidget {
 /// Payback / settlement: green inset "{from} paid {to} €X · PAYMENT".
 /// Tappable — opens [PaybackDetailSheet], the surface a payback can be
 /// deleted from.
-class _PaybackRow extends StatelessWidget {
+class _PaybackRow extends ConsumerWidget {
   const _PaybackRow({required this.expense, required this.onTap});
 
   final Expense expense;
   final VoidCallback onTap;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context)!;
     final semantic = Theme.of(context).extension<SemanticColors>()!;
-    final currentUserEmail = supabase.auth.currentUser?.email;
+    final currentUserEmail = ref.watch(currentUserProvider)?.email;
 
     // v3 inset payback chip: sits inside the joined date-group card with a
     // small margin, so its green surface floats within the row stack. The

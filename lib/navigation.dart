@@ -8,6 +8,8 @@ import 'package:deun/pages/expenses/presentation/claim_page.dart';
 import 'package:deun/pages/expenses/presentation/expense_detail.dart';
 import 'package:deun/pages/expenses/presentation/expense_detail_read.dart';
 import 'package:deun/pages/expenses/data/expense_model.dart';
+import 'package:deun/pages/expenses/data/expense_repository.dart';
+import 'package:deun/pages/groups/data/group_repository.dart';
 import 'package:deun/pages/expenses/data/receipt_scan_result.dart';
 import 'package:deun/pages/friends/presentation/friend_add_page.dart';
 import 'package:deun/pages/friends/presentation/friend_list.dart';
@@ -436,8 +438,8 @@ class _NavigationScreenState extends ConsumerState<NavigationScreen>
 
   Future<void> _initUserLocale() async {
     //initialize Prefered Language
-    final email = supabase.auth.currentUser?.email;
-    if (email == null) return;
+    final email = ref.read(currentUserProvider)?.email;
+    if (email == null || email.isEmpty) return;
 
     final user = await supabase
         .from("user")
@@ -455,14 +457,21 @@ class _NavigationScreenState extends ConsumerState<NavigationScreen>
   /// Starts the signed-in user's push session. With nobody signed in, nothing
   /// starts.
   void _startPushSession() {
-    final userId = supabase.auth.currentUser?.id;
+    final userId = ref.read(currentUserProvider)?.id;
     if (!mounted || userId == null) return;
     unawaited(
       ref
           .read(pushSessionProvider.notifier)
           .start(
             userId: userId,
-            onOpened: (message) => openPushMessage(message, _rootNavigatorKey),
+            onOpened: (message) => openPushMessage(
+              message,
+              _rootNavigatorKey,
+              loadGroup: (id) =>
+                  ref.read(groupRepositoryProvider).fetchDetail(id),
+              loadExpense: (id) =>
+                  ref.read(expenseRepositoryProvider).fetchDetail(id),
+            ),
           ),
     );
   }

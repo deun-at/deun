@@ -505,7 +505,7 @@ void main() {
             'currency_code': 'USD',
             'group_member': const [],
             'group_shares_summary': const [],
-          });
+          }, currentUserEmail: null);
         expect(canChangeGroupCurrency(g), isTrue);
       },
     );

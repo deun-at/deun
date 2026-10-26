@@ -7,12 +7,11 @@ import 'package:deun/pages/groups/data/group_member_model.dart';
 import 'package:deun/pages/groups/data/group_model.dart';
 import 'package:deun/widgets/restyle/expense_picker_sheets.dart';
 import 'package:deun/widgets/theme_builder.dart';
+import 'package:deun/provider.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 
 // The editor sits under the group's own ThemeBuilder, but a set of its
 // colours and every sheet it opens have always followed the APP's brand theme.
@@ -56,7 +55,7 @@ Expense _expense(List<Map<String, dynamic>> entries) {
     'created_at': '2026-01-10T10:00:00',
     'is_paid_back_row': false,
     'expense_entry': entries,
-  });
+  }, currentUserEmail: null);
   return e;
 }
 
@@ -102,6 +101,7 @@ Expense _itemizedExpense() => _expense([
 Future<void> _pump(WidgetTester tester, Expense expense) async {
   await tester.pumpWidget(
     ProviderScope(
+      overrides: [currentUserProvider.overrideWithValue(null)],
       child: MaterialApp(
         localizationsDelegates: const [
           AppLocalizations.delegate,
@@ -142,22 +142,6 @@ ColorScheme _sheetScheme(WidgetTester tester, Type sheet) =>
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
-
-  setUpAll(() async {
-    TestWidgetsFlutterBinding.ensureInitialized().defaultBinaryMessenger
-        .setMockMethodCallHandler(
-          const MethodChannel('plugins.flutter.io/shared_preferences'),
-          (call) async => call.method == 'getAll' ? <String, Object>{} : null,
-        );
-    await Supabase.initialize(
-      url: 'http://localhost:54321',
-      anonKey: 'test-anon-key',
-    );
-  });
-
-  tearDownAll(() async {
-    await Supabase.instance.dispose();
-  });
 
   // Slots asserted on are ones the two seeds actually colour differently
   // (primary, primaryContainer, outlineVariant, outline); the neutral

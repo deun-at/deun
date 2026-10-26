@@ -6,12 +6,13 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../data/receipt_scan_result.dart';
 
 class GeminiReceiptParser {
-  static bool get isAvailable => Supabase.instance.client.auth.currentUser != null;
-
   /// Parse receipt OCR text lines via the Supabase Edge Function.
-  /// Returns null if parsing fails (not authenticated, network error, bad response).
-  static Future<ReceiptScanResult?> parse(List<String> ocrLines) async {
-    if (!isAvailable) return null;
+  /// Returns null if parsing fails (not [signedIn], network error, bad response).
+  static Future<ReceiptScanResult?> parse(
+    List<String> ocrLines, {
+    required bool signedIn,
+  }) async {
+    if (!signedIn) return null;
 
     try {
       final response = await Supabase.instance.client.functions.invoke(
@@ -66,12 +67,13 @@ class GeminiReceiptParser {
             final name = item['name'] as String?;
             final amount = (item['amount'] as num?)?.toDouble();
             final quantity = (item['quantity'] as num?)?.toInt() ?? 1;
-            if (name != null && name.isNotEmpty && amount != null && amount != 0) {
-              items.add(ReceiptLineItem(
-                name: name,
-                amount: amount,
-                quantity: quantity,
-              ));
+            if (name != null &&
+                name.isNotEmpty &&
+                amount != null &&
+                amount != 0) {
+              items.add(
+                ReceiptLineItem(name: name, amount: amount, quantity: quantity),
+              );
             }
           }
         }

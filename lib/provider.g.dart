@@ -53,6 +53,110 @@ final class AuthStateChangesProvider
 
 String _$authStateChangesHash() => r'9fa2fe817507b5e89bc3fdcd940ed567253f90d0';
 
+/// The Supabase client every repository queries through. Overridden in tests.
+
+@ProviderFor(supabaseClient)
+final supabaseClientProvider = SupabaseClientProvider._();
+
+/// The Supabase client every repository queries through. Overridden in tests.
+
+final class SupabaseClientProvider
+    extends $FunctionalProvider<SupabaseClient, SupabaseClient, SupabaseClient>
+    with $Provider<SupabaseClient> {
+  /// The Supabase client every repository queries through. Overridden in tests.
+  SupabaseClientProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'supabaseClientProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$supabaseClientHash();
+
+  @$internal
+  @override
+  $ProviderElement<SupabaseClient> $createElement($ProviderPointer pointer) =>
+      $ProviderElement(pointer);
+
+  @override
+  SupabaseClient create(Ref ref) {
+    return supabaseClient(ref);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(SupabaseClient value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<SupabaseClient>(value),
+    );
+  }
+}
+
+String _$supabaseClientHash() => r'3db2a4c212c7f24cea9810e376225aa1a6cab012';
+
+/// Who is signed in right now, or null. The only reader of `supabase.auth`
+/// outside the auth plumbing: the last auth event's session decides, and before
+/// the first event the session the client restored does. An equal value does
+/// not notify, so a token refresh or a re-emitted sign-in for the same account
+/// rebuilds nothing.
+
+@ProviderFor(currentUser)
+final currentUserProvider = CurrentUserProvider._();
+
+/// Who is signed in right now, or null. The only reader of `supabase.auth`
+/// outside the auth plumbing: the last auth event's session decides, and before
+/// the first event the session the client restored does. An equal value does
+/// not notify, so a token refresh or a re-emitted sign-in for the same account
+/// rebuilds nothing.
+
+final class CurrentUserProvider
+    extends $FunctionalProvider<CurrentUser?, CurrentUser?, CurrentUser?>
+    with $Provider<CurrentUser?> {
+  /// Who is signed in right now, or null. The only reader of `supabase.auth`
+  /// outside the auth plumbing: the last auth event's session decides, and before
+  /// the first event the session the client restored does. An equal value does
+  /// not notify, so a token refresh or a re-emitted sign-in for the same account
+  /// rebuilds nothing.
+  CurrentUserProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'currentUserProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$currentUserHash();
+
+  @$internal
+  @override
+  $ProviderElement<CurrentUser?> $createElement($ProviderPointer pointer) =>
+      $ProviderElement(pointer);
+
+  @override
+  CurrentUser? create(Ref ref) {
+    return currentUser(ref);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(CurrentUser? value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<CurrentUser?>(value),
+    );
+  }
+}
+
+String _$currentUserHash() => r'acca2468523175997515cb280f489e0341d302a6';
+
 /// Watches Supabase auth-state changes and invalidates the user-scoped providers
 /// on sign-out (and on sign-in as a *different* user). Mounted once near the app
 /// root; centralizing the invalidation here means new sign-out surfaces cannot
@@ -149,7 +253,7 @@ final class UserDetailNotifierProvider
 }
 
 String _$userDetailNotifierHash() =>
-    r'99e8a26d1615c267217da2d4bb52cba733ab6ff6';
+    r'd5381d7bfd5e676264a90be3e87a59a29ed05799';
 
 abstract class _$UserDetailNotifier extends $AsyncNotifier<SupaUser> {
   FutureOr<SupaUser> build();

@@ -9,11 +9,11 @@ import 'package:deun/pages/groups/presentation/record_payback_sheet.dart';
 import 'package:deun/widgets/restyle/sheet_scaffold.dart';
 import 'package:deun/widgets/restyle/primary_button.dart';
 import 'package:deun/widgets/theme_builder.dart';
+import 'package:deun/provider.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 
 GroupMember _member(String email, String name, {DateTime? removedAt}) {
   final m = GroupMember();
@@ -95,40 +95,43 @@ Future<void> _pump(
   bool reduceMotion = false,
 }) async {
   await tester.pumpWidget(
-    MaterialApp(
-      localizationsDelegates: const [
-        AppLocalizations.delegate,
-        GlobalMaterialLocalizations.delegate,
-        GlobalWidgetsLocalizations.delegate,
-        GlobalCupertinoLocalizations.delegate,
-      ],
-      supportedLocales: AppLocalizations.supportedLocales,
-      builder: reduceMotion
-          ? (context, child) => MediaQuery(
-              data: MediaQuery.of(context).copyWith(disableAnimations: true),
-              child: child!,
-            )
-          : null,
-      // '/sheet' on top of '/' so the post-write pop lands somewhere instead of
-      // emptying the navigator — and so a confirmation held on the sheet can be
-      // told apart from one painted over the screen behind it.
-      initialRoute: '/sheet',
-      routes: {
-        '/': (context) => const Scaffold(body: Text('BEHIND')),
-        '/sheet': (context) => Theme(
-          data: getThemeData(
-            context,
-            kBrandSeed,
-            Brightness.light,
-          ).copyWith(splashFactory: NoSplash.splashFactory),
-          child: Scaffold(
-            body: RecordPaybackSheet(
-              group: group,
-              recordPayback: recorded?.call,
+    ProviderScope(
+      overrides: [currentUserProvider.overrideWithValue(null)],
+      child: MaterialApp(
+        localizationsDelegates: const [
+          AppLocalizations.delegate,
+          GlobalMaterialLocalizations.delegate,
+          GlobalWidgetsLocalizations.delegate,
+          GlobalCupertinoLocalizations.delegate,
+        ],
+        supportedLocales: AppLocalizations.supportedLocales,
+        builder: reduceMotion
+            ? (context, child) => MediaQuery(
+                data: MediaQuery.of(context).copyWith(disableAnimations: true),
+                child: child!,
+              )
+            : null,
+        // '/sheet' on top of '/' so the post-write pop lands somewhere instead of
+        // emptying the navigator — and so a confirmation held on the sheet can be
+        // told apart from one painted over the screen behind it.
+        initialRoute: '/sheet',
+        routes: {
+          '/': (context) => const Scaffold(body: Text('BEHIND')),
+          '/sheet': (context) => Theme(
+            data: getThemeData(
+              context,
+              kBrandSeed,
+              Brightness.light,
+            ).copyWith(splashFactory: NoSplash.splashFactory),
+            child: Scaffold(
+              body: RecordPaybackSheet(
+                group: group,
+                recordPayback: recorded?.call,
+              ),
             ),
           ),
-        ),
-      },
+        },
+      ),
     ),
   );
   await tester.pumpAndSettle();
@@ -168,22 +171,6 @@ PrimaryButton _cta(WidgetTester tester) =>
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
-
-  setUpAll(() async {
-    TestWidgetsFlutterBinding.ensureInitialized().defaultBinaryMessenger
-        .setMockMethodCallHandler(
-          const MethodChannel('plugins.flutter.io/shared_preferences'),
-          (call) async => call.method == 'getAll' ? <String, Object>{} : null,
-        );
-    await Supabase.initialize(
-      url: 'http://localhost:54321',
-      anonKey: 'test-anon-key',
-    );
-  });
-
-  tearDownAll(() async {
-    await Supabase.instance.dispose();
-  });
 
   // 34 — criterion: any member may record "X paid Y" for any two members.
   testWidgets('records a payment between two members who are not me', (
@@ -354,31 +341,34 @@ void main() {
     final group = _group();
 
     await tester.pumpWidget(
-      MaterialApp(
-        theme: ThemeData(splashFactory: NoSplash.splashFactory),
-        localizationsDelegates: const [
-          AppLocalizations.delegate,
-          GlobalMaterialLocalizations.delegate,
-          GlobalWidgetsLocalizations.delegate,
-          GlobalCupertinoLocalizations.delegate,
-        ],
-        supportedLocales: AppLocalizations.supportedLocales,
-        initialRoute: '/root',
-        routes: {
-          '/root': (context) => Scaffold(
-            body: Center(
-              child: TextButton(
-                child: const Text('ROOT'),
-                onPressed: () => Navigator.of(context).push(
-                  MaterialPageRoute<void>(
-                    builder: (context) => Scaffold(
-                      body: Center(
-                        child: TextButton(
-                          child: const Text('GROUP DETAIL'),
-                          onPressed: () => showRecordPaybackSheet(
-                            context,
-                            group: group,
-                            recordPayback: recorded.call,
+      ProviderScope(
+        overrides: [currentUserProvider.overrideWithValue(null)],
+        child: MaterialApp(
+          theme: ThemeData(splashFactory: NoSplash.splashFactory),
+          localizationsDelegates: const [
+            AppLocalizations.delegate,
+            GlobalMaterialLocalizations.delegate,
+            GlobalWidgetsLocalizations.delegate,
+            GlobalCupertinoLocalizations.delegate,
+          ],
+          supportedLocales: AppLocalizations.supportedLocales,
+          initialRoute: '/root',
+          routes: {
+            '/root': (context) => Scaffold(
+              body: Center(
+                child: TextButton(
+                  child: const Text('ROOT'),
+                  onPressed: () => Navigator.of(context).push(
+                    MaterialPageRoute<void>(
+                      builder: (context) => Scaffold(
+                        body: Center(
+                          child: TextButton(
+                            child: const Text('GROUP DETAIL'),
+                            onPressed: () => showRecordPaybackSheet(
+                              context,
+                              group: group,
+                              recordPayback: recorded.call,
+                            ),
                           ),
                         ),
                       ),
@@ -387,8 +377,8 @@ void main() {
                 ),
               ),
             ),
-          ),
-        },
+          },
+        ),
       ),
     );
 

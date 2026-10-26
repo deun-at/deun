@@ -34,7 +34,11 @@ void main() {
     test('a null name parses to an empty string instead of throwing', () {
       final expense = Expense();
 
-      expect(() => expense.loadDataFromJson(_row(name: null)), returnsNormally);
+      expect(
+        () =>
+            expense.loadDataFromJson(_row(name: null), currentUserEmail: null),
+        returnsNormally,
+      );
       expect(expense.name, '');
     });
 
@@ -42,12 +46,16 @@ void main() {
       final json = _row(name: null)..remove('name');
       final expense = Expense();
 
-      expect(() => expense.loadDataFromJson(json), returnsNormally);
+      expect(
+        () => expense.loadDataFromJson(json, currentUserEmail: null),
+        returnsNormally,
+      );
       expect(expense.name, '');
     });
 
     test('a real name is untouched', () {
-      final expense = Expense()..loadDataFromJson(_row(name: 'Dinner'));
+      final expense = Expense()
+        ..loadDataFromJson(_row(name: 'Dinner'), currentUserEmail: null);
 
       expect(expense.name, 'Dinner');
     });
@@ -61,7 +69,9 @@ void main() {
         _row(name: 'Taxi'),
       ];
 
-      final parsed = rows.map((json) => Expense()..loadDataFromJson(json));
+      final parsed = rows.map(
+        (json) => Expense()..loadDataFromJson(json, currentUserEmail: null),
+      );
 
       expect(parsed.map((e) => e.name), ['Breakfast', '', 'Taxi']);
     });
@@ -77,7 +87,7 @@ void main() {
           'name': null,
           'simplified_expenses': true,
           'created_at': '2026-01-10T10:00:00',
-        }),
+        }, currentUserEmail: null),
         returnsNormally,
       );
       expect(group.name, '');

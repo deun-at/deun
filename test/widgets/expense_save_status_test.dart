@@ -28,13 +28,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'expense_editor_currency_rate_test.dart'
     show
         SavedExpense,
         closeConversionSheet,
-        initTestSupabase,
         installFakePrefs,
         openConversionSheet,
         pickCurrency;
@@ -102,7 +100,7 @@ Expense _quickExpense() {
         ],
       },
     ],
-  });
+  }, currentUserEmail: null);
   return e;
 }
 
@@ -157,6 +155,7 @@ Future<void> _pumpEditor(
   await tester.pumpWidget(
     ProviderScope(
       overrides: [
+        currentUserProvider.overrideWithValue(null),
         if (stickyRate != null) stickyRateProvider.overrideWith(stickyRate),
       ],
       child: MaterialApp(
@@ -254,12 +253,6 @@ Future<void> _enterChfAtTypedRate(WidgetTester tester) async {
 }
 
 void main() {
-  setUpAll(initTestSupabase);
-
-  tearDownAll(() async {
-    await Supabase.instance.dispose();
-  });
-
   setUp(installFakePrefs);
 
   testWidgets('the CTA spins while the save is in flight', (tester) async {

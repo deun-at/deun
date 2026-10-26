@@ -12,13 +12,11 @@ import 'package:deun/provider.dart';
 import 'package:deun/widgets/restyle/primary_button.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'expense_editor_currency_rate_test.dart'
     show
         StubLookup,
         closeConversionSheet,
-        initTestSupabase,
         installFakePrefs,
         itemizedExpense,
         openConversionSheet,
@@ -34,12 +32,6 @@ StubLookup _chfLookup() => StubLookup({
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
-
-  setUpAll(initTestSupabase);
-
-  tearDownAll(() async {
-    await Supabase.instance.dispose();
-  });
 
   setUp(installFakePrefs);
 

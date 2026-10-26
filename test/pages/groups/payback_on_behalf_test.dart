@@ -162,7 +162,7 @@ Expense _paybackRow({String? recordedByEmail, String? recordedByDisplayName}) {
         ],
       },
     ],
-  });
+  }, currentUserEmail: null);
   return e;
 }
 
