@@ -475,6 +475,22 @@ carry `[human]` criteria that nobody has ever observed. Check here before shippi
   (`supabase/tests/rls_stopgap/80_group_invite_token_cases.sql`, 9/9; `30_cases.sql` 75/75 with the released builds'
   join and "stranger joins G1 by id alone" now refused, 72/75 before; 40 14/14, 50 4/4, 60 21/21, 70 21/21).
 
+- [ ] **proves** · removed-member-access: a soft-removed member reads and changes nothing of the group they were
+  removed from, gets back in only through the group's current invite link or an active member's re-add, and the
+  remaining members still see them in the ledger and balances. Once applied, every released build's client-side
+  re-join (update own `removed_at = null`) is refused (hard-fail, by ruling) · out of reach: the self-hosted instance
+  (migration unapplied); behaviour is proven on the local harness
+  (`supabase/tests/rls_stopgap/90_removed_member_access_cases.sql`, 57/57, 10/57 before; `30_cases.sql` 75/75 with the
+  self re-admit case refused, 74/75 before; 40 14/14, 50 4/4, 60 21/21, 70 21/21, 80 9/9) · apply
+  `20261026200000_removed_member_access.sql` as `supabase_admin` after `20261026180000` (it replaces that file's
+  group_member INSERT policy). The order against `20261026160000` does not matter: this file revokes its own functions.
+  Confirm by read-only SQL that
+  `select pg_get_functiondef('public.is_group_member(uuid)'::regprocedure) like '%removed_at is null%';` returns true;
+  `select proname, prosecdef, proconfig from pg_proc where proname in ('is_group_member', 'group_has_members') order by proname;`
+  lists two rows, `prosecdef` true, each with `search_path=""`;
+  `select tablename, policyname from pg_policies where schemaname = 'public' and (qual like '%group_member.email%' or with_check like '%group_member.email%');`
+  returns no rows (no policy reads group_member as the caller any more); and rls-hardening's anon query still returns 0.
+
 ## Findings from verification
 
 Defects turned up while walking the checks. These are not checks themselves — nobody ticks them —

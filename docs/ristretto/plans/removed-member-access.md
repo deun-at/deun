@@ -18,8 +18,9 @@
   - [auto] Gates: `flutter analyze` clean, `flutter test` green.
 - Provides:
   - `public.is_group_member(_group_id uuid) returns boolean` — now true only for the caller's row with `removed_at is null` (signature unchanged)
-  - `public.group_has_members(_group_id uuid) returns boolean` (or an equivalent SECURITY DEFINER helper; exact name the planner's) — used by the creator branches so a group_member policy does not sub-select group_member
-  - Replaced policies on `public."group"` (SELECT / UPDATE / DELETE) and `public.group_member` (SELECT / INSERT / UPDATE) per Decisions
+  - `public.group_has_members(_group_id uuid) returns boolean` — SECURITY DEFINER, `search_path ''`; true if the group has any `group_member` row, removed ones included; used by the creator branches of the `group` SELECT and `group_member` INSERT policies
+  - Replaced policies, same names: `public."group"` SELECT / UPDATE / DELETE and the creator SELECT ("Enable users to view their own data only"), `public.expense` SELECT / INSERT / UPDATE / DELETE, `public.expense_update_checker` and `public.group_update_checker` SELECT / INSERT / UPDATE, now on `is_group_member`; `public.group_member` INSERT (creator branch only while the group has no member row) and UPDATE (own-row branch dropped)
+  - `public.save_group_all(jsonb, jsonb)` replaced: on a create the caller's own member row is inserted first; otherwise the baseline body
 - Consumes: —
 - Decisions:
   - Why → members who remove someone (Jakob in prep removed-member-access, 2026-10-26)
@@ -33,6 +34,10 @@
   - How the policies are changed → a new migration replaces the helper and policies; the applied stopgap files are not edited. It is applied after 20261026180000 (group-id-leak, whose INSERT policy it replaces) and before 20261026160000 is re-run (or rls-hardening is re-run afterwards; it is idempotent). The manual-checks apply entry says so.
   - Realtime → no "you were removed" event is added. An open screen on the removed member's device is stale until its next fetch, which then comes back not-found (accepted: same as full removal today).
   - Push → unchanged; the push function already sends only to active members.
+  - taken: an open group page whose group can no longer be read (the user was removed, or another member deleted it) → shows "Page not found" on its next load (resume or realtime), instead of staying up on stale data
+  - taken: group creation from builds that list a guest before the creator (pre-group-create-simplify) → keeps working: save_group_all now inserts the caller's own row first, so the narrowed creator branch still admits it (otherwise 30_cases "guest listed first" fails, 74/75 in the dry run)
+  - taken: tapping an old expense push for a group the user was removed from → opens nothing, the same as a push for a deleted expense today; group pushes and typed /group/<id> routes show not-found, which they already did
+  - taken: group-page not-found test → the planned `expect(find.byType(GroupDetail), findsNothing)` can never hold, because GroupDetail stays in the tree and only its build returns RouteNotFound. The test asserts the page text is shown, then that the group name ('Trip') is gone and "Page not found" shows.
 - Units:
   - Migration: `is_group_member` on `removed_at is null`; creator-branch helper; replaced `group` and `group_member` policies (own-row UPDATE branch dropped, creator branches limited to member-less groups); grants/revokes
   - Harness: flip 30_cases.sql:87, new removed-member cases (read nothing, write nothing, every RPC refused, no self-re-admit, re-join by token and by member, creator backdoor closed, group creation intact); update any 30–80 case that encoded the old ruling
@@ -46,3 +51,22 @@
 - Likely touchpoints: supabase/migrations/ (new file), supabase/tests/rls_stopgap/30_cases.sql and a new cases file, test/pages/groups/rls_hardening_migration_test.dart, lib/pages/groups/provider/group_list.dart, lib/pages/groups/provider/group_detail.dart, docs/ristretto/manual-checks.md
 - Depends: group-id-leak, rls-hardening, group-write-rpcs, typed-routes
 - Parallel-with: —
+
+## Evidence
+- 1: harness 90_removed_member_access_cases.sql (a soft-removed member reads no group, no group_member row but their own, no expense / entry / share / summary / checker rows; join guests and invite validity as for a stranger); 90 57/57 (10/57 before the migration); local harness only, never live.
+- 2: 90 write cases (every insert, update and delete refused or 0 rows) and each RPC refused for a soft-removed caller: save_group_all, save_expense_all, claim_set_unit_shares, pay_back / pay_back_exact, add_group_member, remove_group_member, delete_group, delete_expense, reset_group_invite; reviewer probes (upsert self-readmit, save_group_all on an existing group by a stranger or removed member) refused.
+- 3: 30_cases.sql "self re-admit" flipped from ok to refused; 30 75/75.
+- 4: 90 re-join cases: join_group with the current token, add_group_member and save_group_all re-add each restore access.
+- 5: 30 75/75, 40 14/14, 50 4/4, 60 21/21, 70 21/21, 80 9/9 with the migration applied (twice); rls_hardening_migration_test C4 and C8 (all 14 baseline policies re-created on is_group_member under the same names); ledger math and has_any_membership untouched.
+- 6: 90 creation cases (brand-new group and the creator's own row; a non-member in group.user_id of a group with any member row can neither read it nor insert themselves); 30 "save_group_all, create, guest listed first" green.
+- 7: group_list_scope_test C6 'a hard-removed user loses the group and its checker stops fetching' and C10 'a refresh that comes back not-found takes the group out, and a later event fetches nothing'; app_router_test 'an open group page shows not-found once its next load reports no row, also when it was opened with the group at hand'; typed /group/<id> routes and group pushes already show not-found.
+- 8: rls_hardening_migration_test C8 forward test green (new and replaced functions revoke public and anon themselves); group_has_members is SECURITY DEFINER with search_path '' and takes the caller from the JWT.
+- 9: `flutter analyze` no issues; `flutter test` all 1929 passed.
+- gates: flutter analyze clean; flutter test 1929 passed; harness 30 75/75, 40 14/14, 50 4/4, 60 21/21, 70 21/21, 80 9/9, 90 57/57 on the reviewer's own throwaway container.
+- review: notes-only · rounds: 1 · open: 0 block, 3 note, 0 lean · trimmed: 1
+- tier: normal
+
+## Open findings
+- note · `supabase/tests/rls_stopgap/90_removed_member_access_cases.sql:57,63` · Both "re-adding themselves" cases pass because the recalculation's insert into `group_shares_summary` fails. The functions themselves don't refuse: the `removed_at = null` update quietly touches 0 rows, and `add_group_member` would otherwise answer `'re_added'`. Why no user can be harmed: that update is still blocked by RLS, so no access comes back. Fix: also assert b's row keeps `removed_at`, or say in the case name that the error comes from the recalculation.
+- note · `lib/pages/groups/presentation/group_detail.dart:92` · Only GroupDetail switches to not-found. The members, payment and statistics pages for a removed group stay on screen after a failed reload (`route_loader.dart:24-26`), and an expense push for that group opens nothing (the build plan leaves both as is). Why no user can be harmed: those pages show nothing fresh, every write is refused and shows the existing error, and the criterion's "open group page" is met. Fix: none needed unless you read the criterion as covering sub-pages and expense pushes too.
+- note · `supabase/migrations/20261026140000_group_write_rpcs.sql:81` · Since this migration, `remove_group_member` called on yourself always fails. I confirmed this with a probe: the error is the `group_shares_summary` insert check, and the whole call rolls back. Why no user can be harmed: the app shows no remove control on your own row (`group_members_page.dart:511-512`), and nothing is written. Fix: none now; a future "leave group" feature needs the recalculation to run as a DEFINER or before the removal.
